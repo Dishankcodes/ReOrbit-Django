@@ -43,11 +43,11 @@ export default function Navbar() {
             Materials
           </a>
 
-          <a href="/about" onClick={closeMenu}>
+          <a href="/remakers-about" onClick={closeMenu}>
             About
           </a>
 
-          <a href="/faq" onClick={closeMenu}>
+          <a href="/remakers-faq" onClick={closeMenu}>
             FAQ
           </a>
         </div>

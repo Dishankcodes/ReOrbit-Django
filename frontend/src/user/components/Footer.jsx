@@ -38,7 +38,7 @@ export default function Footer() {
 
           <h3>Give something a second orbit.</h3>
 
-          <p>Sell, donate, exchange or discover something worth keeping.</p>
+          <p>Sell, donate,  or discover something worth keeping.</p>
         </div>
 
         <a className="btn-primary footer-cta-button" href="/login">

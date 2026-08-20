@@ -39,6 +39,9 @@ export default function Navbar() {
             ReMakers
           </a>
 
+  <a href="/how-it-works" onClick={closeMenu}>
+            How it works?
+          </a>
           <a href="/about" onClick={closeMenu}>
             About
           </a>
