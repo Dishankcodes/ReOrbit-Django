@@ -1,0 +1,12 @@
+.admin-dashboard-placeholder {
+  min-height: 100vh;
+  padding: 40px;
+  background: #F7F5EE;
+  color: #2A4D3A;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.admin-dashboard-placeholder h1 {
+  margin: 0 0 10px;
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+}
