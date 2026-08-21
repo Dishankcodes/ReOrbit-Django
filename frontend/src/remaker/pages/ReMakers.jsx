@@ -148,11 +148,14 @@ const testimonials = [
 
 export default function ReMakers() {
   return (
-    <div className="rm-page">
+    <div className="remaker-page rm-page">
       <Navbar />
 
       <main>
-        {/* HERO */}
+        {/* =====================================================
+            HERO
+        ===================================================== */}
+
         <section className="rm-hero">
           <div className="rm-container">
             <div className="rm-hero-grid">
@@ -194,12 +197,14 @@ export default function ReMakers() {
                     <span className="material-symbols-outlined">verified</span>
                     Verified material
                   </span>
+
                   <span>
                     <span className="material-symbols-outlined">
                       local_shipping
                     </span>
                     Pickup support
                   </span>
+
                   <span>
                     <span className="material-symbols-outlined">
                       storefront
@@ -208,6 +213,8 @@ export default function ReMakers() {
                   </span>
                 </div>
               </div>
+
+              {/* HERO GALLERY */}
 
               <div className="rm-gallery" aria-label="ReMaker creations">
                 <div className="rm-photo">
@@ -233,8 +240,10 @@ export default function ReMakers() {
 
                 <div className="rm-orbit-note">
                   <span className="material-symbols-outlined">recycling</span>
+
                   <div>
                     <strong>Keep materials moving</strong>
+
                     <small>One creation can start another orbit.</small>
                   </div>
                 </div>
@@ -243,7 +252,10 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* STATS */}
+        {/* =====================================================
+            STATS
+        ===================================================== */}
+
         <section className="rm-stats">
           <div className="rm-container">
             <div className="rm-stats-grid">
@@ -251,14 +263,17 @@ export default function ReMakers() {
                 <strong>1,200+</strong>
                 <span>ReMakers discovering new material</span>
               </div>
+
               <div className="rm-stat">
                 <strong>8.4k</strong>
                 <span>Items given another purpose</span>
               </div>
+
               <div className="rm-stat">
                 <strong>32k kg</strong>
                 <span>Material kept in circulation</span>
               </div>
+
               <div className="rm-stat">
                 <strong>4.9/5</strong>
                 <span>Average ReMaker community rating</span>
@@ -267,13 +282,18 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* MATERIALS */}
+        {/* =====================================================
+            MATERIALS
+        ===================================================== */}
+
         <section className="rm-section" id="materials">
           <div className="rm-container">
             <div className="rm-section-head">
               <div>
                 <span className="rm-eyebrow">Source differently</span>
+
                 <h2>Material with a story.</h2>
+
                 <p>
                   Find useful, verified material without starting from scratch.
                   ReOrbit connects makers with things that still have plenty
@@ -295,8 +315,11 @@ export default function ReMakers() {
                       {material.icon}
                     </span>
                   </div>
+
                   <h3>{material.title}</h3>
+
                   <p>{material.text}</p>
+
                   <a href="/marketplace">
                     Explore
                     <span className="material-symbols-outlined">
@@ -309,7 +332,10 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* FEATURED PRODUCTS */}
+        {/* =====================================================
+            FEATURED PRODUCTS
+        ===================================================== */}
+
         <section className="rm-products-section">
           <div className="rm-container">
             <div className="rm-products-head">
@@ -331,10 +357,12 @@ export default function ReMakers() {
             </div>
           </div>
 
-          {/* Automatic Carousel */}
+          {/* AUTOMATIC CAROUSEL */}
+
           <div className="rm-products-slider">
             <div className="rm-products-track">
-              {/* First set */}
+              {/* FIRST SET */}
+
               {featuredProducts.map((product, index) => (
                 <article
                   className="rm-product-card"
@@ -372,7 +400,8 @@ export default function ReMakers() {
                 </article>
               ))}
 
-              {/* Duplicate set for seamless infinite swipe */}
+              {/* DUPLICATE SET FOR INFINITE LOOP */}
+
               {featuredProducts.map((product, index) => (
                 <article
                   className="rm-product-card"
@@ -413,13 +442,19 @@ export default function ReMakers() {
             </div>
           </div>
         </section>
-        {/* FEATURED */}
+
+        {/* =====================================================
+            FEATURED REMAKERS
+        ===================================================== */}
+
         <section className="rm-section rm-featured" id="featured">
           <div className="rm-container">
             <div className="rm-section-head">
               <div>
                 <span className="rm-eyebrow">People behind the making</span>
+
                 <h2>Meet the ReMakers.</h2>
+
                 <p>
                   Discover makers who turn rescued materials into useful,
                   beautiful and one-of-a-kind work.
@@ -436,6 +471,7 @@ export default function ReMakers() {
                 <article className="rm-maker-card" key={maker.name}>
                   <div className="rm-maker-image">
                     <img src={maker.image} alt={maker.name} />
+
                     <span className="rm-maker-tag">
                       <span className="material-symbols-outlined">
                         verified
@@ -447,10 +483,12 @@ export default function ReMakers() {
                   <div className="rm-maker-content">
                     <div className="rm-maker-meta">
                       <span>{maker.specialty}</span>
+
                       <span>{maker.location}</span>
                     </div>
 
                     <h3>{maker.name}</h3>
+
                     <p>&quot;{maker.quote}&quot;</p>
 
                     <a href="/remakers/studio">
@@ -466,7 +504,10 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* JOURNEY */}
+        {/* =====================================================
+            JOURNEY
+        ===================================================== */}
+
         <section className="rm-journey-section" id="how-it-works">
           <div className="rm-container">
             <div className="rm-section-head rm-light-head">
@@ -474,7 +515,9 @@ export default function ReMakers() {
                 <span className="rm-eyebrow rm-eyebrow-light">
                   The ReMaker journey
                 </span>
+
                 <h2>From rescued to remarkable.</h2>
+
                 <p>
                   A simple loop designed around sourcing, making and putting
                   your finished work back into circulation.
@@ -486,8 +529,11 @@ export default function ReMakers() {
               {journey.map((step) => (
                 <article className="rm-journey-card" key={step.number}>
                   <span className="rm-step-number">{step.number}</span>
+
                   <h3>{step.title}</h3>
+
                   <p>{step.text}</p>
+
                   <span className="rm-step-arrow material-symbols-outlined">
                     arrow_forward
                   </span>
@@ -497,11 +543,15 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* TESTIMONIALS */}
+        {/* =====================================================
+            TESTIMONIALS
+        ===================================================== */}
+
         <section className="rm-section" id="stories">
           <div className="rm-container">
             <div className="rm-centered-heading">
               <span className="rm-eyebrow">From the community</span>
+
               <h2>Good making is better together.</h2>
             </div>
 
@@ -509,11 +559,15 @@ export default function ReMakers() {
               {testimonials.map((item) => (
                 <article className="rm-testimonial-card" key={item.name}>
                   <div className="rm-quote-mark">“</div>
+
                   <p>{item.text}</p>
+
                   <div className="rm-testimonial-person">
                     <div className="rm-avatar">{item.name.charAt(0)}</div>
+
                     <div>
                       <strong>{item.name}</strong>
+
                       <span>{item.role}</span>
                     </div>
                   </div>
@@ -523,39 +577,8 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* FINAL CTA */}
-        <section className="rm-final-cta">
-          <div className="rm-container">
-            <div className="rm-cta-inner">
-              <div>
-                <span className="rm-eyebrow rm-eyebrow-light">
-                  Your next creation starts here
-                </span>
-                <h2>Ready to make something worth keeping?</h2>
-                <p>
-                  Join the ReOrbit ReMaker community, source rescued material,
-                  and put your work back into the world.
-                </p>
-              </div>
+       
 
-              <div className="rm-cta-actions">
-                <a className="rm-btn rm-btn-white" href="/remakers/join">
-                  Become a ReMaker
-                  <span className="material-symbols-outlined">
-                    arrow_forward
-                  </span>
-                </a>
-
-                <a className="rm-text-link" href="/marketplace">
-                  Explore materials
-                  <span className="material-symbols-outlined">
-                    arrow_outward
-                  </span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />

@@ -17,30 +17,44 @@ export default function Navbar() {
     };
   }, []);
 
-  const closeMenu = () => setOpen(false);
+  const closeMenu = () => {
+    setOpen(false);
+  };
 
   return (
-    <nav className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
-      <div className="navbar-inner container">
-        {/* Logo */}
-        <a className="navbar-brand" href="/" onClick={closeMenu}>
+    <nav
+      className={`remaker-navbar ${scrolled ? "remaker-navbar-scrolled" : ""}`}
+    >
+      <div className="remaker-navbar-inner remaker-container">
+        {/* =========================
+            LOGO
+        ========================= */}
+
+        <a
+          className="remaker-navbar-brand"
+          href="/remakers"
+          onClick={closeMenu}
+        >
           <span className="material-symbols-outlined">eco</span>
 
           <span>ReOrbit</span>
         </a>
 
-        {/* ReMaker Navigation */}
-        <div className={`navbar-links ${open ? "navbar-links-open" : ""}`}>
+        {/* =========================
+            NAVIGATION
+        ========================= */}
+
+        <div
+          className={`remaker-navbar-links ${
+            open ? "remaker-navbar-links-open" : ""
+          }`}
+        >
           <a href="/remakers" onClick={closeMenu}>
-            ReMakers
+            Home
           </a>
 
-          <a href="/remakers/studio" onClick={closeMenu}>
-            Studio
-          </a>
-
-          <a href="/marketplace" onClick={closeMenu}>
-            Materials
+          <a href="/remakers/users" onClick={closeMenu}>
+            Users
           </a>
 
           <a href="/remakers-about" onClick={closeMenu}>
@@ -52,20 +66,27 @@ export default function Navbar() {
           </a>
         </div>
 
-        {/* Actions */}
-        <div className="navbar-actions">
-          <a className="btn-secondary" href="/login">
-            Sign in
+        {/* =========================
+            ACTIONS
+        ========================= */}
+
+        <div className="remaker-navbar-actions">
+          <a className="remaker-back-user" href="/">
+            <span className="material-symbols-outlined">person</span>
+            <span>Back to user</span>
           </a>
 
-          <a className="btn-primary" href="/remakers/join">
-            Become a ReMaker
+          <a className="remaker-get-started" href="/remakers/join">
+            Get started
           </a>
         </div>
 
-        {/* Mobile */}
+        {/* =========================
+            MOBILE
+        ========================= */}
+
         <button
-          className="navbar-menu"
+          className="remaker-navbar-menu"
           onClick={() => setOpen(!open)}
           aria-label="Toggle navigation"
           aria-expanded={open}

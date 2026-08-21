@@ -1,0 +1,172 @@
+/* All rules scoped strictly to .admin-scope */
+.admin-scope .container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.admin-scope .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  z-index: 1000;
+  background: #c1c8c4;
+  border-bottom: 1px solid rgba(8, 39, 31, 0.1);
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.admin-scope .navbar-scrolled {
+  background: #b6c0bb;
+  box-shadow: 0 4px 20px rgba(8, 39, 31, 0.12);
+}
+
+.admin-scope .navbar-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo */
+.admin-scope .navbar-brand {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.admin-scope .logo-box {
+  border: 2px solid #08271f;
+  padding: 2px 8px;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.admin-scope .logo-text {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #08271f;
+  letter-spacing: -0.02em;
+}
+
+/* Nav Links */
+.admin-scope .navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.admin-scope .navbar-links a {
+  position: relative;
+  color: #414845;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.3rem 0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.admin-scope .navbar-links a:hover,
+.admin-scope .navbar-links a.active {
+  color: #08271f;
+  font-weight: 600;
+}
+
+.admin-scope .navbar-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: #08271f;
+  transition: width 0.2s ease;
+}
+
+.admin-scope .navbar-links a:hover::after,
+.admin-scope .navbar-links a.active::after {
+  width: 100%;
+}
+
+/* Actions */
+.admin-scope .navbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-scope .admin-login-btn {
+  color: #08271f;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease;
+}
+
+.admin-scope .admin-login-btn:hover {
+  background-color: rgba(8, 39, 31, 0.08);
+}
+
+/* Mobile Toggle */
+.admin-scope .navbar-menu {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: #08271f;
+  cursor: pointer;
+  padding: 0.35rem;
+}
+
+.admin-scope .menu-icon {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Mobile Responsive */
+@media (max-width: 850px) {
+  .admin-scope .navbar-actions {
+    display: none;
+  }
+
+  .admin-scope .navbar-menu {
+    display: block;
+  }
+
+  .admin-scope .navbar-links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 16px;
+    right: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: #adcec1;
+    border: 1px solid #08271f;
+    border-radius: 1rem;
+    box-shadow: 0 12px 35px rgba(8, 39, 31, 0.2);
+  }
+
+  .admin-scope .navbar-links-open {
+    display: flex;
+  }
+
+  .admin-scope .navbar-links a {
+    padding: 0.8rem 1rem;
+    border-radius: 0.5rem;
+    color: #08271f;
+  }
+
+  .admin-scope .navbar-links a:hover {
+    background: rgba(8, 39, 31, 0.08);
+  }
+
+  .admin-scope .navbar-links a::after {
+    display: none;
+  }
+}

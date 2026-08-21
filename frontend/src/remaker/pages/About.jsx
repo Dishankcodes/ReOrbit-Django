@@ -6,519 +6,780 @@ export default function About() {
   return (
     <>
       <style>{`
-        /* =====================================================
-           REMAKER ABOUT PAGE
-        ===================================================== */
-
-        .rm-about-page {
-          min-height: 100vh;
-          background: var(--background);
-          color: var(--foreground);
-        }
-
-        /* =====================================================
-           HERO
-        ===================================================== */
-
-        .rm-about-hero {
-          padding: 145px 0 95px;
-        }
+/* =========================================================
+   REMAKER ABOUT PAGE
+   SAME THEME AS REMAKER HOMEPAGE
+========================================================= */
 
-        .rm-about-hero-inner {
-          max-width: 900px;
-          margin: 0 auto;
-          text-align: center;
-        }
+.rm-about-page {
+  min-height: 100vh;
 
-        .rm-about-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+  background: var(--rm-background);
+  color: var(--rm-text);
 
-          padding: 8px 14px;
+  overflow-x: hidden;
+}
 
-          border: 1px solid var(--border);
-          border-radius: 999px;
-
-          background: var(--secondary);
-          color: var(--primary);
-
-          font-size: 0.7rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
 
-        .rm-about-badge .material-symbols-outlined {
-          font-size: 16px;
-        }
+/* =========================================================
+   COMMON CONTAINER
+========================================================= */
 
-        .rm-about-hero h1 {
-          margin: 25px auto 22px;
-
-          max-width: 850px;
+.rm-about-page .container {
+  width: min(1280px, calc(100% - 80px));
 
-          color: var(--primary);
-          font-family: var(--font-display);
+  margin: 0 auto;
+}
 
-          font-size: clamp(3rem, 6vw, 5rem);
-          line-height: 0.98;
-          letter-spacing: -0.055em;
-        }
 
-        .rm-about-hero h1 em {
-          color: var(--leaf);
-          font-style: normal;
-        }
+/* =========================================================
+   HERO
+========================================================= */
 
-        .rm-about-hero p {
-          max-width: 690px;
-          margin: 0 auto;
+.rm-about-hero {
+  padding: 155px 0 95px;
 
-          color: var(--muted-foreground);
+  background: var(--rm-background);
+}
 
-          font-size: 1rem;
-          line-height: 1.75;
-        }
 
-        /* =====================================================
-           INTRO
-        ===================================================== */
+.rm-about-hero-inner {
+  max-width: 900px;
 
-        .rm-about-intro {
-          padding: 35px 0 100px;
-        }
+  margin: 0 auto;
 
-        .rm-about-intro-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 80px;
-          align-items: center;
-        }
+  text-align: center;
+}
 
-        .rm-about-intro-copy h2 {
-          margin-bottom: 20px;
 
-          color: var(--primary);
-          font-family: var(--font-display);
+/* =========================================================
+   BADGE
+========================================================= */
 
-          font-size: clamp(2.2rem, 4vw, 3.5rem);
-          line-height: 1.03;
-          letter-spacing: -0.045em;
-        }
+.rm-about-badge {
+  display: inline-flex;
 
-        .rm-about-intro-copy h2 span {
-          color: var(--leaf);
-        }
+  align-items: center;
+  justify-content: center;
 
-        .rm-about-intro-copy p {
-          margin-bottom: 16px;
+  gap: 8px;
 
-          color: var(--muted-foreground);
+  padding: 9px 14px;
 
-          font-size: 0.95rem;
-          line-height: 1.8;
-        }
+  border: 1px solid var(--rm-border);
 
-        .rm-about-card {
-          min-height: 380px;
+  border-radius: 999px;
 
-          padding: 38px;
+  background: rgba(193, 200, 196, 0.32);
 
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
+  color: var(--rm-green);
 
-          border-radius: 28px;
+  font-size: 0.68rem;
 
-          background:
-            radial-gradient(
-              circle at 80% 20%,
-              rgba(107, 175, 133, 0.25),
-              transparent 35%
-            ),
-            linear-gradient(
-              145deg,
-              #e4ede7,
-              #d9e8de
-            );
+  font-weight: 800;
 
-          border: 1px solid var(--border);
+  letter-spacing: 0.12em;
 
-          overflow: hidden;
-        }
+  text-transform: uppercase;
+}
 
-        .rm-about-icon {
-          width: 64px;
-          height: 64px;
 
-          display: flex;
-          align-items: center;
-          justify-content: center;
+.rm-about-badge .material-symbols-outlined {
+  font-size: 17px;
+}
 
-          border-radius: 50%;
 
-          background: rgba(255, 255, 255, 0.72);
-          color: var(--primary);
+/* =========================================================
+   HERO TITLE
+========================================================= */
 
-          margin-bottom: auto;
-        }
+.rm-about-hero h1 {
+  margin: 28px auto 22px;
 
-        .rm-about-icon .material-symbols-outlined {
-          font-size: 31px;
-        }
+  max-width: 850px;
 
-        .rm-about-card h3 {
-          margin-bottom: 8px;
+  color: var(--rm-maroon);
 
-          color: var(--primary);
-          font-family: var(--font-display);
+  font-family: var(--font-display);
 
-          font-size: 1.7rem;
-        }
+  font-size: clamp(3.5rem, 6vw, 5.8rem);
 
-        .rm-about-card p {
-          max-width: 420px;
+  line-height: 0.96;
 
-          color: var(--muted-foreground);
+  letter-spacing: -0.055em;
 
-          font-size: 0.85rem;
-          line-height: 1.65;
-        }
+  font-weight: 700;
+}
 
-        /* =====================================================
-           VALUES
-        ===================================================== */
 
-        .rm-about-values {
-          padding: 100px 0;
-          background: var(--secondary);
-        }
+.rm-about-hero h1 em {
+  color: var(--rm-green);
 
-        .rm-about-heading {
-          max-width: 700px;
-          margin-bottom: 48px;
-        }
+  font-style: italic;
 
-        .rm-about-heading .eyebrow {
-          display: inline-block;
+  font-weight: 600;
+}
 
-          margin-bottom: 12px;
 
-          color: var(--leaf);
+/* =========================================================
+   HERO DESCRIPTION
+========================================================= */
 
-          font-size: 0.7rem;
-          font-weight: 800;
+.rm-about-hero p {
+  max-width: 690px;
 
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-        }
+  margin: 0 auto;
 
-        .rm-about-heading h2 {
-          color: var(--primary);
-          font-family: var(--font-display);
+  color: var(--rm-secondary-dark);
 
-          font-size: clamp(2.2rem, 4vw, 3.5rem);
+  font-size: 0.95rem;
 
-          line-height: 1.05;
-          letter-spacing: -0.045em;
-        }
+  line-height: 1.75;
+}
 
-        .rm-about-values-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
 
-        .rm-about-value {
-          padding: 30px;
+/* =========================================================
+   INTRO
+========================================================= */
 
-          background: var(--card);
+.rm-about-intro {
+  padding: 35px 0 110px;
 
-          border: 1.5px solid var(--border);
-          border-radius: 22px;
+  background: var(--rm-background);
+}
 
-          transition:
-            transform 0.25s ease,
-            box-shadow 0.25s ease;
-        }
 
-        .rm-about-value:hover {
-          transform: translateY(-5px);
+.rm-about-intro-grid {
+  display: grid;
 
-          box-shadow:
-            0 14px 35px rgba(42, 77, 58, 0.1);
-        }
+  grid-template-columns: 1fr 1fr;
 
-        .rm-about-value-icon {
-          width: 48px;
-          height: 48px;
+  gap: 70px;
 
-          display: flex;
-          align-items: center;
-          justify-content: center;
+  align-items: center;
+}
 
-          margin-bottom: 25px;
 
-          border-radius: 50%;
+/* =========================================================
+   INTRO TEXT
+========================================================= */
 
-          background: var(--secondary);
-          color: var(--primary);
-        }
+.rm-about-intro-copy {
+  max-width: 620px;
+}
 
-        .rm-about-value-icon .material-symbols-outlined {
-          font-size: 23px;
-        }
 
-        .rm-about-value h3 {
-          margin-bottom: 10px;
+.rm-about-intro-copy h2 {
+  margin-bottom: 22px;
 
-          color: var(--primary);
-          font-family: var(--font-display);
+  color: var(--rm-maroon);
 
-          font-size: 1.3rem;
-        }
+  font-family: var(--font-display);
 
-        .rm-about-value p {
-          color: var(--muted-foreground);
+  font-size: clamp(2.3rem, 4vw, 3.7rem);
 
-          font-size: 0.82rem;
-          line-height: 1.7;
-        }
+  line-height: 1;
 
-        /* =====================================================
-           HOW REMAKING WORKS
-        ===================================================== */
+  letter-spacing: -0.045em;
+}
 
-        .rm-about-process {
-          padding: 105px 0;
-        }
 
-        .rm-about-process-heading {
-          max-width: 700px;
-          margin: 0 auto 55px;
-          text-align: center;
-        }
+.rm-about-intro-copy h2 span {
+  color: var(--rm-green);
+}
 
-        .rm-about-process-heading h2 {
-          color: var(--primary);
-          font-family: var(--font-display);
 
-          font-size: clamp(2.2rem, 4vw, 3.4rem);
+.rm-about-intro-copy p {
+  margin-bottom: 16px;
 
-          line-height: 1.05;
-          letter-spacing: -0.045em;
-        }
+  color: var(--rm-muted);
 
-        .rm-about-process-heading p {
-          margin-top: 15px;
+  font-size: 0.85rem;
 
-          color: var(--muted-foreground);
+  line-height: 1.8;
+}
 
-          font-size: 0.92rem;
-          line-height: 1.7;
-        }
 
-        .rm-about-process-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
+/* =========================================================
+   INTRO FEATURE CARD
+========================================================= */
 
-        .rm-about-process-card {
-          padding: 30px;
+.rm-about-card {
+  min-height: 390px;
 
-          background: var(--card);
+  padding: 38px;
 
-          border: 1.5px solid var(--border);
-          border-radius: 22px;
-        }
+  display: flex;
 
-        .rm-about-step {
-          color: var(--leaf);
+  flex-direction: column;
 
-          font-size: 0.7rem;
-          font-weight: 800;
-          letter-spacing: 0.1em;
-        }
+  justify-content: flex-end;
 
-        .rm-about-process-card h3 {
-          margin: 30px 0 10px;
+  border-radius: 24px;
 
-          color: var(--primary);
-          font-family: var(--font-display);
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(8, 39, 31, 0.16),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      #e3e2e0,
+      #d9e8de
+    );
 
-          font-size: 1.35rem;
-        }
+  border: 1px solid var(--rm-border);
 
-        .rm-about-process-card p {
-          color: var(--muted-foreground);
+  overflow: hidden;
 
-          font-size: 0.82rem;
-          line-height: 1.7;
-        }
+  box-shadow: 0 20px 45px rgba(39, 8, 9, 0.06);
+}
 
-        /* =====================================================
-           CTA
-        ===================================================== */
 
-        .rm-about-cta {
-          padding: 0 0 100px;
-        }
+.rm-about-icon {
+  width: 64px;
+  height: 64px;
 
-        .rm-about-cta-box {
-          padding: 55px;
+  display: flex;
 
-          border-radius: 28px;
+  align-items: center;
+  justify-content: center;
 
-          background:
-            linear-gradient(
-              135deg,
-              #2a4d3a,
-              #1e3d2f
-            );
+  border-radius: 50%;
 
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+  background: rgba(255, 255, 255, 0.75);
 
-          gap: 40px;
-        }
+  color: var(--rm-green);
 
-        .rm-about-cta-box h2 {
-          color: white;
-          font-family: var(--font-display);
+  margin-bottom: auto;
+}
 
-          font-size: clamp(2rem, 4vw, 3rem);
 
-          line-height: 1.05;
-        }
+.rm-about-icon .material-symbols-outlined {
+  font-size: 31px;
+}
 
-        .rm-about-cta-box p {
-          margin-top: 10px;
 
-          color: rgba(255, 255, 255, 0.7);
+.rm-about-card h3 {
+  margin-bottom: 8px;
 
-          font-size: 0.85rem;
-        }
+  color: var(--rm-maroon);
 
-        .rm-about-cta-button {
-          flex-shrink: 0;
+  font-family: var(--font-display);
 
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
+  font-size: 1.7rem;
+}
 
-          padding: 13px 22px;
 
-          border-radius: 999px;
+.rm-about-card p {
+  max-width: 420px;
 
-          background: white;
-          color: var(--primary);
+  color: var(--rm-secondary-dark);
 
-          font-size: 0.82rem;
-          font-weight: 700;
+  font-size: 0.82rem;
 
-          text-decoration: none;
-        }
+  line-height: 1.65;
+}
 
-        /* =====================================================
-           RESPONSIVE
-        ===================================================== */
 
-        @media (max-width: 900px) {
+/* =========================================================
+   VALUES
+========================================================= */
 
-          .rm-about-intro-grid {
-            grid-template-columns: 1fr;
-            gap: 45px;
-          }
+.rm-about-values {
+  padding: 105px 0;
 
-          .rm-about-values-grid,
-          .rm-about-process-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
+  background: var(--rm-light);
 
-        @media (max-width: 700px) {
+  border-top: 1px solid var(--rm-border);
 
-          .rm-about-hero {
-            padding: 120px 0 70px;
-          }
+  border-bottom: 1px solid var(--rm-border);
+}
 
-          .rm-about-hero h1 {
-            font-size: clamp(2.7rem, 12vw, 4rem);
-          }
 
-          .rm-about-hero p {
-            font-size: 0.9rem;
-          }
+.rm-about-heading {
+  max-width: 700px;
 
-          .rm-about-intro {
-            padding: 30px 0 75px;
-          }
+  margin-bottom: 48px;
+}
 
-          .rm-about-card {
-            min-height: 300px;
-            padding: 26px;
-          }
 
-          .rm-about-values,
-          .rm-about-process {
-            padding: 75px 0;
-          }
+.rm-about-heading .eyebrow {
+  display: inline-flex;
 
-          .rm-about-values-grid,
-          .rm-about-process-grid {
-            grid-template-columns: 1fr;
-          }
+  align-items: center;
 
-          .rm-about-heading {
-            margin-bottom: 35px;
-          }
+  gap: 7px;
 
-          .rm-about-cta {
-            padding-bottom: 70px;
-          }
+  margin-bottom: 10px;
 
-          .rm-about-cta-box {
-            flex-direction: column;
-            align-items: flex-start;
+  color: var(--rm-green);
 
-            padding: 35px 25px;
+  font-size: 0.68rem;
 
-            border-radius: 22px;
-          }
+  font-weight: 800;
 
-          .rm-about-cta-button {
-            width: 100%;
-            justify-content: center;
-          }
-        }
+  letter-spacing: 0.13em;
 
-        @media (max-width: 480px) {
+  text-transform: uppercase;
+}
 
-          .rm-about-hero {
-            padding-top: 105px;
-          }
 
-          .rm-about-hero h1 {
-            font-size: 2.65rem;
-          }
+.rm-about-heading .eyebrow::before {
+  content: "";
 
-          .rm-about-intro-copy h2,
-          .rm-about-heading h2,
-          .rm-about-process-heading h2 {
-            font-size: 2.2rem;
-          }
+  width: 22px;
 
-          .rm-about-value,
-          .rm-about-process-card {
-            padding: 24px;
-          }
-        }
+  height: 1.5px;
+
+  background: var(--rm-green);
+}
+
+
+.rm-about-heading h2 {
+  color: var(--rm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 3.7rem);
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+
+/* =========================================================
+   VALUE CARDS
+========================================================= */
+
+.rm-about-values-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+}
+
+
+.rm-about-value {
+  padding: 30px;
+
+  background: var(--rm-white);
+
+  border: 1px solid var(--rm-border);
+
+  border-radius: 20px;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+
+.rm-about-value:hover {
+  transform: translateY(-5px);
+
+  border-color: var(--rm-green);
+
+  box-shadow: 0 18px 40px rgba(39, 8, 9, 0.08);
+}
+
+
+.rm-about-value-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 24px;
+
+  border-radius: 14px;
+
+  background: rgba(8, 39, 31, 0.08);
+
+  color: var(--rm-green);
+}
+
+
+.rm-about-value-icon .material-symbols-outlined {
+  font-size: 23px;
+}
+
+
+.rm-about-value h3 {
+  margin-bottom: 10px;
+
+  color: var(--rm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.3rem;
+}
+
+
+.rm-about-value p {
+  color: var(--rm-muted);
+
+  font-size: 0.78rem;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   PROCESS
+========================================================= */
+
+.rm-about-process {
+  padding: 110px 0;
+
+  background: var(--rm-background);
+}
+
+
+.rm-about-process-heading {
+  max-width: 700px;
+
+  margin: 0 auto 55px;
+
+  text-align: center;
+}
+
+
+.rm-about-process-heading h2 {
+  color: var(--rm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 3.5rem);
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+
+.rm-about-process-heading p {
+  margin-top: 15px;
+
+  color: var(--rm-muted);
+
+  font-size: 0.88rem;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   PROCESS CARDS
+========================================================= */
+
+.rm-about-process-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 18px;
+}
+
+
+.rm-about-process-card {
+  padding: 30px;
+
+  background: var(--rm-white);
+
+  border: 1px solid var(--rm-border);
+
+  border-radius: 20px;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+
+.rm-about-process-card:hover {
+  transform: translateY(-5px);
+
+  box-shadow: 0 18px 40px rgba(39, 8, 9, 0.08);
+}
+
+
+.rm-about-step {
+  color: var(--rm-green);
+
+  font-size: 0.68rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+
+.rm-about-process-card h3 {
+  margin: 30px 0 10px;
+
+  color: var(--rm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.35rem;
+}
+
+
+.rm-about-process-card p {
+  color: var(--rm-muted);
+
+  font-size: 0.78rem;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   CTA
+   SAME FEEL AS REMAKER HOMEPAGE CTA
+========================================================= */
+
+.rm-about-cta {
+  padding: 0 0 100px;
+
+  background: var(--rm-background);
+}
+
+
+.rm-about-cta-box {
+  padding: 55px;
+
+  border-radius: 28px;
+
+  background: var(--rm-maroon);
+
+  border: 1px solid rgba(193, 200, 196, 0.25);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 40px;
+}
+
+
+.rm-about-cta-box h2 {
+  max-width: 720px;
+
+  color: var(--rm-white);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 4rem);
+
+  line-height: 0.98;
+
+  letter-spacing: -0.045em;
+}
+
+
+.rm-about-cta-box p {
+  max-width: 600px;
+
+  margin-top: 12px;
+
+  color: rgba(255, 255, 255, 0.67);
+
+  font-size: 0.84rem;
+
+  line-height: 1.7;
+}
+
+
+.rm-about-cta-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 46px;
+
+  padding: 0 22px;
+
+  border-radius: 999px;
+
+  background: var(--rm-white);
+
+  color: var(--rm-maroon);
+
+  border: 1px solid var(--rm-white);
+
+  font-size: 0.8rem;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.rm-about-cta-button:hover {
+  transform: translateY(-2px);
+
+  background: #f3f3f1;
+}
+
+
+.rm-about-cta-button
+.material-symbols-outlined {
+  font-size: 17px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .rm-about-intro-grid {
+    grid-template-columns: 1fr;
+
+    gap: 45px;
+  }
+
+  .rm-about-values-grid,
+  .rm-about-process-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+@media (max-width: 700px) {
+
+  .rm-about-page .container {
+    width: calc(100% - 32px);
+  }
+
+
+  .rm-about-hero {
+    padding: 125px 0 70px;
+  }
+
+
+  .rm-about-hero h1 {
+    font-size: clamp(2.7rem, 12vw, 4rem);
+  }
+
+
+  .rm-about-hero p {
+    font-size: 0.86rem;
+  }
+
+
+  .rm-about-intro {
+    padding: 30px 0 75px;
+  }
+
+
+  .rm-about-card {
+    min-height: 300px;
+
+    padding: 26px;
+  }
+
+
+  .rm-about-values,
+  .rm-about-process {
+    padding: 75px 0;
+  }
+
+
+  .rm-about-values-grid,
+  .rm-about-process-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .rm-about-heading {
+    margin-bottom: 35px;
+  }
+
+
+  .rm-about-cta {
+    padding-bottom: 70px;
+  }
+
+
+  .rm-about-cta-box {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    padding: 35px 25px;
+
+    border-radius: 22px;
+  }
+
+
+  .rm-about-cta-button {
+    width: 100%;
+
+    justify-content: center;
+  }
+}
+
+
+@media (max-width: 480px) {
+
+  .rm-about-page .container {
+    width: calc(100% - 24px);
+  }
+
+
+  .rm-about-hero {
+    padding-top: 110px;
+  }
+
+
+  .rm-about-hero h1 {
+    font-size: 2.65rem;
+  }
+
+
+  .rm-about-intro-copy h2,
+  .rm-about-heading h2,
+  .rm-about-process-heading h2 {
+    font-size: 2.2rem;
+  }
+
+
+  .rm-about-value,
+  .rm-about-process-card {
+    padding: 24px;
+  }
+
+
+  .rm-about-cta-box h2 {
+    font-size: 2.3rem;
+  }
+}
       `}</style>
 
-      <div className="rm-about-page">
+      <div className="remaker-page rm-page rm-about-page">
         <Navbar />
 
         {/* HERO */}

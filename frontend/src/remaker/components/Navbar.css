@@ -1,47 +1,78 @@
-.navbar {
+/* =========================================================
+   REMAKER NAVBAR
+   Matches the original ReOrbit navbar structure
+   ReMaker theme only
+========================================================= */
+
+.remaker-page .remaker-navbar {
   position: fixed;
   top: 0;
   left: 0;
+
   width: 100%;
   height: 76px;
+
   z-index: 1000;
 
-  background: rgba(247, 245, 238, 0.9);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: rgba(250, 249, 247, 0.96);
 
-  border-bottom: 1px solid rgba(212, 228, 216, 0.65);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+
+  border-bottom: 1px solid rgba(193, 200, 196, 0.55);
 
   transition:
-    box-shadow 0.25s ease,
-    background 0.25s ease;
+    background 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.navbar-scrolled {
-  background: rgba(247, 245, 238, 0.97);
-  box-shadow: 0 6px 24px rgba(42, 77, 58, 0.08);
+/* =========================================================
+   SCROLLED NAVBAR
+========================================================= */
+
+.remaker-page .remaker-navbar-scrolled {
+  background: rgba(250, 249, 247, 0.98);
+
+  box-shadow: 0 5px 20px rgba(39, 8, 9, 0.07);
 }
 
-.navbar-inner {
+/* =========================================================
+   NAVBAR INNER
+   Same width / positioning as main ReOrbit layout
+========================================================= */
+
+.remaker-page .remaker-navbar-inner {
+  width: min(1280px, calc(100% - 80px));
+
   height: 100%;
+
+  margin: 0 auto;
+
   display: flex;
   align-items: center;
+
   justify-content: space-between;
 }
 
-/* =========================
+/* =========================================================
    LOGO
-========================= */
+========================================================= */
 
-.navbar-brand {
+.remaker-page .remaker-navbar-brand {
   display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
 
-  color: var(--primary);
+  align-items: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+
+  color: var(--rm-green);
 
   font-family: var(--font-display);
+
   font-size: 1.4rem;
+
   font-weight: 700;
 
   letter-spacing: -0.03em;
@@ -49,7 +80,7 @@
   text-decoration: none;
 }
 
-.navbar-brand .material-symbols-outlined {
+.remaker-page .remaker-navbar-brand .material-symbols-outlined {
   font-size: 29px;
 
   font-variation-settings:
@@ -58,139 +89,311 @@
     "GRAD" 0,
     "opsz" 24;
 
-  transition: transform 0.35s ease;
+  transition: transform 0.3s ease;
 }
 
-.navbar-brand:hover .material-symbols-outlined {
-  transform: rotate(45deg);
+.remaker-page .remaker-navbar-brand:hover .material-symbols-outlined {
+  transform: rotate(20deg);
 }
 
-/* =========================
-   NAV LINKS
-========================= */
+/* =========================================================
+   CENTER NAVIGATION
+========================================================= */
 
-.navbar-links {
+.remaker-page .remaker-navbar-links {
   display: flex;
+
   align-items: center;
-  gap: 2rem;
+
+  justify-content: center;
+
+  gap: 2.4rem;
+
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.navbar-links a {
+.remaker-page .remaker-navbar-links a {
   position: relative;
 
-  color: var(--foreground);
+  padding: 5px 0;
 
-  font-size: 0.875rem;
+  color: var(--rm-secondary-dark);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.88rem;
+
   font-weight: 500;
 
-  padding: 0.3rem 0;
-
   text-decoration: none;
+
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
 }
 
-.navbar-links a::after {
+/* Hover */
+
+.remaker-page .remaker-navbar-links a:hover {
+  color: var(--rm-maroon);
+}
+
+/* Small underline */
+
+.remaker-page .remaker-navbar-links a::after {
   content: "";
 
   position: absolute;
-  left: 0;
-  bottom: -3px;
+
+  left: 50%;
+  bottom: -5px;
 
   width: 0;
   height: 1.5px;
 
-  background: var(--primary);
+  background: var(--rm-maroon);
+
+  transform: translateX(-50%);
 
   transition: width 0.2s ease;
 }
 
-.navbar-links a:hover::after {
-  width: 100%;
+.remaker-page .remaker-navbar-links a:hover::after {
+  width: 18px;
 }
 
-/* =========================
-   ACTION BUTTONS
-========================= */
+/* =========================================================
+   RIGHT ACTIONS
+========================================================= */
 
-.navbar-actions {
+.remaker-page .remaker-navbar-actions {
   display: flex;
+
   align-items: center;
-  gap: 0.7rem;
+
+  gap: 18px;
+
+  flex-shrink: 0;
 }
 
-/* =========================
-   MOBILE BUTTON
-========================= */
+.remaker-page .remaker-back-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 
-.navbar-menu {
+  min-height: 42px;
+  padding: 0 17px;
+
+  border-radius: 999px;
+
+  background: rgba(227, 226, 224, 0.75);
+
+  color: var(--rm-green);
+
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remaker-page .remaker-back-user .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.remaker-page .remaker-back-user:hover {
+  background: rgba(8, 39, 31, 0.1);
+  color: var(--rm-maroon);
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   GET STARTED
+========================================================= */
+
+.remaker-page .remaker-get-started {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  height: 46px;
+
+  padding: 0 22px;
+
+  border-radius: 999px;
+
+  background: var(--rm-maroon);
+
+  border: 1px solid var(--rm-maroon);
+
+  color: var(--rm-white);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.8rem;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.remaker-page .remaker-get-started:hover {
+  background: #3b1011;
+
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   MOBILE MENU BUTTON
+========================================================= */
+
+.remaker-page .remaker-navbar-menu {
   display: none;
 
-  border: 0;
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 5px;
+
+  border: none;
+
   background: transparent;
 
-  color: var(--primary);
+  color: var(--rm-maroon);
 
   cursor: pointer;
-
-  padding: 0.35rem;
 }
 
-.navbar-menu .material-symbols-outlined {
-  font-size: 27px;
+.remaker-page .remaker-navbar-menu .material-symbols-outlined {
+  font-size: 28px;
 }
 
-/* =========================
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+  .remaker-page .remaker-navbar-inner {
+    width: min(100%, calc(100% - 50px));
+  }
+
+  .remaker-page .remaker-navbar-links {
+    gap: 1.5rem;
+  }
+
+  .remaker-page .remaker-navbar-actions {
+    gap: 12px;
+  }
+
+  .remaker-page .remaker-back-user {
+    font-size: 0.7rem;
+  }
+
+  .remaker-page .remaker-get-started {
+    padding: 0 18px;
+  }
+}
+
+/* =========================================================
    MOBILE
-========================= */
+========================================================= */
 
 @media (max-width: 850px) {
-  .navbar-actions {
+  .remaker-page .remaker-navbar-inner {
+    width: calc(100% - 32px);
+  }
+
+  /* Hide desktop actions */
+
+  .remaker-page .remaker-navbar-actions {
     display: none;
   }
 
-  .navbar-menu {
-    display: block;
+  /* Show menu */
+
+  .remaker-page .remaker-navbar-menu {
+    display: inline-flex;
   }
 
-  .navbar-links {
+  /* Mobile navigation */
+
+  .remaker-page .remaker-navbar-links {
     display: none;
 
     position: absolute;
 
-    top: 68px;
+    top: 76px;
+
     left: 16px;
     right: 16px;
 
     flex-direction: column;
+
     align-items: stretch;
 
-    gap: 0.15rem;
+    gap: 3px;
 
-    padding: 1rem;
+    padding: 12px;
 
-    background: rgba(247, 245, 238, 0.98);
+    margin: 0;
 
-    border: 1px solid var(--border);
+    background: rgba(250, 249, 247, 0.98);
 
-    border-radius: 1rem;
+    border: 1px solid var(--rm-border);
 
-    box-shadow: 0 12px 35px rgba(42, 77, 58, 0.12);
+    border-radius: 16px;
+
+    box-shadow: 0 15px 40px rgba(39, 8, 9, 0.12);
   }
 
-  .navbar-links-open {
+  .remaker-page .remaker-navbar-links-open {
     display: flex;
   }
 
-  .navbar-links a {
-    padding: 0.8rem;
+  .remaker-page .remaker-navbar-links a {
+    padding: 13px 14px;
 
-    border-radius: 0.5rem;
+    border-radius: 9px;
   }
 
-  .navbar-links a:hover {
-    background: var(--secondary);
+  .remaker-page .remaker-navbar-links a:hover {
+    background: var(--rm-light);
   }
 
-  .navbar-links a::after {
+  .remaker-page .remaker-navbar-links a::after {
     display: none;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+  .remaker-page .remaker-navbar-inner {
+    width: calc(100% - 24px);
+  }
+
+  .remaker-page .remaker-navbar-brand {
+    font-size: 1.25rem;
+  }
+
+  .remaker-page .remaker-navbar-brand .material-symbols-outlined {
+    font-size: 26px;
   }
 }

@@ -1,10 +1,37 @@
-.site-footer {
-  background: var(--background);
-  border-top: 1px solid var(--border);
+/* =========================================================
+   REMAKER FOOTER
+   ISOLATED THEME
+========================================================= */
+
+.remaker-footer {
+  --remaker-bg: #270809;
+  --remaker-stroke: #c1c8c4;
+
+  --remaker-primary: #c1c8c4;
+  --remaker-secondary: #321113;
+  --remaker-card: #3a1718;
+
+  --remaker-muted: rgba(193, 200, 196, 0.72);
+  --remaker-muted-light: rgba(193, 200, 196, 0.52);
+
+  width: 100%;
+
+  background: var(--remaker-bg);
+
+  color: var(--remaker-primary);
+
+  border-top: 1px solid rgba(193, 200, 196, 0.28);
+
   padding-top: 32px;
+
+  isolation: isolate;
 }
 
-.footer-cta {
+/* =========================================================
+   CTA
+========================================================= */
+
+.remaker-footer .remaker-footer-cta {
   min-height: 132px;
 
   margin-top: 18px;
@@ -13,94 +40,173 @@
   padding: 28px 34px;
 
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 32px;
 
-  background: var(--secondary);
-  border: 1px solid var(--border);
+  background: var(--remaker-secondary);
+
+  border: 1px solid rgba(193, 200, 196, 0.3);
+
   border-radius: 22px;
 }
-.footer-cta-content {
+
+/* CTA CONTENT */
+
+.remaker-footer .remaker-footer-cta-content {
   min-width: 0;
 }
 
-.footer-eyebrow {
+/* EYEBROW */
+
+.remaker-footer .remaker-footer-eyebrow {
   display: inline-flex;
+
   align-items: center;
+
   gap: 7px;
 
-  color: var(--leaf);
+  color: var(--remaker-stroke);
 
   font-size: 0.68rem;
+
   font-weight: 800;
+
   letter-spacing: 0.13em;
+
   text-transform: uppercase;
 }
 
-.footer-eyebrow::before {
+.remaker-footer .remaker-footer-eyebrow::before {
   content: "";
 
   width: 22px;
+
   height: 1.5px;
 
-  background: var(--leaf);
+  background: var(--remaker-stroke);
 }
 
-.footer-cta h3 {
+/* CTA HEADING */
+
+.remaker-footer .remaker-footer-cta h3 {
   margin: 7px 0 5px;
 
-  color: var(--primary);
+  color: var(--remaker-primary);
 
   font-family: var(--font-display);
+
   font-size: clamp(1.25rem, 2vw, 1.65rem);
+
   font-weight: 700;
+
   line-height: 1.15;
+
   letter-spacing: -0.025em;
 }
 
-.footer-cta p {
-  color: var(--muted-foreground);
+/* CTA DESCRIPTION */
+
+.remaker-footer .remaker-footer-cta p {
+  color: var(--remaker-muted);
 
   font-size: 0.82rem;
+
   line-height: 1.5;
 }
 
-.footer-cta-button {
+/* CTA BUTTON */
+
+.remaker-footer .remaker-footer-cta-button {
   flex-shrink: 0;
+
   min-height: 46px;
+
   padding: 0 21px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  border-radius: 999px;
+
+  background: var(--remaker-stroke);
+
+  color: var(--remaker-bg);
+
+  font-family: var(--font-sans);
+
   font-size: 0.8rem;
+
+  font-weight: 700;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
 
-.footer-cta-button .material-symbols-outlined {
+.remaker-footer .remaker-footer-cta-button:hover {
+  transform: translateY(-2px);
+
+  background: #ffffff;
+}
+
+.remaker-footer .remaker-footer-cta-button .material-symbols-outlined {
   font-size: 17px;
 }
 
-.footer-main {
+/* =========================================================
+   MAIN FOOTER
+========================================================= */
+
+.remaker-footer .remaker-footer-main {
   display: grid;
-  grid-template-columns: 2.1fr 1fr 1fr 1fr;
+
+  grid-template-columns:
+    2.1fr
+    1fr
+    1fr
+    1fr;
+
   gap: 70px;
+
   padding-top: 64px;
+
   padding-bottom: 58px;
 }
+
 /* =========================================================
    BRAND
 ========================================================= */
 
-.footer-brand {
+.remaker-footer .remaker-footer-brand {
   max-width: 390px;
 }
 
-.footer-logo {
+/* LOGO */
+
+.remaker-footer .remaker-footer-logo {
   display: inline-flex;
+
   align-items: center;
+
   gap: 8px;
 
-  color: var(--primary);
+  color: var(--remaker-primary);
 
   font-family: var(--font-display);
+
   font-size: 1.25rem;
+
   font-weight: 700;
 
   letter-spacing: -0.025em;
@@ -108,7 +214,7 @@
   text-decoration: none;
 }
 
-.footer-logo .material-symbols-outlined {
+.remaker-footer .remaker-footer-logo .material-symbols-outlined {
   font-size: 25px;
 
   font-variation-settings:
@@ -118,14 +224,17 @@
     "opsz" 24;
 }
 
-.footer-brand p {
+/* BRAND DESCRIPTION */
+
+.remaker-footer .remaker-footer-brand p {
   max-width: 370px;
 
   margin-top: 15px;
 
-  color: var(--muted-foreground);
+  color: var(--remaker-muted);
 
   font-size: 0.82rem;
+
   line-height: 1.7;
 }
 
@@ -133,28 +242,34 @@
    SOCIALS
 ========================================================= */
 
-.footer-socials {
+.remaker-footer .remaker-footer-socials {
   display: flex;
+
   align-items: center;
+
   gap: 8px;
 
   margin-top: 20px;
 }
 
-.footer-socials a {
+.remaker-footer .remaker-footer-socials a {
   width: 34px;
+
   height: 34px;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
-  background: var(--secondary);
+  background: var(--remaker-secondary);
 
-  border: 1px solid var(--border);
+  border: 1px solid rgba(193, 200, 196, 0.3);
+
   border-radius: 50%;
 
-  color: var(--primary);
+  color: var(--remaker-primary);
 
   text-decoration: none;
 
@@ -164,14 +279,15 @@
     border-color 0.2s ease;
 }
 
-.footer-socials a:hover {
+.remaker-footer .remaker-footer-socials a:hover {
   transform: translateY(-2px);
 
-  background: var(--card);
-  border-color: var(--primary);
+  background: var(--remaker-card);
+
+  border-color: var(--remaker-stroke);
 }
 
-.footer-socials .material-symbols-outlined {
+.remaker-footer .remaker-footer-socials .material-symbols-outlined {
   font-size: 16px;
 }
 
@@ -179,31 +295,41 @@
    LINK COLUMNS
 ========================================================= */
 
-.footer-column {
+.remaker-footer .remaker-footer-column {
   display: flex;
+
   flex-direction: column;
+
   align-items: flex-start;
 
   gap: 11px;
 }
 
-.footer-column h4 {
+/* COLUMN TITLE */
+
+.remaker-footer .remaker-footer-column h4 {
   margin: 0 0 7px;
 
-  color: var(--primary);
+  color: var(--remaker-primary);
 
   font-family: var(--font-sans);
+
   font-size: 0.68rem;
+
   font-weight: 800;
 
   text-transform: uppercase;
+
   letter-spacing: 0.12em;
 }
 
-.footer-column a {
-  color: var(--muted-foreground);
+/* COLUMN LINKS */
+
+.remaker-footer .remaker-footer-column a {
+  color: var(--remaker-muted);
 
   font-size: 0.8rem;
+
   font-weight: 500;
 
   text-decoration: none;
@@ -213,8 +339,9 @@
     transform 0.15s ease;
 }
 
-.footer-column a:hover {
-  color: var(--primary);
+.remaker-footer .remaker-footer-column a:hover {
+  color: var(--remaker-primary);
+
   transform: translateX(2px);
 }
 
@@ -222,41 +349,49 @@
    BOTTOM
 ========================================================= */
 
-.footer-bottom {
+.remaker-footer .remaker-footer-bottom {
   min-height: 68px;
 
   padding: 18px 0;
 
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(193, 200, 196, 0.25);
 
   display: flex;
+
   align-items: center;
+
   justify-content: space-between;
 
   gap: 20px;
 }
 
-.footer-bottom p,
-.footer-bottom a {
-  color: var(--muted-foreground);
+/* COPYRIGHT + LINKS */
+
+.remaker-footer .remaker-footer-bottom p,
+.remaker-footer .remaker-footer-bottom a {
+  color: var(--remaker-muted);
 
   font-size: 0.72rem;
 }
 
-.footer-bottom div {
+/* BOTTOM LINKS */
+
+.remaker-footer .remaker-footer-bottom div {
   display: flex;
+
   align-items: center;
+
   gap: 25px;
 }
 
-.footer-bottom a {
+.remaker-footer .remaker-footer-bottom a {
   text-decoration: none;
 
   transition: color 0.15s ease;
 }
 
-.footer-bottom a:hover {
-  color: var(--primary);
+.remaker-footer .remaker-footer-bottom a:hover {
+  color: var(--remaker-primary);
 }
 
 /* =========================================================
@@ -264,13 +399,18 @@
 ========================================================= */
 
 @media (max-width: 1000px) {
-  .footer-main {
-    grid-template-columns: 1.5fr 1fr 1fr;
+  .remaker-footer .remaker-footer-main {
+    grid-template-columns:
+      1.5fr
+      1fr
+      1fr;
+
     gap: 45px;
   }
 
-  .footer-brand {
+  .remaker-footer .remaker-footer-brand {
     grid-column: 1 / -1;
+
     max-width: 500px;
   }
 }
@@ -280,29 +420,31 @@
 ========================================================= */
 
 @media (max-width: 700px) {
-  .site-footer {
+  .remaker-footer {
     padding-top: 20px;
   }
 
-  .footer-cta {
+  .remaker-footer .remaker-footer-cta {
     min-height: auto;
 
     margin-top: 12px;
+
     margin-bottom: 50px;
 
     padding: 25px;
 
     flex-direction: column;
+
     align-items: flex-start;
 
     border-radius: 18px;
   }
 
-  .footer-cta-button {
+  .remaker-footer .remaker-footer-cta-button {
     width: 100%;
   }
 
-  .footer-main {
+  .remaker-footer .remaker-footer-main {
     grid-template-columns: 1fr 1fr;
 
     gap: 38px 25px;
@@ -310,24 +452,25 @@
     padding-bottom: 45px;
   }
 
-  .footer-brand {
+  .remaker-footer .remaker-footer-brand {
     grid-column: 1 / -1;
   }
 
-  .footer-column {
+  .remaker-footer .remaker-footer-column {
     gap: 10px;
   }
 
-  .footer-bottom {
+  .remaker-footer .remaker-footer-bottom {
     min-height: auto;
 
     padding: 20px 0;
 
     flex-direction: column;
+
     align-items: flex-start;
   }
 
-  .footer-bottom div {
+  .remaker-footer .remaker-footer-bottom div {
     gap: 20px;
   }
 }
@@ -337,15 +480,15 @@
 ========================================================= */
 
 @media (max-width: 450px) {
-  .footer-main {
+  .remaker-footer .remaker-footer-main {
     grid-template-columns: 1fr;
   }
 
-  .footer-column {
+  .remaker-footer .remaker-footer-column {
     gap: 9px;
   }
 
-  .footer-brand p {
+  .remaker-footer .remaker-footer-brand p {
     font-size: 0.78rem;
   }
 }
