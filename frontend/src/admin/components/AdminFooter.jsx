@@ -3,73 +3,76 @@ import "./AdminFooter.css";
 
 const columns = [
   {
-    title: "ROLES",
+    title: "Roles",
     links: [
       ["User", "/admin/users"],
       ["ReMaker", "/admin/remakers"],
-      ["Admin", "/admin/dashboard"],
+      ["Admin", "/admin"],
     ],
   },
   {
-    title: "COMMUNITY",
+    title: "Community",
     links: [
-      ["ReMakers", "/admin/community/remakers"],
-      ["About Us", "/admin/about"],
-      ["Stories", "/admin/stories"],
+      ["ReMakers", "/remakers"],
+      ["About Us", "/about"],
+      ["Stories", "/stories"],
     ],
   },
   {
-    title: "SUPPORT",
+    title: "Support",
     links: [
-      ["Support Center", "/admin/support"],
-      ["FAQ", "/admin/faq"],
-      ["Contact Us", "/admin/contact"],
+      ["Support Center", "/support"],
+      ["FAQ", "/faq"],
+      ["Contact Us", "/contact"],
     ],
   },
 ];
 
 export default function AdminFooter() {
   return (
-    <footer className="admin-scope site-footer">
-      <div className="footer-main container">
-        <div className="footer-brand">
-          <a className="footer-logo" href="/admin">
-            <span className="logo-text">ReOrbit</span>
+    <footer className="admin-footer">
+      <div className="admin-footer-main admin-footer-container">
+        {/* BRAND */}
+        <div className="admin-footer-brand">
+          <a href="/admin" className="admin-footer-logo">
+            <span>ReOrbit</span>
           </a>
 
-          <p className="footer-desc">
-            Creating a sustainable marketplace where every item deserves a second
-            story.
+          <p>
+            Creating a sustainable marketplace where every item deserves a
+            second story.
           </p>
 
-          <div className="footer-socials">
-            <a href="#" className="social-icon-btn" aria-label="Camera">
-              📷
+          <div className="admin-footer-socials">
+            <a href="#" aria-label="Instagram">
+              <span className="material-symbols-outlined">photo_camera</span>
             </a>
-            <a href="#" className="social-icon-btn" aria-label="Share">
-              🔗
+
+            <a href="#" aria-label="Share">
+              <span className="material-symbols-outlined">share</span>
             </a>
           </div>
         </div>
 
-        <div className="footer-columns-group">
-          {columns.map((column) => (
-            <div className="footer-column" key={column.title}>
-              <h4>{column.title}</h4>
-              {column.links.map(([label, href]) => (
-                <a href={href} key={label}>
-                  {label}
-                </a>
-              ))}
-            </div>
-          ))}
-        </div>
+        {/* COLUMNS */}
+        {columns.map((column) => (
+          <div className="admin-footer-column" key={column.title}>
+            <h4>{column.title}</h4>
+
+            {column.links.map(([label, href]) => (
+              <a href={href} key={label}>
+                {label}
+              </a>
+            ))}
+          </div>
+        ))}
       </div>
 
-      <div className="footer-bottom container">
-        <p>© 2026 ReOrbit. Circular by design. All rights reserved.</p>
+      {/* BOTTOM */}
+      <div className="admin-footer-bottom admin-footer-container">
+        <p>© 2024 ReOrbit. Circular by design. All rights reserved.</p>
 
-        <div className="legal-links">
+        <div>
           <a href="/privacy">Privacy Policy</a>
           <a href="/terms">Terms of Service</a>
         </div>

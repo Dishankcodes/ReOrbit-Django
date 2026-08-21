@@ -30,24 +30,24 @@ export default function AdminNavbar() {
           </a>
 
           {/* Links */}
-          <div className={`navbar-links ${open ? "navbar-links-open" : ""}`}>
-            <a href="#home" className="active" onClick={closeMenu}>
+          <div className="admin-navbar-links">
+            <a href="/admin-home"  onClick={closeMenu}>
               Home
             </a>
-            <a href="#about" onClick={closeMenu}>
+            <a href="/admin-about" onClick={closeMenu}>
               About
             </a>
-            <a href="#how-it-works" onClick={closeMenu}>
+            <a href="/admin-how-it-works" onClick={closeMenu}>
               How It Works
             </a>
-            <a href="#contact" onClick={closeMenu}>
+            <a href="/admin-contact" onClick={closeMenu}>
               Contact
             </a>
           </div>
 
           {/* Action */}
           <div className="navbar-actions">
-            <a className="admin-login-btn" href="/login">
+            <a className="admin-login-btn" href="/admin-login">
               Admin Login
             </a>
           </div>

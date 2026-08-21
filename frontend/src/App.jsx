@@ -16,7 +16,9 @@ import ReMakerFAQ from "./remaker/pages/FAQ";
 
 import AdminHome from "./admin/pages/AdminHome";
 import AdminDashboard from "./admin/pages/Dashboard";
-
+import AdminAbout from "./admin/pages/AdminAbout";
+import AdminHowItWorks from "./admin/pages/AdminHowItWorks";
+import AdminLogin from "./admin/pages/AdminLogin";
 
 import "./styles/theme.css";
 
@@ -41,7 +43,9 @@ export default function App() {
         {/* ADMIN */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-home" element={<AdminHome />} />
-        
+        <Route path="/admin-about" element={<AdminAbout />} />
+        <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
       </Routes>
     </BrowserRouter>
   );

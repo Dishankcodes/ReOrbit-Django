@@ -14,7 +14,9 @@
   z-index: 1000;
   background: #c1c8c4;
   border-bottom: 1px solid rgba(8, 39, 31, 0.1);
-  transition: box-shadow 0.25s ease, background 0.25s ease;
+  transition:
+    box-shadow 0.25s ease,
+    background 0.25s ease;
   font-family: "Plus Jakarta Sans", sans-serif;
 }
 
@@ -52,45 +54,78 @@
   letter-spacing: -0.02em;
 }
 
-/* Nav Links */
-.admin-scope .navbar-links {
+/* =========================================================
+   ADMIN NAVIGATION LINKS
+   NO ACTIVE PAGE STATE
+   ONLY HOVER UNDERLINE
+========================================================= */
+
+.admin-navbar-links {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 2.4rem;
 }
 
-.admin-scope .navbar-links a {
+.admin-navbar-links a {
   position: relative;
-  color: #414845;
-  font-size: 0.9rem;
+
+  color: var(--admin-text);
+
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
   font-weight: 500;
+
   padding: 0.3rem 0;
+
   text-decoration: none;
+
+  white-space: nowrap;
+
   transition: color 0.2s ease;
 }
 
-.admin-scope .navbar-links a:hover,
-.admin-scope .navbar-links a.active {
-  color: #08271f;
-  font-weight: 600;
+/* =========================================================
+   REMOVE ACTIVE / CURRENT PAGE STYLING
+========================================================= */
+
+.admin-navbar-links a.active,
+.admin-navbar-links a.active::after,
+.admin-navbar-links a[aria-current="page"],
+.admin-navbar-links a[aria-current="page"]::after {
+  color: var(--admin-text);
+
+  width: 0;
+
+  background: transparent;
 }
 
-.admin-scope .navbar-links a::after {
+/* =========================================================
+   HOVER ONLY
+========================================================= */
+
+.admin-navbar-links a::after {
   content: "";
+
   position: absolute;
+
   left: 0;
-  bottom: -2px;
+  bottom: -4px;
+
   width: 0;
-  height: 2px;
-  background: #08271f;
+  height: 1.5px;
+
+  background: var(--admin-green);
+
   transition: width 0.2s ease;
 }
 
-.admin-scope .navbar-links a:hover::after,
-.admin-scope .navbar-links a.active::after {
-  width: 100%;
+.admin-navbar-links a:hover {
+  color: var(--admin-green);
 }
 
+.admin-navbar-links a:hover::after {
+  width: 100%;
+}
 /* Actions */
 .admin-scope .navbar-actions {
   display: flex;
