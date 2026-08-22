@@ -40,9 +40,7 @@ export default function AdminNavbar() {
             <a href="/admin-how-it-works" onClick={closeMenu}>
               How It Works
             </a>
-            <a href="/admin-contact" onClick={closeMenu}>
-              Contact
-            </a>
+
           </div>
 
           {/* Action */}

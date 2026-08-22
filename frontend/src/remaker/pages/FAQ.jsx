@@ -14,12 +14,17 @@ const faqGroups = [
       {
         question: "Who can become a ReMaker?",
         answer:
-          "Artists, designers, craftspeople, furniture makers and other creators can join the ReMaker community. Your work and creative process are what matter most.",
+          "Artists, designers, craftspeople, furniture makers and other creators can join the ReMaker community. Your creativity, skills and the work you create are what matter most.",
       },
       {
         question: "How do I become a ReMaker?",
         answer:
-          "You can join through the ReMaker onboarding flow, create your profile and start building your portfolio. Once your profile is ready, you can discover materials and showcase your creations.",
+          "Register through the ReMaker onboarding flow, create your profile and start building your portfolio. Once your profile is ready, you can explore materials and showcase your creations.",
+      },
+      {
+        question: "Do I need professional experience to become a ReMaker?",
+        answer:
+          "Not necessarily. ReOrbit is designed for people who enjoy creating, repairing, redesigning or transforming materials. Your skills and creative work can grow as you participate.",
       },
     ],
   },
@@ -30,64 +35,115 @@ const faqGroups = [
       {
         question: "Where do ReMakers get their materials?",
         answer:
-          "ReMakers can source rescued materials made available through ReOrbit. These can come from households and other material sources that have useful items ready for another purpose.",
+          "ReMakers can source rescued materials made available through ReOrbit. These materials can come from households and other sources where useful items are ready for another purpose.",
       },
       {
         question: "Can I choose which materials I want?",
         answer:
-          "Yes. You can browse available material listings and look for pieces that match the requirements of your project.",
+          "Yes. You can browse available material listings, search by requirements and explore item details before deciding what fits your project.",
       },
       {
-        question: "Can I claim material for a project?",
+        question: "Can I claim or purchase material for a project?",
         answer:
-          "ReMakers can claim available rescued material through the material sourcing flow. Availability depends on the current listings.",
+          "You can select available material through the material sourcing flow. Depending on the listing, the material may be available for purchase or another supported sourcing method.",
       },
       {
         question: "Can I use materials I already have?",
         answer:
-          "Yes. Your ReMaker profile and portfolio can showcase creations made from rescued materials sourced through ReOrbit as well as your broader creative work.",
+          "Yes. Your ReMaker profile and portfolio can showcase creations made from materials sourced through ReOrbit as well as your broader creative work.",
+      },
+      {
+        question: "Can I see material details before choosing it?",
+        answer:
+          "Yes. Material listings are designed to provide information that helps you understand what is available and decide whether it is suitable for your project.",
       },
     ],
   },
 
   {
-    title: "Studio & portfolio",
+    title: "ReMaker Studio",
     questions: [
       {
         question: "What is the ReMaker Studio?",
         answer:
-          "The ReMaker Studio is the creative space for ReMakers to manage their work, showcase transformations and build their presence within the ReOrbit ecosystem.",
-      },
-      {
-        question: "Can I show before-and-after images?",
-        answer:
-          "Yes. Before-and-after showcases are an important part of showing the journey from rescued material to finished creation.",
+          "The ReMaker Studio is your creative workspace within ReOrbit. It helps you manage your profile, showcase your work, organize products and build your presence as a ReMaker.",
       },
       {
         question: "Can I create a portfolio?",
         answer:
-          "Yes. Your ReMaker profile can be used to showcase your projects, creations, creative style and transformation stories.",
+          "Yes. Your portfolio allows you to showcase your projects, creations, creative style and transformation stories to people visiting your ReMaker profile.",
+      },
+      {
+        question: "Can I show before-and-after images?",
+        answer:
+          "Yes. Before-and-after content helps communicate the transformation journey and shows how a rescued or overlooked material became a finished creation.",
+      },
+      {
+        question: "Can I update my ReMaker profile?",
+        answer:
+          "Yes. You can manage your profile information and keep your creative identity, skills and other details up to date.",
       },
     ],
   },
 
   {
-    title: "Selling creations",
+    title: "Products & selling",
     questions: [
       {
         question: "Can I sell my finished creations?",
         answer:
-          "Yes. ReMakers can showcase and sell finished work through the ReOrbit ecosystem.",
+          "Yes. ReMakers can showcase and sell finished creations through the ReOrbit ecosystem.",
       },
       {
-        question: "Can buyers see how a creation was made?",
+        question: "How do I add a product?",
         answer:
-          "The ReMaker experience is designed around transparency and storytelling. Transformation details and before-and-after content can help buyers understand the journey behind a creation.",
+          "You can create a product listing by providing the relevant product information, selecting a category, adding images and setting the appropriate price.",
+      },
+      {
+        question: "Can I edit my product listing?",
+        answer:
+          "Yes. Product information can be managed through your ReMaker workspace so your listings remain accurate and up to date.",
+      },
+      {
+        question: "Can I remove or pause a product?",
+        answer:
+          "Product management allows ReMakers to control the availability of their listings when a creation is no longer available or needs to be temporarily paused.",
+      },
+      {
+        question: "Can buyers understand how my product was created?",
+        answer:
+          "Yes. Transformation details, project information and before-and-after content can help buyers understand the story and creative process behind your finished work.",
       },
       {
         question: "Can I take custom orders?",
         answer:
-          "Custom work can be part of a ReMaker's offering. You can use your profile and portfolio to communicate the type of work you create and the projects you are open to.",
+          "Custom work can be part of a ReMaker's offering. Your profile and portfolio can communicate the type of work you create and the projects you are open to.",
+      },
+    ],
+  },
+
+  {
+    title: "Orders & earnings",
+    questions: [
+      {
+        question: "How do I know when someone purchases my product?",
+        answer:
+          "Your ReMaker workspace can be used to view order information and follow the status of your customer purchases.",
+      },
+      {
+        question: "Can I track my orders?",
+        answer:
+          "Yes. Order-related information can be accessed through your ReMaker workspace so you can keep track of your sales activity.",
+      },
+      {
+        question: "Can I see my earnings?",
+        answer:
+          "Yes. Your ReMaker dashboard can provide visibility into your earnings and selling activity.",
+      },
+      {
+        question: "Can customers review my creations?",
+        answer:
+          "Yes. Customer ratings and reviews help build your reputation and give future customers more confidence in your work.",
       },
     ],
   },
@@ -103,13 +159,18 @@ const faqGroups = [
       {
         question: "How does ReOrbit support ReMakers?",
         answer:
-          "ReOrbit helps ReMakers with material discovery, portfolio visibility, showcasing finished creations and connecting their work with people looking for meaningful products.",
+          "ReOrbit helps ReMakers with material discovery, portfolio visibility, product showcasing and connecting their work with people looking for meaningful creations.",
+      },
+      {
+        question: "What happens if I need help?",
+        answer:
+          "You can contact the ReOrbit team through the support or contact channel for assistance with your ReMaker experience.",
       },
     ],
   },
 ];
 
-export default function FAQ() {
+export default function ReMakerFAQ() {
   const [openItem, setOpenItem] = useState("0-0");
 
   const toggleItem = (id) => {
@@ -119,16 +180,30 @@ export default function FAQ() {
   return (
     <>
       <style>{`
-      /* =========================================================
+
+/* =========================================================
    REMAKER FAQ
-   SAME DESIGN SYSTEM AS REMAKER HOMEPAGE
+   SAME THEME AS REMAKER HOMEPAGE / ABOUT / HOW IT WORKS
 ========================================================= */
 
-.rm-faq-page {
+.remaker-faq-page {
+  --faq-maroon: #270809;
+  --faq-green: #08271F;
+  --faq-secondary: #414845;
+
+  --faq-text: #1A1C1A;
+  --faq-muted: #727975;
+  --faq-border: #C1C8C4;
+  --faq-light: #E3E2E0;
+
+  --faq-background: #FAF9F7;
+  --faq-white: #FFFFFF;
+
   min-height: 100vh;
 
-  background: var(--rm-background);
-  color: var(--rm-text);
+  background: var(--faq-background);
+
+  color: var(--faq-text);
 
   overflow-x: hidden;
 }
@@ -138,7 +213,7 @@ export default function FAQ() {
    CONTAINER
 ========================================================= */
 
-.rm-faq-page .container {
+.remaker-faq-page .faq-container {
   width: min(1280px, calc(100% - 80px));
 
   margin: 0 auto;
@@ -149,16 +224,15 @@ export default function FAQ() {
    HERO
 ========================================================= */
 
-.rm-faq-hero {
+.remaker-faq-page .faq-hero {
   padding: 155px 0 85px;
 
-  background: var(--rm-background);
+  background: var(--faq-background);
 
   text-align: center;
 }
 
-
-.rm-faq-hero-inner {
+.remaker-faq-page .faq-hero-inner {
   max-width: 850px;
 
   margin: 0 auto;
@@ -169,7 +243,7 @@ export default function FAQ() {
    BADGE
 ========================================================= */
 
-.rm-faq-badge {
+.remaker-faq-page .faq-badge {
   display: inline-flex;
 
   align-items: center;
@@ -179,13 +253,13 @@ export default function FAQ() {
 
   padding: 9px 14px;
 
-  border: 1px solid var(--rm-border);
+  border: 1px solid var(--faq-border);
 
   border-radius: 999px;
 
   background: rgba(193, 200, 196, 0.32);
 
-  color: var(--rm-green);
+  color: var(--faq-green);
 
   font-size: 0.68rem;
 
@@ -196,8 +270,7 @@ export default function FAQ() {
   text-transform: uppercase;
 }
 
-
-.rm-faq-badge .material-symbols-outlined {
+.remaker-faq-page .faq-badge .material-symbols-outlined {
   font-size: 17px;
 }
 
@@ -206,10 +279,10 @@ export default function FAQ() {
    HERO TITLE
 ========================================================= */
 
-.rm-faq-hero h1 {
+.remaker-faq-page .faq-hero h1 {
   margin: 28px 0 20px;
 
-  color: var(--rm-maroon);
+  color: var(--faq-maroon);
 
   font-family: var(--font-display);
 
@@ -222,22 +295,20 @@ export default function FAQ() {
   font-weight: 700;
 }
 
-
-.rm-faq-hero h1 em {
-  color: var(--rm-green);
+.remaker-faq-page .faq-hero h1 em {
+  color: var(--faq-green);
 
   font-style: italic;
 
   font-weight: 600;
 }
 
-
-.rm-faq-hero p {
+.remaker-faq-page .faq-hero p {
   max-width: 650px;
 
   margin: 0 auto;
 
-  color: var(--rm-secondary-dark);
+  color: var(--faq-secondary);
 
   font-size: 0.9rem;
 
@@ -249,14 +320,13 @@ export default function FAQ() {
    FAQ CONTENT
 ========================================================= */
 
-.rm-faq-content {
+.remaker-faq-page .faq-content {
   padding: 30px 0 110px;
 
-  background: var(--rm-background);
+  background: var(--faq-background);
 }
 
-
-.rm-faq-layout {
+.remaker-faq-page .faq-layout {
   display: grid;
 
   grid-template-columns: 240px minmax(0, 780px);
@@ -273,27 +343,26 @@ export default function FAQ() {
    SIDEBAR
 ========================================================= */
 
-.rm-faq-sidebar {
+.remaker-faq-page .faq-sidebar {
   position: sticky;
 
   top: 105px;
 
   padding: 20px;
 
-  background: var(--rm-white);
+  background: var(--faq-white);
 
-  border: 1px solid var(--rm-border);
+  border: 1px solid var(--faq-border);
 
   border-radius: 18px;
 }
 
-
-.rm-faq-sidebar-label {
+.remaker-faq-page .faq-sidebar-label {
   display: block;
 
   margin-bottom: 14px;
 
-  color: var(--rm-green);
+  color: var(--faq-green);
 
   font-size: 0.65rem;
 
@@ -304,8 +373,7 @@ export default function FAQ() {
   text-transform: uppercase;
 }
 
-
-.rm-faq-sidebar a {
+.remaker-faq-page .faq-sidebar a {
   display: block;
 
   padding: 10px 12px;
@@ -314,7 +382,7 @@ export default function FAQ() {
 
   border-radius: 9px;
 
-  color: var(--rm-secondary-dark);
+  color: var(--faq-secondary);
 
   font-size: 0.75rem;
 
@@ -328,11 +396,10 @@ export default function FAQ() {
     transform 0.2s ease;
 }
 
+.remaker-faq-page .faq-sidebar a:hover {
+  background: var(--faq-light);
 
-.rm-faq-sidebar a:hover {
-  background: var(--rm-light);
-
-  color: var(--rm-maroon);
+  color: var(--faq-maroon);
 
   transform: translateX(2px);
 }
@@ -342,20 +409,18 @@ export default function FAQ() {
    FAQ GROUP
 ========================================================= */
 
-.rm-faq-group {
+.remaker-faq-page .faq-group {
   margin-bottom: 55px;
 }
 
-
-.rm-faq-group:last-child {
+.remaker-faq-page .faq-group:last-child {
   margin-bottom: 0;
 }
 
-
-.rm-faq-group h2 {
+.remaker-faq-page .faq-group h2 {
   margin-bottom: 18px;
 
-  color: var(--rm-maroon);
+  color: var(--faq-maroon);
 
   font-family: var(--font-display);
 
@@ -371,12 +436,12 @@ export default function FAQ() {
    FAQ LIST
 ========================================================= */
 
-.rm-faq-list {
+.remaker-faq-page .faq-list {
   overflow: hidden;
 
-  background: var(--rm-white);
+  background: var(--faq-white);
 
-  border: 1px solid var(--rm-border);
+  border: 1px solid var(--faq-border);
 
   border-radius: 18px;
 }
@@ -386,12 +451,11 @@ export default function FAQ() {
    FAQ ITEM
 ========================================================= */
 
-.rm-faq-item {
-  border-bottom: 1px solid var(--rm-border);
+.remaker-faq-page .faq-item {
+  border-bottom: 1px solid var(--faq-border);
 }
 
-
-.rm-faq-item:last-child {
+.remaker-faq-page .faq-item:last-child {
   border-bottom: 0;
 }
 
@@ -400,7 +464,7 @@ export default function FAQ() {
    QUESTION
 ========================================================= */
 
-.rm-faq-question {
+.remaker-faq-page .faq-question {
   width: 100%;
 
   display: flex;
@@ -415,9 +479,9 @@ export default function FAQ() {
 
   border: 0;
 
-  background: var(--rm-white);
+  background: var(--faq-white);
 
-  color: var(--rm-maroon);
+  color: var(--faq-maroon);
 
   font-family: var(--font-sans);
 
@@ -434,19 +498,18 @@ export default function FAQ() {
     color 0.2s ease;
 }
 
-
-.rm-faq-question:hover {
+.remaker-faq-page .faq-question:hover {
   background: rgba(8, 39, 31, 0.035);
 
-  color: var(--rm-green);
+  color: var(--faq-green);
 }
 
 
 /* =========================================================
-   ICON
+   PLUS / ARROW ICON
 ========================================================= */
 
-.rm-faq-icon {
+.remaker-faq-page .faq-icon {
   width: 32px;
   height: 32px;
 
@@ -455,14 +518,13 @@ export default function FAQ() {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   border-radius: 50%;
 
   background: rgba(8, 39, 31, 0.08);
 
-  color: var(--rm-green);
+  color: var(--faq-green);
 
   transition:
     transform 0.25s ease,
@@ -470,16 +532,14 @@ export default function FAQ() {
     color 0.25s ease;
 }
 
-
-.rm-faq-icon .material-symbols-outlined {
+.remaker-faq-page .faq-icon .material-symbols-outlined {
   font-size: 18px;
 }
 
+.remaker-faq-page .faq-item-open .faq-icon {
+  background: var(--faq-maroon);
 
-.rm-faq-item-open .rm-faq-icon {
-  background: var(--rm-maroon);
-
-  color: var(--rm-white);
+  color: var(--faq-white);
 
   transform: rotate(180deg);
 }
@@ -489,28 +549,26 @@ export default function FAQ() {
    ANSWER
 ========================================================= */
 
-.rm-faq-answer {
+.remaker-faq-page .faq-answer {
   max-height: 0;
 
   overflow: hidden;
 
-  background: var(--rm-white);
+  background: var(--faq-white);
 
   transition:
     max-height 0.3s ease,
     padding 0.3s ease;
 }
 
-
-.rm-faq-item-open .rm-faq-answer {
+.remaker-faq-page .faq-item-open .faq-answer {
   max-height: 300px;
 
   padding: 0 60px 22px 22px;
 }
 
-
-.rm-faq-answer p {
-  color: var(--rm-muted);
+.remaker-faq-page .faq-answer p {
+  color: var(--faq-muted);
 
   font-size: 0.8rem;
 
@@ -522,14 +580,14 @@ export default function FAQ() {
    SUPPORT CTA
 ========================================================= */
 
-.rm-faq-contact {
+.remaker-faq-page .faq-contact {
   margin-top: 65px;
 
   padding: 40px;
 
   border-radius: 24px;
 
-  background: var(--rm-maroon);
+  background: var(--faq-maroon);
 
   border: 1px solid rgba(193, 200, 196, 0.25);
 
@@ -542,11 +600,10 @@ export default function FAQ() {
   gap: 30px;
 }
 
-
-.rm-faq-contact h3 {
+.remaker-faq-page .faq-contact h3 {
   margin-bottom: 7px;
 
-  color: var(--rm-white);
+  color: var(--faq-white);
 
   font-family: var(--font-display);
 
@@ -555,8 +612,7 @@ export default function FAQ() {
   letter-spacing: -0.03em;
 }
 
-
-.rm-faq-contact p {
+.remaker-faq-page .faq-contact p {
   color: rgba(255, 255, 255, 0.67);
 
   font-size: 0.78rem;
@@ -564,12 +620,10 @@ export default function FAQ() {
   line-height: 1.6;
 }
 
-
-.rm-faq-contact-button {
+.remaker-faq-page .faq-contact-button {
   display: inline-flex;
 
   align-items: center;
-
   justify-content: center;
 
   gap: 7px;
@@ -582,11 +636,11 @@ export default function FAQ() {
 
   border-radius: 999px;
 
-  background: var(--rm-white);
+  background: var(--faq-white);
 
-  color: var(--rm-maroon);
+  color: var(--faq-maroon);
 
-  border: 1px solid var(--rm-white);
+  border: 1px solid var(--faq-white);
 
   font-size: 0.78rem;
 
@@ -599,15 +653,13 @@ export default function FAQ() {
     background 0.2s ease;
 }
 
-
-.rm-faq-contact-button:hover {
-  background: #f3f3f1;
+.remaker-faq-page .faq-contact-button:hover {
+  background: #F3F3F1;
 
   transform: translateY(-2px);
 }
 
-
-.rm-faq-contact-button .material-symbols-outlined {
+.remaker-faq-page .faq-contact-button .material-symbols-outlined {
   font-size: 16px;
 }
 
@@ -618,24 +670,24 @@ export default function FAQ() {
 
 @media (max-width: 1000px) {
 
-  .rm-faq-layout {
+  .remaker-faq-page .faq-layout {
     grid-template-columns: 210px minmax(0, 1fr);
 
     gap: 40px;
   }
+
 }
 
 
 @media (max-width: 900px) {
 
-  .rm-faq-layout {
+  .remaker-faq-page .faq-layout {
     grid-template-columns: 1fr;
 
     gap: 35px;
   }
 
-
-  .rm-faq-sidebar {
+  .remaker-faq-page .faq-sidebar {
     position: static;
 
     display: flex;
@@ -649,60 +701,52 @@ export default function FAQ() {
     padding: 14px;
   }
 
-
-  .rm-faq-sidebar-label {
+  .remaker-faq-page .faq-sidebar-label {
     width: 100%;
 
     margin-bottom: 4px;
   }
 
-
-  .rm-faq-sidebar a {
+  .remaker-faq-page .faq-sidebar a {
     margin: 0;
 
-    background: var(--rm-light);
+    background: var(--faq-light);
   }
+
 }
 
 
 @media (max-width: 700px) {
 
-  .rm-faq-page .container {
+  .remaker-faq-page .faq-container {
     width: calc(100% - 32px);
   }
 
-
-  .rm-faq-hero {
+  .remaker-faq-page .faq-hero {
     padding: 125px 0 65px;
   }
 
-
-  .rm-faq-hero h1 {
+  .remaker-faq-page .faq-hero h1 {
     font-size: clamp(2.7rem, 12vw, 4rem);
   }
 
-
-  .rm-faq-hero p {
+  .remaker-faq-page .faq-hero p {
     font-size: 0.84rem;
   }
 
-
-  .rm-faq-content {
+  .remaker-faq-page .faq-content {
     padding-bottom: 75px;
   }
 
-
-  .rm-faq-group {
+  .remaker-faq-page .faq-group {
     margin-bottom: 40px;
   }
 
-
-  .rm-faq-group h2 {
+  .remaker-faq-page .faq-group h2 {
     font-size: 1.5rem;
   }
 
-
-  .rm-faq-question {
+  .remaker-faq-page .faq-question {
     padding: 18px;
 
     font-size: 0.8rem;
@@ -710,18 +754,15 @@ export default function FAQ() {
     gap: 15px;
   }
 
-
-  .rm-faq-item-open .rm-faq-answer {
+  .remaker-faq-page .faq-item-open .faq-answer {
     padding: 0 45px 19px 18px;
   }
 
-
-  .rm-faq-answer p {
+  .remaker-faq-page .faq-answer p {
     font-size: 0.76rem;
   }
 
-
-  .rm-faq-contact {
+  .remaker-faq-page .faq-contact {
     flex-direction: column;
 
     align-items: flex-start;
@@ -731,159 +772,161 @@ export default function FAQ() {
     border-radius: 20px;
   }
 
-
-  .rm-faq-contact-button {
+  .remaker-faq-page .faq-contact-button {
     width: 100%;
   }
+
 }
 
 
 @media (max-width: 480px) {
 
-  .rm-faq-page .container {
+  .remaker-faq-page .faq-container {
     width: calc(100% - 24px);
   }
 
-
-  .rm-faq-hero {
+  .remaker-faq-page .faq-hero {
     padding-top: 110px;
   }
 
-
-  .rm-faq-hero h1 {
+  .remaker-faq-page .faq-hero h1 {
     font-size: 2.65rem;
   }
 
-
-  .rm-faq-sidebar {
+  .remaker-faq-page .faq-sidebar {
     display: grid;
 
     grid-template-columns: 1fr 1fr;
   }
 
-
-  .rm-faq-sidebar a {
+  .remaker-faq-page .faq-sidebar a {
     font-size: 0.68rem;
   }
 
-
-  .rm-faq-question {
+  .remaker-faq-page .faq-question {
     font-size: 0.76rem;
   }
 
-
-  .rm-faq-icon {
+  .remaker-faq-page .faq-icon {
     width: 28px;
     height: 28px;
   }
+
 }
+
       `}</style>
 
-      <div className="remaker-page rm-page rm-about-page">
+      <div className="remaker-page rm-page remaker-faq-page">
         <Navbar />
 
-        {/* HERO */}
-        <section className="rm-faq-hero">
-          <div className="container rm-faq-hero-inner">
-            <span className="rm-faq-badge">
-              <span className="material-symbols-outlined">handyman</span>
-              ReMaker Support
-            </span>
+        <main>
+          <section className="faq-hero">
+            <div className="faq-container faq-hero-inner">
+              <span className="faq-badge">
+                <span className="material-symbols-outlined">handyman</span>
+                ReMaker Support
+              </span>
 
-            <h1>
-              Questions about your
-              <em> creative orbit?</em>
-            </h1>
+              <h1>
+                Questions about your
+                <em> creative orbit?</em>
+              </h1>
 
-            <p>
-              Find answers about becoming a ReMaker, sourcing materials, using
-              the Studio, showcasing your work and selling your creations.
-            </p>
-          </div>
-        </section>
+              <p>
+                Find answers about becoming a ReMaker, sourcing materials, using
+                the Studio, showcasing your work and selling your creations
+                through ReOrbit.
+              </p>
+            </div>
+          </section>
 
-        {/* FAQ */}
-        <section className="rm-faq-content">
-          <div className="container rm-faq-layout">
-            {/* SIDEBAR */}
-            <aside className="rm-faq-sidebar">
-              <span className="rm-faq-sidebar-label">On this page</span>
+          {/* =====================================================
+              FAQ CONTENT
+          ===================================================== */}
 
-              {faqGroups.map((group, index) => (
-                <a key={group.title} href={`#rm-faq-${index}`}>
-                  {group.title}
-                </a>
-              ))}
-            </aside>
+          <section className="faq-content">
+            <div className="faq-container faq-layout">
+              {/* SIDEBAR */}
 
-            {/* QUESTIONS */}
-            <div>
-              {faqGroups.map((group, groupIndex) => (
-                <section
-                  className="rm-faq-group"
-                  id={`rm-faq-${groupIndex}`}
-                  key={group.title}
-                >
-                  <h2>{group.title}</h2>
+              <aside className="faq-sidebar">
+                <span className="faq-sidebar-label">On this page</span>
 
-                  <div className="rm-faq-list">
-                    {group.questions.map((item, questionIndex) => {
-                      const id = `${groupIndex}-${questionIndex}`;
+                {faqGroups.map((group, index) => (
+                  <a key={group.title} href={`#faq-group-${index}`}>
+                    {group.title}
+                  </a>
+                ))}
+              </aside>
 
-                      const isOpen = openItem === id;
+              {/* QUESTIONS */}
 
-                      return (
-                        <div
-                          className={`rm-faq-item ${
-                            isOpen ? "rm-faq-item-open" : ""
-                          }`}
-                          key={item.question}
-                        >
-                          <button
-                            className="rm-faq-question"
-                            onClick={() => toggleItem(id)}
-                            aria-expanded={isOpen}
+              <div>
+                {faqGroups.map((group, groupIndex) => (
+                  <section
+                    className="faq-group"
+                    id={`faq-group-${groupIndex}`}
+                    key={group.title}
+                  >
+                    <h2>{group.title}</h2>
+
+                    <div className="faq-list">
+                      {group.questions.map((item, questionIndex) => {
+                        const id = `${groupIndex}-${questionIndex}`;
+
+                        const isOpen = openItem === id;
+
+                        return (
+                          <div
+                            className={`faq-item ${
+                              isOpen ? "faq-item-open" : ""
+                            }`}
+                            key={item.question}
                           >
-                            <span>{item.question}</span>
+                            <button
+                              className="faq-question"
+                              onClick={() => toggleItem(id)}
+                              aria-expanded={isOpen}
+                            >
+                              <span>{item.question}</span>
 
-                            <span className="rm-faq-icon">
-                              <span className="material-symbols-outlined">
-                                expand_more
+                              <span className="faq-icon">
+                                <span className="material-symbols-outlined">
+                                  expand_more
+                                </span>
                               </span>
-                            </span>
-                          </button>
+                            </button>
 
-                          <div className="rm-faq-answer">
-                            <p>{item.answer}</p>
+                            <div className="faq-answer">
+                              <p>{item.answer}</p>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
+
+                <div className="faq-contact">
+                  <div>
+                    <h3>Need help with your orbit?</h3>
+
+                    <p>
+                      Can't find what you're looking for? Get in touch with the
+                      ReOrbit team and we'll help you find the right next step.
+                    </p>
                   </div>
-                </section>
-              ))}
 
-              {/* SUPPORT */}
-              <div className="rm-faq-contact">
-                <div>
-                  <h3>Need help with your orbit?</h3>
-
-                  <p>
-                    Get in touch with the ReOrbit team and we'll help you find
-                    the right next step.
-                  </p>
+                  <a href="/remakers-contact" className="faq-contact-button">
+                    Contact us
+                    <span className="material-symbols-outlined">
+                      arrow_forward
+                    </span>
+                  </a>
                 </div>
-
-                <a href="/contact" className="rm-faq-contact-button">
-                  Contact us
-                  <span className="material-symbols-outlined">
-                    arrow_forward
-                  </span>
-                </a>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </main>
 
         <Footer />
       </div>

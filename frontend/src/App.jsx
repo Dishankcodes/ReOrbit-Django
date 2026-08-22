@@ -13,11 +13,15 @@ import HowItWorks from "./user/pages/HowItWorks";
 import ReMakers from "./remaker/pages/ReMakers";
 import ReMakerAbout from "./remaker/pages/About";
 import ReMakerFAQ from "./remaker/pages/FAQ";
+import ReMakerHowItWorks from "./remaker/pages/HowItWorks";
+import ReMakerContact from "./remaker/pages/Contact";
+import RemakerBeforeMarketplace from "./remaker/pages/ReMakerBeforeMarketplace";
 
 import AdminHome from "./admin/pages/AdminHome";
 import AdminDashboard from "./admin/pages/Dashboard";
 import AdminAbout from "./admin/pages/AdminAbout";
 import AdminHowItWorks from "./admin/pages/AdminHowItWorks";
+
 import AdminLogin from "./admin/pages/AdminLogin";
 
 import "./styles/theme.css";
@@ -39,13 +43,19 @@ export default function App() {
         <Route path="/remakers" element={<ReMakers />} />
         <Route path="/remakers-about" element={<ReMakerAbout />} />
         <Route path="/remakers-faq" element={<ReMakerFAQ />} />
+        <Route path="/remakers-how-it-works" element={<ReMakerHowItWorks />} />
+        <Route path="/remakers-contact" element={<ReMakerContact />} />
+        <Route path="/remakers-before-marketplace" element={<RemakerBeforeMarketplace />} />
+
 
         {/* ADMIN */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-home" element={<AdminHome />} />
         <Route path="/admin-about" element={<AdminAbout />} />
         <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
+  
         <Route path="/admin-login" element={<AdminLogin />} />
+        
       </Routes>
     </BrowserRouter>
   );

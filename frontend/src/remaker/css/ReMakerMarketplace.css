@@ -1,0 +1,1341 @@
+.remaker-marketplace-page {
+  --rmm-maroon: #270809;
+  --rmm-maroon-light: #3b1011;
+  --rmm-green: #08271f;
+  --rmm-green-soft: #47645a;
+
+  --rmm-text: #1a1c1a;
+  --rmm-muted: #6b7280;
+  --rmm-soft-muted: #9ca3af;
+
+  --rmm-border: #c1c8c4;
+  --rmm-light: #e3e2e0;
+  --rmm-background: #faf9f7;
+  --rmm-white: #ffffff;
+  --rmm-green-pale: #dfe8e4;
+
+  width: 100%;
+  min-height: 100vh;
+
+  background: var(--rmm-background);
+  color: var(--rmm-text);
+
+  isolation: isolate;
+  overflow-x: hidden;
+}
+
+.remaker-marketplace-page .rm-market-container {
+  width: min(1280px, calc(100% - 80px));
+  margin: 0 auto;
+}
+
+.remaker-marketplace-page a {
+  text-decoration: none;
+}
+
+.remaker-marketplace-page button,
+.remaker-marketplace-page input,
+.remaker-marketplace-page select {
+  font: inherit;
+}
+
+.remaker-marketplace-page .rm-market-btn {
+  min-height: 46px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 0 21px;
+
+  border-radius: 999px;
+
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.remaker-marketplace-page .rm-market-btn:hover {
+  transform: translateY(-2px);
+}
+
+.remaker-marketplace-page .rm-market-btn .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.remaker-marketplace-page .rm-market-btn-primary {
+  background: var(--rmm-maroon);
+  color: var(--rmm-white);
+  border: 1px solid var(--rmm-maroon);
+}
+
+.remaker-marketplace-page .rm-market-btn-primary:hover {
+  background: var(--rmm-maroon-light);
+}
+
+.remaker-marketplace-page .rm-market-btn-secondary {
+  background: transparent;
+  color: var(--rmm-maroon);
+  border: 1px solid var(--rmm-border);
+}
+
+.remaker-marketplace-page .rm-market-btn-secondary:hover {
+  background: var(--rmm-light);
+  border-color: var(--rmm-maroon);
+}
+
+.remaker-marketplace-page .rm-market-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: var(--rmm-green);
+
+  font-size: 0.68rem;
+  font-weight: 800;
+
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.remaker-marketplace-page .rm-market-eyebrow::before {
+  content: "";
+
+  width: 22px;
+  height: 1.5px;
+
+  background: var(--rmm-green);
+}
+
+.remaker-marketplace-page .rm-market-eyebrow .material-symbols-outlined {
+  display: none;
+}
+
+.remaker-marketplace-page .rm-market-hero {
+  min-height: calc(100vh - 76px);
+
+  display: flex;
+  align-items: center;
+
+  padding: 105px 0 90px;
+
+  background: var(--rmm-background);
+
+  overflow: hidden;
+}
+
+.remaker-marketplace-page .rm-market-hero-grid {
+  display: grid;
+
+  grid-template-columns: 1.05fr 0.95fr;
+
+  align-items: center;
+
+  gap: 75px;
+}
+
+.remaker-marketplace-page .rm-market-hero-copy {
+  max-width: 650px;
+}
+
+.remaker-marketplace-page .rm-market-hero h1 {
+  margin: 24px 0 22px;
+
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(3.4rem, 6vw, 5.8rem);
+
+  line-height: 0.95;
+
+  letter-spacing: -0.055em;
+}
+
+.remaker-marketplace-page .rm-market-hero h1 em {
+  color: var(--rmm-green);
+
+  font-style: italic;
+  font-weight: 600;
+}
+
+.remaker-marketplace-page .rm-market-hero-copy > p {
+  max-width: 600px;
+
+  margin-bottom: 30px;
+
+  color: var(--rmm-green-soft);
+
+  font-size: 0.95rem;
+
+  line-height: 1.75;
+}
+
+.remaker-marketplace-page .rm-market-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* =========================================================
+   HERO IMAGE
+========================================================= */
+
+.remaker-marketplace-page .rm-market-hero-visual {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.remaker-marketplace-page .rm-market-hero-image {
+  position: relative;
+
+  width: 100%;
+  max-width: 530px;
+
+  height: 500px;
+
+  overflow: hidden;
+
+  border-radius: 26px;
+
+  border: 1px solid var(--rmm-border);
+
+  box-shadow: 0 25px 60px rgba(39, 8, 9, 0.1);
+}
+
+.remaker-marketplace-page .rm-market-hero-image > img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.remaker-marketplace-page .rm-market-floating-card {
+  position: absolute;
+
+  left: 22px;
+  bottom: 22px;
+
+  max-width: 290px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px 17px;
+
+  background: rgba(250, 249, 247, 0.95);
+
+  border: 1px solid var(--rmm-border);
+
+  border-radius: 16px;
+
+  box-shadow: 0 15px 40px rgba(39, 8, 9, 0.15);
+
+  backdrop-filter: blur(10px);
+}
+
+.remaker-marketplace-page
+  .rm-market-floating-card
+  > .material-symbols-outlined {
+  width: 39px;
+  height: 39px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--rmm-green-pale);
+
+  color: var(--rmm-green);
+
+  font-size: 20px;
+}
+
+.remaker-marketplace-page .rm-market-floating-card strong {
+  display: block;
+
+  color: var(--rmm-maroon);
+
+  font-size: 0.78rem;
+}
+
+.remaker-marketplace-page .rm-market-floating-card small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.65rem;
+
+  line-height: 1.4;
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.remaker-marketplace-page .rm-market-stats {
+  border-top: 1px solid var(--rmm-border);
+  border-bottom: 1px solid var(--rmm-border);
+
+  background: var(--rmm-white);
+}
+
+.remaker-marketplace-page .rm-market-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.remaker-marketplace-page .rm-market-stat {
+  min-height: 120px;
+
+  padding: 25px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  border-right: 1px solid var(--rmm-border);
+}
+
+.remaker-marketplace-page .rm-market-stat:last-child {
+  border-right: 0;
+}
+
+.remaker-marketplace-page .rm-market-stat strong {
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.remaker-marketplace-page .rm-market-stat span {
+  margin-top: 8px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.7rem;
+}
+
+/* =========================================================
+   BROWSER
+========================================================= */
+
+.remaker-marketplace-page .rm-market-browser {
+  padding: 105px 0;
+
+  background: var(--rmm-background);
+}
+
+.remaker-marketplace-page .rm-market-section-heading {
+  display: flex;
+  justify-content: space-between;
+
+  margin-bottom: 38px;
+}
+
+.remaker-marketplace-page .rm-market-section-heading h2 {
+  max-width: 700px;
+
+  margin: 10px 0 12px;
+
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 3.7rem);
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+.remaker-marketplace-page .rm-market-section-heading p {
+  max-width: 600px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.9rem;
+
+  line-height: 1.7;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.remaker-marketplace-page .rm-market-search-area {
+  display: grid;
+
+  grid-template-columns: 1fr auto;
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+.remaker-marketplace-page .rm-market-search {
+  min-height: 52px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0 16px;
+
+  background: var(--rmm-white);
+
+  border: 1px solid var(--rmm-border);
+
+  border-radius: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.remaker-marketplace-page .rm-market-search:focus-within {
+  border-color: var(--rmm-green);
+
+  box-shadow: 0 0 0 3px rgba(8, 39, 31, 0.07);
+}
+
+.remaker-marketplace-page .rm-market-search > .material-symbols-outlined {
+  color: var(--rmm-green);
+
+  font-size: 21px;
+}
+
+.remaker-marketplace-page .rm-market-search input {
+  width: 100%;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: var(--rmm-text);
+
+  font-size: 0.78rem;
+}
+
+.remaker-marketplace-page .rm-market-search input::placeholder {
+  color: var(--rmm-soft-muted);
+}
+
+.remaker-marketplace-page .rm-market-search button {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: var(--rmm-light);
+
+  color: var(--rmm-muted);
+
+  cursor: pointer;
+}
+
+.remaker-marketplace-page .rm-market-search button .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.remaker-marketplace-page .rm-market-selects {
+  display: flex;
+  gap: 10px;
+}
+
+.remaker-marketplace-page .rm-market-selects select {
+  min-width: 150px;
+
+  padding: 0 35px 0 14px;
+
+  border: 1px solid var(--rmm-border);
+  border-radius: 14px;
+
+  background: var(--rmm-white);
+
+  color: var(--rmm-text);
+
+  font-size: 0.75rem;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
+.remaker-marketplace-page .rm-market-categories {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-bottom: 32px;
+}
+
+.remaker-marketplace-page .rm-market-categories button {
+  padding: 8px 14px;
+
+  border: 1px solid var(--rmm-border);
+
+  border-radius: 999px;
+
+  background: transparent;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.remaker-marketplace-page .rm-market-categories button:hover {
+  color: var(--rmm-maroon);
+  border-color: var(--rmm-maroon);
+}
+
+.remaker-marketplace-page .rm-market-categories .rm-category-active {
+  background: var(--rmm-maroon);
+  border-color: var(--rmm-maroon);
+
+  color: var(--rmm-white);
+}
+
+/* =========================================================
+   RESULTS
+========================================================= */
+
+.remaker-marketplace-page .rm-market-results-head {
+  min-height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.75rem;
+}
+
+.remaker-marketplace-page .rm-market-results-head strong {
+  color: var(--rmm-maroon);
+}
+
+.remaker-marketplace-page .rm-market-results-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--rmm-maroon);
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.remaker-marketplace-page .rm-market-results-head .material-symbols-outlined {
+  font-size: 15px;
+}
+
+/* =========================================================
+   MATERIAL GRID
+========================================================= */
+
+.remaker-marketplace-page .rm-material-market-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 18px;
+}
+
+.remaker-marketplace-page .rm-material-market-card {
+  overflow: hidden;
+
+  background: var(--rmm-white);
+
+  border: 1px solid var(--rmm-border);
+
+  border-radius: 19px;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.remaker-marketplace-page .rm-material-market-card:hover {
+  transform: translateY(-5px);
+
+  border-color: var(--rmm-green);
+
+  box-shadow: 0 20px 45px rgba(39, 8, 9, 0.09);
+}
+
+/* IMAGE */
+
+.remaker-marketplace-page .rm-material-market-image {
+  position: relative;
+
+  height: 220px;
+
+  overflow: hidden;
+
+  background: var(--rmm-light);
+}
+
+.remaker-marketplace-page .rm-material-market-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.5s ease;
+}
+
+.remaker-marketplace-page
+  .rm-material-market-card:hover
+  .rm-material-market-image
+  img {
+  transform: scale(1.04);
+}
+
+.remaker-marketplace-page .rm-material-market-category {
+  position: absolute;
+
+  left: 12px;
+  top: 12px;
+
+  padding: 6px 10px;
+
+  background: rgba(250, 249, 247, 0.94);
+
+  border-radius: 999px;
+
+  color: var(--rmm-maroon);
+
+  font-size: 0.61rem;
+  font-weight: 700;
+}
+
+.remaker-marketplace-page .rm-material-market-condition {
+  position: absolute;
+
+  right: 12px;
+  top: 12px;
+
+  padding: 6px 10px;
+
+  background: var(--rmm-green);
+
+  border-radius: 999px;
+
+  color: var(--rmm-white);
+
+  font-size: 0.61rem;
+  font-weight: 700;
+}
+
+/* CONTENT */
+
+.remaker-marketplace-page .rm-material-market-content {
+  padding: 17px;
+}
+
+.remaker-marketplace-page .rm-material-market-meta {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  color: var(--rmm-soft-muted);
+
+  font-size: 0.6rem;
+}
+
+.remaker-marketplace-page .rm-material-market-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.remaker-marketplace-page .rm-material-market-meta .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.remaker-marketplace-page .rm-material-market-content h3 {
+  margin: 10px 0 7px;
+
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.05rem;
+
+  line-height: 1.2;
+}
+
+.remaker-marketplace-page .rm-material-market-content p {
+  min-height: 65px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.68rem;
+
+  line-height: 1.6;
+}
+
+.remaker-marketplace-page .rm-material-market-footer {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-top: 15px;
+
+  padding-top: 13px;
+
+  border-top: 1px solid var(--rmm-light);
+}
+
+.remaker-marketplace-page .rm-material-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: var(--rmm-green);
+
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.remaker-marketplace-page .rm-material-type .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.remaker-marketplace-page .rm-material-market-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  color: var(--rmm-maroon);
+
+  font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.remaker-marketplace-page
+  .rm-material-market-footer
+  .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.remaker-marketplace-page .rm-market-empty {
+  min-height: 300px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  padding: 40px;
+
+  background: var(--rmm-white);
+
+  border: 1px dashed var(--rmm-border);
+
+  border-radius: 20px;
+
+  text-align: center;
+}
+
+.remaker-marketplace-page .rm-market-empty > .material-symbols-outlined {
+  width: 55px;
+  height: 55px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--rmm-light);
+
+  color: var(--rmm-green);
+
+  font-size: 25px;
+}
+
+.remaker-marketplace-page .rm-market-empty h3 {
+  margin: 15px 0 7px;
+
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.2rem;
+}
+
+.remaker-marketplace-page .rm-market-empty p {
+  max-width: 400px;
+
+  color: var(--rmm-muted);
+
+  font-size: 0.72rem;
+
+  line-height: 1.6;
+}
+
+.remaker-marketplace-page .rm-market-empty button {
+  margin-top: 18px;
+
+  padding: 10px 18px;
+
+  border: 1px solid var(--rmm-maroon);
+
+  border-radius: 999px;
+
+  background: var(--rmm-maroon);
+
+  color: var(--rmm-white);
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   HOW IT WORKS
+========================================================= */
+
+.remaker-marketplace-page .rm-market-how {
+  padding: 105px 0;
+
+  background: var(--rmm-maroon);
+
+  color: var(--rmm-white);
+}
+
+.remaker-marketplace-page .rm-market-how-heading {
+  margin-bottom: 45px;
+}
+
+.remaker-marketplace-page .rm-market-eyebrow-light {
+  color: var(--rmm-border);
+}
+
+.remaker-marketplace-page .rm-market-eyebrow-light::before {
+  background: var(--rmm-border);
+}
+
+.remaker-marketplace-page .rm-market-how-heading h2 {
+  max-width: 700px;
+
+  margin-top: 10px;
+
+  color: var(--rmm-white);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 3.7rem);
+
+  line-height: 1;
+
+  letter-spacing: -0.045em;
+}
+
+.remaker-marketplace-page .rm-market-how-grid {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 14px;
+}
+
+.remaker-marketplace-page .rm-market-how-grid article {
+  position: relative;
+
+  min-height: 270px;
+
+  padding: 25px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  border: 1px solid rgba(193, 200, 196, 0.24);
+
+  border-radius: 20px;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.remaker-marketplace-page .rm-market-how-grid article:hover {
+  transform: translateY(-4px);
+
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.remaker-marketplace-page .rm-market-how-grid article > span:first-child {
+  display: block;
+
+  margin-bottom: 30px;
+
+  color: var(--rmm-border);
+
+  font-size: 0.7rem;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+.remaker-marketplace-page .rm-market-how-icon {
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 35px;
+
+  border-radius: 13px;
+
+  background: rgba(255, 255, 255, 0.09);
+
+  color: var(--rmm-border);
+}
+
+.remaker-marketplace-page .rm-market-how-icon .material-symbols-outlined {
+  font-size: 21px;
+}
+
+.remaker-marketplace-page .rm-market-how-grid h3 {
+  margin-bottom: 9px;
+
+  color: var(--rmm-white);
+
+  font-family: var(--font-display);
+
+  font-size: 1.1rem;
+}
+
+.remaker-marketplace-page .rm-market-how-grid p {
+  color: rgba(255, 255, 255, 0.62);
+
+  font-size: 0.72rem;
+
+  line-height: 1.65;
+}
+/* =========================================================
+   CTA (THEME MATCHED)
+========================================================= */
+
+.remaker-marketplace-page .rm-market-cta {
+  padding: 90px 0;
+
+  /* Matches light page background */
+  background: var(--rmm-background);
+}
+
+.remaker-marketplace-page .rm-market-cta-inner {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 50px;
+
+  padding: 55px;
+
+  /* Matches white card styling */
+  background: var(--rmm-white);
+
+  border: 1px solid var(--rmm-border);
+
+  border-radius: 28px;
+
+  box-shadow: 0 20px 50px rgba(39, 8, 9, 0.05);
+}
+
+.remaker-marketplace-page .rm-market-cta-inner h2 {
+  max-width: 700px;
+
+  margin: 10px 0 13px;
+
+  /* Matches dark maroon typography */
+  color: var(--rmm-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+
+  line-height: 0.98;
+
+  letter-spacing: -0.045em;
+}
+
+.remaker-marketplace-page .rm-market-cta-inner p {
+  max-width: 580px;
+
+  /* Matches muted body text color */
+  color: var(--rmm-muted);
+
+  font-size: 0.82rem;
+
+  line-height: 1.7;
+}
+
+.remaker-marketplace-page .rm-market-cta-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+
+  flex-shrink: 0;
+}
+.remaker-marketplace-page .rm-market-text-link {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  color: var(--rmm-white);
+
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.remaker-marketplace-page .rm-market-text-link .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+  .remaker-marketplace-page .rm-market-container {
+    width: min(100%, calc(100% - 50px));
+  }
+
+  .remaker-marketplace-page .rm-market-hero-grid {
+    gap: 45px;
+  }
+
+  .remaker-marketplace-page .rm-material-market-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .remaker-marketplace-page .rm-market-how-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+  .remaker-marketplace-page .rm-market-hero {
+    padding: 85px 0 70px;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-grid {
+    grid-template-columns: 1fr;
+
+    gap: 50px;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-copy {
+    max-width: 720px;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-visual {
+    justify-content: center;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-image {
+    max-width: 680px;
+    height: 450px;
+  }
+
+  .remaker-marketplace-page .rm-market-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .remaker-marketplace-page .rm-market-stat {
+    border-bottom: 1px solid var(--rmm-border);
+  }
+
+  .remaker-marketplace-page .rm-market-stat:nth-child(2) {
+    border-right: 0;
+  }
+
+  .remaker-marketplace-page .rm-market-search-area {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-marketplace-page .rm-market-selects {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .remaker-marketplace-page .rm-market-selects select {
+    width: 100%;
+    height: 48px;
+  }
+
+  .remaker-marketplace-page .rm-material-market-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .remaker-marketplace-page .rm-market-cta-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .remaker-marketplace-page .rm-market-cta-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .remaker-marketplace-page .rm-market-container {
+    width: calc(100% - 32px);
+  }
+
+  .remaker-marketplace-page .rm-market-hero {
+    min-height: auto;
+
+    padding: 55px 0 60px;
+  }
+
+  .remaker-marketplace-page .rm-market-hero h1 {
+    margin-top: 20px;
+
+    font-size: clamp(2.75rem, 13vw, 4rem);
+  }
+
+  .remaker-marketplace-page .rm-market-hero-copy > p {
+    font-size: 0.82rem;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .remaker-marketplace-page .rm-market-btn {
+    width: 100%;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-image {
+    height: 370px;
+
+    border-radius: 20px;
+  }
+
+  .remaker-marketplace-page .rm-market-floating-card {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+
+    max-width: none;
+  }
+
+  .remaker-marketplace-page .rm-market-stat {
+    min-height: 100px;
+
+    padding: 18px 15px;
+  }
+
+  .remaker-marketplace-page .rm-market-stat strong {
+    font-size: 1.3rem;
+  }
+
+  .remaker-marketplace-page .rm-market-stat span {
+    font-size: 0.62rem;
+  }
+
+  .remaker-marketplace-page .rm-market-browser,
+  .remaker-marketplace-page .rm-market-how {
+    padding: 70px 0;
+  }
+
+  .remaker-marketplace-page .rm-market-section-heading h2,
+  .remaker-marketplace-page .rm-market-how-heading h2 {
+    font-size: 2.35rem;
+  }
+
+  .remaker-marketplace-page .rm-market-search {
+    min-height: 48px;
+  }
+
+  .remaker-marketplace-page .rm-market-selects {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-marketplace-page .rm-market-categories {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+
+    padding-bottom: 5px;
+  }
+
+  .remaker-marketplace-page .rm-market-categories button {
+    flex-shrink: 0;
+  }
+
+  .remaker-marketplace-page .rm-market-results-head {
+    align-items: flex-start;
+  }
+
+  .remaker-marketplace-page .rm-material-market-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-marketplace-page .rm-material-market-image {
+    height: 250px;
+  }
+
+  .remaker-marketplace-page .rm-market-how-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-marketplace-page .rm-market-how-grid article {
+    min-height: 220px;
+  }
+
+  .remaker-marketplace-page .rm-market-cta {
+    padding: 60px 0;
+  }
+
+  .remaker-marketplace-page .rm-market-cta-inner {
+    padding: 30px 22px;
+
+    border-radius: 20px;
+  }
+
+  .remaker-marketplace-page .rm-market-cta-inner h2 {
+    font-size: 2.3rem;
+  }
+
+  .remaker-marketplace-page .rm-market-cta-actions {
+    width: 100%;
+
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .remaker-marketplace-page .rm-market-text-link {
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+  .remaker-marketplace-page .rm-market-hero h1 {
+    font-size: 2.65rem;
+  }
+
+  .remaker-marketplace-page .rm-market-hero-image {
+    height: 320px;
+  }
+
+  .remaker-marketplace-page .rm-market-section-heading h2,
+  .remaker-marketplace-page .rm-market-how-heading h2 {
+    font-size: 2.05rem;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.remaker-marketplace-page a:focus-visible,
+.remaker-marketplace-page button:focus-visible,
+.remaker-marketplace-page input:focus-visible,
+.remaker-marketplace-page select:focus-visible {
+  outline: 2px solid var(--rmm-green);
+
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .remaker-marketplace-page *,
+  .remaker-marketplace-page *::before,
+  .remaker-marketplace-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    scroll-behavior: auto !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

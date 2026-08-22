@@ -14,7 +14,7 @@ const columns = [
     title: "Community",
     links: [
       ["ReMakers", "/remakers"],
-      ["About Us", "/about"],
+      ["About Us", "/remakers-about"],
       ["Stories", "/stories"],
     ],
   },
@@ -23,7 +23,7 @@ const columns = [
     links: [
       ["FAQ", "/faq"],
       ["Help Center", "/support"],
-      ["Contact Us", "/contact"],
+      ["Contact Us", "/remakers-contact"],
     ],
   },
 ];

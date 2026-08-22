@@ -53,12 +53,16 @@ export default function Navbar() {
             Home
           </a>
 
-          <a href="/remakers/users" onClick={closeMenu}>
-            Users
+          <a href="/remakers-before-marketplace" onClick={closeMenu}>
+            Marketplace
           </a>
 
           <a href="/remakers-about" onClick={closeMenu}>
             About
+          </a>
+
+          <a href="/remakers-how-it-works" onClick={closeMenu}>
+            How it works
           </a>
 
           <a href="/remakers-faq" onClick={closeMenu}>
