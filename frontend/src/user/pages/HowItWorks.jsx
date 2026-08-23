@@ -7,7 +7,7 @@ export default function HowItWorks() {
     <>
       <style>{`
         /* =====================================================
-           HOW IT WORKS
+           HOW IT WORKS — USER SIDE
         ===================================================== */
 
         .how-page {
@@ -193,7 +193,7 @@ export default function HowItWorks() {
         }
 
         /* =====================================================
-           STEPS
+           USER JOURNEY
         ===================================================== */
 
         .how-steps {
@@ -294,7 +294,7 @@ export default function HowItWorks() {
         }
 
         /* =====================================================
-           SIMPLE FLOW
+           USER FLOW
         ===================================================== */
 
         .how-flow {
@@ -334,6 +334,7 @@ export default function HowItWorks() {
           color: var(--muted-foreground);
 
           font-size: 0.85rem;
+          line-height: 1.7;
         }
 
         .how-flow-line {
@@ -345,7 +346,23 @@ export default function HowItWorks() {
         }
 
         .how-flow-item {
+          position: relative;
+
           text-align: center;
+        }
+
+        .how-flow-item:not(:last-child)::after {
+          content: "→";
+
+          position: absolute;
+
+          top: 19px;
+          right: -12px;
+
+          color: var(--leaf);
+
+          font-size: 18px;
+          font-weight: 700;
         }
 
         .how-flow-icon {
@@ -387,10 +404,12 @@ export default function HowItWorks() {
           color: var(--muted-foreground);
 
           font-size: 0.7rem;
+
+          line-height: 1.5;
         }
 
         /* =====================================================
-           USER SUPPORT
+           WHAT HAPPENS AFTER LISTING
         ===================================================== */
 
         .how-support {
@@ -449,6 +468,80 @@ export default function HowItWorks() {
 
           font-size: 0.78rem;
           line-height: 1.7;
+        }
+
+        /* =====================================================
+           BUYER SIDE
+        ===================================================== */
+
+        .how-buy {
+          padding: 100px 0;
+
+          background: var(--secondary);
+        }
+
+        .how-buy-grid {
+          display: grid;
+
+          grid-template-columns: 1fr 1fr;
+
+          gap: 20px;
+        }
+
+        .how-buy-card {
+          padding: 32px;
+
+          background: var(--card);
+
+          border: 1px solid var(--border);
+
+          border-radius: 23px;
+        }
+
+        .how-buy-card-header {
+          display: flex;
+
+          align-items: center;
+
+          gap: 13px;
+
+          margin-bottom: 18px;
+        }
+
+        .how-buy-card-icon {
+          width: 46px;
+          height: 46px;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 50%;
+
+          background: var(--secondary);
+
+          color: var(--primary);
+        }
+
+        .how-buy-card-icon .material-symbols-outlined {
+          font-size: 22px;
+        }
+
+        .how-buy-card h3 {
+          color: var(--primary);
+
+          font-family: var(--font-display);
+
+          font-size: 1.25rem;
+        }
+
+        .how-buy-card p {
+          color: var(--muted-foreground);
+
+          font-size: 0.8rem;
+
+          line-height: 1.75;
         }
 
         /* =====================================================
@@ -540,11 +633,11 @@ export default function HowItWorks() {
           .how-flow-line {
             grid-template-columns: repeat(2, 1fr);
 
-            gap: 30px;
+            gap: 35px;
           }
 
-          .how-support-grid {
-            grid-template-columns: 1fr 1fr;
+          .how-flow-item:not(:last-child)::after {
+            display: none;
           }
         }
 
@@ -555,6 +648,10 @@ export default function HowItWorks() {
           }
 
           .how-support-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .how-buy-grid {
             grid-template-columns: 1fr;
           }
         }
@@ -575,7 +672,8 @@ export default function HowItWorks() {
 
           .how-paths,
           .how-steps,
-          .how-flow {
+          .how-flow,
+          .how-buy {
             padding: 75px 0;
           }
 
@@ -637,7 +735,8 @@ export default function HowItWorks() {
 
           .how-path-card,
           .how-step-card,
-          .how-support-card {
+          .how-support-card,
+          .how-buy-card {
             padding: 24px;
           }
         }
@@ -663,27 +762,27 @@ export default function HowItWorks() {
             </h1>
 
             <p>
-              ReOrbit makes it simple to give useful things another chance —
-              whether you're selling, donating, exchanging, or discovering
-              something that deserves a place in your life.
+              ReOrbit gives useful things a second chance by connecting people
+              who want to sell or donate with people looking to buy, reuse and
+              discover something valuable.
             </p>
           </div>
         </section>
 
         {/* =====================================================
-            PATHS
+            TWO MAIN PATHS
         ===================================================== */}
 
         <section className="how-paths">
           <div className="container">
             <div className="how-section-heading">
-              <span className="how-eyebrow">Pick your orbit</span>
+              <span className="how-eyebrow">Choose your path</span>
 
-              <h2>There is more than one way forward.</h2>
+              <h2>Give your item a new direction.</h2>
 
               <p>
-                Choose the path that makes the most sense for you and the things
-                you already have.
+                ReOrbit gives you simple ways to move things you no longer need
+                toward someone or somewhere they can still be useful.
               </p>
             </div>
 
@@ -695,11 +794,12 @@ export default function HowItWorks() {
                   <span className="material-symbols-outlined">sell</span>
                 </div>
 
-                <h3>Sell</h3>
+                <h3>Sell an item</h3>
 
                 <p>
-                  List things you no longer use, add clear photos, condition and
-                  details, and connect with someone who wants them.
+                  List something you no longer use with photos, category,
+                  condition and other important details. Interested buyers can
+                  discover your listing and purchase it through ReOrbit.
                 </p>
               </div>
 
@@ -712,27 +812,30 @@ export default function HowItWorks() {
                   </span>
                 </div>
 
-                <h3>Donate</h3>
+                <h3>Donate an item</h3>
 
                 <p>
-                  Give useful items another purpose by donating them through
-                  ReOrbit. Eligible items can enter the collection and inventory
-                  process for further reuse.
+                  If you do not want to sell an item, you can choose to donate
+                  it. Eligible donated items can move through ReOrbit's
+                  collection, warehouse and inventory process for further reuse.
                 </p>
               </div>
 
-              {/* EXCHANGE */}
+              {/* BUY */}
 
               <div className="how-path-card">
                 <div className="how-path-icon">
-                  <span className="material-symbols-outlined">sync_alt</span>
+                  <span className="material-symbols-outlined">
+                    shopping_bag
+                  </span>
                 </div>
 
-                <h3>Exchange</h3>
+                <h3>Buy something useful</h3>
 
                 <p>
-                  Exchange something you no longer need for something more
-                  useful to you, keeping both items in circulation for longer.
+                  Browse available user listings, refurbished products and
+                  ReMaker creations. Find something that fits your needs and
+                  give it a place in your life.
                 </p>
               </div>
             </div>
@@ -740,19 +843,19 @@ export default function HowItWorks() {
         </section>
 
         {/* =====================================================
-            STEPS
+            SELL / DONATE STEPS
         ===================================================== */}
 
         <section className="how-steps">
           <div className="container">
             <div className="how-steps-heading">
-              <span className="how-eyebrow">Simple by design</span>
+              <span className="how-eyebrow">For your items</span>
 
-              <h2>From your hands to its next story.</h2>
+              <h2>From your hands to its next purpose.</h2>
 
               <p>
-                ReOrbit keeps the process simple while making sure useful items
-                can continue moving through the ecosystem.
+                Listing an item on ReOrbit is designed to be simple, clear and
+                transparent.
               </p>
             </div>
 
@@ -762,11 +865,11 @@ export default function HowItWorks() {
               <div className="how-step-card">
                 <div className="how-step-number">01</div>
 
-                <h3>Create a listing</h3>
+                <h3>Add your item</h3>
 
                 <p>
-                  Add photos, category, condition and important details about
-                  the item you're ready to pass on.
+                  Upload photos and provide the item's category, condition,
+                  description and other relevant details.
                 </p>
               </div>
 
@@ -775,11 +878,11 @@ export default function HowItWorks() {
               <div className="how-step-card">
                 <div className="how-step-number">02</div>
 
-                <h3>Choose its next path</h3>
+                <h3>Choose what happens next</h3>
 
                 <p>
-                  Decide whether you want to sell, donate or exchange the item
-                  based on what works best for you.
+                  Choose whether you want to sell the item or donate it through
+                  the available ReOrbit options.
                 </p>
               </div>
 
@@ -788,11 +891,11 @@ export default function HowItWorks() {
               <div className="how-step-card">
                 <div className="how-step-number">03</div>
 
-                <h3>Arrange the handover</h3>
+                <h3>Arrange pickup</h3>
 
                 <p>
-                  Use the available pickup or handover options to move the item
-                  safely toward its next destination.
+                  Where pickup is supported, provide the required location
+                  details and follow the available handover process.
                 </p>
               </div>
 
@@ -801,11 +904,11 @@ export default function HowItWorks() {
               <div className="how-step-card">
                 <div className="how-step-number">04</div>
 
-                <h3>Give it another orbit</h3>
+                <h3>Keep it moving</h3>
 
                 <p>
-                  Your item reaches another user, enters further reuse, or can
-                  become useful material for a ReMaker.
+                  Your item can reach another user, enter ReOrbit's inventory or
+                  become a useful material for a ReMaker.
                 </p>
               </div>
             </div>
@@ -820,16 +923,16 @@ export default function HowItWorks() {
           <div className="container">
             <div className="how-flow-box">
               <div className="how-flow-heading">
-                <h2>A simple circular journey.</h2>
+                <h2>A simple journey for every item.</h2>
 
                 <p>
-                  Every step helps extend the useful life of things already
-                  around us.
+                  Different items can follow different routes while staying
+                  inside the ReOrbit ecosystem.
                 </p>
               </div>
 
               <div className="how-flow-line">
-                {/* HOME */}
+                {/* USER */}
 
                 <div className="how-flow-item">
                   <div className="how-flow-icon">
@@ -852,22 +955,22 @@ export default function HowItWorks() {
 
                   <strong>ReOrbit</strong>
 
-                  <span>List, donate or exchange</span>
+                  <span>Sell or donate</span>
                 </div>
 
-                {/* NEXT USER */}
+                {/* NEXT DESTINATION */}
 
                 <div className="how-flow-item">
                   <div className="how-flow-icon">
-                    <span className="material-symbols-outlined">person</span>
+                    <span className="material-symbols-outlined">groups</span>
                   </div>
 
-                  <strong>New owner</strong>
+                  <strong>Next destination</strong>
 
-                  <span>Someone who needs it</span>
+                  <span>Buyer, warehouse or ReMaker</span>
                 </div>
 
-                {/* NEW STORY */}
+                {/* PURPOSE */}
 
                 <div className="how-flow-item">
                   <div className="how-flow-icon">
@@ -876,7 +979,7 @@ export default function HowItWorks() {
 
                   <strong>New purpose</strong>
 
-                  <span>Ready for another orbit</span>
+                  <span>Used, restored or reimagined</span>
                 </div>
               </div>
             </div>
@@ -884,7 +987,60 @@ export default function HowItWorks() {
         </section>
 
         {/* =====================================================
-            WHAT HAPPENS NEXT
+            BUYING
+        ===================================================== */}
+
+        <section className="how-buy">
+          <div className="container">
+            <div className="how-section-heading">
+              <span className="how-eyebrow">For buyers</span>
+
+              <h2>Find something worth keeping.</h2>
+
+              <p>
+                ReOrbit is not only about passing things on. It is also a place
+                to discover products with another story.
+              </p>
+            </div>
+
+            <div className="how-buy-grid">
+              <div className="how-buy-card">
+                <div className="how-buy-card-header">
+                  <div className="how-buy-card-icon">
+                    <span className="material-symbols-outlined">search</span>
+                  </div>
+
+                  <h3>Browse the marketplace</h3>
+                </div>
+
+                <p>
+                  Explore items listed by users along with products made
+                  available through the ReOrbit ecosystem. Categories and item
+                  information help you find something that matches your needs.
+                </p>
+              </div>
+
+              <div className="how-buy-card">
+                <div className="how-buy-card-header">
+                  <div className="how-buy-card-icon">
+                    <span className="material-symbols-outlined">handyman</span>
+                  </div>
+
+                  <h3>Discover ReMaker creations</h3>
+                </div>
+
+                <p>
+                  ReMakers can source rescued materials and transform them into
+                  new products. Their finished creations can be showcased and
+                  sold through ReOrbit.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            BEYOND LISTING
         ===================================================== */}
 
         <section className="how-support">
@@ -895,13 +1051,15 @@ export default function HowItWorks() {
               <h2>ReOrbit keeps the journey connected.</h2>
 
               <p>
-                The platform brings together users, items and ReMakers so useful
-                things can continue moving instead of stopping after one
-                transaction.
+                The platform connects users, items, ReMakers and operational
+                processes so useful things can continue moving through the
+                ecosystem.
               </p>
             </div>
 
             <div className="how-support-grid">
+              {/* PICKUP */}
+
               <div className="how-support-card">
                 <div className="how-support-icon">
                   <span className="material-symbols-outlined">
@@ -912,25 +1070,29 @@ export default function HowItWorks() {
                 <h3>Pickup support</h3>
 
                 <p>
-                  Where pickup is supported, your item can be collected from the
-                  provided location. Applicable pickup charges and availability
+                  Where pickup is supported, items can be collected from the
+                  provided location. Availability and applicable pickup charges
                   depend on the item and location.
                 </p>
               </div>
 
+              {/* INVENTORY */}
+
               <div className="how-support-card">
                 <div className="how-support-icon">
-                  <span className="material-symbols-outlined">handshake</span>
+                  <span className="material-symbols-outlined">warehouse</span>
                 </div>
 
-                <h3>A smoother handover</h3>
+                <h3>ReOrbit inventory</h3>
 
                 <p>
-                  ReOrbit helps connect the person giving an item with the
-                  person receiving it, making the transition clearer and easier
-                  to follow.
+                  Donated or eligible items can enter the ReOrbit warehouse and
+                  inventory process, where they can be managed for further reuse
+                  and redistribution.
                 </p>
               </div>
+
+              {/* REMAKER */}
 
               <div className="how-support-card">
                 <div className="how-support-icon">
@@ -939,12 +1101,11 @@ export default function HowItWorks() {
                   </span>
                 </div>
 
-                <h3>A second route through ReMakers</h3>
+                <h3>ReMaker route</h3>
 
                 <p>
-                  Items and materials that still have potential can also find
-                  their way to ReMakers who can repair, transform or reimagine
-                  them into something new.
+                  Items and materials with creative potential can reach ReMakers
+                  who repair, restore or transform them into new creations.
                 </p>
               </div>
             </div>
@@ -961,7 +1122,10 @@ export default function HowItWorks() {
               <div>
                 <h2>Ready to give something another orbit?</h2>
 
-                <p>Start with something you already have.</p>
+                <p>
+                  Start with something you already have or discover something
+                  worth bringing home.
+                </p>
               </div>
 
               <a href="/login" className="how-cta-button">

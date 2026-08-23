@@ -53,7 +53,7 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="navbar-actions">
-          <a className="btn-secondary" href="/remakers">
+          <a className="btn-secondary" href="/remakers-home">
             Become a ReMaker
           </a>
 

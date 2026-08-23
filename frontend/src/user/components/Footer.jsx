@@ -96,8 +96,8 @@ export default function Footer() {
         <p>© 2026 ReOrbit. Circular by design. All rights reserved.</p>
 
         <div>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
+          <a href="/UserPrivacy">Privacy</a>
+          <a href="/UserTerms">Terms</a>
         </div>
       </div>
     </footer>

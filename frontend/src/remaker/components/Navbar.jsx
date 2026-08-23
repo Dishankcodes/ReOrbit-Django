@@ -32,7 +32,7 @@ export default function Navbar() {
 
         <a
           className="remaker-navbar-brand"
-          href="/remakers"
+          href="/remakers-home"
           onClick={closeMenu}
         >
           <span className="material-symbols-outlined">eco</span>
@@ -49,7 +49,7 @@ export default function Navbar() {
             open ? "remaker-navbar-links-open" : ""
           }`}
         >
-          <a href="/remakers" onClick={closeMenu}>
+          <a href="/remakers-home" onClick={closeMenu}>
             Home
           </a>
 

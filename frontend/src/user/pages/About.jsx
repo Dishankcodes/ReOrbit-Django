@@ -7,6 +7,9 @@ export default function About() {
     <>
       <style>
         {`
+        /* =====================================================
+           ABOUT PAGE
+        ===================================================== */
 
         .about-page {
           background: var(--background);
@@ -14,7 +17,10 @@ export default function About() {
           min-height: 100vh;
         }
 
-       
+        /* =====================================================
+           HERO
+        ===================================================== */
+
         .about-hero {
           padding: 145px 0 95px;
         }
@@ -29,13 +35,18 @@ export default function About() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+
           padding: 8px 14px;
+
           border: 1px solid var(--border);
           border-radius: 999px;
+
           background: var(--secondary);
           color: var(--primary);
+
           font-size: 0.7rem;
           font-weight: 700;
+
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -158,7 +169,7 @@ export default function About() {
 
           border-radius: 50%;
 
-          background: rgba(255,255,255,0.72);
+          background: rgba(255, 255, 255, 0.72);
 
           color: var(--primary);
 
@@ -422,7 +433,7 @@ export default function About() {
         .about-cta-box p {
           margin-top: 10px;
 
-          color: rgba(255,255,255,0.7);
+          color: rgba(255, 255, 255, 0.7);
 
           font-size: 0.85rem;
         }
@@ -549,7 +560,7 @@ export default function About() {
             padding: 24px;
           }
         }
-        `}
+      `}
       </style>
 
       <div className="about-page">
@@ -573,9 +584,9 @@ export default function About() {
             </h1>
 
             <p>
-              ReOrbit is a platform that helps people give useful items another
-              purpose through selling, donating, exchanging, purchasing and
-              creative reuse.
+              ReOrbit is a circular platform that helps people sell, donate and
+              discover reusable items while connecting suitable materials with
+              ReMakers who can give them a new purpose.
             </p>
           </div>
         </section>
@@ -599,15 +610,16 @@ export default function About() {
               </p>
 
               <p>
-                ReOrbit creates a connected space where users can list items,
-                discover things they need, donate useful items or exchange them
-                with others.
+                ReOrbit creates a connected space where users can list items
+                they no longer need, discover things they want to buy, or donate
+                useful items instead of leaving them unused.
               </p>
 
               <p>
-                When an item needs more than a new owner, it can move toward
-                refurbishment or creative transformation through ReMakers. This
-                helps keep useful materials in circulation for longer.
+                When an item needs more than a new owner, suitable items and
+                materials can move through ReOrbit's inventory and refurbishment
+                process or reach ReMakers who can transform them into something
+                new.
               </p>
             </div>
 
@@ -620,8 +632,8 @@ export default function About() {
                 <h3>Keep the orbit moving.</h3>
 
                 <p>
-                  Sell something you no longer need. Donate it. Exchange it.
-                  Find something useful. Or let a ReMaker transform it into
+                  Sell something you no longer need. Donate it. Find something
+                  useful. Or let a ReMaker transform suitable materials into
                   something new.
                 </p>
               </div>
@@ -642,43 +654,50 @@ export default function About() {
             </div>
 
             <div className="about-values-grid">
+              {/* VALUE 1 */}
+
               <div className="about-value-card">
                 <div className="about-value-icon">
-                  <span className="material-symbols-outlined">swap_horiz</span>
+                  <span className="material-symbols-outlined">sell</span>
                 </div>
 
-                <h3>More ways to reuse</h3>
+                <h3>Give items a new owner</h3>
 
                 <p>
-                  Users can sell, donate, exchange or purchase reusable items
-                  instead of limiting every item to a single path.
+                  Users can list reusable items for sale, allowing someone else
+                  to discover and purchase things that still have value.
                 </p>
               </div>
+
+              {/* VALUE 2 */}
 
               <div className="about-value-card">
                 <div className="about-value-icon">
                   <span className="material-symbols-outlined">handyman</span>
                 </div>
 
-                <h3>People who can transform</h3>
+                <h3>Enable creative reuse</h3>
 
                 <p>
-                  ReMakers can discover materials, create new products and bring
-                  transformed items back into the ReOrbit marketplace.
+                  ReMakers can discover suitable materials, transform them into
+                  new creations and offer those finished products through the
+                  ReOrbit marketplace.
                 </p>
               </div>
+
+              {/* VALUE 3 */}
 
               <div className="about-value-card">
                 <div className="about-value-icon">
                   <span className="material-symbols-outlined">analytics</span>
                 </div>
 
-                <h3>See your impact</h3>
+                <h3>Make impact visible</h3>
 
                 <p>
-                  ReOrbit can connect activity with rewards, Orbit Points,
-                  vouchers, badges, certificates and meaningful impact
-                  information.
+                  ReOrbit connects meaningful activity with Orbit Points,
+                  vouchers, badges, certificates and impact information through
+                  the user dashboard.
                 </p>
               </div>
             </div>
@@ -695,45 +714,51 @@ export default function About() {
               <h2>One platform. Multiple paths forward.</h2>
 
               <p>
-                ReOrbit connects users, ReMakers and the management system
-                around the complete lifecycle of reusable items.
+                ReOrbit connects users, ReMakers and platform management around
+                the lifecycle of reusable items.
               </p>
             </div>
 
             <div className="about-process-grid">
+              {/* STEP 1 */}
+
               <div className="about-process-card">
-                <span className="about-step">01 — LIST & CONNECT</span>
+                <span className="about-step">01 — LIST & BUY</span>
 
                 <h3>Put useful things back into circulation.</h3>
 
                 <p>
-                  List reusable items with their details and condition. Other
-                  users can discover them and choose to purchase, exchange or
-                  receive them through the available options.
+                  Users can list reusable items with their details, condition
+                  and images. Other users can discover available products and
+                  purchase items that match their needs.
                 </p>
               </div>
 
+              {/* STEP 2 */}
+
               <div className="about-process-card">
-                <span className="about-step">02 — DONATE & TRANSFORM</span>
+                <span className="about-step">02 — DONATE & MANAGE</span>
 
                 <h3>Give an item another route.</h3>
 
                 <p>
-                  Items can also be donated into the ReOrbit system, where they
-                  may enter managed inventory, refurbishment or a ReMaker's
-                  creative process.
+                  Items can also be donated through ReOrbit. Suitable donations
+                  can move through pickup, warehouse and inventory management
+                  before continuing toward reuse or refurbishment.
                 </p>
               </div>
 
-              <div className="about-process-card">
-                <span className="about-step">03 — REUSE & REORBIT</span>
+              {/* STEP 3 */}
 
-                <h3>Let the next chapter begin.</h3>
+              <div className="about-process-card">
+                <span className="about-step">03 — REMAKE & REORBIT</span>
+
+                <h3>Turn materials into something new.</h3>
 
                 <p>
-                  Refurbished or transformed products can return to the
-                  marketplace, creating another opportunity for the item to
-                  reach a new owner and continue its journey.
+                  Suitable materials can reach ReMakers, who can repair,
+                  redesign or transform them into new products that can return
+                  to the marketplace.
                 </p>
               </div>
             </div>
@@ -751,8 +776,8 @@ export default function About() {
                 <h2>Have something that deserves another chance?</h2>
 
                 <p>
-                  Sell it, donate it, exchange it or help give it a new purpose
-                  through ReOrbit.
+                  Sell it, donate it, or help give it a new purpose through
+                  ReOrbit.
                 </p>
               </div>
 

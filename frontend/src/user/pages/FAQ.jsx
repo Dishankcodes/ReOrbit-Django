@@ -9,22 +9,22 @@ const faqGroups = [
       {
         question: "What is ReOrbit?",
         answer:
-          "ReOrbit is a circular platform that helps people give reusable items another purpose. Users can sell, donate, exchange or purchase items, while ReMakers can source useful materials and transform them into new creations.",
+          "ReOrbit is a circular platform that helps people give reusable items another purpose. Users can sell, donate or purchase items, while ReMakers can source useful materials and transform them into new creations.",
       },
       {
         question: "Who can use ReOrbit?",
         answer:
-          "ReOrbit brings together users who want to sell, donate, exchange or purchase reusable items, ReMakers who source materials and create new products, and administrators who manage the platform, inventory, logistics and overall activity.",
+          "ReOrbit brings together users who want to sell, donate or purchase reusable items, ReMakers who source materials and create new products, and administrators who manage the platform, inventory, logistics and overall activity.",
       },
       {
         question: "How do I get started?",
         answer:
-          "Create your ReOrbit account and choose what you want to do. You can explore the marketplace, list something you no longer need, donate an item, exchange with another user or discover products created by ReMakers.",
+          "Create your ReOrbit account and choose what you want to do. You can explore the marketplace, list something you no longer need, donate an item or discover products created by ReMakers.",
       },
       {
         question: "Do I need an account to use ReOrbit?",
         answer:
-          "An account is required for actions such as listing items, purchasing, donating, exchanging items and managing your activity. You can explore available content before deciding to get started.",
+          "An account is required for actions such as listing items, purchasing, donating and managing your activity. You can explore available content before deciding to get started.",
       },
     ],
   },
@@ -35,12 +35,12 @@ const faqGroups = [
       {
         question: "How do I list an item?",
         answer:
-          "Create a listing by adding the item's relevant details, category, condition, images and other required information. Once submitted, the item can enter the appropriate ReOrbit flow based on the listing type.",
+          "Create a listing by adding the item's relevant details, category, condition, images and other required information. Once submitted, the item can enter the appropriate ReOrbit flow based on whether you are selling or donating it.",
       },
       {
         question: "What can I do with an item I no longer need?",
         answer:
-          "You can choose the option that best fits your situation. Depending on the item and available functionality, you may sell it, donate it, exchange it with another user or make it available as material for reuse.",
+          "You can choose the option that best fits your situation. You can sell the item to another user or donate it through ReOrbit so it can continue toward another useful purpose.",
       },
       {
         question: "Can I buy items on ReOrbit?",
@@ -48,14 +48,14 @@ const faqGroups = [
           "Yes. Users can browse available marketplace items, explore their details and purchase items that match their needs.",
       },
       {
-        question: "Can I exchange an item instead of selling it?",
+        question: "Can I buy products created by ReMakers?",
         answer:
-          "Yes. Exchange is one of the reuse paths supported by ReOrbit. It allows useful items to move directly between users instead of being left unused.",
+          "Yes. ReMakers can showcase their finished creations through ReOrbit, allowing users to discover and purchase unique products made from rescued or recovered materials.",
       },
       {
         question: "What happens after I list an item?",
         answer:
-          "The item becomes part of the appropriate ReOrbit flow. Depending on whether it is being sold, donated or exchanged, the next steps may involve another user, pickup logistics, inventory management or a ReMaker.",
+          "The item becomes part of the appropriate ReOrbit flow. Depending on whether it is being sold or donated, the next steps may involve another user, pickup logistics, inventory management or a ReMaker.",
       },
     ],
   },
@@ -126,9 +126,9 @@ const faqGroups = [
           "You can join the ReMaker community and create your ReMaker profile. ReMakers can showcase their work, discover suitable materials, create products and participate in the ReOrbit ecosystem.",
       },
       {
-        question: "Can ReMakers buy materials from users?",
+        question: "Can ReMakers source materials from ReOrbit?",
         answer:
-          "Yes. ReMakers can discover suitable reusable materials made available through the ReOrbit platform and use them as inputs for their creative work.",
+          "Yes. ReMakers can discover suitable reusable materials made available through ReOrbit and use them as inputs for their creative work.",
       },
       {
         question: "Can ReMakers sell their finished products?",
@@ -191,6 +191,11 @@ const faqGroups = [
         question: "How can I contact ReOrbit?",
         answer:
           "You can use the Contact Us page to reach the ReOrbit support team. Include the relevant item, transaction or account information so your request can be handled more efficiently.",
+      },
+      {
+        question: "How does ReOrbit protect my information?",
+        answer:
+          "ReOrbit is designed to handle account and transaction information responsibly. You can review the Privacy Policy to understand how information is collected, used and managed.",
       },
     ],
   },
@@ -431,7 +436,6 @@ export default function FAQ() {
           border-radius: 50%;
 
           background: var(--secondary);
-
           color: var(--primary);
 
           transition:
@@ -543,6 +547,7 @@ export default function FAQ() {
 
         .faq-contact-button:hover {
           background: #1e3d2f;
+
           transform: translateY(-1px);
         }
 
@@ -606,7 +611,9 @@ export default function FAQ() {
 
           .faq-question {
             padding: 18px 2px;
+
             font-size: 0.82rem;
+
             gap: 15px;
           }
 
@@ -620,6 +627,7 @@ export default function FAQ() {
 
           .faq-contact {
             flex-direction: column;
+
             align-items: flex-start;
 
             padding: 27px 22px;
@@ -643,6 +651,7 @@ export default function FAQ() {
 
           .faq-sidebar {
             display: grid;
+
             grid-template-columns: 1fr 1fr;
           }
 
@@ -681,8 +690,8 @@ export default function FAQ() {
             </h1>
 
             <p>
-              Find answers about buying, selling, donating, exchanging,
-              ReMakers, pickups, rewards and giving items another orbit.
+              Everything you need to know about buying, selling, donating,
+              ReMakers, pickups, rewards and giving things another orbit.
             </p>
           </div>
         </section>

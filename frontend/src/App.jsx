@@ -7,6 +7,8 @@ import About from "./user/pages/About";
 import FAQ from "./user/pages/FAQ";
 import Contact from "./user/pages/Contact";
 import HowItWorks from "./user/pages/HowItWorks";
+import Privacy from "./user/pages/Privacy";
+import Terms from "./user/pages/Terms";
 import ReMakerDiscover from "./user/pages/ReMakerDiscover";
 import Marketplace from "./user/pages/UserBeforeMarketplace";
 
@@ -41,6 +43,8 @@ export default function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/UserPrivacy" element={<Privacy />} />
+        <Route path="/UserTerms" element={<Terms />} />
 
         {/* REMAKER */}
         <Route path="/remakers-home" element={<ReMakersHome />} />
