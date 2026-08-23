@@ -5,7 +5,7 @@ const columns = [
   {
     title: "Platform",
     links: [
-      ["Marketplace", "/marketplace"],
+      ["Marketplace", "/discover-marketplace"],
       ["How it works", "/how-it-works"],
       ["About Us", "/about"],
     ],
@@ -13,7 +13,7 @@ const columns = [
   {
     title: "Community",
     links: [
-      ["ReMakers", "/remakers"],
+      ["ReMakers", "/discover-remakers"],
       ["Stories", "/stories"],
       ["Impact", "/impact"],
     ],

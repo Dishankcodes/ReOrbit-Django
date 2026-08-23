@@ -9,82 +9,188 @@ const faqGroups = [
       {
         question: "What is ReOrbit?",
         answer:
-          "ReOrbit is a circular marketplace where people can sell, donate,  and discover items that deserve another chance. It also connects rescued materials with ReMakers who can transform them into new creations.",
+          "ReOrbit is a circular platform that helps people give reusable items another purpose. Users can sell, donate, exchange or purchase items, while ReMakers can source useful materials and transform them into new creations.",
       },
       {
         question: "Who can use ReOrbit?",
         answer:
-          "ReOrbit is designed for households looking to give away or sell things they no longer use, buyers looking for verified and refurbished products, and ReMakers who want to source materials and sell their creations.",
+          "ReOrbit brings together users who want to sell, donate, exchange or purchase reusable items, ReMakers who source materials and create new products, and administrators who manage the platform, inventory, logistics and overall activity.",
       },
       {
         question: "How do I get started?",
         answer:
-          "Create an account and explore the marketplace, list an item, or discover the ReMaker community. You can choose the path that works best for you.",
+          "Create your ReOrbit account and choose what you want to do. You can explore the marketplace, list something you no longer need, donate an item, exchange with another user or discover products created by ReMakers.",
+      },
+      {
+        question: "Do I need an account to use ReOrbit?",
+        answer:
+          "An account is required for actions such as listing items, purchasing, donating, exchanging items and managing your activity. You can explore available content before deciding to get started.",
       },
     ],
   },
+
   {
     title: "Listings & marketplace",
     questions: [
       {
         question: "How do I list an item?",
         answer:
-          "Choose the listing option, add photos and item details, describe its condition and submit the listing. Clear and honest information helps buyers understand exactly what they are getting.",
+          "Create a listing by adding the item's relevant details, category, condition, images and other required information. Once submitted, the item can enter the appropriate ReOrbit flow based on the listing type.",
       },
       {
-        question: "Can I donate an item instead of selling it?",
+        question: "What can I do with an item I no longer need?",
         answer:
-          "Yes. ReOrbit supports different ways of giving items another life, including donation and material recovery where available.",
+          "You can choose the option that best fits your situation. Depending on the item and available functionality, you may sell it, donate it, exchange it with another user or make it available as material for reuse.",
       },
       {
-        question: "Are marketplace items verified?",
+        question: "Can I buy items on ReOrbit?",
         answer:
-          "ReOrbit focuses on clear item information and verified listings. Condition details and relevant history are provided to help buyers make informed decisions.",
+          "Yes. Users can browse available marketplace items, explore their details and purchase items that match their needs.",
       },
       {
-        question: "Can I  an item?",
+        question: "Can I exchange an item instead of selling it?",
         answer:
-          "Yes.  is one of the ways ReOrbit encourages people to keep useful objects moving instead of leaving them unused.",
+          "Yes. Exchange is one of the reuse paths supported by ReOrbit. It allows useful items to move directly between users instead of being left unused.",
+      },
+      {
+        question: "What happens after I list an item?",
+        answer:
+          "The item becomes part of the appropriate ReOrbit flow. Depending on whether it is being sold, donated or exchanged, the next steps may involve another user, pickup logistics, inventory management or a ReMaker.",
       },
     ],
   },
+
+  {
+    title: "Donations & reuse",
+    questions: [
+      {
+        question: "Can I donate an item?",
+        answer:
+          "Yes. ReOrbit allows users to donate reusable items instead of selling them. Donated items can enter the platform's managed inventory and may later be reused, refurbished or directed toward another suitable purpose.",
+      },
+      {
+        question: "Where do donated items go?",
+        answer:
+          "Depending on the item's condition and intended use, donated items can be managed through ReOrbit's inventory and warehouse process. Suitable materials may also be made available to ReMakers.",
+      },
+      {
+        question: "What happens if an item needs refurbishment?",
+        answer:
+          "Items that can benefit from repair or refurbishment can move through the appropriate ReOrbit management process. ReMakers may also transform suitable materials into new products.",
+      },
+      {
+        question: "Can a donated item become a new product?",
+        answer:
+          "Yes. Suitable materials can become part of a ReMaker's creative process. A ReMaker can source the material, transform it and eventually offer the finished creation through the ReOrbit ecosystem.",
+      },
+    ],
+  },
+
   {
     title: "Pickup & delivery",
     questions: [
       {
         question: "Is pickup available?",
         answer:
-          "Pickup support is available in supported pincodes. Availability and applicable charges can depend on the item and location.",
+          "Pickup support is available for supported locations and applicable ReOrbit activities. Availability can depend on the item's type, location and the specific transaction or donation process.",
       },
       {
         question: "How does pickup work?",
         answer:
-          "Once a supported pickup is arranged, the item can be collected from the provided location according to the pickup details shown during the process.",
+          "When pickup is available, the required pickup information is collected during the relevant process. The item can then be scheduled for collection according to the available logistics options.",
       },
       {
         question: "Are there pickup charges?",
         answer:
-          "Pickup charges can apply depending on the location and item. Any applicable charge should be shown before you complete the relevant process.",
+          "Pickup charges may apply depending on the location, item and type of activity. Any applicable pickup cost should be communicated as part of the relevant process.",
+      },
+      {
+        question: "What happens after an item is picked up?",
+        answer:
+          "The next step depends on the item's journey. It may move to another user, enter ReOrbit inventory, reach a ReMaker or continue through refurbishment and reuse processes.",
       },
     ],
   },
+
   {
     title: "ReMakers",
     questions: [
       {
         question: "What is a ReMaker?",
         answer:
-          "A ReMaker is a creator who works with rescued, recovered or overlooked materials and transforms them into useful or meaningful new creations.",
+          "A ReMaker is a creator who works with rescued, recovered or overlooked materials and transforms them into useful, creative or meaningful products.",
       },
       {
         question: "How can I become a ReMaker?",
         answer:
-          "You can start by joining the ReMaker community and building your profile. ReMakers can showcase their work, source materials and sell their finished creations.",
+          "You can join the ReMaker community and create your ReMaker profile. ReMakers can showcase their work, discover suitable materials, create products and participate in the ReOrbit ecosystem.",
       },
       {
-        question: "Can ReMakers sell their creations on ReOrbit?",
+        question: "Can ReMakers buy materials from users?",
         answer:
-          "Yes. ReMakers can showcase their work and offer finished creations through the ReOrbit ecosystem.",
+          "Yes. ReMakers can discover suitable reusable materials made available through the ReOrbit platform and use them as inputs for their creative work.",
+      },
+      {
+        question: "Can ReMakers sell their finished products?",
+        answer:
+          "Yes. ReMakers can showcase their creations and offer finished products through the ReOrbit marketplace.",
+      },
+      {
+        question: "Can I see how a ReMaker transformed an item?",
+        answer:
+          "The ReMaker ecosystem is designed to showcase the transformation journey, including the original material and the resulting creation where the relevant information has been provided.",
+      },
+    ],
+  },
+
+  {
+    title: "Rewards & impact",
+    questions: [
+      {
+        question: "What are Orbit Points?",
+        answer:
+          "Orbit Points are part of ReOrbit's reward system. Eligible activities can contribute points that users may be able to use toward available rewards, vouchers or other platform benefits.",
+      },
+      {
+        question: "Can I earn rewards on ReOrbit?",
+        answer:
+          "ReOrbit can reward eligible reuse activities through features such as Orbit Points, vouchers, badges and other recognition. The exact reward can depend on the activity and applicable platform rules.",
+      },
+      {
+        question: "What are ReOrbit badges?",
+        answer:
+          "Badges are recognition for meaningful activity within the ReOrbit ecosystem. They can represent achievements or participation in reuse and circular activities.",
+      },
+      {
+        question: "Can I receive a sustainability certificate?",
+        answer:
+          "ReOrbit can provide sustainability or impact certificates for eligible activities where the feature is applicable. These can help users understand and showcase their contribution to keeping items in circulation.",
+      },
+      {
+        question: "Can I see my environmental impact?",
+        answer:
+          "The ReOrbit dashboard is designed to help users understand their activity and its impact, including information such as items given another purpose and other relevant sustainability metrics.",
+      },
+    ],
+  },
+
+  {
+    title: "Account & support",
+    questions: [
+      {
+        question: "Where can I see my ReOrbit activity?",
+        answer:
+          "Your dashboard is intended to provide a central view of your activity, including relevant listings, transactions, rewards and impact information.",
+      },
+      {
+        question: "What happens if I have a problem with a transaction?",
+        answer:
+          "If you experience an issue with a transaction, pickup or another platform activity, you can contact ReOrbit support with the relevant details so the issue can be reviewed.",
+      },
+      {
+        question: "How can I contact ReOrbit?",
+        answer:
+          "You can use the Contact Us page to reach the ReOrbit support team. Include the relevant item, transaction or account information so your request can be handled more efficiently.",
       },
     ],
   },
@@ -106,9 +212,7 @@ export default function FAQ() {
 
         .faq-page {
           min-height: 100vh;
-
           background: var(--background);
-
           color: var(--foreground);
         }
 
@@ -118,39 +222,31 @@ export default function FAQ() {
 
         .faq-hero {
           padding: 145px 0 80px;
-
           text-align: center;
         }
 
         .faq-hero-inner {
           max-width: 820px;
-
           margin: 0 auto;
         }
 
         .faq-badge {
           display: inline-flex;
-
           align-items: center;
-
           gap: 7px;
 
           padding: 8px 14px;
 
           border: 1px solid var(--border);
-
           border-radius: 999px;
 
           background: var(--secondary);
-
           color: var(--primary);
 
           font-size: 0.68rem;
-
           font-weight: 700;
 
           letter-spacing: 0.08em;
-
           text-transform: uppercase;
         }
 
@@ -168,25 +264,21 @@ export default function FAQ() {
           font-size: clamp(3rem, 6vw, 5rem);
 
           line-height: 0.98;
-
           letter-spacing: -0.055em;
         }
 
         .faq-hero h1 em {
           color: var(--leaf);
-
           font-style: normal;
         }
 
         .faq-hero p {
           max-width: 620px;
-
           margin: 0 auto;
 
           color: var(--muted-foreground);
 
           font-size: 0.98rem;
-
           line-height: 1.75;
         }
 
@@ -216,21 +308,20 @@ export default function FAQ() {
 
         .faq-sidebar {
           position: sticky;
-
           top: 105px;
         }
 
         .faq-sidebar-label {
+          display: block;
+
           margin-bottom: 16px;
 
           color: var(--muted-foreground);
 
           font-size: 0.65rem;
-
           font-weight: 800;
 
           letter-spacing: 0.1em;
-
           text-transform: uppercase;
         }
 
@@ -238,7 +329,6 @@ export default function FAQ() {
           display: block;
 
           padding: 9px 12px;
-
           margin-bottom: 3px;
 
           border-radius: 8px;
@@ -256,7 +346,6 @@ export default function FAQ() {
 
         .faq-sidebar a:hover {
           background: var(--secondary);
-
           color: var(--primary);
         }
 
@@ -302,7 +391,6 @@ export default function FAQ() {
           display: flex;
 
           align-items: center;
-
           justify-content: space-between;
 
           gap: 25px;
@@ -318,7 +406,6 @@ export default function FAQ() {
           font-family: var(--font-sans);
 
           font-size: 0.9rem;
-
           font-weight: 600;
 
           text-align: left;
@@ -339,7 +426,6 @@ export default function FAQ() {
           display: flex;
 
           align-items: center;
-
           justify-content: center;
 
           border-radius: 50%;
@@ -359,7 +445,6 @@ export default function FAQ() {
 
         .faq-item-open .faq-icon {
           background: var(--primary);
-
           color: var(--primary-foreground);
 
           transform: rotate(180deg);
@@ -376,7 +461,7 @@ export default function FAQ() {
         }
 
         .faq-item-open .faq-answer {
-          max-height: 300px;
+          max-height: 400px;
 
           padding: 0 50px 22px 4px;
         }
@@ -407,7 +492,6 @@ export default function FAQ() {
           display: flex;
 
           align-items: center;
-
           justify-content: space-between;
 
           gap: 30px;
@@ -459,7 +543,6 @@ export default function FAQ() {
 
         .faq-contact-button:hover {
           background: #1e3d2f;
-
           transform: translateY(-1px);
         }
 
@@ -471,7 +554,6 @@ export default function FAQ() {
 
           .faq-layout {
             grid-template-columns: 1fr;
-
             gap: 35px;
           }
 
@@ -487,13 +569,11 @@ export default function FAQ() {
 
           .faq-sidebar-label {
             width: 100%;
-
             margin-bottom: 5px;
           }
 
           .faq-sidebar a {
             background: var(--secondary);
-
             margin: 0;
           }
         }
@@ -526,9 +606,7 @@ export default function FAQ() {
 
           .faq-question {
             padding: 18px 2px;
-
             font-size: 0.82rem;
-
             gap: 15px;
           }
 
@@ -542,7 +620,6 @@ export default function FAQ() {
 
           .faq-contact {
             flex-direction: column;
-
             align-items: flex-start;
 
             padding: 27px 22px;
@@ -550,7 +627,6 @@ export default function FAQ() {
 
           .faq-contact-button {
             width: 100%;
-
             justify-content: center;
           }
         }
@@ -567,7 +643,6 @@ export default function FAQ() {
 
           .faq-sidebar {
             display: grid;
-
             grid-template-columns: 1fr 1fr;
           }
 
@@ -589,7 +664,10 @@ export default function FAQ() {
       <div className="faq-page">
         <Navbar />
 
-        {/* HERO */}
+        {/* =====================================================
+            HERO
+        ===================================================== */}
+
         <section className="faq-hero">
           <div className="container faq-hero-inner">
             <span className="faq-badge">
@@ -603,16 +681,20 @@ export default function FAQ() {
             </h1>
 
             <p>
-              Everything you need to know about buying, listing, donating,
-              exchanging and giving things another orbit.
+              Find answers about buying, selling, donating, exchanging,
+              ReMakers, pickups, rewards and giving items another orbit.
             </p>
           </div>
         </section>
 
-        {/* FAQ */}
+        {/* =====================================================
+            FAQ CONTENT
+        ===================================================== */}
+
         <section className="faq-content">
           <div className="container faq-layout">
             {/* SIDEBAR */}
+
             <aside className="faq-sidebar">
               <span className="faq-sidebar-label">On this page</span>
 
@@ -624,6 +706,7 @@ export default function FAQ() {
             </aside>
 
             {/* QUESTIONS */}
+
             <div>
               {faqGroups.map((group, groupIndex) => (
                 <section
@@ -671,12 +754,13 @@ export default function FAQ() {
               ))}
 
               {/* CONTACT */}
+
               <div className="faq-contact">
                 <div>
                   <h3>Still have a question?</h3>
 
                   <p>
-                    Our support team is happy to help you find the right orbit.
+                    Our support team is here to help with your ReOrbit journey.
                   </p>
                 </div>
 

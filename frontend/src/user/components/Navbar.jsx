@@ -31,15 +31,15 @@ export default function Navbar() {
 
         {/* Navigation */}
         <div className={`navbar-links ${open ? "navbar-links-open" : ""}`}>
-          <a href="/marketplace" onClick={closeMenu}>
+          <a href="/discover-marketplace" onClick={closeMenu}>
             Marketplace
           </a>
 
-          <a href="/remakers" onClick={closeMenu}>
+          <a href="/discover-remakers" onClick={closeMenu}>
             ReMakers
           </a>
 
-  <a href="/how-it-works" onClick={closeMenu}>
+          <a href="/how-it-works" onClick={closeMenu}>
             How it works?
           </a>
           <a href="/about" onClick={closeMenu}>

@@ -6,11 +6,7 @@ export default function About() {
   return (
     <>
       <style>
-        
         {`
-        /* =====================================================
-           ABOUT PAGE
-        ===================================================== */
 
         .about-page {
           background: var(--background);
@@ -18,10 +14,7 @@ export default function About() {
           min-height: 100vh;
         }
 
-        /* =====================================================
-           HERO
-        ===================================================== */
-
+       
         .about-hero {
           padding: 145px 0 95px;
         }
@@ -36,19 +29,13 @@ export default function About() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-
           padding: 8px 14px;
-
           border: 1px solid var(--border);
           border-radius: 999px;
-
           background: var(--secondary);
-
           color: var(--primary);
-
           font-size: 0.7rem;
           font-weight: 700;
-
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -562,13 +549,16 @@ export default function About() {
             padding: 24px;
           }
         }
-      `}
+        `}
       </style>
 
       <div className="about-page">
         <Navbar />
 
-        {/* HERO */}
+        {/* =====================================================
+            HERO
+        ===================================================== */}
+
         <section className="about-hero">
           <div className="container about-hero-inner">
             <span className="about-badge">
@@ -577,39 +567,47 @@ export default function About() {
             </span>
 
             <h1>
-              Giving things <em>a second orbit.</em>
+              Give what you have
+              <br />
+              <em>another orbit.</em>
             </h1>
 
             <p>
-              ReOrbit is a circular marketplace built to help people sell,
-              donate, , discover and reimagine the things they no longer
-              need.
+              ReOrbit is a platform that helps people give useful items another
+              purpose through selling, donating, exchanging, purchasing and
+              creative reuse.
             </p>
           </div>
         </section>
 
-        {/* INTRO */}
+        {/* =====================================================
+            INTRO
+        ===================================================== */}
+
         <section className="about-intro">
           <div className="container about-intro-grid">
             <div className="about-intro-copy">
               <h2>
-                Nothing needs to be <span>the end of its story.</span>
+                One item can have
+                <span> more than one future.</span>
               </h2>
 
               <p>
-                Every home has things that are no longer being used. Instead of
-                letting them sit forgotten or sending them away, ReOrbit gives
-                those things another path.
+                Things we no longer use do not necessarily lose their value. A
+                piece of furniture, electronic item, household object or other
+                reusable material may still be useful to someone else.
               </p>
 
               <p>
-                We connect households with buyers, makers and communities who
-                can give useful objects a meaningful second life.
+                ReOrbit creates a connected space where users can list items,
+                discover things they need, donate useful items or exchange them
+                with others.
               </p>
 
               <p>
-                From verified listings and pickup support to refurbishment and
-                creative reuse, ReOrbit keeps valuable things moving.
+                When an item needs more than a new owner, it can move toward
+                refurbishment or creative transformation through ReMakers. This
+                helps keep useful materials in circulation for longer.
               </p>
             </div>
 
@@ -619,126 +617,143 @@ export default function About() {
               </div>
 
               <div>
-                <h3>Keep things moving.</h3>
+                <h3>Keep the orbit moving.</h3>
 
                 <p>
-                  Sell what you no longer need. Discover something worth
-                  keeping. Or transform an overlooked object into something
-                  completely new.
+                  Sell something you no longer need. Donate it. Exchange it.
+                  Find something useful. Or let a ReMaker transform it into
+                  something new.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* VALUES */}
+        {/* =====================================================
+            VALUES
+        ===================================================== */}
+
         <section className="about-values">
           <div className="container">
             <div className="about-section-heading">
-              <span className="eyebrow">What we believe</span>
+              <span className="eyebrow">What ReOrbit brings together</span>
 
-              <h2>A better way to keep useful things in motion.</h2>
+              <h2>More than a marketplace. A connected reuse ecosystem.</h2>
             </div>
 
             <div className="about-values-grid">
               <div className="about-value-card">
                 <div className="about-value-icon">
-                  <span className="material-symbols-outlined">verified</span>
+                  <span className="material-symbols-outlined">swap_horiz</span>
                 </div>
 
-                <h3>Trust first</h3>
+                <h3>More ways to reuse</h3>
 
                 <p>
-                  Clear condition details, verified listings and transparent
-                  item histories help people make confident decisions.
+                  Users can sell, donate, exchange or purchase reusable items
+                  instead of limiting every item to a single path.
                 </p>
               </div>
 
               <div className="about-value-card">
                 <div className="about-value-icon">
-                  <span className="material-symbols-outlined">recycling</span>
+                  <span className="material-symbols-outlined">handyman</span>
                 </div>
 
-                <h3>Keep it circular</h3>
+                <h3>People who can transform</h3>
 
                 <p>
-                  We make it easier to sell, donate,  and transform
-                  existing things instead of always buying new ones.
+                  ReMakers can discover materials, create new products and bring
+                  transformed items back into the ReOrbit marketplace.
                 </p>
               </div>
 
               <div className="about-value-card">
                 <div className="about-value-icon">
-                  <span className="material-symbols-outlined">groups</span>
+                  <span className="material-symbols-outlined">analytics</span>
                 </div>
 
-                <h3>Build together</h3>
+                <h3>See your impact</h3>
 
                 <p>
-                  Households, buyers and ReMakers each play a part in giving
-                  objects their next chapter.
+                  ReOrbit can connect activity with rewards, Orbit Points,
+                  vouchers, badges, certificates and meaningful impact
+                  information.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* PROCESS */}
+        {/* =====================================================
+            PROCESS
+        ===================================================== */}
+
         <section className="about-process">
           <div className="container">
             <div className="about-process-heading">
-              <h2>One thing. More possibilities.</h2>
+              <h2>One platform. Multiple paths forward.</h2>
 
               <p>
-                ReOrbit creates different paths for the things you already have.
+                ReOrbit connects users, ReMakers and the management system
+                around the complete lifecycle of reusable items.
               </p>
             </div>
 
             <div className="about-process-grid">
               <div className="about-process-card">
-                <span className="about-step">01 — LIST</span>
+                <span className="about-step">01 — LIST & CONNECT</span>
 
-                <h3>Give it another chance.</h3>
+                <h3>Put useful things back into circulation.</h3>
 
                 <p>
-                  List an item you no longer use and tell its story, condition
-                  and details.
+                  List reusable items with their details and condition. Other
+                  users can discover them and choose to purchase, exchange or
+                  receive them through the available options.
                 </p>
               </div>
 
               <div className="about-process-card">
-                <span className="about-step">02 — CONNECT</span>
+                <span className="about-step">02 — DONATE & TRANSFORM</span>
 
-                <h3>Find its next person.</h3>
+                <h3>Give an item another route.</h3>
 
                 <p>
-                  Connect with someone who wants to buy, receive or  the
-                  item.
+                  Items can also be donated into the ReOrbit system, where they
+                  may enter managed inventory, refurbishment or a ReMaker's
+                  creative process.
                 </p>
               </div>
 
               <div className="about-process-card">
-                <span className="about-step">03 — REIMAGINE</span>
+                <span className="about-step">03 — REUSE & REORBIT</span>
 
-                <h3>Or make something new.</h3>
+                <h3>Let the next chapter begin.</h3>
 
                 <p>
-                  Rescued materials can also find their way to ReMakers who turn
-                  them into meaningful creations.
+                  Refurbished or transformed products can return to the
+                  marketplace, creating another opportunity for the item to
+                  reach a new owner and continue its journey.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA */}
+        {/* =====================================================
+            CTA
+        ===================================================== */}
+
         <section className="about-cta">
           <div className="container">
             <div className="about-cta-box">
               <div>
-                <h2>Ready to give something another orbit?</h2>
+                <h2>Have something that deserves another chance?</h2>
 
-                <p>List, discover,  or reimagine.</p>
+                <p>
+                  Sell it, donate it, exchange it or help give it a new purpose
+                  through ReOrbit.
+                </p>
               </div>
 
               <a href="/login" className="about-cta-button">

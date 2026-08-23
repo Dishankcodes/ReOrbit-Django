@@ -7,7 +7,7 @@ const managementItems = [
   {
     icon: "👥",
     title: "Manage Users",
-    text: "Review user activity, listings, donations, exchanges and account status from one place.",
+    text: "Review user activity, listings, donations and account status from one place.",
   },
   {
     icon: "🛠",
@@ -22,7 +22,7 @@ const managementItems = [
   {
     icon: "💳",
     title: "Transactions",
-    text: "Monitor purchases, exchanges, donations, payments and other platform transactions.",
+    text: "Monitor purchases, donations, payments and other platform transactions.",
   },
   {
     icon: "🏭",

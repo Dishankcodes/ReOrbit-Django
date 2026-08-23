@@ -1237,8 +1237,7 @@ export default function About() {
                 </h3>
 
                 <p>
-                  Users can list reusable items, donate materials, exchange
-                  products and discover new ways to give their belongings a
+                  Users can list reusable items, donate materials and discover new ways to give their belongings a
                   second purpose.
                 </p>
 
