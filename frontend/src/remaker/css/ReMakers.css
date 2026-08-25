@@ -1,14 +1,11 @@
-/* =========================================================
-   REMAKER HOMEPAGE
-   ISOLATED THEME
-========================================================= */
+
 
 .rm-page {
-  --rm-maroon: #270809;
+  --rm-maroon: #400808;
   --rm-green: #08271f;
   --rm-secondary-dark: #414845;
 
-  --rm-text: #1a1c1a;
+  --rm-text: #5d080b;
   --rm-muted: #6b7280;
   --rm-soft-muted: #9ca3af;
 
@@ -180,14 +177,14 @@
 
 /* HERO TITLE */
 
-.rm-page .rm-hero h1 {
+.rm-page .rm-hero h2 {
   margin: 28px 0 22px;
 
   color: var(--rm-maroon);
 
   font-family: var(--font-display);
 
-  font-size: clamp(3.7rem, 6.4vw, 6.4rem);
+  font-size: clamp(3rem, 6vw, 5rem);
 
   line-height: 0.94;
 
@@ -203,7 +200,9 @@
 
   font-weight: 600;
 }
-
+.red{
+  color:#760b0f
+}
 /* HERO DESCRIPTION */
 
 .rm-page .rm-hero-copy > p {

@@ -41,7 +41,7 @@ export default function Footer() {
           <p>Nothing left behind. Pickup in 25 pincodes.</p>
         </div>
 
-        <a className="remaker-footer-cta-button" href="/login">
+        <a className="remaker-footer-cta-button" href="/remakers-auth">
           Get started
           <span className="material-symbols-outlined">arrow_forward</span>
         </a>

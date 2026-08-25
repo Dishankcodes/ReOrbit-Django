@@ -1128,7 +1128,7 @@ export default function HowItWorks() {
                 </p>
               </div>
 
-              <a href="/login" className="how-cta-button">
+              <a href="/auth" className="how-cta-button">
                 Get started
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>

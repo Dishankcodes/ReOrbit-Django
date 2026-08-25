@@ -1,10 +1,8 @@
 .remaker-marketplace-page {
-  --rmm-maroon: #270809;
-  --rmm-maroon-light: #3b1011;
-  --rmm-green: #08271f;
-  --rmm-green-soft: #47645a;
+  --rmm-maroon: #400808;
+  --rmm-maroon-light: #751a1c;
 
-  --rmm-text: #1a1c1a;
+  --rmm-text: #5d080b;
   --rmm-muted: #6b7280;
   --rmm-soft-muted: #9ca3af;
 
@@ -12,7 +10,7 @@
   --rmm-light: #e3e2e0;
   --rmm-background: #faf9f7;
   --rmm-white: #ffffff;
-  --rmm-green-pale: #dfe8e4;
+  --rmm-maroon-pale: #dfe8e4;
 
   width: 100%;
   min-height: 100vh;
@@ -95,7 +93,7 @@
   align-items: center;
   gap: 7px;
 
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-size: 0.68rem;
   font-weight: 800;
@@ -110,7 +108,7 @@
   width: 22px;
   height: 1.5px;
 
-  background: var(--rmm-green);
+  background: var(--rmm-maroon);
 }
 
 .remaker-marketplace-page .rm-market-eyebrow .material-symbols-outlined {
@@ -146,20 +144,15 @@
 
 .remaker-marketplace-page .rm-market-hero h1 {
   margin: 24px 0 22px;
-
   color: var(--rmm-maroon);
-
   font-family: var(--font-display);
-
-  font-size: clamp(3.4rem, 6vw, 5.8rem);
-
+  font-size: clamp(3rem, 6vw, 5rem);
   line-height: 0.95;
-
   letter-spacing: -0.055em;
 }
 
 .remaker-marketplace-page .rm-market-hero h1 em {
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-style: italic;
   font-weight: 600;
@@ -170,7 +163,7 @@
 
   margin-bottom: 30px;
 
-  color: var(--rmm-green-soft);
+  color: var(--rmm-maroon-light);
 
   font-size: 0.95rem;
 
@@ -257,9 +250,9 @@
 
   border-radius: 50%;
 
-  background: var(--rmm-green-pale);
+  background: var(--rmm-maroon-pale);
 
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-size: 20px;
 }
@@ -412,13 +405,13 @@
 }
 
 .remaker-marketplace-page .rm-market-search:focus-within {
-  border-color: var(--rmm-green);
+  border-color: var(--rmm-maroon);
 
   box-shadow: 0 0 0 3px rgba(8, 39, 31, 0.07);
 }
 
 .remaker-marketplace-page .rm-market-search > .material-symbols-outlined {
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-size: 21px;
 }
@@ -607,7 +600,7 @@
 .remaker-marketplace-page .rm-material-market-card:hover {
   transform: translateY(-5px);
 
-  border-color: var(--rmm-green);
+  border-color: var(--rmm-maroon);
 
   box-shadow: 0 20px 45px rgba(39, 8, 9, 0.09);
 }
@@ -668,7 +661,7 @@
 
   padding: 6px 10px;
 
-  background: var(--rmm-green);
+  background: var(--rmm-maroon);
 
   border-radius: 999px;
 
@@ -749,7 +742,7 @@
   align-items: center;
   gap: 5px;
 
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-size: 0.62rem;
   font-weight: 600;
@@ -811,7 +804,7 @@
 
   background: var(--rmm-light);
 
-  color: var(--rmm-green);
+  color: var(--rmm-maroon);
 
   font-size: 25px;
 }
@@ -1318,7 +1311,7 @@
 .remaker-marketplace-page button:focus-visible,
 .remaker-marketplace-page input:focus-visible,
 .remaker-marketplace-page select:focus-visible {
-  outline: 2px solid var(--rmm-green);
+  outline: 2px solid var(--rmm-maroon);
 
   outline-offset: 3px;
 }

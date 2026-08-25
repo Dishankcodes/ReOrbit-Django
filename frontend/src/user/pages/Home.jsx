@@ -136,14 +136,14 @@ export default function Home() {
             </p>
 
             <div className="hero-actions">
-              <a className="btn-primary btn-large" href="/login">
+              <a className="btn-primary btn-large" href="/auth">
                 Get started — it's free
                 <Icon>arrow_forward</Icon>
               </a>
-              <a className="btn-secondary btn-large" href="/marketplace">
+              <a className="btn-secondary btn-large" href="/discover-marketplace">
                 Explore marketplace
               </a>
-              <a className="btn-secondary btn-large" href="/remakers">
+              <a className="btn-secondary btn-large" href="/remakers-home">
                 Become a ReMaker
                 <Icon>build</Icon>
               </a>
@@ -205,14 +205,14 @@ export default function Home() {
                 find what they need fast.
               </p>
             </div>
-            <a className="section-link" href="/marketplace">
+            <a className="section-link" href="/discover-marketplace">
               See all listings <Icon>arrow_forward</Icon>
             </a>
           </div>
 
           <div className="category-grid">
             {categories.map(([icon, name, count]) => (
-              <a className="category-card" href="/marketplace" key={name}>
+              <a className="category-card" href="/discover-marketplace" key={name}>
                 <div className="category-icon">
                   <Icon>{icon}</Icon>
                 </div>
@@ -288,7 +288,7 @@ export default function Home() {
                 Discover verified and refurbished products with honest
                 condition details and their complete item history.
               </p>
-              <a href="/marketplace" className="role-button">
+              <a href="/discover-marketplace" className="role-button">
                 Browse marketplace <Icon>arrow_forward</Icon>
               </a>
             </article>
@@ -302,7 +302,7 @@ export default function Home() {
                 Source rescued materials, showcase your work, and turn
                 overlooked items into meaningful creations.
               </p>
-              <a href="/remakers" className="role-button">
+              <a href="/remakers-home" className="role-button">
                 Join as a ReMaker <Icon>arrow_forward</Icon>
               </a>
             </article>
@@ -322,7 +322,7 @@ export default function Home() {
                   their work.
                 </p>
               </div>
-              <a className="studio-button" href="/remakers">
+              <a className="studio-button" href="/discover-remakers">
                 Meet the ReMakers <Icon>arrow_forward</Icon>
               </a>
             </div>
@@ -394,10 +394,10 @@ export default function Home() {
               </p>
 
               <div className="final-buttons">
-                <a className="btn-primary" href="/login">
+                <a className="btn-primary" href="/auth">
                   Get started <Icon>arrow_forward</Icon>
                 </a>
-                <a className="cta-outline" href="/remakers">
+                <a className="cta-outline" href="/remakers-home">
                   Become a ReMaker <Icon>arrow_forward</Icon>
                 </a>
               </div>

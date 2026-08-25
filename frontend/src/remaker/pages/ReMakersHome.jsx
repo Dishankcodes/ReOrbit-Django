@@ -165,13 +165,13 @@ export default function ReMakers() {
                   Built for ReMakers
                 </span>
 
-                <h1>
+                <h2>
                   Make more
                   <br />
                   from what&apos;s
                   <br />
-                  <em>already here.</em>
-                </h1>
+                  <em className="red">already here.</em>
+                </h2>
 
                 <p>
                   Source rescued materials, transform overlooked objects into
@@ -180,15 +180,15 @@ export default function ReMakers() {
                 </p>
 
                 <div className="rm-hero-buttons">
-                  <a className="rm-btn rm-btn-primary" href="/remakers/join">
+                  <a className="rm-btn rm-btn-primary" href="/remakers-auth">
                     Become a ReMaker
                     <span className="material-symbols-outlined">
                       arrow_forward
                     </span>
                   </a>
 
-                  <a className="rm-btn rm-btn-secondary" href="#featured">
-                    Meet the ReMakers
+                  <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
+                    Discover Marketplace
                   </a>
                 </div>
 
@@ -301,7 +301,7 @@ export default function ReMakers() {
                 </p>
               </div>
 
-              <a className="rm-btn rm-btn-secondary" href="/marketplace">
+              <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
                 Browse materials
                 <span className="material-symbols-outlined">arrow_outward</span>
               </a>
@@ -320,7 +320,7 @@ export default function ReMakers() {
 
                   <p>{material.text}</p>
 
-                  <a href="/marketplace">
+                  <a href="/remakers-before-marketplace">
                     Explore
                     <span className="material-symbols-outlined">
                       arrow_forward
@@ -332,9 +332,6 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* =====================================================
-            FEATURED PRODUCTS
-        ===================================================== */}
 
         <section className="rm-products-section">
           <div className="rm-container">
@@ -350,7 +347,7 @@ export default function ReMakers() {
                 </p>
               </div>
 
-              <a className="rm-btn rm-btn-secondary" href="/marketplace">
+              <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
                 Explore marketplace
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>

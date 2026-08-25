@@ -41,7 +41,7 @@ export default function Footer() {
           <p>Sell, donate,  or discover something worth keeping.</p>
         </div>
 
-        <a className="btn-primary footer-cta-button" href="/login">
+        <a className="btn-primary footer-cta-button" href="/auth">
           Get started
           <span className="material-symbols-outlined">arrow_forward</span>
         </a>

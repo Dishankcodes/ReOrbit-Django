@@ -80,7 +80,7 @@ export default function Navbar() {
             <span>Back to user</span>
           </a>
 
-          <a className="remaker-get-started" href="/remakers/join">
+          <a className="remaker-get-started" href="/remakers-auth">
             Get started
           </a>
         </div>

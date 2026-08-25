@@ -55,7 +55,7 @@ export default function About() {
   border: 1px solid var(--rm-border);
   border-radius: 999px;
   background: rgba(193, 200, 196, 0.32);
-  color: var(--rm-green);
+  color: var(--rm-maroon);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -75,14 +75,14 @@ export default function About() {
   max-width: 850px;
   color: var(--rm-maroon);
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 6vw, 5.8rem);
+  font-size: clamp(3rem, 4.5vw, 5rem);
   line-height: 0.96;
   letter-spacing: -0.055em;
   font-weight: 700;
 }
 
 .rm-about-hero h1 em {
-  color: var(--rm-green);
+  color: var(--rm-maroon);
   font-style: italic;
   font-weight: 600;
 }
@@ -133,7 +133,7 @@ export default function About() {
 }
 
 .rm-about-intro-copy h2 span {
-  color: var(--rm-green);
+  color: var(--rm-maroon);
 }
 
 .rm-about-intro-copy p {
@@ -180,7 +180,7 @@ export default function About() {
   justify-content: center;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.75);
-  color: var(--rm-green);
+  color: var(--rm-maroon);
   margin-bottom: auto;
 }
 
@@ -223,7 +223,7 @@ export default function About() {
   align-items: center;
   gap: 7px;
   margin-bottom: 10px;
-  color: var(--rm-green);
+  color: var(--rm-maroon);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.13em;
@@ -234,7 +234,7 @@ export default function About() {
   content: "";
   width: 22px;
   height: 1.5px;
-  background: var(--rm-green);
+  background: var(--rm-maroon);
 }
 
 .rm-about-heading h2 {
@@ -268,7 +268,7 @@ export default function About() {
 
 .rm-about-value:hover {
   transform: translateY(-5px);
-  border-color: var(--rm-green);
+  border-color: var(--rm-maroon);
   box-shadow: 0 18px 40px rgba(39, 8, 9, 0.08);
 }
 
@@ -281,7 +281,7 @@ export default function About() {
   margin-bottom: 24px;
   border-radius: 14px;
   background: rgba(8, 39, 31, 0.08);
-  color: var(--rm-green);
+  color: var(--rm-maroon);
 }
 
 .rm-about-value-icon .material-symbols-outlined {
@@ -357,7 +357,7 @@ export default function About() {
 }
 
 .rm-about-step {
-  color: var(--rm-green);
+  color: var(--rm-maroon);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.1em;

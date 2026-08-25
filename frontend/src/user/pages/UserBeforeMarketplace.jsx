@@ -1203,7 +1203,7 @@ export default function Marketplace() {
                 </p>
               </div>
 
-              <a href="/login" className="marketplace-cta-button">
+              <a href="/auth" className="marketplace-cta-button">
                 Start with ReOrbit
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>

@@ -57,7 +57,7 @@ export default function Navbar() {
             Become a ReMaker
           </a>
 
-          <a className="btn-primary" href="/login">
+          <a className="btn-primary" href="/auth">
             Get started
           </a>
         </div>

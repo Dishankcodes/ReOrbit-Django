@@ -781,7 +781,7 @@ export default function About() {
                 </p>
               </div>
 
-              <a href="/login" className="about-cta-button">
+              <a href="/auth" className="about-cta-button">
                 Get started
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>

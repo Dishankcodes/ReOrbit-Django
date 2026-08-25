@@ -1424,7 +1424,7 @@ export default function ReMakerDiscover() {
                 </p>
               </div>
 
-              <a href="/marketplace" className="remakers-cta-button">
+              <a href="/discover-marketplace" className="remakers-cta-button">
                 Explore creations
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>
