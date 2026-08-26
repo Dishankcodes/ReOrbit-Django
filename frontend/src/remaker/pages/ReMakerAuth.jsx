@@ -1,241 +1,650 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../css/ReMakerAuth.css";
 
 export default function ReMakerAuth() {
-  const [isRegister, setIsRegister] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState("login");
+  const [emailExists, setEmailExists] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+
+  const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const [resendTimer, setResendTimer] = useState(0);
+
+  /* =====================================================
+     OTP TIMER
+  ===================================================== */
+
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+
+    const timer = setInterval(() => {
+      setResendTimer((current) => current - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendTimer]);
+
+  /* =====================================================
+     OTP INPUT
+  ===================================================== */
+
+  const handleOtpChange = (value, index) => {
+    if (!/^\d?$/.test(value)) return;
+
+    const updated = [...otp];
+    updated[index] = value;
+
+    setOtp(updated);
+
+    if (value && index < 5) {
+      document.getElementById(`remaker-otp-${index + 1}`)?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (event, index) => {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
+      document.getElementById(`remaker-otp-${index - 1}`)?.focus();
+    }
+  };
+
+  /* =====================================================
+     RESET
+  ===================================================== */
+
+  const resetAuth = () => {
+    setStep("login");
+    setEmailExists(null);
+    setEmail("");
+    setName("");
+    setUsername("");
+    setOtp(["", "", "", "", "", ""]);
+    setMessage("");
+    setLoading(false);
+  };
+
+  /* =====================================================
+     EMAIL CHECK
+     
+     Replace this with your Django API later.
+  ===================================================== */
+
+  const checkEmail = async (event) => {
+    event.preventDefault();
+
+    if (!email.trim()) return;
+
+    setLoading(true);
+    setMessage("");
+
+    /*
+      BACKEND LATER:
+
+      const response = await fetch(
+        "/api/remaker/auth/check-email/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.exists) {
+        ...
+      }
+    */
+
+    setTimeout(() => {
+      /*
+        DEMO ONLY.
+
+        Remove this once Django is connected.
+        Currently emails containing "existing"
+        behave like existing accounts.
+      */
+
+      const exists = email.toLowerCase().includes("existing");
+
+      setEmailExists(exists);
+
+      if (exists) {
+        requestOtp();
+      } else {
+        setStep("register");
+      }
+
+      setLoading(false);
+    }, 700);
+  };
+
+  /* =====================================================
+     REQUEST OTP
+  ===================================================== */
+
+  const requestOtp = () => {
+    setLoading(true);
+    setMessage("");
+
+    /*
+      BACKEND LATER:
+
+      POST /api/remaker/auth/request-otp/
+      {
+        email
+      }
+    */
+
+    setTimeout(() => {
+      setOtp(["", "", "", "", "", ""]);
+      setStep("otp");
+      setResendTimer(30);
+      setMessage("A verification code has been sent to your email.");
+      setLoading(false);
+    }, 800);
+  };
+
+  /* =====================================================
+     REGISTER
+  ===================================================== */
+
+  const handleRegister = (event) => {
+    event.preventDefault();
+
+    if (!name.trim() || !username.trim()) return;
+
+    requestOtp();
+  };
+
+  /* =====================================================
+     VERIFY OTP
+  ===================================================== */
+
+  const verifyOtp = (event) => {
+    event.preventDefault();
+
+    const enteredOtp = otp.join("");
+
+    if (enteredOtp.length !== 6) {
+      setMessage("Please enter the complete 6-digit OTP.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    /*
+      BACKEND LATER:
+
+      POST /api/remaker/auth/verify-otp/
+      {
+        email,
+        otp
+      }
+    */
+
+    setTimeout(() => {
+      if (emailExists) {
+        /*
+          Existing ReMaker
+          OTP → Dashboard
+        */
+
+        window.location.href = "/remakers/dashboard";
+      } else {
+        /*
+          New ReMaker
+          OTP → Confirm registration
+        */
+
+        setStep("confirm");
+        setLoading(false);
+      }
+    }, 900);
+  };
+
+  /* =====================================================
+     COMPLETE REGISTRATION
+  ===================================================== */
+
+  const completeRegistration = () => {
+    setLoading(true);
+
+    /*
+      BACKEND LATER:
+
+      POST /api/remaker/auth/register/
+      {
+        name,
+        username,
+        email
+      }
+    */
+
+    setTimeout(() => {
+      window.location.href = "/remakers/dashboard";
+    }, 900);
+  };
+
+  /* =====================================================
+     RESEND OTP
+  ===================================================== */
+
+  const resendOtp = () => {
+    if (resendTimer > 0 || resendLoading) return;
+
+    setResendLoading(true);
+    setMessage("");
+
+    setTimeout(() => {
+      setOtp(["", "", "", "", "", ""]);
+      setResendTimer(30);
+      setMessage("A new verification code has been sent.");
+      setResendLoading(false);
+    }, 700);
+  };
+
+  /* =====================================================
+     GOOGLE
+  ===================================================== */
+
+  const handleGoogleLogin = () => {
+    /*
+      BACKEND LATER:
+
+      Redirect to Django Google OAuth:
+
+      window.location.href =
+        "/api/remaker/auth/google/";
+    */
 
     setLoading(true);
 
     setTimeout(() => {
-      setLoading(false);
-    }, 1200);
+      window.location.href = "/remakers/dashboard";
+    }, 900);
   };
 
-  const switchMode = () => {
-    setIsRegister((prev) => !prev);
-    setShowPassword(false);
-    setLoading(false);
-  };
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   return (
-    <div className="remaker-page rm-page remaker-auth-page">
+    <div className="remaker-page rm-page remaker-auth-page">  
       <Navbar />
 
-      <main className="rma-page">
-        {/* Background */}
-        <div className="rma-space" />
-        <div className="rma-grid" />
+      {/* =================================================
+          BACKGROUND
+      ================================================= */}
 
-        {/* Stars */}
-        <span className="rma-star rma-star-1" />
-        <span className="rma-star rma-star-2" />
-        <span className="rma-star rma-star-3" />
-        <span className="rma-star rma-star-4" />
+      <main className="remaker-auth-main">
+        <div className="remaker-auth-grid" />
 
-        <section className="rma-stage">
-          {/* Orbital rings */}
-          <div className="rma-orbit rma-orbit-one">
-            <span className="rma-orbit-dot" />
+        <span className="remaker-auth-star star-one" />
+        <span className="remaker-auth-star star-two" />
+        <span className="remaker-auth-star star-three" />
+        <span className="remaker-auth-star star-four" />
+
+        {/* =================================================
+            ORBITAL BACKGROUND
+        ================================================= */}
+
+        <div className="remaker-orbit-stage">
+          <div className="remaker-orbit orbit-one">
+            <span />
           </div>
 
-          <div className="rma-orbit rma-orbit-two">
-            <span className="rma-orbit-dot" />
+          <div className="remaker-orbit orbit-two">
+            <span />
           </div>
 
-          <div className="rma-orbit rma-orbit-three">
-            <span className="rma-orbit-dot" />
+          <div className="remaker-orbit orbit-three">
+            <span />
           </div>
 
-          {/* Core */}
-          <div className="rma-orbit-core">
-            <span>ReMaker</span>
+          <div className="remaker-orbit-core">
+            <span>ReOrbit</span>
           </div>
 
-          {/* Authentication Card */}
-          <div
-            className={`rma-card ${
-              isRegister ? "rma-register-mode" : "rma-login-mode"
-            }`}
-          >
-            {/* Logo */}
-            <div className="rma-logo">
-              <span className="rma-logo-dot" />
+          {/* =================================================
+              AUTH CARD
+          ================================================= */}
+
+          <section className={`remaker-auth-card remaker-step-${step}`}>
+            {/* LOGO */}
+
+            <div className="remaker-auth-logo">
+              <span className="remaker-logo-mark">
+                <span className="material-symbols-outlined">eco</span>
+              </span>
+
               <span>ReOrbit</span>
             </div>
 
-            {/* Heading */}
-            <div className="rma-heading">
-              <span className="rma-eyebrow">
-                {isRegister
-                  ? "JOIN THE MAKING COMMUNITY"
-                  : "WELCOME BACK, REMAKER"}
-              </span>
+            {/* =================================================
+                LOGIN
+            ================================================= */}
 
-              <h1>{isRegister ? "Become a ReMaker" : "ReMaker sign in"}</h1>
+            {step === "login" && (
+              <div className="remaker-auth-content">
+                <div className="remaker-auth-heading">
+                  <span className="remaker-auth-eyebrow">REMAKER ACCESS</span>
 
-              <p>
-                {isRegister
-                  ? "Create your ReMaker space and start turning rescued materials into meaningful work."
-                  : "Return to your studio, discover materials and keep your creations moving."}
-              </p>
-            </div>
+                  <h1>Welcome back.</h1>
 
-            <form onSubmit={handleSubmit}>
-              {/* Full name */}
-              <div
-                className={`rma-field rma-register-field ${
-                  isRegister ? "rma-field-visible" : ""
-                }`}
-              >
-                <label htmlFor="remaker-name">Full name</label>
+                  <p>Sign in to continue your making journey.</p>
+                </div>
 
-                <input
-                  id="remaker-name"
-                  type="text"
-                  placeholder="Your name"
-                  required={isRegister}
-                />
+                <form className="remaker-auth-form" onSubmit={checkEmail}>
+                  <div className="remaker-field">
+                    <label htmlFor="remaker-email">Email address</label>
+
+                    <input
+                      id="remaker-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="remaker-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Checking..." : "Continue with email"}
+
+                    {!loading && (
+                      <span className="material-symbols-outlined">
+                        arrow_forward
+                      </span>
+                    )}
+                  </button>
+                </form>
+
+                <div className="remaker-divider">
+                  <span />
+                  <p>OR</p>
+                  <span />
+                </div>
+
+                <button
+                  className="remaker-google"
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                >
+                  <span className="google-letter">G</span>
+                  Continue with Google
+                </button>
+
+                <div className="remaker-auth-note">
+                  <span className="material-symbols-outlined">lock</span>
+                  No password required. We&apos;ll send you a secure
+                  verification code.
+                </div>
+
+                {message && <p className="remaker-auth-message">{message}</p>}
               </div>
+            )}
 
-              {/* Studio name */}
-              <div
-                className={`rma-field rma-register-field ${
-                  isRegister ? "rma-field-visible" : ""
-                }`}
-              >
-                <label htmlFor="studio-name">Studio / maker name</label>
+            {/* =================================================
+                REGISTER
+            ================================================= */}
 
-                <input
-                  id="studio-name"
-                  type="text"
-                  placeholder="Your studio name"
-                  required={isRegister}
-                />
+            {step === "register" && (
+              <div className="remaker-auth-content">
+                <div className="remaker-auth-heading">
+                  <span className="remaker-auth-eyebrow">NEW REMAKER</span>
+
+                  <h1>Create your orbit.</h1>
+
+                  <p>
+                    We couldn&apos;t find an account with this email. Let&apos;s
+                    create your ReMaker profile.
+                  </p>
+                </div>
+
+                <form className="remaker-auth-form" onSubmit={handleRegister}>
+                  <div className="remaker-field">
+                    <label htmlFor="remaker-name">Full name</label>
+
+                    <input
+                      id="remaker-name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
+
+                  <div className="remaker-field">
+                    <label htmlFor="remaker-username">Username</label>
+
+                    <input
+                      id="remaker-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="@yourmakername"
+                      required
+                    />
+                  </div>
+
+                  <div className="remaker-field">
+                    <label>Email address</label>
+
+                    <input type="email" value={email} readOnly />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="remaker-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Sending..." : "Continue"}
+
+                    {!loading && (
+                      <span className="material-symbols-outlined">
+                        arrow_forward
+                      </span>
+                    )}
+                  </button>
+                </form>
+
+                <button className="remaker-back-link" onClick={resetAuth}>
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Use another email
+                </button>
               </div>
+            )}
 
-              {/* Email */}
-              <div className="rma-field">
-                <label htmlFor="remaker-email">Email address</label>
+            {/* =================================================
+                OTP
+            ================================================= */}
 
-                <input
-                  id="remaker-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
+            {step === "otp" && (
+              <div className="remaker-auth-content">
+                <div className="remaker-auth-heading">
+                  <span className="remaker-auth-eyebrow">
+                    VERIFY YOUR EMAIL
+                  </span>
 
-              {/* Password */}
-              <div className="rma-field">
-                <label htmlFor="remaker-password">Password</label>
+                  <h1>Enter your code.</h1>
 
-                <div className="rma-password-wrapper">
-                  <input
-                    id="remaker-password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    required
-                  />
+                  <p>
+                    We sent a 6-digit verification code to
+                    <strong>{email}</strong>
+                  </p>
+                </div>
+
+                <form className="remaker-auth-form" onSubmit={verifyOtp}>
+                  <div className="remaker-otp">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        id={`remaker-otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength="1"
+                        value={digit}
+                        onChange={(e) => handleOtpChange(e.target.value, index)}
+                        onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                        autoComplete="one-time-code"
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="remaker-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
+
+                    {!loading && (
+                      <span className="material-symbols-outlined">
+                        verified
+                      </span>
+                    )}
+                  </button>
+                </form>
+
+                <div className="remaker-resend">
+                  <span>Didn&apos;t receive the code?</span>
 
                   <button
                     type="button"
-                    className="rma-password-toggle"
-                    onClick={() => setShowPassword((prev) => !prev)}
+                    disabled={resendTimer > 0 || resendLoading}
+                    onClick={resendOtp}
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {resendLoading
+                      ? "Sending..."
+                      : resendTimer > 0
+                        ? `Resend in ${resendTimer}s`
+                        : "Resend OTP"}
                   </button>
                 </div>
+
+                {message && <p className="remaker-auth-message">{message}</p>}
+
+                <button className="remaker-back-link" onClick={resetAuth}>
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Use another email
+                </button>
               </div>
+            )}
 
-              {/* Login options */}
-              {!isRegister && (
-                <div className="rma-options">
-                  <label className="rma-remember">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                    />
+            {/* =================================================
+                CONFIRM REGISTRATION
+            ================================================= */}
 
-                    <span className="rma-checkbox" />
-
-                    <span>Remember me</span>
-                  </label>
-
-                  <button type="button" className="rma-forgot">
-                    Forgot password?
-                  </button>
+            {step === "confirm" && (
+              <div className="remaker-auth-content">
+                <div className="remaker-confirm-icon">
+                  <span className="material-symbols-outlined">verified</span>
                 </div>
-              )}
 
-              {/* Register terms */}
-              {isRegister && (
-                <label className="rma-terms">
-                  <input type="checkbox" required />
-
-                  <span>
-                    I agree to the <a href="/terms">Terms</a> and{" "}
-                    <a href="/privacy">Privacy Policy</a>.
+                <div className="remaker-auth-heading">
+                  <span className="remaker-auth-eyebrow">
+                    REGISTRATION VERIFIED
                   </span>
-                </label>
-              )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                className={`rma-submit ${loading ? "rma-loading" : ""}`}
-                disabled={loading}
-              >
-                {loading
-                  ? "Please wait..."
-                  : isRegister
-                    ? "Create ReMaker account"
-                    : "Sign in"}
-              </button>
+                  <h1>Confirm your orbit.</h1>
 
-              {/* Divider */}
-              <div className="rma-divider">
-                <span />
-                <p>OR</p>
-                <span />
+                  <p>
+                    Your email has been verified. Check your details before
+                    creating your ReMaker account.
+                  </p>
+                </div>
+
+                <div className="remaker-confirm-card">
+                  <div>
+                    <span>Name</span>
+                    <strong>{name}</strong>
+                  </div>
+
+                  <div>
+                    <span>Username</span>
+                    <strong>@{username}</strong>
+                  </div>
+
+                  <div>
+                    <span>Email</span>
+                    <strong>{email}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="remaker-submit"
+                  onClick={completeRegistration}
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Complete registration"}
+
+                  {!loading && (
+                    <span className="material-symbols-outlined">
+                      arrow_forward
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  className="remaker-back-link"
+                  onClick={() => setStep("register")}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Edit details
+                </button>
               </div>
+            )}
 
-              {/* Google */}
-              <button type="button" className="rma-google">
-                <span className="rma-google-icon">G</span>
+            {/* =================================================
+                FOOTER SWITCH
+            ================================================= */}
 
-                <span>Continue with Google</span>
-              </button>
-            </form>
+            <div className="remaker-auth-footer">
+              {step === "login" ? (
+                <>
+                  <span>New to ReOrbit?</span>
 
-            {/* Switch */}
-            <div className="rma-switch">
-              <span>
-                {isRegister
-                  ? "Already a ReMaker?"
-                  : "Want to become a ReMaker?"}
-              </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("register");
+                      setEmailExists(false);
+                    }}
+                  >
+                    Create account
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>Already have an account?</span>
 
-              <button type="button" onClick={switchMode}>
-                {isRegister ? "Sign in" : "Create account"}
-              </button>
+                  <button type="button" onClick={resetAuth}>
+                    Sign in
+                  </button>
+                </>
+              )}
             </div>
-
-            {/* Back */}
-            <a href="/remakers" className="rma-back">
-              <span className="material-symbols-outlined">arrow_back</span>
-              Back to ReMakers
-            </a>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <Footer />

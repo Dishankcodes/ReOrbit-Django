@@ -1,95 +1,89 @@
 /* =========================================================
-   REMAKER AUTHENTICATION
-   ReMaker Maroon + Green Theme
+   REMAKER AUTH
+   ReOrbit ReMaker Theme
 ========================================================= */
 
 .remaker-auth-page {
-  --rma-bg: #faf9f7;
+  --ra-maroon: #270809;
+  --ra-green: #08271f;
+  --ra-green-soft: #47645a;
+  --ra-mint: #adcec1;
+  --ra-mint-light: #bedad0;
 
-  --rma-maroon: #5a1719;
-  --rma-maroon-dark: #3b1011;
+  --ra-background: #faf9f7;
+  --ra-white: #ffffff;
+  --ra-border: #c1c8c4;
 
-  --rma-green: #2a4d3a;
-  --rma-leaf: #6baf85;
-
-  --rma-secondary: #e8eee9;
-  --rma-light: #f0f4f1;
-
-  --rma-border: #d5ded8;
-
-  --rma-text: #26332b;
-  --rma-muted: #727b75;
+  --ra-text: #1a1c1a;
+  --ra-muted: #6b7280;
 
   min-height: 100vh;
 
-  background: var(--rma-bg);
+  background: var(--ra-background);
 
-  color: var(--rma-text);
+  color: var(--ra-text);
+
+  overflow-x: hidden;
 }
 
 /* =========================================================
-   PAGE
+   MAIN
 ========================================================= */
 
-.remaker-auth-page .rma-page {
+.remaker-auth-main {
   position: relative;
 
-  width: 100%;
+  min-height: calc(100vh - 76px);
 
-  min-height: 790px;
-
-  padding-top: 76px;
+  padding: 125px 20px 100px;
 
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   overflow: hidden;
 
   background:
-    radial-gradient(circle at 50% 50%, rgba(90, 23, 25, 0.07), transparent 32%),
-    #faf9f7;
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(71, 100, 90, 0.09),
+      transparent 34%
+    ),
+    var(--ra-background);
 }
 
 /* =========================================================
-   BACKGROUND
+   BACKGROUND GRID
 ========================================================= */
 
-.remaker-auth-page .rma-space {
-  position: absolute;
-
-  inset: 0;
-
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      rgba(107, 175, 133, 0.1),
-      transparent 25%
-    ),
-    radial-gradient(circle at 85% 75%, rgba(90, 23, 25, 0.07), transparent 25%);
-}
-
-.remaker-auth-page .rma-grid {
+.remaker-auth-grid {
   position: absolute;
 
   inset: 0;
 
   background-image:
-    linear-gradient(rgba(90, 23, 25, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(90, 23, 25, 0.035) 1px, transparent 1px);
+    linear-gradient(rgba(8, 39, 31, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 39, 31, 0.035) 1px, transparent 1px);
 
-  background-size: 48px 48px;
+  background-size: 55px 55px;
 
-  mask-image: linear-gradient(to bottom, black, transparent 90%);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 20%,
+    black 80%,
+    transparent
+  );
+
+  pointer-events: none;
 }
 
 /* =========================================================
    STARS
 ========================================================= */
 
-.remaker-auth-page .rma-star {
+.remaker-auth-star {
   position: absolute;
 
   width: 4px;
@@ -97,613 +91,556 @@
 
   border-radius: 50%;
 
-  background: var(--rma-maroon);
+  background: var(--ra-green-soft);
 
-  box-shadow: 0 0 12px rgba(90, 23, 25, 0.45);
+  opacity: 0.5;
 
-  opacity: 0.45;
-
-  animation: rmaTwinkle 3s infinite;
+  animation: remakerStarFloat 5s ease-in-out infinite;
 }
 
-.remaker-auth-page .rma-star-1 {
-  left: 12%;
-  top: 30%;
+.star-one {
+  top: 23%;
+  left: 16%;
 }
 
-.remaker-auth-page .rma-star-2 {
-  left: 80%;
-  top: 20%;
+.star-two {
+  top: 35%;
+  right: 15%;
 
-  animation-delay: 0.7s;
+  width: 3px;
+  height: 3px;
+
+  animation-delay: 1s;
 }
 
-.remaker-auth-page .rma-star-3 {
-  left: 18%;
-  bottom: 20%;
+.star-three {
+  bottom: 24%;
+  left: 24%;
 
-  animation-delay: 1.2s;
+  width: 3px;
+  height: 3px;
+
+  animation-delay: 2s;
 }
 
-.remaker-auth-page .rma-star-4 {
-  right: 10%;
-  bottom: 28%;
+.star-four {
+  bottom: 31%;
+  right: 25%;
 
-  animation-delay: 1.8s;
+  animation-delay: 3s;
+}
+
+@keyframes remakerStarFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translateY(-8px);
+    opacity: 0.75;
+  }
 }
 
 /* =========================================================
-   STAGE
+   ORBIT STAGE
 ========================================================= */
 
-.remaker-auth-page .rma-stage {
+.remaker-orbit-stage {
   position: relative;
 
-  width: min(1000px, 100%);
+  width: 100%;
+
+  max-width: 1180px;
 
   min-height: 700px;
 
   display: flex;
 
   align-items: center;
-
   justify-content: center;
-
-  z-index: 2;
 }
 
 /* =========================================================
-   ORBITS
+   ORBIT RINGS
 ========================================================= */
 
-.remaker-auth-page .rma-orbit {
+.remaker-orbit {
   position: absolute;
 
-  border: 1px solid rgba(90, 23, 25, 0.14);
+  left: 50%;
+  top: 50%;
+
+  border: 1px solid rgba(39, 8, 9, 0.12);
 
   border-radius: 50%;
+
+  transform: translate(-50%, -50%) rotate(-18deg);
 
   pointer-events: none;
 }
 
-.remaker-auth-page .rma-orbit-one {
-  width: 520px;
+.remaker-orbit::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 7px;
+
+  border-radius: inherit;
+
+  border: 1px dashed rgba(8, 39, 31, 0.08);
+}
+
+.remaker-orbit span {
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: var(--ra-maroon);
+
+  box-shadow:
+    0 0 0 5px rgba(39, 8, 9, 0.07),
+    0 0 20px rgba(39, 8, 9, 0.18);
+}
+
+.orbit-one {
+  width: 760px;
+  height: 430px;
+
+  animation: orbitFloat 12s linear infinite;
+}
+
+.orbit-one span {
+  top: 50%;
+  left: -4px;
+}
+
+.orbit-two {
+  width: 900px;
   height: 520px;
 
-  transform: rotate(-25deg);
+  transform: translate(-50%, -50%) rotate(22deg);
 
-  animation: rmaOrbitOne 15s linear infinite;
+  animation: orbitFloatReverse 18s linear infinite;
 }
 
-.remaker-auth-page .rma-orbit-two {
-  width: 390px;
-  height: 390px;
+.orbit-two span {
+  right: 12%;
+  top: -4px;
 
-  border-color: rgba(107, 175, 133, 0.22);
-
-  animation: rmaOrbitTwo 11s linear infinite;
+  background: var(--ra-green-soft);
 }
 
-.remaker-auth-page .rma-orbit-three {
-  width: 620px;
-  height: 270px;
+.orbit-three {
+  width: 1020px;
+  height: 600px;
 
-  transform: rotate(-8deg);
+  transform: translate(-50%, -50%) rotate(-42deg);
 
-  border-color: rgba(90, 23, 25, 0.08);
+  opacity: 0.6;
 
-  animation: rmaOrbitThree 20s linear infinite;
+  animation: orbitFloat 22s linear infinite;
+}
+
+.orbit-three span {
+  bottom: 13%;
+  right: -4px;
+
+  background: var(--ra-mint);
+}
+
+@keyframes orbitFloat {
+  from {
+    transform: translate(-50%, -50%) rotate(-18deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(342deg);
+  }
+}
+
+@keyframes orbitFloatReverse {
+  from {
+    transform: translate(-50%, -50%) rotate(22deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(-338deg);
+  }
 }
 
 /* =========================================================
-   DOTS
+   ORBIT CORE
 ========================================================= */
 
-.remaker-auth-page .rma-orbit-dot {
+.remaker-orbit-core {
   position: absolute;
 
-  width: 9px;
-  height: 9px;
-
-  border-radius: 50%;
-
-  background: var(--rma-maroon);
-
-  box-shadow: 0 0 22px 7px rgba(90, 23, 25, 0.25);
-}
-
-.remaker-auth-page .rma-orbit-one .rma-orbit-dot {
   left: 50%;
-  top: -5px;
-}
-
-.remaker-auth-page .rma-orbit-two .rma-orbit-dot {
-  right: 8%;
   top: 50%;
 
-  width: 7px;
-  height: 7px;
-
-  background: var(--rma-leaf);
-}
-
-/* =========================================================
-   CORE
-========================================================= */
-
-.remaker-auth-page .rma-orbit-core {
-  position: absolute;
-
-  width: 100px;
-  height: 100px;
-
-  border-radius: 50%;
+  width: 120px;
+  height: 120px;
 
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
-  background: rgba(232, 238, 233, 0.86);
+  border-radius: 50%;
 
-  border: 1px solid rgba(90, 23, 25, 0.17);
+  background: radial-gradient(circle at 35% 30%, #ffffff, #e4ece8);
 
-  box-shadow: 0 0 70px rgba(90, 23, 25, 0.1);
+  border: 1px solid rgba(8, 39, 31, 0.12);
+
+  box-shadow:
+    0 20px 50px rgba(39, 8, 9, 0.08),
+    inset 0 0 30px rgba(71, 100, 90, 0.08);
+
+  transform: translate(-50%, -50%);
 
   z-index: 1;
-
-  pointer-events: none;
 }
 
-.remaker-auth-page .rma-orbit-core span {
-  color: var(--rma-maroon);
+.remaker-orbit-core::before {
+  content: "";
 
-  font-size: 12px;
+  position: absolute;
 
-  font-weight: 900;
+  inset: -9px;
 
-  letter-spacing: -0.04em;
+  border: 1px solid rgba(39, 8, 9, 0.08);
+
+  border-radius: 50%;
+}
+
+.remaker-orbit-core span {
+  color: var(--ra-green);
+
+  font-family: var(--font-display);
+
+  font-size: 0.85rem;
+
+  font-weight: 700;
+
+  letter-spacing: -0.03em;
 }
 
 /* =========================================================
-   CARD
+   AUTH CARD
 ========================================================= */
 
-.remaker-auth-page .rma-card {
+.remaker-auth-card {
   position: relative;
 
-  z-index: 5;
+  z-index: 10;
 
-  width: min(440px, calc(100% - 40px));
+  width: min(440px, calc(100vw - 32px));
 
-  padding: 38px;
+  padding: 34px 36px 25px;
 
-  border-radius: 26px;
+  border-radius: 28px;
 
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.96),
-    rgba(250, 249, 247, 0.86)
-  );
+  background: rgba(255, 255, 255, 0.94);
 
-  border: 1px solid rgba(90, 23, 25, 0.13);
-
-  backdrop-filter: blur(24px);
+  border: 1px solid rgba(193, 200, 196, 0.9);
 
   box-shadow:
-    0 35px 100px rgba(59, 16, 17, 0.13),
-    0 0 55px rgba(90, 23, 25, 0.07);
+    0 30px 80px rgba(39, 8, 9, 0.12),
+    0 8px 25px rgba(8, 39, 31, 0.05);
 
-  animation: rmaCardEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  backdrop-filter: blur(18px);
+
+  animation: authCardEnter 0.55s ease both;
+}
+
+@keyframes authCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* =========================================================
    LOGO
 ========================================================= */
 
-.remaker-auth-page .rma-logo {
+.remaker-auth-logo {
   display: flex;
 
   align-items: center;
 
-  justify-content: center;
+  gap: 9px;
 
-  gap: 8px;
+  margin-bottom: 30px;
 
-  margin-bottom: 27px;
+  color: var(--ra-green);
 
-  color: var(--rma-green);
+  font-family: var(--font-display);
 
-  font-size: 22px;
+  font-size: 1.3rem;
 
-  font-weight: 900;
+  font-weight: 700;
 
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
 }
 
-.remaker-auth-page .rma-logo-dot {
-  width: 8px;
-  height: 8px;
+.remaker-logo-mark {
+  width: 32px;
+  height: 32px;
 
-  border-radius: 50%;
+  display: flex;
 
-  background: var(--rma-maroon);
+  align-items: center;
+  justify-content: center;
 
-  box-shadow: 0 0 15px rgba(90, 23, 25, 0.4);
+  border-radius: 10px;
+
+  background: var(--ra-green);
+
+  color: var(--ra-mint-light);
+}
+
+.remaker-logo-mark .material-symbols-outlined {
+  font-size: 19px;
 }
 
 /* =========================================================
    HEADING
 ========================================================= */
 
-.remaker-auth-page .rma-eyebrow {
-  font-size: 10px;
-
-  letter-spacing: 0.17em;
-
-  color: var(--rma-maroon);
-
-  font-weight: 800;
+.remaker-auth-heading {
+  margin-bottom: 25px;
 }
 
-.remaker-auth-page .rma-heading h1 {
-  margin: 7px 0;
+.remaker-auth-eyebrow {
+  display: inline-block;
 
-  color: var(--rma-green);
+  margin-bottom: 10px;
+
+  color: var(--ra-green-soft);
+
+  font-size: 0.62rem;
+
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+}
+
+.remaker-auth-heading h1 {
+  margin: 0 0 10px;
+
+  color: var(--ra-maroon);
 
   font-family: var(--font-display);
 
-  font-size: 34px;
+  font-size: 2.35rem;
 
-  line-height: 1.05;
+  line-height: 1;
 
-  letter-spacing: -0.055em;
+  letter-spacing: -0.05em;
 }
 
-.remaker-auth-page .rma-heading p {
-  margin: 0 0 25px;
+.remaker-auth-heading p {
+  margin: 0;
 
-  color: var(--rma-muted);
+  color: var(--ra-muted);
 
-  font-size: 13px;
+  font-size: 0.78rem;
 
   line-height: 1.65;
 }
 
-/* =========================================================
-   FIELDS
-========================================================= */
+.remaker-auth-heading p strong {
+  display: inline-block;
 
-.remaker-auth-page .rma-field {
-  margin-bottom: 15px;
+  margin-left: 4px;
+
+  color: var(--ra-green);
 }
 
-.remaker-auth-page .rma-field label {
-  display: block;
+/* =========================================================
+   FORM
+========================================================= */
 
-  margin-bottom: 7px;
+.remaker-auth-form {
+  display: flex;
 
-  color: var(--rma-text);
+  flex-direction: column;
 
-  font-size: 11px;
+  gap: 15px;
+}
+
+.remaker-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.remaker-field label {
+  color: var(--ra-green);
+
+  font-size: 0.7rem;
 
   font-weight: 700;
 }
 
-.remaker-auth-page .rma-field input {
+.remaker-field input {
   width: 100%;
 
-  padding: 13px 14px;
+  height: 48px;
 
-  border-radius: 11px;
+  padding: 0 14px;
 
-  border: 1px solid rgba(90, 23, 25, 0.13);
+  border: 1px solid var(--ra-border);
+
+  border-radius: 12px;
+
+  background: #fafbf9;
+
+  color: var(--ra-text);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.8rem;
 
   outline: none;
 
-  background: rgba(250, 249, 247, 0.9);
-
-  color: var(--rma-text);
-
-  font-size: 14px;
-
   transition:
-    border-color 0.25s,
-    box-shadow 0.25s,
-    transform 0.25s;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
-.remaker-auth-page .rma-field input::placeholder {
-  color: #9ba19c;
+.remaker-field input::placeholder {
+  color: #a4aaa7;
 }
 
-.remaker-auth-page .rma-field input:focus {
-  border-color: var(--rma-maroon);
-
-  box-shadow:
-    0 0 0 4px rgba(90, 23, 25, 0.08),
-    0 0 20px rgba(90, 23, 25, 0.06);
-
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   REGISTER FIELD ANIMATION
-========================================================= */
-
-.remaker-auth-page .rma-register-field {
-  opacity: 0;
-
-  max-height: 0;
-
-  overflow: hidden;
-
-  margin: 0;
-
-  transform: translateY(-10px);
-
-  transition:
-    opacity 0.35s ease,
-    max-height 0.45s ease,
-    transform 0.45s ease,
-    margin 0.45s ease;
-}
-
-.remaker-auth-page .rma-register-field.rma-field-visible {
-  opacity: 1;
-
-  max-height: 90px;
-
-  margin-bottom: 15px;
-
-  transform: translateY(0);
-}
-
-/* =========================================================
-   PASSWORD
-========================================================= */
-
-.remaker-auth-page .rma-password-wrapper {
-  position: relative;
-}
-
-.remaker-auth-page .rma-password-wrapper input {
-  padding-right: 65px;
-}
-
-.remaker-auth-page .rma-password-toggle {
-  position: absolute;
-
-  right: 6px;
-  top: 5px;
-
-  border: none;
-
-  background: transparent;
-
-  color: var(--rma-muted);
-
-  font-size: 11px;
-
-  padding: 8px;
-
-  cursor: pointer;
-}
-
-.remaker-auth-page .rma-password-toggle:hover {
-  color: var(--rma-maroon);
-}
-
-/* =========================================================
-   OPTIONS
-========================================================= */
-
-.remaker-auth-page .rma-options {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 10px;
-
-  margin: 5px 0 18px;
-
-  font-size: 11px;
-}
-
-.remaker-auth-page .rma-remember {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  color: var(--rma-muted);
-
-  cursor: pointer;
-}
-
-.remaker-auth-page .rma-remember input {
-  position: absolute;
-
-  opacity: 0;
-
-  pointer-events: none;
-}
-
-.remaker-auth-page .rma-checkbox {
-  width: 16px;
-  height: 16px;
-
-  border-radius: 5px;
-
-  border: 1px solid rgba(90, 23, 25, 0.2);
+.remaker-field input:focus {
+  border-color: var(--ra-green-soft);
 
   background: white;
 
-  position: relative;
-
-  transition: 0.2s;
+  box-shadow: 0 0 0 3px rgba(71, 100, 90, 0.09);
 }
 
-.remaker-auth-page .rma-remember input:checked + .rma-checkbox {
-  background: var(--rma-maroon);
+.remaker-field input[readonly] {
+  background: #eef2ef;
 
-  border-color: var(--rma-maroon);
-}
-
-.remaker-auth-page .rma-remember input:checked + .rma-checkbox::after {
-  content: "✓";
-
-  position: absolute;
-
-  left: 3px;
-  top: -1px;
-
-  color: white;
-
-  font-size: 11px;
-
-  font-weight: 900;
-}
-
-.remaker-auth-page .rma-forgot {
-  border: none;
-
-  background: none;
-
-  color: var(--rma-maroon);
-
-  cursor: pointer;
-
-  font-size: 11px;
-
-  padding: 4px;
-}
-
-.remaker-auth-page .rma-forgot:hover {
-  color: var(--rma-green);
-}
-
-/* =========================================================
-   TERMS
-========================================================= */
-
-.remaker-auth-page .rma-terms {
-  display: flex;
-
-  align-items: flex-start;
-
-  gap: 8px;
-
-  margin: 3px 0 18px;
-
-  color: var(--rma-muted);
-
-  font-size: 11px;
-
-  line-height: 1.5;
-}
-
-.remaker-auth-page .rma-terms input {
-  margin-top: 2px;
-
-  accent-color: var(--rma-maroon);
-}
-
-.remaker-auth-page .rma-terms a {
-  color: var(--rma-maroon);
-
-  font-weight: 700;
-
-  text-decoration: none;
+  color: var(--ra-muted);
 }
 
 /* =========================================================
    SUBMIT
 ========================================================= */
 
-.remaker-auth-page .rma-submit {
+.remaker-submit {
   width: 100%;
 
-  padding: 14px;
+  min-height: 48px;
 
-  border: 1px solid rgba(90, 23, 25, 0.2);
+  margin-top: 4px;
 
-  border-radius: 11px;
+  display: flex;
 
-  background: linear-gradient(
-    135deg,
-    var(--rma-maroon),
-    var(--rma-maroon-dark)
-  );
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px solid var(--ra-maroon);
+
+  border-radius: 999px;
+
+  background: var(--ra-maroon);
 
   color: white;
 
-  font-weight: 900;
+  font-family: var(--font-sans);
+
+  font-size: 0.78rem;
+
+  font-weight: 700;
 
   cursor: pointer;
 
-  box-shadow: 0 10px 28px rgba(90, 23, 25, 0.18);
-
   transition:
-    transform 0.25s,
-    box-shadow 0.25s,
-    opacity 0.25s;
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.remaker-auth-page .rma-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
+.remaker-submit:hover:not(:disabled) {
+  background: #3b1011;
 
-  box-shadow: 0 14px 34px rgba(90, 23, 25, 0.28);
+  transform: translateY(-1px);
+
+  box-shadow: 0 8px 20px rgba(39, 8, 9, 0.14);
 }
 
-.remaker-auth-page .rma-submit:disabled {
-  opacity: 0.7;
+.remaker-submit:disabled {
+  cursor: not-allowed;
 
-  cursor: wait;
+  opacity: 0.65;
+}
+
+.remaker-submit .material-symbols-outlined {
+  font-size: 17px;
 }
 
 /* =========================================================
    DIVIDER
 ========================================================= */
 
-.remaker-auth-page .rma-divider {
+.remaker-divider {
   display: flex;
 
   align-items: center;
 
-  gap: 12px;
+  gap: 10px;
 
-  margin: 21px 0;
+  margin: 21px 0 15px;
 }
 
-.remaker-auth-page .rma-divider span {
+.remaker-divider span {
   flex: 1;
 
   height: 1px;
 
-  background: rgba(90, 23, 25, 0.1);
+  background: var(--ra-border);
 }
 
-.remaker-auth-page .rma-divider p {
+.remaker-divider p {
   margin: 0;
 
-  color: #929892;
+  color: #969d99;
 
-  font-size: 9px;
+  font-size: 0.58rem;
 
-  letter-spacing: 0.15em;
+  font-weight: 700;
 }
 
 /* =========================================================
    GOOGLE
 ========================================================= */
 
-.remaker-auth-page .rma-google {
+.remaker-google {
   width: 100%;
+
+  height: 46px;
 
   display: flex;
 
@@ -711,59 +648,323 @@
 
   justify-content: center;
 
-  gap: 10px;
+  gap: 9px;
 
-  padding: 13px;
+  border: 1px solid var(--ra-border);
 
-  border-radius: 11px;
+  border-radius: 999px;
 
-  border: 1px solid rgba(90, 23, 25, 0.13);
+  background: white;
 
-  background: rgba(255, 255, 255, 0.72);
+  color: var(--ra-green);
 
-  color: var(--rma-text);
+  font-family: var(--font-sans);
+
+  font-size: 0.75rem;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remaker-google:hover {
+  background: #f5f7f5;
+
+  border-color: var(--ra-green-soft);
+
+  transform: translateY(-1px);
+}
+
+.remaker-google:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+.google-letter {
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-family: Arial, sans-serif;
+
+  font-size: 0.85rem;
 
   font-weight: 700;
 
-  font-size: 13px;
+  color: #4285f4;
+}
+
+/* =========================================================
+   NOTE
+========================================================= */
+
+.remaker-auth-note {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 7px;
+
+  margin-top: 17px;
+
+  color: #8a928e;
+
+  font-size: 0.62rem;
+
+  line-height: 1.5;
+}
+
+.remaker-auth-note .material-symbols-outlined {
+  font-size: 15px;
+
+  color: var(--ra-green-soft);
+}
+
+/* =========================================================
+   OTP
+========================================================= */
+
+.remaker-otp {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 8px;
+
+  margin: 5px 0 5px;
+}
+
+.remaker-otp input {
+  width: 52px;
+  height: 58px;
+
+  border: 1px solid var(--ra-border);
+
+  border-radius: 13px;
+
+  background: #fafbf9;
+
+  color: var(--ra-maroon);
+
+  font-family: var(--font-display);
+
+  font-size: 1.25rem;
+
+  font-weight: 700;
+
+  text-align: center;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remaker-otp input:focus {
+  border-color: var(--ra-green-soft);
+
+  box-shadow: 0 0 0 3px rgba(71, 100, 90, 0.09);
+
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   RESEND
+========================================================= */
+
+.remaker-resend {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  margin-top: 17px;
+
+  font-size: 0.67rem;
+
+  color: var(--ra-muted);
+}
+
+.remaker-resend button {
+  border: 0;
+
+  padding: 0;
+
+  background: transparent;
+
+  color: var(--ra-maroon);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.67rem;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.remaker-resend button:disabled {
+  color: #a2a7a4;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   BACK LINK
+========================================================= */
+
+.remaker-back-link {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  margin: 17px auto 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--ra-muted);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.68rem;
 
   cursor: pointer;
 
-  transition: 0.25s;
+  transition: color 0.2s ease;
 }
 
-.remaker-auth-page .rma-google:hover {
-  background: white;
-
-  transform: translateY(-1px);
-
-  box-shadow: 0 8px 20px rgba(90, 23, 25, 0.07);
+.remaker-back-link:hover {
+  color: var(--ra-maroon);
 }
 
-.remaker-auth-page .rma-google-icon {
-  width: 20px;
-  height: 20px;
+.remaker-back-link .material-symbols-outlined {
+  font-size: 15px;
+}
 
-  display: grid;
+/* =========================================================
+   MESSAGE
+========================================================= */
 
-  place-items: center;
+.remaker-auth-message {
+  margin: 13px 0 0;
+
+  padding: 9px 11px;
+
+  border-radius: 9px;
+
+  background: #eef4f0;
+
+  color: var(--ra-green-soft);
+
+  font-size: 0.64rem;
+
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+/* =========================================================
+   CONFIRM
+========================================================= */
+
+.remaker-confirm-icon {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 20px;
 
   border-radius: 50%;
 
-  background: white;
+  background: #e5efe9;
 
-  color: #4285f4;
+  color: var(--ra-green);
+}
 
-  font-size: 13px;
+.remaker-confirm-icon .material-symbols-outlined {
+  font-size: 27px;
+}
 
-  font-weight: 900;
+.remaker-confirm-card {
+  margin: 20px 0;
+
+  padding: 5px 15px;
+
+  border: 1px solid var(--ra-border);
+
+  border-radius: 15px;
+
+  background: #f8faf8;
+}
+
+.remaker-confirm-card > div {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 12px 0;
+
+  border-bottom: 1px solid #e1e5e2;
+}
+
+.remaker-confirm-card > div:last-child {
+  border-bottom: 0;
+}
+
+.remaker-confirm-card span {
+  color: var(--ra-muted);
+
+  font-size: 0.64rem;
+}
+
+.remaker-confirm-card strong {
+  max-width: 220px;
+
+  overflow: hidden;
+
+  color: var(--ra-green);
+
+  font-size: 0.68rem;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 /* =========================================================
-   SWITCH
+   AUTH FOOTER
 ========================================================= */
 
-.remaker-auth-page .rma-switch {
+.remaker-auth-footer {
   display: flex;
 
   align-items: center;
@@ -772,226 +973,150 @@
 
   gap: 5px;
 
-  margin-top: 20px;
+  margin-top: 23px;
 
-  color: var(--rma-muted);
+  padding-top: 20px;
 
-  font-size: 12px;
+  border-top: 1px solid #e5e7e5;
+
+  color: var(--ra-muted);
+
+  font-size: 0.68rem;
 }
 
-.remaker-auth-page .rma-switch button {
-  border: none;
+.remaker-auth-footer button {
+  border: 0;
 
-  background: none;
+  padding: 0;
 
-  color: var(--rma-maroon);
+  background: transparent;
 
-  font-weight: 800;
+  color: var(--ra-maroon);
+
+  font-family: var(--font-sans);
+
+  font-size: 0.68rem;
+
+  font-weight: 700;
 
   cursor: pointer;
-
-  padding: 5px;
-}
-
-.remaker-auth-page .rma-switch button:hover {
-  color: var(--rma-green);
 }
 
 /* =========================================================
-   BACK
+   RESPONSIVE
 ========================================================= */
 
-.remaker-auth-page .rma-back {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 5px;
-
-  margin-top: 18px;
-
-  color: var(--rma-muted);
-
-  font-size: 11px;
-
-  text-decoration: none;
-}
-
-.remaker-auth-page .rma-back:hover {
-  color: var(--rma-maroon);
-}
-
-.remaker-auth-page .rma-back .material-symbols-outlined {
-  font-size: 16px;
-}
-
-/* =========================================================
-   ANIMATIONS
-========================================================= */
-
-@keyframes rmaOrbitOne {
-  to {
-    transform: rotate(335deg);
-  }
-}
-
-@keyframes rmaOrbitTwo {
-  to {
-    transform: rotate(-328deg);
-  }
-}
-
-@keyframes rmaOrbitThree {
-  to {
-    transform: rotate(352deg);
-  }
-}
-
-@keyframes rmaTwinkle {
-  0%,
-  100% {
-    opacity: 0.2;
-
-    transform: scale(0.7);
-  }
-
-  50% {
-    opacity: 0.8;
-
-    transform: scale(1.4);
-  }
-}
-
-@keyframes rmaCardEnter {
-  from {
-    opacity: 0;
-
-    transform: scale(0.9) translateY(15px);
-  }
-
-  to {
-    opacity: 1;
-
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 800px) {
-  .remaker-auth-page .rma-stage {
+@media (max-width: 900px) {
+  .remaker-orbit-stage {
     min-height: 650px;
   }
 
-  .remaker-auth-page .rma-orbit-one {
-    width: 470px;
-    height: 470px;
-  }
-
-  .remaker-auth-page .rma-orbit-two {
-    width: 350px;
-    height: 350px;
-  }
-
-  .remaker-auth-page .rma-orbit-three {
-    width: 540px;
-    height: 240px;
-  }
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 600px) {
-  .remaker-auth-page .rma-page {
-    min-height: auto;
-
-    padding: 95px 15px 45px;
-  }
-
-  .remaker-auth-page .rma-stage {
-    min-height: auto;
-
-    padding: 35px 0;
-  }
-
-  .remaker-auth-page .rma-card {
-    width: 100%;
-
-    padding: 28px 22px;
-
-    border-radius: 22px;
-  }
-
-  .remaker-auth-page .rma-heading h1 {
-    font-size: 29px;
-  }
-
-  .remaker-auth-page .rma-heading p {
-    font-size: 12px;
-  }
-
-  .remaker-auth-page .rma-orbit-one {
-    width: 390px;
+  .orbit-one {
+    width: 680px;
     height: 390px;
   }
 
-  .remaker-auth-page .rma-orbit-two {
-    width: 290px;
-    height: 290px;
+  .orbit-two {
+    width: 780px;
+    height: 450px;
   }
 
-  .remaker-auth-page .rma-orbit-three {
-    width: 450px;
-    height: 200px;
-  }
-
-  .remaker-auth-page .rma-orbit-core {
-    width: 75px;
-    height: 75px;
-  }
-
-  .remaker-auth-page .rma-orbit-core span {
-    font-size: 9px;
-  }
-
-  .remaker-auth-page .rma-options {
-    align-items: flex-start;
+  .orbit-three {
+    width: 880px;
+    height: 520px;
   }
 }
 
-/* =========================================================
-   SMALL PHONES
-========================================================= */
+@media (max-width: 650px) {
+  .remaker-auth-main {
+    min-height: auto;
 
-@media (max-width: 380px) {
-  .remaker-auth-page .rma-card {
-    padding: 24px 18px;
+    padding: 115px 16px 75px;
   }
 
-  .remaker-auth-page .rma-heading h1 {
-    font-size: 26px;
+  .remaker-orbit-stage {
+    min-height: 650px;
   }
 
-  .remaker-auth-page .rma-options {
-    flex-direction: column;
-
-    align-items: flex-start;
+  .remaker-orbit {
+    opacity: 0.45;
   }
 
-  .remaker-auth-page .rma-orbit-one {
-    width: 330px;
-    height: 330px;
+  .orbit-one {
+    width: 500px;
+    height: 300px;
   }
 
-  .remaker-auth-page .rma-orbit-two {
-    width: 250px;
-    height: 250px;
+  .orbit-two {
+    width: 590px;
+    height: 350px;
+  }
+
+  .orbit-three {
+    width: 670px;
+    height: 410px;
+  }
+
+  .remaker-orbit-core {
+    width: 90px;
+    height: 90px;
+  }
+
+  .remaker-orbit-core span {
+    font-size: 0.7rem;
+  }
+
+  .remaker-auth-card {
+    padding: 28px 23px 22px;
+
+    border-radius: 23px;
+  }
+
+  .remaker-auth-logo {
+    margin-bottom: 24px;
+  }
+
+  .remaker-auth-heading h1 {
+    font-size: 2rem;
+  }
+
+  .remaker-otp {
+    gap: 6px;
+  }
+
+  .remaker-otp input {
+    width: 45px;
+    height: 53px;
+  }
+}
+
+@media (max-width: 430px) {
+  .remaker-auth-main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .remaker-auth-card {
+    width: 100%;
+
+    padding: 25px 18px 20px;
+  }
+
+  .remaker-auth-heading h1 {
+    font-size: 1.85rem;
+  }
+
+  .remaker-otp {
+    gap: 4px;
+  }
+
+  .remaker-otp input {
+    width: 41px;
+    height: 50px;
+  }
+
+  .remaker-auth-footer {
+    flex-wrap: wrap;
   }
 }
 
@@ -1004,9 +1129,7 @@
   .remaker-auth-page *::before,
   .remaker-auth-page *::after {
     animation-duration: 0.01ms !important;
-
     animation-iteration-count: 1 !important;
-
     transition-duration: 0.01ms !important;
   }
 }
