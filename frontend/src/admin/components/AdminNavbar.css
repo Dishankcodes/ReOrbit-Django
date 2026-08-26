@@ -1,207 +1,718 @@
-/* All rules scoped strictly to .admin-scope */
-.admin-scope .container {
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 0 24px;
+/* =========================================================
+   REORBIT ADMIN NAVBAR
+   Dark / Premium / Control Center
+   Everything scoped to .admin-scope
+========================================================= */
+
+.admin-scope {
+  --nav-bg: rgba(5, 22, 17, 0.88);
+  --nav-bg-solid: #061b16;
+
+  --nav-surface: #0a251d;
+  --nav-surface-light: #0d3026;
+
+  --nav-accent: #afcfc2;
+  --nav-accent-light: #c5ded5;
+  --nav-accent-dark: #7fa99a;
+
+  --nav-text: #edf3ef;
+  --nav-muted: #8d9c96;
+
+  --nav-border: rgba(175, 207, 194, 0.14);
+  --nav-border-strong: rgba(175, 207, 194, 0.25);
 }
 
-.admin-scope .navbar {
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.admin-scope .admin-navbar {
   position: fixed;
+
   top: 0;
   left: 0;
+
   width: 100%;
-  height: 64px;
+  height: 76px;
+
   z-index: 1000;
-  background: #c1c8c4;
-  border-bottom: 1px solid rgba(8, 39, 31, 0.1);
+
+  background: var(--nav-bg);
+
+  border-bottom: 1px solid var(--nav-border);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
   transition:
+    background 0.25s ease,
     box-shadow 0.25s ease,
-    background 0.25s ease;
-  font-family: "Plus Jakarta Sans", sans-serif;
+    border-color 0.25s ease;
 }
 
-.admin-scope .navbar-scrolled {
-  background: #b6c0bb;
-  box-shadow: 0 4px 20px rgba(8, 39, 31, 0.12);
+.admin-scope .admin-navbar-scrolled {
+  background: rgba(4, 17, 13, 0.96);
+
+  border-bottom-color: var(--nav-border-strong);
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
 }
 
-.admin-scope .navbar-inner {
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.admin-scope .admin-navbar-container {
+  width: min(1280px, calc(100% - 80px));
+
   height: 100%;
+
+  margin: 0 auto;
+
   display: flex;
+
   align-items: center;
   justify-content: space-between;
 }
 
-/* Logo */
-.admin-scope .navbar-brand {
-  text-decoration: none;
+/* =========================================================
+   BRAND
+========================================================= */
+
+.admin-scope .admin-navbar-brand {
   display: flex;
+
   align-items: center;
-}
 
-.admin-scope .logo-box {
-  border: 2px solid #08271f;
-  padding: 2px 8px;
-  display: inline-block;
-  border-radius: 4px;
-}
+  gap: 11px;
 
-.admin-scope .logo-text {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 20px;
-  font-weight: 800;
-  color: #08271f;
-  letter-spacing: -0.02em;
+  color: var(--nav-text);
+
+  text-decoration: none;
+
+  flex-shrink: 0;
 }
 
 /* =========================================================
-   ADMIN NAVIGATION LINKS
-   NO ACTIVE PAGE STATE
-   ONLY HOVER UNDERLINE
+   LOGO MARK
 ========================================================= */
 
-.admin-navbar-links {
-  display: flex;
-  align-items: center;
-  gap: 2.4rem;
-}
-
-.admin-navbar-links a {
+.admin-scope .admin-logo-mark {
   position: relative;
 
-  color: var(--admin-text);
+  width: 32px;
+  height: 32px;
 
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  font-weight: 500;
+  display: flex;
 
-  padding: 0.3rem 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-scope .admin-logo-core {
+  position: relative;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: var(--nav-accent);
+
+  box-shadow: 0 0 15px rgba(175, 207, 194, 0.5);
+}
+
+.admin-scope .admin-logo-orbit {
+  position: absolute;
+
+  width: 27px;
+  height: 12px;
+
+  border: 1px solid var(--nav-accent);
+
+  border-radius: 50%;
+
+  opacity: 0.85;
+}
+
+.admin-scope .orbit-a {
+  transform: rotate(45deg);
+}
+
+.admin-scope .orbit-b {
+  transform: rotate(-45deg);
+}
+
+/* =========================================================
+   BRAND TEXT
+========================================================= */
+
+.admin-scope .admin-brand-text {
+  display: flex;
+
+  align-items: baseline;
+
+  gap: 8px;
+}
+
+.admin-scope .admin-brand-name {
+  color: var(--nav-text);
+
+  font-family: "Bricolage Grotesque", sans-serif;
+
+  font-size: 1.18rem;
+
+  font-weight: 600;
+
+  letter-spacing: -0.035em;
+}
+
+.admin-scope .admin-brand-label {
+  color: var(--nav-accent-dark);
+
+  font-size: 0.48rem;
+
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+}
+
+/* =========================================================
+   DESKTOP LINKS
+========================================================= */
+
+.admin-scope .admin-navbar-links {
+  position: absolute;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  height: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+.admin-scope .admin-navbar-links a {
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  height: 100%;
+
+  padding: 0 15px;
+
+  color: var(--nav-muted);
+
+  font-family: "Plus Jakarta Sans", sans-serif;
+
+  font-size: 0.73rem;
+
+  font-weight: 600;
 
   text-decoration: none;
 
   white-space: nowrap;
 
-  transition: color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
-/* =========================================================
-   REMOVE ACTIVE / CURRENT PAGE STYLING
-========================================================= */
-
-.admin-navbar-links a.active,
-.admin-navbar-links a.active::after,
-.admin-navbar-links a[aria-current="page"],
-.admin-navbar-links a[aria-current="page"]::after {
-  color: var(--admin-text);
-
-  width: 0;
-
-  background: transparent;
-}
-
-/* =========================================================
-   HOVER ONLY
-========================================================= */
-
-.admin-navbar-links a::after {
+.admin-scope .admin-navbar-links a::after {
   content: "";
 
   position: absolute;
 
-  left: 0;
-  bottom: -4px;
+  left: 15px;
+  right: 15px;
 
-  width: 0;
-  height: 1.5px;
+  bottom: 18px;
 
-  background: var(--admin-green);
+  height: 1px;
 
-  transition: width 0.2s ease;
+  background: var(--nav-accent);
+
+  transform: scaleX(0);
+
+  transform-origin: center;
+
+  transition: transform 0.22s ease;
 }
 
-.admin-navbar-links a:hover {
-  color: var(--admin-green);
+.admin-scope .admin-navbar-links a:hover {
+  color: var(--nav-text);
 }
 
-.admin-navbar-links a:hover::after {
-  width: 100%;
+.admin-scope .admin-navbar-links a:hover::after {
+  transform: scaleX(1);
 }
-/* Actions */
-.admin-scope .navbar-actions {
+
+/* =========================================================
+   RIGHT ACTIONS
+========================================================= */
+
+.admin-scope .admin-navbar-actions {
   display: flex;
+
   align-items: center;
+
+  gap: 16px;
 }
 
-.admin-scope .admin-login-btn {
-  color: #08271f;
-  font-weight: 600;
-  font-size: 0.9rem;
+/* =========================================================
+   SYSTEM STATUS
+========================================================= */
+
+.admin-scope .admin-system-status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: var(--nav-muted);
+
+  font-size: 0.57rem;
+
+  font-weight: 750;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+.admin-scope .admin-status-dot {
+  width: 6px;
+  height: 6px;
+
+  display: inline-block;
+
+  border-radius: 50%;
+
+  background: var(--nav-accent);
+
+  box-shadow: 0 0 10px rgba(175, 207, 194, 0.55);
+}
+
+/* =========================================================
+   LOGIN BUTTON
+========================================================= */
+
+.admin-scope .admin-navbar-login {
+  min-height: 39px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 15px;
+
+  border: 1px solid var(--nav-border-strong);
+
+  border-radius: 999px;
+
+  background: rgba(175, 207, 194, 0.06);
+
+  color: var(--nav-accent);
+
+  font-size: 0.68rem;
+
+  font-weight: 750;
+
   text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: background-color 0.2s ease;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.admin-scope .admin-login-btn:hover {
-  background-color: rgba(8, 39, 31, 0.08);
+.admin-scope .admin-navbar-login:hover {
+  transform: translateY(-1px);
+
+  background: var(--nav-accent);
+
+  border-color: var(--nav-accent);
+
+  color: var(--nav-bg-solid);
 }
 
-/* Mobile Toggle */
-.admin-scope .navbar-menu {
+.admin-scope .admin-navbar-login .material-symbols-outlined {
+  font-size: 16px;
+
+  transition: transform 0.2s ease;
+}
+
+.admin-scope .admin-navbar-login:hover .material-symbols-outlined {
+  transform: translateX(2px);
+}
+
+/* =========================================================
+   MOBILE BUTTON
+========================================================= */
+
+.admin-scope .admin-navbar-menu {
   display: none;
-  border: 0;
-  background: transparent;
-  color: #08271f;
+
+  width: 40px;
+  height: 40px;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid var(--nav-border-strong);
+
+  border-radius: 12px;
+
+  background: rgba(175, 207, 194, 0.05);
+
+  color: var(--nav-accent);
+
   cursor: pointer;
-  padding: 0.35rem;
 }
 
-.admin-scope .menu-icon {
-  font-size: 24px;
-  font-weight: bold;
+.admin-scope .admin-navbar-menu .material-symbols-outlined {
+  font-size: 21px;
 }
 
-/* Mobile Responsive */
-@media (max-width: 850px) {
-  .admin-scope .navbar-actions {
+/* =========================================================
+   MOBILE MENU
+========================================================= */
+
+.admin-scope .admin-mobile-menu {
+  position: absolute;
+
+  top: calc(100% + 10px);
+
+  left: 16px;
+  right: 16px;
+
+  display: none;
+
+  border: 1px solid var(--nav-border-strong);
+
+  border-radius: 18px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(13, 48, 38, 0.98),
+    rgba(5, 22, 17, 0.98)
+  );
+
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.35);
+
+  overflow: hidden;
+}
+
+.admin-scope .admin-mobile-menu-open {
+  display: block;
+
+  animation: adminMenuIn 0.2s ease forwards;
+}
+
+@keyframes adminMenuIn {
+  from {
+    opacity: 0;
+
+    transform: translateY(-7px);
+  }
+
+  to {
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+.admin-scope .admin-mobile-menu-inner {
+  padding: 18px;
+}
+
+/* =========================================================
+   MOBILE HEADER
+========================================================= */
+
+.admin-scope .admin-mobile-menu-heading {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 4px 4px 17px;
+
+  border-bottom: 1px solid var(--nav-border);
+}
+
+.admin-scope .admin-mobile-menu-heading > div:first-child {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.admin-scope .admin-mobile-menu-heading span {
+  color: var(--nav-muted);
+
+  font-size: 0.48rem;
+
+  font-weight: 850;
+
+  letter-spacing: 0.14em;
+}
+
+.admin-scope .admin-mobile-menu-heading strong {
+  color: var(--nav-text);
+
+  font-family: "Bricolage Grotesque", sans-serif;
+
+  font-size: 0.86rem;
+
+  font-weight: 600;
+}
+
+.admin-scope .admin-mobile-status {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  color: var(--nav-accent);
+
+  font-size: 0.49rem;
+
+  font-weight: 850;
+
+  letter-spacing: 0.08em;
+}
+
+/* =========================================================
+   MOBILE LINKS
+========================================================= */
+
+.admin-scope .admin-mobile-links {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 13px 0;
+}
+
+.admin-scope .admin-mobile-links a {
+  display: grid;
+
+  grid-template-columns: 36px 1fr auto;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 12px;
+
+  border: 1px solid transparent;
+
+  border-radius: 12px;
+
+  color: var(--nav-soft);
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-scope .admin-mobile-links a:hover {
+  background: rgba(175, 207, 194, 0.06);
+
+  border-color: var(--nav-border);
+}
+
+.admin-scope .admin-mobile-links a > .material-symbols-outlined:first-child {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: rgba(175, 207, 194, 0.07);
+
+  color: var(--nav-accent);
+
+  font-size: 18px;
+}
+
+.admin-scope .admin-mobile-links a > span:nth-child(2) {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.admin-scope .admin-mobile-links strong {
+  color: var(--nav-text);
+
+  font-size: 0.7rem;
+}
+
+.admin-scope .admin-mobile-links small {
+  color: var(--nav-muted);
+
+  font-size: 0.53rem;
+}
+
+.admin-scope .admin-mobile-links .arrow {
+  color: var(--nav-accent-dark);
+
+  font-size: 17px;
+}
+
+/* =========================================================
+   MOBILE LOGIN
+========================================================= */
+
+.admin-scope .admin-mobile-login {
+  min-height: 46px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border-radius: 12px;
+
+  background: var(--nav-accent);
+
+  color: var(--nav-bg-solid);
+
+  font-size: 0.7rem;
+
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+.admin-scope .admin-mobile-login .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+  .admin-scope .admin-navbar-container {
+    width: min(100%, calc(100% - 50px));
+  }
+
+  .admin-scope .admin-navbar-links {
+    gap: 0;
+  }
+
+  .admin-scope .admin-navbar-links a {
+    padding: 0 10px;
+
+    font-size: 0.68rem;
+  }
+
+  .admin-scope .admin-navbar-links a::after {
+    left: 10px;
+    right: 10px;
+  }
+
+  .admin-scope .admin-system-status {
+    display: none;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 800px) {
+  .admin-scope .admin-navbar {
+    height: 68px;
+  }
+
+  .admin-scope .admin-navbar-container {
+    width: calc(100% - 28px);
+  }
+
+  .admin-scope .admin-navbar-links,
+  .admin-scope .admin-navbar-actions {
     display: none;
   }
 
-  .admin-scope .navbar-menu {
-    display: block;
-  }
-
-  .admin-scope .navbar-links {
-    display: none;
-    position: absolute;
-    top: 64px;
-    left: 16px;
-    right: 16px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.25rem;
-    padding: 1rem;
-    background: #adcec1;
-    border: 1px solid #08271f;
-    border-radius: 1rem;
-    box-shadow: 0 12px 35px rgba(8, 39, 31, 0.2);
-  }
-
-  .admin-scope .navbar-links-open {
+  .admin-scope .admin-navbar-menu {
     display: flex;
   }
 
-  .admin-scope .navbar-links a {
-    padding: 0.8rem 1rem;
-    border-radius: 0.5rem;
-    color: #08271f;
-  }
-
-  .admin-scope .navbar-links a:hover {
-    background: rgba(8, 39, 31, 0.08);
-  }
-
-  .admin-scope .navbar-links a::after {
+  .admin-scope .admin-brand-label {
     display: none;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+  .admin-scope .admin-brand-name {
+    font-size: 1.05rem;
+  }
+
+  .admin-scope .admin-logo-mark {
+    width: 29px;
+    height: 29px;
+  }
+
+  .admin-scope .admin-logo-orbit {
+    width: 24px;
+    height: 11px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.admin-scope a:focus-visible,
+.admin-scope button:focus-visible {
+  outline: 2px solid var(--nav-accent);
+
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-scope *,
+  .admin-scope *::before,
+  .admin-scope *::after {
+    transition-duration: 0.01ms !important;
+
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
   }
 }

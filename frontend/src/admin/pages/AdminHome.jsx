@@ -5,57 +5,61 @@ import "../css/Home.css";
 
 const managementItems = [
   {
-    icon: "👥",
+    icon: "group",
     title: "Manage Users",
-    text: "Review user activity, listings, donations and account status from one place.",
+    text: "Review user accounts, listings, donations, activity and account status from one place.",
   },
   {
-    icon: "🛠",
+    icon: "handyman",
     title: "Manage ReMakers",
-    text: "Verify ReMakers, monitor their work, manage profiles and oversee their activity.",
+    text: "Review ReMaker profiles, verify creators, monitor their activity and manage their marketplace presence.",
   },
   {
-    icon: "📦",
+    icon: "inventory_2",
     title: "Manage Products",
-    text: "Track submitted items, refurbished products, marketplace listings and inventory.",
+    text: "Review user listings and ReMaker creations while keeping marketplace information accurate and organized.",
   },
   {
-    icon: "💳",
+    icon: "payments",
     title: "Transactions",
-    text: "Monitor purchases, donations, payments and other platform transactions.",
+    text: "Monitor purchases, payments, order activity and transaction records across the platform.",
   },
   {
-    icon: "🏭",
-    title: "Warehouse",
-    text: "Keep track of rescued items, storage, refurbishment status and items ready for circulation.",
+    icon: "volunteer_activism",
+    title: "Donations",
+    text: "Oversee donated items and manage their status throughout the ReOrbit donation process.",
   },
   {
-    icon: "📊",
+    icon: "analytics",
     title: "Reports & Insights",
-    text: "Review platform performance, environmental impact, transactions and user activity.",
+    text: "Review platform activity, users, products, transactions and other operational insights.",
   },
 ];
 
 const responsibilities = [
   {
     number: "01",
+    icon: "verified_user",
     title: "Verify & moderate",
-    text: "Review users, ReMakers, listings and submitted products to keep the ReOrbit ecosystem trusted.",
+    text: "Review users, ReMakers, listings and submitted products to help maintain a trusted ReOrbit ecosystem.",
   },
   {
     number: "02",
-    title: "Track every item",
-    text: "Follow an item's journey from submission and pickup through refurbishment, listing and its next owner.",
+    icon: "inventory",
+    title: "Manage listings",
+    text: "Monitor items submitted by users and products created by ReMakers before and after they appear in the marketplace.",
   },
   {
     number: "03",
-    title: "Coordinate operations",
-    text: "Manage warehouse inventory, pickups, refurbishment workflows and movement of materials.",
+    icon: "receipt_long",
+    title: "Track transactions",
+    text: "Keep purchases, payments and order-related activity organized and visible to the administration team.",
   },
   {
     number: "04",
-    title: "Measure impact",
-    text: "Use reports and analytics to understand platform activity, transactions and circular impact.",
+    icon: "monitoring",
+    title: "Measure activity",
+    text: "Use reports and platform insights to understand users, listings, ReMakers, transactions and overall activity.",
   },
 ];
 
@@ -74,13 +78,14 @@ export default function AdminHome() {
             <span className="hero-badge">REORBIT MANAGEMENT</span>
 
             <h1 className="hero-title">
-              Keeping the <span className="font-bricolage">ReOrbit</span>{" "}
-              moving.
+              Manage the <span className="font-bricolage">ReOrbit</span>{" "}
+              ecosystem.
             </h1>
 
             <p className="hero-description">
-              The central management system for coordinating users, ReMakers,
-              products, transactions and the journey of every rescued object.
+              A central administration system for managing users, ReMakers,
+              marketplace listings, products, donations, transactions and
+              platform activity.
             </p>
 
             <div className="hero-actions">
@@ -88,7 +93,7 @@ export default function AdminHome() {
                 Admin Login
               </a>
 
-              <a href="/admin/how-it-works" className="btn-secondary">
+              <a href="/admin-how-it-works" className="btn-secondary">
                 How it works
               </a>
             </div>
@@ -98,22 +103,26 @@ export default function AdminHome() {
             <div className="hero-image-wrapper">
               <img
                 src="https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&q=80&w=800"
-                alt="ReOrbit management workspace"
+                alt="ReOrbit administration workspace"
                 className="hero-img"
               />
 
               <div className="overlay-badge top-right">
-                <span className="badge-icon">♻</span>
+                <span className="material-symbols-outlined badge-icon">
+                  inventory_2
+                </span>
 
                 <div>
                   <div className="badge-value">8,921</div>
 
-                  <div className="badge-label">ITEMS REUSED</div>
+                  <div className="badge-label">ITEMS LISTED</div>
                 </div>
               </div>
 
               <div className="overlay-badge bottom-left">
-                <span className="badge-icon">👥</span>
+                <span className="material-symbols-outlined badge-icon">
+                  handyman
+                </span>
 
                 <div>
                   <div className="badge-value">48</div>
@@ -126,91 +135,135 @@ export default function AdminHome() {
         </section>
 
         {/* =================================================
-            PROCESS
+            PLATFORM FLOW
         ================================================= */}
 
         <section className="process-section">
           <h3 className="process-title">
-            One platform. Every stage of the journey.
+            One platform. Multiple sides of the ecosystem.
           </h3>
 
           <div className="process-steps">
-            <span className="step-pill">Users</span>
+            <span className="step-pill">
+              <span className="material-symbols-outlined">group</span>
+              Users
+            </span>
 
-            <span className="arrow">➔</span>
+            <span className="arrow material-symbols-outlined">
+              arrow_forward
+            </span>
 
-            <span className="step-pill">Items</span>
+            <span className="step-pill">
+              <span className="material-symbols-outlined">inventory_2</span>
+              Listings
+            </span>
 
-            <span className="arrow">➔</span>
+            <span className="arrow material-symbols-outlined">
+              arrow_forward
+            </span>
 
-            <span className="step-pill">ReMakers</span>
+            <span className="step-pill">
+              <span className="material-symbols-outlined">handyman</span>
+              ReMakers
+            </span>
 
-            <span className="arrow">➔</span>
+            <span className="arrow material-symbols-outlined">
+              arrow_forward
+            </span>
 
-            <span className="step-pill">Refurbishment</span>
+            <span className="step-pill">
+              <span className="material-symbols-outlined">shopping_bag</span>
+              Marketplace
+            </span>
 
-            <span className="arrow">➔</span>
+            <span className="arrow material-symbols-outlined">
+              arrow_forward
+            </span>
 
-            <span className="step-pill">Warehouse</span>
-
-            <span className="arrow">➔</span>
-
-            <span className="step-pill">New Owners</span>
+            <span className="step-pill">
+              <span className="material-symbols-outlined">payments</span>
+              Transactions
+            </span>
           </div>
         </section>
 
         {/* =================================================
-            OVERVIEW
+            ADMIN CONTROL CENTER
         ================================================= */}
 
         <section className="overview-section">
           <div className="section-heading">
             <span className="section-label">ADMIN CONTROL CENTER</span>
 
-            <h2>Everything that keeps ReOrbit running.</h2>
+            <h2>Everything the administration team needs to manage.</h2>
 
             <p>
-              Admins coordinate the people, products and processes that keep
-              items moving through their second orbit.
+              ReOrbit brings the major parts of the platform together so
+              administrators can monitor activity, review records and keep the
+              marketplace organized.
             </p>
           </div>
 
           <div className="management-grid">
             {managementItems.map((item) => (
               <article className="management-card" key={item.title}>
-                <div className="management-icon">{item.icon}</div>
+                <div className="management-icon">
+                  <span className="material-symbols-outlined">{item.icon}</span>
+                </div>
 
                 <h3>{item.title}</h3>
 
                 <p>{item.text}</p>
+
+                <span className="management-arrow material-symbols-outlined">
+                  arrow_forward
+                </span>
               </article>
             ))}
           </div>
         </section>
 
         {/* =================================================
-            STATS
+            PLATFORM OVERVIEW
         ================================================= */}
 
         <section className="stats-section">
           <div className="stats-grid">
             <div className="admin-stat">
+              <span className="material-symbols-outlined stat-icon">group</span>
+
               <strong>1,284</strong>
+
               <span>Registered users</span>
             </div>
 
             <div className="admin-stat">
+              <span className="material-symbols-outlined stat-icon">
+                handyman
+              </span>
+
               <strong>48</strong>
+
               <span>Verified ReMakers</span>
             </div>
 
             <div className="admin-stat">
+              <span className="material-symbols-outlined stat-icon">
+                inventory_2
+              </span>
+
               <strong>8.9K</strong>
-              <span>Items in circulation</span>
+
+              <span>Marketplace items</span>
             </div>
 
             <div className="admin-stat">
+              <span className="material-symbols-outlined stat-icon">
+                payments
+              </span>
+
               <strong>₹18L+</strong>
+
               <span>Platform transactions</span>
             </div>
           </div>
@@ -225,18 +278,24 @@ export default function AdminHome() {
             <div className="section-heading">
               <span className="section-label">ADMIN RESPONSIBILITIES</span>
 
-              <h2>From verification to impact.</h2>
+              <h2>From verification to platform insights.</h2>
 
               <p>
-                The admin team oversees the complete lifecycle of activity
-                across ReOrbit.
+                Administrators help keep every important part of ReOrbit
+                organized, visible and operating as intended.
               </p>
             </div>
 
             <div className="responsibility-grid">
               {responsibilities.map((item) => (
                 <article className="responsibility-card" key={item.number}>
-                  <span className="responsibility-number">{item.number}</span>
+                  <div className="responsibility-top">
+                    <span className="responsibility-number">{item.number}</span>
+
+                    <span className="material-symbols-outlined responsibility-icon">
+                      {item.icon}
+                    </span>
+                  </div>
 
                   <h3>{item.title}</h3>
 
@@ -248,22 +307,25 @@ export default function AdminHome() {
         </section>
 
         {/* =================================================
-            CTA
+            ADMIN CTA
         ================================================= */}
 
         <section className="admin-cta-section">
           <div className="admin-cta">
             <div>
-              <h2>One dashboard. One circular system.</h2>
+              <span className="section-label">REORBIT ADMINISTRATION</span>
+
+              <h2>One place to manage the entire ecosystem.</h2>
 
               <p>
-                Manage the ReOrbit ecosystem, keep every operation visible and
-                help more objects find their next purpose.
+                Review users, support ReMakers, manage marketplace activity,
+                monitor transactions and understand how ReOrbit is growing.
               </p>
             </div>
 
             <a href="/admin-login" className="btn-primary">
               Enter Admin Panel
+              <span className="material-symbols-outlined">arrow_forward</span>
             </a>
           </div>
         </section>
