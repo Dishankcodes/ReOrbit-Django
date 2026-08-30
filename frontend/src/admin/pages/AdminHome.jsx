@@ -69,9 +69,9 @@ export default function AdminHome() {
       <AdminNavbar />
 
       <main>
-        {/* =================================================
+        {/* =====================================================
             HERO
-        ================================================= */}
+        ===================================================== */}
 
         <section className="hero-section">
           <div className="hero-text-container">
@@ -91,13 +91,17 @@ export default function AdminHome() {
             <div className="hero-actions">
               <a href="/admin-login" className="btn-primary">
                 Admin Login
+                <span className="material-symbols-outlined">arrow_forward</span>
               </a>
 
               <a href="/admin-how-it-works" className="btn-secondary">
                 How it works
+                <span className="material-symbols-outlined">account_tree</span>
               </a>
             </div>
           </div>
+
+          {/* HERO VISUAL */}
 
           <div className="hero-image-container">
             <div className="hero-image-wrapper">
@@ -106,6 +110,8 @@ export default function AdminHome() {
                 alt="ReOrbit administration workspace"
                 className="hero-img"
               />
+
+              {/* ITEMS */}
 
               <div className="overlay-badge top-right">
                 <span className="material-symbols-outlined badge-icon">
@@ -118,6 +124,8 @@ export default function AdminHome() {
                   <div className="badge-label">ITEMS LISTED</div>
                 </div>
               </div>
+
+              {/* REMAKERS */}
 
               <div className="overlay-badge bottom-left">
                 <span className="material-symbols-outlined badge-icon">
@@ -134,9 +142,9 @@ export default function AdminHome() {
           </div>
         </section>
 
-        {/* =================================================
+        {/* =====================================================
             PLATFORM FLOW
-        ================================================= */}
+        ===================================================== */}
 
         <section className="process-section">
           <h3 className="process-title">
@@ -187,9 +195,9 @@ export default function AdminHome() {
           </div>
         </section>
 
-        {/* =================================================
+        {/* =====================================================
             ADMIN CONTROL CENTER
-        ================================================= */}
+        ===================================================== */}
 
         <section className="overview-section">
           <div className="section-heading">
@@ -223,9 +231,9 @@ export default function AdminHome() {
           </div>
         </section>
 
-        {/* =================================================
+        {/* =====================================================
             PLATFORM OVERVIEW
-        ================================================= */}
+        ===================================================== */}
 
         <section className="stats-section">
           <div className="stats-grid">
@@ -269,9 +277,9 @@ export default function AdminHome() {
           </div>
         </section>
 
-        {/* =================================================
-            RESPONSIBILITIES
-        ================================================= */}
+        {/* =====================================================
+            ADMIN RESPONSIBILITIES
+        ===================================================== */}
 
         <section className="responsibility-section">
           <div className="responsibility-inner">
@@ -306,9 +314,9 @@ export default function AdminHome() {
           </div>
         </section>
 
-        {/* =================================================
-            ADMIN CTA
-        ================================================= */}
+        {/* =====================================================
+            FINAL CTA
+        ===================================================== */}
 
         <section className="admin-cta-section">
           <div className="admin-cta">

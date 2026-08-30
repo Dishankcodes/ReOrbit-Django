@@ -5,16 +5,16 @@ const columns = [
   {
     title: "Roles",
     links: [
-      ["User", "/admin/users"],
-      ["ReMaker", "/admin/remakers"],
-      ["Admin", "/admin"],
+      ["User", "/"],
+      ["ReMaker", "/remakers-home"],
+      ["Admin", "/admin-home"],
     ],
   },
   {
     title: "Community",
     links: [
-      ["ReMakers", "/remakers"],
-      ["About Us", "/about"],
+      ["ReMakers", "/manage-remakers"],
+      ["About Us", "/admin-about"],
       ["Stories", "/stories"],
     ],
   },
@@ -34,7 +34,7 @@ export default function AdminFooter() {
       <div className="admin-footer-main admin-footer-container">
         {/* BRAND */}
         <div className="admin-footer-brand">
-          <a href="/admin" className="admin-footer-logo">
+          <a href="/admin-home" className="admin-footer-logo">
             <span>ReOrbit</span>
           </a>
 
