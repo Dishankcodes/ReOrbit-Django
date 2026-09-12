@@ -1,6 +1,6 @@
 import React from "react";
-import AdminNavbar from "../components/AdminNavbar";
-import AdminFooter from "../components/AdminFooter";
+import AdminNavbar from "../../components/AdminNavbar";
+import AdminFooter from "../../components/AdminFooter";
 
 export default function HowItWorks() {
   const managementAreas = [

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import "../css/Auth.css";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import "../../css/Auth.css";
 
 export default function Auth() {
   const [isRegister, setIsRegister] = useState(false);

@@ -1,32 +1,32 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Home from "./user/pages/Home";
-import About from "./user/pages/About";
-import FAQ from "./user/pages/FAQ";
-import Contact from "./user/pages/Contact";
-import HowItWorks from "./user/pages/HowItWorks";
-import Privacy from "./user/pages/Privacy";
-import Terms from "./user/pages/Terms";
-import ReMakerDiscover from "./user/pages/ReMakerDiscover";
-import Marketplace from "./user/pages/UserBeforeMarketplace";
+import Home from "./user/pages/HomePages/Home";
+import About from "./user/pages/HomePages/About";
+import FAQ from "./user/pages/HomePages/FAQ";
+import Contact from "./user/pages/HomePages/Contact";
+import HowItWorks from "./user/pages/HomePages/HowItWorks";
+import Privacy from "./user/pages/HomePages/Privacy";
+import Terms from "./user/pages/HomePages/Terms";
+import ReMakerDiscover from "./user/pages/HomePages/ReMakerDiscover";
+import Marketplace from "./user/pages/HomePages/UserBeforeMarketplace";
 
-import UserAuth from "./user/pages/Auth";
-import ReMakerAuth from "./remaker/pages/ReMakerAuth";
+import UserAuth from "./user/pages/Auth/Auth";
+import ReMakerAuth from "./remaker/pages/Auth/ReMakerAuth";
 
-import ReMakersHome from "./remaker/pages/ReMakersHome";
-import ReMakerAbout from "./remaker/pages/About";
-import ReMakerFAQ from "./remaker/pages/FAQ";
-import ReMakerHowItWorks from "./remaker/pages/HowItWorks";
-import ReMakerContact from "./remaker/pages/Contact";
-import RemakerBeforeMarketplace from "./remaker/pages/ReMakerBeforeMarketplace";
+import ReMakersHome from "./remaker/pages/HomePages/ReMakersHome";
+import ReMakerAbout from "./remaker/pages/HomePages/About";
+import ReMakerFAQ from "./remaker/pages/HomePages/FAQ";
+import ReMakerHowItWorks from "./remaker/pages/HomePages/HowItWorks";
+import ReMakerContact from "./remaker/pages/HomePages/Contact";
+import RemakerBeforeMarketplace from "./remaker/pages/HomePages/ReMakerBeforeMarketplace";
 
-import AdminHome from "./admin/pages/AdminHome";
+import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminDashboard from "./admin/pages/Dashboard";
-import AdminAbout from "./admin/pages/AdminAbout";
-import AdminHowItWorks from "./admin/pages/AdminHowItWorks";
+import AdminAbout from "./admin/pages/HomePages/AdminAbout";
+import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
 
-import AdminLogin from "./admin/pages/AdminLogin";
+import AdminLogin from "./admin/pages/Auth/AdminLogin";
 
 import "./styles/theme.css";
 

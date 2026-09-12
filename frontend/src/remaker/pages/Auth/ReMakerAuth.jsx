@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import "../css/ReMakerAuth.css";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import "../../css/ReMakerAuth.css";
 
 export default function ReMakerAuth() {
   const [step, setStep] = useState("login");

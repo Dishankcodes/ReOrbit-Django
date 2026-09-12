@@ -1,7 +1,7 @@
 import React from "react";
-import AdminNavbar from "../components/AdminNavbar";
-import AdminFooter from "../components/AdminFooter";
-import "../css/Home.css";
+import AdminNavbar from "../../components/AdminNavbar";
+import AdminFooter from "../../components/AdminFooter";
+import "../../css/Home.css";
 
 const managementItems = [
   {

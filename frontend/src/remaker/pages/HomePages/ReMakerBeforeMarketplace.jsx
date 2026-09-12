@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import "../css/ReMakerMarketplace.css";
+import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
+import "../../css/ReMakerMarketplace.css";
 
 const materials = [
   {
