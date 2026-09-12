@@ -1,22 +1,85 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { adminLogin } from "../../../api/auth";
 
 export default function AdminLogin() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Add your actual authentication logic here
-    console.log("Admin login submitted");
+    setError("");
+    setSuccess("");
+
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await adminLogin({
+        email: email.trim(),
+        password,
+      });
+
+      const data = response?.data || response;
+
+      /*
+       * Store Admin authentication information.
+       */
+      localStorage.setItem("reorbit_access_token", data.access);
+      localStorage.setItem("reorbit_refresh_token", data.refresh);
+      localStorage.setItem("reorbit_account_type", "admin");
+
+      if (data.admin?.admin_id) {
+        localStorage.setItem("reorbit_account_id", String(data.admin.admin_id));
+      }
+
+      if (data.admin) {
+        localStorage.setItem("reorbit_admin", JSON.stringify(data.admin));
+      }
+
+      setSuccess(response?.message || "Admin login successful.");
+
+      /*
+       * We'll connect the actual Admin Dashboard
+       * route when its UI is implemented.
+       */
+      setTimeout(() => {
+        navigate("/admin-dashboard");
+      }, 500);
+    } catch (err) {
+      setError(
+        err?.data?.message ||
+          err?.data?.detail ||
+          err?.message ||
+          "Unable to login.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="admin-login-page">
       <style>{`
-        /* =====================================================
+        /* 
            REORBIT ADMIN LOGIN
            MASTER ADMIN THEME — ADMIN ABOUT SYSTEM
-        ===================================================== */
+         */
 
         .admin-login-page {
           --login-bg: #061b16;
@@ -92,9 +155,9 @@ export default function AdminLogin() {
           );
         }
 
-        /* =====================================================
+        /* 
            BACK BUTTON
-        ===================================================== */
+         */
 
         .admin-login-back {
           position: fixed;
@@ -128,9 +191,9 @@ export default function AdminLogin() {
           transform: translateX(-3px);
         }
 
-        /* =====================================================
+        /* 
            LOGIN WRAPPER
-        ===================================================== */
+         */
 
         .admin-login-wrapper {
           position: relative;
@@ -140,9 +203,9 @@ export default function AdminLogin() {
           margin: 0 auto;
         }
 
-        /* =====================================================
+        /* 
            BRAND
-        ===================================================== */
+         */
 
         .admin-login-brand {
           text-align: center;
@@ -191,9 +254,9 @@ export default function AdminLogin() {
           letter-spacing: 0.03em;
         }
 
-        /* =====================================================
+        /* 
            LOGIN CARD
-        ===================================================== */
+         */
 
         .admin-login-card {
           position: relative;
@@ -269,9 +332,9 @@ export default function AdminLogin() {
           line-height: 1.65;
         }
 
-        /* =====================================================
+        /* 
            FORM
-        ===================================================== */
+         */
 
         .admin-login-form {
           display: flex;
@@ -323,9 +386,9 @@ export default function AdminLogin() {
           box-shadow: 0 0 0 3px rgba(175,207,194,0.08);
         }
 
-        /* =====================================================
+        /* 
            PASSWORD
-        ===================================================== */
+         */
 
         .admin-password-wrapper {
           position: relative;
@@ -362,9 +425,9 @@ export default function AdminLogin() {
           background: rgba(175,207,194,0.08);
         }
 
-        /* =====================================================
+        /* 
            LOGIN BUTTON
-        ===================================================== */
+         */
 
         .admin-login-button {
           width: 100%;
@@ -394,9 +457,9 @@ export default function AdminLogin() {
           transform: translateY(0);
         }
 
-        /* =====================================================
+        /* 
            SECURITY NOTE
-        ===================================================== */
+         */
 
         .admin-login-security {
           display: flex;
@@ -421,9 +484,9 @@ export default function AdminLogin() {
           font-size: 0.55rem;
         }
 
-        /* =====================================================
+        /* 
            FOOTER
-        ===================================================== */
+         */
 
         .admin-login-footer {
           text-align: center;
@@ -435,9 +498,9 @@ export default function AdminLogin() {
           text-transform: uppercase;
         }
 
-        /* =====================================================
+        /* 
            FOCUS
-        ===================================================== */
+         */
 
         .admin-login-page a:focus-visible,
         .admin-login-page button:focus-visible,
@@ -446,9 +509,9 @@ export default function AdminLogin() {
           outline-offset: 3px;
         }
 
-        /* =====================================================
+        /* 
            TABLET
-        ===================================================== */
+         */
 
         @media (max-width: 600px) {
           .admin-login-page {
@@ -470,9 +533,9 @@ export default function AdminLogin() {
           }
         }
 
-        /* =====================================================
+        /* 
            SMALL MOBILE
-        ===================================================== */
+         */
 
         @media (max-width: 400px) {
           .admin-login-page {
@@ -493,9 +556,9 @@ export default function AdminLogin() {
           }
         }
 
-        /* =====================================================
+        /* 
            REDUCED MOTION
-        ===================================================== */
+         */
 
         @media (prefers-reduced-motion: reduce) {
           .admin-login-page *,
@@ -539,18 +602,7 @@ export default function AdminLogin() {
           </div>
 
           <form className="admin-login-form" onSubmit={handleSubmit}>
-            {/* USERNAME */}
-
-            <div className="admin-login-field">
-              <label htmlFor="admin-username">Username</label>
-
-              <input
-                id="admin-username"
-                type="text"
-                placeholder="Enter your username"
-                required
-              />
-            </div>
+            {error && <div className="admin-login-error">{error}</div>}
 
             {/* EMAIL */}
 
@@ -561,6 +613,9 @@ export default function AdminLogin() {
                 id="admin-email"
                 type="email"
                 placeholder="admin@reorbit.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -575,23 +630,30 @@ export default function AdminLogin() {
                   id="admin-password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   required
                 />
 
                 <button
                   type="button"
                   className="admin-password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((prev) => !prev)}
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
             </div>
 
-            {/* LOGIN */}
+            {/* LOGIN BUTTON */}
 
-            <button type="submit" className="admin-login-button">
-              Login to Admin Panel
+            <button
+              type="submit"
+              className="admin-login-button"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Login to Admin Panel"}
             </button>
           </form>
 

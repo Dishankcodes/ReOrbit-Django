@@ -61,3 +61,10 @@ export function logoutUser(accessToken, refreshToken) {
     },
   });
 }
+
+export function adminLogin(payload) {
+  return apiRequest("/admins/auth/login/", {
+    method: "POST",
+    body: payload,
+  });
+}
