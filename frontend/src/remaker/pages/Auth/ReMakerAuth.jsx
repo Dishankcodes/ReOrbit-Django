@@ -3,6 +3,14 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import "../../css/ReMakerAuth.css";
 
+import {
+  checkReMakerEmail,
+  requestReMakerRegistrationOTP,
+  requestReMakerLoginOTP,
+  registerReMaker,
+  verifyReMakerLoginOTP,
+} from "../../../api/auth";
+
 export default function ReMakerAuth() {
   const [step, setStep] = useState("login");
   const [emailExists, setEmailExists] = useState(null);
@@ -19,47 +27,51 @@ export default function ReMakerAuth() {
 
   const [resendTimer, setResendTimer] = useState(0);
 
-  /* =====================================================
-     OTP TIMER
-  ===================================================== */
-
+  // Handle OTP resend timer.
   useEffect(() => {
-    if (resendTimer <= 0) return;
+    if (resendTimer <= 0) {
+      return;
+    }
 
     const timer = setInterval(() => {
-      setResendTimer((current) => current - 1);
+      setResendTimer((current) => {
+        if (current <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+
+        return current - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
   }, [resendTimer]);
 
-  /* =====================================================
-     OTP INPUT
-  ===================================================== */
-
+  // Handle OTP input.
   const handleOtpChange = (value, index) => {
-    if (!/^\d?$/.test(value)) return;
+    if (!/^\d?$/.test(value)) {
+      return;
+    }
 
     const updated = [...otp];
     updated[index] = value;
 
     setOtp(updated);
+    setMessage("");
 
     if (value && index < 5) {
       document.getElementById(`remaker-otp-${index + 1}`)?.focus();
     }
   };
 
+  // Handle OTP backspace navigation.
   const handleOtpKeyDown = (event, index) => {
     if (event.key === "Backspace" && !otp[index] && index > 0) {
       document.getElementById(`remaker-otp-${index - 1}`)?.focus();
     }
   };
 
-  /* =====================================================
-     RESET
-  ===================================================== */
-
+  // Reset authentication flow.
   const resetAuth = () => {
     setStep("login");
     setEmailExists(null);
@@ -69,109 +81,105 @@ export default function ReMakerAuth() {
     setOtp(["", "", "", "", "", ""]);
     setMessage("");
     setLoading(false);
+    setResendLoading(false);
+    setResendTimer(0);
   };
 
-  /* =====================================================
-     EMAIL CHECK
-     
-     Replace this with your Django API later.
-  ===================================================== */
-
+  // Check whether the ReMaker email exists.
   const checkEmail = async (event) => {
     event.preventDefault();
 
-    if (!email.trim()) return;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setMessage("Please enter your email address.");
+      return;
+    }
 
     setLoading(true);
     setMessage("");
 
-    /*
-      BACKEND LATER:
+    try {
+      const response = await checkReMakerEmail(normalizedEmail);
 
-      const response = await fetch(
-        "/api/remaker/auth/check-email/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const exists = Boolean(response?.data?.exists);
 
-      const data = await response.json();
-
-      if (data.exists) {
-        ...
-      }
-    */
-
-    setTimeout(() => {
-      /*
-        DEMO ONLY.
-
-        Remove this once Django is connected.
-        Currently emails containing "existing"
-        behave like existing accounts.
-      */
-
-      const exists = email.toLowerCase().includes("existing");
-
+      setEmail(normalizedEmail);
       setEmailExists(exists);
 
       if (exists) {
-        requestOtp();
+        await requestReMakerLoginOTP(normalizedEmail);
+
+        setOtp(["", "", "", "", "", ""]);
+        setStep("otp");
+        setResendTimer(30);
+        setMessage("A verification code has been sent to your email.");
       } else {
         setStep("register");
+        setMessage("");
       }
-
+    } catch (error) {
+      setMessage(
+        error?.message || "Unable to check your email. Please try again.",
+      );
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   };
 
-  /* =====================================================
-     REQUEST OTP
-  ===================================================== */
+  // Send the registration OTP.
+  const handleRegister = async (event) => {
+    event.preventDefault();
 
-  const requestOtp = () => {
+    const normalizedName = name.trim();
+    const normalizedUsername = username.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedName) {
+      setMessage("Please enter your full name.");
+      return;
+    }
+
+    if (!normalizedUsername) {
+      setMessage("Please enter your username.");
+      return;
+    }
+
+    if (!normalizedEmail) {
+      setMessage("Please enter your email address.");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
-    /*
-      BACKEND LATER:
+    try {
+      const response = await requestReMakerRegistrationOTP(
+        normalizedEmail,
+        normalizedName,
+        normalizedUsername,
+      );
 
-      POST /api/remaker/auth/request-otp/
-      {
-        email
-      }
-    */
-
-    setTimeout(() => {
+      setName(normalizedName);
+      setUsername(normalizedUsername);
+      setEmail(normalizedEmail);
+      setEmailExists(false);
       setOtp(["", "", "", "", "", ""]);
       setStep("otp");
       setResendTimer(30);
-      setMessage("A verification code has been sent to your email.");
+
+      setMessage(
+        response?.message || "A verification code has been sent to your email.",
+      );
+    } catch (error) {
+      setMessage(error?.message || "Unable to send OTP. Please try again.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
-  /* =====================================================
-     REGISTER
-  ===================================================== */
-
-  const handleRegister = (event) => {
-    event.preventDefault();
-
-    if (!name.trim() || !username.trim()) return;
-
-    requestOtp();
-  };
-
-  /* =====================================================
-     VERIFY OTP
-  ===================================================== */
-
-  const verifyOtp = (event) => {
+  // Verify login or registration OTP.
+  const verifyOtp = async (event) => {
     event.preventDefault();
 
     const enteredOtp = otp.join("");
@@ -184,109 +192,131 @@ export default function ReMakerAuth() {
     setLoading(true);
     setMessage("");
 
-    /*
-      BACKEND LATER:
-
-      POST /api/remaker/auth/verify-otp/
-      {
-        email,
-        otp
-      }
-    */
-
-    setTimeout(() => {
+    try {
       if (emailExists) {
-        /*
-          Existing ReMaker
-          OTP → Dashboard
-        */
+        const response = await verifyReMakerLoginOTP(
+          email.trim().toLowerCase(),
+          enteredOtp,
+        );
 
-        window.location.href = "/remakers/dashboard";
-      } else {
-        /*
-          New ReMaker
-          OTP → Confirm registration
-        */
+        const accessToken = response?.data?.access;
 
-        setStep("confirm");
-        setLoading(false);
+        const refreshToken = response?.data?.refresh;
+
+        const remaker = response?.data?.remaker;
+
+        if (!accessToken || !refreshToken) {
+          throw new Error("Login response is missing authentication tokens.");
+        }
+
+        localStorage.setItem("reorbit_access_token", accessToken);
+
+        localStorage.setItem("reorbit_refresh_token", refreshToken);
+
+        if (remaker) {
+          localStorage.setItem("reorbit_remaker", JSON.stringify(remaker));
+        }
+
+        window.location.href = "/remakers-home";
+        return;
       }
-    }, 900);
+
+      const response = await registerReMaker({
+        email: email.trim().toLowerCase(),
+        otp: enteredOtp,
+        full_name: name.trim(),
+        username: username.trim(),
+      });
+
+      const accessToken = response?.data?.access;
+
+      const refreshToken = response?.data?.refresh;
+
+      const remaker = response?.data?.remaker;
+
+      if (!accessToken || !refreshToken) {
+        throw new Error(
+          "Registration response is missing authentication tokens.",
+        );
+      }
+
+      localStorage.setItem("reorbit_access_token", accessToken);
+
+      localStorage.setItem("reorbit_refresh_token", refreshToken);
+
+      if (remaker) {
+        localStorage.setItem("reorbit_remaker", JSON.stringify(remaker));
+      }
+
+      setStep("confirm");
+      setMessage(
+        response?.message ||
+          "Your ReMaker account has been created successfully.",
+      );
+    } catch (error) {
+      setMessage(error?.message || "Invalid or expired OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* =====================================================
-     COMPLETE REGISTRATION
-  ===================================================== */
-
+  // Complete registration and enter ReOrbit.
   const completeRegistration = () => {
     setLoading(true);
+    setMessage("");
 
-    /*
-      BACKEND LATER:
-
-      POST /api/remaker/auth/register/
-      {
-        name,
-        username,
-        email
-      }
-    */
-
-    setTimeout(() => {
-      window.location.href = "/remakers/dashboard";
-    }, 900);
+    window.location.href = "/remakers-home";
   };
 
-  /* =====================================================
-     RESEND OTP
-  ===================================================== */
-
-  const resendOtp = () => {
-    if (resendTimer > 0 || resendLoading) return;
+  // Resend the current OTP.
+  const resendOtp = async () => {
+    if (resendTimer > 0 || resendLoading || loading) {
+      return;
+    }
 
     setResendLoading(true);
     setMessage("");
 
-    setTimeout(() => {
+    try {
+      if (emailExists) {
+        const response = await requestReMakerLoginOTP(
+          email.trim().toLowerCase(),
+        );
+
+        setMessage(
+          response?.message || "A new verification code has been sent.",
+        );
+      } else {
+        const response = await requestReMakerRegistrationOTP(
+          email.trim().toLowerCase(),
+          name.trim(),
+          username.trim(),
+        );
+
+        setMessage(
+          response?.message || "A new verification code has been sent.",
+        );
+      }
+
       setOtp(["", "", "", "", "", ""]);
       setResendTimer(30);
-      setMessage("A new verification code has been sent.");
+
+      document.getElementById("remaker-otp-0")?.focus();
+    } catch (error) {
+      setMessage(error?.message || "Unable to resend OTP. Please try again.");
+    } finally {
       setResendLoading(false);
-    }, 700);
+    }
   };
 
-  /* =====================================================
-     GOOGLE
-  ===================================================== */
-
+  // Google authentication will be added later.
   const handleGoogleLogin = () => {
-    /*
-      BACKEND LATER:
-
-      Redirect to Django Google OAuth:
-
-      window.location.href =
-        "/api/remaker/auth/google/";
-    */
-
-    setLoading(true);
-
-    setTimeout(() => {
-      window.location.href = "/remakers/dashboard";
-    }, 900);
+    setMessage("Google login will be available soon.");
   };
-
-  /* =====================================================
-     RENDER
-  ===================================================== */
 
   return (
-    <div className="remaker-page rm-page remaker-auth-page">  
+    <div className="remaker-page rm-page remaker-auth-page">
       <Navbar />
-
-      {/* =================================================
-          BACKGROUND
-      ================================================= */}
 
       <main className="remaker-auth-main">
         <div className="remaker-auth-grid" />
@@ -295,10 +325,6 @@ export default function ReMakerAuth() {
         <span className="remaker-auth-star star-two" />
         <span className="remaker-auth-star star-three" />
         <span className="remaker-auth-star star-four" />
-
-        {/* =================================================
-            ORBITAL BACKGROUND
-        ================================================= */}
 
         <div className="remaker-orbit-stage">
           <div className="remaker-orbit orbit-one">
@@ -317,13 +343,7 @@ export default function ReMakerAuth() {
             <span>ReOrbit</span>
           </div>
 
-          {/* =================================================
-              AUTH CARD
-          ================================================= */}
-
           <section className={`remaker-auth-card remaker-step-${step}`}>
-            {/* LOGO */}
-
             <div className="remaker-auth-logo">
               <span className="remaker-logo-mark">
                 <span className="material-symbols-outlined">eco</span>
@@ -331,10 +351,6 @@ export default function ReMakerAuth() {
 
               <span>ReOrbit</span>
             </div>
-
-            {/* =================================================
-                LOGIN
-            ================================================= */}
 
             {step === "login" && (
               <div className="remaker-auth-content">
@@ -348,14 +364,21 @@ export default function ReMakerAuth() {
 
                 <form className="remaker-auth-form" onSubmit={checkEmail}>
                   <div className="remaker-field">
-                    <label htmlFor="remaker-email">Email address</label>
+                    <label htmlFor="remaker-register-email">
+                      Email address
+                    </label>
 
                     <input
-                      id="remaker-email"
+                      id="remaker-register-email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setMessage("");
+                      }}
                       placeholder="you@example.com"
+                      autoComplete="email"
+                      readOnly={Boolean(email)}
                       required
                     />
                   </div>
@@ -401,10 +424,6 @@ export default function ReMakerAuth() {
               </div>
             )}
 
-            {/* =================================================
-                REGISTER
-            ================================================= */}
-
             {step === "register" && (
               <div className="remaker-auth-content">
                 <div className="remaker-auth-heading">
@@ -428,6 +447,7 @@ export default function ReMakerAuth() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your name"
+                      autoComplete="name"
                       required
                     />
                   </div>
@@ -441,14 +461,22 @@ export default function ReMakerAuth() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="@yourmakername"
+                      autoComplete="username"
                       required
                     />
                   </div>
 
                   <div className="remaker-field">
-                    <label>Email address</label>
+                    <label htmlFor="remaker-register-email">
+                      Email address
+                    </label>
 
-                    <input type="email" value={email} readOnly />
+                    <input
+                      id="remaker-register-email"
+                      type="email"
+                      value={email}
+                      readOnly
+                    />
                   </div>
 
                   <button
@@ -466,16 +494,18 @@ export default function ReMakerAuth() {
                   </button>
                 </form>
 
-                <button className="remaker-back-link" onClick={resetAuth}>
+                <button
+                  type="button"
+                  className="remaker-back-link"
+                  onClick={resetAuth}
+                >
                   <span className="material-symbols-outlined">arrow_back</span>
                   Use another email
                 </button>
+
+                {message && <p className="remaker-auth-message">{message}</p>}
               </div>
             )}
-
-            {/* =================================================
-                OTP
-            ================================================= */}
 
             {step === "otp" && (
               <div className="remaker-auth-content">
@@ -487,7 +517,7 @@ export default function ReMakerAuth() {
                   <h1>Enter your code.</h1>
 
                   <p>
-                    We sent a 6-digit verification code to
+                    We sent a 6-digit verification code to{" "}
                     <strong>{email}</strong>
                   </p>
                 </div>
@@ -504,7 +534,8 @@ export default function ReMakerAuth() {
                         value={digit}
                         onChange={(e) => handleOtpChange(e.target.value, index)}
                         onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                        autoComplete="one-time-code"
+                        autoComplete={index === 0 ? "one-time-code" : "off"}
+                        aria-label={`OTP digit ${index + 1}`}
                       />
                     ))}
                   </div>
@@ -529,7 +560,7 @@ export default function ReMakerAuth() {
 
                   <button
                     type="button"
-                    disabled={resendTimer > 0 || resendLoading}
+                    disabled={resendTimer > 0 || resendLoading || loading}
                     onClick={resendOtp}
                   >
                     {resendLoading
@@ -542,16 +573,16 @@ export default function ReMakerAuth() {
 
                 {message && <p className="remaker-auth-message">{message}</p>}
 
-                <button className="remaker-back-link" onClick={resetAuth}>
+                <button
+                  type="button"
+                  className="remaker-back-link"
+                  onClick={resetAuth}
+                >
                   <span className="material-symbols-outlined">arrow_back</span>
                   Use another email
                 </button>
               </div>
             )}
-
-            {/* =================================================
-                CONFIRM REGISTRATION
-            ================================================= */}
 
             {step === "confirm" && (
               <div className="remaker-auth-content">
@@ -567,8 +598,8 @@ export default function ReMakerAuth() {
                   <h1>Confirm your orbit.</h1>
 
                   <p>
-                    Your email has been verified. Check your details before
-                    creating your ReMaker account.
+                    Your email has been verified and your ReMaker account has
+                    been created successfully.
                   </p>
                 </div>
 
@@ -595,7 +626,7 @@ export default function ReMakerAuth() {
                   onClick={completeRegistration}
                   disabled={loading}
                 >
-                  {loading ? "Creating account..." : "Complete registration"}
+                  {loading ? "Opening ReOrbit..." : "Continue to ReOrbit"}
 
                   {!loading && (
                     <span className="material-symbols-outlined">
@@ -604,19 +635,9 @@ export default function ReMakerAuth() {
                   )}
                 </button>
 
-                <button
-                  className="remaker-back-link"
-                  onClick={() => setStep("register")}
-                >
-                  <span className="material-symbols-outlined">arrow_back</span>
-                  Edit details
-                </button>
+                {message && <p className="remaker-auth-message">{message}</p>}
               </div>
             )}
-
-            {/* =================================================
-                FOOTER SWITCH
-            ================================================= */}
 
             <div className="remaker-auth-footer">
               {step === "login" ? (
@@ -628,6 +649,7 @@ export default function ReMakerAuth() {
                     onClick={() => {
                       setStep("register");
                       setEmailExists(false);
+                      setMessage("");
                     }}
                   >
                     Create account
