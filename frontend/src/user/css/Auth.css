@@ -1,7 +1,7 @@
-/* =========================================================
+/* 
    REORBIT USER AUTH
    ORBITAL AUTHENTICATION
-========================================================= */
+ */
 
 .user-auth-page {
   --auth-bg: #f7f5ee;
@@ -26,9 +26,9 @@
   color: var(--auth-text);
 }
 
-/* =========================================================
+/* 
    MAIN AUTH PAGE
-========================================================= */
+ */
 
 .user-auth-page .auth-page {
   position: relative;
@@ -56,9 +56,9 @@
     #f7f5ee;
 }
 
-/* =========================================================
+/* 
    BACKGROUND ATMOSPHERE
-========================================================= */
+ */
 
 .user-auth-page .auth-space {
   position: absolute;
@@ -74,9 +74,9 @@
     radial-gradient(circle at 85% 75%, rgba(42, 77, 58, 0.08), transparent 25%);
 }
 
-/* =========================================================
+/* 
    GRID
-========================================================= */
+ */
 
 .user-auth-page .auth-grid {
   position: absolute;
@@ -94,9 +94,9 @@
   pointer-events: none;
 }
 
-/* =========================================================
+/* 
    FLOATING STARS
-========================================================= */
+ */
 
 .user-auth-page .auth-star {
   position: absolute;
@@ -143,9 +143,9 @@
   animation-delay: 1.8s;
 }
 
-/* =========================================================
+/* 
    AUTH STAGE
-========================================================= */
+ */
 
 .user-auth-page .auth-stage {
   position: relative;
@@ -163,9 +163,9 @@
   z-index: 2;
 }
 
-/* =========================================================
+/* 
    ORBIT RINGS
-========================================================= */
+ */
 
 .user-auth-page .orbit {
   position: absolute;
@@ -206,9 +206,9 @@
   animation: orbitThree 20s linear infinite;
 }
 
-/* =========================================================
+/* 
    ORBIT DOTS
-========================================================= */
+ */
 
 .user-auth-page .orbit-dot {
   position: absolute;
@@ -236,9 +236,9 @@
   height: 7px;
 }
 
-/* =========================================================
+/* 
    CENTER CORE
-========================================================= */
+ */
 
 .user-auth-page .orbit-core {
   position: absolute;
@@ -275,9 +275,9 @@
   letter-spacing: -0.04em;
 }
 
-/* =========================================================
+/* 
    AUTH CARD
-========================================================= */
+ */
 
 .user-auth-page .auth-card {
   position: relative;
@@ -307,9 +307,9 @@
   animation: cardEnter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* =========================================================
+/* 
    LOGO
-========================================================= */
+ */
 
 .user-auth-page .auth-logo {
   display: flex;
@@ -342,9 +342,9 @@
   box-shadow: 0 0 15px var(--auth-leaf);
 }
 
-/* =========================================================
+/* 
    HEADING
-========================================================= */
+ */
 
 .user-auth-page .auth-eyebrow {
   font-size: 10px;
@@ -378,9 +378,9 @@
   line-height: 1.6;
 }
 
-/* =========================================================
+/* 
    FORM FIELD
-========================================================= */
+ */
 
 .user-auth-page .auth-field {
   margin-bottom: 15px;
@@ -435,9 +435,9 @@
   transform: translateY(-1px);
 }
 
-/* =========================================================
+/* 
    REGISTER FIELD
-========================================================= */
+ */
 
 .user-auth-page .register-field {
   opacity: 0;
@@ -467,9 +467,9 @@
   transform: translateY(0);
 }
 
-/* =========================================================
+/* 
    PASSWORD
-========================================================= */
+ */
 
 .user-auth-page .password-wrapper {
   position: relative;
@@ -503,9 +503,9 @@
   color: var(--auth-primary);
 }
 
-/* =========================================================
+/* 
    OPTIONS
-========================================================= */
+ */
 
 .user-auth-page .auth-options {
   display: flex;
@@ -597,9 +597,9 @@
   color: var(--auth-leaf);
 }
 
-/* =========================================================
+/* 
    TERMS
-========================================================= */
+ */
 
 .user-auth-page .auth-terms {
   display: flex;
@@ -633,9 +633,9 @@
   text-decoration: none;
 }
 
-/* =========================================================
+/* 
    MAIN BUTTON
-========================================================= */
+ */
 
 .user-auth-page .auth-submit {
   width: 100%;
@@ -674,9 +674,9 @@
   cursor: wait;
 }
 
-/* =========================================================
+/* 
    DIVIDER
-========================================================= */
+ */
 
 .user-auth-page .auth-divider {
   display: flex;
@@ -706,9 +706,9 @@
   letter-spacing: 0.15em;
 }
 
-/* =========================================================
+/* 
    GOOGLE
-========================================================= */
+ */
 
 .user-auth-page .google-button {
   width: 100%;
@@ -771,9 +771,9 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-/* =========================================================
+/* 
    SWITCH
-========================================================= */
+ */
 
 .user-auth-page .auth-switch {
   display: flex;
@@ -809,9 +809,9 @@
   color: var(--auth-leaf);
 }
 
-/* =========================================================
+/* 
    BACK
-========================================================= */
+ */
 
 .user-auth-page .auth-back {
   display: flex;
@@ -841,9 +841,9 @@
   font-size: 16px;
 }
 
-/* =========================================================
+/* 
    ORBIT ANIMATIONS
-========================================================= */
+ */
 
 @keyframes orbitOne {
   to {
@@ -892,9 +892,9 @@
   }
 }
 
-/* =========================================================
+/* 
    TABLET
-========================================================= */
+ */
 
 @media (max-width: 800px) {
   .user-auth-page .auth-page {
@@ -921,9 +921,9 @@
   }
 }
 
-/* =========================================================
+/* 
    MOBILE
-========================================================= */
+ */
 
 @media (max-width: 600px) {
   .user-auth-page .auth-page {
@@ -987,9 +987,9 @@
   }
 }
 
-/* =========================================================
+/* 
    SMALL PHONES
-========================================================= */
+ */
 
 @media (max-width: 380px) {
   .user-auth-page .auth-page {
@@ -1021,9 +1021,9 @@
   }
 }
 
-/* =========================================================
+/* 
    REDUCED MOTION
-========================================================= */
+ */
 
 @media (prefers-reduced-motion: reduce) {
   .user-auth-page *,
@@ -1035,4 +1035,132 @@
 
     transition-duration: 0.01ms !important;
   }
+}
+
+/* 
+   AUTH API MESSAGES
+ */
+
+.auth-message {
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.auth-success {
+  color: #2a4d3a;
+  background: rgba(212, 228, 216, 0.75);
+  border: 1px solid rgba(42, 77, 58, 0.14);
+}
+
+.auth-error {
+  color: #8a3d3d;
+  background: rgba(245, 222, 222, 0.8);
+  border: 1px solid rgba(138, 61, 61, 0.14);
+}
+
+/* 
+   FORGOT PASSWORD
+ */
+
+.forgot-mode {
+  min-height: 570px;
+}
+
+.forgot-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 22px;
+  padding: 12px 13px;
+  border-radius: 12px;
+  background: rgba(212, 228, 216, 0.42);
+  border: 1px solid rgba(42, 77, 58, 0.08);
+}
+
+.forgot-step > span {
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #2a4d3a;
+  color: #ffffff;
+
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.forgot-step strong {
+  display: block;
+  margin-bottom: 3px;
+
+  color: #253229;
+
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.forgot-step p {
+  margin: 0;
+
+  color: #6b756e;
+
+  font-size: 0.61rem;
+  line-height: 1.55;
+}
+
+/* 
+   SECONDARY BUTTON
+ */
+
+.auth-secondary-button {
+  width: 100%;
+  height: 44px;
+  margin-top: 10px;
+
+  border: 1px solid rgba(42, 77, 58, 0.14);
+  border-radius: 11px;
+
+  background: transparent;
+
+  color: #2a4d3a;
+
+  font-family: inherit;
+  font-size: 0.66rem;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.auth-secondary-button:hover {
+  background: rgba(212, 228, 216, 0.45);
+  border-color: rgba(42, 77, 58, 0.25);
+  transform: translateY(-1px);
+}
+
+/* 
+   DISABLED GOOGLE BUTTON
+ */
+
+.google-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.google-button:disabled:hover {
+  transform: none;
 }

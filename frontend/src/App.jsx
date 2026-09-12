@@ -30,6 +30,31 @@ import AdminLogin from "./admin/pages/Auth/AdminLogin";
 
 import "./styles/theme.css";
 
+
+
+function UserDashboardPlaceholder() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: "10px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <h1>ReOrbit User Dashboard</h1>
+
+      <p>
+        Authentication successful. Dashboard UI
+        will be implemented in Phase 2.
+      </p>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
