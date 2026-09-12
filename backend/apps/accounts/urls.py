@@ -1,12 +1,7 @@
 from django.urls import path
-
-from .views import AccountsStatusView
-
+from .views import RefreshTokenView, LogoutView
 
 urlpatterns = [
-    path(
-        'status/',
-        AccountsStatusView.as_view(),
-        name='accounts-status'
-    ),
+    path('token/refresh/', RefreshTokenView.as_view(), name='token-refresh'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]
