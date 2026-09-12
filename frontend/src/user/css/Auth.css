@@ -1164,3 +1164,237 @@
 .google-button:disabled:hover {
   transform: none;
 }
+
+/* Forgot password OTP layout. */
+.forgot-otp-container {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Forgot password OTP label. */
+.forgot-otp-container > label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2a4d3a;
+}
+
+/* Forgot password OTP boxes. */
+.forgot-otp-boxes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  width: 100%;
+}
+
+/* Individual OTP box. */
+.forgot-otp-boxes input {
+  width: 48px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid #d4e4d8;
+  border-radius: 12px;
+  outline: none;
+  background: #ffffff;
+  color: #2a4d3a;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Focused OTP box. */
+.forgot-otp-boxes input:focus {
+  border-color: #2a4d3a;
+  box-shadow: 0 0 0 3px rgba(42, 77, 58, 0.1);
+  transform: translateY(-1px);
+}
+
+/* OTP helper text. */
+.forgot-otp-help {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #718078;
+}
+
+/* OTP resend section. */
+.forgot-resend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 18px;
+  font-size: 13px;
+  color: #718078;
+  text-align: center;
+}
+
+/* OTP resend button. */
+.forgot-resend button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #2a4d3a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Disabled resend button. */
+.forgot-resend button:disabled {
+  color: #9aa8a0;
+  cursor: not-allowed;
+}
+
+/* Forgot password secondary button. */
+.auth-secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 13px;
+  padding: 11px 16px;
+  border: 1px solid #d4e4d8;
+  border-radius: 10px;
+  background: transparent;
+  color: #2a4d3a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Secondary button hover. */
+.auth-secondary-button:hover {
+  background: #f7f5ee;
+  border-color: #2a4d3a;
+}
+
+/* Secondary button icon. */
+.auth-secondary-button .material-symbols-outlined {
+  font-size: 17px;
+}
+
+/* Authentication message. */
+.auth-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+/* Success message. */
+.auth-success {
+  border: 1px solid #cfe2d5;
+  background: #f2f8f4;
+  color: #2a4d3a;
+}
+
+/* Error message. */
+.auth-error {
+  border: 1px solid #ead0d0;
+  background: #fff5f5;
+  color: #9b4141;
+}
+
+/* Authentication message icon. */
+.auth-message .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+/* Forgot password form spacing. */
+.forgot-password-form {
+  width: 100%;
+}
+
+/* Forgot password step. */
+.forgot-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+/* Forgot password step number. */
+.forgot-step > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #d4e4d8;
+  color: #2a4d3a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Forgot password step title. */
+.forgot-step strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #2a4d3a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Forgot password step description. */
+.forgot-step p {
+  margin: 0;
+  color: #718078;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Forgot password submit button icon. */
+.auth-submit .material-symbols-outlined {
+  font-size: 19px;
+}
+
+/* Responsive OTP boxes. */
+@media (max-width: 480px) {
+  .forgot-otp-boxes {
+    gap: 6px;
+  }
+
+  .forgot-otp-boxes input {
+    width: 43px;
+    height: 52px;
+    font-size: 20px;
+  }
+
+  .forgot-resend {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Small mobile OTP boxes. */
+@media (max-width: 360px) {
+  .forgot-otp-boxes {
+    gap: 4px;
+  }
+
+  .forgot-otp-boxes input {
+    width: 39px;
+    height: 48px;
+    font-size: 18px;
+  }
+}

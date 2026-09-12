@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Navbar from "../../components/Navbar";
@@ -17,59 +17,143 @@ import "../../css/Auth.css";
 export default function Auth() {
   const navigate = useNavigate();
 
-  
   const [mode, setMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  /* USER REGISTER / LOGIN*/
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  /*FORGOT PASSWORD */
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  /*
-   * CLEAR MESSAGES
-   */
+  const [resendTimer, setResendTimer] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const otpRefs = useRef([]);
+
+  // Clear success and error messages.
   const clearMessages = () => {
     setMessage("");
     setError("");
   };
 
-  /* SAVE AUTH DATA */
+  // Save authenticated user data.
   const saveAuthData = (data) => {
     const storage = rememberMe ? localStorage : sessionStorage;
 
     storage.setItem("reorbit_access_token", data.access);
+
     storage.setItem("reorbit_refresh_token", data.refresh);
+
     storage.setItem("reorbit_account_type", "user");
+
     storage.setItem("reorbit_account_id", String(data.user.user_id));
 
     storage.setItem("reorbit_user", JSON.stringify(data.user));
 
-    /*
-     * Remove tokens from the other storage.
-     */
     const otherStorage = rememberMe ? sessionStorage : localStorage;
 
     otherStorage.removeItem("reorbit_access_token");
+
     otherStorage.removeItem("reorbit_refresh_token");
+
     otherStorage.removeItem("reorbit_account_type");
+
     otherStorage.removeItem("reorbit_account_id");
+
     otherStorage.removeItem("reorbit_user");
   };
 
-  /*
-   * LOGIN
-   */
+  // Handle OTP countdown.
+  useEffect(() => {
+    if (resendTimer <= 0) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setResendTimer((current) => {
+        if (current <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendTimer]);
+
+  // Start OTP resend timer.
+  const startResendTimer = () => {
+    setResendTimer(30);
+  };
+
+  // Reset OTP boxes.
+  const clearOtp = () => {
+    setOtp(["", "", "", "", "", ""]);
+  };
+
+  // Handle OTP box input.
+  const handleOtpChange = (value, index) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+
+    const updatedOtp = [...otp];
+    updatedOtp[index] = digit;
+
+    setOtp(updatedOtp);
+    setError("");
+    setMessage("");
+
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Handle OTP keyboard navigation.
+  const handleOtpKeyDown = (event, index) => {
+    if (event.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // Handle OTP paste.
+  const handleOtpPaste = (event) => {
+    event.preventDefault();
+
+    const pastedValue = event.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    if (!pastedValue) {
+      return;
+    }
+
+    const updatedOtp = ["", "", "", "", "", ""];
+
+    pastedValue.split("").forEach((digit, index) => {
+      updatedOtp[index] = digit;
+    });
+
+    setOtp(updatedOtp);
+    setError("");
+    setMessage("");
+
+    const focusIndex = Math.min(pastedValue.length, 5);
+
+    otpRefs.current[focusIndex]?.focus();
+  };
+
+  // Login user.
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -84,7 +168,7 @@ export default function Auth() {
 
     try {
       const response = await userLogin({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
@@ -92,13 +176,6 @@ export default function Auth() {
 
       setMessage(response.message || "Login successful.");
 
-      /*
-       * Temporary redirect.
-       *
-       * We will replace this with the actual
-       * User Dashboard route when Phase 2 UI
-       * is implemented.
-       */
       setTimeout(() => {
         navigate("/user-dashboard");
       }, 500);
@@ -109,9 +186,7 @@ export default function Auth() {
     }
   };
 
-  /*
-   * REGISTER
-   */
+  // Register user.
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -137,14 +212,10 @@ export default function Auth() {
     try {
       const response = await userRegister({
         full_name: fullName.trim(),
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      /*
-       * Registration API returns JWT tokens,
-       * so the user is authenticated immediately.
-       */
       saveAuthData(response.data);
 
       setMessage(response.message || "Registration successful.");
@@ -161,15 +232,15 @@ export default function Auth() {
     }
   };
 
-  /*
-   * FORGOT PASSWORD - SEND OTP
-   */
+  // Request forgot-password OTP.
   const handleForgotEmail = async (e) => {
     e.preventDefault();
 
     clearMessages();
 
-    if (!email.trim()) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError("Please enter your email address.");
       return;
     }
@@ -177,11 +248,20 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const response = await requestForgotPasswordOTP(email.trim());
+      const response = await requestForgotPasswordOTP(normalizedEmail);
+
+      setEmail(normalizedEmail);
+      clearOtp();
+      setResetToken("");
+      startResendTimer();
 
       setMessage(response.message || "OTP sent successfully.");
 
       setMode("forgot-otp");
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
     } catch (err) {
       setError(err?.data?.message || err?.message || "Unable to send OTP.");
     } finally {
@@ -189,25 +269,35 @@ export default function Auth() {
     }
   };
 
-  /*
-   * VERIFY OTP
-   */
+  // Verify forgot-password OTP.
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
     clearMessages();
 
-    if (!otp.trim()) {
-      setError("Please enter the OTP.");
+    const enteredOtp = otp.join("");
+
+    if (enteredOtp.length !== 6) {
+      setError("Please enter the complete 6-digit OTP.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await verifyForgotPasswordOTP(email.trim(), otp.trim());
+      const response = await verifyForgotPasswordOTP(
+        email.trim().toLowerCase(),
+        enteredOtp,
+      );
 
-      setResetToken(response?.data?.reset_token || "");
+      const token = response?.data?.reset_token;
+
+      if (!token) {
+        setError("OTP verified, but the reset session could not be created.");
+        return;
+      }
+
+      setResetToken(token);
 
       setMessage(response.message || "OTP verified successfully.");
 
@@ -219,9 +309,42 @@ export default function Auth() {
     }
   };
 
-  /*
-   * RESET PASSWORD
-   */
+  // Resend forgot-password OTP.
+  const handleResendOTP = async () => {
+    if (resendTimer > 0 || resendLoading || loading) {
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    setResendLoading(true);
+    clearMessages();
+
+    try {
+      const response = await requestForgotPasswordOTP(normalizedEmail);
+
+      clearOtp();
+      setResetToken("");
+      startResendTimer();
+
+      setMessage(response.message || "A new OTP has been sent to your email.");
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    } catch (err) {
+      setError(err?.data?.message || err?.message || "Unable to resend OTP.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Reset user password.
   const handleResetPassword = async (e) => {
     e.preventDefault();
 
@@ -229,6 +352,11 @@ export default function Auth() {
 
     if (!newPassword) {
       setError("Please enter your new password.");
+      return;
+    }
+
+    if (!confirmPassword) {
+      setError("Please confirm your new password.");
       return;
     }
 
@@ -247,22 +375,16 @@ export default function Auth() {
     try {
       const response = await resetForgotPassword(resetToken, newPassword);
 
-      setMessage(response.message || "Password reset successfully.");
-
-      /*
-       * Clear forgot password state.
-       */
-      setOtp("");
+      clearOtp();
       setResetToken("");
       setNewPassword("");
       setConfirmPassword("");
 
-      /*
-       * Return to login.
-       */
+      setMessage(response.message || "Password reset successfully.");
+
       setTimeout(() => {
         setMode("login");
-      }, 700);
+      }, 900);
     } catch (err) {
       setError(
         err?.data?.message || err?.message || "Unable to reset password.",
@@ -272,9 +394,7 @@ export default function Auth() {
     }
   };
 
-  /*
-   * SWITCH LOGIN / REGISTER
-   */
+  // Switch between login and register.
   const switchMode = () => {
     clearMessages();
 
@@ -284,37 +404,44 @@ export default function Auth() {
     setLoading(false);
   };
 
-  /*
-   * START FORGOT PASSWORD
-   */
+  // Open forgot-password flow.
   const openForgotPassword = () => {
     clearMessages();
 
-    setOtp("");
+    clearOtp();
     setResetToken("");
     setNewPassword("");
     setConfirmPassword("");
+    setResendTimer(0);
 
     setMode("forgot-email");
   };
 
-  /*
-   * BACK TO LOGIN
-   */
+  // Return to login.
   const backToLogin = () => {
     clearMessages();
 
     setMode("login");
 
-    setOtp("");
+    clearOtp();
     setResetToken("");
     setNewPassword("");
     setConfirmPassword("");
+    setResendTimer(0);
   };
 
-  /*
-   * HEADING
-   */
+  // Return to forgot email.
+  const changeForgotEmail = () => {
+    clearMessages();
+
+    clearOtp();
+    setResetToken("");
+    setResendTimer(0);
+
+    setMode("forgot-email");
+  };
+
+  // Get authentication heading.
   const getHeading = () => {
     if (mode === "register") {
       return {
@@ -361,8 +488,6 @@ export default function Auth() {
         <span className="auth-star star-4" />
 
         <section className="auth-stage">
-          {/* ORBITS */}
-
           <div className="orbit orbit-one">
             <span className="orbit-dot" />
           </div>
@@ -375,13 +500,9 @@ export default function Auth() {
             <span className="orbit-dot" />
           </div>
 
-          {/* CORE */}
-
           <div className="orbit-core">
             <span>ReOrbit</span>
           </div>
-
-          {/* CARD */}
 
           <div
             className={`auth-card ${
@@ -392,14 +513,10 @@ export default function Auth() {
                   : "login-mode"
             }`}
           >
-            {/* LOGO */}
-
             <div className="auth-logo">
               <span className="logo-dot" />
               <span>ReOrbit</span>
             </div>
-
-            {/* HEADING */}
 
             <div className="auth-heading">
               <span className="auth-eyebrow">{heading.eyebrow}</span>
@@ -409,19 +526,21 @@ export default function Auth() {
               <p>{heading.description}</p>
             </div>
 
-            {/* SUCCESS */}
-
             {message && (
-              <div className="auth-message auth-success">{message}</div>
+              <div className="auth-message auth-success">
+                <span className="material-symbols-outlined">check_circle</span>
+
+                <span>{message}</span>
+              </div>
             )}
 
-            {/* ERROR */}
+            {error && (
+              <div className="auth-message auth-error">
+                <span className="material-symbols-outlined">error</span>
 
-            {error && <div className="auth-message auth-error">{error}</div>}
-
-            {/*
-                LOGIN
-            */}
+                <span>{error}</span>
+              </div>
+            )}
 
             {mode === "login" && (
               <form onSubmit={handleLogin}>
@@ -433,7 +552,10 @@ export default function Auth() {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearMessages();
+                    }}
                     autoComplete="email"
                     required
                   />
@@ -448,7 +570,10 @@ export default function Auth() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        clearMessages();
+                      }}
                       autoComplete="current-password"
                       required
                     />
@@ -512,10 +637,6 @@ export default function Auth() {
               </form>
             )}
 
-            {/*
-                REGISTER
-            */}
-
             {mode === "register" && (
               <form onSubmit={handleRegister}>
                 <div className="auth-field">
@@ -526,7 +647,10 @@ export default function Auth() {
                     type="text"
                     placeholder="Your name"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      clearMessages();
+                    }}
                     autoComplete="name"
                     required
                   />
@@ -540,7 +664,10 @@ export default function Auth() {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearMessages();
+                    }}
                     autoComplete="email"
                     required
                   />
@@ -555,7 +682,10 @@ export default function Auth() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        clearMessages();
+                      }}
                       autoComplete="new-password"
                       required
                     />
@@ -606,12 +736,11 @@ export default function Auth() {
               </form>
             )}
 
-            {/*
-                FORGOT EMAIL
-            */}
-
             {mode === "forgot-email" && (
-              <form onSubmit={handleForgotEmail}>
+              <form
+                onSubmit={handleForgotEmail}
+                className="forgot-password-form"
+              >
                 <div className="forgot-step">
                   <span>01</span>
 
@@ -619,7 +748,8 @@ export default function Auth() {
                     <strong>Enter your email</strong>
 
                     <p>
-                      We'll send a verification OTP to your registered email.
+                      We&apos;ll send a verification code to your registered
+                      email.
                     </p>
                   </div>
                 </div>
@@ -632,7 +762,10 @@ export default function Auth() {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearMessages();
+                    }}
                     autoComplete="email"
                     required
                   />
@@ -644,6 +777,12 @@ export default function Auth() {
                   disabled={loading}
                 >
                   {loading ? "Sending OTP..." : "Send OTP"}
+
+                  {!loading && (
+                    <span className="material-symbols-outlined">
+                      arrow_forward
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -651,68 +790,98 @@ export default function Auth() {
                   className="auth-secondary-button"
                   onClick={backToLogin}
                 >
+                  <span className="material-symbols-outlined">arrow_back</span>
                   Back to sign in
                 </button>
               </form>
             )}
 
-            {/*
-                FORGOT OTP
-            */}
-
             {mode === "forgot-otp" && (
-              <form onSubmit={handleVerifyOTP}>
+              <form onSubmit={handleVerifyOTP} className="forgot-password-form">
                 <div className="forgot-step">
                   <span>02</span>
 
                   <div>
-                    <strong>Verify OTP</strong>
+                    <strong>Verify your email</strong>
 
                     <p>
-                      Enter the OTP sent to <b>{email}</b>.
+                      Enter the 6-digit code sent to <strong>{email}</strong>
                     </p>
                   </div>
                 </div>
 
-                <div className="auth-field">
-                  <label htmlFor="otp">OTP</label>
+                <div className="forgot-otp-container">
+                  <label>Verification code</label>
 
-                  <input
-                    id="otp"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="Enter 6-digit OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                    required
-                  />
+                  <div className="forgot-otp-boxes" onPaste={handleOtpPaste}>
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(element) => {
+                          otpRefs.current[index] = element;
+                        }}
+                        id={`forgot-otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(e.target.value, index)}
+                        onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                        autoComplete={index === 0 ? "one-time-code" : "off"}
+                        aria-label={`OTP digit ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <p className="forgot-otp-help">
+                    Enter the 6-digit code from your email.
+                  </p>
                 </div>
 
                 <button
                   type="submit"
                   className="auth-submit"
-                  disabled={loading}
+                  disabled={loading || otp.join("").length !== 6}
                 >
                   {loading ? "Verifying..." : "Verify OTP"}
+
+                  {!loading && (
+                    <span className="material-symbols-outlined">verified</span>
+                  )}
                 </button>
+
+                <div className="forgot-resend">
+                  <span>Didn&apos;t receive the code?</span>
+
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendTimer > 0 || resendLoading || loading}
+                  >
+                    {resendLoading
+                      ? "Sending..."
+                      : resendTimer > 0
+                        ? `Resend in ${resendTimer}s`
+                        : "Resend OTP"}
+                  </button>
+                </div>
 
                 <button
                   type="button"
                   className="auth-secondary-button"
-                  onClick={() => setMode("forgot-email")}
+                  onClick={changeForgotEmail}
                 >
+                  <span className="material-symbols-outlined">arrow_back</span>
                   Change email
                 </button>
               </form>
             )}
 
-            {/*
-                NEW PASSWORD
-            */}
-
             {mode === "forgot-password" && (
-              <form onSubmit={handleResetPassword}>
+              <form
+                onSubmit={handleResetPassword}
+                className="forgot-password-form"
+              >
                 <div className="forgot-step">
                   <span>03</span>
 
@@ -720,7 +889,8 @@ export default function Auth() {
                     <strong>Create new password</strong>
 
                     <p>
-                      Your OTP has been verified. Create a new password below.
+                      Your email has been verified. Create a new password for
+                      your account.
                     </p>
                   </div>
                 </div>
@@ -734,7 +904,10 @@ export default function Auth() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        clearMessages();
+                      }}
                       autoComplete="new-password"
                       required
                     />
@@ -757,7 +930,10 @@ export default function Auth() {
                     type="password"
                     placeholder="••••••••"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      clearMessages();
+                    }}
                     autoComplete="new-password"
                     required
                   />
@@ -769,13 +945,15 @@ export default function Auth() {
                   disabled={loading}
                 >
                   {loading ? "Resetting..." : "Reset password"}
+
+                  {!loading && (
+                    <span className="material-symbols-outlined">
+                      lock_reset
+                    </span>
+                  )}
                 </button>
               </form>
             )}
-
-            {/*
-                LOGIN / REGISTER SWITCH
-            */}
 
             {(mode === "login" || mode === "register") && (
               <div className="auth-switch">
@@ -790,8 +968,6 @@ export default function Auth() {
                 </button>
               </div>
             )}
-
-            {/* BACK */}
 
             <a href="/" className="auth-back">
               <span className="material-symbols-outlined">arrow_back</span>
