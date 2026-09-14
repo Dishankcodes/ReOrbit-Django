@@ -1,0 +1,1140 @@
+.remaker-dashboard {
+  --rd-bg: #faf9f7;
+  --rd-card: #ffffff;
+  --rd-maroon: #270809;
+  --rd-green: #08271f;
+  --rd-sage: #c1c8c4;
+  --rd-sage-light: #e9eeeb;
+  --rd-text: #211918;
+  --rd-muted: #756d6b;
+  --rd-border: #e1dcd9;
+  --rd-soft: #f4f1ef;
+  --rd-success: #356b51;
+  --rd-warning: #a46d25;
+  --rd-blue: #496b80;
+  --rd-shadow: 0 10px 30px rgba(39, 8, 9, 0.045);
+
+  min-height: 100%;
+  color: var(--rd-text);
+}
+
+/* TOP */
+
+.remaker-dashboard-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.remaker-dashboard-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--rd-maroon);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+.remaker-dashboard-top h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.remaker-dashboard-top p {
+  margin: 8px 0 0;
+  color: var(--rd-muted);
+  font-size: 14px;
+}
+
+.remaker-dashboard-add-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 17px;
+  background: var(--rd-maroon);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: 0 8px 20px rgba(39, 8, 9, 0.14);
+}
+
+.remaker-dashboard-add-btn:hover {
+  transform: translateY(-1px);
+  background: #3a1011;
+}
+
+/* STAT GRID */
+
+.remaker-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.remaker-stat-card {
+  position: relative;
+  min-width: 0;
+  background: var(--rd-card);
+  border: 1px solid var(--rd-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: var(--rd-shadow);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.remaker-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(39, 8, 9, 0.07);
+}
+
+.remaker-stat-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.remaker-stat-icon.sales {
+  background: #f2e5e5;
+  color: var(--rd-maroon);
+}
+
+.remaker-stat-icon.orders {
+  background: #e8efeb;
+  color: var(--rd-green);
+}
+
+.remaker-stat-icon.products {
+  background: #edf0ed;
+  color: #536b60;
+}
+
+.remaker-stat-icon.followers {
+  background: #f1ece9;
+  color: #79574d;
+}
+
+.remaker-stat-content {
+  min-width: 0;
+}
+
+.remaker-stat-title {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.remaker-stat-content strong {
+  display: block;
+  color: var(--rd-text);
+  font-size: 23px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.remaker-stat-change {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.remaker-stat-change span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--rd-success);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.remaker-stat-change small {
+  color: var(--rd-muted);
+  font-size: 10px;
+}
+
+.remaker-stat-arrow {
+  position: absolute;
+  top: 18px;
+  right: 17px;
+  width: 29px;
+  height: 29px;
+  border: 1px solid var(--rd-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--rd-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.remaker-stat-arrow:hover {
+  background: var(--rd-green);
+  color: #ffffff;
+  border-color: var(--rd-green);
+}
+
+/* PANELS */
+
+.remaker-panel {
+  min-width: 0;
+  background: var(--rd-card);
+  border: 1px solid var(--rd-border);
+  border-radius: 16px;
+  padding: 21px;
+  box-shadow: var(--rd-shadow);
+}
+
+.remaker-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.remaker-panel-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.remaker-panel-header p {
+  margin: 5px 0 0;
+  color: var(--rd-muted);
+  font-size: 11px;
+}
+
+.remaker-view-link {
+  border: none;
+  background: transparent;
+  color: var(--rd-maroon);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.remaker-view-link:hover {
+  text-decoration: underline;
+}
+
+.remaker-icon-button {
+  width: 31px;
+  height: 31px;
+  border: 1px solid var(--rd-border);
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--rd-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.remaker-icon-button:hover {
+  background: var(--rd-green);
+  color: #ffffff;
+  border-color: var(--rd-green);
+}
+
+/* MAIN GRID */
+
+.remaker-dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(310px, 0.85fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+/* SALES */
+
+.remaker-sales-summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 23px;
+  margin-bottom: 10px;
+}
+
+.remaker-sales-summary > div:first-child span {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.remaker-sales-summary > div:first-child strong {
+  font-size: 27px;
+  letter-spacing: -0.035em;
+}
+
+.remaker-sales-growth {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--rd-success);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.remaker-sales-growth small {
+  color: var(--rd-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.remaker-chart {
+  display: flex;
+  height: 265px;
+  margin-top: 4px;
+}
+
+.remaker-chart-y {
+  width: 45px;
+  padding: 4px 8px 28px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.remaker-chart-y span {
+  color: #9a9492;
+  font-size: 9px;
+}
+
+.remaker-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.remaker-chart-grid {
+  position: absolute;
+  inset: 4px 0 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.remaker-chart-grid span {
+  width: 100%;
+  border-top: 1px dashed #ebe7e4;
+}
+
+.remaker-sales-svg {
+  position: absolute;
+  inset: 4px 0 30px;
+  width: 100%;
+  height: calc(100% - 34px);
+  overflow: visible;
+  color: var(--rd-maroon);
+}
+
+.remaker-chart-points {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  bottom: 30px;
+}
+
+.remaker-chart-point {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: translate(-50%, 50%);
+  background: var(--rd-maroon);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px var(--rd-maroon);
+}
+
+.remaker-chart-months {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.remaker-chart-months span {
+  color: #9a9492;
+  font-size: 9px;
+}
+
+/* PIPELINE */
+
+.remaker-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+  margin-top: 28px;
+}
+
+.remaker-pipeline-item {
+  display: grid;
+  grid-template-columns: 38px 72px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.remaker-pipeline-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+}
+
+.remaker-pipeline-icon.pending {
+  background: #f7efe3;
+  color: var(--rd-warning);
+}
+
+.remaker-pipeline-icon.processing {
+  background: #e9efec;
+  color: var(--rd-green);
+}
+
+.remaker-pipeline-icon.shipped {
+  background: #edf0f2;
+  color: var(--rd-blue);
+}
+
+.remaker-pipeline-icon.delivered {
+  background: #e6efe9;
+  color: var(--rd-success);
+}
+
+.remaker-pipeline-item > div:nth-child(2) strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.remaker-pipeline-item > div:nth-child(2) span {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.remaker-pipeline-bar {
+  height: 6px;
+  background: #eeeae7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.remaker-pipeline-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--rd-green);
+}
+
+.remaker-pipeline-item:nth-child(1) .remaker-pipeline-bar span {
+  background: #b17c35;
+}
+
+.remaker-pipeline-item:nth-child(3) .remaker-pipeline-bar span {
+  background: #58768a;
+}
+
+.remaker-pipeline-item:nth-child(4) .remaker-pipeline-bar span {
+  background: #4b775f;
+}
+
+.remaker-full-link {
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 15px;
+  border: none;
+  border-top: 1px solid var(--rd-border);
+  background: transparent;
+  color: var(--rd-maroon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* LOWER GRID */
+
+.remaker-dashboard-lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+/* PRODUCTS */
+
+.remaker-products-list {
+  margin-top: 17px;
+}
+
+.remaker-product-row {
+  display: grid;
+  grid-template-columns: 30px 44px minmax(0, 1fr) 55px 85px;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 0;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.remaker-product-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.remaker-product-number {
+  color: #a49d9a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.remaker-product-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--rd-soft);
+  color: var(--rd-maroon);
+  display: grid;
+  place-items: center;
+}
+
+.remaker-product-info {
+  min-width: 0;
+}
+
+.remaker-product-info strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.remaker-product-info span {
+  display: block;
+  margin-top: 3px;
+  color: var(--rd-muted);
+  font-size: 10px;
+}
+
+.remaker-product-sales {
+  text-align: center;
+}
+
+.remaker-product-sales strong {
+  display: block;
+  font-size: 13px;
+}
+
+.remaker-product-sales span {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 9px;
+}
+
+.remaker-product-revenue {
+  text-align: right;
+}
+
+.remaker-product-revenue > strong {
+  display: block;
+  font-size: 12px;
+}
+
+.remaker-product-revenue > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #987127;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+/* ORDERS */
+
+.remaker-orders-list {
+  margin-top: 17px;
+}
+
+.remaker-order-row {
+  display: grid;
+  grid-template-columns: 39px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.remaker-order-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.remaker-order-icon {
+  width: 39px;
+  height: 39px;
+  border-radius: 10px;
+  background: #edf1ee;
+  color: var(--rd-green);
+  display: grid;
+  place-items: center;
+}
+
+.remaker-order-info {
+  min-width: 0;
+}
+
+.remaker-order-info strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.remaker-order-info span {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.remaker-order-right {
+  text-align: right;
+  min-width: 78px;
+}
+
+.remaker-order-right > strong {
+  display: block;
+  font-size: 11px;
+}
+
+.remaker-order-status {
+  display: inline-flex;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.remaker-order-status.processing {
+  background: #f5eadb;
+  color: #91611f;
+}
+
+.remaker-order-status.shipped {
+  background: #e8eef1;
+  color: #4e6c7e;
+}
+
+.remaker-order-status.delivered {
+  background: #e4eee8;
+  color: #3e6c53;
+}
+
+.remaker-order-right small {
+  display: block;
+  color: #9b9491;
+  font-size: 8px;
+  margin-top: 3px;
+}
+
+/* BOTTOM GRID */
+
+.remaker-dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(280px, 0.85fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+/* ACTIVITY */
+
+.remaker-activity-list {
+  margin-top: 15px;
+}
+
+.remaker-activity-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.remaker-activity-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.remaker-activity-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f1e8e7;
+  color: var(--rd-maroon);
+  display: grid;
+  place-items: center;
+}
+
+.remaker-activity-content {
+  min-width: 0;
+}
+
+.remaker-activity-content strong {
+  display: block;
+  font-size: 10px;
+}
+
+.remaker-activity-content span {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+.remaker-activity-item small {
+  color: #9a9492;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+/* PERFORMANCE */
+
+.remaker-performance-panel > .remaker-panel-header > svg {
+  color: var(--rd-green);
+}
+
+.remaker-performance-score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 20px;
+}
+
+.remaker-score-circle {
+  width: 83px;
+  height: 83px;
+  flex: 0 0 83px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at center, #ffffff 57%, transparent 58%),
+    conic-gradient(var(--rd-green) 92%, #e5e9e7 0);
+}
+
+.remaker-score-circle > div {
+  text-align: center;
+}
+
+.remaker-score-circle strong {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.remaker-score-circle span {
+  color: var(--rd-muted);
+  font-size: 9px;
+}
+
+.remaker-performance-score > div:last-child strong {
+  display: block;
+  color: var(--rd-green);
+  font-size: 14px;
+}
+
+.remaker-performance-score > div:last-child p {
+  max-width: 190px;
+  margin: 5px 0 0;
+  color: var(--rd-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.remaker-performance-items {
+  border-top: 1px solid var(--rd-border);
+}
+
+.remaker-performance-items > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #eeeae7;
+}
+
+.remaker-performance-items > div:last-child {
+  border-bottom: none;
+}
+
+.remaker-performance-items span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rd-muted);
+  font-size: 9px;
+}
+
+.remaker-performance-items strong {
+  font-size: 11px;
+}
+
+/* QUICK ACTIONS */
+
+.remaker-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.remaker-actions button {
+  width: 100%;
+  border: 1px solid var(--rd-border);
+  background: #ffffff;
+  border-radius: 11px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 35px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.remaker-actions button:hover {
+  border-color: #bdb4b1;
+  background: #faf8f6;
+  transform: translateX(2px);
+}
+
+.remaker-action-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 9px;
+  background: #f1e7e6;
+  color: var(--rd-maroon);
+  display: grid;
+  place-items: center;
+}
+
+.remaker-actions button:nth-child(2) .remaker-action-icon {
+  background: #e9efec;
+  color: var(--rd-green);
+}
+
+.remaker-actions button:nth-child(3) .remaker-action-icon {
+  background: #eef0ef;
+  color: #5d7167;
+}
+
+.remaker-actions button:nth-child(4) .remaker-action-icon {
+  background: #f0ece9;
+  color: #76594f;
+}
+
+.remaker-actions button > span:nth-child(2) strong {
+  display: block;
+  color: var(--rd-text);
+  font-size: 10px;
+}
+
+.remaker-actions button > span:nth-child(2) small {
+  display: block;
+  color: var(--rd-muted);
+  font-size: 8px;
+  margin-top: 3px;
+}
+
+.remaker-actions button > svg {
+  color: #aaa29f;
+}
+
+/* IMPACT */
+
+.remaker-impact-banner {
+  background: var(--rd-green);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 21px 23px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  overflow: hidden;
+  position: relative;
+}
+
+.remaker-impact-banner::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid rgba(193, 200, 196, 0.12);
+  right: -80px;
+  top: -110px;
+}
+
+.remaker-impact-left {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.remaker-impact-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(193, 200, 196, 0.14);
+  color: var(--rd-sage);
+  display: grid;
+  place-items: center;
+}
+
+.remaker-impact-left span {
+  display: block;
+  color: var(--rd-sage);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.remaker-impact-left strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.remaker-impact-left b {
+  color: #ffffff;
+}
+
+.remaker-impact-stats {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.remaker-impact-stats > div {
+  padding-left: 25px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.remaker-impact-stats strong {
+  display: block;
+  font-size: 17px;
+}
+
+.remaker-impact-stats span {
+  display: block;
+  color: var(--rd-sage);
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+/* TABLET */
+
+@media (max-width: 1250px) {
+  .remaker-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remaker-dashboard-main-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+  }
+
+  .remaker-dashboard-bottom-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remaker-actions-panel {
+    grid-column: span 2;
+  }
+}
+
+/* SMALL LAPTOP */
+
+@media (max-width: 1050px) {
+  .remaker-dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-dashboard-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .remaker-actions-panel {
+    grid-column: span 2;
+  }
+
+  .remaker-impact-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .remaker-impact-stats {
+    width: 100%;
+  }
+}
+
+/* TABLET */
+
+@media (max-width: 800px) {
+  .remaker-dashboard {
+    padding: 0;
+  }
+
+  .remaker-dashboard-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .remaker-dashboard-add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .remaker-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .remaker-dashboard-lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-dashboard-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-actions-panel {
+    grid-column: auto;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 560px) {
+  .remaker-dashboard-top h1 {
+    font-size: 25px;
+  }
+
+  .remaker-dashboard-top p {
+    line-height: 1.5;
+  }
+
+  .remaker-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remaker-stat-card {
+    padding: 17px;
+  }
+
+  .remaker-panel {
+    padding: 17px;
+    border-radius: 14px;
+  }
+
+  .remaker-chart {
+    height: 225px;
+  }
+
+  .remaker-chart-months span:nth-child(even) {
+    display: none;
+  }
+
+  .remaker-product-row {
+    grid-template-columns: 26px 40px minmax(0, 1fr) 70px;
+  }
+
+  .remaker-product-sales {
+    display: none;
+  }
+
+  .remaker-product-placeholder {
+    width: 40px;
+    height: 40px;
+  }
+
+  .remaker-order-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .remaker-order-right {
+    grid-column: 2;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .remaker-order-right small {
+    margin-top: 0;
+  }
+
+  .remaker-impact-stats {
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .remaker-impact-stats > div {
+    padding-left: 15px;
+  }
+
+  .remaker-impact-left strong {
+    line-height: 1.45;
+  }
+}

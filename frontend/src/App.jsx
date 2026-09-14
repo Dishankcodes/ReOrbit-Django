@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// User public pages.
 import Home from "./user/pages/HomePages/Home";
 import About from "./user/pages/HomePages/About";
 import FAQ from "./user/pages/HomePages/FAQ";
@@ -11,13 +12,17 @@ import Terms from "./user/pages/HomePages/Terms";
 import ReMakerDiscover from "./user/pages/HomePages/ReMakerDiscover";
 import Marketplace from "./user/pages/HomePages/UserBeforeMarketplace";
 
+// User authentication.
 import UserAuth from "./user/pages/Auth/Auth";
 
+// User after-login.
 import UserLayout from "./user/components/UserLayout";
 import UserDashboard from "./user/pages/UserDashboard";
 
+// ReMaker authentication.
 import ReMakerAuth from "./remaker/pages/Auth/ReMakerAuth";
 
+// ReMaker public pages.
 import ReMakersHome from "./remaker/pages/HomePages/ReMakersHome";
 import ReMakerAbout from "./remaker/pages/HomePages/About";
 import ReMakerFAQ from "./remaker/pages/HomePages/FAQ";
@@ -25,14 +30,20 @@ import ReMakerHowItWorks from "./remaker/pages/HomePages/HowItWorks";
 import ReMakerContact from "./remaker/pages/HomePages/Contact";
 import RemakerBeforeMarketplace from "./remaker/pages/HomePages/ReMakerBeforeMarketplace";
 
+// ReMaker after-login.
+import ReMakerLayout from "./remaker/components/ReMakerLayout";
+import ReMakerDashboard from "./remaker/pages/ReMakerDashboard";
+
+// Admin public pages.
 import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
 import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
 import AdminLogin from "./admin/pages/Auth/AdminLogin";
 
-
+// Admin panel.
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminDashboard from "./admin/pages/Dashboard";
+
 import "./styles/theme.css";
 
 export default function App() {
@@ -68,25 +79,86 @@ export default function App() {
         {/* REMAKER PUBLIC PAGES */}
 
         <Route path="/remakers-home" element={<ReMakersHome />} />
+
         <Route path="/remakers-about" element={<ReMakerAbout />} />
+
         <Route path="/remakers-faq" element={<ReMakerFAQ />} />
+
         <Route path="/remakers-how-it-works" element={<ReMakerHowItWorks />} />
+
         <Route path="/remakers-contact" element={<ReMakerContact />} />
+
         <Route
           path="/remakers-before-marketplace"
           element={<RemakerBeforeMarketplace />}
         />
 
-        {/* ADMIN */}
+        {/* REMAKER AFTER LOGIN */}
+
+        <Route element={<ReMakerLayout />}>
+          <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
+
+          <Route
+            path="/remaker-portfolio"
+            element={<div>ReMaker Portfolio</div>}
+          />
+
+          <Route
+            path="/remaker-products"
+            element={<div>ReMaker Products</div>}
+          />
+
+          <Route path="/remaker-orders" element={<div>ReMaker Orders</div>} />
+
+          <Route
+            path="/remaker-earnings"
+            element={<div>ReMaker Earnings</div>}
+          />
+
+          <Route
+            path="/remaker-followers"
+            element={<div>ReMaker Followers</div>}
+          />
+
+          <Route path="/remaker-reviews" element={<div>ReMaker Reviews</div>} />
+
+          <Route
+            path="/remaker-analytics"
+            element={<div>ReMaker Analytics</div>}
+          />
+
+          <Route
+            path="/remaker-notifications"
+            element={<div>ReMaker Notifications</div>}
+          />
+
+          <Route
+            path="/remaker-settings"
+            element={<div>ReMaker Settings</div>}
+          />
+
+          <Route path="/remaker-help" element={<div>ReMaker Help</div>} />
+
+          <Route path="/remaker-profile" element={<div>ReMaker Profile</div>} />
+
+          <Route
+            path="/remaker-products/new"
+            element={<div>Create Product</div>}
+          />
+        </Route>
+
+        {/* ADMIN PUBLIC PAGES */}
 
         <Route path="/admin-home" element={<AdminHome />} />
+
         <Route path="/admin-about" element={<AdminAbout />} />
+
         <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
 
         <Route path="/admin-login" element={<AdminLogin />} />
 
-       
         {/* ADMIN PANEL */}
+
         <Route element={<AdminLayout />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
 

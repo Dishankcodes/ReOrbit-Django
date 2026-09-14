@@ -1,0 +1,621 @@
+.remaker-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+
+  z-index: 1000;
+
+  width: 270px;
+
+  display: flex;
+  flex-direction: column;
+
+  background: linear-gradient(180deg, #270809 0%, #2d0b0d 52%, #210607 100%);
+
+  color: #ffffff;
+
+  border-right: 1px solid rgba(193, 200, 196, 0.11);
+
+  overflow: hidden;
+
+  transition:
+    width 0.25s ease,
+    transform 0.25s ease;
+}
+
+.remaker-sidebar-top {
+  min-height: 82px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 18px;
+
+  border-bottom: 1px solid rgba(193, 200, 196, 0.1);
+}
+
+.remaker-sidebar-brand {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.remaker-sidebar-brand-icon {
+  width: 44px;
+  height: 44px;
+
+  flex: 0 0 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(193, 200, 196, 0.2);
+
+  border-radius: 13px;
+
+  background: rgba(193, 200, 196, 0.09);
+
+  color: #c1c8c4;
+}
+
+.remaker-sidebar-brand-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  white-space: nowrap;
+}
+
+.remaker-sidebar-brand-name {
+  font-family: "Bricolage Grotesque", Georgia, serif;
+
+  font-size: 21px;
+  font-weight: 600;
+
+  line-height: 1;
+
+  letter-spacing: -0.02em;
+}
+
+.remaker-sidebar-brand-tagline {
+  color: rgba(193, 200, 196, 0.5);
+
+  font-size: 8px;
+  font-weight: 700;
+
+  line-height: 1;
+
+  letter-spacing: 0.14em;
+}
+
+.remaker-sidebar-mobile-close {
+  display: none;
+
+  margin-left: auto;
+
+  width: 34px;
+  height: 34px;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  color: #ffffff;
+}
+
+.remaker-sidebar-studio {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin: 18px 13px 4px;
+
+  padding: 11px;
+
+  border: 1px solid rgba(193, 200, 196, 0.12);
+
+  border-radius: 12px;
+
+  background: rgba(193, 200, 196, 0.06);
+}
+
+.remaker-sidebar-studio-icon {
+  width: 31px;
+  height: 31px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: rgba(193, 200, 196, 0.12);
+
+  color: #c1c8c4;
+}
+
+.remaker-sidebar-studio > div:last-child {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.remaker-sidebar-studio span {
+  color: rgba(193, 200, 196, 0.48);
+
+  font-size: 7px;
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+}
+
+.remaker-sidebar-studio strong {
+  overflow: hidden;
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remaker-sidebar-navigation {
+  flex: 1;
+
+  min-height: 0;
+
+  padding: 15px 13px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-width: thin;
+
+  scrollbar-color: rgba(193, 200, 196, 0.18) transparent;
+}
+
+.remaker-sidebar-navigation::-webkit-scrollbar {
+  width: 4px;
+}
+
+.remaker-sidebar-navigation::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.remaker-sidebar-navigation::-webkit-scrollbar-thumb {
+  background: rgba(193, 200, 196, 0.18);
+
+  border-radius: 999px;
+}
+
+.remaker-sidebar-section {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.remaker-sidebar-section-label {
+  display: block;
+
+  padding: 0 13px;
+
+  margin-bottom: 8px;
+
+  color: rgba(193, 200, 196, 0.46);
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.14em;
+
+  white-space: nowrap;
+}
+
+.remaker-sidebar-link {
+  position: relative;
+
+  width: 100%;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 0 13px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: rgba(255, 255, 255, 0.66);
+
+  font-size: 12px;
+  font-weight: 500;
+
+  text-align: left;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.remaker-sidebar-link:hover {
+  background: rgba(193, 200, 196, 0.08);
+
+  color: #ffffff;
+
+  transform: translateX(2px);
+}
+
+.remaker-sidebar-link.active {
+  background: linear-gradient(
+    90deg,
+    rgba(193, 200, 196, 0.16),
+    rgba(193, 200, 196, 0.06)
+  );
+
+  color: #ffffff;
+}
+
+.remaker-sidebar-link.active::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+
+  width: 3px;
+
+  border-radius: 0 5px 5px 0;
+
+  background: #c1c8c4;
+}
+
+.remaker-sidebar-link-icon {
+  flex: 0 0 18px;
+
+  color: rgba(193, 200, 196, 0.68);
+
+  transition: color 0.2s ease;
+}
+
+.remaker-sidebar-link:hover .remaker-sidebar-link-icon,
+.remaker-sidebar-link.active .remaker-sidebar-link-icon {
+  color: #c1c8c4;
+}
+
+.remaker-sidebar-link-text {
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+.remaker-sidebar-divider {
+  width: calc(100% - 12px);
+
+  height: 1px;
+
+  margin: 16px auto;
+
+  background: rgba(193, 200, 196, 0.09);
+}
+
+.remaker-sidebar-logout {
+  margin-top: 5px;
+
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.remaker-sidebar-logout:hover {
+  background: rgba(210, 130, 130, 0.08);
+
+  color: #ffffff;
+}
+
+.remaker-sidebar-logout:hover .remaker-sidebar-link-icon {
+  color: #d7a5a5;
+}
+
+.remaker-sidebar-profile {
+  width: calc(100% - 24px);
+
+  min-height: 72px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  margin: 0 12px 14px;
+
+  padding: 10px;
+
+  border: 1px solid rgba(193, 200, 196, 0.12);
+
+  border-radius: 14px;
+
+  background: rgba(193, 200, 196, 0.06);
+
+  color: #ffffff;
+
+  text-align: left;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.remaker-sidebar-profile:hover {
+  background: rgba(193, 200, 196, 0.1);
+
+  border-color: rgba(193, 200, 196, 0.2);
+}
+
+.remaker-sidebar-avatar {
+  width: 40px;
+  height: 40px;
+
+  flex: 0 0 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: linear-gradient(145deg, #c1c8c4, #8f9b96);
+
+  color: #270809;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.remaker-sidebar-profile-info {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.remaker-sidebar-profile-info strong {
+  overflow: hidden;
+
+  color: #ffffff;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.remaker-sidebar-profile-info span {
+  color: rgba(255, 255, 255, 0.43);
+
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.remaker-sidebar-profile-arrow {
+  flex: 0 0 auto;
+
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.remaker-sidebar.collapsed {
+  width: 82px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-top {
+  justify-content: center;
+
+  padding: 0 10px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-brand {
+  justify-content: center;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-brand-text {
+  display: none;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-studio {
+  width: 58px;
+
+  justify-content: center;
+
+  margin-left: 12px;
+  margin-right: 12px;
+
+  padding: 8px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-studio > div:last-child {
+  display: none;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-navigation {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-section-label {
+  display: none;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-link {
+  justify-content: center;
+
+  padding: 0;
+
+  gap: 0;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-link-text {
+  display: none;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-link.active::before {
+  left: -1px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-divider {
+  width: 40px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-profile {
+  width: 58px;
+
+  justify-content: center;
+
+  margin-left: 12px;
+  margin-right: 12px;
+
+  padding: 8px;
+}
+
+.remaker-sidebar.collapsed .remaker-sidebar-profile-info,
+.remaker-sidebar.collapsed .remaker-sidebar-profile-arrow {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .remaker-sidebar {
+    width: 270px;
+
+    transform: translateX(-100%);
+
+    box-shadow: 15px 0 50px rgba(39, 8, 9, 0.18);
+  }
+
+  .remaker-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .remaker-sidebar.collapsed {
+    width: 270px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-top {
+    justify-content: flex-start;
+
+    padding: 0 18px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-brand-text {
+    display: flex;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-studio {
+    width: auto;
+
+    justify-content: flex-start;
+
+    margin-left: 13px;
+    margin-right: 13px;
+
+    padding: 11px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-studio > div:last-child {
+    display: flex;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-navigation {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-section-label {
+    display: block;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-link {
+    justify-content: flex-start;
+
+    padding: 0 13px;
+
+    gap: 13px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-link-text {
+    display: block;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-divider {
+    width: calc(100% - 12px);
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-profile {
+    width: calc(100% - 24px);
+
+    justify-content: flex-start;
+
+    margin-left: 12px;
+    margin-right: 12px;
+
+    padding: 10px;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-profile-info {
+    display: flex;
+  }
+
+  .remaker-sidebar.collapsed .remaker-sidebar-profile-arrow {
+    display: block;
+  }
+
+  .remaker-sidebar-mobile-close {
+    display: flex;
+  }
+}
+
+@media (max-width: 520px) {
+  .remaker-sidebar {
+    width: 285px;
+  }
+
+  .remaker-sidebar.collapsed {
+    width: 285px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remaker-sidebar,
+  .remaker-sidebar-link,
+  .remaker-sidebar-profile {
+    transition: none;
+  }
+}
