@@ -1,0 +1,168 @@
+/* User Layout Base Variables & Application Shell */
+.user-layout {
+  --user-bg: #f7f5ee;
+  --user-primary: #2a4d3a;
+  --user-primary-dark: #1e3d2f;
+  --user-secondary: #d4e4d8;
+  --user-card: #ffffff;
+  --user-text: #1f2923;
+  --user-muted: #6b756d;
+  --user-border: #dce5de;
+
+  --user-sidebar-width: 270px;
+  --user-sidebar-collapsed: 82px;
+  --user-header-height: 82px;
+
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  background: var(--user-bg);
+  color: var(--user-text);
+  font-family:
+    "Plus Jakarta Sans",
+    "Inter",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  overflow-x: hidden;
+}
+
+/* Global Resets */
+.user-layout *,
+.user-layout *::before,
+.user-layout *::after {
+  box-sizing: border-box;
+}
+
+.user-layout button,
+.user-layout input,
+.user-layout textarea,
+.user-layout select {
+  font: inherit;
+}
+
+.user-layout button {
+  cursor: pointer;
+}
+
+.user-layout a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Main Application Area & Layout States */
+.user-layout-main {
+  width: calc(100% - var(--user-sidebar-width));
+  min-width: 0;
+  min-height: 100vh;
+  margin-left: var(--user-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  transition:
+    width 0.25s ease,
+    margin-left 0.25s ease;
+}
+
+.user-layout.sidebar-collapsed .user-layout-main {
+  width: calc(100% - var(--user-sidebar-collapsed));
+  margin-left: var(--user-sidebar-collapsed);
+}
+
+/* Content Container Components */
+.user-page-content {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  min-height: calc(100vh - var(--user-header-height));
+  padding: 30px;
+  background: var(--user-bg);
+}
+
+.user-page-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.user-page-full {
+  width: 100%;
+}
+
+.user-page-section {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.user-layout-card {
+  width: 100%;
+  border: 1px solid var(--user-border);
+  border-radius: 18px;
+  background: var(--user-card);
+  box-shadow: 0 8px 30px rgba(31, 41, 35, 0.04);
+}
+
+.user-sidebar-overlay {
+  display: none;
+}
+
+/* Media Queries & Responsive Breakpoints */
+@media (max-width: 1100px) {
+  .user-page-content {
+    padding: 25px;
+  }
+}
+
+@media (max-width: 900px) {
+  .user-layout-main,
+  .user-layout.sidebar-collapsed .user-layout-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .user-page-content {
+    min-height: calc(100vh - 72px);
+    padding: 20px 16px;
+  }
+
+  .user-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(18, 32, 24, 0.35);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+}
+
+@media (max-width: 520px) {
+  .user-page-content {
+    padding: 17px 12px;
+  }
+
+  .user-page-section {
+    margin-bottom: 18px;
+  }
+
+  .user-layout-card {
+    border-radius: 15px;
+  }
+}
+
+@media (max-width: 380px) {
+  .user-page-content {
+    padding: 14px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-layout-main {
+    transition: none;
+  }
+}

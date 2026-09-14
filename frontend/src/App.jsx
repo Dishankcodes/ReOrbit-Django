@@ -12,6 +12,10 @@ import ReMakerDiscover from "./user/pages/HomePages/ReMakerDiscover";
 import Marketplace from "./user/pages/HomePages/UserBeforeMarketplace";
 
 import UserAuth from "./user/pages/Auth/Auth";
+
+import UserLayout from "./user/components/UserLayout";
+import UserDashboard from "./user/pages/UserDashboard";
+
 import ReMakerAuth from "./remaker/pages/Auth/ReMakerAuth";
 
 import ReMakersHome from "./remaker/pages/HomePages/ReMakersHome";
@@ -25,41 +29,16 @@ import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminDashboard from "./admin/pages/Dashboard";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
 import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
-
 import AdminLogin from "./admin/pages/Auth/AdminLogin";
 
 import "./styles/theme.css";
-
-
-
-function UserDashboardPlaceholder() {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: "10px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h1>ReOrbit User Dashboard</h1>
-
-      <p>
-        Authentication successful. Dashboard UI
-        will be implemented in Phase 2.
-      </p>
-    </div>
-  );
-}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* USER */}
+        {/* USER PUBLIC PAGES */}
+
         <Route path="/" element={<Home />} />
         <Route path="/discover-remakers" element={<ReMakerDiscover />} />
         <Route path="/discover-marketplace" element={<Marketplace />} />
@@ -71,12 +50,21 @@ export default function App() {
         <Route path="/UserTerms" element={<Terms />} />
 
         {/* USER AUTH */}
+
         <Route path="/auth" element={<UserAuth />} />
-        
+
+        {/* USER AFTER LOGIN */}
+
+        <Route element={<UserLayout />}>
+          <Route path="/user-dashboard" element={<UserDashboard />} />
+        </Route>
+
         {/* REMAKER AUTH */}
+
         <Route path="/remakers-auth" element={<ReMakerAuth />} />
 
-        {/* REMAKER */}
+        {/* REMAKER PUBLIC PAGES */}
+
         <Route path="/remakers-home" element={<ReMakersHome />} />
         <Route path="/remakers-about" element={<ReMakerAbout />} />
         <Route path="/remakers-faq" element={<ReMakerFAQ />} />
@@ -88,12 +76,13 @@ export default function App() {
         />
 
         {/* ADMIN */}
+
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-home" element={<AdminHome />} />
         <Route path="/admin-about" element={<AdminAbout />} />
         <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
-
         <Route path="/admin-login" element={<AdminLogin />} />
+
       </Routes>
     </BrowserRouter>
   );
