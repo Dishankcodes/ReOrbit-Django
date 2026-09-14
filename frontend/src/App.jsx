@@ -26,11 +26,13 @@ import ReMakerContact from "./remaker/pages/HomePages/Contact";
 import RemakerBeforeMarketplace from "./remaker/pages/HomePages/ReMakerBeforeMarketplace";
 
 import AdminHome from "./admin/pages/HomePages/AdminHome";
-import AdminDashboard from "./admin/pages/Dashboard";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
 import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
 import AdminLogin from "./admin/pages/Auth/AdminLogin";
 
+
+import AdminLayout from "./admin/components/AdminLayout";
+import AdminDashboard from "./admin/pages/Dashboard";
 import "./styles/theme.css";
 
 export default function App() {
@@ -77,12 +79,46 @@ export default function App() {
 
         {/* ADMIN */}
 
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-home" element={<AdminHome />} />
         <Route path="/admin-about" element={<AdminAbout />} />
         <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
+
         <Route path="/admin-login" element={<AdminLogin />} />
 
+       
+        {/* ADMIN PANEL */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+          <Route path="/admin-users" element={<div>Admin Users</div>} />
+
+          <Route path="/admin-remakers" element={<div>Admin ReMakers</div>} />
+
+          <Route path="/admin-products" element={<div>Admin Products</div>} />
+
+          <Route path="/admin-orders" element={<div>Admin Orders</div>} />
+
+          <Route path="/admin-donations" element={<div>Admin Donations</div>} />
+
+          <Route path="/admin-pickups" element={<div>Admin Pickups</div>} />
+
+          <Route path="/admin-warehouse" element={<div>Admin Warehouse</div>} />
+
+          <Route path="/admin-rewards" element={<div>Admin Rewards</div>} />
+
+          <Route
+            path="/admin-notifications"
+            element={<div>Admin Notifications</div>}
+          />
+
+          <Route path="/admin-reports" element={<div>Admin Reports</div>} />
+
+          <Route path="/admin-settings" element={<div>Admin Settings</div>} />
+
+          <Route path="/admin-help" element={<div>Admin Help & Support</div>} />
+
+          <Route path="/admin-profile" element={<div>Admin Profile</div>} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

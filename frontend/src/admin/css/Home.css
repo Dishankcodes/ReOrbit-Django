@@ -1,7 +1,7 @@
-/* =========================================================
+/* 
    REORBIT ADMIN HOME
    MASTER THEME — MATCHES ADMIN ABOUT / HOW IT WORKS
-   ========================================================= */
+    */
 
 .admin-home-container {
   --admin-bg: #061b16;
@@ -59,9 +59,9 @@
     "opsz" 24;
 }
 
-/* =========================================================
+/* 
    SHARED CONTAINERS
-   ========================================================= */
+    */
 
 .admin-home-container .hero-section,
 .admin-home-container .overview-section,
@@ -71,9 +71,9 @@
   margin: 0 auto;
 }
 
-/* =========================================================
+/* 
    HERO
-   ========================================================= */
+    */
 
 .admin-home-container .hero-section {
   position: relative;
@@ -221,9 +221,9 @@
   font-size: 17px;
 }
 
-/* =========================================================
+/* 
    HERO VISUAL
-   ========================================================= */
+    */
 
 .admin-home-container .hero-image-container {
   position: relative;
@@ -334,9 +334,9 @@
   letter-spacing: 0.1em;
 }
 
-/* =========================================================
+/* 
    HERO ORBIT DETAILS
-   ========================================================= */
+    */
 
 .admin-home-container .hero-image-wrapper > .overlay-badge::before {
   content: "";
@@ -350,9 +350,9 @@
   box-shadow: 0 0 12px var(--admin-accent);
 }
 
-/* =========================================================
+/* 
    PLATFORM FLOW
-   ========================================================= */
+    */
 
 .admin-home-container .process-section {
   position: relative;
@@ -423,9 +423,9 @@
   font-size: 17px;
 }
 
-/* =========================================================
+/* 
    OVERVIEW
-   ========================================================= */
+    */
 
 .admin-home-container .overview-section {
   padding: 115px 0;
@@ -474,9 +474,9 @@
   line-height: 1.75;
 }
 
-/* =========================================================
+/* 
    MANAGEMENT GRID
-   ========================================================= */
+    */
 
 .admin-home-container .management-grid {
   display: grid;
@@ -568,9 +568,9 @@
   opacity: 0.7;
 }
 
-/* =========================================================
+/* 
    STATS
-   ========================================================= */
+    */
 
 .admin-home-container .stats-section {
   position: relative;
@@ -635,9 +635,9 @@
   text-transform: uppercase;
 }
 
-/* =========================================================
+/* 
    RESPONSIBILITIES
-   ========================================================= */
+    */
 
 .admin-home-container .responsibility-section {
   padding: 115px 0;
@@ -712,9 +712,9 @@
   line-height: 1.7;
 }
 
-/* =========================================================
+/* 
    CTA
-   ========================================================= */
+    */
 
 .admin-home-container .admin-cta-section {
   padding: 85px 0 105px;
@@ -782,9 +782,9 @@
   white-space: nowrap;
 }
 
-/* =========================================================
+/* 
    ACCESSIBILITY
-   ========================================================= */
+    */
 
 .admin-home-container a:focus-visible,
 .admin-home-container button:focus-visible {
@@ -792,9 +792,9 @@
   outline-offset: 3px;
 }
 
-/* =========================================================
+/* 
    TABLET
-   ========================================================= */
+    */
 
 @media (max-width: 1080px) {
   .admin-home-container .hero-section,
@@ -825,9 +825,9 @@
   }
 }
 
-/* =========================================================
+/* 
    MOBILE / TABLET
-   ========================================================= */
+    */
 
 @media (max-width: 800px) {
   .admin-home-container {
@@ -863,9 +863,9 @@
   }
 }
 
-/* =========================================================
+/* 
    MOBILE
-   ========================================================= */
+    */
 
 @media (max-width: 600px) {
   .admin-home-container .hero-section,
@@ -998,9 +998,9 @@
   }
 }
 
-/* =========================================================
+/* 
    SMALL MOBILE
-   ========================================================= */
+    */
 
 @media (max-width: 500px) {
   .admin-home-container .hero-actions {
@@ -1038,9 +1038,9 @@
   }
 }
 
-/* =========================================================
+/* 
    REDUCED MOTION
-   ========================================================= */
+    */
 
 @media (prefers-reduced-motion: reduce) {
   .admin-home-container *,
