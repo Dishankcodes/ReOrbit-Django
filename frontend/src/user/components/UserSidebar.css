@@ -155,19 +155,18 @@
 .user-sidebar-link {
   position: relative;
   width: 100%;
-  min-height: 48px;
+  min-height: 45px;
   display: flex;
   align-items: center;
   gap: 13px;
   padding: 0 13px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 11px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.67);
   font-size: 13px;
   font-weight: 500;
   text-align: left;
-  white-space: nowrap;
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -181,47 +180,57 @@
 }
 
 .user-sidebar-link.active {
-  background: rgba(212, 228, 216, 0.22);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0.055)
+  );
   color: #ffffff;
-  font-weight: 600;
 }
 
 .user-sidebar-link.active::before {
   content: "";
   position: absolute;
-  left: -14px;
-  top: 10px;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
   width: 3px;
-  height: 28px;
-  border-radius: 0 4px 4px 0;
-  background: #d4e4d8;
+  border-radius: 0 5px 5px 0;
+  background: #b8d8c4;
 }
 
 .user-sidebar-link-icon {
   flex: 0 0 18px;
+  color: rgba(255, 255, 255, 0.58);
+  transition: color 0.2s ease;
+}
+
+.user-sidebar-link:hover .user-sidebar-link-icon,
+.user-sidebar-link.active .user-sidebar-link-icon {
+  color: #b8d8c4;
 }
 
 .user-sidebar-link-text {
-  width: auto;
-  opacity: 1;
   overflow: hidden;
-  transition:
-    opacity 0.15s ease,
-    width 0.25s ease;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .user-sidebar.collapsed .user-sidebar-link {
   justify-content: center;
   padding: 0;
+  gap: 0;
 }
 
 .user-sidebar.collapsed .user-sidebar-link-text {
-  width: 0;
-  opacity: 0;
+  display: none;
 }
 
 .user-sidebar.collapsed .user-sidebar-link.active::before {
-  left: -19px;
+  left: -1px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
 }
 
 .user-sidebar-divider {

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+
 import {
   Menu,
   Search,
@@ -11,60 +12,80 @@ import {
   Palette,
   Plus,
 } from "lucide-react";
+
 import { useLocation, useNavigate } from "react-router-dom";
 
 import "./ReMakerHeader.css";
+
+/* =========================================================
+   PAGE INFORMATION
+   ========================================================= */
 
 const pageInformation = {
   "/remaker-dashboard": {
     title: "Dashboard",
     subtitle: "Your ReMaker studio at a glance.",
   },
+
   "/remaker-portfolio": {
     title: "Portfolio",
     subtitle: "Showcase your work and creative journey.",
   },
+
   "/remaker-products": {
     title: "Products",
     subtitle: "Manage your ReMaker marketplace listings.",
   },
+
   "/remaker-orders": {
     title: "Orders",
     subtitle: "Track and manage your customer orders.",
   },
+
   "/remaker-earnings": {
     title: "Earnings",
     subtitle: "Track your sales and ReOrbit earnings.",
   },
+
   "/remaker-followers": {
     title: "Followers",
     subtitle: "Connect with people following your work.",
   },
+
   "/remaker-reviews": {
     title: "Reviews",
     subtitle: "See what customers say about your work.",
   },
+
   "/remaker-analytics": {
     title: "Analytics",
     subtitle: "Understand your studio performance.",
   },
+
   "/remaker-notifications": {
     title: "Notifications",
     subtitle: "Stay updated with your ReMaker activity.",
   },
+
   "/remaker-settings": {
     title: "Settings",
     subtitle: "Manage your studio and account preferences.",
   },
+
   "/remaker-help": {
     title: "Help & Support",
     subtitle: "Find answers and get support.",
   },
+
   "/remaker-profile": {
     title: "Studio Profile",
     subtitle: "Manage your ReMaker identity and profile.",
   },
 };
+
+/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
 
 const notifications = [
   {
@@ -73,12 +94,14 @@ const notifications = [
     message: "A customer placed an order for your product.",
     time: "14 min ago",
   },
+
   {
     id: 2,
     title: "New follower",
     message: "Someone started following your studio.",
     time: "1 hour ago",
   },
+
   {
     id: 3,
     title: "New review",
@@ -86,6 +109,10 @@ const notifications = [
     time: "3 hours ago",
   },
 ];
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
 
 function getStoredReMaker() {
   try {
@@ -101,6 +128,10 @@ function getStoredReMaker() {
   }
 }
 
+/* =========================================================
+   NAME
+   ========================================================= */
+
 function getReMakerName(remaker) {
   return (
     remaker?.full_name ||
@@ -112,9 +143,17 @@ function getReMakerName(remaker) {
   );
 }
 
+/* =========================================================
+   EMAIL
+   ========================================================= */
+
 function getReMakerEmail(remaker) {
   return remaker?.email || "ReMaker Studio";
 }
+
+/* =========================================================
+   INITIALS
+   ========================================================= */
 
 function getInitials(name) {
   if (!name) {
@@ -130,12 +169,15 @@ function getInitials(name) {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
+/* =========================================================
+   COMPONENT
+   ========================================================= */
+
 export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const notificationRef = useRef(null);
-
   const profileRef = useRef(null);
 
   const [remaker, setReMaker] = useState(() => getStoredReMaker());
@@ -145,6 +187,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const [profileOpen, setProfileOpen] = useState(false);
+
+  /* =========================================================
+     STORAGE LISTENER
+     ========================================================= */
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -157,6 +203,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  /* =========================================================
+     CLOSE DROPDOWNS
+     ========================================================= */
 
   useEffect(() => {
     const handleDocumentClick = (event) => {
@@ -179,6 +229,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     };
   }, []);
 
+  /* =========================================================
+     CLOSE DROPDOWNS ON ROUTE CHANGE
+     ========================================================= */
+
   useEffect(() => {
     setNotificationsOpen(false);
     setProfileOpen(false);
@@ -194,6 +248,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     title: "ReMaker Studio",
     subtitle: "Create, sell and grow your work on ReOrbit.",
   };
+
+  /* =========================================================
+     SEARCH
+     ========================================================= */
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -211,6 +269,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     setSearchValue("");
   };
 
+  /* =========================================================
+     PROFILE
+     ========================================================= */
+
   const handleProfile = () => {
     setNotificationsOpen(false);
     setProfileOpen(false);
@@ -221,6 +283,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
       onCloseMobile();
     }
   };
+
+  /* =========================================================
+     SETTINGS
+     ========================================================= */
 
   const handleSettings = () => {
     setNotificationsOpen(false);
@@ -233,6 +299,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     }
   };
 
+  /* =========================================================
+     CREATE PRODUCT
+     ========================================================= */
+
   const handleCreateProduct = () => {
     navigate("/remaker-products/new");
 
@@ -240,6 +310,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
       onCloseMobile();
     }
   };
+
+  /* =========================================================
+     LOGOUT
+     ========================================================= */
 
   const handleLogout = () => {
     localStorage.removeItem("reorbit_access_token");
@@ -260,6 +334,10 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
 
   return (
     <header className="remaker-header">
+      {/* =====================================================
+          LEFT
+          ===================================================== */}
+
       <div className="remaker-header-left">
         <button
           type="button"
@@ -287,15 +365,24 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
         </div>
       </div>
 
+      {/* =====================================================
+          RIGHT
+          ===================================================== */}
+
       <div className="remaker-header-actions">
+        {/* CREATE */}
+
         <button
           type="button"
           className="remaker-create-button"
           onClick={handleCreateProduct}
         >
           <Plus size={15} />
+
           <span>Add Product</span>
         </button>
+
+        {/* SEARCH */}
 
         <form className="remaker-header-search" onSubmit={handleSearchSubmit}>
           <Search size={17} strokeWidth={1.8} />
@@ -319,6 +406,8 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
             </button>
           )}
         </form>
+
+        {/* NOTIFICATIONS */}
 
         <div className="remaker-header-icon-wrapper" ref={notificationRef}>
           <button
@@ -388,6 +477,8 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
             </div>
           )}
         </div>
+
+        {/* PROFILE */}
 
         <div className="remaker-header-profile-wrapper" ref={profileRef}>
           <button

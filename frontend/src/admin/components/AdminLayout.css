@@ -3,23 +3,19 @@
   --admin-primary: #0e3a2d;
   --admin-primary-dark: #08271f;
   --admin-secondary: #adcec1;
+  --admin-secondary-light: #c1d9cf;
   --admin-card: #ffffff;
   --admin-text: #13221b;
   --admin-muted: #6a7771;
   --admin-border: #d8e4de;
-
   --admin-sidebar-width: 270px;
   --admin-sidebar-collapsed: 82px;
   --admin-header-height: 82px;
-
   width: 100%;
   min-height: 100vh;
-
   display: flex;
-
   background: var(--admin-bg);
   color: var(--admin-text);
-
   font-family:
     "Plus Jakarta Sans",
     "Inter",
@@ -28,7 +24,6 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-
   overflow-x: hidden;
 }
 
@@ -58,12 +53,9 @@
   width: calc(100% - var(--admin-sidebar-width));
   min-width: 0;
   min-height: 100vh;
-
   margin-left: var(--admin-sidebar-width);
-
   display: flex;
   flex-direction: column;
-
   transition:
     width 0.25s ease,
     margin-left 0.25s ease;
@@ -77,20 +69,15 @@
 .admin-page-content {
   width: 100%;
   min-width: 0;
-
   flex: 1;
-
   min-height: calc(100vh - var(--admin-header-height));
-
   padding: 30px;
-
   background: var(--admin-bg);
 }
 
 .admin-page-container {
   width: 100%;
   max-width: 1600px;
-
   margin: 0 auto;
 }
 
@@ -105,12 +92,9 @@
 
 .admin-layout-card {
   width: 100%;
-
   border: 1px solid var(--admin-border);
   border-radius: 18px;
-
   background: var(--admin-card);
-
   box-shadow: 0 8px 30px rgba(8, 39, 31, 0.04);
 }
 
@@ -139,20 +123,13 @@
   .admin-sidebar-overlay {
     position: fixed;
     inset: 0;
-
     z-index: 950;
-
     display: block;
-
     width: 100%;
     height: 100%;
-
     padding: 0;
-
     border: 0;
-
     background: rgba(8, 39, 31, 0.42);
-
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }

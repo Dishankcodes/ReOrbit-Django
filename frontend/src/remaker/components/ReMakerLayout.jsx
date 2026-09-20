@@ -10,7 +10,10 @@ export default function ReMakerLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Toggle sidebar depending on screen size.
+  /* =========================================================
+     SIDEBAR TOGGLE
+     ========================================================= */
+
   const toggleSidebar = () => {
     if (window.innerWidth <= 900) {
       setMobileSidebarOpen((current) => !current);
@@ -20,7 +23,10 @@ export default function ReMakerLayout() {
     setSidebarCollapsed((current) => !current);
   };
 
-  // Close mobile sidebar.
+  /* =========================================================
+     CLOSE MOBILE SIDEBAR
+     ========================================================= */
+
   const closeMobileSidebar = () => {
     setMobileSidebarOpen(false);
   };

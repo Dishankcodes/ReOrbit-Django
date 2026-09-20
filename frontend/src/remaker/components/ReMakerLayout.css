@@ -1,26 +1,25 @@
+/* REORBIT REMAKER LAYOUT - Application Shell (Maroon / Sage Theme) */
 .remaker-layout {
   --remaker-bg: #faf9f7;
   --remaker-maroon: #270809;
+  --remaker-maroon-dark: #1f0607;
   --remaker-maroon-light: #421517;
   --remaker-green: #08271f;
+  --remaker-green-light: #123b30;
   --remaker-sage: #c1c8c4;
+  --remaker-sage-light: #e8ecea;
   --remaker-card: #ffffff;
   --remaker-text: #211918;
   --remaker-muted: #756d6b;
   --remaker-border: #e1dcd9;
-
   --remaker-sidebar-width: 270px;
   --remaker-sidebar-collapsed: 82px;
   --remaker-header-height: 82px;
-
   width: 100%;
   min-height: 100vh;
-
   display: flex;
-
   background: var(--remaker-bg);
   color: var(--remaker-text);
-
   font-family:
     "Plus Jakarta Sans",
     "Inter",
@@ -29,10 +28,10 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-
   overflow-x: hidden;
 }
 
+/* Global Reset */
 .remaker-layout *,
 .remaker-layout *::before,
 .remaker-layout *::after {
@@ -55,16 +54,14 @@
   text-decoration: none;
 }
 
+/* Main Application Area */
 .remaker-layout-main {
   width: calc(100% - var(--remaker-sidebar-width));
   min-width: 0;
   min-height: 100vh;
-
   margin-left: var(--remaker-sidebar-width);
-
   display: flex;
   flex-direction: column;
-
   transition:
     width 0.25s ease,
     margin-left 0.25s ease;
@@ -72,27 +69,22 @@
 
 .remaker-layout.sidebar-collapsed .remaker-layout-main {
   width: calc(100% - var(--remaker-sidebar-collapsed));
-
   margin-left: var(--remaker-sidebar-collapsed);
 }
 
+/* Page Content */
 .remaker-page-content {
   width: 100%;
   min-width: 0;
-
   flex: 1;
-
   min-height: calc(100vh - var(--remaker-header-height));
-
   padding: 30px;
-
   background: var(--remaker-bg);
 }
 
 .remaker-page-container {
   width: 100%;
   max-width: 1600px;
-
   margin: 0 auto;
 }
 
@@ -102,25 +94,24 @@
 
 .remaker-page-section {
   width: 100%;
-
   margin-bottom: 24px;
 }
 
+/* Common Card */
 .remaker-layout-card {
   width: 100%;
-
   border: 1px solid var(--remaker-border);
   border-radius: 18px;
-
   background: var(--remaker-card);
-
   box-shadow: 0 8px 30px rgba(39, 8, 9, 0.035);
 }
 
+/* Mobile Sidebar Overlay */
 .remaker-sidebar-overlay {
   display: none;
 }
 
+/* Responsive Styles */
 @media (max-width: 1100px) {
   .remaker-page-content {
     padding: 25px;
@@ -136,27 +127,19 @@
 
   .remaker-page-content {
     min-height: calc(100vh - 72px);
-
     padding: 20px 16px;
   }
 
   .remaker-sidebar-overlay {
     position: fixed;
     inset: 0;
-
     z-index: 950;
-
     display: block;
-
     width: 100%;
     height: 100%;
-
     padding: 0;
-
     border: 0;
-
     background: rgba(39, 8, 9, 0.34);
-
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }

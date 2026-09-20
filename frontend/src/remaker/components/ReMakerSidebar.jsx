@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import {
   LayoutDashboard,
   Images,
@@ -17,9 +18,14 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+
 import { NavLink, useNavigate } from "react-router-dom";
 
 import "./ReMakerSidebar.css";
+
+/* ====
+   STUDIO MENU
+   ==== */
 
 const studioMenu = [
   {
@@ -39,6 +45,10 @@ const studioMenu = [
   },
 ];
 
+/* ====
+   ORDERS MENU
+   ==== */
+
 const ordersMenu = [
   {
     label: "Orders",
@@ -52,6 +62,10 @@ const ordersMenu = [
   },
 ];
 
+/* ====
+   COMMUNITY MENU
+   ==== */
+
 const communityMenu = [
   {
     label: "Followers",
@@ -64,6 +78,10 @@ const communityMenu = [
     icon: Star,
   },
 ];
+
+/* ====
+   TOOLS MENU
+   ==== */
 
 const toolsMenu = [
   {
@@ -88,6 +106,10 @@ const toolsMenu = [
   },
 ];
 
+/* ====
+   STORAGE
+   ==== */
+
 function getStoredReMaker() {
   try {
     const storedReMaker = localStorage.getItem("reorbit_remaker");
@@ -102,6 +124,10 @@ function getStoredReMaker() {
   }
 }
 
+/* ====
+   NAME
+   ==== */
+
 function getReMakerName(remaker) {
   return (
     remaker?.full_name ||
@@ -112,6 +138,10 @@ function getReMakerName(remaker) {
     "ReMaker Studio"
   );
 }
+
+/* ====
+   INITIALS
+   ==== */
 
 function getInitials(name) {
   if (!name) {
@@ -127,6 +157,10 @@ function getInitials(name) {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
+/* ====
+   COMPONENT
+   ==== */
+
 export default function ReMakerSidebar({
   collapsed = false,
   mobileOpen = false,
@@ -135,6 +169,10 @@ export default function ReMakerSidebar({
   const navigate = useNavigate();
 
   const [remaker, setReMaker] = useState(() => getStoredReMaker());
+
+  /* ====
+     STORAGE LISTENER
+     ==== */
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -149,14 +187,21 @@ export default function ReMakerSidebar({
   }, []);
 
   const remakerName = getReMakerName(remaker);
-
   const initials = getInitials(remakerName);
+
+  /* ====
+     NAVIGATION
+     ==== */
 
   const handleNavigation = () => {
     if (window.innerWidth <= 900 && onCloseMobile) {
       onCloseMobile();
     }
   };
+
+  /* ====
+     PROFILE
+     ==== */
 
   const handleProfileClick = () => {
     navigate("/remaker-profile");
@@ -165,6 +210,10 @@ export default function ReMakerSidebar({
       onCloseMobile();
     }
   };
+
+  /* ====
+     LOGOUT
+     ==== */
 
   const handleLogout = () => {
     localStorage.removeItem("reorbit_access_token");
@@ -183,6 +232,10 @@ export default function ReMakerSidebar({
       onCloseMobile();
     }
   };
+
+  /* ====
+     MENU ITEM
+     ==== */
 
   const renderMenuItem = (item) => {
     const Icon = item.icon;
@@ -214,10 +267,14 @@ export default function ReMakerSidebar({
         mobileOpen ? "mobile-open" : ""
       }`}
     >
+      {/* 
+          BRAND
+           */}
+
       <div className="remaker-sidebar-top">
         <div className="remaker-sidebar-brand">
           <div className="remaker-sidebar-brand-icon">
-            <Palette size={21} strokeWidth={1.7} />
+            <Palette size={22} strokeWidth={1.8} />
           </div>
 
           <div className="remaker-sidebar-brand-text">
@@ -239,19 +296,15 @@ export default function ReMakerSidebar({
         </button>
       </div>
 
-      <div className="remaker-sidebar-studio">
-        <div className="remaker-sidebar-studio-icon">
-          <Sparkles size={14} strokeWidth={1.7} />
-        </div>
+     
 
-        <div>
-          <span>CREATOR SPACE</span>
-
-          <strong>Your Studio</strong>
-        </div>
-      </div>
+      {/* 
+          NAVIGATION
+           */}
 
       <nav className="remaker-sidebar-navigation">
+        {/* STUDIO */}
+
         <div className="remaker-sidebar-section">
           <span className="remaker-sidebar-section-label">STUDIO</span>
 
@@ -259,6 +312,8 @@ export default function ReMakerSidebar({
         </div>
 
         <div className="remaker-sidebar-divider" />
+
+        {/* ORDERS */}
 
         <div className="remaker-sidebar-section">
           <span className="remaker-sidebar-section-label">ORDERS</span>
@@ -268,6 +323,8 @@ export default function ReMakerSidebar({
 
         <div className="remaker-sidebar-divider" />
 
+        {/* COMMUNITY */}
+
         <div className="remaker-sidebar-section">
           <span className="remaker-sidebar-section-label">COMMUNITY</span>
 
@@ -275,6 +332,8 @@ export default function ReMakerSidebar({
         </div>
 
         <div className="remaker-sidebar-divider" />
+
+        {/* TOOLS */}
 
         <div className="remaker-sidebar-section">
           <span className="remaker-sidebar-section-label">TOOLS</span>
@@ -296,6 +355,10 @@ export default function ReMakerSidebar({
           </button>
         </div>
       </nav>
+
+      {/* 
+          PROFILE
+           */}
 
       <button
         type="button"

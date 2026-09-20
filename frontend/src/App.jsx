@@ -51,7 +51,6 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* USER PUBLIC PAGES */}
-
         <Route path="/" element={<Home />} />
         <Route path="/discover-remakers" element={<ReMakerDiscover />} />
         <Route path="/discover-marketplace" element={<Marketplace />} />
@@ -63,132 +62,62 @@ export default function App() {
         <Route path="/UserTerms" element={<Terms />} />
 
         {/* USER AUTH */}
-
         <Route path="/auth" element={<UserAuth />} />
 
         {/* USER AFTER LOGIN */}
-
         <Route element={<UserLayout />}>
           <Route path="/user-dashboard" element={<UserDashboard />} />
         </Route>
 
         {/* REMAKER AUTH */}
-
         <Route path="/remakers-auth" element={<ReMakerAuth />} />
 
         {/* REMAKER PUBLIC PAGES */}
-
         <Route path="/remakers-home" element={<ReMakersHome />} />
-
         <Route path="/remakers-about" element={<ReMakerAbout />} />
-
         <Route path="/remakers-faq" element={<ReMakerFAQ />} />
-
         <Route path="/remakers-how-it-works" element={<ReMakerHowItWorks />} />
-
         <Route path="/remakers-contact" element={<ReMakerContact />} />
-
-        <Route
-          path="/remakers-before-marketplace"
-          element={<RemakerBeforeMarketplace />}
-        />
+        <Route path="/remakers-before-marketplace" element={<RemakerBeforeMarketplace />} />
 
         {/* REMAKER AFTER LOGIN */}
-
         <Route element={<ReMakerLayout />}>
           <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
-
-          <Route
-            path="/remaker-portfolio"
-            element={<div>ReMaker Portfolio</div>}
-          />
-
-          <Route
-            path="/remaker-products"
-            element={<div>ReMaker Products</div>}
-          />
-
+          <Route path="/remaker-portfolio" element={<div>ReMaker Portfolio</div>} />
+          <Route path="/remaker-products" element={<div>ReMaker Products</div>} />
           <Route path="/remaker-orders" element={<div>ReMaker Orders</div>} />
-
-          <Route
-            path="/remaker-earnings"
-            element={<div>ReMaker Earnings</div>}
-          />
-
-          <Route
-            path="/remaker-followers"
-            element={<div>ReMaker Followers</div>}
-          />
-
+          <Route path="/remaker-earnings" element={<div>ReMaker Earnings</div>} />
+          <Route path="/remaker-followers" element={<div>ReMaker Followers</div>} />
           <Route path="/remaker-reviews" element={<div>ReMaker Reviews</div>} />
-
-          <Route
-            path="/remaker-analytics"
-            element={<div>ReMaker Analytics</div>}
-          />
-
-          <Route
-            path="/remaker-notifications"
-            element={<div>ReMaker Notifications</div>}
-          />
-
-          <Route
-            path="/remaker-settings"
-            element={<div>ReMaker Settings</div>}
-          />
-
+          <Route path="/remaker-analytics" element={<div>ReMaker Analytics</div>} />
+          <Route path="/remaker-notifications" element={<div>ReMaker Notifications</div>} />
+          <Route path="/remaker-settings" element={<div>ReMaker Settings</div>} />
           <Route path="/remaker-help" element={<div>ReMaker Help</div>} />
-
           <Route path="/remaker-profile" element={<div>ReMaker Profile</div>} />
-
-          <Route
-            path="/remaker-products/new"
-            element={<div>Create Product</div>}
-          />
+          <Route path="/remaker-products/new" element={<div>Create Product</div>} />
         </Route>
 
         {/* ADMIN PUBLIC PAGES */}
-
         <Route path="/admin-home" element={<AdminHome />} />
-
         <Route path="/admin-about" element={<AdminAbout />} />
-
         <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
-
         <Route path="/admin-login" element={<AdminLogin />} />
 
         {/* ADMIN PANEL */}
-
         <Route element={<AdminLayout />}>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-
           <Route path="/admin-users" element={<div>Admin Users</div>} />
-
           <Route path="/admin-remakers" element={<div>Admin ReMakers</div>} />
-
           <Route path="/admin-products" element={<div>Admin Products</div>} />
-
           <Route path="/admin-orders" element={<div>Admin Orders</div>} />
-
           <Route path="/admin-donations" element={<div>Admin Donations</div>} />
-
           <Route path="/admin-pickups" element={<div>Admin Pickups</div>} />
-
           <Route path="/admin-warehouse" element={<div>Admin Warehouse</div>} />
-
           <Route path="/admin-rewards" element={<div>Admin Rewards</div>} />
-
-          <Route
-            path="/admin-notifications"
-            element={<div>Admin Notifications</div>}
-          />
-
+          <Route path="/admin-notifications" element={<div>Admin Notifications</div>} />
           <Route path="/admin-reports" element={<div>Admin Reports</div>} />
-
           <Route path="/admin-settings" element={<div>Admin Settings</div>} />
-
           <Route path="/admin-help" element={<div>Admin Help & Support</div>} />
-
           <Route path="/admin-profile" element={<div>Admin Profile</div>} />
         </Route>
       </Routes>

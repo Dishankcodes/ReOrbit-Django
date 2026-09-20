@@ -1,22 +1,19 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
-
 import "./AdminLayout.css";
 
 export default function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Toggle sidebar depending on screen size.
+  // Toggle sidebar.
   const toggleSidebar = () => {
     if (window.innerWidth <= 900) {
       setMobileSidebarOpen((current) => !current);
       return;
     }
-
     setSidebarCollapsed((current) => !current);
   };
 
@@ -27,16 +24,13 @@ export default function AdminLayout() {
 
   return (
     <div
-      className={`admin-layout ${sidebarCollapsed ? "sidebar-collapsed" : ""} ${
-        mobileSidebarOpen ? "mobile-sidebar-open" : ""
-      }`}
+      className={`admin-layout ${sidebarCollapsed ? "sidebar-collapsed" : ""} ${mobileSidebarOpen ? "mobile-sidebar-open" : ""}`}
     >
       <AdminSidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={closeMobileSidebar}
       />
-
       {mobileSidebarOpen && (
         <button
           type="button"
@@ -45,13 +39,11 @@ export default function AdminLayout() {
           aria-label="Close navigation"
         />
       )}
-
       <div className="admin-layout-main">
         <AdminHeader
           onToggleSidebar={toggleSidebar}
           onCloseMobile={closeMobileSidebar}
         />
-
         <main className="admin-page-content">
           <Outlet />
         </main>
