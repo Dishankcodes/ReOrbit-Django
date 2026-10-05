@@ -1,0 +1,371 @@
+/* REMAKER PRODUCTS LIST - Maroon / Sage theme */
+
+.rpl {
+  --rp-maroon: #270809;
+  --rp-maroon-soft: #421517;
+  --rp-green: #08271f;
+  --rp-sage: #c1c8c4;
+  --rp-sage-light: #e9eeeb;
+  --rp-text: #211918;
+  --rp-muted: #756d6b;
+  --rp-border: #e1dcd9;
+  --rp-soft: #f4f1ef;
+  --rp-success: #356b51;
+  --rp-warning: #a46d25;
+  color: var(--rp-text);
+}
+
+.rpl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.rpl-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--rp-border);
+  border-radius: 14px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.rpl-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rp-muted);
+  white-space: nowrap;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.rpl-tabs button span {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--rp-soft);
+  font-size: 11px;
+  text-align: center;
+}
+
+.rpl-tabs button.active {
+  background: var(--rp-maroon);
+  color: #fff;
+}
+
+.rpl-tabs button.active span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.rpl .rpl-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 17px;
+  border-radius: 12px;
+  background: var(--rp-maroon);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(39, 8, 9, 0.14);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.rpl .rpl-add:hover {
+  transform: translateY(-1px);
+  background: var(--rp-maroon-soft);
+}
+
+.rpl-query {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  color: var(--rp-muted);
+}
+
+.rpl-query button {
+  border: 0;
+  background: transparent;
+  padding: 2px 6px;
+  font-weight: 700;
+  color: var(--rp-maroon);
+  text-decoration: underline;
+}
+
+/* GRID */
+
+.rpl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.rpl-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--rp-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(39, 8, 9, 0.045);
+  transition: box-shadow 0.2s ease;
+}
+
+.rpl-card:hover {
+  box-shadow: 0 16px 38px rgba(39, 8, 9, 0.09);
+}
+
+.rpl-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--rp-soft);
+  overflow: hidden;
+}
+
+.rpl-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.rpl-card.is-off .rpl-media img {
+  filter: grayscale(0.85);
+  opacity: 0.7;
+}
+
+.rpl-noimg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #a39b98;
+}
+
+.rpl-badge {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fff;
+}
+
+.rpl-badge.active {
+  color: var(--rp-success);
+}
+
+.rpl-badge.inactive {
+  background: var(--rp-maroon);
+  color: #fff;
+}
+
+.rpl-badge.draft {
+  color: var(--rp-muted);
+}
+
+.rpl-badge.soldout {
+  color: var(--rp-warning);
+}
+
+.rpl-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px 18px 18px;
+}
+
+.rpl-cat {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rp-muted);
+}
+
+.rpl-body h3 {
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.rpl-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.rpl-price-row strong {
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--rp-maroon);
+}
+
+.rpl-price-row span {
+  font-size: 12px;
+  color: var(--rp-muted);
+}
+
+.rpl-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--rp-muted);
+}
+
+.rpl-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rpl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.rpl-foot {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rp-border);
+}
+
+.rpl-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rpl-toggle button {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: #d3ccc9;
+  transition: background 0.2s ease;
+}
+
+.rpl-toggle button span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(39, 8, 9, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.rpl-toggle button.on {
+  background: var(--rp-success);
+}
+
+.rpl-toggle button.on span {
+  transform: translateX(18px);
+}
+
+.rpl-draft-note {
+  font-size: 12px;
+  color: var(--rp-muted);
+}
+
+.rpl-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--rp-maroon);
+  transition: background 0.2s ease;
+}
+
+.rpl-edit:hover {
+  background: var(--rp-sage-light);
+}
+
+/* EMPTY */
+
+.rpl-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 420px;
+  margin: 60px auto;
+  text-align: center;
+  color: var(--rp-muted);
+}
+
+.rpl-empty h2 {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--rp-maroon);
+}
+
+.rpl .rpl-empty .rpl-add {
+  margin-top: 14px;
+}
+
+.rpl button:focus-visible,
+.rpl a:focus-visible {
+  outline: 2px solid var(--rp-maroon);
+  outline-offset: 2px;
+}
+
+@media (max-width: 520px) {
+  .rpl-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rpl-add {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rpl * {
+    transition: none !important;
+  }
+}

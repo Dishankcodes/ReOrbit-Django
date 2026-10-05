@@ -33,6 +33,10 @@ import RemakerBeforeMarketplace from "./remaker/pages/HomePages/ReMakerBeforeMar
 
 import ReMakerLayout from "./remaker/components/ReMakerLayout";
 import ReMakerDashboard from "./remaker/pages/ReMakerDashboard";
+import ReMakerProducts from "./remaker/pages/Products/ReMakerProducts";
+import ReMakerAddProduct from "./remaker/pages/Products/ReMakerAddProduct";
+import ReMakerEditProduct from "./remaker/pages/Products/ReMakerEditProduct";
+import ReMakerProfile from "./remaker/pages/ReMakerProfile";
 
 import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
@@ -127,10 +131,7 @@ export default function App() {
             element={<div>ReMaker Portfolio</div>}
           />
 
-          <Route
-            path="/remaker-products"
-            element={<div>ReMaker Products</div>}
-          />
+          <Route path="/remaker-products" element={<ReMakerProducts />} />
 
           <Route path="/remaker-orders" element={<div>ReMaker Orders</div>} />
 
@@ -163,11 +164,13 @@ export default function App() {
 
           <Route path="/remaker-help" element={<div>ReMaker Help</div>} />
 
-          <Route path="/remaker-profile" element={<div>ReMaker Profile</div>} />
+          <Route path="/remaker-profile" element={<ReMakerProfile />} />
+
+          <Route path="/remaker-products/new" element={<ReMakerAddProduct />} />
 
           <Route
-            path="/remaker-products/new"
-            element={<div>Create Product</div>}
+            path="/remaker-products/:productId/edit"
+            element={<ReMakerEditProduct />}
           />
         </Route>
 

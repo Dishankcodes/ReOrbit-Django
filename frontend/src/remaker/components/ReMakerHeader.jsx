@@ -81,7 +81,32 @@ const pageInformation = {
     title: "Studio Profile",
     subtitle: "Manage your ReMaker identity and profile.",
   },
+
+  "/remaker-products/new": {
+    title: "Add Product",
+    subtitle: "Create a new listing for your marketplace.",
+  },
 };
+
+const editProductInformation = {
+  title: "Edit Product",
+  subtitle: "Update details, photos and availability.",
+};
+
+function getPageInformation(pathname) {
+  if (pageInformation[pathname]) {
+    return pageInformation[pathname];
+  }
+
+  if (/^\/remaker-products\/[^/]+\/edit$/.test(pathname)) {
+    return editProductInformation;
+  }
+
+  return {
+    title: "ReMaker Studio",
+    subtitle: "Create, sell and grow your work on ReOrbit.",
+  };
+}
 
 /* =========================================================
    NOTIFICATIONS
@@ -244,10 +269,7 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
 
   const initials = getInitials(remakerName);
 
-  const currentPage = pageInformation[location.pathname] || {
-    title: "ReMaker Studio",
-    subtitle: "Create, sell and grow your work on ReOrbit.",
-  };
+  const currentPage = getPageInformation(location.pathname);
 
   /* =========================================================
      SEARCH
