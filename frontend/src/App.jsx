@@ -37,6 +37,8 @@ import ReMakerProducts from "./remaker/pages/Products/ReMakerProducts";
 import ReMakerAddProduct from "./remaker/pages/Products/ReMakerAddProduct";
 import ReMakerEditProduct from "./remaker/pages/Products/ReMakerEditProduct";
 import ReMakerProfile from "./remaker/pages/ReMakerProfile";
+import ReMakerMarketplace from "./remaker/pages/Marketplace/ReMakerMarketplace";
+import ReMakerProductDetails from "./remaker/pages/Marketplace/ReMakerProductDetails";
 
 import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
@@ -129,6 +131,13 @@ export default function App() {
           <Route
             path="/remaker-portfolio"
             element={<div>ReMaker Portfolio</div>}
+          />
+
+          <Route path="/remaker-marketplace" element={<ReMakerMarketplace />} />
+
+          <Route
+            path="/remaker-marketplace/product/:productId"
+            element={<ReMakerProductDetails />}
           />
 
           <Route path="/remaker-products" element={<ReMakerProducts />} />

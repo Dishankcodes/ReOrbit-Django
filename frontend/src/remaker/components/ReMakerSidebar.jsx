@@ -17,11 +17,24 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  Store,
 } from "lucide-react";
 
 import { NavLink, useNavigate } from "react-router-dom";
 
 import "./ReMakerSidebar.css";
+
+/* ====
+   MARKETPLACE MENU
+   ==== */
+
+const marketplaceMenu = [
+  {
+    label: "Marketplace",
+    path: "/remaker-marketplace",
+    icon: Store,
+  },
+];
 
 /* ====
    STUDIO MENU
@@ -303,6 +316,16 @@ export default function ReMakerSidebar({
            */}
 
       <nav className="remaker-sidebar-navigation">
+        {/* MARKETPLACE */}
+
+        <div className="remaker-sidebar-section">
+          <span className="remaker-sidebar-section-label">MARKETPLACE</span>
+
+          {marketplaceMenu.map(renderMenuItem)}
+        </div>
+
+        <div className="remaker-sidebar-divider" />
+
         {/* STUDIO */}
 
         <div className="remaker-sidebar-section">

@@ -82,10 +82,20 @@ const pageInformation = {
     subtitle: "Manage your ReMaker identity and profile.",
   },
 
+  "/remaker-marketplace": {
+    title: "Marketplace",
+    subtitle: "Source materials and finished pieces from the ReOrbit community.",
+  },
+
   "/remaker-products/new": {
     title: "Add Product",
     subtitle: "Create a new listing for your marketplace.",
   },
+};
+
+const marketplaceProductInformation = {
+  title: "Product details",
+  subtitle: "Look closely before you buy.",
 };
 
 const editProductInformation = {
@@ -96,6 +106,10 @@ const editProductInformation = {
 function getPageInformation(pathname) {
   if (pageInformation[pathname]) {
     return pageInformation[pathname];
+  }
+
+  if (/^\/remaker-marketplace\/product\/[^/]+$/.test(pathname)) {
+    return marketplaceProductInformation;
   }
 
   if (/^\/remaker-products\/[^/]+\/edit$/.test(pathname)) {
@@ -284,7 +298,11 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
       return;
     }
 
-    navigate(`/remaker-products?search=${encodeURIComponent(query)}`);
+    const target = location.pathname.startsWith("/remaker-marketplace")
+      ? "/remaker-marketplace"
+      : "/remaker-products";
+
+    navigate(`${target}?search=${encodeURIComponent(query)}`);
   };
 
   const handleSearchClear = () => {
@@ -413,8 +431,12 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
             type="text"
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search products..."
-            aria-label="Search products"
+            placeholder={
+              location.pathname.startsWith("/remaker-marketplace")
+                ? "Search marketplace..."
+                : "Search products..."
+            }
+            aria-label="Search"
           />
 
           {searchValue && (
