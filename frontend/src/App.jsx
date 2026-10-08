@@ -178,7 +178,7 @@ export default function App() {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+     
     </Routes>
   );
 }
