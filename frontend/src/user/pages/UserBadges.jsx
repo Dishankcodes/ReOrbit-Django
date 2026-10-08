@@ -1,0 +1,5 @@
+import { Award, Check, Lock, Leaf, ShoppingBag, Heart, Gift, Recycle, Trophy } from "lucide-react";
+import { badges } from "../data/mockData";
+import "../styles/pages.css";
+const icons={leaf:Leaf,"shopping-bag":ShoppingBag,heart:Heart,gift:Gift,recycle:Recycle,trophy:Trophy};
+export default function UserBadges(){return <div className="page"><div className="page-head"><div><span className="eyebrow">MILESTONES</span><h2>Your Badges</h2><p>Small milestones that show how you’re helping things stay in orbit.</p></div><div className="badge-summary"><Award size={17}/><strong>3 / 6</strong><span>earned</span></div></div><div className="badge-grid">{badges.map(b=>{const I=icons[b.icon]||Award;return <article className={`badge-card card ${b.earned?"earned":"locked"}`} key={b.title}><div className="badge-art"><I size={26}/>{!b.earned&&<span><Lock size={11}/></span>}</div><div><h3>{b.title}</h3><p>{b.text}</p>{b.earned?<small><Check size={11}/> Earned {b.date}</small>:<small><Lock size={11}/> Keep going</small>}</div></article>})}</div></div>}
