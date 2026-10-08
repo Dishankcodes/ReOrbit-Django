@@ -1,0 +1,133 @@
+.bi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  line-height: 1;
+  font-family: "Segoe UI Symbol", "Segoe UI", Arial, sans-serif;
+  font-weight: 700;
+}
+.bi::before {
+  display: inline-block;
+  line-height: 1;
+}
+.bi-arrow-counterclockwise::before {
+  content: "↶";
+}
+.bi-arrow-down::before {
+  content: "↓";
+}
+.bi-arrow-left::before {
+  content: "←";
+}
+.bi-arrow-repeat::before {
+  content: "↻";
+}
+.bi-arrow-right::before {
+  content: "→";
+}
+.bi-arrow-up-right::before {
+  content: "↗";
+}
+.bi-bag-plus::before {
+  content: "▱+";
+}
+.bi-box-seam::before {
+  content: "▣";
+}
+.bi-box2-heart::before {
+  content: "▣♥";
+}
+.bi-calendar3::before {
+  content: "▦";
+}
+.bi-chat-square-text::before {
+  content: "▤";
+}
+.bi-check2::before {
+  content: "✓";
+}
+.bi-check2-circle::before {
+  content: "✓";
+}
+.bi-chevron-right::before {
+  content: "›";
+}
+.bi-circle-fill::before {
+  content: "•";
+}
+.bi-eye::before {
+  content: "◉";
+}
+.bi-geo-alt::before {
+  content: "⌖";
+}
+.bi-grid::before {
+  content: "⊞";
+}
+.bi-grid-3x3-gap::before {
+  content: "▦";
+}
+.bi-hand-index::before {
+  content: "☝";
+}
+.bi-heart::before {
+  content: "♡";
+}
+.bi-heart-fill::before {
+  content: "♥";
+}
+.bi-image::before {
+  content: "▧";
+}
+.bi-lamp::before {
+  content: "◈";
+}
+.bi-leaf::before {
+  content: "❧";
+}
+.bi-list::before {
+  content: "☰";
+}
+.bi-patch-check-fill::before {
+  content: "✓";
+}
+.bi-person::before {
+  content: "●";
+}
+.bi-person-check::before {
+  content: "●✓";
+}
+.bi-person-plus::before {
+  content: "●+";
+}
+.bi-person-workspace::before {
+  content: "●⌂";
+}
+.bi-person-x::before {
+  content: "●×";
+}
+.bi-recycle::before {
+  content: "♻";
+}
+.bi-search::before {
+  content: "⌕";
+}
+.bi-shield-check::before {
+  content: "◇✓";
+}
+.bi-sliders2::before {
+  content: "☷";
+}
+.bi-star::before {
+  content: "☆";
+}
+.bi-star-fill::before {
+  content: "★";
+}
+.bi-stars::before {
+  content: "✦";
+}
+.bi-x-lg::before {
+  content: "×";
+}

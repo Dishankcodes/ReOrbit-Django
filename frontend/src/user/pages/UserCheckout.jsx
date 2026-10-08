@@ -1,122 +1,330 @@
-import { ArrowLeft, Check, CreditCard, MapPin, ShieldCheck, ShoppingBag, Truck, ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { currentUser, formatPrice, getItemById } from "../data/mockData";
-import "../styles/pages.css";
+import React, { useMemo, useState } from "react";
+import {
+  MapPin,
+  CreditCard,
+  Smartphone,
+  WalletCards,
+  Check,
+  ShieldCheck,
+  ArrowLeft,
+  Plus,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+import "../css/marketplace-css/UserCheckout.css";
+
+const addresses = [
+  {
+    id: 1,
+    label: "Home",
+    name: "Dishank Prajapati",
+    address: "82, Sunrise Apartment, Ahmedabad",
+    pincode: "380015",
+    default: true,
+  },
+  {
+    id: 2,
+    label: "Office",
+    name: "Dishank Prajapati",
+    address: "InfoCity, Gandhinagar",
+    pincode: "382007",
+    default: false,
+  },
+  {
+    id: 3,
+    label: "Other",
+    name: "Dishank Prajapati",
+    address: "Vastrapur, Ahmedabad",
+    pincode: "380015",
+    default: false,
+  },
+];
+
+const paymentOptions = [
+  {
+    id: "upi",
+    title: "UPI",
+    description: "Google Pay, PhonePe, Paytm",
+    icon: Smartphone,
+  },
+  {
+    id: "card",
+    title: "Credit / Debit Card",
+    description: "Visa, Mastercard, RuPay",
+    icon: CreditCard,
+  },
+  {
+    id: "wallet",
+    title: "Wallet",
+    description: "ReOrbit Wallet (Mock)",
+    icon: WalletCards,
+  },
+];
 
 export default function UserCheckout() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const productId = params.get("productId");
-  const requestedQuantity = Number(params.get("quantity")) || 1;
-  const product = getItemById(productId);
-  const [quantity, setQuantity] = useState(Math.max(1, requestedQuantity));
-  const [placed, setPlaced] = useState(false);
+
+  const [selectedAddress, setSelectedAddress] = useState(1);
+
+  const [payment, setPayment] = useState("upi");
+
+  const product = {
+    name: "Reclaimed Wooden Chair",
+    price: 2800,
+    quantity: 1,
+    image:
+      "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=700&q=80",
+  };
 
   const subtotal = useMemo(
-    () => (product ? product.price * quantity : 0),
-    [product, quantity],
+    () => product.price * product.quantity,
+    [product.price, product.quantity],
   );
-  const delivery = subtotal >= 3000 ? 0 : 99;
+
+  const delivery = 50;
   const total = subtotal + delivery;
 
-  if (!product) {
-    return (
-      <div className="page checkout-page">
-        <div className="checkout-empty card">
-          <div className="checkout-empty-icon"><ShoppingBag size={26} /></div>
-          <span className="eyebrow">CHECKOUT</span>
-          <h2>Product not found</h2>
-          <p>The item you selected is no longer available in this checkout.</p>
-          <Link className="btn btn-primary" to="/user-marketplace">Back to marketplace</Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (placed) {
-    return (
-      <div className="page checkout-page">
-        <section className="checkout-success card">
-          <div className="checkout-success-icon"><Check size={28} /></div>
-          <span className="eyebrow">ORDER CONFIRMED</span>
-          <h2>Your order is on its way to a new orbit.</h2>
-          <p>Your UI-only order confirmation has been created for <strong>{product.title}</strong>.</p>
-          <div className="checkout-success-meta">
-            <span>Order reference</span>
-            <strong>RO-DEMO-{product.id.slice(0, 6).toUpperCase()}</strong>
-          </div>
-          <div className="hero-actions checkout-success-actions">
-            <Link className="btn btn-primary" to="/user-orders">View my orders</Link>
-            <Link className="btn btn-soft" to="/user-marketplace">Continue shopping</Link>
-          </div>
-        </section>
-      </div>
-    );
-  }
+  const placeOrder = () => {
+    navigate("/user-orders");
+  };
 
   return (
-    <div className="page checkout-page">
-      <div className="checkout-back-row">
-        <button type="button" className="checkout-back" onClick={() => navigate(-1)}>
-          <ArrowLeft size={14} /> Back
-        </button>
-        <span>Secure UI checkout</span>
+    <section className="user-checkout-page">
+      <div className="checkout-header">
+        <small>Secure checkout</small>
+
+        <h1>Complete your order</h1>
+
+        <p>Confirm your delivery details and choose how you'd like to pay.</p>
+      </div>
+
+      <div className="checkout-steps">
+        <div className="checkout-step completed">
+          <span className="checkout-step-number">
+            <Check size={13} />
+          </span>
+
+          <span>Cart</span>
+        </div>
+
+        <div className="checkout-step-line" />
+
+        <div className="checkout-step active">
+          <span className="checkout-step-number">2</span>
+
+          <span>Address</span>
+        </div>
+
+        <div className="checkout-step-line" />
+
+        <div className="checkout-step">
+          <span className="checkout-step-number">3</span>
+
+          <span>Payment</span>
+        </div>
+
+        <div className="checkout-step-line" />
+
+        <div className="checkout-step">
+          <span className="checkout-step-number">4</span>
+
+          <span>Review</span>
+        </div>
       </div>
 
       <div className="checkout-layout">
-        <section>
-          <div className="checkout-section card">
-            <div className="checkout-section-head">
-              <div><span className="eyebrow">DELIVERY</span><h3>Delivery address</h3></div>
-              <span className="checkout-step">01</span>
-            </div>
-            <div className="checkout-address">
-              <span className="checkout-icon"><MapPin size={17} /></span>
-              <div><strong>{currentUser.name}</strong><p>{currentUser.city}, Gujarat · {currentUser.pincode}</p><small>{currentUser.email}</small></div>
-              <button type="button">Change</button>
-            </div>
-          </div>
+        <div className="checkout-main">
+          <article className="checkout-card">
+            <div className="checkout-card-header">
+              <div className="checkout-card-icon">
+                <MapPin size={17} />
+              </div>
 
-          <div className="checkout-section card">
-            <div className="checkout-section-head">
-              <div><span className="eyebrow">PAYMENT</span><h3>Payment method</h3></div>
-              <span className="checkout-step">02</span>
+              <h2>Delivery address</h2>
             </div>
-            <button type="button" className="payment-option active">
-              <span className="checkout-icon"><CreditCard size={17} /></span>
-              <span><strong>Card / UPI</strong><small>Demo payment selection for UI</small></span>
-              <span className="payment-check"><Check size={13} /></span>
-            </button>
-            <button type="button" className="payment-option">
-              <span className="checkout-icon"><ShoppingBag size={17} /></span>
-              <span><strong>Cash on delivery</strong><small>Available for eligible orders</small></span>
-            </button>
-          </div>
 
-          <div className="checkout-section card">
-            <div className="checkout-section-head">
-              <div><span className="eyebrow">ITEM</span><h3>Review your purchase</h3></div>
-              <span className="checkout-step">03</span>
+            <div className="checkout-address-list">
+              {addresses.map((address) => (
+                <button
+                  type="button"
+                  key={address.id}
+                  className={`checkout-address ${
+                    selectedAddress === address.id ? "active" : ""
+                  }`}
+                  onClick={() => setSelectedAddress(address.id)}
+                >
+                  <div className="checkout-address-icon">
+                    <MapPin size={15} />
+                  </div>
+
+                  <div>
+                    <strong>
+                      {address.label}
+                      {address.default ? " · Default" : ""}
+                    </strong>
+
+                    <span>{address.name}</span>
+
+                    <small>
+                      {address.address} · {address.pincode}
+                    </small>
+                  </div>
+
+                  <span className="checkout-address-check">
+                    {selectedAddress === address.id && <Check size={11} />}
+                  </span>
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="checkout-address"
+                onClick={() =>
+                  window.alert(
+                    "Add address UI is ready for the next form step.",
+                  )
+                }
+              >
+                <div className="checkout-address-icon">
+                  <Plus size={15} />
+                </div>
+
+                <div>
+                  <strong>Add new address</strong>
+
+                  <span>Save another delivery location.</span>
+                </div>
+              </button>
             </div>
+          </article>
+
+          <article className="checkout-card">
+            <div className="checkout-card-header">
+              <div className="checkout-card-icon">
+                <CreditCard size={17} />
+              </div>
+
+              <h2>Payment method</h2>
+            </div>
+
+            <div className="checkout-payment-list">
+              {paymentOptions.map((option) => {
+                const Icon = option.icon;
+
+                return (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={`checkout-payment-option ${
+                      payment === option.id ? "active" : ""
+                    }`}
+                    onClick={() => setPayment(option.id)}
+                  >
+                    <div className="checkout-payment-icon">
+                      <Icon size={17} />
+                    </div>
+
+                    <div>
+                      <strong>{option.title}</strong>
+
+                      <small>{option.description}</small>
+                    </div>
+
+                    <span className="checkout-radio" />
+                  </button>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="checkout-card">
+            <div className="checkout-card-header">
+              <div className="checkout-card-icon">
+                <Check size={17} />
+              </div>
+
+              <h2>Review item</h2>
+            </div>
+
             <div className="checkout-product">
-              <img src={product.image} alt={product.title} />
-              <div><span>{product.category}</span><h4>{product.title}</h4><p>Sold by {product.seller}</p><strong>{formatPrice(product.price)}</strong></div>
-              <div className="checkout-qty"><button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>−</button><strong>{quantity}</strong><button type="button" onClick={() => setQuantity((q) => Math.min(product.quantity || 10, q + 1))}>+</button></div>
-            </div>
-          </div>
-        </section>
+              <div className="checkout-product-image">
+                <img src={product.image} alt={product.name} />
+              </div>
 
-        <aside className="checkout-summary card">
-          <span className="eyebrow">ORDER SUMMARY</span>
-          <h3>Ready for another life?</h3>
-          <div className="checkout-summary-product"><img src={product.image} alt="" /><div><strong>{product.title}</strong><span>{quantity} × {formatPrice(product.price)}</span></div></div>
-          <div className="checkout-summary-lines"><div><span>Subtotal</span><strong>{formatPrice(subtotal)}</strong></div><div><span>Delivery</span><strong>{delivery ? formatPrice(delivery) : "FREE"}</strong></div></div>
-          <div className="checkout-total"><span>Total</span><strong>{formatPrice(total)}</strong></div>
-          <button type="button" className="btn btn-primary checkout-place" onClick={() => setPlaced(true)}>Place demo order <ArrowRight size={14} className="checkout-arrow" /></button>
-          <div className="checkout-trust"><ShieldCheck size={15} /><span>Protected checkout UI</span><Truck size={15} /><span>Impact-aware delivery</span></div>
+              <div>
+                <h3>{product.name}</h3>
+
+                <p>Quantity {product.quantity} · Sustainable marketplace</p>
+              </div>
+
+              <strong className="checkout-product-price">
+                ₹{product.price.toLocaleString("en-IN")}
+              </strong>
+            </div>
+          </article>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              minHeight: 38,
+              padding: "0 12px",
+              border: "1px solid #dce5de",
+              borderRadius: 9,
+              background: "#fff",
+              color: "#2a4d3a",
+              fontSize: 8,
+              fontWeight: 800,
+            }}
+          >
+            <ArrowLeft
+              size={13}
+              style={{
+                marginRight: 6,
+                verticalAlign: "middle",
+              }}
+            />
+            Back
+          </button>
+        </div>
+
+        <aside className="checkout-summary">
+          <small>Order summary</small>
+
+          <h2>₹{total.toLocaleString("en-IN")}</h2>
+
+          <div className="checkout-summary-row">
+            <span>Item</span>
+
+            <strong>₹{subtotal.toLocaleString("en-IN")}</strong>
+          </div>
+
+          <div className="checkout-summary-row">
+            <span>Delivery</span>
+
+            <strong>₹{delivery}</strong>
+          </div>
+
+          <div className="checkout-total">
+            <span>Total</span>
+
+            <strong>₹{total.toLocaleString("en-IN")}</strong>
+          </div>
+
+          <button
+            type="button"
+            className="checkout-place-order"
+            onClick={placeOrder}
+          >
+            Place order · ₹{total.toLocaleString("en-IN")}
+          </button>
+
+          <div className="checkout-secure">
+            <ShieldCheck size={11} />
+            Secure mock payment experience
+          </div>
         </aside>
       </div>
-    </div>
+    </section>
   );
 }
