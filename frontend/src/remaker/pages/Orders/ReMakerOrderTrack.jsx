@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { OrderNotFound } from "./ReMakerOrderDetails";
-import { StatusBadge, Timeline } from "../../components/OrderParts";
+import { StatusBadge, Timeline } from "../../pages-components/OrderParts";
 import { formatPrice } from "../../data/remakerMarketplaceData";
 import {
   DEFAULT_ADDRESS,

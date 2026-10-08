@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { CancelModal, MiniProgress, StatusBadge, Timeline } from "../../components/OrderParts";
+import { CancelModal, MiniProgress, StatusBadge, Timeline } from "../../pages-components/OrderParts";
 import { formatPrice } from "../../data/remakerMarketplaceData";
 import {
   DEFAULT_ADDRESS,

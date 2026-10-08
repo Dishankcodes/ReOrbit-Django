@@ -23,7 +23,7 @@ import {
   Package,
 } from "lucide-react";
 
-import MarketOrderModal from "../../components/MarketOrderModal";
+import MarketOrderModal from "../../pages-components/MarketOrderModal";
 import {
   SERVICEABLE_PINCODES,
   SOURCE_LABEL,

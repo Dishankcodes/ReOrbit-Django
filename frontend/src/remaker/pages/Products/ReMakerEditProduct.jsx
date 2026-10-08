@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { PackageSearch } from "lucide-react";
 
-import ProductForm from "../../components/ProductForm";
+import ProductForm from "../../pages-components/ProductForm";
 import { getProductById } from "../../data/remakerProducts";
 
 import "../../css/ReMakerProductForm.css";

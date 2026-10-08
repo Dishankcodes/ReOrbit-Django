@@ -49,7 +49,12 @@ function buildInitial() {
     state: "Gujarat",
     pincode: "380015",
     bio: "I turn broken mirrors, old window frames and tired furniture into pieces people want to keep. Every product starts as someone else's discard, and I try to leave a little of its first life visible.",
-    skills: ["Furniture restoration", "Mirror framing", "Wood finishing", "Metal work"],
+    skills: [
+      "Furniture restoration",
+      "Mirror framing",
+      "Wood finishing",
+      "Metal work",
+    ],
     experience:
       "6 years restoring and upcycling furniture. Started in a small garage workshop, now working with local carpenters on larger commissions.",
     certifications: [
@@ -120,9 +125,15 @@ export default function ReMakerProfile() {
 
   const errors = {
     fullName: draft.fullName.trim() ? "" : "Enter your full name.",
-    artName: draft.artName.trim() ? "" : "Add the name buyers will know you by.",
-    phone: /^[0-9 ]{10,13}$/.test(draft.phone.trim()) ? "" : "Enter a valid 10-digit phone number.",
-    pincode: /^[0-9]{6}$/.test(draft.pincode.trim()) ? "" : "Pincode must be 6 digits.",
+    artName: draft.artName.trim()
+      ? ""
+      : "Add the name buyers will know you by.",
+    phone: /^[0-9 ]{10,13}$/.test(draft.phone.trim())
+      ? ""
+      : "Enter a valid 10-digit phone number.",
+    pincode: /^[0-9]{6}$/.test(draft.pincode.trim())
+      ? ""
+      : "Pincode must be 6 digits.",
     city: draft.city.trim() ? "" : "Enter your city.",
     state: draft.state.trim() ? "" : "Enter your state.",
   };
@@ -143,7 +154,11 @@ export default function ReMakerProfile() {
   };
 
   const cancelEdit = () => {
-    if (draft.avatar && draft.avatar !== saved.avatar && draft.avatar.startsWith("blob:")) {
+    if (
+      draft.avatar &&
+      draft.avatar !== saved.avatar &&
+      draft.avatar.startsWith("blob:")
+    ) {
       URL.revokeObjectURL(draft.avatar);
     }
 
@@ -198,7 +213,9 @@ export default function ReMakerProfile() {
 
     if (!text || draft[field].length >= max) return;
 
-    const exists = draft[field].some((item) => item.toLowerCase() === text.toLowerCase());
+    const exists = draft[field].some(
+      (item) => item.toLowerCase() === text.toLowerCase(),
+    );
 
     if (!exists) setField(field, [...draft[field], text]);
 
@@ -314,7 +331,11 @@ export default function ReMakerProfile() {
           </div>
 
           {!editing && (
-            <button type="button" className="rpp-btn primary" onClick={startEdit}>
+            <button
+              type="button"
+              className="rpp-btn primary"
+              onClick={startEdit}
+            >
               <Pencil size={15} />
               Edit profile
             </button>
@@ -393,13 +414,17 @@ export default function ReMakerProfile() {
                     type="text"
                     value={skillDraft}
                     onChange={(event) => setSkillDraft(event.target.value)}
-                    onKeyDown={(event) => tagKey(event, "skills", skillDraft, setSkillDraft, 10)}
+                    onKeyDown={(event) =>
+                      tagKey(event, "skills", skillDraft, setSkillDraft, 10)
+                    }
                     placeholder="Add a skill and press Enter"
                     aria-label="Add a skill"
                   />
                   <button
                     type="button"
-                    onClick={() => addTag("skills", skillDraft, setSkillDraft, 10)}
+                    onClick={() =>
+                      addTag("skills", skillDraft, setSkillDraft, 10)
+                    }
                     aria-label="Add skill"
                   >
                     <Plus size={16} />
@@ -436,12 +461,16 @@ export default function ReMakerProfile() {
                   rows={4}
                   maxLength={400}
                   value={draft.experience}
-                  onChange={(event) => setField("experience", event.target.value)}
+                  onChange={(event) =>
+                    setField("experience", event.target.value)
+                  }
                   placeholder="Years of experience, workshops, notable projects."
                 />
               </div>
             ) : (
-              <p className="rpp-bio">{data.experience || "No experience added yet."}</p>
+              <p className="rpp-bio">
+                {data.experience || "No experience added yet."}
+              </p>
             )}
           </section>
 
@@ -490,7 +519,9 @@ export default function ReMakerProfile() {
                 />
                 <button
                   type="button"
-                  onClick={() => addTag("certifications", certDraft, setCertDraft, 6)}
+                  onClick={() =>
+                    addTag("certifications", certDraft, setCertDraft, 6)
+                  }
                   aria-label="Add certification"
                 >
                   <Plus size={16} />
@@ -533,7 +564,10 @@ export default function ReMakerProfile() {
             {editing ? (
               <div className="rpp-form single">
                 <Field id="rpp-phone" label="Phone" error={err("phone")}>
-                  {textInput("rpp-phone", "phone", { inputMode: "tel", maxLength: 13 })}
+                  {textInput("rpp-phone", "phone", {
+                    inputMode: "tel",
+                    maxLength: 13,
+                  })}
                 </Field>
                 <Field id="rpp-address" label="Address">
                   {textInput("rpp-address", "address", { maxLength: 120 })}
@@ -547,7 +581,10 @@ export default function ReMakerProfile() {
                   </Field>
                 </div>
                 <Field id="rpp-pin" label="Pincode" error={err("pincode")}>
-                  {textInput("rpp-pin", "pincode", { inputMode: "numeric", maxLength: 6 })}
+                  {textInput("rpp-pin", "pincode", {
+                    inputMode: "numeric",
+                    maxLength: 6,
+                  })}
                 </Field>
               </div>
             ) : (
@@ -559,7 +596,9 @@ export default function ReMakerProfile() {
                 <li>
                   <MapPin size={16} />
                   <span>
-                    {[data.address, data.city, data.state].filter(Boolean).join(", ")}
+                    {[data.address, data.city, data.state]
+                      .filter(Boolean)
+                      .join(", ")}
                     <small>{data.pincode}</small>
                   </span>
                 </li>
@@ -577,7 +616,8 @@ export default function ReMakerProfile() {
                 <span>
                   {data.email}
                   <small>
-                    Signed up with {data.authProvider === "google" ? "Google" : "email"}. Email
+                    Signed up with{" "}
+                    {data.authProvider === "google" ? "Google" : "email"}. Email
                     can&apos;t be changed here.
                   </small>
                 </span>
@@ -589,17 +629,29 @@ export default function ReMakerProfile() {
 
       {/* ======================= SAVE BAR ======================= */}
       {editing && (
-        <div className="rpp-savebar" role="region" aria-label="Save profile changes">
+        <div
+          className="rpp-savebar"
+          role="region"
+          aria-label="Save profile changes"
+        >
           <p>
             {attempted && hasErrors
               ? "Fix the highlighted fields to save."
               : "You are editing your profile."}
           </p>
           <div>
-            <button type="button" className="rpp-btn ghost" onClick={cancelEdit}>
+            <button
+              type="button"
+              className="rpp-btn ghost"
+              onClick={cancelEdit}
+            >
               Cancel
             </button>
-            <button type="button" className="rpp-btn primary" onClick={saveEdit}>
+            <button
+              type="button"
+              className="rpp-btn primary"
+              onClick={saveEdit}
+            >
               Save changes
             </button>
           </div>

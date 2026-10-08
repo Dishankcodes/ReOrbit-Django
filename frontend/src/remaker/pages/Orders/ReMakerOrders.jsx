@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { MiniProgress, StatusBadge } from "../../components/OrderParts";
+import { MiniProgress, StatusBadge } from "../../pages-components/OrderParts";
 import { formatPrice } from "../../data/remakerMarketplaceData";
 import {
   PAYMENT_LABEL,

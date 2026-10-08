@@ -19,7 +19,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { Avatar, RatingSummary, ReviewList } from "../../components/ReviewBlocks";
+import { Avatar, RatingSummary, ReviewList } from "../../pages-components/ReviewBlocks";
 import {
   formatPrice,
   getListingsBySeller,

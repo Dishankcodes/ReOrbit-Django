@@ -13,7 +13,7 @@ import {
   reportTypeFor,
   useOrder,
 } from "../../data/ordersStore";
-import { StatusBadge } from "../../components/OrderParts";
+import { StatusBadge } from "../../pages-components/OrderParts";
 
 import "../../css/ReMakerOrders.css";
 

@@ -165,7 +165,6 @@ export default function ReMakerBeforeMarketplace() {
       <Navbar />
 
       <main>
-      
         <section className="rm-market-hero">
           <div className="rm-market-container">
             <div className="rm-market-hero-grid">

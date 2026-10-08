@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 
-import PortfolioForm from "../../components/PortfolioForm";
+import PortfolioForm from "../../pages-components/PortfolioForm";
 import { useWork } from "../../data/portfolioStore";
 
 import "../../css/ReMakerPortfolio.css";

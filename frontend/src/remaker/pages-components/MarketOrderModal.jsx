@@ -14,10 +14,30 @@ import { formatPrice } from "../data/remakerMarketplaceData";
 /* Payment_method ENUM from the Transactions table */
 const PAYMENTS = [
   { key: "UPI", label: "UPI", note: "Pay with any UPI app", icon: Smartphone },
-  { key: "CARD", label: "Card", note: "Credit or debit card", icon: CreditCard },
-  { key: "NET_BANKING", label: "Net banking", note: "Pay from your bank", icon: Landmark },
-  { key: "WALLET", label: "Wallet", note: "ReOrbit or partner wallet", icon: Wallet },
-  { key: "COD", label: "Cash on delivery", note: "Pay when it arrives", icon: Banknote },
+  {
+    key: "CARD",
+    label: "Card",
+    note: "Credit or debit card",
+    icon: CreditCard,
+  },
+  {
+    key: "NET_BANKING",
+    label: "Net banking",
+    note: "Pay from your bank",
+    icon: Landmark,
+  },
+  {
+    key: "WALLET",
+    label: "Wallet",
+    note: "ReOrbit or partner wallet",
+    icon: Wallet,
+  },
+  {
+    key: "COD",
+    label: "Cash on delivery",
+    note: "Pay when it arrives",
+    icon: Banknote,
+  },
 ];
 
 export default function MarketOrderModal({
@@ -63,7 +83,9 @@ export default function MarketOrderModal({
     setPlaced({ id: `RO-${number}`, payment });
   };
 
-  const paymentLabel = PAYMENTS.find((item) => item.key === placed?.payment)?.label;
+  const paymentLabel = PAYMENTS.find(
+    (item) => item.key === placed?.payment,
+  )?.label;
 
   return (
     <div
@@ -80,7 +102,12 @@ export default function MarketOrderModal({
         tabIndex={-1}
         ref={dialogRef}
       >
-        <button type="button" className="rmd-modal-close" onClick={onClose} aria-label="Close">
+        <button
+          type="button"
+          className="rmd-modal-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
           <X size={18} />
         </button>
 
@@ -119,7 +146,11 @@ export default function MarketOrderModal({
             </dl>
 
             <div className="rmd-modal-actions">
-              <button type="button" className="rmd-btn primary" onClick={onBrowse}>
+              <button
+                type="button"
+                className="rmd-btn primary"
+                onClick={onBrowse}
+              >
                 Keep browsing
               </button>
               <button type="button" className="rmd-btn ghost" onClick={onClose}>
@@ -151,7 +182,10 @@ export default function MarketOrderModal({
                 const Icon = item.icon;
 
                 return (
-                  <label className={payment === item.key ? "active" : ""} key={item.key}>
+                  <label
+                    className={payment === item.key ? "active" : ""}
+                    key={item.key}
+                  >
                     <input
                       type="radio"
                       name="payment"
@@ -178,7 +212,11 @@ export default function MarketOrderModal({
                 <dd>{formatPrice(subtotal)}</dd>
               </div>
               <div>
-                <dt>{delivery === "platform" ? `ReOrbit delivery to ${pincode}` : "Self pickup"}</dt>
+                <dt>
+                  {delivery === "platform"
+                    ? `ReOrbit delivery to ${pincode}`
+                    : "Self pickup"}
+                </dt>
                 <dd>{deliveryFee ? formatPrice(deliveryFee) : "Free"}</dd>
               </div>
               <div className="total">
@@ -188,7 +226,11 @@ export default function MarketOrderModal({
             </dl>
 
             <div className="rmd-modal-actions">
-              <button type="button" className="rmd-btn primary" onClick={placeOrder}>
+              <button
+                type="button"
+                className="rmd-btn primary"
+                onClick={placeOrder}
+              >
                 Place order, {formatPrice(total)}
               </button>
               <button type="button" className="rmd-btn ghost" onClick={onClose}>

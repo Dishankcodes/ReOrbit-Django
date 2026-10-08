@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import BeforeAfter from "../../components/BeforeAfter";
-import PortfolioDeleteModal from "../../components/PortfolioDeleteModal";
+import BeforeAfter from "../../pages-components/BeforeAfter";
+import PortfolioDeleteModal from "../../pages-components/PortfolioDeleteModal";
 import { REMAKER_PRODUCTS, formatPrice } from "../../data/remakerProducts";
 import {
   deleteWork,
