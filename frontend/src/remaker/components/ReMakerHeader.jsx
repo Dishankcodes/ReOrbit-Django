@@ -38,13 +38,33 @@ const pageInformation = {
   },
 
   "/remaker-orders": {
-    title: "Orders",
-    subtitle: "Track and manage your customer orders.",
+    title: "My Purchases",
+    subtitle: "Everything you have bought on ReOrbit.",
+  },
+
+  "/remaker-sales": {
+    title: "Sales",
+    subtitle: "Orders customers placed for your products.",
+  },
+
+  "/remaker-customers": {
+    title: "Customers",
+    subtitle: "People who have bought from you.",
   },
 
   "/remaker-earnings": {
     title: "Earnings",
     subtitle: "Track your sales and ReOrbit earnings.",
+  },
+
+  "/remaker-earnings/transactions": {
+    title: "Transactions",
+    subtitle: "Every sale, fee and payout status.",
+  },
+
+  "/remaker-earnings/payouts": {
+    title: "Payouts",
+    subtitle: "Withdraw your earnings to your bank.",
   },
 
   "/remaker-followers": {
@@ -87,6 +107,11 @@ const pageInformation = {
     subtitle: "Source materials and finished pieces from the ReOrbit community.",
   },
 
+  "/remaker-portfolio/new": {
+    title: "Add Work",
+    subtitle: "Show a piece before and after your hands made it new.",
+  },
+
   "/remaker-products/new": {
     title: "Add Product",
     subtitle: "Create a new listing for your marketplace.",
@@ -96,6 +121,46 @@ const pageInformation = {
 const marketplaceProductInformation = {
   title: "Product details",
   subtitle: "Look closely before you buy.",
+};
+
+const sellerProfileInformation = {
+  title: "Seller profile",
+  subtitle: "See their work, listings and what buyers say.",
+};
+
+const portfolioViewInformation = {
+  title: "Portfolio work",
+  subtitle: "See the transformation up close.",
+};
+
+const portfolioEditInformation = {
+  title: "Edit Work",
+  subtitle: "Update the photos and the story.",
+};
+
+const orderDetailInformation = {
+  title: "Order details",
+  subtitle: "Everything about this purchase in one place.",
+};
+
+const orderTrackInformation = {
+  title: "Track order",
+  subtitle: "Follow your order from the seller to your door.",
+};
+
+const orderReportInformation = {
+  title: "Report an issue",
+  subtitle: "Tell us what went wrong with this order.",
+};
+
+const saleDetailInformation = {
+  title: "Sale details",
+  subtitle: "Manage this order and see who bought it.",
+};
+
+const customerProfileInformation = {
+  title: "Customer",
+  subtitle: "Contact details and order history.",
 };
 
 const editProductInformation = {
@@ -110,6 +175,38 @@ function getPageInformation(pathname) {
 
   if (/^\/remaker-marketplace\/product\/[^/]+$/.test(pathname)) {
     return marketplaceProductInformation;
+  }
+
+  if (/^\/remaker-marketplace\/seller\/[^/]+$/.test(pathname)) {
+    return sellerProfileInformation;
+  }
+
+  if (/^\/remaker-portfolio\/[^/]+\/edit$/.test(pathname)) {
+    return portfolioEditInformation;
+  }
+
+  if (/^\/remaker-portfolio\/[^/]+$/.test(pathname)) {
+    return portfolioViewInformation;
+  }
+
+  if (/^\/remaker-sales\/[^/]+$/.test(pathname)) {
+    return saleDetailInformation;
+  }
+
+  if (/^\/remaker-customers\/[^/]+$/.test(pathname)) {
+    return customerProfileInformation;
+  }
+
+  if (/^\/remaker-orders\/[^/]+\/track$/.test(pathname)) {
+    return orderTrackInformation;
+  }
+
+  if (/^\/remaker-orders\/[^/]+\/report$/.test(pathname)) {
+    return orderReportInformation;
+  }
+
+  if (/^\/remaker-orders\/[^/]+$/.test(pathname)) {
+    return orderDetailInformation;
   }
 
   if (/^\/remaker-products\/[^/]+\/edit$/.test(pathname)) {

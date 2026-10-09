@@ -64,9 +64,19 @@ const studioMenu = [
 
 const ordersMenu = [
   {
-    label: "Orders",
+    label: "Purchases",
     path: "/remaker-orders",
+    icon: ShoppingBag,
+  },
+  {
+    label: "Sales",
+    path: "/remaker-sales",
     icon: Package,
+  },
+  {
+    label: "Customers",
+    path: "/remaker-customers",
+    icon: Users,
   },
   {
     label: "Earnings",
