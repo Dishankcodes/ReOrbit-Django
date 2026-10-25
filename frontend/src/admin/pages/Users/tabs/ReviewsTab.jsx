@@ -7,7 +7,12 @@ function Stars({ value }) {
   return (
     <span className="aup-stars" aria-label={`${value} out of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} size={14} className={n <= value ? "on" : ""} fill={n <= value ? "currentColor" : "none"} />
+        <Star
+          key={n}
+          size={14}
+          className={n <= value ? "on" : ""}
+          fill={n <= value ? "currentColor" : "none"}
+        />
       ))}
     </span>
   );
@@ -17,7 +22,11 @@ export default function ReviewsTab({ user }) {
   if (user.reviews.length === 0) {
     return (
       <section className="aup-card">
-        <EmptyState icon={MessageSquareText} title="No reviews written" text="Reviews this user leaves for products and ReMakers will show here." />
+        <EmptyState
+          icon={MessageSquareText}
+          title="No reviews written"
+          text="Reviews this user leaves for products and ReMakers will show here."
+        />
       </section>
     );
   }
@@ -36,7 +45,9 @@ export default function ReviewsTab({ user }) {
             <div className="aup-review-head">
               <div>
                 <strong>{review.target}</strong>
-                <span>{review.kind} review · {formatDate(review.created_at)}</span>
+                <span>
+                  {review.kind} review · {formatDate(review.created_at)}
+                </span>
               </div>
               <Stars value={review.rating} />
             </div>

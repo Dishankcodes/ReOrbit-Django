@@ -60,9 +60,14 @@ export const PRODUCT_ACTION_LIST = ACTIONS;
 /* Which actions apply to a listing in its current state. */
 export function getProductActions(product) {
   if (product.type === "item") {
-    if (product.verification === "Pending") return [ACTIONS.verify, ACTIONS.reject];
+    if (product.verification === "Pending")
+      return [ACTIONS.verify, ACTIONS.reject];
     if (product.verification === "Rejected") return [ACTIONS.verify];
-    if (product.verification === "Verified" && ["Listed", "Reserved"].includes(product.rawStatus)) return [ACTIONS.reject];
+    if (
+      product.verification === "Verified" &&
+      ["Listed", "Reserved"].includes(product.rawStatus)
+    )
+      return [ACTIONS.reject];
     return [];
   }
   if (product.rawStatus === "Listed") return [ACTIONS.deactivate];

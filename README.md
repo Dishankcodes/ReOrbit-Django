@@ -12,12 +12,12 @@ The platform bridges the gap between **sellers, artists, buyers, and administrat
 
 Millions of reusable products are discarded every year despite still having value. ReOrbit aims to solve this problem by providing a digital ecosystem where users can:
 
-* Sell reusable items
-* Donate items for refurbishment
-* Exchange products with other users
-* Purchase second-life products
-* Connect with talented artists
-* Support sustainable living
+- Sell reusable items
+- Donate items for refurbishment
+- Exchange products with other users
+- Purchase second-life products
+- Connect with talented artists
+- Support sustainable living
 
 Artists can transform old products into unique creations, while administrators ensure quality, transparency, and smooth platform operations.
 
@@ -25,12 +25,12 @@ Artists can transform old products into unique creations, while administrators e
 
 # 🎯 Objectives
 
-* Promote sustainable consumption.
-* Reduce unnecessary waste generation.
-* Encourage product reuse and refurbishment.
-* Support artists by providing a marketplace for upcycled products.
-* Build a trusted community-driven circular economy.
-* Reward users for environmentally responsible actions.
+- Promote sustainable consumption.
+- Reduce unnecessary waste generation.
+- Encourage product reuse and refurbishment.
+- Support artists by providing a marketplace for upcycled products.
+- Build a trusted community-driven circular economy.
+- Reward users for environmentally responsible actions.
 
 ---
 
@@ -38,72 +38,72 @@ Artists can transform old products into unique creations, while administrators e
 
 ## 👤 Authentication & Account Management
 
-* Secure User Registration & Login
-* Email Verification
-* Password Reset
-* Profile Management
-* Role-Based Access Control
-* Secure Authentication System
+- Secure User Registration & Login
+- Email Verification
+- Password Reset
+- Profile Management
+- Role-Based Access Control
+- Secure Authentication System
 
 ---
 
 ## ♻️ Item Management
 
-* Upload reusable items
-* AI Category Detection *(planned)*
-* AI Price Recommendation *(planned)*
-* Item Verification
-* Item Approval Workflow
-* Item Status Tracking
-* QR Code Tracking *(planned)*
-* Image Gallery
-* Product Details
-* Product Search & Filtering
-* Wishlist Management
+- Upload reusable items
+- AI Category Detection _(planned)_
+- AI Price Recommendation _(planned)_
+- Item Verification
+- Item Approval Workflow
+- Item Status Tracking
+- QR Code Tracking _(planned)_
+- Image Gallery
+- Product Details
+- Product Search & Filtering
+- Wishlist Management
 
 ---
 
 ## 🛒 Marketplace
 
-* Buy reusable products
-* Sell reusable products
-* Donate products
-* Exchange items
-* Artist Marketplace
-* Refurbished Product Store
-* Custom Artist Orders
-* Product Ratings & Reviews
+- Buy reusable products
+- Sell reusable products
+- Donate products
+- Exchange items
+- Artist Marketplace
+- Refurbished Product Store
+- Custom Artist Orders
+- Product Ratings & Reviews
 
 ---
 
 ## 🎨 Artist Features
 
-* Artist Profile
-* Portfolio Showcase
-* Purchase reusable items
-* Sell refurbished/upcycled products
-* Earnings Dashboard
-* Customer Reviews
-* Accept Custom Projects
+- Artist Profile
+- Portfolio Showcase
+- Purchase reusable items
+- Sell refurbished/upcycled products
+- Earnings Dashboard
+- Customer Reviews
+- Accept Custom Projects
 
 ---
 
 ## 🚚 Order & Warehouse Management
 
-* Pickup Request Management
-* Warehouse Tracking
-* Refurbishment Workflow
-* Order Tracking
-* Inventory Management
-* Product Listing Management
+- Pickup Request Management
+- Warehouse Tracking
+- Refurbishment Workflow
+- Order Tracking
+- Inventory Management
+- Product Listing Management
 
 ---
 
 ## 💬 Communication
 
-* User ↔ Artist Chat
-* Notifications
-* Review & Rating System
+- User ↔ Artist Chat
+- Notifications
+- Review & Rating System
 
 ---
 
@@ -111,42 +111,42 @@ Artists can transform old products into unique creations, while administrators e
 
 ### User Dashboard
 
-* Uploaded Items
-* Purchased Products
-* Sold Products
-* Donations
-* Exchanges
-* Orbit Points
-* Wishlist
-* Order History
-* Environmental Impact
-* Personal Statistics
+- Uploaded Items
+- Purchased Products
+- Sold Products
+- Donations
+- Exchanges
+- Orbit Points
+- Wishlist
+- Order History
+- Environmental Impact
+- Personal Statistics
 
 ### Artist Dashboard
 
-* Sales Analytics
-* Earnings
-* Portfolio Statistics
-* Product Performance
-* Customer Feedback
+- Sales Analytics
+- Earnings
+- Portfolio Statistics
+- Product Performance
+- Customer Feedback
 
 ### Admin Dashboard
 
-* User Statistics
-* Artist Management
-* Warehouse Overview
-* Transaction Monitoring
-* Reports & Analytics
-* Platform Performance
+- User Statistics
+- Artist Management
+- Warehouse Overview
+- Transaction Monitoring
+- Reports & Analytics
+- Platform Performance
 
 ---
 
 ## 🎁 Rewards System
 
-* Orbit Points
-* Achievement Badges
-* Sustainability Certificates
-* Offers & Rewards *(planned)*
+- Orbit Points
+- Achievement Badges
+- Sustainability Certificates
+- Offers & Rewards _(planned)_
 
 ---
 
@@ -199,25 +199,25 @@ Customer Purchase
 
 ### Backend
 
-* Django
-* Django REST Framework
+- Django
+- Django REST Framework
 
 ### Frontend
 
-* HTML5
-* CSS3
-* Bootstrap
-* JavaScript
+- HTML5
+- CSS3
+- Bootstrap
+- JavaScript
 
 ### Database
 
-* PostgreSQL
+- PostgreSQL
 
 ### Additional Technologies
 
-* REST APIs
-* JWT Authentication *(planned)*
-* AI Integration *(Future Enhancement)*
+- REST APIs
+- JWT Authentication _(planned)_
+- AI Integration _(Future Enhancement)_
 
 ---
 
@@ -252,18 +252,18 @@ ReOrbit/
 
 # 🚀 Future Enhancements
 
-* AI Price Recommendation
-* AI Category Detection
-* QR-Based Item Tracking
-* Real-Time Notifications
-* Live Chat
-* Digital Wallet
-* Carbon Footprint Calculator
-* Pickup Route Optimization
-* Mobile Application
-* Recommendation System
-* Payment Gateway Integration
-* Multi-language Support
+- AI Price Recommendation
+- AI Category Detection
+- QR-Based Item Tracking
+- Real-Time Notifications
+- Live Chat
+- Digital Wallet
+- Carbon Footprint Calculator
+- Pickup Route Optimization
+- Mobile Application
+- Recommendation System
+- Payment Gateway Integration
+- Multi-language Support
 
 ---
 

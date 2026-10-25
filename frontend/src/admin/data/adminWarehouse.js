@@ -27,7 +27,8 @@ const between = (min, max) => min + Math.floor(random() * (max - min + 1));
 
 export const UNSOLD_DAYS = 7; // the rule: unsold for this many days -> alert
 
-const hoursAgo = (h) => new Date(DEMO_TODAY.getTime() - h * 3600000).toISOString();
+const hoursAgo = (h) =>
+  new Date(DEMO_TODAY.getTime() - h * 3600000).toISOString();
 const daysAgo = (d, extraHours = 0) => hoursAgo(d * 24 + extraHours);
 
 /* ---------- warehouse layout (zones) ---------- */
@@ -40,46 +41,178 @@ export const ZONES = [
 ];
 
 export const CATEGORY_ZONE = {
-  Furniture: "A", "Home Decor": "B", Kitchen: "B", Clothing: "C", Fashion: "C",
-  Electronics: "D", Books: "D", Sports: "E",
+  Furniture: "A",
+  "Home Decor": "B",
+  Kitchen: "B",
+  Clothing: "C",
+  Fashion: "C",
+  Electronics: "D",
+  Books: "D",
+  Sports: "E",
 };
 
 /* The dock (DOCK) and the QC / refurbishment bay (QC) sit outside the racks. */
-export const WAREHOUSE_ADDRESS = "Plot 14, Orbit Industrial Park, Sarkhej, Ahmedabad 382210";
+export const WAREHOUSE_ADDRESS =
+  "Plot 14, Orbit Industrial Park, Sarkhej, Ahmedabad 382210";
 
 /* ---------- what we stock ---------- */
 const CATALOG = [
-  { title: "Vintage Teak Drawer Chest", category: "Furniture", image: "/images/products/teak-drawer-chest.jpg", price: 6500 },
-  { title: "Ceramic Table Lamp", category: "Home Decor", image: "/images/products/ceramic-lamp.jpg", price: 1200 },
-  { title: "Wooden Study Chair", category: "Furniture", image: "/images/products/vintage-chair.jpg", price: 2400 },
-  { title: "Solid Wood Dining Table", category: "Furniture", image: "/images/products/wooden-table.jpg", price: 9800 },
-  { title: "Denim Jackets Bundle (4)", category: "Clothing", image: "/images/products/default-item.jpg", price: 1800 },
-  { title: "Old Laptop (working)", category: "Electronics", image: "/images/products/default-item.jpg", price: 7500 },
-  { title: "Glass Jars Set (12)", category: "Kitchen", image: "/images/products/default-item.jpg", price: 650 },
-  { title: "Steel Bookshelf", category: "Furniture", image: "/images/products/default-item.jpg", price: 3200 },
-  { title: "Brass Cooking Pots", category: "Kitchen", image: "/images/products/default-item.jpg", price: 2100 },
-  { title: "Children's Books Bundle", category: "Books", image: "/images/products/default-item.jpg", price: 500 },
-  { title: "Cotton Sarees (6)", category: "Clothing", image: "/images/products/default-item.jpg", price: 2800 },
-  { title: "Carved Window Frames", category: "Home Decor", image: "/images/products/default-item.jpg", price: 3600 },
-  { title: "Kids Bicycle", category: "Sports", image: "/images/products/default-item.jpg", price: 1900 },
-  { title: "Rattan Side Table", category: "Furniture", image: "/images/products/default-item.jpg", price: 2700 },
-  { title: "Reclaimed Wood Lamp", category: "Home Decor", image: "/images/products/ceramic-lamp.jpg", price: 1249 },
-  { title: "Upcycled Denim Tote", category: "Fashion", image: "/images/products/default-item.jpg", price: 749 },
-  { title: "Refurbished Study Chair", category: "Furniture", image: "/images/products/vintage-chair.jpg", price: 3199 },
-  { title: "Rustic Coffee Table", category: "Furniture", image: "/images/products/wooden-table.jpg", price: 5400 },
-  { title: "Badminton Racket Set", category: "Sports", image: "/images/products/default-item.jpg", price: 900 },
-  { title: "Vintage Radio", category: "Electronics", image: "/images/products/default-item.jpg", price: 2200 },
+  {
+    title: "Vintage Teak Drawer Chest",
+    category: "Furniture",
+    image: "/images/products/teak-drawer-chest.jpg",
+    price: 6500,
+  },
+  {
+    title: "Ceramic Table Lamp",
+    category: "Home Decor",
+    image: "/images/products/ceramic-lamp.jpg",
+    price: 1200,
+  },
+  {
+    title: "Wooden Study Chair",
+    category: "Furniture",
+    image: "/images/products/vintage-chair.jpg",
+    price: 2400,
+  },
+  {
+    title: "Solid Wood Dining Table",
+    category: "Furniture",
+    image: "/images/products/wooden-table.jpg",
+    price: 9800,
+  },
+  {
+    title: "Denim Jackets Bundle (4)",
+    category: "Clothing",
+    image: "/images/products/default-item.jpg",
+    price: 1800,
+  },
+  {
+    title: "Old Laptop (working)",
+    category: "Electronics",
+    image: "/images/products/default-item.jpg",
+    price: 7500,
+  },
+  {
+    title: "Glass Jars Set (12)",
+    category: "Kitchen",
+    image: "/images/products/default-item.jpg",
+    price: 650,
+  },
+  {
+    title: "Steel Bookshelf",
+    category: "Furniture",
+    image: "/images/products/default-item.jpg",
+    price: 3200,
+  },
+  {
+    title: "Brass Cooking Pots",
+    category: "Kitchen",
+    image: "/images/products/default-item.jpg",
+    price: 2100,
+  },
+  {
+    title: "Children's Books Bundle",
+    category: "Books",
+    image: "/images/products/default-item.jpg",
+    price: 500,
+  },
+  {
+    title: "Cotton Sarees (6)",
+    category: "Clothing",
+    image: "/images/products/default-item.jpg",
+    price: 2800,
+  },
+  {
+    title: "Carved Window Frames",
+    category: "Home Decor",
+    image: "/images/products/default-item.jpg",
+    price: 3600,
+  },
+  {
+    title: "Kids Bicycle",
+    category: "Sports",
+    image: "/images/products/default-item.jpg",
+    price: 1900,
+  },
+  {
+    title: "Rattan Side Table",
+    category: "Furniture",
+    image: "/images/products/default-item.jpg",
+    price: 2700,
+  },
+  {
+    title: "Reclaimed Wood Lamp",
+    category: "Home Decor",
+    image: "/images/products/ceramic-lamp.jpg",
+    price: 1249,
+  },
+  {
+    title: "Upcycled Denim Tote",
+    category: "Fashion",
+    image: "/images/products/default-item.jpg",
+    price: 749,
+  },
+  {
+    title: "Refurbished Study Chair",
+    category: "Furniture",
+    image: "/images/products/vintage-chair.jpg",
+    price: 3199,
+  },
+  {
+    title: "Rustic Coffee Table",
+    category: "Furniture",
+    image: "/images/products/wooden-table.jpg",
+    price: 5400,
+  },
+  {
+    title: "Badminton Racket Set",
+    category: "Sports",
+    image: "/images/products/default-item.jpg",
+    price: 900,
+  },
+  {
+    title: "Vintage Radio",
+    category: "Electronics",
+    image: "/images/products/default-item.jpg",
+    price: 2200,
+  },
 ];
 
 const CONDITIONS = ["Like new", "Good", "Good", "Fair", "Needs refurbishing"];
-const CAT_CODE = { Furniture: "FUR", "Home Decor": "DEC", Kitchen: "KIT", Clothing: "CLO", Fashion: "FAS", Electronics: "ELE", Books: "BOK", Sports: "SPT" };
+const CAT_CODE = {
+  Furniture: "FUR",
+  "Home Decor": "DEC",
+  Kitchen: "KIT",
+  Clothing: "CLO",
+  Fashion: "FAS",
+  Electronics: "ELE",
+  Books: "BOK",
+  Sports: "SPT",
+};
 
 /* ReMaker who refurbishes each kind of stock */
-const REFURB_BY_CATEGORY = { Furniture: "Tara Bose", "Home Decor": "Arjun Mehta", Kitchen: "Gaurav Menon", Clothing: "Priya Shah", Fashion: "Divya Nambiar", Electronics: "Arjun Mehta", Books: "Priya Shah", Sports: "Karan Bhatia" };
-const remakerByName = (name) => INITIAL_REMAKERS.find((r) => r.full_name === name);
+const REFURB_BY_CATEGORY = {
+  Furniture: "Tara Bose",
+  "Home Decor": "Arjun Mehta",
+  Kitchen: "Gaurav Menon",
+  Clothing: "Priya Shah",
+  Fashion: "Divya Nambiar",
+  Electronics: "Arjun Mehta",
+  Books: "Priya Shah",
+  Sports: "Karan Bhatia",
+};
+const remakerByName = (name) =>
+  INITIAL_REMAKERS.find((r) => r.full_name === name);
 export function refurbFor(category, assignedAt, progress = "Assigned") {
   const rm = remakerByName(REFURB_BY_CATEGORY[category] || "Priya Shah");
-  return { name: rm.full_name, path: `/admin-remakers/${rm.remaker_id}`, assigned_at: assignedAt, due: new Date(new Date(assignedAt).getTime() + 10 * 86400000).toISOString(), progress };
+  return {
+    name: rm.full_name,
+    path: `/admin-remakers/${rm.remaker_id}`,
+    assigned_at: assignedAt,
+    due: new Date(new Date(assignedAt).getTime() + 10 * 86400000).toISOString(),
+    progress,
+  };
 }
 
 const activeUsers = INITIAL_USERS.filter((u) => u.status === "Active");
@@ -88,10 +221,26 @@ const activeRemakers = INITIAL_REMAKERS.filter((r) => r.status === "Active");
 function sourceParty(kind) {
   if (kind === "ReMaker") {
     const rm = pick(activeRemakers);
-    return { type: "ReMaker", id: rm.remaker_id, name: rm.full_name, sub: `“${rm.username}”`, image: rm.profile.profile_image, city: rm.profile.city, path: `/admin-remakers/${rm.remaker_id}` };
+    return {
+      type: "ReMaker",
+      id: rm.remaker_id,
+      name: rm.full_name,
+      sub: `“${rm.username}”`,
+      image: rm.profile.profile_image,
+      city: rm.profile.city,
+      path: `/admin-remakers/${rm.remaker_id}`,
+    };
   }
   const u = pick(activeUsers);
-  return { type: "User", id: u.user_id, name: u.full_name, sub: u.email, image: u.profile.profile_image, city: u.profile.city, path: `/admin-users/${u.user_id}` };
+  return {
+    type: "User",
+    id: u.user_id,
+    name: u.full_name,
+    sub: u.email,
+    image: u.profile.profile_image,
+    city: u.profile.city,
+    path: `/admin-users/${u.user_id}`,
+  };
 }
 
 export function makeLocation(category, seedNumber) {
@@ -123,10 +272,17 @@ function build() {
       const spec = CATALOG[(counter * 7 + i * 3) % CATALOG.length];
       const seq = 1001 + counter;
       const id = `WH-${seq}`;
-      const kind = group.status === "Refurbishment" ? "User" : random() < 0.28 ? "ReMaker" : "User";
+      const kind =
+        group.status === "Refurbishment"
+          ? "User"
+          : random() < 0.28
+            ? "ReMaker"
+            : "User";
       const qty = spec.title.includes("(") ? 1 : pick([1, 1, 1, 2, 3]);
-      const listPrice = Math.round((spec.price * qty * (0.92 + random() * 0.2)) / 10) * 10;
-      const costPrice = Math.round((listPrice * (0.5 + random() * 0.18)) / 10) * 10;
+      const listPrice =
+        Math.round((spec.price * qty * (0.92 + random() * 0.2)) / 10) * 10;
+      const costPrice =
+        Math.round((listPrice * (0.5 + random() * 0.18)) / 10) * 10;
 
       let listedAge = null;
       let receivedAge;
@@ -138,8 +294,14 @@ function build() {
       }
 
       const receivedAt = daysAgo(receivedAge, between(0, 6));
-      const storedAt = group.status === "Received" ? null : new Date(new Date(receivedAt).getTime() + between(3, 20) * 3600000).toISOString();
-      const listedAt = listedAge === null ? null : daysAgo(listedAge, between(0, 5));
+      const storedAt =
+        group.status === "Received"
+          ? null
+          : new Date(
+              new Date(receivedAt).getTime() + between(3, 20) * 3600000,
+            ).toISOString();
+      const listedAt =
+        listedAge === null ? null : daysAgo(listedAge, between(0, 5));
 
       const item = {
         inventory_id: id,
@@ -148,7 +310,10 @@ function build() {
         title: spec.title,
         category: spec.category,
         image: spec.image,
-        condition: group.status === "Refurbishment" ? "Needs refurbishing" : pick(CONDITIONS.slice(0, 4)),
+        condition:
+          group.status === "Refurbishment"
+            ? "Needs refurbishing"
+            : pick(CONDITIONS.slice(0, 4)),
         quantity: qty,
         source: sourceParty(kind),
         purchase_ref: `PO-26${String(between(9, 10)).padStart(2, "0")}-${String(between(10, 99))}`,
@@ -170,12 +335,24 @@ function build() {
         events: [],
       };
 
-      if (group.status === "Received") item.location = { zone: "DOCK", rack: "01", level: 1, bin: "DOCK-01" };
+      if (group.status === "Received")
+        item.location = { zone: "DOCK", rack: "01", level: 1, bin: "DOCK-01" };
       else if (group.status === "Refurbishment") {
         const bay = between(1, 4);
-        item.location = { zone: "QC", rack: `0${bay}`, level: 1, bin: `QC-0${bay}` };
-        const assignedAt = new Date(new Date(storedAt).getTime() + 24 * 3600000).toISOString();
-        item.refurb = refurbFor(spec.category, assignedAt, pick(["Assigned", "In_Progress", "In_Progress"]));
+        item.location = {
+          zone: "QC",
+          rack: `0${bay}`,
+          level: 1,
+          bin: `QC-0${bay}`,
+        };
+        const assignedAt = new Date(
+          new Date(storedAt).getTime() + 24 * 3600000,
+        ).toISOString();
+        item.refurb = refurbFor(
+          spec.category,
+          assignedAt,
+          pick(["Assigned", "In_Progress", "In_Progress"]),
+        );
       } else if (group.status === "Released") item.location = null;
       else item.location = makeLocation(spec.category, seq);
 
@@ -183,7 +360,8 @@ function build() {
         item.released_at = daysAgo(between(1, 8));
         if (i === 4) item.sale_status = "Donated";
       }
-      if (group.status === "Assigned") item.order_id = `ORD-${between(7000, 7999)}`;
+      if (group.status === "Assigned")
+        item.order_id = `ORD-${between(7000, 7999)}`;
 
       /* a couple of listed items already had a price cut or promo */
       if (group.sale === "Listed" && group.listed[0] >= 14 && i % 3 === 1) {
@@ -191,15 +369,52 @@ function build() {
         item.list_price = Math.round((listPrice * 0.9) / 10) * 10;
       }
       if (group.sale === "Listed" && group.listed[0] === 7 && i === 2) {
-        item.snoozed_until = new Date(DEMO_TODAY.getTime() + 2 * 86400000).toISOString();
+        item.snoozed_until = new Date(
+          DEMO_TODAY.getTime() + 2 * 86400000,
+        ).toISOString();
       }
 
       /* timeline */
-      item.events.push({ id: "e-recv", label: "Received at warehouse", detail: `Bought from ${item.source.name} · ${item.purchase_ref}`, at: receivedAt, tone: "good" });
-      if (storedAt) item.events.push({ id: "e-stored", label: "Stored on shelf", detail: item.location ? `Location ${item.location.bin}` : "Put away", at: storedAt, tone: "neutral" });
-      if (item.refurb) item.events.push({ id: "e-refurb", label: "Sent to refurbishment", detail: `Assigned to ${item.refurb.name}`, at: item.refurb.assigned_at, tone: "neutral" });
-      if (listedAt) item.events.push({ id: "e-listed", label: "Listed on marketplace", detail: `Price ₹${item.original_price.toLocaleString("en-IN")}`, at: listedAt, tone: "good" });
-      if (group.status === "Released") item.events.push({ id: "e-out", label: item.sale_status === "Donated" ? "Donated" : "Dispatched to buyer", detail: "Left the warehouse", at: item.released_at, tone: "neutral" });
+      item.events.push({
+        id: "e-recv",
+        label: "Received at warehouse",
+        detail: `Bought from ${item.source.name} · ${item.purchase_ref}`,
+        at: receivedAt,
+        tone: "good",
+      });
+      if (storedAt)
+        item.events.push({
+          id: "e-stored",
+          label: "Stored on shelf",
+          detail: item.location ? `Location ${item.location.bin}` : "Put away",
+          at: storedAt,
+          tone: "neutral",
+        });
+      if (item.refurb)
+        item.events.push({
+          id: "e-refurb",
+          label: "Sent to refurbishment",
+          detail: `Assigned to ${item.refurb.name}`,
+          at: item.refurb.assigned_at,
+          tone: "neutral",
+        });
+      if (listedAt)
+        item.events.push({
+          id: "e-listed",
+          label: "Listed on marketplace",
+          detail: `Price ₹${item.original_price.toLocaleString("en-IN")}`,
+          at: listedAt,
+          tone: "good",
+        });
+      if (group.status === "Released")
+        item.events.push({
+          id: "e-out",
+          label:
+            item.sale_status === "Donated" ? "Donated" : "Dispatched to buyer",
+          detail: "Left the warehouse",
+          at: item.released_at,
+          tone: "neutral",
+        });
       item.events.sort((a, b) => new Date(a.at) - new Date(b.at));
 
       rows.push(item);

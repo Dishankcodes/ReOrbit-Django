@@ -140,7 +140,8 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
 
   const warehouseAlerts = useWarehouseAlerts();
   const pendingDonations = useDonations().filter((d) => d.status === "Pending");
-  const bellCount = warehouseAlerts.length + pendingDonations.length + notifications.length;
+  const bellCount =
+    warehouseAlerts.length + pendingDonations.length + notifications.length;
   const notificationRef = useRef(null);
 
   const profileRef = useRef(null);
@@ -198,15 +199,23 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
   /* A single user's page (/admin-users/USR-1001) gets its own title. */
   const isUserProfilePage = /^\/admin-users\/[^/]+$/.test(location.pathname);
 
-  const isRemakerProfilePage = /^\/admin-remakers\/[^/]+$/.test(location.pathname);
+  const isRemakerProfilePage = /^\/admin-remakers\/[^/]+$/.test(
+    location.pathname,
+  );
 
-  const isProductDetailsPage = /^\/admin-products\/[^/]+$/.test(location.pathname);
+  const isProductDetailsPage = /^\/admin-products\/[^/]+$/.test(
+    location.pathname,
+  );
 
   const isOrderDetailsPage = /^\/admin-orders\/[^/]+$/.test(location.pathname);
 
-  const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(location.pathname);
+  const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(
+    location.pathname,
+  );
 
-  const isWarehouseItemPage = /^\/admin-warehouse\/[^/]+$/.test(location.pathname);
+  const isWarehouseItemPage = /^\/admin-warehouse\/[^/]+$/.test(
+    location.pathname,
+  );
 
   const currentPage = isDonationDetailsPage
     ? {
@@ -214,34 +223,36 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
         subtitle: "Review the donor, the item and the pickup progress.",
       }
     : isWarehouseItemPage
-    ? {
-        title: "Stock Details",
-        subtitle: "Location, sales performance and actions for this stock.",
-      }
-    : isOrderDetailsPage
-    ? {
-        title: "Order Details",
-        subtitle: "Payment, buyer, seller and the history of this order.",
-      }
-    : isProductDetailsPage
-    ? {
-        title: "Product Details",
-        subtitle: "Review the listing, who posted it and its history.",
-      }
-    : isRemakerProfilePage
-    ? {
-        title: "ReMaker Profile",
-        subtitle: "Portfolio, products, orders, refurbishments and moderation.",
-      }
-    : isUserProfilePage
-    ? {
-        title: "User Profile",
-        subtitle: "Account details, orders, donations and moderation.",
-      }
-    : pageInformation[location.pathname] || {
-        title: "ReOrbit Admin",
-        subtitle: "Manage the ReOrbit ecosystem.",
-      };
+      ? {
+          title: "Stock Details",
+          subtitle: "Location, sales performance and actions for this stock.",
+        }
+      : isOrderDetailsPage
+        ? {
+            title: "Order Details",
+            subtitle: "Payment, buyer, seller and the history of this order.",
+          }
+        : isProductDetailsPage
+          ? {
+              title: "Product Details",
+              subtitle: "Review the listing, who posted it and its history.",
+            }
+          : isRemakerProfilePage
+            ? {
+                title: "ReMaker Profile",
+                subtitle:
+                  "Portfolio, products, orders, refurbishments and moderation.",
+              }
+            : isUserProfilePage
+              ? {
+                  title: "User Profile",
+                  subtitle:
+                    "Account details, orders, donations and moderation.",
+                }
+              : pageInformation[location.pathname] || {
+                  title: "ReOrbit Admin",
+                  subtitle: "Manage the ReOrbit ecosystem.",
+                };
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -404,10 +415,15 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                   >
                     <span className="admin-notification-dot" />
                     <div>
-                      <strong>Warehouse: {warehouseAlerts.length} unsold for 7+ days</strong>
+                      <strong>
+                        Warehouse: {warehouseAlerts.length} unsold for 7+ days
+                      </strong>
                       <p>
-                        {warehouseAlerts[0].title} has been on sale {warehouseAlerts[0].daysListed} days
-                        {warehouseAlerts.length > 1 ? ` and ${warehouseAlerts.length - 1} more need action.` : "."}
+                        {warehouseAlerts[0].title} has been on sale{" "}
+                        {warehouseAlerts[0].daysListed} days
+                        {warehouseAlerts.length > 1
+                          ? ` and ${warehouseAlerts.length - 1} more need action.`
+                          : "."}
                       </p>
                       <span>Open warehouse alerts</span>
                     </div>
@@ -424,8 +440,13 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                   >
                     <span className="admin-notification-dot" />
                     <div>
-                      <strong>Donations: {pendingDonations.length} waiting for review</strong>
-                      <p>Accept to schedule a free pickup, or reject with a reason.</p>
+                      <strong>
+                        Donations: {pendingDonations.length} waiting for review
+                      </strong>
+                      <p>
+                        Accept to schedule a free pickup, or reject with a
+                        reason.
+                      </p>
                       <span>Open donations</span>
                     </div>
                   </button>

@@ -93,13 +93,20 @@ export function getOrderActions(order) {
   const isCod = transaction.payment_method === "COD";
   const list = [];
 
-  if (["Pending", "Confirmed"].includes(status) && pay === "Pending" && !isCod) list.push(ACTIONS.markPaid);
-  if (status === "Pending" && (pay === "Success" || (isCod && pay === "Pending"))) list.push(ACTIONS.confirm);
+  if (["Pending", "Confirmed"].includes(status) && pay === "Pending" && !isCod)
+    list.push(ACTIONS.markPaid);
+  if (
+    status === "Pending" &&
+    (pay === "Success" || (isCod && pay === "Pending"))
+  )
+    list.push(ACTIONS.confirm);
   if (status === "Confirmed") list.push(ACTIONS.complete);
   if (["Pending", "Confirmed"].includes(status)) list.push(ACTIONS.cancel);
   if (status === "Completed") list.push(ACTIONS.return);
-  if (["Cancelled", "Returned"].includes(status) && pay === "Success") list.push(ACTIONS.refund);
+  if (["Cancelled", "Returned"].includes(status) && pay === "Success")
+    list.push(ACTIONS.refund);
   return list;
 }
 
-export const canApplyOrderAction = (order, key) => getOrderActions(order).some((a) => a.key === key);
+export const canApplyOrderAction = (order, key) =>
+  getOrderActions(order).some((a) => a.key === key);

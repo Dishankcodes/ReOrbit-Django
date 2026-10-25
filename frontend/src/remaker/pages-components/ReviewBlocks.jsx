@@ -62,7 +62,9 @@ export function RatingSummary({ reviews, average, total }) {
 
       <ul className="rvw-bars" aria-label="Rating breakdown">
         {[5, 4, 3, 2, 1].map((star) => {
-          const share = summary.count ? (summary.distribution[star] / summary.count) * 100 : 0;
+          const share = summary.count
+            ? (summary.distribution[star] / summary.count) * 100
+            : 0;
 
           return (
             <li key={star}>

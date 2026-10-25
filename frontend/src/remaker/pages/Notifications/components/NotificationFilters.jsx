@@ -6,7 +6,11 @@ export default function NotificationFilters({ filter, onFilter, counts }) {
   const tabs = [
     { key: "all", label: "All", count: counts.all },
     { key: "unread", label: "Unread", count: counts.unread },
-    ...CATEGORIES.map((item) => ({ key: item.key, label: item.label, count: counts[item.key] || 0 })),
+    ...CATEGORIES.map((item) => ({
+      key: item.key,
+      label: item.label,
+      count: counts[item.key] || 0,
+    })),
   ];
 
   return (

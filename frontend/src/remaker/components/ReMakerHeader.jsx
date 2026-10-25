@@ -132,7 +132,8 @@ const pageInformation = {
 
   "/remaker-marketplace": {
     title: "Marketplace",
-    subtitle: "Source materials and finished pieces from the ReOrbit community.",
+    subtitle:
+      "Source materials and finished pieces from the ReOrbit community.",
   },
 
   "/remaker-portfolio/new": {

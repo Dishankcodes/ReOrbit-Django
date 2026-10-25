@@ -27,12 +27,20 @@ export default function ReviewModal({ order, onSubmit, onClose }) {
       onConfirm={submit}
     >
       <p>
-        How was <strong>{order.item.title}</strong>? Your review appears on {order.seller?.name}'s profile and
-        helps other buyers.
+        How was <strong>{order.item.title}</strong>? Your review appears on{" "}
+        {order.seller?.name}'s profile and helps other buyers.
       </p>
-      <StarInput value={rating} onChange={(value) => { setRating(value); setError(""); }} />
+      <StarInput
+        value={rating}
+        onChange={(value) => {
+          setRating(value);
+          setError("");
+        }}
+      />
       <label className="dn-field">
-        <span className="dn-label">Your review <span className="dn-hint">(optional)</span></span>
+        <span className="dn-label">
+          Your review <span className="dn-hint">(optional)</span>
+        </span>
         <textarea
           className="dn-textarea"
           style={{ minHeight: 90 }}

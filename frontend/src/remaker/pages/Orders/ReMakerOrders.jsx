@@ -15,9 +15,21 @@ import "../../css/ReMakerOrders.css";
 
 const TABS = [
   { key: "all", label: "All orders", test: () => true },
-  { key: "active", label: "In progress", test: (o) => o.status === "Pending" || o.status === "Confirmed" },
-  { key: "completed", label: "Completed", test: (o) => o.status === "Completed" },
-  { key: "closed", label: "Cancelled and returned", test: (o) => o.status === "Cancelled" || o.status === "Returned" },
+  {
+    key: "active",
+    label: "In progress",
+    test: (o) => o.status === "Pending" || o.status === "Confirmed",
+  },
+  {
+    key: "completed",
+    label: "Completed",
+    test: (o) => o.status === "Completed",
+  },
+  {
+    key: "closed",
+    label: "Cancelled and returned",
+    test: (o) => o.status === "Cancelled" || o.status === "Returned",
+  },
 ];
 
 export default function ReMakerOrders() {
@@ -26,7 +38,10 @@ export default function ReMakerOrders() {
   const [query, setQuery] = useState("");
 
   const counts = useMemo(
-    () => Object.fromEntries(TABS.map((item) => [item.key, orders.filter(item.test).length])),
+    () =>
+      Object.fromEntries(
+        TABS.map((item) => [item.key, orders.filter(item.test).length]),
+      ),
     [orders],
   );
 
@@ -53,11 +68,18 @@ export default function ReMakerOrders() {
       <section className="rod">
         <div className="rod-empty">
           <div className="rod-empty-art" aria-hidden="true">
-            <img className="a" src="/images/products/teak-drawer-chest.jpg" alt="" />
+            <img
+              className="a"
+              src="/images/products/teak-drawer-chest.jpg"
+              alt=""
+            />
             <img className="b" src="/images/products/ceramic-lamp.jpg" alt="" />
           </div>
           <h2>You haven&apos;t bought anything yet</h2>
-          <p>Find reclaimed material and finished pieces from the ReOrbit community.</p>
+          <p>
+            Find reclaimed material and finished pieces from the ReOrbit
+            community.
+          </p>
           <Link to="/remaker-marketplace" className="rod-btn primary">
             Browse the marketplace
           </Link>
@@ -129,7 +151,8 @@ export default function ReMakerOrders() {
         <div className="rod-list">
           {visible.map((order) => {
             const status = describeStatus(order);
-            const active = order.status === "Pending" || order.status === "Confirmed";
+            const active =
+              order.status === "Pending" || order.status === "Confirmed";
 
             return (
               <article className="rod-card" key={order.id}>
@@ -154,43 +177,66 @@ export default function ReMakerOrders() {
                 </header>
 
                 <div className="rod-card-body">
-                  <Link to={`/remaker-orders/${order.id}`} className="rod-thumb" aria-label={`View ${order.title}`}>
+                  <Link
+                    to={`/remaker-orders/${order.id}`}
+                    className="rod-thumb"
+                    aria-label={`View ${order.title}`}
+                  >
                     <img src={order.image} alt="" loading="lazy" />
                   </Link>
 
                   <div className="rod-card-info">
                     <h3>
-                      <Link to={`/remaker-orders/${order.id}`}>{order.title}</Link>
+                      <Link to={`/remaker-orders/${order.id}`}>
+                        {order.title}
+                      </Link>
                     </h3>
                     <p className="rod-seller">
                       Sold by {order.sellerName}
                       <span className={`rod-chip ${order.sellerType}`}>
-                        {order.sellerType === "remaker" ? "ReMaker" : "Community"}
+                        {order.sellerType === "remaker"
+                          ? "ReMaker"
+                          : "Community"}
                       </span>
                     </p>
                     <p className="rod-qty">
-                      Qty {order.quantity} · {order.fulfilment === "pickup" ? "Self pickup" : "ReOrbit delivery"}
+                      Qty {order.quantity} ·{" "}
+                      {order.fulfilment === "pickup"
+                        ? "Self pickup"
+                        : "ReOrbit delivery"}
                     </p>
                     <p className="rod-message">{status.message}</p>
                     <MiniProgress order={order} />
                   </div>
 
                   <div className="rod-card-actions">
-                    <Link to={`/remaker-orders/${order.id}`} className="rod-btn primary small">
+                    <Link
+                      to={`/remaker-orders/${order.id}`}
+                      className="rod-btn primary small"
+                    >
                       View details
                     </Link>
                     {active && (
-                      <Link to={`/remaker-orders/${order.id}/track`} className="rod-btn ghost small">
+                      <Link
+                        to={`/remaker-orders/${order.id}/track`}
+                        className="rod-btn ghost small"
+                      >
                         Track order
                       </Link>
                     )}
                     {!active && order.status !== "Cancelled" && (
-                      <Link to={`/remaker-marketplace/product/${order.listingId}`} className="rod-btn ghost small">
+                      <Link
+                        to={`/remaker-marketplace/product/${order.listingId}`}
+                        className="rod-btn ghost small"
+                      >
                         Buy again
                       </Link>
                     )}
                     {canReport(order) && (
-                      <Link to={`/remaker-orders/${order.id}/report`} className="rod-link">
+                      <Link
+                        to={`/remaker-orders/${order.id}/report`}
+                        className="rod-link"
+                      >
                         Report an issue
                       </Link>
                     )}

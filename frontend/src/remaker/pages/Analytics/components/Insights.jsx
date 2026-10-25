@@ -17,7 +17,10 @@ function buildInsights(data) {
       tag: "Best seller",
       title: `${best.title} is carrying your studio`,
       text: `It earned ${formatPrice(best.revenue)}, which is ${share.toFixed(0)}% of everything you made in this period. Keep it in stock and feature it first.`,
-      action: { label: "Open product", to: `/remaker-products/${best.id}/edit` },
+      action: {
+        label: "Open product",
+        to: `/remaker-products/${best.id}/edit`,
+      },
     });
 
     const gap = [...products]
@@ -30,7 +33,10 @@ function buildInsights(data) {
         tag: "Room to grow",
         title: `${gap.title} gets looked at but rarely bought`,
         text: `${fmtNumber(gap.views)} people viewed it and only ${fmtPercent(gap.conv, 2)} ordered. A brighter cover photo, a clearer story or a small price change often helps.`,
-        action: { label: "Improve listing", to: `/remaker-products/${gap.id}/edit` },
+        action: {
+          label: "Improve listing",
+          to: `/remaker-products/${gap.id}/edit`,
+        },
       });
     }
   }

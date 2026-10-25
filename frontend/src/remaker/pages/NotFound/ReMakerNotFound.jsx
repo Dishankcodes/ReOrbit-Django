@@ -9,10 +9,22 @@ export default function ReMakerNotFound() {
   const { pathname } = useLocation();
 
   const links = [
-    { to: "/remaker-dashboard", label: "Dashboard", note: "Your studio at a glance" },
-    { to: "/remaker-products", label: "Products", note: "Manage what you sell" },
+    {
+      to: "/remaker-dashboard",
+      label: "Dashboard",
+      note: "Your studio at a glance",
+    },
+    {
+      to: "/remaker-products",
+      label: "Products",
+      note: "Manage what you sell",
+    },
     { to: "/remaker-sales", label: "Sales", note: "Orders from customers" },
-    { to: "/remaker-marketplace", label: "Marketplace", note: "Find items to rework" },
+    {
+      to: "/remaker-marketplace",
+      label: "Marketplace",
+      note: "Find items to rework",
+    },
   ];
 
   return (
@@ -25,7 +37,8 @@ export default function ReMakerNotFound() {
       <p className="nf-code">404</p>
       <h1>We could not find that page</h1>
       <p className="nf-text">
-        There is nothing at <code>{pathname}</code>. It may have moved, or the link may have a typo.
+        There is nothing at <code>{pathname}</code>. It may have moved, or the
+        link may have a typo.
       </p>
 
       <div className="nf-actions">

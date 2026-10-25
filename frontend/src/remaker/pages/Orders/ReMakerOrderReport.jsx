@@ -91,7 +91,10 @@ function Report({ order }) {
 
         <div className="rod-empty small">
           <h2>This order was cancelled</h2>
-          <p>There is nothing to report on a cancelled order. If you were charged, check the refund status.</p>
+          <p>
+            There is nothing to report on a cancelled order. If you were
+            charged, check the refund status.
+          </p>
           <Link to={`/remaker-orders/${order.id}`} className="rod-btn primary">
             Back to order
           </Link>
@@ -103,7 +106,8 @@ function Report({ order }) {
   /* ----- already reported: show its status ----- */
   if (existing) {
     const stages = ["Pending", "Reviewed", "Resolved"];
-    const current = existing.status === "Rejected" ? 2 : stages.indexOf(existing.status);
+    const current =
+      existing.status === "Rejected" ? 2 : stages.indexOf(existing.status);
 
     return (
       <section className="rod rod-report-page">
@@ -120,17 +124,30 @@ function Report({ order }) {
             <section className="rod-panel">
               <div className="rod-panel-head">
                 <h3>Your report</h3>
-                <span className={`rod-badge report-${existing.status.toLowerCase()}`}>{existing.status}</span>
+                <span
+                  className={`rod-badge report-${existing.status.toLowerCase()}`}
+                >
+                  {existing.status}
+                </span>
               </div>
 
               <ol className="rod-report-steps">
                 {stages.map((stage, i) => (
                   <li
-                    className={i < current || (i === current && existing.status !== "Pending") ? "done" : i === current ? "current" : ""}
+                    className={
+                      i < current ||
+                      (i === current && existing.status !== "Pending")
+                        ? "done"
+                        : i === current
+                          ? "current"
+                          : ""
+                    }
                     key={stage}
                   >
                     <span aria-hidden="true" />
-                    {existing.status === "Rejected" && stage === "Resolved" ? "Rejected" : stage}
+                    {existing.status === "Rejected" && stage === "Resolved"
+                      ? "Rejected"
+                      : stage}
                   </li>
                 ))}
               </ol>
@@ -143,8 +160,9 @@ function Report({ order }) {
                 <div>
                   <dt>About</dt>
                   <dd>
-                    {REPORT_TOPICS.find((item) => item.key === existing.topic)?.label || "Other"} ·{" "}
-                    {existing.reason}
+                    {REPORT_TOPICS.find((item) => item.key === existing.topic)
+                      ?.label || "Other"}{" "}
+                    · {existing.reason}
                   </dd>
                 </div>
                 <div>
@@ -171,12 +189,16 @@ function Report({ order }) {
                 </p>
               ) : (
                 <p className="rod-note">
-                  Our team is reviewing this. You will see the result here, usually within 24 hours.
+                  Our team is reviewing this. You will see the result here,
+                  usually within 24 hours.
                 </p>
               )}
             </section>
 
-            <Link to={`/remaker-orders/${order.id}`} className="rod-btn ghost back">
+            <Link
+              to={`/remaker-orders/${order.id}`}
+              className="rod-btn ghost back"
+            >
               Back to order
             </Link>
           </div>
@@ -207,7 +229,9 @@ function Report({ order }) {
     for (const file of Array.from(files).slice(0, MAX_PHOTOS - photos.length)) {
       try {
         const url = await fileToDataUrl(file, 900, 0.7);
-        setPhotos((current) => (current.length < MAX_PHOTOS ? [...current, url] : current));
+        setPhotos((current) =>
+          current.length < MAX_PHOTOS ? [...current, url] : current,
+        );
       } catch (error) {
         setPhotoError(error.message);
       }
@@ -220,7 +244,9 @@ function Report({ order }) {
     if (Object.values(errors).some(Boolean)) {
       requestAnimationFrame(() =>
         document
-          .querySelector('.rod-report-page [aria-invalid="true"], .rod-report-page [data-invalid="true"]')
+          .querySelector(
+            '.rod-report-page [aria-invalid="true"], .rod-report-page [data-invalid="true"]',
+          )
           ?.scrollIntoView({ behavior: "smooth", block: "center" }),
       );
       return;
@@ -235,7 +261,9 @@ function Report({ order }) {
     });
 
     navigate(`/remaker-orders/${order.id}`, {
-      state: { notice: `Report ${report.id} submitted. We will review it within 24 hours.` },
+      state: {
+        notice: `Report ${report.id} submitted. We will review it within 24 hours.`,
+      },
     });
   };
 
@@ -252,19 +280,31 @@ function Report({ order }) {
       <div className="rod-grid">
         <div className="rod-main">
           {/* TOPIC */}
-          <section className="rod-panel" data-invalid={show("topic") ? "true" : undefined}>
+          <section
+            className="rod-panel"
+            data-invalid={show("topic") ? "true" : undefined}
+          >
             <h3>What is this about?</h3>
 
-            <div className="rod-topics" role="radiogroup" aria-label="Report topic">
+            <div
+              className="rod-topics"
+              role="radiogroup"
+              aria-label="Report topic"
+            >
               {REPORT_TOPICS.map((item) => (
-                <label className={topic === item.key ? "active" : ""} key={item.key}>
+                <label
+                  className={topic === item.key ? "active" : ""}
+                  key={item.key}
+                >
                   <input
                     type="radio"
                     name="topic"
                     checked={topic === item.key}
                     onChange={() => {
                       setTopic(item.key);
-                      setReason(item.reasons.length === 1 ? item.reasons[0] : "");
+                      setReason(
+                        item.reasons.length === 1 ? item.reasons[0] : "",
+                      );
                     }}
                   />
                   <span className="rod-radio" aria-hidden="true" />
@@ -293,7 +333,9 @@ function Report({ order }) {
                     onChange={(event) => setReason(event.target.value)}
                     aria-invalid={show("reason") && topic ? "true" : undefined}
                   >
-                    <option value="">{topicInfo ? "Select a reason" : "Choose a topic first"}</option>
+                    <option value="">
+                      {topicInfo ? "Select a reason" : "Choose a topic first"}
+                    </option>
                     {topicInfo?.reasons.map((item) => (
                       <option key={item} value={item}>
                         {item}
@@ -301,7 +343,9 @@ function Report({ order }) {
                     ))}
                   </select>
                 </div>
-                {show("reason") && topic && <span className="rod-error">{show("reason")}</span>}
+                {show("reason") && topic && (
+                  <span className="rod-error">{show("reason")}</span>
+                )}
               </div>
 
               <div className="rod-field">
@@ -334,7 +378,11 @@ function Report({ order }) {
                       <img src={src} alt={`Evidence ${i + 1}`} />
                       <button
                         type="button"
-                        onClick={() => setPhotos((current) => current.filter((_, index) => index !== i))}
+                        onClick={() =>
+                          setPhotos((current) =>
+                            current.filter((_, index) => index !== i),
+                          )
+                        }
                         aria-label={`Remove photo ${i + 1}`}
                       >
                         Remove
@@ -343,7 +391,11 @@ function Report({ order }) {
                   ))}
 
                   {photos.length < MAX_PHOTOS && (
-                    <button type="button" className="rod-photo-add" onClick={() => fileRef.current?.click()}>
+                    <button
+                      type="button"
+                      className="rod-photo-add"
+                      onClick={() => fileRef.current?.click()}
+                    >
                       <img src="/images/products/default-item.jpg" alt="" />
                       <b>Add photo</b>
                     </button>
@@ -393,7 +445,9 @@ function Report({ order }) {
               </li>
               <li>
                 <strong>You get a result</strong>
-                <small>The outcome shows up on this order, including any refund.</small>
+                <small>
+                  The outcome shows up on this order, including any refund.
+                </small>
               </li>
             </ol>
           </section>

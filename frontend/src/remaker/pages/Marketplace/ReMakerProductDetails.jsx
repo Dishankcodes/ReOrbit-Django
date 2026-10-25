@@ -24,7 +24,12 @@ import {
 } from "lucide-react";
 
 import MarketOrderModal from "../../pages-components/MarketOrderModal";
-import { Avatar, RatingSummary, ReviewList, Stars } from "../../pages-components/ReviewBlocks";
+import {
+  Avatar,
+  RatingSummary,
+  ReviewList,
+  Stars,
+} from "../../pages-components/ReviewBlocks";
 import {
   SERVICEABLE_PINCODES,
   SOURCE_LABEL,
@@ -88,7 +93,10 @@ function Details({ listing }) {
   const productReviews = getProductReviews(listing.id);
   const related = useMemo(() => getRelatedListings(listing), [listing]);
   const fromSeller = useMemo(
-    () => getListingsBySeller(listing.sellerId).filter((other) => other.id !== listing.id),
+    () =>
+      getListingsBySeller(listing.sellerId).filter(
+        (other) => other.id !== listing.id,
+      ),
     [listing],
   );
   const profilePath = sellerProfilePath(listing.sellerId);
@@ -101,17 +109,25 @@ function Details({ listing }) {
   const [checked, setChecked] = useState(null); /* null | "ok" | "no" | "bad" */
   const [needPincode, setNeedPincode] = useState(false);
   const [ordering, setOrdering] = useState(false);
-  const [reviewView, setReviewView] = useState(listing.source === "remaker" ? "product" : "seller");
+  const [reviewView, setReviewView] = useState(
+    listing.source === "remaker" ? "product" : "seller",
+  );
 
   const saved = wishlist.has(listing.id);
   const isRemaker = listing.source === "remaker";
   const charge = deliveryCharge(listing.price);
-  const total = listing.price * quantity + (delivery === "platform" ? charge : 0);
+  const total =
+    listing.price * quantity + (delivery === "platform" ? charge : 0);
   const outOfStock = listing.quantity < 1;
-  const reviewCount = isRemaker ? productReviews.length : seller?.totalReviews ?? sellerReviews.length;
+  const reviewCount = isRemaker
+    ? productReviews.length
+    : (seller?.totalReviews ?? sellerReviews.length);
 
   const step = (delta) =>
-    setIndex((current) => (current + delta + listing.gallery.length) % listing.gallery.length);
+    setIndex(
+      (current) =>
+        (current + delta + listing.gallery.length) % listing.gallery.length,
+    );
 
   const checkPincode = () => {
     const value = pincode.trim();
@@ -143,7 +159,9 @@ function Details({ listing }) {
     { label: "Reviews", value: seller?.totalReviews ?? sellerReviews.length },
     {
       label: isRemaker ? "Pieces listed" : "Sold so far",
-      value: isRemaker ? seller?.productsCount ?? "-" : seller?.productsSold ?? "-",
+      value: isRemaker
+        ? (seller?.productsCount ?? "-")
+        : (seller?.productsSold ?? "-"),
     },
   ];
 
@@ -156,7 +174,9 @@ function Details({ listing }) {
           Marketplace
         </Link>
         <span aria-hidden="true">/</span>
-        <Link to={`/remaker-marketplace?category=${encodeURIComponent(listing.category)}`}>
+        <Link
+          to={`/remaker-marketplace?category=${encodeURIComponent(listing.category)}`}
+        >
           {listing.category}
         </Link>
         <span aria-hidden="true">/</span>
@@ -167,7 +187,10 @@ function Details({ listing }) {
         {/* GALLERY */}
         <div className="rmd-gallery">
           <div className="rmd-stage">
-            <Photo src={listing.gallery[index]} alt={`${listing.title}, photo ${index + 1}`} />
+            <Photo
+              src={listing.gallery[index]}
+              alt={`${listing.title}, photo ${index + 1}`}
+            />
 
             <span className={`rmd-source ${listing.source}`}>
               {isRemaker ? <Palette size={13} /> : <Package size={13} />}
@@ -186,10 +209,20 @@ function Details({ listing }) {
 
             {listing.gallery.length > 1 && (
               <>
-                <button type="button" className="rmd-nav prev" onClick={() => step(-1)} aria-label="Previous photo">
+                <button
+                  type="button"
+                  className="rmd-nav prev"
+                  onClick={() => step(-1)}
+                  aria-label="Previous photo"
+                >
                   <ChevronLeft size={20} />
                 </button>
-                <button type="button" className="rmd-nav next" onClick={() => step(1)} aria-label="Next photo">
+                <button
+                  type="button"
+                  className="rmd-nav next"
+                  onClick={() => step(1)}
+                  aria-label="Next photo"
+                >
                   <ChevronRight size={20} />
                 </button>
                 <span className="rmd-counter">
@@ -233,7 +266,9 @@ function Details({ listing }) {
           <p className="rmd-postedby">
             {isRemaker ? "Made by" : "Listed by"}{" "}
             <Link to={profilePath}>{listing.seller}</Link>
-            {isRemaker && <BadgeCheck size={15} aria-label="Verified ReMaker" />}
+            {isRemaker && (
+              <BadgeCheck size={15} aria-label="Verified ReMaker" />
+            )}
           </p>
 
           <div className="rmd-rating">
@@ -257,9 +292,16 @@ function Details({ listing }) {
               {isRemaker ? <Recycle size={18} /> : <Lightbulb size={18} />}
             </span>
             <div>
-              <strong>{isRemaker ? "Made from a second life" : "Ideas to rework it into"}</strong>
+              <strong>
+                {isRemaker
+                  ? "Made from a second life"
+                  : "Ideas to rework it into"}
+              </strong>
               {isRemaker ? (
-                <p>{listing.madeFrom || "Created by a ReOrbit ReMaker from recovered material."}</p>
+                <p>
+                  {listing.madeFrom ||
+                    "Created by a ReOrbit ReMaker from recovered material."}
+                </p>
               ) : (
                 <div className="rmd-ideas">
                   {listing.ideas.map((idea) => (
@@ -286,7 +328,9 @@ function Details({ listing }) {
                 <output aria-live="polite">{quantity}</output>
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.min(listing.quantity, q + 1))}
+                  onClick={() =>
+                    setQuantity((q) => Math.min(listing.quantity, q + 1))
+                  }
                   disabled={quantity >= listing.quantity}
                   aria-label="Increase quantity"
                 >
@@ -339,7 +383,9 @@ function Details({ listing }) {
                       value={pincode}
                       placeholder="Your pincode"
                       aria-label="Delivery pincode"
-                      aria-invalid={needPincode && checked !== "ok" ? "true" : undefined}
+                      aria-invalid={
+                        needPincode && checked !== "ok" ? "true" : undefined
+                      }
                       onChange={(event) => {
                         setPincode(event.target.value.replace(/[^0-9]/g, ""));
                         setChecked(null);
@@ -362,7 +408,8 @@ function Details({ listing }) {
                   {checked === "no" && (
                     <p className="bad">
                       <CircleAlert size={14} />
-                      We don&apos;t deliver to {pincode} yet. Choose self pickup instead.
+                      We don&apos;t deliver to {pincode} yet. Choose self pickup
+                      instead.
                     </p>
                   )}
                   {checked === "bad" && (
@@ -422,10 +469,15 @@ function Details({ listing }) {
         <div className="rmd-seller-top">
           <Link to={profilePath} className="rmd-seller-main">
             <span className="rmd-avatar">
-              <Avatar src={seller?.image || listing.sellerImage} name={listing.seller} />
+              <Avatar
+                src={seller?.image || listing.sellerImage}
+                name={listing.seller}
+              />
             </span>
             <span className="rmd-seller-text">
-              <small>{isRemaker ? "Verified ReMaker" : "Community seller"}</small>
+              <small>
+                {isRemaker ? "Verified ReMaker" : "Community seller"}
+              </small>
               <strong>
                 {listing.seller}
                 {isRemaker && <BadgeCheck size={16} />}
@@ -494,8 +546,14 @@ function Details({ listing }) {
                 <li>
                   <Recycle size={18} />
                   <div>
-                    <strong>{isRemaker ? "Reused material" : "Reuse-ready"}</strong>
-                    <small>{isRemaker ? "Built from recovered parts" : "Good base for a new project"}</small>
+                    <strong>
+                      {isRemaker ? "Reused material" : "Reuse-ready"}
+                    </strong>
+                    <small>
+                      {isRemaker
+                        ? "Built from recovered parts"
+                        : "Good base for a new project"}
+                    </small>
                   </div>
                 </li>
               </ul>
@@ -529,7 +587,9 @@ function Details({ listing }) {
               <li>
                 <span />
                 <div>
-                  <strong>{isRemaker ? "Original item rescued" : "Listed by owner"}</strong>
+                  <strong>
+                    {isRemaker ? "Original item rescued" : "Listed by owner"}
+                  </strong>
                   <small>
                     {isRemaker
                       ? listing.madeFrom || "Recovered by the ReMaker"
@@ -540,7 +600,9 @@ function Details({ listing }) {
               <li>
                 <span />
                 <div>
-                  <strong>{isRemaker ? "Reworked by hand" : "Condition checked"}</strong>
+                  <strong>
+                    {isRemaker ? "Reworked by hand" : "Condition checked"}
+                  </strong>
                   <small>
                     {isRemaker
                       ? `${listing.seller} cleaned, repaired and finished it`
@@ -558,7 +620,9 @@ function Details({ listing }) {
               <li className="next">
                 <span />
                 <div>
-                  <strong>{isRemaker ? "Your next owner story" : "Your next project"}</strong>
+                  <strong>
+                    {isRemaker ? "Your next owner story" : "Your next project"}
+                  </strong>
                   <small>
                     {isRemaker
                       ? "Buy it to keep it in use, or study the craft."
@@ -573,7 +637,11 @@ function Details({ listing }) {
         {tab === "reviews" && (
           <div className="rmd-panel">
             {isRemaker ? (
-              <div className="rvw-switch" role="tablist" aria-label="Which reviews">
+              <div
+                className="rvw-switch"
+                role="tablist"
+                aria-label="Which reviews"
+              >
                 <button
                   type="button"
                   role="tab"
@@ -595,8 +663,8 @@ function Details({ listing }) {
               </div>
             ) : (
               <p className="rvw-note">
-                Community items are one of a kind, so buyers review the seller. These are reviews
-                for {listing.seller}.
+                Community items are one of a kind, so buyers review the seller.
+                These are reviews for {listing.seller}.
               </p>
             )}
 
@@ -607,7 +675,9 @@ function Details({ listing }) {
                   <ReviewList reviews={productReviews} verified />
                 </>
               ) : (
-                <p className="rvw-empty">No one has reviewed this product yet.</p>
+                <p className="rvw-empty">
+                  No one has reviewed this product yet.
+                </p>
               )
             ) : sellerReviews.length ? (
               <>
@@ -618,7 +688,9 @@ function Details({ listing }) {
                 />
                 <ReviewList reviews={sellerReviews} />
                 <p className="rmd-all-reviews">
-                  <Link to={profilePath}>See all reviews on {listing.seller}&apos;s profile</Link>
+                  <Link to={profilePath}>
+                    See all reviews on {listing.seller}&apos;s profile
+                  </Link>
                 </p>
               </>
             ) : (

@@ -16,7 +16,10 @@ export default function RowActionMenu({ label, items }) {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
     const height = menuRef.current?.offsetHeight || 220;
-    const top = window.innerHeight - rect.bottom < height + 12 ? rect.top - height - 6 : rect.bottom + 6;
+    const top =
+      window.innerHeight - rect.bottom < height + 12
+        ? rect.top - height - 6
+        : rect.bottom + 6;
     setCoords({ top, left: Math.max(12, rect.right - 214) });
   }, [open]);
 
@@ -24,7 +27,12 @@ export default function RowActionMenu({ label, items }) {
     if (!open) return undefined;
     const close = (event) => {
       if (event.type === "keydown" && event.key !== "Escape") return;
-      if (event.type === "mousedown" && (menuRef.current?.contains(event.target) || buttonRef.current?.contains(event.target))) return;
+      if (
+        event.type === "mousedown" &&
+        (menuRef.current?.contains(event.target) ||
+          buttonRef.current?.contains(event.target))
+      )
+        return;
       setOpen(false);
     };
     document.addEventListener("mousedown", close);
@@ -66,7 +74,8 @@ export default function RowActionMenu({ label, items }) {
             onClick={(event) => event.stopPropagation()}
           >
             {items.map((item, index) => {
-              if (item === "separator") return <div key={`sep-${index}`} className="au-menu-sep" />;
+              if (item === "separator")
+                return <div key={`sep-${index}`} className="au-menu-sep" />;
               const Icon = item.icon;
               return (
                 <button

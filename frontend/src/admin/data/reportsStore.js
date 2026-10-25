@@ -19,7 +19,20 @@ export const RANGES = [
 ];
 
 export const DAY = 86400000;
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 const t = (v) => new Date(v).getTime();
 const sum = (arr, f) => arr.reduce((n, x) => n + (f(x) || 0), 0);
 
@@ -29,14 +42,25 @@ export function makeBuckets(start, end, weekly) {
   if (weekly) {
     for (let s = start; s < end; s += 7 * DAY) {
       const d = new Date(s);
-      out.push({ from: s, to: Math.min(s + 7 * DAY, end + 1), label: `${d.getDate()} ${MONTHS[d.getMonth()]}` });
+      out.push({
+        from: s,
+        to: Math.min(s + 7 * DAY, end + 1),
+        label: `${d.getDate()} ${MONTHS[d.getMonth()]}`,
+      });
     }
   } else {
-    const d = new Date(start); d.setDate(1); d.setHours(0, 0, 0, 0);
+    const d = new Date(start);
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
     while (d.getTime() <= end) {
       const from = d.getTime();
-      const n = new Date(d); n.setMonth(n.getMonth() + 1);
-      out.push({ from: Math.max(from, start), to: n.getTime(), label: `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}` });
+      const n = new Date(d);
+      n.setMonth(n.getMonth() + 1);
+      out.push({
+        from: Math.max(from, start),
+        to: n.getTime(),
+        label: `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`,
+      });
       d.setMonth(d.getMonth() + 1);
     }
   }
@@ -46,14 +70,23 @@ export const inB = (b, v) => t(v) >= b.from && t(v) < b.to;
 
 function tally(list, keyFn, valFn = () => 1) {
   const m = new Map();
-  list.forEach((x) => { const k = keyFn(x); if (k == null) return; m.set(k, (m.get(k) || 0) + valFn(x)); });
-  return [...m.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+  list.forEach((x) => {
+    const k = keyFn(x);
+    if (k == null) return;
+    m.set(k, (m.get(k) || 0) + valFn(x));
+  });
+  return [...m.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
 }
 /* keep the top N and fold the rest into "Other" (never invent a 5th colour) */
 function topN(rows, n) {
   if (rows.length <= n) return rows;
   const head = rows.slice(0, n - 1);
-  return [...head, { label: "Other", value: sum(rows.slice(n - 1), (r) => r.value) }];
+  return [
+    ...head,
+    { label: "Other", value: sum(rows.slice(n - 1), (r) => r.value) },
+  ];
 }
 const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 
@@ -81,42 +114,98 @@ export function useReport(rangeKey) {
     /* ---------- orders / revenue ---------- */
     const ordersIn = orders.filter((o) => inRange(o.order_date));
     const ordersPrev = orders.filter((o) => inPrev(o.order_date));
-    const paid = (o) => o.transaction.payment_status === "Success" && ["Confirmed", "Completed"].includes(o.order_status);
+    const paid = (o) =>
+      o.transaction.payment_status === "Success" &&
+      ["Confirmed", "Completed"].includes(o.order_status);
     const gmv = (list) => sum(list.filter(paid), (o) => o.amount);
     const fees = (list) => sum(list.filter(paid), (o) => o.platform_fee);
-    const refunds = (list) => sum(list.filter((o) => o.transaction.payment_status === "Refunded"), (o) => o.amount);
+    const refunds = (list) =>
+      sum(
+        list.filter((o) => o.transaction.payment_status === "Refunded"),
+        (o) => o.amount,
+      );
 
     const trend = buckets.map((b) => {
       const list = ordersIn.filter((o) => inB(b, o.order_date));
-      return { label: b.label, revenue: gmv(list), fees: fees(list), orders: list.length, refunds: refunds(list) };
+      return {
+        label: b.label,
+        revenue: gmv(list),
+        fees: fees(list),
+        orders: list.length,
+        refunds: refunds(list),
+      };
     });
 
-    const statuses = ["Completed", "Confirmed", "Pending", "Cancelled", "Returned"];
-    const statusRows = statuses.map((s) => ({ label: s, value: ordersIn.filter((o) => o.order_status === s).length }));
+    const statuses = [
+      "Completed",
+      "Confirmed",
+      "Pending",
+      "Cancelled",
+      "Returned",
+    ];
+    const statusRows = statuses.map((s) => ({
+      label: s,
+      value: ordersIn.filter((o) => o.order_status === s).length,
+    }));
 
-    const flowRows = tally(ordersIn.filter(paid), (o) => o.flow, (o) => o.amount);
-    const categoryRows = tally(ordersIn.filter(paid), (o) => o.listing?.category || "Other", (o) => o.amount);
-    const payRows = tally(ordersIn, (o) => (o.transaction.payment_method || "Other").replace(/_/g, " "));
+    const flowRows = tally(
+      ordersIn.filter(paid),
+      (o) => o.flow,
+      (o) => o.amount,
+    );
+    const categoryRows = tally(
+      ordersIn.filter(paid),
+      (o) => o.listing?.category || "Other",
+      (o) => o.amount,
+    );
+    const payRows = tally(ordersIn, (o) =>
+      (o.transaction.payment_method || "Other").replace(/_/g, " "),
+    );
     const kindRows = [
-      { label: "Platform products", value: gmv(ordersIn.filter((o) => o.listing?.kind === "product")) },
-      { label: "Member items", value: gmv(ordersIn.filter((o) => o.listing?.kind === "item")) },
+      {
+        label: "Platform products",
+        value: gmv(ordersIn.filter((o) => o.listing?.kind === "product")),
+      },
+      {
+        label: "Member items",
+        value: gmv(ordersIn.filter((o) => o.listing?.kind === "item")),
+      },
     ];
 
     const sellerMap = new Map();
     ordersIn.filter(paid).forEach((o) => {
       const k = `${o.seller?.name || "ReOrbit"}|${o.seller?.type || "Admin"}`;
-      const cur = sellerMap.get(k) || { name: o.seller?.name || "ReOrbit", type: o.seller?.type || "Admin", orders: 0, revenue: 0 };
-      cur.orders += 1; cur.revenue += o.amount; sellerMap.set(k, cur);
+      const cur = sellerMap.get(k) || {
+        name: o.seller?.name || "ReOrbit",
+        type: o.seller?.type || "Admin",
+        orders: 0,
+        revenue: 0,
+      };
+      cur.orders += 1;
+      cur.revenue += o.amount;
+      sellerMap.set(k, cur);
     });
-    const topSellers = [...sellerMap.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 8);
+    const topSellers = [...sellerMap.values()]
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 8);
 
     const orderKpi = {
-      revenue: gmv(ordersIn), revenuePrev: gmv(ordersPrev),
-      orders: ordersIn.length, ordersPrev: ordersPrev.length,
-      fees: fees(ordersIn), feesPrev: fees(ordersPrev),
-      aov: ordersIn.filter(paid).length ? Math.round(gmv(ordersIn) / ordersIn.filter(paid).length) : 0,
+      revenue: gmv(ordersIn),
+      revenuePrev: gmv(ordersPrev),
+      orders: ordersIn.length,
+      ordersPrev: ordersPrev.length,
+      fees: fees(ordersIn),
+      feesPrev: fees(ordersPrev),
+      aov: ordersIn.filter(paid).length
+        ? Math.round(gmv(ordersIn) / ordersIn.filter(paid).length)
+        : 0,
       refunds: refunds(ordersIn),
-      cancelRate: pct(ordersIn.filter((o) => ["Cancelled", "Returned"].includes(o.order_status)).length, ordersIn.length),
+      cancelRate: pct(
+        ordersIn.filter((o) =>
+          ["Cancelled", "Returned"].includes(o.order_status),
+        ).length,
+        ordersIn.length,
+      ),
     };
 
     /* ---------- donations & pickups ---------- */
@@ -127,52 +216,135 @@ export function useReport(rangeKey) {
       return {
         label: b.label,
         Completed: list.filter((d) => d.status === "Completed").length,
-        "In progress": list.filter((d) => ["Scheduled", "Picked_Up", "Received", "Accepted"].includes(d.status)).length,
+        "In progress": list.filter((d) =>
+          ["Scheduled", "Picked_Up", "Received", "Accepted"].includes(d.status),
+        ).length,
         Pending: list.filter((d) => d.status === "Pending").length,
         Rejected: list.filter((d) => d.status === "Rejected").length,
       };
     });
-    const donCats = topN(tally(donIn, (d) => d.category, (d) => d.quantity), 5);
+    const donCats = topN(
+      tally(
+        donIn,
+        (d) => d.category,
+        (d) => d.quantity,
+      ),
+      5,
+    );
     const donStatus = tally(donIn, (d) => d.status.replace(/_/g, " "));
     const donKpi = {
-      total: donIn.length, totalPrev: donPrev.length,
+      total: donIn.length,
+      totalPrev: donPrev.length,
       items: sum(donIn, (d) => d.quantity),
-      weight: Math.round(sum(donIn.filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status)), (d) => d.weight_kg)),
-      completion: pct(donIn.filter((d) => d.status === "Completed").length, donIn.filter((d) => d.status !== "Pending").length),
+      weight: Math.round(
+        sum(
+          donIn.filter((d) =>
+            ["Picked_Up", "Received", "Completed"].includes(d.status),
+          ),
+          (d) => d.weight_kg,
+        ),
+      ),
+      completion: pct(
+        donIn.filter((d) => d.status === "Completed").length,
+        donIn.filter((d) => d.status !== "Pending").length,
+      ),
       pending: donations.filter((d) => d.status === "Pending").length,
     };
 
-    const pkIn = pickups.filter((p) => inRange(p.requested_at || p.date || DEMO_TODAY));
-    const pkStatus = ["Requested", "Scheduled", "Picked_Up", "Completed", "Cancelled"].map((s) => ({ label: s.replace(/_/g, " "), value: pkIn.filter((p) => p.status === s).length }));
-    const pkAgents = tally(pkIn.filter((p) => p.agent), (p) => p.agent);
+    const pkIn = pickups.filter((p) =>
+      inRange(p.requested_at || p.date || DEMO_TODAY),
+    );
+    const pkStatus = [
+      "Requested",
+      "Scheduled",
+      "Picked_Up",
+      "Completed",
+      "Cancelled",
+    ].map((s) => ({
+      label: s.replace(/_/g, " "),
+      value: pkIn.filter((p) => p.status === s).length,
+    }));
+    const pkAgents = tally(
+      pkIn.filter((p) => p.agent),
+      (p) => p.agent,
+    );
     const pkKpi = {
       total: pkIn.length,
       done: pkIn.filter((p) => p.status === "Completed").length,
-      overdue: pkIn.filter((p) => p.due?.overdue || p.due?.tone === "bad").length,
-      cancelRate: pct(pkIn.filter((p) => p.status === "Cancelled").length, pkIn.length),
+      overdue: pkIn.filter((p) => p.due?.overdue || p.due?.tone === "bad")
+        .length,
+      cancelRate: pct(
+        pkIn.filter((p) => p.status === "Cancelled").length,
+        pkIn.length,
+      ),
     };
 
     /* ---------- warehouse ---------- */
-    const wh = stock.filter((i) => i.warehouse_status !== "Released" || i.sale_status === "Donated");
-    const whStatus = ["Received", "Stored", "Assigned", "Refurbishment", "Released"].map((s) => ({ label: s, value: stock.filter((i) => i.warehouse_status === s).length }));
-    const whSale = ["Listed", "Not listed", "Sold", "Donated"].map((s) => ({ label: s, value: stock.filter((i) => i.sale_status === s).length }));
-    const whCats = topN(tally(stock, (i) => i.category, (i) => i.list_price || 0), 5);
+    const wh = stock.filter(
+      (i) => i.warehouse_status !== "Released" || i.sale_status === "Donated",
+    );
+    const whStatus = [
+      "Received",
+      "Stored",
+      "Assigned",
+      "Refurbishment",
+      "Released",
+    ].map((s) => ({
+      label: s,
+      value: stock.filter((i) => i.warehouse_status === s).length,
+    }));
+    const whSale = ["Listed", "Not listed", "Sold", "Donated"].map((s) => ({
+      label: s,
+      value: stock.filter((i) => i.sale_status === s).length,
+    }));
+    const whCats = topN(
+      tally(
+        stock,
+        (i) => i.category,
+        (i) => i.list_price || 0,
+      ),
+      5,
+    );
     const aging = [
-      { label: "0–7 days", min: 0, max: 7 }, { label: "8–14 days", min: 8, max: 14 },
-      { label: "15–30 days", min: 15, max: 30 }, { label: "31+ days", min: 31, max: 9999 },
-    ].map((b) => ({ label: b.label, value: stock.filter((i) => i.sale_status === "Listed" && i.daysListed >= b.min && i.daysListed <= b.max).length }));
+      { label: "0–7 days", min: 0, max: 7 },
+      { label: "8–14 days", min: 8, max: 14 },
+      { label: "15–30 days", min: 15, max: 30 },
+      { label: "31+ days", min: 31, max: 9999 },
+    ].map((b) => ({
+      label: b.label,
+      value: stock.filter(
+        (i) =>
+          i.sale_status === "Listed" &&
+          i.daysListed >= b.min &&
+          i.daysListed <= b.max,
+      ).length,
+    }));
     const whKpi = {
       items: stock.length,
-      value: sum(stock.filter((i) => i.warehouse_status !== "Released"), (i) => i.list_price),
+      value: sum(
+        stock.filter((i) => i.warehouse_status !== "Released"),
+        (i) => i.list_price,
+      ),
       listed: stock.filter((i) => i.sale_status === "Listed").length,
       alerts: stock.filter((i) => i.alert).length,
       sold: stock.filter((i) => i.sale_status === "Sold").length,
-      sellThrough: pct(stock.filter((i) => i.sale_status === "Sold").length, stock.filter((i) => ["Listed", "Sold"].includes(i.sale_status)).length),
+      sellThrough: pct(
+        stock.filter((i) => i.sale_status === "Sold").length,
+        stock.filter((i) => ["Listed", "Sold"].includes(i.sale_status)).length,
+      ),
     };
-    const stale = stock.filter((i) => i.alert).sort((a, b) => b.daysListed - a.daysListed).slice(0, 8);
+    const stale = stock
+      .filter((i) => i.alert)
+      .sort((a, b) => b.daysListed - a.daysListed)
+      .slice(0, 8);
 
     /* ---------- community ---------- */
-    const joined = (u) => u.created_at || u.joined || u.joined_at || u.profile?.joined || u.registered_at;
+    const joined = (u) =>
+      u.created_at ||
+      u.joined ||
+      u.joined_at ||
+      u.profile?.joined ||
+      u.registered_at;
     const alive = (u) => u.status !== "Deleted";
     const userTrend = buckets.map((b) => ({
       label: b.label,
@@ -181,39 +353,106 @@ export function useReport(rangeKey) {
     }));
     const userStatus = tally(users, (u) => u.status);
     const remakerStatus = tally(remakers, (u) => u.status);
-    const cities = topN(tally([...users, ...remakers].filter(alive), (u) => u.profile?.city || u.city || "Unknown"), 6);
+    const cities = topN(
+      tally(
+        [...users, ...remakers].filter(alive),
+        (u) => u.profile?.city || u.city || "Unknown",
+      ),
+      6,
+    );
     const redIn = redemptions.filter((r) => inRange(r.at));
-    const pointsIssued = sum(donationRewards.filter((r) => r.status === "Credited" && inRange(r.at)), (r) => r.points);
+    const pointsIssued = sum(
+      donationRewards.filter((r) => r.status === "Credited" && inRange(r.at)),
+      (r) => r.points,
+    );
     const comKpi = {
       users: users.filter(alive).length,
       remakers: remakers.filter(alive).length,
-      newInRange: users.filter((u) => joined(u) && inRange(joined(u))).length + remakers.filter((r) => joined(r) && inRange(joined(r))).length,
-      suspended: users.filter((u) => ["Suspended", "Blocked"].includes(u.status)).length + remakers.filter((r) => ["Suspended", "Blocked"].includes(r.status)).length,
+      newInRange:
+        users.filter((u) => joined(u) && inRange(joined(u))).length +
+        remakers.filter((r) => joined(r) && inRange(joined(r))).length,
+      suspended:
+        users.filter((u) => ["Suspended", "Blocked"].includes(u.status))
+          .length +
+        remakers.filter((r) => ["Suspended", "Blocked"].includes(r.status))
+          .length,
       redemptions: redIn.length,
       pointsIssued,
     };
 
     return {
-      range, start, end, weekly,
-      orders: { kpi: orderKpi, trend, statusRows, flowRows, categoryRows, payRows, kindRows, topSellers },
-      donations: { kpi: donKpi, trend: donTrend, cats: donCats, status: donStatus, pk: { kpi: pkKpi, status: pkStatus, agents: pkAgents } },
-      warehouse: { kpi: whKpi, status: whStatus, sale: whSale, cats: whCats, aging, stale },
-      community: { kpi: comKpi, trend: userTrend, userStatus, remakerStatus, cities },
+      range,
+      start,
+      end,
+      weekly,
+      orders: {
+        kpi: orderKpi,
+        trend,
+        statusRows,
+        flowRows,
+        categoryRows,
+        payRows,
+        kindRows,
+        topSellers,
+      },
+      donations: {
+        kpi: donKpi,
+        trend: donTrend,
+        cats: donCats,
+        status: donStatus,
+        pk: { kpi: pkKpi, status: pkStatus, agents: pkAgents },
+      },
+      warehouse: {
+        kpi: whKpi,
+        status: whStatus,
+        sale: whSale,
+        cats: whCats,
+        aging,
+        stale,
+      },
+      community: {
+        kpi: comKpi,
+        trend: userTrend,
+        userStatus,
+        remakerStatus,
+        cities,
+      },
       _wh: wh.length,
     };
-  }, [orders, donations, pickups, stock, users, remakers, redemptions, donationRewards, rangeKey]);
+  }, [
+    orders,
+    donations,
+    pickups,
+    stock,
+    users,
+    remakers,
+    redemptions,
+    donationRewards,
+    rangeKey,
+  ]);
 }
 
 /* ---------- CSV ---------- */
 export function toCsv(columns, rows) {
   const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  return [columns.map((c) => esc(c.label)).join(","), ...rows.map((r) => columns.map((c) => esc(r[c.key])).join(","))].join("\n");
+  return [
+    columns.map((c) => esc(c.label)).join(","),
+    ...rows.map((r) => columns.map((c) => esc(r[c.key])).join(",")),
+  ].join("\n");
 }
 export function downloadCsv(name, csv) {
   try {
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
     const a = document.createElement("a");
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 500);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }

@@ -41,12 +41,17 @@ export default function PortfolioDeleteModal({ work, onConfirm, onCancel }) {
         tabIndex={-1}
         ref={dialogRef}
       >
-        <BeforeAfter before={work.before} after={work.after} className="rpt-modal-ba" />
+        <BeforeAfter
+          before={work.before}
+          after={work.after}
+          className="rpt-modal-ba"
+        />
 
         <h2 id="rpt-del-title">Delete &ldquo;{work.title}&rdquo;?</h2>
         <p id="rpt-del-text">
-          This removes the work and both photos from your portfolio, and buyers will no longer see
-          it on your profile. A product linked to it is not affected. You can undo right after.
+          This removes the work and both photos from your portfolio, and buyers
+          will no longer see it on your profile. A product linked to it is not
+          affected. You can undo right after.
         </p>
 
         <div className="rpt-modal-actions">

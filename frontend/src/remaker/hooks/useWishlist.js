@@ -6,7 +6,11 @@ import { useCallback, useSyncExternalStore } from "react";
    something to show. */
 
 const KEY = "reorbit_remaker_wishlist";
-const STARTER = ["restored-teak-cabinet", "upcycled-home-lamp", "teak-drawer-chest"];
+const STARTER = [
+  "restored-teak-cabinet",
+  "upcycled-home-lamp",
+  "teak-drawer-chest",
+];
 
 function read() {
   try {

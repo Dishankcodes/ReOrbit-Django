@@ -36,13 +36,24 @@ function createRandom(seed) {
   };
 }
 const pick = (random, list) => list[Math.floor(random() * list.length)];
-const between = (random, min, max) => min + Math.floor(random() * (max - min + 1));
+const between = (random, min, max) =>
+  min + Math.floor(random() * (max - min + 1));
 const addMs = (date, ms) => new Date(new Date(date).getTime() + ms);
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
-const capNow = (date) => (date > ORDERS_NOW ? new Date(ORDERS_NOW.getTime() - 20 * 60 * 1000) : date);
+const capNow = (date) =>
+  date > ORDERS_NOW ? new Date(ORDERS_NOW.getTime() - 20 * 60 * 1000) : date;
 
-const PAYMENT_METHODS = ["UPI", "UPI", "UPI", "CARD", "CARD", "NET_BANKING", "WALLET", "COD"];
+const PAYMENT_METHODS = [
+  "UPI",
+  "UPI",
+  "UPI",
+  "CARD",
+  "CARD",
+  "NET_BANKING",
+  "WALLET",
+  "COD",
+];
 const CANCEL_REASONS = [
   "Buyer changed their mind before dispatch.",
   "Seller could not fulfil the order in time.",
@@ -116,10 +127,14 @@ export const addressOf = (person, party) =>
 /* ---------- pools ---------- */
 
 const verifiedItems = INITIAL_USERS.flatMap((user) =>
-  user.items.filter((item) => item.verification_status === "Verified").map((item) => ({ ...item, owner: user })),
+  user.items
+    .filter((item) => item.verification_status === "Verified")
+    .map((item) => ({ ...item, owner: user })),
 );
 const sellableProducts = INITIAL_REMAKERS.flatMap((rm) =>
-  rm.products.filter((p) => p.status !== "Draft").map((p) => ({ ...p, owner: rm })),
+  rm.products
+    .filter((p) => p.status !== "Draft")
+    .map((p) => ({ ...p, owner: rm })),
 );
 const activeUsers = INITIAL_USERS.filter((u) => u.status === "Active");
 const activeRemakers = INITIAL_REMAKERS.filter((r) => r.status === "Active");
@@ -128,9 +143,24 @@ const activeRemakers = INITIAL_REMAKERS.filter((r) => r.status === "Active");
 
 function pickStatus(random, ageDays) {
   const roll = random() * 100;
-  if (ageDays <= 4) return roll < 40 ? "Pending" : roll < 80 ? "Confirmed" : roll < 90 ? "Completed" : "Cancelled";
+  if (ageDays <= 4)
+    return roll < 40
+      ? "Pending"
+      : roll < 80
+        ? "Confirmed"
+        : roll < 90
+          ? "Completed"
+          : "Cancelled";
   if (ageDays <= 20) {
-    return roll < 25 ? "Confirmed" : roll < 80 ? "Completed" : roll < 90 ? "Cancelled" : roll < 95 ? "Returned" : "Pending";
+    return roll < 25
+      ? "Confirmed"
+      : roll < 80
+        ? "Completed"
+        : roll < 90
+          ? "Cancelled"
+          : roll < 95
+            ? "Returned"
+            : "Pending";
   }
   return roll < 78 ? "Completed" : roll < 90 ? "Cancelled" : "Returned";
 }
@@ -138,7 +168,11 @@ function pickStatus(random, ageDays) {
 function pickPayment(random, status, method) {
   switch (status) {
     case "Pending":
-      return method === "COD" ? "Pending" : random() < 0.7 ? "Pending" : "Failed";
+      return method === "COD"
+        ? "Pending"
+        : random() < 0.7
+          ? "Pending"
+          : "Failed";
     case "Confirmed":
       return method === "COD" ? "Pending" : "Success";
     case "Completed":
@@ -204,7 +238,9 @@ function buildOrders() {
 
       if (roll < 0.65) {
         /* User -> User */
-        const pool = activeUsers.filter((u) => u.user_id !== sellerPerson.user_id);
+        const pool = activeUsers.filter(
+          (u) => u.user_id !== sellerPerson.user_id,
+        );
         buyerPerson = pick(random, pool);
         buyer = userParty(buyerPerson);
       } else if (roll < 0.77) {
@@ -229,7 +265,12 @@ function buildOrders() {
     /* dates: skewed towards recent */
     const ageDays = Math.floor(Math.pow(random(), 1.7) * 330);
     const placed = capNow(
-      new Date(ORDERS_NOW.getTime() - ageDays * DAY - between(random, 0, 20) * HOUR - between(random, 5, 55) * 60000),
+      new Date(
+        ORDERS_NOW.getTime() -
+          ageDays * DAY -
+          between(random, 0, 20) * HOUR -
+          between(random, 5, 55) * 60000,
+      ),
     );
     const realAge = Math.floor((ORDERS_NOW - placed) / DAY);
 
@@ -242,16 +283,24 @@ function buildOrders() {
     const platformFee = Math.round(subtotal * 0.03);
     let delivery = 0;
     if (buyer.type !== "Admin") {
-      if (listing.kind === "item") delivery = listing.pickup === "Managed by platform" ? 149 : 0;
+      if (listing.kind === "item")
+        delivery = listing.pickup === "Managed by platform" ? 149 : 0;
       else delivery = subtotal >= 1500 ? 0 : 79;
     }
     const amount = subtotal + platformFee + delivery;
 
     /* ---------- timeline written at creation ---------- */
     const events = [];
-    const push = (id, label, detail, at, tone, extra = {}) => events.push({ id, label, detail, at: at.toISOString(), tone, ...extra });
+    const push = (id, label, detail, at, tone, extra = {}) =>
+      events.push({ id, label, detail, at: at.toISOString(), tone, ...extra });
 
-    push("placed", "Order placed", `${buyer.name} ordered “${listing.title}”`, placed, "neutral");
+    push(
+      "placed",
+      "Order placed",
+      `${buyer.name} ordered “${listing.title}”`,
+      placed,
+      "neutral",
+    );
 
     const confirmedAt = capNow(addMs(placed, between(random, 1, 20) * HOUR));
     const reached = (list) => list.includes(status);
@@ -262,11 +311,25 @@ function buildOrders() {
     let returnReason = "";
 
     if (reached(["Confirmed", "Completed", "Returned"])) {
-      push("confirmed", "Order confirmed", `Confirmed for ${seller.name}`, confirmedAt, "info");
+      push(
+        "confirmed",
+        "Order confirmed",
+        `Confirmed for ${seller.name}`,
+        confirmedAt,
+        "info",
+      );
     }
     if (reached(["Completed", "Returned"])) {
       completedAt = capNow(addMs(confirmedAt, between(random, 2, 7) * DAY));
-      push("completed", "Delivered & completed", listing.kind === "item" ? "Item handed over to the buyer" : "Product delivered to the buyer", completedAt, "good");
+      push(
+        "completed",
+        "Delivered & completed",
+        listing.kind === "item"
+          ? "Item handed over to the buyer"
+          : "Product delivered to the buyer",
+        completedAt,
+        "good",
+      );
     }
     if (status === "Returned") {
       returnedAt = capNow(addMs(completedAt, between(random, 3, 9) * DAY));
@@ -281,29 +344,57 @@ function buildOrders() {
 
     /* payment */
     const txnId = `TXN-${640000 + i * 37 + between(random, 1, 30)}`;
-    const reference = method === "COD" ? null : `${method === "NET_BANKING" ? "NB" : method.slice(0, 3)}${between(random, 100000000, 999999999)}`;
+    const reference =
+      method === "COD"
+        ? null
+        : `${method === "NET_BANKING" ? "NB" : method.slice(0, 3)}${between(random, 100000000, 999999999)}`;
     let transactionDate = null;
 
     if (payment === "Success" || payment === "Refunded") {
       transactionDate =
-        method === "COD" && completedAt ? completedAt : capNow(addMs(placed, between(random, 1, 9) * 60000));
+        method === "COD" && completedAt
+          ? completedAt
+          : capNow(addMs(placed, between(random, 1, 9) * 60000));
       push(
         "payment",
         method === "COD" ? "Cash collected" : "Payment received",
-        method === "COD" ? "Collected on delivery" : `${method.replace("_", " ")} · ${reference}`,
+        method === "COD"
+          ? "Collected on delivery"
+          : `${method.replace("_", " ")} · ${reference}`,
         transactionDate,
         "good",
       );
     } else if (payment === "Failed") {
       transactionDate = capNow(addMs(placed, between(random, 1, 9) * 60000));
-      push("payment", "Payment failed", `${method.replace("_", " ")} · ${reference || "no reference"}`, transactionDate, "bad");
+      push(
+        "payment",
+        "Payment failed",
+        `${method.replace("_", " ")} · ${reference || "no reference"}`,
+        transactionDate,
+        "bad",
+      );
     } else if (status === "Pending") {
-      push("payment", "Awaiting payment", method === "COD" ? "To be collected on delivery" : `${method.replace("_", " ")} not received yet`, placed, "wait", { pending: true });
+      push(
+        "payment",
+        "Awaiting payment",
+        method === "COD"
+          ? "To be collected on delivery"
+          : `${method.replace("_", " ")} not received yet`,
+        placed,
+        "wait",
+        { pending: true },
+      );
     }
 
     if (payment === "Refunded") {
       const anchor = returnedAt || cancelledAt || placed;
-      push("refund", "Refund issued", `₹${amount.toLocaleString("en-IN")} returned to the buyer`, capNow(addMs(anchor, between(random, 1, 3) * DAY)), "info");
+      push(
+        "refund",
+        "Refund issued",
+        `₹${amount.toLocaleString("en-IN")} returned to the buyer`,
+        capNow(addMs(anchor, between(random, 1, 3) * DAY)),
+        "info",
+      );
     }
 
     events.sort((a, b) => new Date(b.at) - new Date(a.at));
@@ -326,11 +417,15 @@ function buildOrders() {
         transaction_id: txnId,
         payment_method: method,
         payment_status: payment,
-        transaction_date: transactionDate ? transactionDate.toISOString() : null,
+        transaction_date: transactionDate
+          ? transactionDate.toISOString()
+          : null,
         reference,
       },
       delivery: addressOf(buyerPerson, buyer),
-      pickup_from: sellerPerson ? addressOf(sellerPerson, seller) : WAREHOUSE_ADDRESS,
+      pickup_from: sellerPerson
+        ? addressOf(sellerPerson, seller)
+        : WAREHOUSE_ADDRESS,
       events,
     });
   }

@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { ratingsByProduct, reportReview, summarize, useReviews } from "../../data/reviewsStore";
+import {
+  ratingsByProduct,
+  reportReview,
+  summarize,
+  useReviews,
+} from "../../data/reviewsStore";
 
 import ProductRatings from "./components/ProductRatings";
 import ReportReviewModal from "./components/ReportReviewModal";
@@ -51,7 +56,12 @@ export default function ReMakerReviews() {
       if (rating && review.rating !== rating) return false;
       if (!text) return true;
 
-      return [review.reviewer.name, review.text, review.productTitle, review.reviewer.city]
+      return [
+        review.reviewer.name,
+        review.text,
+        review.productTitle,
+        review.reviewer.city,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(text);
@@ -60,8 +70,10 @@ export default function ReMakerReviews() {
     const sorters = {
       newest: (a, b) => b.createdAt.localeCompare(a.createdAt),
       oldest: (a, b) => a.createdAt.localeCompare(b.createdAt),
-      highest: (a, b) => b.rating - a.rating || b.createdAt.localeCompare(a.createdAt),
-      lowest: (a, b) => a.rating - b.rating || b.createdAt.localeCompare(a.createdAt),
+      highest: (a, b) =>
+        b.rating - a.rating || b.createdAt.localeCompare(a.createdAt),
+      lowest: (a, b) =>
+        a.rating - b.rating || b.createdAt.localeCompare(a.createdAt),
       helpful: (a, b) => b.helpful - a.helpful,
     };
 
@@ -97,8 +109,9 @@ export default function ReMakerReviews() {
         <div>
           <h2>What customers say</h2>
           <p>
-            Read every review of your products, reply to your customers and keep your rating strong. Replying to
-            reviews builds trust with the next buyer.
+            Read every review of your products, reply to your customers and keep
+            your rating strong. Replying to reviews builds trust with the next
+            buyer.
           </p>
         </div>
 
@@ -108,7 +121,11 @@ export default function ReMakerReviews() {
       </header>
 
       {/* ================= SUMMARY ================= */}
-      <ReviewsHero summary={summary} ratingFilter={rating} onRatingFilter={change(setRating)} />
+      <ReviewsHero
+        summary={summary}
+        ratingFilter={rating}
+        onRatingFilter={change(setRating)}
+      />
 
       {/* ================= LIST + SIDE ================= */}
       <div className="rvp-layout">
@@ -148,7 +165,11 @@ export default function ReMakerReviews() {
                   : "When customers review your products, they appear here."}
               </p>
               {filtersOn && (
-                <button type="button" className="rvp-btn ghost" onClick={resetFilters}>
+                <button
+                  type="button"
+                  className="rvp-btn ghost"
+                  onClick={resetFilters}
+                >
                   Show all reviews
                 </button>
               )}
@@ -157,7 +178,11 @@ export default function ReMakerReviews() {
             <>
               <div className="rvp-list">
                 {visible.slice(0, shown).map((review) => (
-                  <ReviewCard key={review.id} review={review} onReport={setReporting} />
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    onReport={setReporting}
+                  />
                 ))}
               </div>
 
@@ -166,7 +191,11 @@ export default function ReMakerReviews() {
                   Showing {Math.min(shown, visible.length)} of {visible.length}
                 </span>
                 {shown < visible.length && (
-                  <button type="button" className="rvp-btn ghost" onClick={() => setShown((value) => value + PAGE_SIZE)}>
+                  <button
+                    type="button"
+                    className="rvp-btn ghost"
+                    onClick={() => setShown((value) => value + PAGE_SIZE)}
+                  >
                     Show more reviews
                   </button>
                 )}
@@ -176,29 +205,43 @@ export default function ReMakerReviews() {
         </div>
 
         <aside className="rvp-side">
-          <ProductRatings items={byProduct} active={product} onSelect={change(setProduct)} />
+          <ProductRatings
+            items={byProduct}
+            active={product}
+            onSelect={change(setProduct)}
+          />
 
           <section className="rvp-side-card tips">
             <h3>Replying well</h3>
             <ol>
               <li>
                 <strong>Thank first</strong>
-                <small>Even for a short review, a thank you goes a long way.</small>
+                <small>
+                  Even for a short review, a thank you goes a long way.
+                </small>
               </li>
               <li>
                 <strong>Stay calm on low ratings</strong>
-                <small>Offer to fix it. Future buyers read how you handle problems.</small>
+                <small>
+                  Offer to fix it. Future buyers read how you handle problems.
+                </small>
               </li>
               <li>
                 <strong>Be specific</strong>
-                <small>Mention the product or detail they liked, not a copy and paste.</small>
+                <small>
+                  Mention the product or detail they liked, not a copy and
+                  paste.
+                </small>
               </li>
             </ol>
           </section>
 
           <section className="rvp-side-card cta">
             <h3>Want more reviews?</h3>
-            <p>Add clear photos and a short story to each product. Customers who understand a piece write better reviews.</p>
+            <p>
+              Add clear photos and a short story to each product. Customers who
+              understand a piece write better reviews.
+            </p>
             <Link to="/remaker-products" className="rvp-btn light">
               Improve my products
             </Link>
@@ -206,7 +249,13 @@ export default function ReMakerReviews() {
         </aside>
       </div>
 
-      {reporting && <ReportReviewModal review={reporting} onSubmit={submitReport} onClose={() => setReporting(null)} />}
+      {reporting && (
+        <ReportReviewModal
+          review={reporting}
+          onSubmit={submitReport}
+          onClose={() => setReporting(null)}
+        />
+      )}
 
       {notice && (
         <div className="rvp-toast" role="status" aria-live="polite">

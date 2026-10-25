@@ -25,7 +25,11 @@ export function Field({ label, htmlFor, hint, error, children }) {
     <div className="set-field">
       {label && <label htmlFor={htmlFor}>{label}</label>}
       {children}
-      {error ? <span className="set-error">{error}</span> : hint ? <small>{hint}</small> : null}
+      {error ? (
+        <span className="set-error">{error}</span>
+      ) : hint ? (
+        <small>{hint}</small>
+      ) : null}
     </div>
   );
 }
@@ -91,7 +95,8 @@ export function useDraft(saved, sectionKey, onDirty) {
     setDraft(saved);
   }, [saved]);
 
-  const set = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const set = (field, value) =>
+    setDraft((current) => ({ ...current, [field]: value }));
   const reset = () => setDraft(saved);
 
   return { draft, setDraft, set, dirty, reset };
@@ -107,7 +112,12 @@ export function SaveBar({ dirty, onSave, onReset, disabled = false }) {
         <button type="button" className="set-btn ghost-light" onClick={onReset}>
           Discard
         </button>
-        <button type="button" className="set-btn light" onClick={onSave} disabled={disabled}>
+        <button
+          type="button"
+          className="set-btn light"
+          onClick={onSave}
+          disabled={disabled}
+        >
           Save changes
         </button>
       </div>

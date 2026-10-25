@@ -22,7 +22,11 @@ export default function ItemsTab({ user, toast }) {
   if (user.items.length === 0) {
     return (
       <section className="aup-card">
-        <EmptyState icon={Boxes} title="No items uploaded" text="Items this user lists on the marketplace will show up here." />
+        <EmptyState
+          icon={Boxes}
+          title="No items uploaded"
+          text="Items this user lists on the marketplace will show up here."
+        />
       </section>
     );
   }
@@ -34,7 +38,10 @@ export default function ItemsTab({ user, toast }) {
           <article key={item.item_id} className="aup-item">
             <div className="aup-item-image">
               <img src={item.image} alt={item.title} />
-              <StatusBadge status={item.item_status} className="aup-item-status" />
+              <StatusBadge
+                status={item.item_status}
+                className="aup-item-status"
+              />
             </div>
             <div className="aup-item-body">
               <span className="aup-item-cat">{item.category}</span>
@@ -49,9 +56,12 @@ export default function ItemsTab({ user, toast }) {
                 <small>{formatDate(item.created_at)}</small>
               </div>
 
-              {item.verification_status === "Rejected" && item.rejection_message && (
-                <p className="aup-item-note"><AlertCircle size={14} /> {item.rejection_message}</p>
-              )}
+              {item.verification_status === "Rejected" &&
+                item.rejection_message && (
+                  <p className="aup-item-note">
+                    <AlertCircle size={14} /> {item.rejection_message}
+                  </p>
+                )}
 
               {item.verification_status === "Pending" && (
                 <div className="aup-item-actions">
@@ -65,7 +75,11 @@ export default function ItemsTab({ user, toast }) {
                   >
                     <CheckCircle2 size={14} /> Verify
                   </button>
-                  <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={() => setRejecting(item)}>
+                  <button
+                    type="button"
+                    className="ad-btn ad-btn-ghost ad-btn-sm"
+                    onClick={() => setRejecting(item)}
+                  >
                     <XCircle size={14} /> Reject
                   </button>
                 </div>
@@ -81,7 +95,9 @@ export default function ItemsTab({ user, toast }) {
         onClose={() => setRejecting(null)}
         onConfirm={(message) => {
           reviewUserItem(user.user_id, rejecting.item_id, "Rejected", message);
-          toast(`“${rejecting.title}” rejected. The owner will see your message.`);
+          toast(
+            `“${rejecting.title}” rejected. The owner will see your message.`,
+          );
           setRejecting(null);
         }}
       />

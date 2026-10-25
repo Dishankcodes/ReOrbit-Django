@@ -19,7 +19,11 @@ export default function Heatmap({ heatmap }) {
         </div>
       </header>
 
-      <div className="ana-heat" role="table" aria-label="Orders by day and time of day">
+      <div
+        className="ana-heat"
+        role="table"
+        aria-label="Orders by day and time of day"
+      >
         <div className="ana-heat-corner" />
         {blocks.map((block) => (
           <span className="ana-heat-col" role="columnheader" key={block}>

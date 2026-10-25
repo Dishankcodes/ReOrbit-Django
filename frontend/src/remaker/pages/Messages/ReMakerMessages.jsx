@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { lastMessage, markConversationRead, useConversations } from "../../data/messagesStore";
+import {
+  lastMessage,
+  markConversationRead,
+  useConversations,
+} from "../../data/messagesStore";
 
 import ChatThread from "./components/ChatThread";
 import ConversationList from "./components/ConversationList";
@@ -41,10 +45,13 @@ export default function ReMakerMessages() {
 
     return conversations.filter((item) => {
       if (filter === "unread" && item.unread === 0) return false;
-      if (filter !== "all" && filter !== "unread" && item.kind !== filter) return false;
+      if (filter !== "all" && filter !== "unread" && item.kind !== filter)
+        return false;
       if (!text) return true;
 
-      return `${item.name} ${item.subtitle} ${lastMessage(item).text}`.toLowerCase().includes(text);
+      return `${item.name} ${item.subtitle} ${lastMessage(item).text}`
+        .toLowerCase()
+        .includes(text);
     });
   }, [conversations, filter, query]);
 
@@ -56,7 +63,16 @@ export default function ReMakerMessages() {
 
   return (
     <section className={`rk msg ${id && active ? "chat-open" : ""}`}>
-      <ConversationList conversations={visible} activeId={shown?.id} onSelect={open} filter={filter} onFilter={setFilter} query={query} onQuery={setQuery} counts={counts} />
+      <ConversationList
+        conversations={visible}
+        activeId={shown?.id}
+        onSelect={open}
+        filter={filter}
+        onFilter={setFilter}
+        query={query}
+        onQuery={setQuery}
+        counts={counts}
+      />
 
       {unknown ? (
         <div className="msg-empty">
@@ -67,7 +83,10 @@ export default function ReMakerMessages() {
           </Link>
         </div>
       ) : shown ? (
-        <ChatThread conversation={shown} onBack={() => navigate("/remaker-messages")} />
+        <ChatThread
+          conversation={shown}
+          onBack={() => navigate("/remaker-messages")}
+        />
       ) : (
         <div className="msg-empty">
           <div className="rk-empty-art" aria-hidden="true">
@@ -75,7 +94,10 @@ export default function ReMakerMessages() {
             <img src="/images/users/kabir-verma.jpg" alt="" />
           </div>
           <h3>No messages yet</h3>
-          <p>When customers or other ReMakers write to you, the chat shows up here.</p>
+          <p>
+            When customers or other ReMakers write to you, the chat shows up
+            here.
+          </p>
         </div>
       )}
     </section>

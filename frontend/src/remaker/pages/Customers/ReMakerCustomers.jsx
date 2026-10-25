@@ -21,19 +21,33 @@ export default function ReMakerCustomers() {
       if (type !== "all" && customer.type !== type) return false;
       if (!text) return true;
 
-      return [customer.name, customer.city, customer.state, customer.email].join(" ").toLowerCase().includes(text);
+      return [customer.name, customer.city, customer.state, customer.email]
+        .join(" ")
+        .toLowerCase()
+        .includes(text);
     });
   }, [customers, query, type]);
 
-  const repeat = useMemo(() => customers.filter((entry) => entry.orders.length > 1), [customers]);
+  const repeat = useMemo(
+    () => customers.filter((entry) => entry.orders.length > 1),
+    [customers],
+  );
   const list = type === "repeat" ? repeat : visible;
   const totalSpent = customers.reduce((total, entry) => total + entry.spent, 0);
 
   const tabs = [
     { key: "all", label: "All customers", count: customers.length },
     { key: "repeat", label: "Repeat buyers", count: repeat.length },
-    { key: "User", label: "Community", count: customers.filter((c) => c.customer.type === "User").length },
-    { key: "ReMaker", label: "ReMakers", count: customers.filter((c) => c.customer.type === "ReMaker").length },
+    {
+      key: "User",
+      label: "Community",
+      count: customers.filter((c) => c.customer.type === "User").length,
+    },
+    {
+      key: "ReMaker",
+      label: "ReMakers",
+      count: customers.filter((c) => c.customer.type === "ReMaker").length,
+    },
   ];
 
   if (customers.length === 0) {
@@ -44,7 +58,9 @@ export default function ReMakerCustomers() {
             <img className="a" src="/images/users/meera-iyer.jpg" alt="" />
           </div>
           <h2>No customers yet</h2>
-          <p>People who buy from you will appear here, with their order history.</p>
+          <p>
+            People who buy from you will appear here, with their order history.
+          </p>
         </div>
       </section>
     );
@@ -56,8 +72,9 @@ export default function ReMakerCustomers() {
         <div>
           <h2>Your customers</h2>
           <p>
-            {customers.length} {customers.length === 1 ? "person has" : "people have"} bought from you. Together
-            they spent {formatPrice(totalSpent)}.
+            {customers.length}{" "}
+            {customers.length === 1 ? "person has" : "people have"} bought from
+            you. Together they spent {formatPrice(totalSpent)}.
           </p>
         </div>
         <Link to="/remaker-sales" className="rod-btn ghost">
@@ -118,17 +135,24 @@ export default function ReMakerCustomers() {
                 </span>
                 <div>
                   <h3>
-                    <Link to={`/remaker-customers/${customer.id}`} className="sls-ccard-link">
+                    <Link
+                      to={`/remaker-customers/${customer.id}`}
+                      className="sls-ccard-link"
+                    >
                       {customer.name}
                     </Link>
                   </h3>
                   <p>
                     {customer.city}, {customer.state}
                   </p>
-                  <span className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}>
+                  <span
+                    className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}
+                  >
                     {customer.type === "ReMaker" ? "ReMaker" : "Customer"}
                   </span>
-                  {orders.length > 1 && <span className="rod-chip repeat">Repeat buyer</span>}
+                  {orders.length > 1 && (
+                    <span className="rod-chip repeat">Repeat buyer</span>
+                  )}
                 </div>
               </div>
 

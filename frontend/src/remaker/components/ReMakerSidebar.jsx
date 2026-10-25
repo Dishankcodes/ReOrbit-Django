@@ -340,8 +340,6 @@ export default function ReMakerSidebar({
         </button>
       </div>
 
-     
-
       {/* 
           NAVIGATION
            */}

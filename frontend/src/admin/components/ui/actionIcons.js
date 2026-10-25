@@ -1,4 +1,22 @@
-import { RotateCcw, PauseCircle, Ban, Trash2, CheckCircle2, EyeOff, PackageCheck, Undo2, Banknote, BadgeIndianRupee, PackagePlus, Tag, Sparkles, Wrench, Gift, Truck, BellOff } from "lucide-react";
+import {
+  RotateCcw,
+  PauseCircle,
+  Ban,
+  Trash2,
+  CheckCircle2,
+  EyeOff,
+  PackageCheck,
+  Undo2,
+  Banknote,
+  BadgeIndianRupee,
+  PackagePlus,
+  Tag,
+  Sparkles,
+  Wrench,
+  Gift,
+  Truck,
+  BellOff,
+} from "lucide-react";
 
 /* Maps the icon key used in data/userActions.js to a lucide icon. */
 export const ACTION_ICONS = {

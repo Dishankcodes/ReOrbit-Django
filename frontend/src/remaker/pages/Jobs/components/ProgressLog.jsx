@@ -4,7 +4,12 @@ import { timeLabel } from "../../../data/jobsStore";
 
 export default function ProgressLog({ items }) {
   if (items.length === 0) {
-    return <p className="job-muted">No updates yet. Add photos and notes as you work so the warehouse team can follow along.</p>;
+    return (
+      <p className="job-muted">
+        No updates yet. Add photos and notes as you work so the warehouse team
+        can follow along.
+      </p>
+    );
   }
 
   return (

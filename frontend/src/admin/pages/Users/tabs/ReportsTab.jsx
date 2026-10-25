@@ -8,7 +8,11 @@ export default function ReportsTab({ user, noun = "user" }) {
   if (user.reports.length === 0) {
     return (
       <section className="aup-card">
-        <EmptyState icon={ShieldCheck} title="No reports" text={`Nobody has reported this ${noun}, and they have not reported anyone.`} />
+        <EmptyState
+          icon={ShieldCheck}
+          title="No reports"
+          text={`Nobody has reported this ${noun}, and they have not reported anyone.`}
+        />
       </section>
     );
   }
@@ -24,17 +28,23 @@ export default function ReportsTab({ user, noun = "user" }) {
       <ul className="aup-list">
         {user.reports.map((report) => (
           <li key={report.report_id} className="aup-list-row aup-report">
-            <span className={`aup-report-icon ${report.direction.startsWith("Against") ? "against" : ""}`}>
+            <span
+              className={`aup-report-icon ${report.direction.startsWith("Against") ? "against" : ""}`}
+            >
               <Flag size={16} />
             </span>
             <div className="aup-list-main">
               <strong>{report.reason}</strong>
               <span>{report.description}</span>
               <small>
-                <span className="aup-mono">{report.report_id}</span> · {report.direction} · {report.report_type} · with {report.other_party} · {formatDate(report.created_at)}
+                <span className="aup-mono">{report.report_id}</span> ·{" "}
+                {report.direction} · {report.report_type} · with{" "}
+                {report.other_party} · {formatDate(report.created_at)}
               </small>
             </div>
-            <div className="aup-list-end"><StatusBadge status={report.status} /></div>
+            <div className="aup-list-end">
+              <StatusBadge status={report.status} />
+            </div>
           </li>
         ))}
       </ul>

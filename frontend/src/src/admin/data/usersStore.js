@@ -32,7 +32,12 @@ export function updateUserDonation(userId, donationId, patch) {
   users = users.map((user) =>
     user.user_id !== userId
       ? user
-      : { ...user, donations: user.donations.map((d) => (d.donation_id === donationId ? { ...d, ...patch } : d)) },
+      : {
+          ...user,
+          donations: user.donations.map((d) =>
+            d.donation_id === donationId ? { ...d, ...patch } : d,
+          ),
+        },
   );
   emit();
 }
@@ -82,8 +87,18 @@ export function reviewUserItem(userId, itemId, decision, message = "") {
         item.item_id !== itemId
           ? item
           : decision === "Verified"
-            ? { ...item, verification_status: "Verified", item_status: "Listed", rejection_message: "" }
-            : { ...item, verification_status: "Rejected", item_status: "Draft", rejection_message: message },
+            ? {
+                ...item,
+                verification_status: "Verified",
+                item_status: "Listed",
+                rejection_message: "",
+              }
+            : {
+                ...item,
+                verification_status: "Rejected",
+                item_status: "Draft",
+                rejection_message: message,
+              },
       ),
     };
   });

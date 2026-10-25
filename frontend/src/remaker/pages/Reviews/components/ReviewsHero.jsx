@@ -44,7 +44,13 @@ export default function ReviewsHero({ summary, ratingFilter, onRatingFilter }) {
             <small>Reply rate</small>
             <strong>{Math.round(summary.responseRate)}%</strong>
           </div>
-          <div className="rvp-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(summary.responseRate)}>
+          <div
+            className="rvp-meter"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(summary.responseRate)}
+          >
             <i style={{ width: `${summary.responseRate}%` }} />
           </div>
           <p>

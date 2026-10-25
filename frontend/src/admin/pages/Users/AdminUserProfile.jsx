@@ -47,9 +47,12 @@ import "../../css/AdminUI.css";
 import "../../css/users/AdminUserProfile.css";
 
 const NOTICE_TEXT = {
-  Suspended: "This account is suspended. The user cannot sign in, list items or place orders.",
-  Blocked: "This account is blocked. The user is signed out and cannot return until unblocked.",
-  Deleted: "This account is deleted. History is kept for orders and donations, and it can be restored.",
+  Suspended:
+    "This account is suspended. The user cannot sign in, list items or place orders.",
+  Blocked:
+    "This account is blocked. The user is signed out and cannot return until unblocked.",
+  Deleted:
+    "This account is deleted. History is kept for orders and donations, and it can be restored.",
 };
 
 export default function AdminUserProfile() {
@@ -76,7 +79,11 @@ export default function AdminUserProfile() {
             title="User not found"
             text="This account does not exist or the link is wrong."
             action={
-              <button type="button" className="ad-btn ad-btn-primary ad-btn-sm" onClick={() => navigate("/admin-users")}>
+              <button
+                type="button"
+                className="ad-btn ad-btn-primary ad-btn-sm"
+                onClick={() => navigate("/admin-users")}
+              >
                 <ArrowLeft size={14} /> Back to users
               </button>
             }
@@ -92,10 +99,25 @@ export default function AdminUserProfile() {
 
   const tabs = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
-    { id: "orders", label: "Orders", icon: ShoppingBag, count: user.orders.length },
-    { id: "donations", label: "Donations", icon: Gift, count: user.donations.length },
+    {
+      id: "orders",
+      label: "Orders",
+      icon: ShoppingBag,
+      count: user.orders.length,
+    },
+    {
+      id: "donations",
+      label: "Donations",
+      icon: Gift,
+      count: user.donations.length,
+    },
     { id: "items", label: "Items", icon: Boxes, count: user.items.length },
-    { id: "wishlist", label: "Wishlist", icon: Heart, count: user.wishlist.length },
+    {
+      id: "wishlist",
+      label: "Wishlist",
+      icon: Heart,
+      count: user.wishlist.length,
+    },
     { id: "reviews", label: "Reviews", icon: Star, count: user.reviews.length },
     { id: "reports", label: "Reports", icon: Flag, count: user.reports.length },
     { id: "activity", label: "Activity", icon: History },
@@ -107,7 +129,11 @@ export default function AdminUserProfile() {
     { label: "Sales", value: profile.total_sales, icon: BadgeIndianRupee },
     { label: "Donations", value: user.donations.length, icon: Gift },
     { label: "Total spent", value: formatINR(user.totals.spent), icon: Wallet },
-    { label: "CO₂ saved", value: `${profile.environmental_impact} kg`, icon: Leaf },
+    {
+      label: "CO₂ saved",
+      value: `${profile.environmental_impact} kg`,
+      icon: Leaf,
+    },
   ];
 
   const confirmAction = (reason) => {
@@ -119,7 +145,9 @@ export default function AdminUserProfile() {
   const onTabKey = (event, index) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     event.preventDefault();
-    const next = (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    const next =
+      (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+      tabs.length;
     setTab(tabs[next].id);
     document.getElementById(`aup-tab-${tabs[next].id}`)?.focus();
   };
@@ -138,18 +166,33 @@ export default function AdminUserProfile() {
       {/* ---------- hero ---------- */}
       <section className="aup-hero">
         <div className="aup-hero-main">
-          <UserAvatar name={user.full_name} src={profile.profile_image} size={92} rounded="26px" />
+          <UserAvatar
+            name={user.full_name}
+            src={profile.profile_image}
+            size={92}
+            rounded="26px"
+          />
           <div className="aup-hero-info">
             <div className="aup-hero-name">
               <h2>{user.full_name}</h2>
               <StatusBadge status={user.status} />
             </div>
             <ul className="aup-hero-meta">
-              <li><Hash size={14} /> {user.user_id}</li>
-              <li><Mail size={14} /> {user.email}</li>
-              <li><Phone size={14} /> {profile.phone}</li>
-              <li><MapPin size={14} /> {profile.city}, {profile.state}</li>
-              <li><CalendarDays size={14} /> Joined {formatDate(user.created_at)}</li>
+              <li>
+                <Hash size={14} /> {user.user_id}
+              </li>
+              <li>
+                <Mail size={14} /> {user.email}
+              </li>
+              <li>
+                <Phone size={14} /> {profile.phone}
+              </li>
+              <li>
+                <MapPin size={14} /> {profile.city}, {profile.state}
+              </li>
+              <li>
+                <CalendarDays size={14} /> Joined {formatDate(user.created_at)}
+              </li>
             </ul>
           </div>
         </div>
@@ -172,11 +215,15 @@ export default function AdminUserProfile() {
       </section>
 
       {user.status !== "Active" && (
-        <div className={`aup-notice tone-${user.status.toLowerCase()}`} role="status">
+        <div
+          className={`aup-notice tone-${user.status.toLowerCase()}`}
+          role="status"
+        >
           <strong>{NOTICE_TEXT[user.status]}</strong>
           {latestReason && (
             <span>
-              Reason: “{latestReason.reason}” — {latestReason.by}, {formatDate(latestReason.at)}
+              Reason: “{latestReason.reason}” — {latestReason.by},{" "}
+              {formatDate(latestReason.at)}
             </span>
           )}
         </div>
@@ -188,7 +235,9 @@ export default function AdminUserProfile() {
           const Icon = stat.icon;
           return (
             <div key={stat.label} className="aup-stat">
-              <span className="aup-stat-icon"><Icon size={17} strokeWidth={1.8} /></span>
+              <span className="aup-stat-icon">
+                <Icon size={17} strokeWidth={1.8} />
+              </span>
               <div>
                 <small>{stat.label}</small>
                 <strong>{stat.value}</strong>
@@ -217,13 +266,20 @@ export default function AdminUserProfile() {
             >
               <Icon size={15} />
               {item.label}
-              {item.count !== undefined && <span className="aup-tab-count">{item.count}</span>}
+              {item.count !== undefined && (
+                <span className="aup-tab-count">{item.count}</span>
+              )}
             </button>
           );
         })}
       </div>
 
-      <div id="aup-tabpanel" role="tabpanel" aria-labelledby={`aup-tab-${tab}`} className="aup-panel-body">
+      <div
+        id="aup-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`aup-tab-${tab}`}
+        className="aup-panel-body"
+      >
         {tab === "overview" && <OverviewTab user={user} goToTab={setTab} />}
         {tab === "orders" && <OrdersTab user={user} />}
         {tab === "donations" && <DonationsTab user={user} toast={toast} />}

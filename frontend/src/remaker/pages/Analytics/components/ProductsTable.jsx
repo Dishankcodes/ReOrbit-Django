@@ -14,7 +14,10 @@ const COLUMNS = [
 export default function ProductsTable({ products }) {
   const [sort, setSort] = useState("revenue");
 
-  const rows = useMemo(() => [...products].sort((a, b) => b[sort] - a[sort]), [products, sort]);
+  const rows = useMemo(
+    () => [...products].sort((a, b) => b[sort] - a[sort]),
+    [products, sort],
+  );
   const topRevenue = Math.max(...products.map((item) => item.revenue), 1);
 
   return (
@@ -35,8 +38,16 @@ export default function ProductsTable({ products }) {
             <tr>
               <th>Product</th>
               {COLUMNS.map((column) => (
-                <th className="num" key={column.key} aria-sort={sort === column.key ? "descending" : "none"}>
-                  <button type="button" className={sort === column.key ? "active" : ""} onClick={() => setSort(column.key)}>
+                <th
+                  className="num"
+                  key={column.key}
+                  aria-sort={sort === column.key ? "descending" : "none"}
+                >
+                  <button
+                    type="button"
+                    className={sort === column.key ? "active" : ""}
+                    onClick={() => setSort(column.key)}
+                  >
                     {column.label}
                     {sort === column.key && <span aria-hidden="true"> ↓</span>}
                   </button>
@@ -50,7 +61,10 @@ export default function ProductsTable({ products }) {
             {rows.map((row, index) => (
               <tr key={row.id}>
                 <td data-label="Product">
-                  <Link to={`/remaker-products/${row.id}/edit`} className="ana-product-cell">
+                  <Link
+                    to={`/remaker-products/${row.id}/edit`}
+                    className="ana-product-cell"
+                  >
                     <b className="rank">{index + 1}</b>
                     <img src={row.image} alt="" />
                     <span>
@@ -63,7 +77,10 @@ export default function ProductsTable({ products }) {
                 </td>
                 <td className="num strong" data-label="Earnings">
                   {formatPrice(row.revenue)}
-                  <i className="mini" style={{ width: `${(row.revenue / topRevenue) * 100}%` }} />
+                  <i
+                    className="mini"
+                    style={{ width: `${(row.revenue / topRevenue) * 100}%` }}
+                  />
                 </td>
                 <td className="num" data-label="Orders">
                   {fmtNumber(row.orders)}
@@ -78,7 +95,9 @@ export default function ProductsTable({ products }) {
                   {fmtPercent(row.conv, 2)}
                 </td>
                 <td className="num" data-label="Change">
-                  <span className={`ana-chip ${row.delta === null ? "" : row.delta >= 0 ? "up" : "down"}`}>
+                  <span
+                    className={`ana-chip ${row.delta === null ? "" : row.delta >= 0 ? "up" : "down"}`}
+                  >
                     {row.delta === null ? "New" : fmtDelta(row.delta)}
                   </span>
                 </td>

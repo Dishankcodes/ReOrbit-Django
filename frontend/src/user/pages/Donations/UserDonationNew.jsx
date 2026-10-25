@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, HandHeart, Loader2, Package, CalendarDays, ClipboardCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  HandHeart,
+  Loader2,
+  Package,
+  CalendarDays,
+  ClipboardCheck,
+} from "lucide-react";
 
 import {
   DONATION_CATEGORIES,
@@ -72,7 +81,9 @@ export default function UserDonationNew() {
 
   const set = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
-    setErrors((current) => (current[key] ? { ...current, [key]: undefined } : current));
+    setErrors((current) =>
+      current[key] ? { ...current, [key]: undefined } : current,
+    );
   };
 
   useEffect(() => {
@@ -90,7 +101,10 @@ export default function UserDonationNew() {
         pincode: form.pincode,
       };
     }
-    return SAVED_ADDRESSES.find((item) => item.id === form.addressId) || SAVED_ADDRESSES[0];
+    return (
+      SAVED_ADDRESSES.find((item) => item.id === form.addressId) ||
+      SAVED_ADDRESSES[0]
+    );
   }, [form.useNewAddress, form.line, form.pincode, form.addressId]);
 
   /* ---------- validation ---------- */
@@ -100,8 +114,10 @@ export default function UserDonationNew() {
 
     if (index === 0) {
       if (!form.category) next.category = "Choose a category.";
-      if (form.title.trim().length < 3) next.title = "Give the item a short name (at least 3 characters).";
-      if (form.description.trim().length < 10) next.description = "Add a few more details (at least 10 characters).";
+      if (form.title.trim().length < 3)
+        next.title = "Give the item a short name (at least 3 characters).";
+      if (form.description.trim().length < 10)
+        next.description = "Add a few more details (at least 10 characters).";
       if (!form.condition) next.condition = "Select the condition of the item.";
       if (form.quantity < 1) next.quantity = "Quantity must be at least 1.";
       if (form.images.length < 1) next.images = "Add at least one photo.";
@@ -109,20 +125,27 @@ export default function UserDonationNew() {
 
     if (index === 1) {
       if (form.useNewAddress) {
-        if (form.line.trim().length < 6) next.line = "Enter the full pickup address.";
+        if (form.line.trim().length < 6)
+          next.line = "Enter the full pickup address.";
         const pin = checkPincode(form.pincode);
         if (!pin.valid) next.pincode = "Enter a valid 6-digit pincode.";
-        else if (!pin.serviceable) next.pincode = "We don't pick up from this pincode yet.";
+        else if (!pin.serviceable)
+          next.pincode = "We don't pick up from this pincode yet.";
       } else {
         const pin = checkPincode(address.pincode);
-        if (!pin.serviceable) next.addressId = "We don't pick up from this address yet.";
+        if (!pin.serviceable)
+          next.addressId = "We don't pick up from this address yet.";
       }
-      if (form.contactName.trim().length < 2) next.contactName = "Enter a contact name.";
-      if (form.phone.replace(/\D/g, "").slice(-10).length < 10) next.phone = "Enter a valid 10-digit phone number.";
-      if (!form.date || !form.slot) next.schedule = "Choose a pickup date and a time slot.";
+      if (form.contactName.trim().length < 2)
+        next.contactName = "Enter a contact name.";
+      if (form.phone.replace(/\D/g, "").slice(-10).length < 10)
+        next.phone = "Enter a valid 10-digit phone number.";
+      if (!form.date || !form.slot)
+        next.schedule = "Choose a pickup date and a time slot.";
     }
 
-    if (index === 2 && !form.agree) next.agree = "Please confirm to submit your donation.";
+    if (index === 2 && !form.agree)
+      next.agree = "Please confirm to submit your donation.";
 
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -187,17 +210,24 @@ export default function UserDonationNew() {
               : "Tell us about the item, choose a free pickup time, and you're done."}
           </p>
         </div>
-        <span className="dn-chip"><HandHeart size={14} /> Free doorstep pickup</span>
+        <span className="dn-chip">
+          <HandHeart size={14} /> Free doorstep pickup
+        </span>
       </header>
 
       {/* stepper */}
       <ol className="dn-stepper" aria-label="Donation steps">
         {STEPS.map((item, index) => {
           const Icon = item.icon;
-          const state = index < step ? "is-done" : index === step ? "is-current" : "";
+          const state =
+            index < step ? "is-done" : index === step ? "is-current" : "";
           return (
             <li key={item.label} className={state}>
-              <button type="button" onClick={() => jump(index)} disabled={index >= step}>
+              <button
+                type="button"
+                onClick={() => jump(index)}
+                disabled={index >= step}
+              >
                 <span className="dn-stepper-dot">
                   {index < step ? <Check size={16} /> : <Icon size={16} />}
                 </span>
@@ -214,31 +244,62 @@ export default function UserDonationNew() {
       <div className="dn-new-layout">
         <section className="dn-card dn-card-pad dn-new-main">
           <div className="dn-new-title">
-            <h2>{["Tell us about the item", "Schedule your free pickup", "Review and submit"][step]}</h2>
+            <h2>
+              {
+                [
+                  "Tell us about the item",
+                  "Schedule your free pickup",
+                  "Review and submit",
+                ][step]
+              }
+            </h2>
             <p className="dn-muted">
-              {[
-                "Good details and photos help our team review your donation quickly.",
-                "Pick where and when we should collect it.",
-                "Check everything once more before you send it to us.",
-              ][step]}
+              {
+                [
+                  "Good details and photos help our team review your donation quickly.",
+                  "Pick where and when we should collect it.",
+                  "Check everything once more before you send it to us.",
+                ][step]
+              }
             </p>
           </div>
 
           {step === 0 && <StepItem form={form} set={set} errors={errors} />}
-          {step === 1 && <StepPickup form={form} set={set} errors={{ ...errors }} />}
+          {step === 1 && (
+            <StepPickup form={form} set={set} errors={{ ...errors }} />
+          )}
           {step === 2 && (
-            <StepReview form={form} address={address} onEdit={setStep} errors={errors} set={set} />
+            <StepReview
+              form={form}
+              address={address}
+              onEdit={setStep}
+              errors={errors}
+              set={set}
+            />
           )}
 
-          {errors.addressId && step === 1 && <span className="dn-error" style={{ marginTop: 10 }}>{errors.addressId}</span>}
+          {errors.addressId && step === 1 && (
+            <span className="dn-error" style={{ marginTop: 10 }}>
+              {errors.addressId}
+            </span>
+          )}
 
           <footer className="dn-new-foot">
             {step > 0 ? (
-              <button type="button" className="dn-btn dn-btn--ghost" onClick={goBack} disabled={submitting}>
+              <button
+                type="button"
+                className="dn-btn dn-btn--ghost"
+                onClick={goBack}
+                disabled={submitting}
+              >
                 <ArrowLeft size={16} /> Back
               </button>
             ) : (
-              <button type="button" className="dn-btn dn-btn--ghost" onClick={() => navigate("/user-donations")}>
+              <button
+                type="button"
+                className="dn-btn dn-btn--ghost"
+                onClick={() => navigate("/user-donations")}
+              >
                 Cancel
               </button>
             )}
@@ -248,7 +309,12 @@ export default function UserDonationNew() {
                 Continue <ArrowRight size={16} />
               </button>
             ) : (
-              <button type="button" className="dn-btn" onClick={submit} disabled={submitting}>
+              <button
+                type="button"
+                className="dn-btn"
+                onClick={submit}
+                disabled={submitting}
+              >
                 {submitting ? (
                   <>
                     <Loader2 size={16} className="dn-spin" /> Submitting…

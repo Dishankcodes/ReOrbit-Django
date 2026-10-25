@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
-import { STATUS_TONE, dateLabel, replyToTicket, setTicketStatus, timeLabel, useTicket } from "../../data/helpStore";
+import {
+  STATUS_TONE,
+  dateLabel,
+  replyToTicket,
+  setTicketStatus,
+  timeLabel,
+  useTicket,
+} from "../../data/helpStore";
 
 import "../../css/ReMakerUi.css";
 import "./HelpPage.css";
@@ -81,14 +88,19 @@ function Thread({ ticket }) {
           </small>
           <h2>{ticket.subject}</h2>
         </div>
-        <span className={`rk-badge ${STATUS_TONE[ticket.status]}`}>{ticket.status}</span>
+        <span className={`rk-badge ${STATUS_TONE[ticket.status]}`}>
+          {ticket.status}
+        </span>
       </header>
 
       <div className="hlp-layout">
         <div className="hlp-thread">
           <ol className="hlp-messages" aria-label="Conversation">
             {ticket.messages.map((message) => (
-              <li className={message.from === "me" ? "me" : "them"} key={message.id}>
+              <li
+                className={message.from === "me" ? "me" : "them"}
+                key={message.id}
+              >
                 <div className="hlp-bubble">
                   <header>
                     <strong>{message.name}</strong>
@@ -105,7 +117,8 @@ function Thread({ ticket }) {
             <div className="hlp-closed">
               <strong>This ticket is closed.</strong>
               <span>
-                Need more help? <Link to="/remaker-help/new">Create a new ticket</Link>.
+                Need more help?{" "}
+                <Link to="/remaker-help/new">Create a new ticket</Link>.
               </span>
             </div>
           ) : (
@@ -113,12 +126,31 @@ function Thread({ ticket }) {
               <label htmlFor="tk-reply" className="sr-only">
                 Your reply
               </label>
-              <textarea id="tk-reply" rows={3} maxLength={1000} value={text} onChange={(event) => setText(event.target.value)} placeholder={resolved ? "Reply to reopen this ticket" : "Write your reply"} aria-invalid={attempted && text.trim().length < 2 ? "true" : undefined} />
+              <textarea
+                id="tk-reply"
+                rows={3}
+                maxLength={1000}
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder={
+                  resolved ? "Reply to reopen this ticket" : "Write your reply"
+                }
+                aria-invalid={
+                  attempted && text.trim().length < 2 ? "true" : undefined
+                }
+              />
               <div>
                 {resolved ? (
                   <small>Replying will reopen this ticket.</small>
                 ) : (
-                  <button type="button" className="rk-textbtn" onClick={() => { setTicketStatus(ticket.id, "Resolved"); setNotice("Ticket marked as resolved."); }}>
+                  <button
+                    type="button"
+                    className="rk-textbtn"
+                    onClick={() => {
+                      setTicketStatus(ticket.id, "Resolved");
+                      setNotice("Ticket marked as resolved.");
+                    }}
+                  >
                     Mark as resolved
                   </button>
                 )}
@@ -155,7 +187,15 @@ function Thread({ ticket }) {
                 <div>
                   <dt>Order</dt>
                   <dd>
-                    <Link to={ticket.relatedOrder.startsWith("SO-") ? `/remaker-sales/${ticket.relatedOrder}` : `/remaker-orders/${ticket.relatedOrder}`}>{ticket.relatedOrder}</Link>
+                    <Link
+                      to={
+                        ticket.relatedOrder.startsWith("SO-")
+                          ? `/remaker-sales/${ticket.relatedOrder}`
+                          : `/remaker-orders/${ticket.relatedOrder}`
+                      }
+                    >
+                      {ticket.relatedOrder}
+                    </Link>
                   </dd>
                 </div>
               )}
@@ -173,8 +213,18 @@ function Thread({ ticket }) {
           {resolved && (
             <section className="rk-card hlp-done">
               <h3>Is this sorted?</h3>
-              <p>Close the ticket if you are happy, or reply to keep talking with us.</p>
-              <button type="button" className="rk-btn primary" onClick={() => { setTicketStatus(ticket.id, "Closed"); setNotice("Ticket closed. Thank you!"); }}>
+              <p>
+                Close the ticket if you are happy, or reply to keep talking with
+                us.
+              </p>
+              <button
+                type="button"
+                className="rk-btn primary"
+                onClick={() => {
+                  setTicketStatus(ticket.id, "Closed");
+                  setNotice("Ticket closed. Thank you!");
+                }}
+              >
                 Yes, close this ticket
               </button>
             </section>
@@ -182,7 +232,10 @@ function Thread({ ticket }) {
 
           <section className="rk-card hlp-tip">
             <h3>Faster help</h3>
-            <p>Add order numbers, amounts and photos in your replies. It saves a round of questions.</p>
+            <p>
+              Add order numbers, amounts and photos in your replies. It saves a
+              round of questions.
+            </p>
           </section>
         </aside>
       </div>

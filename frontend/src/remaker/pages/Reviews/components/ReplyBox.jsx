@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 
-import { REPLY_TEMPLATES, deleteReply, relativeAgo, saveReply } from "../../../data/reviewsStore";
+import {
+  REPLY_TEMPLATES,
+  deleteReply,
+  relativeAgo,
+  saveReply,
+} from "../../../data/reviewsStore";
 
 const MIN = 10;
 const MAX = 400;
@@ -12,7 +17,8 @@ export default function ReplyBox({ review }) {
   const [attempted, setAttempted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const tone = review.rating >= 4 ? "high" : review.rating === 3 ? "mid" : "low";
+  const tone =
+    review.rating >= 4 ? "high" : review.rating === 3 ? "mid" : "low";
   const tooShort = text.trim().length < MIN;
 
   const open = () => {
@@ -33,7 +39,11 @@ export default function ReplyBox({ review }) {
   if (editing) {
     return (
       <div className="rvp-reply editing">
-        <label htmlFor={`reply-${review.id}`}>{review.reply ? "Edit your reply" : "Reply to " + review.reviewer.name.split(" ")[0]}</label>
+        <label htmlFor={`reply-${review.id}`}>
+          {review.reply
+            ? "Edit your reply"
+            : "Reply to " + review.reviewer.name.split(" ")[0]}
+        </label>
 
         <textarea
           id={`reply-${review.id}`}
@@ -47,7 +57,9 @@ export default function ReplyBox({ review }) {
         />
 
         <div className="rvp-reply-meta">
-          <span className="rvp-error">{attempted && tooShort ? `Write at least ${MIN} characters.` : ""}</span>
+          <span className="rvp-error">
+            {attempted && tooShort ? `Write at least ${MIN} characters.` : ""}
+          </span>
           <small>
             {text.length}/{MAX}
           </small>
@@ -57,7 +69,11 @@ export default function ReplyBox({ review }) {
           <div className="rvp-templates">
             <small>Quick start</small>
             {REPLY_TEMPLATES[tone].map((template) => (
-              <button type="button" key={template} onClick={() => setText(template)}>
+              <button
+                type="button"
+                key={template}
+                onClick={() => setText(template)}
+              >
                 {template}
               </button>
             ))}
@@ -65,10 +81,18 @@ export default function ReplyBox({ review }) {
         )}
 
         <div className="rvp-reply-actions">
-          <button type="button" className="rvp-btn primary small" onClick={submit}>
+          <button
+            type="button"
+            className="rvp-btn primary small"
+            onClick={submit}
+          >
             {review.reply ? "Save reply" : "Post reply"}
           </button>
-          <button type="button" className="rvp-btn ghost small" onClick={() => setEditing(false)}>
+          <button
+            type="button"
+            className="rvp-btn ghost small"
+            onClick={() => setEditing(false)}
+          >
             Cancel
           </button>
         </div>
@@ -98,7 +122,11 @@ export default function ReplyBox({ review }) {
           {confirmDelete ? (
             <span className="rvp-confirm">
               Delete this reply?
-              <button type="button" className="danger" onClick={() => deleteReply(review.id)}>
+              <button
+                type="button"
+                className="danger"
+                onClick={() => deleteReply(review.id)}
+              >
                 Yes, delete
               </button>
               <button type="button" onClick={() => setConfirmDelete(false)}>
@@ -106,7 +134,11 @@ export default function ReplyBox({ review }) {
               </button>
             </span>
           ) : (
-            <button type="button" className="danger" onClick={() => setConfirmDelete(true)}>
+            <button
+              type="button"
+              className="danger"
+              onClick={() => setConfirmDelete(true)}
+            >
               Delete
             </button>
           )}

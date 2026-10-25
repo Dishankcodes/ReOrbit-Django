@@ -8,7 +8,9 @@ export default function JobsSummary({ totals }) {
       <article className="strong">
         <small>Paid from jobs</small>
         <strong>{formatPrice(totals.paid)}</strong>
-        <span>{totals.done} completed {totals.done === 1 ? "job" : "jobs"}</span>
+        <span>
+          {totals.done} completed {totals.done === 1 ? "job" : "jobs"}
+        </span>
       </article>
       <article>
         <small>In quality review</small>

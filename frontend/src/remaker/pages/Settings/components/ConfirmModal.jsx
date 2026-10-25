@@ -1,7 +1,16 @@
 import React, { useEffect, useRef } from "react";
 
 /* One confirm dialog used for sign out, unblock, delete and so on */
-export default function ConfirmModal({ title, children, confirmLabel, cancelLabel = "Go back", tone = "primary", disabled = false, onConfirm, onClose }) {
+export default function ConfirmModal({
+  title,
+  children,
+  confirmLabel,
+  cancelLabel = "Go back",
+  tone = "primary",
+  disabled = false,
+  onConfirm,
+  onClose,
+}) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -31,12 +40,24 @@ export default function ConfirmModal({ title, children, confirmLabel, cancelLabe
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="set-modal" role="alertdialog" aria-modal="true" aria-labelledby="set-modal-title" tabIndex={-1} ref={ref}>
+      <div
+        className="set-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="set-modal-title"
+        tabIndex={-1}
+        ref={ref}
+      >
         <h2 id="set-modal-title">{title}</h2>
         <div className="set-modal-body">{children}</div>
 
         <div className="set-modal-actions">
-          <button type="button" className={`set-btn ${tone === "danger" ? "danger" : "primary"}`} onClick={onConfirm} disabled={disabled}>
+          <button
+            type="button"
+            className={`set-btn ${tone === "danger" ? "danger" : "primary"}`}
+            onClick={onConfirm}
+            disabled={disabled}
+          >
             {confirmLabel}
           </button>
           <button type="button" className="set-btn ghost" onClick={onClose}>

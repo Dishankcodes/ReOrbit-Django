@@ -18,8 +18,15 @@ function Stepper({ status }) {
   return (
     <ol className="aup-steps" aria-label={`Donation progress: ${status}`}>
       {STEPS.map((step, index) => (
-        <li key={step.key} className={index < current ? "done" : index === current ? "current" : ""}>
-          <span>{index < current ? <Check size={11} strokeWidth={3} /> : index + 1}</span>
+        <li
+          key={step.key}
+          className={
+            index < current ? "done" : index === current ? "current" : ""
+          }
+        >
+          <span>
+            {index < current ? <Check size={11} strokeWidth={3} /> : index + 1}
+          </span>
           <em>{step.label}</em>
         </li>
       ))}
@@ -31,7 +38,11 @@ export default function DonationsTab({ user, toast }) {
   if (user.donations.length === 0) {
     return (
       <section className="aup-card">
-        <EmptyState icon={Gift} title="No donations yet" text="When this user donates an item, the pickup progress will appear here." />
+        <EmptyState
+          icon={Gift}
+          title="No donations yet"
+          text="When this user donates an item, the pickup progress will appear here."
+        />
       </section>
     );
   }
@@ -48,24 +59,37 @@ export default function DonationsTab({ user, toast }) {
                 <StatusBadge status={donation.donation_status} />
               </div>
               <p>
-                <span className="aup-mono">{donation.donation_id}</span> · {donation.category} · Qty {donation.quantity} · Donated on {formatDate(donation.donation_date)}
+                <span className="aup-mono">{donation.donation_id}</span> ·{" "}
+                {donation.category} · Qty {donation.quantity} · Donated on{" "}
+                {formatDate(donation.donation_date)}
               </p>
               {donation.pickup_date ? (
                 <p className="aup-donation-pickup">
-                  <CalendarClock size={14} /> Free pickup {formatDate(donation.pickup_date)}, {donation.pickup_slot}
+                  <CalendarClock size={14} /> Free pickup{" "}
+                  {formatDate(donation.pickup_date)}, {donation.pickup_slot}
                 </p>
               ) : (
-                <p className="aup-donation-pickup muted"><CalendarClock size={14} /> Pickup not scheduled yet</p>
+                <p className="aup-donation-pickup muted">
+                  <CalendarClock size={14} /> Pickup not scheduled yet
+                </p>
               )}
             </div>
             {donation.certificate && (
-              <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={() => toast("Certificate preview is not connected yet (UI only).")}>
+              <button
+                type="button"
+                className="ad-btn ad-btn-ghost ad-btn-sm"
+                onClick={() =>
+                  toast("Certificate preview is not connected yet (UI only).")
+                }
+              >
                 <Award size={14} /> Certificate
               </button>
             )}
           </div>
           {donation.donation_status === "Rejected" && (
-            <p className="apd-warn" style={{ marginTop: 14 }}>Rejected by admin: {donation.reject_reason}</p>
+            <p className="apd-warn" style={{ marginTop: 14 }}>
+              Rejected by admin: {donation.reject_reason}
+            </p>
           )}
           <Stepper status={donation.donation_status} />
         </article>

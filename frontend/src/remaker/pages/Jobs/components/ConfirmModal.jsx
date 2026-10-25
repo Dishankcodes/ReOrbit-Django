@@ -1,6 +1,14 @@
 import React, { useEffect, useRef } from "react";
 
-export default function ConfirmModal({ title, children, confirmLabel, cancelLabel = "Go back", tone = "primary", onConfirm, onClose }) {
+export default function ConfirmModal({
+  title,
+  children,
+  confirmLabel,
+  cancelLabel = "Go back",
+  tone = "primary",
+  onConfirm,
+  onClose,
+}) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -24,13 +32,29 @@ export default function ConfirmModal({ title, children, confirmLabel, cancelLabe
   }, [onClose]);
 
   return (
-    <div className="rk-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <div className="rk-modal" role="alertdialog" aria-modal="true" aria-labelledby="job-modal-title" tabIndex={-1} ref={ref}>
+    <div
+      className="rk-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="rk-modal"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="job-modal-title"
+        tabIndex={-1}
+        ref={ref}
+      >
         <h2 id="job-modal-title">{title}</h2>
         <div className="rk-modal-body">{children}</div>
 
         <div className="rk-modal-actions">
-          <button type="button" className={`rk-btn ${tone === "danger" ? "danger" : "primary"}`} onClick={onConfirm}>
+          <button
+            type="button"
+            className={`rk-btn ${tone === "danger" ? "danger" : "primary"}`}
+            onClick={onConfirm}
+          >
             {confirmLabel}
           </button>
           <button type="button" className="rk-btn ghost" onClick={onClose}>

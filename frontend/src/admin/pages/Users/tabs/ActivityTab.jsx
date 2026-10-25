@@ -2,7 +2,12 @@ import React from "react";
 import { UserPlus, Boxes, ShoppingBag, Gift } from "lucide-react";
 import { formatDateTime } from "../../../utils/format";
 
-const ICONS = { account: UserPlus, item: Boxes, order: ShoppingBag, donation: Gift };
+const ICONS = {
+  account: UserPlus,
+  item: Boxes,
+  order: ShoppingBag,
+  donation: Gift,
+};
 
 export default function ActivityTab({ user }) {
   return (
@@ -18,7 +23,9 @@ export default function ActivityTab({ user }) {
           const Icon = ICONS[event.type] || UserPlus;
           return (
             <li key={`${event.at}-${index}`}>
-              <span className={`aup-activity-icon type-${event.type}`}><Icon size={15} /></span>
+              <span className={`aup-activity-icon type-${event.type}`}>
+                <Icon size={15} />
+              </span>
               <div>
                 <strong>{event.text}</strong>
                 <small>{formatDateTime(event.at)}</small>

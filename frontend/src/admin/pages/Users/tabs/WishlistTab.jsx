@@ -7,7 +7,11 @@ export default function WishlistTab({ user }) {
   if (user.wishlist.length === 0) {
     return (
       <section className="aup-card">
-        <EmptyState icon={Heart} title="Wishlist is empty" text="Items and ReMaker products saved by this user will appear here." />
+        <EmptyState
+          icon={Heart}
+          title="Wishlist is empty"
+          text="Items and ReMaker products saved by this user will appear here."
+        />
       </section>
     );
   }
@@ -26,9 +30,13 @@ export default function WishlistTab({ user }) {
             <img src={entry.image} alt="" className="aup-thumb" />
             <div className="aup-list-main">
               <strong>{entry.title}</strong>
-              <span>{entry.kind} · {entry.by} · saved {formatDate(entry.added_at)}</span>
+              <span>
+                {entry.kind} · {entry.by} · saved {formatDate(entry.added_at)}
+              </span>
             </div>
-            <div className="aup-list-end"><strong>{formatINR(entry.price)}</strong></div>
+            <div className="aup-list-end">
+              <strong>{formatINR(entry.price)}</strong>
+            </div>
           </li>
         ))}
       </ul>

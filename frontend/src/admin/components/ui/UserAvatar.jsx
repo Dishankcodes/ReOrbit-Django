@@ -25,7 +25,11 @@ export default function UserAvatar({ name, src, size = 40, rounded = "12px" }) {
   }
 
   return (
-    <span className="ad-avatar ad-avatar-initials" style={style} aria-label={name}>
+    <span
+      className="ad-avatar ad-avatar-initials"
+      style={style}
+      aria-label={name}
+    >
       {getInitials(name)}
     </span>
   );

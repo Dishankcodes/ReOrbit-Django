@@ -14,7 +14,8 @@ export default function SubmitPanel({ job, onAddProgress, onSubmit }) {
   const progressFile = useRef(null);
   const afterFile = useRef(null);
 
-  const toggle = (index) => setChecks((current) => ({ ...current, [index]: !current[index] }));
+  const toggle = (index) =>
+    setChecks((current) => ({ ...current, [index]: !current[index] }));
 
   const pick = async (file, apply) => {
     if (!file) return;
@@ -53,7 +54,14 @@ export default function SubmitPanel({ job, onAddProgress, onSubmit }) {
           <label htmlFor="job-update" className="sr-only">
             Progress note
           </label>
-          <textarea id="job-update" rows={3} maxLength={400} value={update} onChange={(event) => setUpdate(event.target.value)} placeholder="What did you do today? Mention anything the warehouse should know." />
+          <textarea
+            id="job-update"
+            rows={3}
+            maxLength={400}
+            value={update}
+            onChange={(event) => setUpdate(event.target.value)}
+            placeholder="What did you do today? Mention anything the warehouse should know."
+          />
         </div>
 
         <div className="job-row">
@@ -65,24 +73,52 @@ export default function SubmitPanel({ job, onAddProgress, onSubmit }) {
               </button>
             </span>
           ) : (
-            <button type="button" className="rk-btn ghost small" onClick={() => progressFile.current?.click()}>
+            <button
+              type="button"
+              className="rk-btn ghost small"
+              onClick={() => progressFile.current?.click()}
+            >
               Add a photo
             </button>
           )}
 
-          <button type="button" className="rk-btn primary small" onClick={postUpdate} disabled={update.trim().length < 3}>
+          <button
+            type="button"
+            className="rk-btn primary small"
+            onClick={postUpdate}
+            disabled={update.trim().length < 3}
+          >
             Post update
           </button>
         </div>
 
-        <input ref={progressFile} type="file" accept="image/*" hidden onChange={(event) => { pick(event.target.files?.[0], setUpdatePhoto); event.target.value = ""; }} />
+        <input
+          ref={progressFile}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(event) => {
+            pick(event.target.files?.[0], setUpdatePhoto);
+            event.target.value = "";
+          }}
+        />
       </section>
 
       <section className="rk-card job-submit">
-        <h3>{job.status === "Needs changes" ? "Resubmit for quality check" : "Submit for quality check"}</h3>
-        <p className="job-muted">When the work is done, add a photo of the finished piece. We check it and pay you if it passes.</p>
+        <h3>
+          {job.status === "Needs changes"
+            ? "Resubmit for quality check"
+            : "Submit for quality check"}
+        </h3>
+        <p className="job-muted">
+          When the work is done, add a photo of the finished piece. We check it
+          and pay you if it passes.
+        </p>
 
-        <div className="rk-field" data-invalid={attempted && !after ? "true" : undefined}>
+        <div
+          className="rk-field"
+          data-invalid={attempted && !after ? "true" : undefined}
+        >
           <span className="rk-label">Photo of the finished piece</span>
 
           {after ? (
@@ -93,32 +129,71 @@ export default function SubmitPanel({ job, onAddProgress, onSubmit }) {
               </button>
             </span>
           ) : (
-            <button type="button" className="job-drop" onClick={() => afterFile.current?.click()}>
+            <button
+              type="button"
+              className="job-drop"
+              onClick={() => afterFile.current?.click()}
+            >
               <img src={job.before[0]} alt="" />
               <b>Add the “after” photo</b>
             </button>
           )}
 
-          <input ref={afterFile} type="file" accept="image/*" hidden onChange={(event) => { pick(event.target.files?.[0], setAfter); event.target.value = ""; }} />
-          {attempted && !after && <span className="rk-error">The quality check needs a photo of the finished piece.</span>}
+          <input
+            ref={afterFile}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              pick(event.target.files?.[0], setAfter);
+              event.target.value = "";
+            }}
+          />
+          {attempted && !after && (
+            <span className="rk-error">
+              The quality check needs a photo of the finished piece.
+            </span>
+          )}
         </div>
 
         <fieldset className="job-checks">
           <legend>Before you send it</legend>
           {job.requirements.map((item, index) => (
             <label key={item} className={checks[index] ? "on" : ""}>
-              <input type="checkbox" checked={Boolean(checks[index])} onChange={() => toggle(index)} />
+              <input
+                type="checkbox"
+                checked={Boolean(checks[index])}
+                onChange={() => toggle(index)}
+              />
               <span aria-hidden="true" />
               {item}
             </label>
           ))}
-          {attempted && !allChecked && <span className="rk-error">Tick every item to confirm it is done.</span>}
+          {attempted && !allChecked && (
+            <span className="rk-error">
+              Tick every item to confirm it is done.
+            </span>
+          )}
         </fieldset>
 
         <div className="rk-field">
           <label htmlFor="job-note">Note for the quality team</label>
-          <textarea id="job-note" rows={3} maxLength={400} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Tell us what you did, the finish you used and how to care for it." aria-invalid={attempted && note.trim().length < 10 ? "true" : undefined} />
-          {attempted && note.trim().length < 10 && <span className="rk-error">Add a short note, at least 10 characters.</span>}
+          <textarea
+            id="job-note"
+            rows={3}
+            maxLength={400}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Tell us what you did, the finish you used and how to care for it."
+            aria-invalid={
+              attempted && note.trim().length < 10 ? "true" : undefined
+            }
+          />
+          {attempted && note.trim().length < 10 && (
+            <span className="rk-error">
+              Add a short note, at least 10 characters.
+            </span>
+          )}
         </div>
 
         {error && <p className="rk-error">{error}</p>}

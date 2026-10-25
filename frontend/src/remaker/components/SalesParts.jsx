@@ -31,7 +31,8 @@ export function SaleProgress({ order }) {
   let percent = (stepIndex(order) / (steps.length - 1)) * 100;
 
   if (order.status === "Pending") percent = 6;
-  if (order.status === "Cancelled" || order.status === "Returned") percent = 100;
+  if (order.status === "Cancelled" || order.status === "Returned")
+    percent = 100;
 
   return (
     <div
@@ -58,7 +59,11 @@ export function SaleTimeline({ order }) {
           <div>
             <strong>{step.label}</strong>
             <small>
-              {step.time ? formatDateTime(step.time) : step.state === "upcoming" ? "Expected next" : ""}
+              {step.time
+                ? formatDateTime(step.time)
+                : step.state === "upcoming"
+                  ? "Expected next"
+                  : ""}
             </small>
             {step.note && <p>{step.note}</p>}
           </div>

@@ -19,7 +19,9 @@ export default function FollowingCard({ item, onUnfollow }) {
         </small>
         <span>
           {item.rating ? `${item.rating} rating` : "New ReMaker"}
-          {item.followers ? ` · ${item.followers.toLocaleString("en-IN")} followers` : ""}
+          {item.followers
+            ? ` · ${item.followers.toLocaleString("en-IN")} followers`
+            : ""}
           {item.products ? ` · ${item.products} pieces` : ""}
         </span>
         <em>Following since {followedLabel(item.followedAt)}</em>
@@ -27,11 +29,18 @@ export default function FollowingCard({ item, onUnfollow }) {
 
       <div className="fol-follow-actions">
         {item.profile && (
-          <Link to={`/remaker-marketplace/seller/${item.id}`} className="fol-btn ghost small">
+          <Link
+            to={`/remaker-marketplace/seller/${item.id}`}
+            className="fol-btn ghost small"
+          >
             View profile
           </Link>
         )}
-        <button type="button" className="fol-btn danger-ghost small" onClick={() => onUnfollow(item)}>
+        <button
+          type="button"
+          className="fol-btn danger-ghost small"
+          onClick={() => onUnfollow(item)}
+        >
           Unfollow
         </button>
       </div>

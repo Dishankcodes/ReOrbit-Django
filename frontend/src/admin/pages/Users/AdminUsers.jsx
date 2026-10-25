@@ -38,15 +38,31 @@ const STATUS_CARDS = [
 ];
 
 const SORTS = {
-  newest: { label: "Newest first", fn: (a, b) => new Date(b.created_at) - new Date(a.created_at) },
-  oldest: { label: "Oldest first", fn: (a, b) => new Date(a.created_at) - new Date(b.created_at) },
-  name: { label: "Name A–Z", fn: (a, b) => a.full_name.localeCompare(b.full_name) },
-  active: { label: "Recently active", fn: (a, b) => new Date(b.last_active) - new Date(a.last_active) },
+  newest: {
+    label: "Newest first",
+    fn: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+  },
+  oldest: {
+    label: "Oldest first",
+    fn: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  },
+  name: {
+    label: "Name A–Z",
+    fn: (a, b) => a.full_name.localeCompare(b.full_name),
+  },
+  active: {
+    label: "Recently active",
+    fn: (a, b) => new Date(b.last_active) - new Date(a.last_active),
+  },
   busiest: {
     label: "Most activity",
     fn: (a, b) =>
-      b.profile.total_uploads + b.profile.total_purchases + b.profile.total_sales -
-      (a.profile.total_uploads + a.profile.total_purchases + a.profile.total_sales),
+      b.profile.total_uploads +
+      b.profile.total_purchases +
+      b.profile.total_sales -
+      (a.profile.total_uploads +
+        a.profile.total_purchases +
+        a.profile.total_sales),
   },
 };
 
@@ -57,16 +73,39 @@ function appliesTo(actionKey, status) {
 }
 
 function exportCsv(rows) {
-  const header = ["User ID", "Name", "Email", "Sign-up method", "City", "State", "Status", "Uploads", "Purchases", "Sales", "Joined"];
+  const header = [
+    "User ID",
+    "Name",
+    "Email",
+    "Sign-up method",
+    "City",
+    "State",
+    "Status",
+    "Uploads",
+    "Purchases",
+    "Sales",
+    "Joined",
+  ];
   const lines = rows.map((u) =>
     [
-      u.user_id, u.full_name, u.email, u.auth_provider, u.profile.city, u.profile.state, u.status,
-      u.profile.total_uploads, u.profile.total_purchases, u.profile.total_sales, formatDate(u.created_at),
+      u.user_id,
+      u.full_name,
+      u.email,
+      u.auth_provider,
+      u.profile.city,
+      u.profile.state,
+      u.status,
+      u.profile.total_uploads,
+      u.profile.total_purchases,
+      u.profile.total_sales,
+      formatDate(u.created_at),
     ]
       .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
       .join(","),
   );
-  const blob = new Blob([[header.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob([[header.join(","), ...lines].join("\n")], {
+    type: "text/csv;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -91,8 +130,16 @@ export default function AdminUsers() {
 
   /* ---------- numbers for the top cards ---------- */
   const counts = useMemo(() => {
-    const result = { All: users.length, Active: 0, Suspended: 0, Blocked: 0, Deleted: 0 };
-    users.forEach((user) => { result[user.status] += 1; });
+    const result = {
+      All: users.length,
+      Active: 0,
+      Suspended: 0,
+      Blocked: 0,
+      Deleted: 0,
+    };
+    users.forEach((user) => {
+      result[user.status] += 1;
+    });
     return result;
   }, [users]);
 
@@ -118,11 +165,14 @@ export default function AdminUsers() {
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   /* back to page 1 whenever the filters change */
-  useEffect(() => { setPage(1); }, [query, status, provider, sort, pageSize]);
+  useEffect(() => {
+    setPage(1);
+  }, [query, status, provider, sort, pageSize]);
 
   /* ---------- selection ---------- */
   const rowIds = rows.map((user) => user.user_id);
-  const allOnPageSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id));
+  const allOnPageSelected =
+    rowIds.length > 0 && rowIds.every((id) => selected.has(id));
   const someOnPageSelected = rowIds.some((id) => selected.has(id));
 
   const toggleOne = (id) =>
@@ -135,7 +185,9 @@ export default function AdminUsers() {
   const togglePage = () =>
     setSelected((current) => {
       const next = new Set(current);
-      rowIds.forEach((id) => (allOnPageSelected ? next.delete(id) : next.add(id)));
+      rowIds.forEach((id) =>
+        allOnPageSelected ? next.delete(id) : next.add(id),
+      );
       return next;
     });
 
@@ -144,7 +196,9 @@ export default function AdminUsers() {
   const selectedUsers = users.filter((user) => selected.has(user.user_id));
   const bulkActions = ["activate", "suspend", "block", "delete"]
     .map((key) => ACTION_LIST[key])
-    .filter((action) => selectedUsers.some((user) => appliesTo(action.key, user.status)));
+    .filter((action) =>
+      selectedUsers.some((user) => appliesTo(action.key, user.status)),
+    );
 
   /* ---------- actions ---------- */
   const askAction = (action, ids) => {
@@ -170,7 +224,9 @@ export default function AdminUsers() {
     clearSelection();
   };
 
-  const pendingNames = pending ? pending.ids.map((id) => users.find((u) => u.user_id === id)?.full_name) : [];
+  const pendingNames = pending
+    ? pending.ids.map((id) => users.find((u) => u.user_id === id)?.full_name)
+    : [];
   const filtersActive = query || status !== "All" || provider !== "all";
 
   return (
@@ -188,7 +244,9 @@ export default function AdminUsers() {
               onClick={() => setStatus(card.key)}
               aria-pressed={active}
             >
-              <span className="au-card-icon"><Icon size={18} strokeWidth={1.8} /></span>
+              <span className="au-card-icon">
+                <Icon size={18} strokeWidth={1.8} />
+              </span>
               <span className="au-card-text">
                 <small>{card.label}</small>
                 <strong>{counts[card.key]}</strong>
@@ -215,7 +273,11 @@ export default function AdminUsers() {
                 </button>
               ))}
             </div>
-            <button type="button" className="au-bulk-clear" onClick={clearSelection}>
+            <button
+              type="button"
+              className="au-bulk-clear"
+              onClick={clearSelection}
+            >
               <X size={14} /> Clear
             </button>
           </div>
@@ -231,7 +293,11 @@ export default function AdminUsers() {
                 aria-label="Search users"
               />
               {query && (
-                <button type="button" onClick={() => setQuery("")} aria-label="Clear search">
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Clear search"
+                >
                   <X size={14} />
                 </button>
               )}
@@ -240,7 +306,10 @@ export default function AdminUsers() {
             <div className="au-toolbar-right">
               <label className="au-select">
                 <span>Sign-up</span>
-                <select value={provider} onChange={(e) => setProvider(e.target.value)}>
+                <select
+                  value={provider}
+                  onChange={(e) => setProvider(e.target.value)}
+                >
                   <option value="all">All methods</option>
                   <option value="email">Email</option>
                   <option value="google">Google</option>
@@ -249,9 +318,15 @@ export default function AdminUsers() {
 
               <label className="au-select">
                 <ArrowUpDown size={14} />
-                <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort users">
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  aria-label="Sort users"
+                >
                   {Object.entries(SORTS).map(([key, item]) => (
-                    <option key={key} value={key}>{item.label}</option>
+                    <option key={key} value={key}>
+                      {item.label}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -259,7 +334,10 @@ export default function AdminUsers() {
               <button
                 type="button"
                 className="ad-btn ad-btn-ghost"
-                onClick={() => { exportCsv(filtered); toast(`Exported ${filtered.length} users to CSV.`); }}
+                onClick={() => {
+                  exportCsv(filtered);
+                  toast(`Exported ${filtered.length} users to CSV.`);
+                }}
                 disabled={!filtered.length}
               >
                 <Download size={15} /> Export
@@ -276,7 +354,11 @@ export default function AdminUsers() {
                   <input
                     type="checkbox"
                     checked={allOnPageSelected}
-                    ref={(el) => { if (el) el.indeterminate = !allOnPageSelected && someOnPageSelected; }}
+                    ref={(el) => {
+                      if (el)
+                        el.indeterminate =
+                          !allOnPageSelected && someOnPageSelected;
+                    }}
                     onChange={togglePage}
                     aria-label="Select all users on this page"
                   />
@@ -288,7 +370,9 @@ export default function AdminUsers() {
                 <th className="col-joined">Joined</th>
                 <th className="col-seen">Last active</th>
                 <th>Status</th>
-                <th className="col-menu"><span className="sr-only">Actions</span></th>
+                <th className="col-menu">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -297,11 +381,18 @@ export default function AdminUsers() {
                   key={user.user_id}
                   className={`${user.status === "Deleted" ? "is-deleted" : ""} ${selected.has(user.user_id) ? "is-selected" : ""}`}
                   onClick={() => navigate(`/admin-users/${user.user_id}`)}
-                  onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && navigate(`/admin-users/${user.user_id}`)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    e.target === e.currentTarget &&
+                    navigate(`/admin-users/${user.user_id}`)
+                  }
                   tabIndex={0}
                   aria-label={`Open profile of ${user.full_name}`}
                 >
-                  <td className="col-check" onClick={(e) => e.stopPropagation()}>
+                  <td
+                    className="col-check"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="checkbox"
                       checked={selected.has(user.user_id)}
@@ -311,7 +402,11 @@ export default function AdminUsers() {
                   </td>
                   <td>
                     <div className="au-person">
-                      <UserAvatar name={user.full_name} src={user.profile.profile_image} size={40} />
+                      <UserAvatar
+                        name={user.full_name}
+                        src={user.profile.profile_image}
+                        size={40}
+                      />
                       <div>
                         <strong>{user.full_name}</strong>
                         <span>{user.email}</span>
@@ -322,23 +417,37 @@ export default function AdminUsers() {
                     <span className="au-muted-strong">{user.profile.city}</span>
                     <span className="au-sub">{user.profile.state}</span>
                   </td>
-                  <td className="col-method"><ProviderBadge provider={user.auth_provider} /></td>
+                  <td className="col-method">
+                    <ProviderBadge provider={user.auth_provider} />
+                  </td>
                   <td className="col-activity">
                     <div className="au-activity">
-                      <span title="Items uploaded"><b>{user.profile.total_uploads}</b></span>
+                      <span title="Items uploaded">
+                        <b>{user.profile.total_uploads}</b>
+                      </span>
                       <i />
-                      <span title="Purchases"><b>{user.profile.total_purchases}</b></span>
+                      <span title="Purchases">
+                        <b>{user.profile.total_purchases}</b>
+                      </span>
                       <i />
-                      <span title="Sales"><b>{user.profile.total_sales}</b></span>
+                      <span title="Sales">
+                        <b>{user.profile.total_sales}</b>
+                      </span>
                     </div>
                   </td>
                   <td className="col-joined">
-                    <span className="au-muted-strong">{formatDate(user.created_at)}</span>
+                    <span className="au-muted-strong">
+                      {formatDate(user.created_at)}
+                    </span>
                   </td>
                   <td className="col-seen">
-                    <span className="au-muted-strong">{timeAgo(user.last_active)}</span>
+                    <span className="au-muted-strong">
+                      {timeAgo(user.last_active)}
+                    </span>
                   </td>
-                  <td><StatusBadge status={user.status} /></td>
+                  <td>
+                    <StatusBadge status={user.status} />
+                  </td>
                   <td className="col-menu" onClick={(e) => e.stopPropagation()}>
                     <UserActionMenu
                       user={user}
@@ -361,7 +470,11 @@ export default function AdminUsers() {
                   <button
                     type="button"
                     className="ad-btn ad-btn-ghost ad-btn-sm"
-                    onClick={() => { setQuery(""); setStatus("All"); setProvider("all"); }}
+                    onClick={() => {
+                      setQuery("");
+                      setStatus("All");
+                      setProvider("all");
+                    }}
                   >
                     Clear filters
                   </button>

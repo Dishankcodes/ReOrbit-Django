@@ -8,22 +8,78 @@ import { useReport } from "../../data/reportsStore";
 import "../../css/Home.css";
 
 const managementItems = [
-  { icon: "group", title: "Users & ReMakers", text: "Review accounts, verify ReMakers, and warn, suspend or block when something is wrong. Every action is recorded." },
-  { icon: "inventory_2", title: "Products & listings", text: "Approve or reject what members and ReMakers post, and keep the marketplace accurate and trustworthy." },
-  { icon: "receipt_long", title: "Orders & payments", text: "Follow every order from placed to delivered, confirm payments, handle cancellations, returns and refunds." },
-  { icon: "volunteer_activism", title: "Donations & pickups", text: "Accept or reject donations, schedule free pickups with a partner, and see which ones are running late." },
-  { icon: "warehouse", title: "Warehouse", text: "Receive stock, give it a rack and bin, send it for refurbishment and get alerted when a product stops selling." },
-  { icon: "storefront", title: "Buy & sell as the platform", text: "Buy from members and ReMakers, then list refurbished stock for sale with photos and track each selling order." },
-  { icon: "redeem", title: "Rewards & vouchers", text: "Set how many Orbit points members earn, create vouchers and coupons, and review every redemption." },
-  { icon: "account_balance_wallet", title: "Earnings & reports", text: "See what the platform fee and your own sales earn, where the money goes and how the marketplace is growing." },
-  { icon: "admin_panel_settings", title: "Team & permissions", text: "Add sub-admins such as warehouse staff or support and give each one view or edit access to only what they need." },
+  {
+    icon: "group",
+    title: "Users & ReMakers",
+    text: "Review accounts, verify ReMakers, and warn, suspend or block when something is wrong. Every action is recorded.",
+  },
+  {
+    icon: "inventory_2",
+    title: "Products & listings",
+    text: "Approve or reject what members and ReMakers post, and keep the marketplace accurate and trustworthy.",
+  },
+  {
+    icon: "receipt_long",
+    title: "Orders & payments",
+    text: "Follow every order from placed to delivered, confirm payments, handle cancellations, returns and refunds.",
+  },
+  {
+    icon: "volunteer_activism",
+    title: "Donations & pickups",
+    text: "Accept or reject donations, schedule free pickups with a partner, and see which ones are running late.",
+  },
+  {
+    icon: "warehouse",
+    title: "Warehouse",
+    text: "Receive stock, give it a rack and bin, send it for refurbishment and get alerted when a product stops selling.",
+  },
+  {
+    icon: "storefront",
+    title: "Buy & sell as the platform",
+    text: "Buy from members and ReMakers, then list refurbished stock for sale with photos and track each selling order.",
+  },
+  {
+    icon: "redeem",
+    title: "Rewards & vouchers",
+    text: "Set how many Orbit points members earn, create vouchers and coupons, and review every redemption.",
+  },
+  {
+    icon: "account_balance_wallet",
+    title: "Earnings & reports",
+    text: "See what the platform fee and your own sales earn, where the money goes and how the marketplace is growing.",
+  },
+  {
+    icon: "admin_panel_settings",
+    title: "Team & permissions",
+    text: "Add sub-admins such as warehouse staff or support and give each one view or edit access to only what they need.",
+  },
 ];
 
 const responsibilities = [
-  { number: "01", icon: "verified_user", title: "Review & verify", text: "Check new donations, listings, ReMakers and reported accounts before they affect the marketplace." },
-  { number: "02", icon: "local_shipping", title: "Keep stock moving", text: "Schedule pickups, shelve what arrives, refurbish it and cut the price or donate it when it will not sell." },
-  { number: "03", icon: "payments", title: "Handle the money", text: "Confirm payments, ship and deliver orders, issue refunds and watch the platform fee and sales come in." },
-  { number: "04", icon: "lock_person", title: "Control access", text: "Decide who on the team can see or change each part of the admin, and preview it exactly as they would." },
+  {
+    number: "01",
+    icon: "verified_user",
+    title: "Review & verify",
+    text: "Check new donations, listings, ReMakers and reported accounts before they affect the marketplace.",
+  },
+  {
+    number: "02",
+    icon: "local_shipping",
+    title: "Keep stock moving",
+    text: "Schedule pickups, shelve what arrives, refurbish it and cut the price or donate it when it will not sell.",
+  },
+  {
+    number: "03",
+    icon: "payments",
+    title: "Handle the money",
+    text: "Confirm payments, ship and deliver orders, issue refunds and watch the platform fee and sales come in.",
+  },
+  {
+    number: "04",
+    icon: "lock_person",
+    title: "Control access",
+    text: "Decide who on the team can see or change each part of the admin, and preview it exactly as they would.",
+  },
 ];
 
 const flow = [
@@ -35,7 +91,14 @@ const flow = [
   { icon: "account_balance_wallet", label: "Earn" },
 ];
 
-const compact = (n) => (n >= 1e7 ? `₹${(n / 1e7).toFixed(1)}Cr` : n >= 1e5 ? `₹${(n / 1e5).toFixed(1)}L` : n >= 1e3 ? `₹${(n / 1e3).toFixed(1)}K` : `₹${Math.round(n)}`);
+const compact = (n) =>
+  n >= 1e7
+    ? `₹${(n / 1e7).toFixed(1)}Cr`
+    : n >= 1e5
+      ? `₹${(n / 1e5).toFixed(1)}L`
+      : n >= 1e3
+        ? `₹${(n / 1e3).toFixed(1)}K`
+        : `₹${Math.round(n)}`;
 
 export default function AdminHome() {
   const users = useUsers();
@@ -65,10 +128,9 @@ export default function AdminHome() {
             </h1>
 
             <p className="hero-description">
-              One console to review donations, move stock through the
-              warehouse, handle orders and payments, reward members and see
-              what ReOrbit earns, with access you control for every team
-              member.
+              One console to review donations, move stock through the warehouse,
+              handle orders and payments, reward members and see what ReOrbit
+              earns, with access you control for every team member.
             </p>
 
             <div className="hero-actions">

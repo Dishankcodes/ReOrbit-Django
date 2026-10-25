@@ -38,7 +38,9 @@ function Photo({ src, alt }) {
     );
   }
 
-  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />;
+  return (
+    <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />
+  );
 }
 
 export default function ReMakerMarketplace() {
@@ -81,7 +83,13 @@ export default function ReMakerMarketplace() {
 
       if (!text) return true;
 
-      return [listing.title, listing.category, listing.seller, listing.city, ...listing.materials]
+      return [
+        listing.title,
+        listing.category,
+        listing.seller,
+        listing.city,
+        ...listing.materials,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(text);
@@ -91,7 +99,11 @@ export default function ReMakerMarketplace() {
   }, [query, source, category, condition, sort, savedOnly, wishlist]);
 
   const filtersActive =
-    query || source !== "all" || category !== "all" || condition !== "all" || savedOnly;
+    query ||
+    source !== "all" ||
+    category !== "all" ||
+    condition !== "all" ||
+    savedOnly;
 
   const clearAll = () => {
     setSavedOnly(false);
@@ -161,7 +173,11 @@ export default function ReMakerMarketplace() {
             aria-label="Search the marketplace"
           />
           {query && (
-            <button type="button" onClick={() => setParam("search", "", "")} aria-label="Clear search">
+            <button
+              type="button"
+              onClick={() => setParam("search", "", "")}
+              aria-label="Clear search"
+            >
               <X size={14} />
             </button>
           )}
@@ -170,7 +186,10 @@ export default function ReMakerMarketplace() {
         <div className="rmk-selects">
           <label className="rmk-select">
             <span className="sr-only">Condition</span>
-            <select value={condition} onChange={(event) => setParam("condition", event.target.value)}>
+            <select
+              value={condition}
+              onChange={(event) => setParam("condition", event.target.value)}
+            >
               <option value="all">Any condition</option>
               {CONDITIONS.map((item) => (
                 <option key={item} value={item}>
@@ -182,7 +201,12 @@ export default function ReMakerMarketplace() {
 
           <label className="rmk-select">
             <span className="sr-only">Sort by</span>
-            <select value={sort} onChange={(event) => setParam("sort", event.target.value, "newest")}>
+            <select
+              value={sort}
+              onChange={(event) =>
+                setParam("sort", event.target.value, "newest")
+              }
+            >
               {SORTS.map((item) => (
                 <option key={item.key} value={item.key}>
                   {item.label}
@@ -233,7 +257,9 @@ export default function ReMakerMarketplace() {
       {results.length === 0 ? (
         <div className="rmk-empty">
           <SearchX size={36} strokeWidth={1.5} />
-          <h2>{savedOnly && !query ? "Nothing saved yet" : "No listings match"}</h2>
+          <h2>
+            {savedOnly && !query ? "Nothing saved yet" : "No listings match"}
+          </h2>
           <p>
             {savedOnly && !query
               ? "Tap the heart on a listing to keep it here for later."
@@ -254,7 +280,11 @@ export default function ReMakerMarketplace() {
                   <Photo src={listing.gallery[0]} alt="" />
 
                   <span className={`rmk-tag ${listing.source}`}>
-                    {listing.source === "remaker" ? <Palette size={12} /> : <Package size={12} />}
+                    {listing.source === "remaker" ? (
+                      <Palette size={12} />
+                    ) : (
+                      <Package size={12} />
+                    )}
                     {SOURCE_LABEL[listing.source]}
                   </span>
 
@@ -265,7 +295,11 @@ export default function ReMakerMarketplace() {
                     className={`rmk-heart ${saved ? "on" : ""}`}
                     onClick={() => wishlist.toggle(listing.id)}
                     aria-pressed={saved}
-                    aria-label={saved ? `Remove ${listing.title} from saved` : `Save ${listing.title}`}
+                    aria-label={
+                      saved
+                        ? `Remove ${listing.title} from saved`
+                        : `Save ${listing.title}`
+                    }
                   >
                     <Heart size={17} fill={saved ? "currentColor" : "none"} />
                   </button>
@@ -275,14 +309,19 @@ export default function ReMakerMarketplace() {
                   <span className="rmk-cat">{listing.category}</span>
 
                   <h3>
-                    <Link to={`/remaker-marketplace/product/${listing.id}`} className="rmk-link">
+                    <Link
+                      to={`/remaker-marketplace/product/${listing.id}`}
+                      className="rmk-link"
+                    >
                       {listing.title}
                     </Link>
                   </h3>
 
                   <p className="rmk-seller">
                     {listing.seller}
-                    {listing.source === "remaker" && <BadgeCheck size={14} aria-label="Verified ReMaker" />}
+                    {listing.source === "remaker" && (
+                      <BadgeCheck size={14} aria-label="Verified ReMaker" />
+                    )}
                   </p>
 
                   <div className="rmk-foot">
@@ -298,7 +337,11 @@ export default function ReMakerMarketplace() {
                       <Leaf size={13} />
                       {listing.co2SavedKg} kg CO₂ saved
                     </span>
-                    <span>{listing.quantity > 1 ? `${listing.quantity} available` : "1 available"}</span>
+                    <span>
+                      {listing.quantity > 1
+                        ? `${listing.quantity} available`
+                        : "1 available"}
+                    </span>
                   </div>
                 </div>
               </article>

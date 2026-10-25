@@ -4,7 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import BeforeAfter from "./BeforeAfter";
 import PortfolioDeleteModal from "./PortfolioDeleteModal";
 import { CATEGORIES, REMAKER_PRODUCTS } from "../data/remakerProducts";
-import { addWork, deleteWork, fileToDataUrl, updateWork } from "../data/portfolioStore";
+import {
+  addWork,
+  deleteWork,
+  fileToDataUrl,
+  updateWork,
+} from "../data/portfolioStore";
 
 import "../css/ReMakerPortfolio.css";
 
@@ -29,7 +34,17 @@ function buildInitial(work) {
   };
 }
 
-function Slot({ kind, label, hint, value, error, busy, onPick, onRemove, invalid }) {
+function Slot({
+  kind,
+  label,
+  hint,
+  value,
+  error,
+  busy,
+  onPick,
+  onRemove,
+  invalid,
+}) {
   const inputRef = useRef(null);
   const [drag, setDrag] = useState(false);
 
@@ -61,7 +76,11 @@ function Slot({ kind, label, hint, value, error, busy, onPick, onRemove, invalid
         <img src={value || SAMPLE[kind]} alt={value ? `${label} photo` : ""} />
 
         {!value && (
-          <button type="button" className="rpt-slot-add" onClick={() => inputRef.current?.click()}>
+          <button
+            type="button"
+            className="rpt-slot-add"
+            onClick={() => inputRef.current?.click()}
+          >
             <b>{busy ? "Preparing photo..." : `Add ${kind} photo`}</b>
             <span>Drop a file here or browse. JPG, PNG or WebP.</span>
           </button>
@@ -78,7 +97,9 @@ function Slot({ kind, label, hint, value, error, busy, onPick, onRemove, invalid
           </div>
         )}
 
-        <span className={`rpt-slot-tag ${kind}`}>{kind === "before" ? "Before" : "After"}</span>
+        <span className={`rpt-slot-tag ${kind}`}>
+          {kind === "before" ? "Before" : "After"}
+        </span>
 
         <input
           ref={inputRef}
@@ -115,12 +136,16 @@ export default function PortfolioForm({ mode = "add", work = null }) {
   const [saving, setSaving] = useState(false);
 
   const dirty = JSON.stringify(values) !== JSON.stringify(initial);
-  const set = (field, value) => setValues((current) => ({ ...current, [field]: value }));
+  const set = (field, value) =>
+    setValues((current) => ({ ...current, [field]: value }));
 
   const errors = {
     before: values.before ? "" : "Add the photo from before you started.",
     after: values.after ? "" : "Add the photo of the finished piece.",
-    title: values.title.trim().length >= 3 ? "" : "Give this work a title of at least 3 characters.",
+    title:
+      values.title.trim().length >= 3
+        ? ""
+        : "Give this work a title of at least 3 characters.",
     category: values.category ? "" : "Choose the closest category.",
     description:
       values.description.trim().length >= DESC_MIN
@@ -153,7 +178,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
     if (hasErrors) {
       requestAnimationFrame(() =>
         document
-          .querySelector('.rpt [data-invalid="true"], .rpt [aria-invalid="true"]')
+          .querySelector(
+            '.rpt [data-invalid="true"], .rpt [aria-invalid="true"]',
+          )
           ?.scrollIntoView({ behavior: "smooth", block: "center" }),
       );
       return;
@@ -172,10 +199,14 @@ export default function PortfolioForm({ mode = "add", work = null }) {
 
     if (isEdit) {
       updateWork(work.id, data);
-      navigate(`/remaker-portfolio/${work.id}`, { state: { notice: "Changes saved." } });
+      navigate(`/remaker-portfolio/${work.id}`, {
+        state: { notice: "Changes saved." },
+      });
     } else {
       const { id } = addWork(data);
-      navigate(`/remaker-portfolio/${id}`, { state: { notice: "Work added to your portfolio." } });
+      navigate(`/remaker-portfolio/${id}`, {
+        state: { notice: "Work added to your portfolio." },
+      });
     }
   };
 
@@ -184,7 +215,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
     navigate("/remaker-portfolio", { state: { undo: removed } });
   };
 
-  const backTo = isEdit ? `/remaker-portfolio/${work.id}` : "/remaker-portfolio";
+  const backTo = isEdit
+    ? `/remaker-portfolio/${work.id}`
+    : "/remaker-portfolio";
   const ready = values.before && values.after;
 
   return (
@@ -194,7 +227,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
           &larr; {isEdit ? "Back to work" : "Back to portfolio"}
         </Link>
 
-        {isEdit && dirty && <span className="rpt-unsaved">Unsaved changes</span>}
+        {isEdit && dirty && (
+          <span className="rpt-unsaved">Unsaved changes</span>
+        )}
       </div>
 
       <div className="rpt-form-grid">
@@ -204,8 +239,8 @@ export default function PortfolioForm({ mode = "add", work = null }) {
             <header className="rpt-card-head">
               <h2>Before and after photos</h2>
               <p>
-                Show the piece as you found it, then as you finished it. Use the same angle and
-                light for both so the change is easy to see.
+                Show the piece as you found it, then as you finished it. Use the
+                same angle and light for both so the change is easy to see.
               </p>
             </header>
 
@@ -239,7 +274,10 @@ export default function PortfolioForm({ mode = "add", work = null }) {
           <section className="rpt-card">
             <header className="rpt-card-head">
               <h2>Details</h2>
-              <p>Buyers read this on your profile, so tell the story of the transformation.</p>
+              <p>
+                Buyers read this on your profile, so tell the story of the
+                transformation.
+              </p>
             </header>
 
             <div className="rpt-fields">
@@ -279,7 +317,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
                     ))}
                   </select>
                 </div>
-                {show("category") && <span className="rpt-error-inline">{show("category")}</span>}
+                {show("category") && (
+                  <span className="rpt-error-inline">{show("category")}</span>
+                )}
               </div>
 
               <div className="rpt-field">
@@ -290,7 +330,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
                   <select
                     id="rpt-product"
                     value={values.linkedProductId}
-                    onChange={(event) => set("linkedProductId", event.target.value)}
+                    onChange={(event) =>
+                      set("linkedProductId", event.target.value)
+                    }
                   >
                     <option value="">Not linked to a product</option>
                     {REMAKER_PRODUCTS.map((product) => (
@@ -314,7 +356,9 @@ export default function PortfolioForm({ mode = "add", work = null }) {
                   aria-invalid={show("description") ? "true" : undefined}
                 />
                 <div className="rpt-meta">
-                  <span className="rpt-error-inline">{show("description")}</span>
+                  <span className="rpt-error-inline">
+                    {show("description")}
+                  </span>
                   <small>
                     {values.description.length}/{DESC_MAX}
                   </small>
@@ -354,7 +398,12 @@ export default function PortfolioForm({ mode = "add", work = null }) {
           </section>
 
           <div className="rpt-actions">
-            <button type="button" className="rpt-btn primary" onClick={save} disabled={saving || (isEdit && !dirty)}>
+            <button
+              type="button"
+              className="rpt-btn primary"
+              onClick={save}
+              disabled={saving || (isEdit && !dirty)}
+            >
               {isEdit ? "Save changes" : "Add to portfolio"}
             </button>
 
@@ -363,7 +412,11 @@ export default function PortfolioForm({ mode = "add", work = null }) {
             </Link>
 
             {isEdit && (
-              <button type="button" className="rpt-btn danger-ghost" onClick={() => setConfirmDelete(true)}>
+              <button
+                type="button"
+                className="rpt-btn danger-ghost"
+                onClick={() => setConfirmDelete(true)}
+              >
                 Delete this work
               </button>
             )}

@@ -47,7 +47,9 @@ export default function ReMakerNotifications() {
   const counts = useMemo(() => {
     const result = { all: all.length, unread };
     CATEGORIES.forEach((category) => {
-      result[category.key] = all.filter((item) => item.category === category.key).length;
+      result[category.key] = all.filter(
+        (item) => item.category === category.key,
+      ).length;
     });
     return result;
   }, [all, unread]);
@@ -65,7 +67,8 @@ export default function ReMakerNotifications() {
 
     return all.filter((item) => {
       if (filter === "unread" && item.read) return false;
-      if (filter !== "all" && filter !== "unread" && item.category !== filter) return false;
+      if (filter !== "all" && filter !== "unread" && item.category !== filter)
+        return false;
       if (!text) return true;
 
       return `${item.title} ${item.text}`.toLowerCase().includes(text);
@@ -88,7 +91,8 @@ export default function ReMakerNotifications() {
     if (item.link) navigate(item.link.to);
   };
 
-  const toggleRead = (item) => (item.read ? markUnread(item.id) : markRead(item.id));
+  const toggleRead = (item) =>
+    item.read ? markUnread(item.id) : markRead(item.id);
 
   const remove = (item) => {
     const removed = removeNotifications(item.id);
@@ -102,11 +106,16 @@ export default function ReMakerNotifications() {
     setSelected([]);
   };
 
-  const selectOne = (id) => setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
+  const selectOne = (id) =>
+    setSelected((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+    );
 
-  const allVisibleSelected = page.length > 0 && page.every((item) => selected.includes(item.id));
+  const allVisibleSelected =
+    page.length > 0 && page.every((item) => selected.includes(item.id));
 
-  const toggleAllVisible = () => setSelected(allVisibleSelected ? [] : page.map((item) => item.id));
+  const toggleAllVisible = () =>
+    setSelected(allVisibleSelected ? [] : page.map((item) => item.id));
 
   const bulkRead = () => {
     markRead(selected);
@@ -122,14 +131,21 @@ export default function ReMakerNotifications() {
 
   const bulkDelete = () => {
     const removed = removeNotifications(selected);
-    flash(`Deleted ${removed.length} ${removed.length === 1 ? "notification" : "notifications"}.`, () => restoreNotifications(removed));
+    flash(
+      `Deleted ${removed.length} ${removed.length === 1 ? "notification" : "notifications"}.`,
+      () => restoreNotifications(removed),
+    );
     setSelected([]);
   };
 
   const readAll = () => {
     const category = filter === "all" || filter === "unread" ? "all" : filter;
     markAllRead(category);
-    flash(category === "all" ? "All notifications marked as read." : "Marked this type as read.");
+    flash(
+      category === "all"
+        ? "All notifications marked as read."
+        : "Marked this type as read.",
+    );
   };
 
   const filtersOn = filter !== "all" || query;
@@ -148,13 +164,25 @@ export default function ReMakerNotifications() {
         </div>
 
         <div className="ntf-top-actions">
-          <button type="button" className="ntf-btn ghost" onClick={toggleSelecting}>
+          <button
+            type="button"
+            className="ntf-btn ghost"
+            onClick={toggleSelecting}
+          >
             {selecting ? "Done" : "Select"}
           </button>
-          <button type="button" className="ntf-btn ghost" onClick={readAll} disabled={unread === 0}>
+          <button
+            type="button"
+            className="ntf-btn ghost"
+            onClick={readAll}
+            disabled={unread === 0}
+          >
             Mark all as read
           </button>
-          <Link to="/remaker-settings?section=notifications" className="ntf-btn primary">
+          <Link
+            to="/remaker-settings?section=notifications"
+            className="ntf-btn primary"
+          >
             Notification settings
           </Link>
         </div>
@@ -162,7 +190,11 @@ export default function ReMakerNotifications() {
 
       <div className="ntf-layout">
         <div className="ntf-main-col">
-          <NotificationFilters filter={filter} onFilter={pickFilter} counts={counts} />
+          <NotificationFilters
+            filter={filter}
+            onFilter={pickFilter}
+            counts={counts}
+          />
 
           <label className="ntf-search">
             <span className="sr-only">Search notifications</span>
@@ -181,18 +213,39 @@ export default function ReMakerNotifications() {
           {selecting && (
             <div className="ntf-bulk" role="toolbar" aria-label="Bulk actions">
               <label className="ntf-bulk-all">
-                <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} />
-                <span>{selected.length ? `${selected.length} selected` : "Select all shown"}</span>
+                <input
+                  type="checkbox"
+                  checked={allVisibleSelected}
+                  onChange={toggleAllVisible}
+                />
+                <span>
+                  {selected.length
+                    ? `${selected.length} selected`
+                    : "Select all shown"}
+                </span>
               </label>
 
               <div>
-                <button type="button" onClick={bulkRead} disabled={!selected.length}>
+                <button
+                  type="button"
+                  onClick={bulkRead}
+                  disabled={!selected.length}
+                >
                   Mark read
                 </button>
-                <button type="button" onClick={bulkUnread} disabled={!selected.length}>
+                <button
+                  type="button"
+                  onClick={bulkUnread}
+                  disabled={!selected.length}
+                >
                   Mark unread
                 </button>
-                <button type="button" className="danger" onClick={bulkDelete} disabled={!selected.length}>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={bulkDelete}
+                  disabled={!selected.length}
+                >
                   Delete
                 </button>
               </div>
@@ -240,7 +293,11 @@ export default function ReMakerNotifications() {
           ) : (
             <>
               {groups.map((group) => (
-                <section className="ntf-group" key={group.key} aria-label={group.label}>
+                <section
+                  className="ntf-group"
+                  key={group.key}
+                  aria-label={group.label}
+                >
                   <h3>{group.label}</h3>
 
                   <div className="ntf-list">
@@ -265,7 +322,11 @@ export default function ReMakerNotifications() {
                   Showing {Math.min(shown, visible.length)} of {visible.length}
                 </span>
                 {shown < visible.length && (
-                  <button type="button" className="ntf-btn ghost" onClick={() => setShown((value) => value + PAGE_SIZE)}>
+                  <button
+                    type="button"
+                    className="ntf-btn ghost"
+                    onClick={() => setShown((value) => value + PAGE_SIZE)}
+                  >
                     Show older notifications
                   </button>
                 )}
@@ -274,7 +335,11 @@ export default function ReMakerNotifications() {
           )}
         </div>
 
-        <NotificationSide unreadByCategory={unreadByCategory} prefs={prefs} onPick={pickFilter} />
+        <NotificationSide
+          unreadByCategory={unreadByCategory}
+          prefs={prefs}
+          onPick={pickFilter}
+        />
       </div>
 
       {toast && (

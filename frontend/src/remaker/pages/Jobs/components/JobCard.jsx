@@ -1,7 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import { DIFFICULTY_TONE, JOB_STATES, dueLabel, postedLabel } from "../../../data/jobsStore";
+import {
+  DIFFICULTY_TONE,
+  JOB_STATES,
+  dueLabel,
+  postedLabel,
+} from "../../../data/jobsStore";
 import { formatPrice } from "../../../data/remakerMarketplaceData";
 
 export default function JobCard({ job }) {
@@ -10,9 +15,19 @@ export default function JobCard({ job }) {
   const due = !open && job.status !== "Completed" ? dueLabel(job.dueAt) : "";
 
   return (
-    <article className={`job-card ${job.status === "Needs changes" ? "attention" : ""}`}>
+    <article
+      className={`job-card ${job.status === "Needs changes" ? "attention" : ""}`}
+    >
       <div className="job-media">
-        <img src={job.status === "Completed" && job.afterImage ? job.afterImage : job.before[0]} alt="" loading="lazy" />
+        <img
+          src={
+            job.status === "Completed" && job.afterImage
+              ? job.afterImage
+              : job.before[0]
+          }
+          alt=""
+          loading="lazy"
+        />
         <span className={`rk-badge ${state.tone}`}>{state.label}</span>
         <span className="job-fee">{formatPrice(job.fee)}</span>
       </div>
@@ -20,7 +35,9 @@ export default function JobCard({ job }) {
       <div className="job-body">
         <div className="job-top">
           <span>{job.category}</span>
-          <span className={`rk-badge ${DIFFICULTY_TONE[job.difficulty]}`}>{job.difficulty}</span>
+          <span className={`rk-badge ${DIFFICULTY_TONE[job.difficulty]}`}>
+            {job.difficulty}
+          </span>
         </div>
 
         <h3>
@@ -33,7 +50,13 @@ export default function JobCard({ job }) {
         <dl className="job-meta">
           <div>
             <dt>{open ? "Time allowed" : "Deadline"}</dt>
-            <dd>{open ? `${job.days} days` : job.status === "Completed" ? "Finished" : due}</dd>
+            <dd>
+              {open
+                ? `${job.days} days`
+                : job.status === "Completed"
+                  ? "Finished"
+                  : due}
+            </dd>
           </div>
           <div>
             <dt>Warehouse</dt>
@@ -45,7 +68,9 @@ export default function JobCard({ job }) {
           </div>
         </dl>
 
-        {job.status === "Needs changes" && <p className="job-alert">The quality check found things to fix.</p>}
+        {job.status === "Needs changes" && (
+          <p className="job-alert">The quality check found things to fix.</p>
+        )}
       </div>
     </article>
   );

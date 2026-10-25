@@ -5,8 +5,10 @@ export function printInvoice(o) {
   const w = window.open("", "_blank", "width=820,height=900");
   if (!w) return false;
   const t = o.transaction;
-  const row = (a, b, cls = "") => `<tr class="${cls}"><td>${a}</td><td class="r">${b}</td></tr>`;
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${o.order_id}</title>
+  const row = (a, b, cls = "") =>
+    `<tr class="${cls}"><td>${a}</td><td class="r">${b}</td></tr>`;
+  w.document
+    .write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${o.order_id}</title>
 <style>body{font-family:Inter,Arial,sans-serif;color:#13221b;margin:40px;font-size:14px}h1{font-size:24px;margin:0 0 4px}
 .top{display:flex;justify-content:space-between;border-bottom:2px solid #0e3a2d;padding-bottom:16px;margin-bottom:22px}
 .muted{color:#6a7b72}table{width:100%;border-collapse:collapse;margin:14px 0}td,th{padding:9px 6px;border-bottom:1px solid #e3ebe7;text-align:left}

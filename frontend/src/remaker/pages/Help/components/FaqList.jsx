@@ -13,7 +13,9 @@ export default function FaqList({ items, showCategory = false }) {
     <div className="hlp-faq">
       {items.map((item) => {
         const open = openId === item.id;
-        const category = FAQ_CATEGORIES.find((entry) => entry.key === item.category);
+        const category = FAQ_CATEGORIES.find(
+          (entry) => entry.key === item.category,
+        );
 
         return (
           <details

@@ -14,7 +14,11 @@ import { Card, Field, Row, SaveBar, Toggle, useDraft } from "./Controls";
 import ConfirmModal from "./ConfirmModal";
 
 export default function SecuritySection({ settings, onDirty, notify }) {
-  const { draft, set, dirty, reset } = useDraft(settings.privacy, "security", onDirty);
+  const { draft, set, dirty, reset } = useDraft(
+    settings.privacy,
+    "security",
+    onDirty,
+  );
   const [confirmOthers, setConfirmOthers] = useState(false);
   const timer = useRef(null);
 
@@ -27,7 +31,8 @@ export default function SecuritySection({ settings, onDirty, notify }) {
 
   const handleUnblock = (person) => {
     const removed = unblock(person.id);
-    if (removed) notify(`Unblocked ${removed.name}.`, () => restoreBlocked(removed));
+    if (removed)
+      notify(`Unblocked ${removed.name}.`, () => restoreBlocked(removed));
   };
 
   const handleEnd = (session) => {
@@ -47,7 +52,9 @@ export default function SecuritySection({ settings, onDirty, notify }) {
       privacy: settings.privacy,
     };
 
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
+    );
     const link = document.createElement("a");
 
     link.href = url;
@@ -59,23 +66,53 @@ export default function SecuritySection({ settings, onDirty, notify }) {
 
   return (
     <div className="set-stack">
-      <Card title="Who can see what" note="Control how visible your studio is to other people on ReOrbit.">
-        <Row title="Show my followers" note="Visitors can see how many people follow you.">
-          <Toggle checked={draft.showFollowers} onChange={(value) => set("showFollowers", value)} label="Show followers" />
+      <Card
+        title="Who can see what"
+        note="Control how visible your studio is to other people on ReOrbit."
+      >
+        <Row
+          title="Show my followers"
+          note="Visitors can see how many people follow you."
+        >
+          <Toggle
+            checked={draft.showFollowers}
+            onChange={(value) => set("showFollowers", value)}
+            label="Show followers"
+          />
         </Row>
-        <Row title="Show how many pieces I have sold" note="Builds trust with new buyers.">
-          <Toggle checked={draft.showSoldCount} onChange={(value) => set("showSoldCount", value)} label="Show sales count" />
+        <Row
+          title="Show how many pieces I have sold"
+          note="Builds trust with new buyers."
+        >
+          <Toggle
+            checked={draft.showSoldCount}
+            onChange={(value) => set("showSoldCount", value)}
+            label="Show sales count"
+          />
         </Row>
-        <Row title="Appear in marketplace search" note="Turn off to hide your studio from search. Your products stay for people with the link.">
-          <Toggle checked={draft.searchable} onChange={(value) => set("searchable", value)} label="Appear in search" />
+        <Row
+          title="Appear in marketplace search"
+          note="Turn off to hide your studio from search. Your products stay for people with the link."
+        >
+          <Toggle
+            checked={draft.searchable}
+            onChange={(value) => set("searchable", value)}
+            label="Appear in search"
+          />
         </Row>
 
         <div className="set-grid pad">
           <Field label="Who can message me" htmlFor="set-msg">
             <div className="set-select">
-              <select id="set-msg" value={draft.messages} onChange={(e) => set("messages", e.target.value)}>
+              <select
+                id="set-msg"
+                value={draft.messages}
+                onChange={(e) => set("messages", e.target.value)}
+              >
                 <option value="everyone">Everyone on ReOrbit</option>
-                <option value="customers">Only people who bought from me</option>
+                <option value="customers">
+                  Only people who bought from me
+                </option>
                 <option value="none">No one</option>
               </select>
             </div>
@@ -83,7 +120,10 @@ export default function SecuritySection({ settings, onDirty, notify }) {
         </div>
       </Card>
 
-      <Card title="Blocked people" note="They cannot message you or buy from you.">
+      <Card
+        title="Blocked people"
+        note="They cannot message you or buy from you."
+      >
         {settings.blocked.length === 0 ? (
           <p className="set-empty">You have not blocked anyone.</p>
         ) : (
@@ -96,10 +136,15 @@ export default function SecuritySection({ settings, onDirty, notify }) {
                 <div>
                   <strong>{person.name}</strong>
                   <small>
-                    {person.city} · {person.reason} · {blockedLabel(person.blockedAt)}
+                    {person.city} · {person.reason} ·{" "}
+                    {blockedLabel(person.blockedAt)}
                   </small>
                 </div>
-                <button type="button" className="set-btn ghost small" onClick={() => handleUnblock(person)}>
+                <button
+                  type="button"
+                  className="set-btn ghost small"
+                  onClick={() => handleUnblock(person)}
+                >
                   Unblock
                 </button>
               </li>
@@ -108,7 +153,10 @@ export default function SecuritySection({ settings, onDirty, notify }) {
         )}
       </Card>
 
-      <Card title="Where you are signed in" note="Sign out of anything you do not recognise.">
+      <Card
+        title="Where you are signed in"
+        note="Sign out of anything you do not recognise."
+      >
         <ul className="set-sessions">
           {settings.sessions.map((session) => (
             <li key={session.id}>
@@ -118,12 +166,19 @@ export default function SecuritySection({ settings, onDirty, notify }) {
                   {session.current && <em>This device</em>}
                 </strong>
                 <small>
-                  {session.place} · {session.current ? "Active now" : lastActiveLabel(session.lastActive)}
+                  {session.place} ·{" "}
+                  {session.current
+                    ? "Active now"
+                    : lastActiveLabel(session.lastActive)}
                 </small>
               </div>
 
               {!session.current && (
-                <button type="button" className="set-textbtn" onClick={() => handleEnd(session)}>
+                <button
+                  type="button"
+                  className="set-textbtn"
+                  onClick={() => handleEnd(session)}
+                >
                   Sign out
                 </button>
               )}
@@ -132,13 +187,20 @@ export default function SecuritySection({ settings, onDirty, notify }) {
         </ul>
 
         {others.length > 0 && (
-          <button type="button" className="set-btn danger-ghost" onClick={() => setConfirmOthers(true)}>
+          <button
+            type="button"
+            className="set-btn danger-ghost"
+            onClick={() => setConfirmOthers(true)}
+          >
             Sign out of all other devices
           </button>
         )}
       </Card>
 
-      <Card title="Your data" note="Download a copy of your settings and preferences.">
+      <Card
+        title="Your data"
+        note="Download a copy of your settings and preferences."
+      >
         <button type="button" className="set-btn ghost" onClick={downloadData}>
           Download my data
         </button>
@@ -158,7 +220,9 @@ export default function SecuritySection({ settings, onDirty, notify }) {
           }}
           onClose={() => setConfirmOthers(false)}
         >
-          <p>You stay signed in here. Everyone else will need to sign in again.</p>
+          <p>
+            You stay signed in here. Everyone else will need to sign in again.
+          </p>
         </ConfirmModal>
       )}
     </div>

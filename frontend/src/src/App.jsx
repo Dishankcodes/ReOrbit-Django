@@ -348,9 +348,15 @@ export default function App() {
         <Route path="/admin-orders" element={<AdminOrders />} />
         <Route path="/admin-orders/:orderId" element={<AdminOrderDetails />} />
         <Route path="/admin-warehouse" element={<AdminWarehouse />} />
-        <Route path="/admin-warehouse/:inventoryId" element={<AdminWarehouseItem />} />
+        <Route
+          path="/admin-warehouse/:inventoryId"
+          element={<AdminWarehouseItem />}
+        />
         <Route path="/admin-donations" element={<AdminDonations />} />
-        <Route path="/admin-donations/:donationId" element={<AdminDonationDetails />} />
+        <Route
+          path="/admin-donations/:donationId"
+          element={<AdminDonationDetails />}
+        />
       </Route>
 
       {/* =====================================================

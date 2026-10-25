@@ -24,7 +24,8 @@ export function MiniProgress({ order }) {
 
   let percent = (index / (flow.length - 1)) * 100;
   if (order.status === "Pending") percent = 6;
-  if (order.status === "Cancelled" || order.status === "Returned") percent = 100;
+  if (order.status === "Cancelled" || order.status === "Returned")
+    percent = 100;
 
   return (
     <div
@@ -153,7 +154,11 @@ export function CancelModal({ order, onConfirm, onClose }) {
         </fieldset>
 
         <div className="rod-modal-actions">
-          <button type="button" className="rod-btn danger" onClick={() => onConfirm(reason)}>
+          <button
+            type="button"
+            className="rod-btn danger"
+            onClick={() => onConfirm(reason)}
+          >
             Cancel order
           </button>
           <button type="button" className="rod-btn ghost" onClick={onClose}>

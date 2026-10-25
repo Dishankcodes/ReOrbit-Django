@@ -414,17 +414,29 @@ export default function App() {
         <Route path="/admin-orders" element={<AdminOrders />} />
         <Route path="/admin-orders/:orderId" element={<AdminOrderDetails />} />
         <Route path="/admin-warehouse" element={<AdminWarehouse />} />
-        <Route path="/admin-warehouse/:inventoryId" element={<AdminWarehouseItem />} />
+        <Route
+          path="/admin-warehouse/:inventoryId"
+          element={<AdminWarehouseItem />}
+        />
         <Route path="/admin-donations" element={<AdminDonations />} />
-        <Route path="/admin-donations/:donationId" element={<AdminDonationDetails />} />
+        <Route
+          path="/admin-donations/:donationId"
+          element={<AdminDonationDetails />}
+        />
         <Route path="/admin-pickups" element={<AdminPickups />} />
-        <Route path="/admin-pickups/:pickupId" element={<AdminPickupDetails />} />
+        <Route
+          path="/admin-pickups/:pickupId"
+          element={<AdminPickupDetails />}
+        />
         <Route path="/admin-rewards" element={<AdminRewards />} />
         <Route path="/admin-reports" element={<AdminReports />} />
         <Route path="/admin-settings" element={<AdminSettings />} />
         <Route path="/admin-team" element={<AdminTeam />} />
         <Route path="/admin-earnings" element={<AdminEarnings />} />
-        <Route path="/admin-profile" element={<Navigate to="/admin-settings" replace />} />
+        <Route
+          path="/admin-profile"
+          element={<Navigate to="/admin-settings" replace />}
+        />
         <Route path="/admin-notifications" element={<AdminNotifications />} />
         <Route path="/admin-shop" element={<AdminShop />} />
         <Route path="/admin-shop/product/:id" element={<AdminShopProduct />} />
@@ -433,13 +445,19 @@ export default function App() {
         <Route path="/admin-shop/checkout" element={<AdminShopCheckout />} />
         <Route path="/admin-shop/success/:ids" element={<AdminShopSuccess />} />
         <Route path="/admin-shop/orders" element={<AdminShopOrders />} />
-        <Route path="/admin-shop/orders/:orderId" element={<AdminShopOrderDetails />} />
+        <Route
+          path="/admin-shop/orders/:orderId"
+          element={<AdminShopOrderDetails />}
+        />
         <Route path="/admin-sell" element={<AdminSell />} />
         <Route path="/admin-sell/new" element={<AdminSellForm />} />
         <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
         <Route path="/admin-sell/listing/:id" element={<AdminSellListing />} />
         <Route path="/admin-sell/sales" element={<AdminSales />} />
-        <Route path="/admin-sell/sales/:orderId" element={<AdminSaleDetails />} />
+        <Route
+          path="/admin-sell/sales/:orderId"
+          element={<AdminSaleDetails />}
+        />
       </Route>
 
       {/* =====================================================

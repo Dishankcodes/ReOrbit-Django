@@ -81,13 +81,22 @@ function getDonationPage(pathname) {
   if (!pathname.startsWith("/user-donations/")) return null;
 
   if (pathname === "/user-donations/new") {
-    return { title: "Donate an item", subtitle: "Share something useful with someone who needs it." };
+    return {
+      title: "Donate an item",
+      subtitle: "Share something useful with someone who needs it.",
+    };
   }
   if (pathname === "/user-donations/history") {
-    return { title: "Donation History", subtitle: "Everything you've given, in one place." };
+    return {
+      title: "Donation History",
+      subtitle: "Everything you've given, in one place.",
+    };
   }
   if (pathname.startsWith("/user-donations/success/")) {
-    return { title: "Donation Submitted", subtitle: "Thank you for giving an item another orbit." };
+    return {
+      title: "Donation Submitted",
+      subtitle: "Thank you for giving an item another orbit.",
+    };
   }
   if (pathname.endsWith("/pickup")) {
     return { title: "Pickup", subtitle: "Manage your free donation pickup." };
@@ -95,7 +104,10 @@ function getDonationPage(pathname) {
   if (pathname.endsWith("/certificate")) {
     return { title: "Certificate", subtitle: "Proof of your contribution." };
   }
-  return { title: "Donation Details", subtitle: "Track your donation from pickup to delivery." };
+  return {
+    title: "Donation Details",
+    subtitle: "Track your donation from pickup to delivery.",
+  };
 }
 
 /* Titles for the nested order pages. */
@@ -103,9 +115,15 @@ function getOrderPage(pathname) {
   if (!pathname.startsWith("/user-orders/")) return null;
 
   if (pathname.endsWith("/track")) {
-    return { title: "Track Order", subtitle: "Follow your parcel from seller to doorstep." };
+    return {
+      title: "Track Order",
+      subtitle: "Follow your parcel from seller to doorstep.",
+    };
   }
-  return { title: "Order Details", subtitle: "Items, payment, delivery and seller in one place." };
+  return {
+    title: "Order Details",
+    subtitle: "Items, payment, delivery and seller in one place.",
+  };
 }
 
 const notifications = [
@@ -225,9 +243,9 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
   const currentPage = pageInformation[location.pathname] ||
     getDonationPage(location.pathname) ||
     getOrderPage(location.pathname) || {
-    title: "ReOrbit",
-    subtitle: "Reuse, recreate and reimagine your everyday items.",
-  };
+      title: "ReOrbit",
+      subtitle: "Reuse, recreate and reimagine your everyday items.",
+    };
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();

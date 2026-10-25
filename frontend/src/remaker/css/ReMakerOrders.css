@@ -883,7 +883,11 @@
 }
 
 .rod-timeline li.upcoming:not(:last-child)::before {
-  background: repeating-linear-gradient(to bottom, var(--rp-sage) 0 4px, transparent 4px 8px);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--rp-sage) 0 4px,
+    transparent 4px 8px
+  );
 }
 
 .rod-dot {
@@ -1220,7 +1224,9 @@
 
 label.active > .rod-radio {
   border-color: var(--rp-maroon);
-  box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 9px var(--rp-maroon);
+  box-shadow:
+    inset 0 0 0 3px #fff,
+    inset 0 0 0 9px var(--rp-maroon);
 }
 
 .rod-topics strong {

@@ -11,8 +11,19 @@ import "./JobsPage.css";
 
 const TABS = [
   { key: "open", label: "Open jobs", test: (job) => job.status === "Open" },
-  { key: "mine", label: "My jobs", test: (job) => ["Assigned", "In progress", "In review", "Needs changes"].includes(job.status) },
-  { key: "done", label: "Completed", test: (job) => job.status === "Completed" },
+  {
+    key: "mine",
+    label: "My jobs",
+    test: (job) =>
+      ["Assigned", "In progress", "In review", "Needs changes"].includes(
+        job.status,
+      ),
+  },
+  {
+    key: "done",
+    label: "Completed",
+    test: (job) => job.status === "Completed",
+  },
 ];
 
 export default function ReMakerJobs() {
@@ -25,11 +36,21 @@ export default function ReMakerJobs() {
 
   const totals = useMemo(() => jobTotals(jobs), [jobs]);
 
-  const counts = Object.fromEntries(TABS.map((item) => [item.key, jobs.filter(item.test).length]));
-  const needChanges = jobs.filter((job) => job.status === "Needs changes").length;
+  const counts = Object.fromEntries(
+    TABS.map((item) => [item.key, jobs.filter(item.test).length]),
+  );
+  const needChanges = jobs.filter(
+    (job) => job.status === "Needs changes",
+  ).length;
 
-  const inTab = useMemo(() => jobs.filter(TABS.find((item) => item.key === tab).test), [jobs, tab]);
-  const categories = useMemo(() => [...new Set(inTab.map((job) => job.category))].sort(), [inTab]);
+  const inTab = useMemo(
+    () => jobs.filter(TABS.find((item) => item.key === tab).test),
+    [jobs, tab],
+  );
+  const categories = useMemo(
+    () => [...new Set(inTab.map((job) => job.category))].sort(),
+    [inTab],
+  );
 
   const visible = useMemo(() => {
     const text = query.trim().toLowerCase();
@@ -37,7 +58,9 @@ export default function ReMakerJobs() {
     const filtered = inTab.filter((job) => {
       if (category !== "all" && job.category !== category) return false;
       if (!text) return true;
-      return `${job.title} ${job.summary} ${job.category}`.toLowerCase().includes(text);
+      return `${job.title} ${job.summary} ${job.category}`
+        .toLowerCase()
+        .includes(text);
     });
 
     const sorters = {
@@ -60,8 +83,9 @@ export default function ReMakerJobs() {
         <div>
           <h2>Warehouse jobs</h2>
           <p>
-            ReOrbit&apos;s warehouse offers refurbishing work to verified ReMakers. Take a job for a fixed fee, rework the
-            item, send photos, and get paid after a quality check.
+            ReOrbit&apos;s warehouse offers refurbishing work to verified
+            ReMakers. Take a job for a fixed fee, rework the item, send photos,
+            and get paid after a quality check.
           </p>
         </div>
 
@@ -71,8 +95,15 @@ export default function ReMakerJobs() {
       </header>
 
       {needChanges > 0 && (
-        <button type="button" className="job-alert-bar" onClick={() => switchTab("mine")}>
-          <strong>{needChanges} {needChanges === 1 ? "job needs" : "jobs need"} changes after the quality check</strong>
+        <button
+          type="button"
+          className="job-alert-bar"
+          onClick={() => switchTab("mine")}
+        >
+          <strong>
+            {needChanges} {needChanges === 1 ? "job needs" : "jobs need"}{" "}
+            changes after the quality check
+          </strong>
           <span>See my jobs →</span>
         </button>
       )}
@@ -81,7 +112,14 @@ export default function ReMakerJobs() {
 
       <div className="rk-tabs" role="tablist" aria-label="Jobs">
         {TABS.map((item) => (
-          <button type="button" role="tab" aria-selected={tab === item.key} className={tab === item.key ? "active" : ""} key={item.key} onClick={() => switchTab(item.key)}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === item.key}
+            className={tab === item.key ? "active" : ""}
+            key={item.key}
+            onClick={() => switchTab(item.key)}
+          >
             {item.label}
             <span>{counts[item.key]}</span>
           </button>
@@ -91,12 +129,20 @@ export default function ReMakerJobs() {
       <div className="job-filters">
         <label className="rk-search">
           <span className="sr-only">Search jobs</span>
-          <input type="text" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search jobs" />
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search jobs"
+          />
         </label>
 
         <label className="rk-select">
           <span className="sr-only">Sort jobs</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
             <option value="newest">Newest first</option>
             <option value="pay">Highest pay</option>
             <option value="due">Due soonest</option>
@@ -107,7 +153,13 @@ export default function ReMakerJobs() {
       {categories.length > 1 && (
         <div className="rk-chips" role="group" aria-label="Category">
           {["all", ...categories].map((item) => (
-            <button type="button" key={item} className={category === item ? "active" : ""} aria-pressed={category === item} onClick={() => setCategory(item)}>
+            <button
+              type="button"
+              key={item}
+              className={category === item ? "active" : ""}
+              aria-pressed={category === item}
+              onClick={() => setCategory(item)}
+            >
               {item === "all" ? "All categories" : item}
             </button>
           ))}
@@ -120,7 +172,13 @@ export default function ReMakerJobs() {
             <img src="/images/portfolio/before-tara-teak-cabinet.jpg" alt="" />
             <img src="/images/portfolio/tara-teak-cabinet.jpg" alt="" />
           </div>
-          <h3>{tab === "open" ? "No open jobs right now" : tab === "mine" ? "You have no active jobs" : "No completed jobs yet"}</h3>
+          <h3>
+            {tab === "open"
+              ? "No open jobs right now"
+              : tab === "mine"
+                ? "You have no active jobs"
+                : "No completed jobs yet"}
+          </h3>
           <p>
             {tab === "open"
               ? "New jobs are posted whenever the warehouse receives items. We will notify you."
@@ -129,7 +187,11 @@ export default function ReMakerJobs() {
                 : "Finished jobs that passed the quality check are listed here."}
           </p>
           {tab !== "open" && (
-            <button type="button" className="rk-btn primary" onClick={() => switchTab("open")}>
+            <button
+              type="button"
+              className="rk-btn primary"
+              onClick={() => switchTab("open")}
+            >
               See open jobs
             </button>
           )}

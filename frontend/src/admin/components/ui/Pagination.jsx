@@ -4,7 +4,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 function pageWindow(page, pageCount) {
   if (pageCount <= 5) return Array.from({ length: pageCount }, (_, i) => i + 1);
   const pages = new Set([1, pageCount, page, page - 1, page + 1]);
-  const sorted = [...pages].filter((p) => p >= 1 && p <= pageCount).sort((a, b) => a - b);
+  const sorted = [...pages]
+    .filter((p) => p >= 1 && p <= pageCount)
+    .sort((a, b) => a - b);
   const result = [];
   sorted.forEach((p, i) => {
     if (i > 0 && p - sorted[i - 1] > 1) result.push("gap-" + p);
@@ -28,16 +30,25 @@ export default function Pagination({
   return (
     <div className="ad-pagination">
       <div className="ad-pagination-info">
-        Showing <strong>{from}–{to}</strong> of <strong>{total}</strong>
+        Showing{" "}
+        <strong>
+          {from}–{to}
+        </strong>{" "}
+        of <strong>{total}</strong>
       </div>
 
       <div className="ad-pagination-controls">
         {onPageSize && (
           <label className="ad-pagination-size">
             <span>Rows</span>
-            <select value={pageSize} onChange={(e) => onPageSize(Number(e.target.value))}>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSize(Number(e.target.value))}
+            >
               {sizes.map((size) => (
-                <option key={size} value={size}>{size}</option>
+                <option key={size} value={size}>
+                  {size}
+                </option>
               ))}
             </select>
           </label>
@@ -55,7 +66,9 @@ export default function Pagination({
 
         {pageWindow(page, pageCount).map((p) =>
           typeof p === "string" ? (
-            <span key={p} className="ad-page-gap">…</span>
+            <span key={p} className="ad-page-gap">
+              …
+            </span>
           ) : (
             <button
               key={p}

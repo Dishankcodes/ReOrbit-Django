@@ -1,8 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { MARKET_LISTINGS, formatPrice } from "../../data/remakerMarketplaceData";
-import useWishlist, { clearWishlist, setWishlist } from "../../hooks/useWishlist";
+import {
+  MARKET_LISTINGS,
+  formatPrice,
+} from "../../data/remakerMarketplaceData";
+import useWishlist, {
+  clearWishlist,
+  setWishlist,
+} from "../../hooks/useWishlist";
 
 import SavedCard from "./components/SavedCard";
 
@@ -30,7 +36,10 @@ export default function ReMakerSaved() {
   const saved = useMemo(
     () =>
       wishlist.ids
-        .map((id, index) => ({ listing: MARKET_LISTINGS.find((item) => item.id === id), index }))
+        .map((id, index) => ({
+          listing: MARKET_LISTINGS.find((item) => item.id === id),
+          index,
+        }))
         .filter((entry) => entry.listing),
     [wishlist.ids],
   );
@@ -42,7 +51,9 @@ export default function ReMakerSaved() {
   };
 
   const visible = useMemo(() => {
-    const filtered = saved.filter((entry) => source === "all" || entry.listing.source === source);
+    const filtered = saved.filter(
+      (entry) => source === "all" || entry.listing.source === source,
+    );
 
     const sorters = {
       recent: (a, b) => b.index - a.index,
@@ -77,7 +88,10 @@ export default function ReMakerSaved() {
             <img src="/images/products/ceramic-lamp.jpg" alt="" />
           </div>
           <h3>Nothing saved yet</h3>
-          <p>Tap the heart on any listing in the marketplace to keep it here for later.</p>
+          <p>
+            Tap the heart on any listing in the marketplace to keep it here for
+            later.
+          </p>
           <Link to="/remaker-marketplace" className="rk-btn primary">
             Browse the marketplace
           </Link>
@@ -87,7 +101,13 @@ export default function ReMakerSaved() {
           <div className="rk-toast" role="status" aria-live="polite">
             <span>{toast.text}</span>
             {toast.undo && (
-              <button type="button" onClick={() => { toast.undo(); setToast(null); }}>
+              <button
+                type="button"
+                onClick={() => {
+                  toast.undo();
+                  setToast(null);
+                }}
+              >
                 Undo
               </button>
             )}
@@ -103,8 +123,12 @@ export default function ReMakerSaved() {
         <div>
           <h2>Saved items</h2>
           <p>
-            Pieces you saved from the marketplace. {saved.length} {saved.length === 1 ? "item" : "items"}, worth{" "}
-            {formatPrice(saved.reduce((sum, entry) => sum + entry.listing.price, 0))} together.
+            Pieces you saved from the marketplace. {saved.length}{" "}
+            {saved.length === 1 ? "item" : "items"}, worth{" "}
+            {formatPrice(
+              saved.reduce((sum, entry) => sum + entry.listing.price, 0),
+            )}{" "}
+            together.
           </p>
         </div>
 
@@ -112,7 +136,11 @@ export default function ReMakerSaved() {
           <Link to="/remaker-marketplace" className="rk-btn ghost">
             Keep browsing
           </Link>
-          <button type="button" className="rk-btn danger-ghost" onClick={() => setConfirmClear(true)}>
+          <button
+            type="button"
+            className="rk-btn danger-ghost"
+            onClick={() => setConfirmClear(true)}
+          >
             Clear all
           </button>
         </div>
@@ -125,7 +153,14 @@ export default function ReMakerSaved() {
             { key: "user", label: "Community items" },
             { key: "remaker", label: "ReMaker pieces" },
           ].map((item) => (
-            <button type="button" role="tab" aria-selected={source === item.key} className={source === item.key ? "active" : ""} key={item.key} onClick={() => setSource(item.key)}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={source === item.key}
+              className={source === item.key ? "active" : ""}
+              key={item.key}
+              onClick={() => setSource(item.key)}
+            >
               {item.label}
               <span>{counts[item.key]}</span>
             </button>
@@ -134,7 +169,10 @@ export default function ReMakerSaved() {
 
         <label className="rk-select">
           <span className="sr-only">Sort saved items</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
             <option value="recent">Recently saved</option>
             <option value="low">Price: low to high</option>
             <option value="high">Price: high to low</option>
@@ -146,8 +184,14 @@ export default function ReMakerSaved() {
       {visible.length === 0 ? (
         <div className="rk-empty">
           <h3>Nothing in this group</h3>
-          <p>Switch to another group, or save more pieces from the marketplace.</p>
-          <button type="button" className="rk-btn ghost" onClick={() => setSource("all")}>
+          <p>
+            Switch to another group, or save more pieces from the marketplace.
+          </p>
+          <button
+            type="button"
+            className="rk-btn ghost"
+            onClick={() => setSource("all")}
+          >
             Show everything
           </button>
         </div>
@@ -160,21 +204,43 @@ export default function ReMakerSaved() {
           </div>
 
           <p className="sav-total">
-            {visible.length} {visible.length === 1 ? "item" : "items"} shown, {formatPrice(total)} in total
+            {visible.length} {visible.length === 1 ? "item" : "items"} shown,{" "}
+            {formatPrice(total)} in total
           </p>
         </>
       )}
 
       {confirmClear && (
-        <div className="rk-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setConfirmClear(false); }}>
-          <div className="rk-modal" role="alertdialog" aria-modal="true" aria-labelledby="sav-clear-title">
+        <div
+          className="rk-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setConfirmClear(false);
+          }}
+        >
+          <div
+            className="rk-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="sav-clear-title"
+          >
             <h2 id="sav-clear-title">Clear all saved items?</h2>
-            <p className="rk-modal-body">This removes all {saved.length} items from your saved list. You can undo right after.</p>
+            <p className="rk-modal-body">
+              This removes all {saved.length} items from your saved list. You
+              can undo right after.
+            </p>
             <div className="rk-modal-actions">
-              <button type="button" className="rk-btn danger" onClick={clearAll}>
+              <button
+                type="button"
+                className="rk-btn danger"
+                onClick={clearAll}
+              >
                 Clear all
               </button>
-              <button type="button" className="rk-btn ghost" onClick={() => setConfirmClear(false)}>
+              <button
+                type="button"
+                className="rk-btn ghost"
+                onClick={() => setConfirmClear(false)}
+              >
                 Keep them
               </button>
             </div>
@@ -186,7 +252,13 @@ export default function ReMakerSaved() {
         <div className="rk-toast" role="status" aria-live="polite">
           <span>{toast.text}</span>
           {toast.undo && (
-            <button type="button" onClick={() => { toast.undo(); setToast(null); }}>
+            <button
+              type="button"
+              onClick={() => {
+                toast.undo();
+                setToast(null);
+              }}
+            >
               Undo
             </button>
           )}

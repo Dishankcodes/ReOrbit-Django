@@ -18,7 +18,9 @@ export default function ReMakerSettings() {
   const [params, setParams] = useSearchParams();
 
   const requested = params.get("section");
-  const active = SECTIONS.some((item) => item.key === requested) ? requested : "account";
+  const active = SECTIONS.some((item) => item.key === requested)
+    ? requested
+    : "account";
 
   const [dirty, setDirty] = useState({});
   const [toast, setToast] = useState(null); /* { text, undo } */
@@ -28,7 +30,9 @@ export default function ReMakerSettings() {
 
   /* Sections report unsaved changes here so the menu can show a dot */
   const reportDirty = useCallback((key, value) => {
-    setDirty((current) => (current[key] === value ? current : { ...current, [key]: value }));
+    setDirty((current) =>
+      current[key] === value ? current : { ...current, [key]: value },
+    );
   }, []);
 
   const notify = useCallback((text, undo = null) => {
@@ -65,7 +69,9 @@ export default function ReMakerSettings() {
       <header className="set-top">
         <div>
           <h2>Settings</h2>
-          <p>Manage your account, studio and how ReOrbit keeps in touch with you.</p>
+          <p>
+            Manage your account, studio and how ReOrbit keeps in touch with you.
+          </p>
         </div>
 
         <Link to="/remaker-profile" className="set-btn ghost">
@@ -84,19 +90,39 @@ export default function ReMakerSettings() {
 
           {/* Every section stays mounted so unsaved changes survive switching tabs */}
           <div hidden={active !== "account"}>
-            <AccountSection settings={settings} onDirty={reportDirty} notify={notify} />
+            <AccountSection
+              settings={settings}
+              onDirty={reportDirty}
+              notify={notify}
+            />
           </div>
           <div hidden={active !== "studio"}>
-            <StudioSection settings={settings} onDirty={reportDirty} notify={notify} />
+            <StudioSection
+              settings={settings}
+              onDirty={reportDirty}
+              notify={notify}
+            />
           </div>
           <div hidden={active !== "notifications"}>
-            <NotificationPrefsSection settings={settings} onDirty={reportDirty} notify={notify} />
+            <NotificationPrefsSection
+              settings={settings}
+              onDirty={reportDirty}
+              notify={notify}
+            />
           </div>
           <div hidden={active !== "payouts"}>
-            <PayoutPrefsSection settings={settings} onDirty={reportDirty} notify={notify} />
+            <PayoutPrefsSection
+              settings={settings}
+              onDirty={reportDirty}
+              notify={notify}
+            />
           </div>
           <div hidden={active !== "security"}>
-            <SecuritySection settings={settings} onDirty={reportDirty} notify={notify} />
+            <SecuritySection
+              settings={settings}
+              onDirty={reportDirty}
+              notify={notify}
+            />
           </div>
           <div hidden={active !== "danger"}>
             <DangerSection notify={notify} />

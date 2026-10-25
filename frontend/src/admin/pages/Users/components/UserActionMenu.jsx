@@ -18,7 +18,8 @@ export default function UserActionMenu({ user, onView, onAction }) {
     if (!rect) return;
     const menuHeight = menuRef.current?.offsetHeight || 190;
     const below = window.innerHeight - rect.bottom;
-    const top = below < menuHeight + 12 ? rect.top - menuHeight - 6 : rect.bottom + 6;
+    const top =
+      below < menuHeight + 12 ? rect.top - menuHeight - 6 : rect.bottom + 6;
     setCoords({ top, left: Math.max(12, rect.right - 214) });
   };
 
@@ -32,8 +33,10 @@ export default function UserActionMenu({ user, onView, onAction }) {
       if (event.type === "keydown" && event.key !== "Escape") return;
       if (
         event.type === "mousedown" &&
-        (menuRef.current?.contains(event.target) || buttonRef.current?.contains(event.target))
-      ) return;
+        (menuRef.current?.contains(event.target) ||
+          buttonRef.current?.contains(event.target))
+      )
+        return;
       setOpen(false);
     };
     document.addEventListener("mousedown", close);
@@ -74,7 +77,15 @@ export default function UserActionMenu({ user, onView, onAction }) {
             style={{ top: coords.top, left: coords.left }}
             onClick={(event) => event.stopPropagation()}
           >
-            <button type="button" role="menuitem" className="au-menu-item" onClick={() => { setOpen(false); onView(); }}>
+            <button
+              type="button"
+              role="menuitem"
+              className="au-menu-item"
+              onClick={() => {
+                setOpen(false);
+                onView();
+              }}
+            >
               <Eye size={15} /> View profile
             </button>
             <div className="au-menu-sep" />
@@ -86,7 +97,10 @@ export default function UserActionMenu({ user, onView, onAction }) {
                   type="button"
                   role="menuitem"
                   className={`au-menu-item tone-${action.tone}`}
-                  onClick={() => { setOpen(false); onAction(action); }}
+                  onClick={() => {
+                    setOpen(false);
+                    onAction(action);
+                  }}
                 >
                   <Icon size={15} /> {action.label}
                 </button>

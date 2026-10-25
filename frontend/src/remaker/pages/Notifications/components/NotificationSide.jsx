@@ -10,7 +10,11 @@ export default function NotificationSide({ unreadByCategory, prefs, onPick }) {
     const row = prefs.channels[key];
     if (!row) return "Off";
 
-    const on = [row.app && "App", row.email && "Email", row.sms && "SMS"].filter(Boolean);
+    const on = [
+      row.app && "App",
+      row.email && "Email",
+      row.sms && "SMS",
+    ].filter(Boolean);
     return on.length ? on.join(", ") : "Off";
   };
 
@@ -28,7 +32,9 @@ export default function NotificationSide({ unreadByCategory, prefs, onPick }) {
                   <strong>{item.label}</strong>
                   <small>{item.note}</small>
                 </span>
-                <b className={unreadByCategory[item.key] ? "has" : ""}>{unreadByCategory[item.key] || 0}</b>
+                <b className={unreadByCategory[item.key] ? "has" : ""}>
+                  {unreadByCategory[item.key] || 0}
+                </b>
               </button>
             </li>
           ))}
@@ -44,25 +50,37 @@ export default function NotificationSide({ unreadByCategory, prefs, onPick }) {
         <dl className="ntf-channels">
           {NOTIFICATION_ROWS.slice(0, 5).map((row) => (
             <div key={row.key}>
-              <dt>{row.label.split(" and ")[0].replace("New orders", "Sales")}</dt>
+              <dt>
+                {row.label.split(" and ")[0].replace("New orders", "Sales")}
+              </dt>
               <dd>{channelLabel(row.key)}</dd>
             </div>
           ))}
         </dl>
 
         <p className="ntf-quiet">
-          {prefs.quietOn ? `Quiet hours: ${prefs.quietFrom} to ${prefs.quietTo}` : "Quiet hours are off"} ·{" "}
-          {prefs.digest === "instant" ? "Instant alerts" : prefs.digest === "daily" ? "Daily summary" : "Weekly summary"}
+          {prefs.quietOn
+            ? `Quiet hours: ${prefs.quietFrom} to ${prefs.quietTo}`
+            : "Quiet hours are off"}{" "}
+          ·{" "}
+          {prefs.digest === "instant"
+            ? "Instant alerts"
+            : prefs.digest === "daily"
+              ? "Daily summary"
+              : "Weekly summary"}
         </p>
       </section>
 
       <section className="ntf-card tips">
         <h3>Never miss an order</h3>
         <p>
-          New orders must be accepted within 24 hours. Turn on SMS for sales so you hear about them even when you are
-          not on ReOrbit.
+          New orders must be accepted within 24 hours. Turn on SMS for sales so
+          you hear about them even when you are not on ReOrbit.
         </p>
-        <Link to="/remaker-settings?section=notifications" className="ntf-btn light">
+        <Link
+          to="/remaker-settings?section=notifications"
+          className="ntf-btn light"
+        >
           Set up alerts
         </Link>
       </section>

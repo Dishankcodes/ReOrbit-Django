@@ -217,7 +217,9 @@ export function fileToDataUrl(file, maxSide = 1400, quality = 0.82) {
       canvas.width = Math.round(image.width * scale);
       canvas.height = Math.round(image.height * scale);
 
-      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas
+        .getContext("2d")
+        .drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };

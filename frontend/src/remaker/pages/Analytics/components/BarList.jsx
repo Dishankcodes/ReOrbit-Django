@@ -1,7 +1,13 @@
 import React from "react";
 
 /* Horizontal bars: traffic sources, buyer cities */
-export default function BarList({ title, subtitle, items, valueLabel, sideLabel }) {
+export default function BarList({
+  title,
+  subtitle,
+  items,
+  valueLabel,
+  sideLabel,
+}) {
   const max = Math.max(...items.map((item) => item.percent), 1);
 
   return (

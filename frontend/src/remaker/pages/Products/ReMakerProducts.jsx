@@ -1,6 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, ImagePlus, Pencil, Plus, Search, ShoppingBag } from "lucide-react";
+import {
+  Eye,
+  ImagePlus,
+  Pencil,
+  Plus,
+  Search,
+  ShoppingBag,
+} from "lucide-react";
 
 import {
   PRODUCT_STATUS,
@@ -58,7 +65,10 @@ export default function ReMakerProducts() {
         if (product.id !== id || product.status === "Draft") return product;
 
         if (product.status === "Inactive") {
-          return { ...product, status: product.stock === 0 ? "Sold_Out" : "Listed" };
+          return {
+            ...product,
+            status: product.stock === 0 ? "Sold_Out" : "Listed",
+          };
         }
 
         return { ...product, status: "Inactive" };
@@ -103,7 +113,9 @@ export default function ReMakerProducts() {
       {visible.length === 0 ? (
         <div className="rpl-empty">
           <ShoppingBag size={34} strokeWidth={1.6} />
-          <h2>{query ? "No products match your search" : "Nothing here yet"}</h2>
+          <h2>
+            {query ? "No products match your search" : "Nothing here yet"}
+          </h2>
           <p>
             {query
               ? "Try a different word or clear the search."
@@ -118,7 +130,8 @@ export default function ReMakerProducts() {
         <div className="rpl-grid">
           {visible.map((product) => {
             const status = PRODUCT_STATUS[product.status];
-            const isActive = product.status === "Listed" || product.status === "Sold_Out";
+            const isActive =
+              product.status === "Listed" || product.status === "Sold_Out";
             const isDraft = product.status === "Draft";
 
             return (
@@ -138,7 +151,9 @@ export default function ReMakerProducts() {
                       <ImagePlus size={26} />
                     </span>
                   )}
-                  <span className={`rpl-badge ${status.tone}`}>{status.label}</span>
+                  <span className={`rpl-badge ${status.tone}`}>
+                    {status.label}
+                  </span>
                 </Link>
 
                 <div className="rpl-body">
@@ -146,7 +161,11 @@ export default function ReMakerProducts() {
                   <h3>{product.title}</h3>
 
                   <div className="rpl-price-row">
-                    <strong>{product.price ? formatPrice(product.price) : "No price yet"}</strong>
+                    <strong>
+                      {product.price
+                        ? formatPrice(product.price)
+                        : "No price yet"}
+                    </strong>
                     <span>
                       {isDraft
                         ? "Not published"
@@ -169,7 +188,9 @@ export default function ReMakerProducts() {
 
                   <div className="rpl-foot">
                     {isDraft ? (
-                      <span className="rpl-draft-note">Finish it to publish</span>
+                      <span className="rpl-draft-note">
+                        Finish it to publish
+                      </span>
                     ) : (
                       <label className="rpl-toggle">
                         <button
@@ -189,7 +210,9 @@ export default function ReMakerProducts() {
                     <button
                       type="button"
                       className="rpl-edit"
-                      onClick={() => navigate(`/remaker-products/${product.id}/edit`)}
+                      onClick={() =>
+                        navigate(`/remaker-products/${product.id}/edit`)
+                      }
                     >
                       <Pencil size={14} />
                       Edit

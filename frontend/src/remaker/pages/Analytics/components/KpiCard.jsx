@@ -11,19 +11,40 @@ function Sparkline({ values }) {
   const span = max - min || 1;
 
   const points = values
-    .map((value, i) => `${(i / (values.length - 1)) * 100},${92 - ((value - min) / span) * 84}`)
+    .map(
+      (value, i) =>
+        `${(i / (values.length - 1)) * 100},${92 - ((value - min) / span) * 84}`,
+    )
     .join(" ");
 
   return (
-    <svg className="ana-spark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <svg
+      className="ana-spark"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
       <polygon points={`0,100 ${points} 100,100`} className="area" />
-      <polyline points={points} className="line" vectorEffect="non-scaling-stroke" />
+      <polyline
+        points={points}
+        className="line"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
 
-export default function KpiCard({ label, value, hint, delta, series, tone = "default", lowerIsBetter = false }) {
-  const hasDelta = delta !== null && delta !== undefined && !Number.isNaN(delta);
+export default function KpiCard({
+  label,
+  value,
+  hint,
+  delta,
+  series,
+  tone = "default",
+  lowerIsBetter = false,
+}) {
+  const hasDelta =
+    delta !== null && delta !== undefined && !Number.isNaN(delta);
   const good = hasDelta && (lowerIsBetter ? delta <= 0 : delta >= 0);
 
   return (
@@ -31,8 +52,12 @@ export default function KpiCard({ label, value, hint, delta, series, tone = "def
       <header>
         <span>{label}</span>
         {hasDelta && (
-          <em className={good ? "up" : "down"} title="Compared with the period before">
-            {delta >= 0 ? "▲" : "▼"} {fmtDelta(Math.abs(delta)).replace("+", "")}
+          <em
+            className={good ? "up" : "down"}
+            title="Compared with the period before"
+          >
+            {delta >= 0 ? "▲" : "▼"}{" "}
+            {fmtDelta(Math.abs(delta)).replace("+", "")}
           </em>
         )}
       </header>

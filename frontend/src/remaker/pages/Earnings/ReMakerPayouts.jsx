@@ -50,8 +50,12 @@ function BankModal({ bank, onSave, onClose }) {
   const errors = {
     holder: holder.trim().length >= 3 ? "" : "Enter the name on the account.",
     name: name.trim().length >= 2 ? "" : "Enter your bank's name.",
-    account: /^[0-9]{9,18}$/.test(account.trim()) ? "" : "Account numbers have 9 to 18 digits.",
-    ifsc: /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc.trim()) ? "" : "IFSC looks like SBIN0001234.",
+    account: /^[0-9]{9,18}$/.test(account.trim())
+      ? ""
+      : "Account numbers have 9 to 18 digits.",
+    ifsc: /^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(ifsc.trim())
+      ? ""
+      : "IFSC looks like SBIN0001234.",
   };
 
   const show = (key) => (attempted ? errors[key] : "");
@@ -80,19 +84,34 @@ function BankModal({ bank, onSave, onClose }) {
       >
         <h2 id="sls-bank-title">Bank account for payouts</h2>
         <p>
-          Money is sent to this account. For your safety we keep only the last 4 digits of the account number.
+          Money is sent to this account. For your safety we keep only the last 4
+          digits of the account number.
         </p>
 
         <div className="rod-fields sls-bank-fields">
           <div className="rod-field">
             <label htmlFor="sls-holder">Name on the account</label>
-            <input id="sls-holder" type="text" value={holder} onChange={(e) => setHolder(e.target.value)} aria-invalid={show("holder") ? "true" : undefined} />
-            {show("holder") && <span className="rod-error">{show("holder")}</span>}
+            <input
+              id="sls-holder"
+              type="text"
+              value={holder}
+              onChange={(e) => setHolder(e.target.value)}
+              aria-invalid={show("holder") ? "true" : undefined}
+            />
+            {show("holder") && (
+              <span className="rod-error">{show("holder")}</span>
+            )}
           </div>
 
           <div className="rod-field">
             <label htmlFor="sls-bankname">Bank</label>
-            <input id="sls-bankname" type="text" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={show("name") ? "true" : undefined} />
+            <input
+              id="sls-bankname"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              aria-invalid={show("name") ? "true" : undefined}
+            />
             {show("name") && <span className="rod-error">{show("name")}</span>}
           </div>
 
@@ -108,7 +127,9 @@ function BankModal({ bank, onSave, onClose }) {
               onChange={(e) => setAccount(e.target.value.replace(/\D/g, ""))}
               aria-invalid={show("account") ? "true" : undefined}
             />
-            {show("account") && <span className="rod-error">{show("account")}</span>}
+            {show("account") && (
+              <span className="rod-error">{show("account")}</span>
+            )}
           </div>
 
           <div className="rod-field">
@@ -164,7 +185,9 @@ export default function ReMakerPayouts() {
 
     if (payout) {
       setOpen(payout.id);
-      setNotice(`Payout ${payout.id} requested. It reaches your bank in 1 to 2 working days.`);
+      setNotice(
+        `Payout ${payout.id} requested. It reaches your bank in 1 to 2 working days.`,
+      );
     }
   };
 
@@ -194,7 +217,12 @@ export default function ReMakerPayouts() {
               </p>
             </div>
 
-            <button type="button" className="rod-btn primary" disabled={!canWithdraw} onClick={() => setModal("withdraw")}>
+            <button
+              type="button"
+              className="rod-btn primary"
+              disabled={!canWithdraw}
+              onClick={() => setModal("withdraw")}
+            >
               Withdraw {canWithdraw ? formatPrice(earnings.available) : ""}
             </button>
           </section>
@@ -211,11 +239,16 @@ export default function ReMakerPayouts() {
             ) : (
               <div className="sls-payouts">
                 {payouts.map((payout) => {
-                  const included = orders.filter((order) => payout.orderIds.includes(order.id));
+                  const included = orders.filter((order) =>
+                    payout.orderIds.includes(order.id),
+                  );
                   const expanded = open === payout.id;
 
                   return (
-                    <article className={`sls-payout ${expanded ? "open" : ""}`} key={payout.id}>
+                    <article
+                      className={`sls-payout ${expanded ? "open" : ""}`}
+                      key={payout.id}
+                    >
                       <button
                         type="button"
                         className="sls-payout-head"
@@ -227,10 +260,16 @@ export default function ReMakerPayouts() {
                           <small>{formatDate(payout.createdAt)}</small>
                         </span>
                         <span className="sls-payout-meta">
-                          {payout.orderIds.length} {payout.orderIds.length === 1 ? "order" : "orders"} · to ••••{payout.bankLast4}
+                          {payout.orderIds.length}{" "}
+                          {payout.orderIds.length === 1 ? "order" : "orders"} ·
+                          to ••••{payout.bankLast4}
                         </span>
-                        <span className="sls-payout-amount">{formatPrice(payout.amount)}</span>
-                        <span className={`sls-earn ${payout.status === "Paid" ? "done" : "active"}`}>
+                        <span className="sls-payout-amount">
+                          {formatPrice(payout.amount)}
+                        </span>
+                        <span
+                          className={`sls-earn ${payout.status === "Paid" ? "done" : "active"}`}
+                        >
                           {payout.status === "Paid" ? "Paid" : "Processing"}
                         </span>
                       </button>
@@ -275,7 +314,11 @@ export default function ReMakerPayouts() {
           <section className="rod-panel sls-bank">
             <div className="rod-panel-head">
               <h3>Bank account</h3>
-              <button type="button" className="sls-textbtn" onClick={() => setModal("bank")}>
+              <button
+                type="button"
+                className="sls-textbtn"
+                onClick={() => setModal("bank")}
+              >
                 Change
               </button>
             </div>
@@ -298,7 +341,9 @@ export default function ReMakerPayouts() {
               </li>
               <li>
                 <strong>Withdraw {formatPrice(MIN_PAYOUT)} or more</strong>
-                <small>You can withdraw everything that has cleared in one go.</small>
+                <small>
+                  You can withdraw everything that has cleared in one go.
+                </small>
               </li>
               <li>
                 <strong>Money arrives in 1 to 2 working days</strong>
@@ -320,7 +365,13 @@ export default function ReMakerPayouts() {
         />
       )}
 
-      {modal === "bank" && <BankModal bank={bank} onSave={saveBank} onClose={() => setModal(null)} />}
+      {modal === "bank" && (
+        <BankModal
+          bank={bank}
+          onSave={saveBank}
+          onClose={() => setModal(null)}
+        />
+      )}
 
       {notice && (
         <div className="rod-toast" role="status" aria-live="polite">

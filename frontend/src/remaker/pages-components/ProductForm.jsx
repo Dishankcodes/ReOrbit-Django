@@ -51,7 +51,9 @@ function buildInitial(product) {
     materials: product?.materials || [],
     originType: product?.originType || "own",
     originItemId: product?.originItemId || "",
-    active: product ? product.status === "Listed" || product.status === "Sold_Out" : true,
+    active: product
+      ? product.status === "Listed" || product.status === "Sold_Out"
+      : true,
     photos,
   };
 }
@@ -112,7 +114,11 @@ export default function ProductForm({ mode = "add", product = null }) {
   };
 
   const checklist = [
-    { key: "photos", label: `Add ${MIN_PHOTOS} to ${MAX_PHOTOS} photos`, note: `${photoCount}/${MAX_PHOTOS}` },
+    {
+      key: "photos",
+      label: `Add ${MIN_PHOTOS} to ${MAX_PHOTOS} photos`,
+      note: `${photoCount}/${MAX_PHOTOS}`,
+    },
     { key: "title", label: "Name your product" },
     { key: "category", label: "Pick a category" },
     { key: "description", label: "Describe how you made it" },
@@ -257,7 +263,11 @@ export default function ProductForm({ mode = "add", product = null }) {
       addMaterial(materialDraft);
     }
 
-    if (event.key === "Backspace" && !materialDraft && values.materials.length) {
+    if (
+      event.key === "Backspace" &&
+      !materialDraft &&
+      values.materials.length
+    ) {
       setField("materials", values.materials.slice(0, -1));
     }
   };
@@ -273,7 +283,10 @@ export default function ProductForm({ mode = "add", product = null }) {
      --------------------------------------------------------- */
 
   const changeStock = (delta) =>
-    setField("stock", Math.max(0, Math.min(999, Number(values.stock || 0) + delta)));
+    setField(
+      "stock",
+      Math.max(0, Math.min(999, Number(values.stock || 0) + delta)),
+    );
 
   const handlePrice = (event) =>
     setField("price", event.target.value.replace(/[^0-9]/g, "").slice(0, 7));
@@ -327,7 +340,10 @@ export default function ProductForm({ mode = "add", product = null }) {
   const handleSaveEdit = () => {
     if (values.active && !complete) {
       setAttempted(true);
-      flash("error", "Finish the highlighted fields before keeping this product active.");
+      flash(
+        "error",
+        "Finish the highlighted fields before keeping this product active.",
+      );
       scrollToFirstProblem();
       return;
     }
@@ -347,7 +363,9 @@ export default function ProductForm({ mode = "add", product = null }) {
 
   const cover = photos[0] || photos.find(Boolean);
   const soldOut = Number(values.stock) === 0;
-  const originItem = ORIGIN_ITEMS.find((item) => item.id === values.originItemId);
+  const originItem = ORIGIN_ITEMS.find(
+    (item) => item.id === values.originItemId,
+  );
 
   const unusedSuggestions = MATERIAL_SUGGESTIONS.filter(
     (suggestion) =>
@@ -394,11 +412,13 @@ export default function ProductForm({ mode = "add", product = null }) {
               <div>
                 <h2>Photos</h2>
                 <p>
-                  Add {MIN_PHOTOS} to {MAX_PHOTOS} clear photos. The first one is
-                  the cover buyers see in the marketplace.
+                  Add {MIN_PHOTOS} to {MAX_PHOTOS} clear photos. The first one
+                  is the cover buyers see in the marketplace.
                 </p>
               </div>
-              <span className={`rpf-count ${photoCount >= MIN_PHOTOS ? "ok" : ""}`}>
+              <span
+                className={`rpf-count ${photoCount >= MIN_PHOTOS ? "ok" : ""}`}
+              >
                 {photoCount}/{MAX_PHOTOS}
               </span>
             </header>
@@ -421,7 +441,9 @@ export default function ProductForm({ mode = "add", product = null }) {
                     <>
                       <img src={photo.url} alt={`Product photo ${index + 1}`} />
 
-                      {index === 0 && <span className="rpf-cover-tag">Cover</span>}
+                      {index === 0 && (
+                        <span className="rpf-cover-tag">Cover</span>
+                      )}
 
                       <div className="rpf-slot-actions">
                         {index !== 0 && (
@@ -464,14 +486,18 @@ export default function ProductForm({ mode = "add", product = null }) {
                             <Upload size={22} />
                           </span>
                           <strong>Drop your cover photo here</strong>
-                          <span>or browse. JPG, PNG or WebP, up to {MAX_MB} MB.</span>
+                          <span>
+                            or browse. JPG, PNG or WebP, up to {MAX_MB} MB.
+                          </span>
                         </>
                       ) : (
                         <>
                           <span className="rpf-slot-icon small">
                             <ImagePlus size={18} />
                           </span>
-                          <strong>{index < MIN_PHOTOS ? "Add photo" : "Optional"}</strong>
+                          <strong>
+                            {index < MIN_PHOTOS ? "Add photo" : "Optional"}
+                          </strong>
                         </>
                       )}
                     </button>
@@ -524,7 +550,9 @@ export default function ProductForm({ mode = "add", product = null }) {
                   <select
                     id="rpf-category"
                     value={values.category}
-                    onChange={(event) => setField("category", event.target.value)}
+                    onChange={(event) =>
+                      setField("category", event.target.value)
+                    }
                     aria-invalid={show("category") ? "true" : undefined}
                     data-invalid={show("category") ? "true" : undefined}
                   >
@@ -549,12 +577,16 @@ export default function ProductForm({ mode = "add", product = null }) {
                   value={values.description}
                   maxLength={DESC_MAX}
                   placeholder="What did it start as? What did you change? Mention size, finish and how to care for it."
-                  onChange={(event) => setField("description", event.target.value)}
+                  onChange={(event) =>
+                    setField("description", event.target.value)
+                  }
                   aria-invalid={show("description") ? "true" : undefined}
                   data-invalid={show("description") ? "true" : undefined}
                 />
                 <div className="rpf-meta-row">
-                  <span className="rpf-error-inline">{show("description")}</span>
+                  <span className="rpf-error-inline">
+                    {show("description")}
+                  </span>
                   <span className="rpf-hint">
                     {values.description.length}/{DESC_MAX}
                   </span>
@@ -583,7 +615,11 @@ export default function ProductForm({ mode = "add", product = null }) {
                     onChange={(event) => setMaterialDraft(event.target.value)}
                     onKeyDown={handleMaterialKey}
                     onBlur={() => addMaterial(materialDraft)}
-                    placeholder={values.materials.length ? "Add another" : "Type a material and press Enter"}
+                    placeholder={
+                      values.materials.length
+                        ? "Add another"
+                        : "Type a material and press Enter"
+                    }
                   />
                 </div>
                 {unusedSuggestions.length > 0 && (
@@ -631,7 +667,9 @@ export default function ProductForm({ mode = "add", product = null }) {
                     aria-invalid={show("price") ? "true" : undefined}
                   />
                 </div>
-                {show("price") && <span className="rpf-error-inline">{show("price")}</span>}
+                {show("price") && (
+                  <span className="rpf-error-inline">{show("price")}</span>
+                )}
               </div>
 
               <div className="rpf-field">
@@ -681,7 +719,11 @@ export default function ProductForm({ mode = "add", product = null }) {
               </div>
             </header>
 
-            <div className="rpf-segment" role="radiogroup" aria-label="Product origin">
+            <div
+              className="rpf-segment"
+              role="radiogroup"
+              aria-label="Product origin"
+            >
               {[
                 { value: "item", label: "A ReOrbit item" },
                 { value: "own", label: "My own materials" },
@@ -702,12 +744,16 @@ export default function ProductForm({ mode = "add", product = null }) {
             {values.originType === "item" ? (
               <div className="rpf-origin">
                 <div className="rpf-field">
-                  <label htmlFor="rpf-origin-item">Item you bought on ReOrbit</label>
+                  <label htmlFor="rpf-origin-item">
+                    Item you bought on ReOrbit
+                  </label>
                   <div className="rpf-select">
                     <select
                       id="rpf-origin-item"
                       value={values.originItemId}
-                      onChange={(event) => setField("originItemId", event.target.value)}
+                      onChange={(event) =>
+                        setField("originItemId", event.target.value)
+                      }
                     >
                       <option value="">Choose an item</option>
                       {ORIGIN_ITEMS.map((item) => (
@@ -748,8 +794,8 @@ export default function ProductForm({ mode = "add", product = null }) {
             ) : (
               <p className="rpf-note">
                 <Info size={14} />
-                Using your own materials is fine. Buyers will see that this piece
-                was made in your studio.
+                Using your own materials is fine. Buyers will see that this
+                piece was made in your studio.
               </p>
             )}
           </section>
@@ -761,7 +807,9 @@ export default function ProductForm({ mode = "add", product = null }) {
           <section className="rpf-preview-wrap">
             <h3>Marketplace preview</h3>
 
-            <article className={`rpf-preview ${!values.active ? "is-off" : ""}`}>
+            <article
+              className={`rpf-preview ${!values.active ? "is-off" : ""}`}
+            >
               <div className="rpf-preview-media">
                 {cover ? (
                   <img src={cover.url} alt="" />
@@ -773,7 +821,9 @@ export default function ProductForm({ mode = "add", product = null }) {
                 )}
 
                 {soldOut && <span className="rpf-flag sold">Sold out</span>}
-                {!values.active && !soldOut && <span className="rpf-flag off">Inactive</span>}
+                {!values.active && !soldOut && (
+                  <span className="rpf-flag off">Inactive</span>
+                )}
                 {photoCount > 1 && (
                   <span className="rpf-flag count">{photoCount} photos</span>
                 )}
@@ -794,7 +844,11 @@ export default function ProductForm({ mode = "add", product = null }) {
                 )}
 
                 <div className="rpf-preview-foot">
-                  <strong>{Number(values.price) > 0 ? formatPrice(values.price) : "₹ --"}</strong>
+                  <strong>
+                    {Number(values.price) > 0
+                      ? formatPrice(values.price)
+                      : "₹ --"}
+                  </strong>
                   {originItem || values.originType === "item" ? (
                     <span className="rpf-origin-tag">
                       <Recycle size={12} />
@@ -858,13 +912,17 @@ export default function ProductForm({ mode = "add", product = null }) {
                 aria-valuemax={checklist.length}
                 aria-valuenow={doneCount}
               >
-                <span style={{ width: `${(doneCount / checklist.length) * 100}%` }} />
+                <span
+                  style={{ width: `${(doneCount / checklist.length) * 100}%` }}
+                />
               </div>
 
               <ul>
                 {checklist.map((item) => (
                   <li key={item.key} className={item.done ? "done" : ""}>
-                    <span className="tick">{item.done && <Check size={12} strokeWidth={3} />}</span>
+                    <span className="tick">
+                      {item.done && <Check size={12} strokeWidth={3} />}
+                    </span>
                     <span className="label">{item.label}</span>
                     {item.note && !item.done && <small>{item.note}</small>}
                   </li>
@@ -896,10 +954,18 @@ export default function ProductForm({ mode = "add", product = null }) {
               </>
             ) : (
               <>
-                <button type="button" className="rpf-btn primary" onClick={handlePublish}>
+                <button
+                  type="button"
+                  className="rpf-btn primary"
+                  onClick={handlePublish}
+                >
                   Publish product
                 </button>
-                <button type="button" className="rpf-btn ghost" onClick={handleSaveDraft}>
+                <button
+                  type="button"
+                  className="rpf-btn ghost"
+                  onClick={handleSaveDraft}
+                >
                   Save as draft
                 </button>
               </>
@@ -909,8 +975,16 @@ export default function ProductForm({ mode = "add", product = null }) {
       </div>
 
       {toast && (
-        <div className={`rpf-toast ${toast.tone}`} role="status" aria-live="polite">
-          {toast.tone === "success" ? <Check size={16} /> : <CircleAlert size={16} />}
+        <div
+          className={`rpf-toast ${toast.tone}`}
+          role="status"
+          aria-live="polite"
+        >
+          {toast.tone === "success" ? (
+            <Check size={16} />
+          ) : (
+            <CircleAlert size={16} />
+          )}
           {toast.text}
         </div>
       )}

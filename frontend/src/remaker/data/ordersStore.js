@@ -30,19 +30,55 @@ export const DEFAULT_ADDRESS = {
 /* ---------- tracking flows ---------- */
 
 export const DELIVERY_FLOW = [
-  { key: "placed", label: "Order placed", note: "We sent your order to the seller." },
-  { key: "confirmed", label: "Seller confirmed", note: "The seller is getting it ready." },
-  { key: "picked_up", label: "Picked up by ReOrbit", note: "Our team collected it from the seller." },
+  {
+    key: "placed",
+    label: "Order placed",
+    note: "We sent your order to the seller.",
+  },
+  {
+    key: "confirmed",
+    label: "Seller confirmed",
+    note: "The seller is getting it ready.",
+  },
+  {
+    key: "picked_up",
+    label: "Picked up by ReOrbit",
+    note: "Our team collected it from the seller.",
+  },
   { key: "in_transit", label: "In transit", note: "On its way to your city." },
-  { key: "out_for_delivery", label: "Out for delivery", note: "It will reach you today." },
-  { key: "delivered", label: "Delivered", note: "Handed over at your address." },
+  {
+    key: "out_for_delivery",
+    label: "Out for delivery",
+    note: "It will reach you today.",
+  },
+  {
+    key: "delivered",
+    label: "Delivered",
+    note: "Handed over at your address.",
+  },
 ];
 
 export const PICKUP_FLOW = [
-  { key: "placed", label: "Order placed", note: "We sent your order to the seller." },
-  { key: "confirmed", label: "Seller confirmed", note: "The seller is getting it ready." },
-  { key: "ready", label: "Ready for pickup", note: "Collect it from the seller with your pickup code." },
-  { key: "collected", label: "Collected", note: "You collected it from the seller." },
+  {
+    key: "placed",
+    label: "Order placed",
+    note: "We sent your order to the seller.",
+  },
+  {
+    key: "confirmed",
+    label: "Seller confirmed",
+    note: "The seller is getting it ready.",
+  },
+  {
+    key: "ready",
+    label: "Ready for pickup",
+    note: "Collect it from the seller with your pickup code.",
+  },
+  {
+    key: "collected",
+    label: "Collected",
+    note: "You collected it from the seller.",
+  },
 ];
 
 export function flowOf(order) {
@@ -50,7 +86,10 @@ export function flowOf(order) {
 }
 
 export function stageIndex(order) {
-  return Math.max(0, flowOf(order).findIndex((step) => step.key === order.stage));
+  return Math.max(
+    0,
+    flowOf(order).findIndex((step) => step.key === order.stage),
+  );
 }
 
 function statusFromStage(order, index) {
@@ -81,7 +120,8 @@ function snapshot(listingId) {
 function build(base) {
   const item = snapshot(base.listingId);
   const quantity = base.quantity || 1;
-  const deliveryFee = base.fulfilment === "delivery" ? deliveryCharge(item.unitPrice) : 0;
+  const deliveryFee =
+    base.fulfilment === "delivery" ? deliveryCharge(item.unitPrice) : 0;
 
   return {
     ...item,
@@ -97,7 +137,8 @@ function build(base) {
 /* Seed dates are relative to "now" so the demo always looks current */
 const NOW = Date.now();
 const ago = (hours) => new Date(NOW - hours * 3600000).toISOString();
-const dayOffset = (days) => new Date(NOW + days * 86400000).toISOString().slice(0, 10);
+const dayOffset = (days) =>
+  new Date(NOW + days * 86400000).toISOString().slice(0, 10);
 
 const SEED = [
   build({
@@ -173,7 +214,11 @@ const SEED = [
     fulfilment: "delivery",
     status: "Cancelled",
     stage: "confirmed",
-    payment: { method: "NET_BANKING", status: "Refunded", txnId: "TXN7684410027" },
+    payment: {
+      method: "NET_BANKING",
+      status: "Refunded",
+      txnId: "TXN7684410027",
+    },
     cancelledAt: ago(425),
     cancelReason: "Ordered by mistake",
     eta: "",
@@ -209,7 +254,8 @@ const SEED = [
         photos: [],
         status: "Resolved",
         createdAt: ago(740),
-        resolution: "We refunded the order to your wallet and marked it as returned.",
+        resolution:
+          "We refunded the order to your wallet and marked it as returned.",
       },
     ],
   }),
@@ -271,7 +317,9 @@ function patchOrder(id, change) {
   commit(
     orders.map((order) => {
       if (order.id !== id) return order;
-      return typeof change === "function" ? change(order) : { ...order, ...change };
+      return typeof change === "function"
+        ? change(order)
+        : { ...order, ...change };
     }),
   );
 }
@@ -279,12 +327,21 @@ function patchOrder(id, change) {
 /* ---------- actions ---------- */
 
 /* Called when the buy flow places an order */
-export function createOrder({ listing, quantity, delivery, charge, pincode, paymentMethod }) {
+export function createOrder({
+  listing,
+  quantity,
+  delivery,
+  charge,
+  pincode,
+  paymentMethod,
+}) {
   const now = new Date();
   const id = `RO-${String(Math.floor(10000 + Math.random() * 89999))}`;
   const fulfilment = delivery === "platform" ? "delivery" : "pickup";
   const fee = fulfilment === "delivery" ? charge : 0;
-  const eta = new Date(now.getTime() + (fulfilment === "delivery" ? 5 : 3) * 86400000);
+  const eta = new Date(
+    now.getTime() + (fulfilment === "delivery" ? 5 : 3) * 86400000,
+  );
 
   const order = {
     id,
@@ -309,7 +366,8 @@ export function createOrder({ listing, quantity, delivery, charge, pincode, paym
     payment: {
       method: paymentMethod,
       status: paymentMethod === "COD" ? "Pending" : "Success",
-      txnId: paymentMethod === "COD" ? "" : `TXN${Date.now().toString().slice(-10)}`,
+      txnId:
+        paymentMethod === "COD" ? "" : `TXN${Date.now().toString().slice(-10)}`,
     },
     trackingId: "",
     pickupCode: "",
@@ -324,7 +382,10 @@ export function createOrder({ listing, quantity, delivery, charge, pincode, paym
 }
 
 export function canCancel(order) {
-  return order.status === "Pending" || (order.status === "Confirmed" && stageIndex(order) <= 1);
+  return (
+    order.status === "Pending" ||
+    (order.status === "Confirmed" && stageIndex(order) <= 1)
+  );
 }
 
 export function cancelOrder(id, reason) {
@@ -335,7 +396,8 @@ export function cancelOrder(id, reason) {
     cancelReason: reason,
     payment: {
       ...order.payment,
-      status: order.payment.method === "COD" ? order.payment.status : "Refunded",
+      status:
+        order.payment.method === "COD" ? order.payment.status : "Refunded",
     },
   }));
 }
@@ -353,7 +415,10 @@ export function addReport(id, data) {
     ...data,
   };
 
-  patchOrder(id, (order) => ({ ...order, reports: [...order.reports, report] }));
+  patchOrder(id, (order) => ({
+    ...order,
+    reports: [...order.reports, report],
+  }));
 
   return report;
 }
@@ -361,7 +426,8 @@ export function addReport(id, data) {
 /* Demo helper: move an order one step forward (used with ?demo=1) */
 export function advanceOrder(id) {
   patchOrder(id, (order) => {
-    if (order.status === "Cancelled" || order.status === "Returned") return order;
+    if (order.status === "Cancelled" || order.status === "Returned")
+      return order;
 
     const flow = flowOf(order);
     const index = stageIndex(order);
@@ -385,8 +451,15 @@ export function advanceOrder(id) {
       nextOrder.pickupCode = String(Math.floor(1000 + Math.random() * 8999));
     }
 
-    if (nextOrder.status === "Completed" && nextOrder.payment.status === "Pending") {
-      nextOrder.payment = { ...nextOrder.payment, status: "Success", txnId: `TXN${Date.now().toString().slice(-10)}` };
+    if (
+      nextOrder.status === "Completed" &&
+      nextOrder.payment.status === "Pending"
+    ) {
+      nextOrder.payment = {
+        ...nextOrder.payment,
+        status: "Success",
+        txnId: `TXN${Date.now().toString().slice(-10)}`,
+      };
     }
 
     return nextOrder;
@@ -399,7 +472,20 @@ export function resetOrders() {
 
 /* ---------- display helpers ---------- */
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export function formatDate(value) {
   const date = new Date(value);
@@ -437,7 +523,8 @@ export function describeStatus(order) {
       return {
         label: "Awaiting confirmation",
         tone: "pending",
-        message: "The seller has 24 hours to confirm your order. You can cancel until then.",
+        message:
+          "The seller has 24 hours to confirm your order. You can cancel until then.",
       };
     case "Confirmed":
       return {
@@ -498,7 +585,9 @@ export function buildTimeline(order) {
       {
         key: "cancelled",
         label: "Order cancelled",
-        note: order.cancelReason ? `Reason: ${order.cancelReason}` : "Cancelled by you.",
+        note: order.cancelReason
+          ? `Reason: ${order.cancelReason}`
+          : "Cancelled by you.",
         time: order.cancelledAt,
         state: "cancelled",
       },
@@ -508,11 +597,14 @@ export function buildTimeline(order) {
   const steps = flow.map((step, i) => ({
     ...step,
     time: order.times[step.key],
-    state: i < index || (i === index && order.status === "Completed") || (i === index && order.status === "Returned")
-      ? "done"
-      : i === index
-        ? "current"
-        : "upcoming",
+    state:
+      i < index ||
+      (i === index && order.status === "Completed") ||
+      (i === index && order.status === "Returned")
+        ? "done"
+        : i === index
+          ? "current"
+          : "upcoming",
   }));
 
   if (order.status === "Returned") {
@@ -536,19 +628,33 @@ export const REPORT_TOPICS = [
     key: "item",
     label: "The item",
     note: "Not as described, damaged or wrong",
-    reasons: ["Not as described", "Damaged or broken", "Wrong item received", "Parts are missing"],
+    reasons: [
+      "Not as described",
+      "Damaged or broken",
+      "Wrong item received",
+      "Parts are missing",
+    ],
   },
   {
     key: "seller",
     label: "The seller",
     note: "Behaviour or communication",
-    reasons: ["Seller is not responding", "Rude or unsafe behaviour", "Asked me to pay outside ReOrbit"],
+    reasons: [
+      "Seller is not responding",
+      "Rude or unsafe behaviour",
+      "Asked me to pay outside ReOrbit",
+    ],
   },
   {
     key: "delivery",
     label: "Delivery or pickup",
     note: "Late, missing or a handover problem",
-    reasons: ["Not delivered", "Delayed", "Delivery partner issue", "Could not collect at pickup"],
+    reasons: [
+      "Not delivered",
+      "Delayed",
+      "Delivery partner issue",
+      "Could not collect at pickup",
+    ],
   },
   {
     key: "payment",
@@ -566,8 +672,10 @@ export const REPORT_TOPICS = [
 
 /* Reports.report_type for a topic */
 export function reportTypeFor(topic, order) {
-  if (topic === "item") return order.sellerType === "remaker" ? "Product" : "Item";
-  if (topic === "seller") return order.sellerType === "remaker" ? "ReMaker" : "User";
+  if (topic === "item")
+    return order.sellerType === "remaker" ? "Product" : "Item";
+  if (topic === "seller")
+    return order.sellerType === "remaker" ? "ReMaker" : "User";
 
   return "Other";
 }

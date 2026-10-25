@@ -51,7 +51,10 @@ export default function ReviewToolbar({
 
         <label className="rvp-select">
           <span className="sr-only">Product</span>
-          <select value={product} onChange={(event) => onProduct(event.target.value)}>
+          <select
+            value={product}
+            onChange={(event) => onProduct(event.target.value)}
+          >
             <option value="all">All products</option>
             {products.map((item) => (
               <option key={item.productId} value={item.productId}>

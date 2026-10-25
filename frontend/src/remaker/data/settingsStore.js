@@ -23,13 +23,37 @@ function stored() {
 }
 
 export const NOTIFICATION_ROWS = [
-  { key: "orders", label: "New orders and sales updates", note: "When a customer orders, cancels or an order is delivered" },
-  { key: "purchases", label: "Your purchases", note: "Tracking and updates on things you bought" },
-  { key: "reviews", label: "Reviews", note: "New reviews and replies waiting for you" },
+  {
+    key: "orders",
+    label: "New orders and sales updates",
+    note: "When a customer orders, cancels or an order is delivered",
+  },
+  {
+    key: "purchases",
+    label: "Your purchases",
+    note: "Tracking and updates on things you bought",
+  },
+  {
+    key: "reviews",
+    label: "Reviews",
+    note: "New reviews and replies waiting for you",
+  },
   { key: "followers", label: "Followers", note: "When someone follows you" },
-  { key: "payouts", label: "Payouts and earnings", note: "Money that cleared and payouts that were paid" },
-  { key: "products", label: "Products", note: "Low stock, approvals and wishlist saves" },
-  { key: "system", label: "ReOrbit news and security", note: "New features, sign-in alerts and policy changes" },
+  {
+    key: "payouts",
+    label: "Payouts and earnings",
+    note: "Money that cleared and payouts that were paid",
+  },
+  {
+    key: "products",
+    label: "Products",
+    note: "Low stock, approvals and wishlist saves",
+  },
+  {
+    key: "system",
+    label: "ReOrbit news and security",
+    note: "New features, sign-in alerts and policy changes",
+  },
 ];
 
 export const LANGUAGES = [
@@ -63,7 +87,8 @@ function defaults() {
       showLocation: true,
       vacation: false,
       vacationUntil: "",
-      vacationMessage: "I am away and will ship your order when I am back. Thank you for waiting!",
+      vacationMessage:
+        "I am away and will ship your order when I am back. Thank you for waiting!",
       offerPickup: true,
       offerDelivery: true,
       handlingDays: 2,
@@ -96,13 +121,43 @@ function defaults() {
       messages: "everyone",
     },
     blocked: [
-      { id: "b-1", name: "Harsh Vora", city: "Rajkot", reason: "Abusive review", blockedAt: ago(690) },
-      { id: "b-2", name: "Rakesh Nandi", city: "Kolkata", reason: "Spam messages", blockedAt: ago(2200) },
+      {
+        id: "b-1",
+        name: "Harsh Vora",
+        city: "Rajkot",
+        reason: "Abusive review",
+        blockedAt: ago(690),
+      },
+      {
+        id: "b-2",
+        name: "Rakesh Nandi",
+        city: "Kolkata",
+        reason: "Spam messages",
+        blockedAt: ago(2200),
+      },
     ],
     sessions: [
-      { id: "s-1", device: "Chrome on Windows", place: "Ahmedabad, India", lastActive: ago(0), current: true },
-      { id: "s-2", device: "ReOrbit app on Android", place: "Ahmedabad, India", lastActive: ago(5), current: false },
-      { id: "s-3", device: "Safari on iPad", place: "Surat, India", lastActive: ago(210), current: false },
+      {
+        id: "s-1",
+        device: "Chrome on Windows",
+        place: "Ahmedabad, India",
+        lastActive: ago(0),
+        current: true,
+      },
+      {
+        id: "s-2",
+        device: "ReOrbit app on Android",
+        place: "Ahmedabad, India",
+        lastActive: ago(5),
+        current: false,
+      },
+      {
+        id: "s-3",
+        device: "Safari on iPad",
+        place: "Surat, India",
+        lastActive: ago(210),
+        current: false,
+      },
     ],
   };
 }
@@ -165,7 +220,11 @@ export function saveSection(section, value) {
 export function unblock(id) {
   const removed = state.blocked.find((item) => item.id === id) || null;
 
-  if (removed) commit({ ...state, blocked: state.blocked.filter((item) => item.id !== id) });
+  if (removed)
+    commit({
+      ...state,
+      blocked: state.blocked.filter((item) => item.id !== id),
+    });
 
   return removed;
 }
@@ -179,7 +238,11 @@ export function restoreBlocked(item) {
 export function endSession(id) {
   const removed = state.sessions.find((item) => item.id === id) || null;
 
-  if (removed && !removed.current) commit({ ...state, sessions: state.sessions.filter((item) => item.id !== id) });
+  if (removed && !removed.current)
+    commit({
+      ...state,
+      sessions: state.sessions.filter((item) => item.id !== id),
+    });
 
   return removed;
 }
@@ -199,7 +262,11 @@ export function passwordChecks(password) {
     { key: "len", label: "At least 8 characters", ok: password.length >= 8 },
     { key: "letter", label: "A letter", ok: /[A-Za-z]/.test(password) },
     { key: "number", label: "A number", ok: /\d/.test(password) },
-    { key: "mixed", label: "Upper and lower case", ok: /[a-z]/.test(password) && /[A-Z]/.test(password) },
+    {
+      key: "mixed",
+      label: "Upper and lower case",
+      ok: /[a-z]/.test(password) && /[A-Z]/.test(password),
+    },
   ];
 }
 
@@ -217,5 +284,9 @@ export function lastActiveLabel(iso) {
 }
 
 export function blockedLabel(iso) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

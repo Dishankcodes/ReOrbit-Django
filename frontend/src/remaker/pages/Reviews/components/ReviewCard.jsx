@@ -12,7 +12,9 @@ export default function ReviewCard({ review, onReport }) {
   const { reviewer } = review;
 
   return (
-    <article className={`rvp-card ${!review.reply ? "needs" : ""} ${review.report ? "reported" : ""}`}>
+    <article
+      className={`rvp-card ${!review.reply ? "needs" : ""} ${review.report ? "reported" : ""}`}
+    >
       <header className="rvp-card-head">
         <span className="rvp-avatar">
           <Avatar src={reviewer.image} name={reviewer.name} />
@@ -21,7 +23,9 @@ export default function ReviewCard({ review, onReport }) {
         <div className="rvp-who">
           <strong>
             {reviewer.customerId ? (
-              <Link to={`/remaker-customers/${reviewer.customerId}`}>{reviewer.name}</Link>
+              <Link to={`/remaker-customers/${reviewer.customerId}`}>
+                {reviewer.name}
+              </Link>
             ) : (
               reviewer.name
             )}
@@ -37,7 +41,10 @@ export default function ReviewCard({ review, onReport }) {
         </div>
       </header>
 
-      <Link to={`/remaker-products/${review.productId}/edit`} className="rvp-product">
+      <Link
+        to={`/remaker-products/${review.productId}/edit`}
+        className="rvp-product"
+      >
         <img src={review.productImage} alt="" />
         <span>
           <small>Review of</small>
@@ -58,7 +65,12 @@ export default function ReviewCard({ review, onReport }) {
       {review.photos.length > 0 && (
         <div className="rvp-photos">
           {review.photos.map((src, index) => (
-            <button type="button" key={src} onClick={() => setViewer(index)} aria-label={`Open customer photo ${index + 1}`}>
+            <button
+              type="button"
+              key={src}
+              onClick={() => setViewer(index)}
+              aria-label={`Open customer photo ${index + 1}`}
+            >
               <img src={src} alt="" loading="lazy" />
             </button>
           ))}
@@ -83,7 +95,8 @@ export default function ReviewCard({ review, onReport }) {
 
       <footer className="rvp-card-foot">
         <span>
-          {review.helpful} {review.helpful === 1 ? "person" : "people"} found this helpful
+          {review.helpful} {review.helpful === 1 ? "person" : "people"} found
+          this helpful
         </span>
 
         {!review.report && (
@@ -94,7 +107,12 @@ export default function ReviewCard({ review, onReport }) {
       </footer>
 
       {viewer >= 0 && (
-        <PhotoViewer photos={review.photos} index={viewer} onChange={setViewer} onClose={() => setViewer(-1)} />
+        <PhotoViewer
+          photos={review.photos}
+          index={viewer}
+          onChange={setViewer}
+          onClose={() => setViewer(-1)}
+        />
       )}
     </article>
   );

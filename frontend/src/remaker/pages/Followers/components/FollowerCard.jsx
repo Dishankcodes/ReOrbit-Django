@@ -4,12 +4,23 @@ import { Avatar } from "../../../pages-components/ReviewBlocks";
 import { followedLabel } from "../../../data/followersStore";
 
 /* One follower, as a card or as a row */
-export default function FollowerCard({ person, view, following, onOpen, onFollowBack }) {
+export default function FollowerCard({
+  person,
+  view,
+  following,
+  onOpen,
+  onFollowBack,
+}) {
   const engaged = person.views >= 34 || person.saves >= 5;
 
   return (
     <article className={`fol-card ${view}`}>
-      <button type="button" className="fol-card-main" onClick={() => onOpen(person)} aria-label={`View ${person.name}`}>
+      <button
+        type="button"
+        className="fol-card-main"
+        onClick={() => onOpen(person)}
+        aria-label={`View ${person.name}`}
+      >
         <span className="fol-avatar">
           <Avatar src={person.image} name={person.name} />
         </span>
@@ -21,7 +32,9 @@ export default function FollowerCard({ person, view, following, onOpen, onFollow
           </small>
 
           <span className="fol-badges">
-            <i className={person.type === "ReMaker" ? "maker" : ""}>{person.type === "ReMaker" ? "ReMaker" : "Shopper"}</i>
+            <i className={person.type === "ReMaker" ? "maker" : ""}>
+              {person.type === "ReMaker" ? "ReMaker" : "Shopper"}
+            </i>
             {person.customerId && <i className="customer">Customer</i>}
             {engaged && <i className="engaged">Engaged</i>}
           </span>
@@ -36,7 +49,9 @@ export default function FollowerCard({ person, view, following, onOpen, onFollow
           </span>
         )}
 
-        <span className="fol-card-date">Followed {followedLabel(person.followedAt)}</span>
+        <span className="fol-card-date">
+          Followed {followedLabel(person.followedAt)}
+        </span>
       </button>
 
       {person.type === "ReMaker" && (
@@ -44,7 +59,11 @@ export default function FollowerCard({ person, view, following, onOpen, onFollow
           {following ? (
             <span className="fol-following">Following</span>
           ) : (
-            <button type="button" className="fol-btn ghost small" onClick={() => onFollowBack(person)}>
+            <button
+              type="button"
+              className="fol-btn ghost small"
+              onClick={() => onFollowBack(person)}
+            >
               Follow back
             </button>
           )}

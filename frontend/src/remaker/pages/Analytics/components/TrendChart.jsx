@@ -3,9 +3,27 @@ import React, { useMemo, useRef, useState } from "react";
 import { fmtCompact, fmtNumber, formatPrice, niceMax } from "./format";
 
 const METRICS = [
-  { key: "revenue", label: "Earnings", unit: "₹", format: (v) => formatPrice(v), axis: (v) => `₹${fmtCompact(v)}` },
-  { key: "orders", label: "Orders", unit: "", format: (v) => fmtNumber(v), axis: (v) => fmtCompact(v) },
-  { key: "views", label: "Product views", unit: "", format: (v) => fmtNumber(v), axis: (v) => fmtCompact(v) },
+  {
+    key: "revenue",
+    label: "Earnings",
+    unit: "₹",
+    format: (v) => formatPrice(v),
+    axis: (v) => `₹${fmtCompact(v)}`,
+  },
+  {
+    key: "orders",
+    label: "Orders",
+    unit: "",
+    format: (v) => fmtNumber(v),
+    axis: (v) => fmtCompact(v),
+  },
+  {
+    key: "views",
+    label: "Product views",
+    unit: "",
+    format: (v) => fmtNumber(v),
+    axis: (v) => fmtCompact(v),
+  },
 ];
 
 export default function TrendChart({ series, rangeLabel }) {
@@ -37,7 +55,10 @@ export default function TrendChart({ series, rangeLabel }) {
     const box = stage.current?.getBoundingClientRect();
     if (!box) return;
 
-    const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
+    const ratio = Math.min(
+      1,
+      Math.max(0, (event.clientX - box.left) / box.width),
+    );
     setHover(Math.round(ratio * (count - 1)));
   };
 
@@ -79,7 +100,8 @@ export default function TrendChart({ series, rangeLabel }) {
         <div>
           <dt>Best period</dt>
           <dd>
-            {config.format(values[peakIndex] || 0)} <small>{series[peakIndex]?.label}</small>
+            {config.format(values[peakIndex] || 0)}{" "}
+            <small>{series[peakIndex]?.label}</small>
           </dd>
         </div>
       </dl>
@@ -100,30 +122,54 @@ export default function TrendChart({ series, rangeLabel }) {
           aria-label={`${config.label} chart for ${rangeLabel}. Total ${config.format(total)}.`}
         >
           {ticks.map((tick) => (
-            <i className="ana-grid" style={{ bottom: `${tick * 100}%` }} key={tick} />
+            <i
+              className="ana-grid"
+              style={{ bottom: `${tick * 100}%` }}
+              key={tick}
+            />
           ))}
 
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
             <defs>
               <linearGradient id="anaFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#270809" stopOpacity="0.22" />
                 <stop offset="100%" stopColor="#270809" stopOpacity="0" />
               </linearGradient>
             </defs>
-            <polygon points={`0,100 ${geometry.points} 100,100`} fill="url(#anaFill)" />
-            <polyline points={geometry.points} className="ana-line" vectorEffect="non-scaling-stroke" />
+            <polygon
+              points={`0,100 ${geometry.points} 100,100`}
+              fill="url(#anaFill)"
+            />
+            <polyline
+              points={geometry.points}
+              className="ana-line"
+              vectorEffect="non-scaling-stroke"
+            />
           </svg>
 
           {active !== null && (
             <>
-              <span className="ana-cursor" style={{ left: `${geometry.x(active)}%` }} />
+              <span
+                className="ana-cursor"
+                style={{ left: `${geometry.x(active)}%` }}
+              />
               <span
                 className="ana-dot"
-                style={{ left: `${geometry.x(active)}%`, bottom: `${100 - geometry.y(values[active])}%` }}
+                style={{
+                  left: `${geometry.x(active)}%`,
+                  bottom: `${100 - geometry.y(values[active])}%`,
+                }}
               />
               <div
                 className={`ana-tip ${geometry.x(active) > 70 ? "left" : ""}`}
-                style={{ left: `${geometry.x(active)}%`, bottom: `${100 - geometry.y(values[active])}%` }}
+                style={{
+                  left: `${geometry.x(active)}%`,
+                  bottom: `${100 - geometry.y(values[active])}%`,
+                }}
               >
                 <small>{series[active].label}</small>
                 <strong>{config.format(values[active])}</strong>
@@ -134,7 +180,10 @@ export default function TrendChart({ series, rangeLabel }) {
 
         <div className="ana-xaxis" aria-hidden="true">
           {series.map((point, i) => (
-            <span key={point.label + i} className={i % step === 0 ? "show" : ""}>
+            <span
+              key={point.label + i}
+              className={i % step === 0 ? "show" : ""}
+            >
               {point.short}
             </span>
           ))}

@@ -187,7 +187,10 @@ export default function ReMakers() {
                     </span>
                   </a>
 
-                  <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
+                  <a
+                    className="rm-btn rm-btn-secondary"
+                    href="/remakers-before-marketplace"
+                  >
                     Discover Marketplace
                   </a>
                 </div>
@@ -301,7 +304,10 @@ export default function ReMakers() {
                 </p>
               </div>
 
-              <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
+              <a
+                className="rm-btn rm-btn-secondary"
+                href="/remakers-before-marketplace"
+              >
                 Browse materials
                 <span className="material-symbols-outlined">arrow_outward</span>
               </a>
@@ -332,7 +338,6 @@ export default function ReMakers() {
           </div>
         </section>
 
-
         <section className="rm-products-section">
           <div className="rm-container">
             <div className="rm-products-head">
@@ -347,7 +352,10 @@ export default function ReMakers() {
                 </p>
               </div>
 
-              <a className="rm-btn rm-btn-secondary" href="/remakers-before-marketplace">
+              <a
+                className="rm-btn rm-btn-secondary"
+                href="/remakers-before-marketplace"
+              >
                 Explore marketplace
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>
@@ -573,9 +581,6 @@ export default function ReMakers() {
             </div>
           </div>
         </section>
-
-       
-
       </main>
 
       <Footer />

@@ -25,7 +25,8 @@ export default function ReMakerPortfolio() {
 
   /* Clear router state so a refresh doesn't bring the toast back */
   useEffect(() => {
-    if (location.state?.undo) navigate(location.pathname, { replace: true, state: null });
+    if (location.state?.undo)
+      navigate(location.pathname, { replace: true, state: null });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -35,17 +36,24 @@ export default function ReMakerPortfolio() {
     return () => clearTimeout(timer.current);
   }, [undo]);
 
-  const categories = useMemo(() => [...new Set(works.map((work) => work.category))].sort(), [works]);
+  const categories = useMemo(
+    () => [...new Set(works.map((work) => work.category))].sort(),
+    [works],
+  );
 
   const visible = useMemo(() => {
-    const filtered = category === "all" ? works : works.filter((work) => work.category === category);
+    const filtered =
+      category === "all"
+        ? works
+        : works.filter((work) => work.category === category);
 
     return sort === "oldest" ? [...filtered].reverse() : filtered;
   }, [works, category, sort]);
 
   /* Category chip can disappear after a delete */
   useEffect(() => {
-    if (category !== "all" && !categories.includes(category)) setCategory("all");
+    if (category !== "all" && !categories.includes(category))
+      setCategory("all");
   }, [categories, category]);
 
   const linkedCount = works.filter((work) => work.linkedProductId).length;
@@ -67,13 +75,21 @@ export default function ReMakerPortfolio() {
       <section className="rpt">
         <div className="rpt-empty">
           <div className="rpt-empty-art" aria-hidden="true">
-            <img className="a" src="/images/portfolio/before-tara-console.jpg" alt="" />
-            <img className="b" src="/images/portfolio/tara-console.jpg" alt="" />
+            <img
+              className="a"
+              src="/images/portfolio/before-tara-console.jpg"
+              alt=""
+            />
+            <img
+              className="b"
+              src="/images/portfolio/tara-console.jpg"
+              alt=""
+            />
           </div>
           <h2>Show the work behind your pieces</h2>
           <p>
-            Add a before and an after photo and buyers can see exactly what you do with something
-            people threw away.
+            Add a before and an after photo and buyers can see exactly what you
+            do with something people threw away.
           </p>
           <Link to="/remaker-portfolio/new" className="rpt-btn primary">
             Add your first work
@@ -132,7 +148,10 @@ export default function ReMakerPortfolio() {
 
         <label className="rpt-select inline">
           <span className="sr-only">Sort works</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
           </select>
@@ -148,7 +167,10 @@ export default function ReMakerPortfolio() {
             <div className="rpt-work-body">
               <span className="rpt-work-cat">{work.category}</span>
               <h3>
-                <Link to={`/remaker-portfolio/${work.id}`} className="rpt-work-link">
+                <Link
+                  to={`/remaker-portfolio/${work.id}`}
+                  className="rpt-work-link"
+                >
                   {work.title}
                 </Link>
               </h3>
@@ -158,10 +180,17 @@ export default function ReMakerPortfolio() {
                 <small>{formatWorkDate(work.createdAt)}</small>
 
                 <div className="rpt-work-actions">
-                  <Link to={`/remaker-portfolio/${work.id}/edit`} aria-label={`Edit ${work.title}`}>
+                  <Link
+                    to={`/remaker-portfolio/${work.id}/edit`}
+                    aria-label={`Edit ${work.title}`}
+                  >
                     Edit
                   </Link>
-                  <button type="button" onClick={() => setToDelete(work)} aria-label={`Delete ${work.title}`}>
+                  <button
+                    type="button"
+                    onClick={() => setToDelete(work)}
+                    aria-label={`Delete ${work.title}`}
+                  >
                     Delete
                   </button>
                 </div>
@@ -172,7 +201,11 @@ export default function ReMakerPortfolio() {
       </div>
 
       {toDelete && (
-        <PortfolioDeleteModal work={toDelete} onConfirm={confirmRemove} onCancel={() => setToDelete(null)} />
+        <PortfolioDeleteModal
+          work={toDelete}
+          onConfirm={confirmRemove}
+          onCancel={() => setToDelete(null)}
+        />
       )}
 
       {undo && (

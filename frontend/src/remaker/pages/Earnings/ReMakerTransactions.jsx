@@ -24,10 +24,25 @@ const RANGES = [
   { key: "all", label: "All time", days: 0 },
 ];
 
-const STATUSES = ["All", "Clearing", "Available", "In payout", "Paid out", "Reversed", "Cancelled", "In progress"];
+const STATUSES = [
+  "All",
+  "Clearing",
+  "Available",
+  "In payout",
+  "Paid out",
+  "Reversed",
+  "Cancelled",
+  "In progress",
+];
 
 function dateOf(order) {
-  return order.times.delivered || order.times.collected || order.cancelledAt || order.returnedAt || order.createdAt;
+  return (
+    order.times.delivered ||
+    order.times.collected ||
+    order.cancelledAt ||
+    order.returnedAt ||
+    order.createdAt
+  );
 }
 
 function csvEscape(value) {
@@ -48,13 +63,24 @@ export default function ReMakerTransactions() {
     const text = query.trim().toLowerCase();
 
     return orders
-      .map((order) => ({ order, status: earningStatus(order, payouts), date: dateOf(order) }))
+      .map((order) => ({
+        order,
+        status: earningStatus(order, payouts),
+        date: dateOf(order),
+      }))
       .filter((row) => new Date(row.date).getTime() >= since)
       .filter((row) => status === "All" || row.status === status)
       .filter((row) => {
         if (!text) return true;
 
-        return [row.order.id, row.order.title, getCustomer(row.order.customerId)?.name].join(" ").toLowerCase().includes(text);
+        return [
+          row.order.id,
+          row.order.title,
+          getCustomer(row.order.customerId)?.name,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(text);
       })
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [orders, payouts, range, status, query]);
@@ -63,7 +89,11 @@ export default function ReMakerTransactions() {
     () =>
       rows.reduce(
         (sum, row) => {
-          if (["Clearing", "Available", "In payout", "Paid out"].includes(row.status)) {
+          if (
+            ["Clearing", "Available", "In payout", "Paid out"].includes(
+              row.status,
+            )
+          ) {
             sum.gross += grossOf(row.order);
             sum.fee += feeOf(row.order);
             sum.net += netOf(row.order);
@@ -76,7 +106,17 @@ export default function ReMakerTransactions() {
   );
 
   const downloadCsv = () => {
-    const header = ["Date", "Order", "Customer", "Item", "Qty", "Item price", "ReOrbit fee", "You receive", "Status"];
+    const header = [
+      "Date",
+      "Order",
+      "Customer",
+      "Item",
+      "Qty",
+      "Item price",
+      "ReOrbit fee",
+      "You receive",
+      "Status",
+    ];
     const lines = rows.map((row) => [
       formatDate(row.date),
       row.order.id,
@@ -89,8 +129,12 @@ export default function ReMakerTransactions() {
       row.status,
     ]);
 
-    const csv = [header, ...lines].map((line) => line.map(csvEscape).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const csv = [header, ...lines]
+      .map((line) => line.map(csvEscape).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
     const link = document.createElement("a");
 
     link.href = url;
@@ -132,7 +176,10 @@ export default function ReMakerTransactions() {
         <div className="sls-selects">
           <label className="rod-select">
             <span className="sr-only">Date range</span>
-            <select value={range} onChange={(event) => setRange(event.target.value)}>
+            <select
+              value={range}
+              onChange={(event) => setRange(event.target.value)}
+            >
               {RANGES.map((item) => (
                 <option key={item.key} value={item.key}>
                   {item.label}
@@ -143,7 +190,10 @@ export default function ReMakerTransactions() {
 
           <label className="rod-select">
             <span className="sr-only">Status</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+            >
               {STATUSES.map((item) => (
                 <option key={item} value={item}>
                   {item === "All" ? "All statuses" : item}
@@ -152,7 +202,12 @@ export default function ReMakerTransactions() {
             </select>
           </label>
 
-          <button type="button" className="rod-btn ghost small" onClick={downloadCsv} disabled={rows.length === 0}>
+          <button
+            type="button"
+            className="rod-btn ghost small"
+            onClick={downloadCsv}
+            disabled={rows.length === 0}
+          >
             Download CSV
           </button>
         </div>
@@ -197,7 +252,10 @@ export default function ReMakerTransactions() {
                   <tr key={order.id} className={dead ? "dead" : ""}>
                     <td data-label="Date">{formatDate(date)}</td>
                     <td data-label="Order">
-                      <Link to={`/remaker-sales/${order.id}`} className="sls-order-cell">
+                      <Link
+                        to={`/remaker-sales/${order.id}`}
+                        className="sls-order-cell"
+                      >
                         <img src={order.image} alt="" />
                         <span>
                           <strong>{order.id}</strong>

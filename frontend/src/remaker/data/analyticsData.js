@@ -65,7 +65,14 @@ const CITIES = [
 ];
 
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const TIME_BLOCKS = ["6 to 9 am", "9 am to 12", "12 to 3 pm", "3 to 6 pm", "6 to 9 pm", "9 to 12 pm"];
+const TIME_BLOCKS = [
+  "6 to 9 am",
+  "9 am to 12",
+  "12 to 3 pm",
+  "3 to 6 pm",
+  "6 to 9 pm",
+  "9 to 12 pm",
+];
 
 /* ---------- build the daily rows once ---------- */
 
@@ -81,7 +88,8 @@ function buildDays() {
     const weekday = (date.getDay() + 6) % 7; /* Monday = 0 */
     const weekend = weekday >= 5 ? 1.22 : weekday === 4 ? 1.08 : 0.96;
     const progress = index / (TOTAL_DAYS - 1); /* 0 a year ago, 1 today */
-    const season = 1 + 0.18 * Math.sin((date.getMonth() / 12) * Math.PI * 2 + 1);
+    const season =
+      1 + 0.18 * Math.sin((date.getMonth() / 12) * Math.PI * 2 + 1);
 
     const day = {
       date,
@@ -98,7 +106,9 @@ function buildDays() {
       const profile = PROFILE[product.id];
       const trend = 0.6 + progress * 0.9 * profile.growth;
       const noise = 0.78 + random() * 0.45;
-      const views = Math.round(profile.views * weekend * season * trend * noise);
+      const views = Math.round(
+        profile.views * weekend * season * trend * noise,
+      );
       const saves = Math.round(views * profile.save * (0.8 + random() * 0.4));
 
       /* orders: expected value from conversion, drawn from a small distribution */
@@ -129,7 +139,14 @@ const DAYS = buildDays();
 /* ---------- helpers ---------- */
 
 function sumRows(rows) {
-  const total = { views: 0, saves: 0, orders: 0, revenue: 0, visits: 0, followers: 0 };
+  const total = {
+    views: 0,
+    saves: 0,
+    orders: 0,
+    revenue: 0,
+    visits: 0,
+    followers: 0,
+  };
 
   rows.forEach((row) => {
     total.views += row.views;
@@ -151,7 +168,20 @@ function change(current, previous) {
   return ((current - previous) / previous) * 100;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 /* group rows into points: daily, weekly or monthly depending on the range */
 function bucketize(rows, days) {
@@ -161,7 +191,10 @@ function bucketize(rows, days) {
     rows.forEach((row) => {
       points.push({
         label: `${row.date.getDate()} ${MONTHS[row.date.getMonth()]}`,
-        short: days <= 7 ? WEEK_DAYS[(row.date.getDay() + 6) % 7] : String(row.date.getDate()),
+        short:
+          days <= 7
+            ? WEEK_DAYS[(row.date.getDay() + 6) % 7]
+            : String(row.date.getDate()),
         rows: [row],
       });
     });
@@ -256,20 +289,32 @@ export function getAnalytics(rangeKey = "30") {
   /* sales by category */
   const categoryMap = new Map();
   productRows.forEach((row) => {
-    categoryMap.set(row.category, (categoryMap.get(row.category) || 0) + row.revenue);
+    categoryMap.set(
+      row.category,
+      (categoryMap.get(row.category) || 0) + row.revenue,
+    );
   });
 
-  const categoryTotal = [...categoryMap.values()].reduce((a, b) => a + b, 0) || 1;
+  const categoryTotal =
+    [...categoryMap.values()].reduce((a, b) => a + b, 0) || 1;
   const categories = [...categoryMap.entries()]
-    .map(([name, revenue]) => ({ name, revenue, share: (revenue / categoryTotal) * 100 }))
+    .map(([name, revenue]) => ({
+      name,
+      revenue,
+      share: (revenue / categoryTotal) * 100,
+    }))
     .sort((a, b) => b.revenue - a.revenue);
 
   /* traffic sources: shares drift a little with the range so each looks real */
   const sources = SOURCES.map((source, index) => {
     const wobble = 1 + (((days * (index + 3)) % 7) - 3) * 0.012;
-    return { ...source, value: Math.round(current.views * source.share * wobble) };
+    return {
+      ...source,
+      value: Math.round(current.views * source.share * wobble),
+    };
   });
-  const sourceTotal = sources.reduce((total, source) => total + source.value, 0) || 1;
+  const sourceTotal =
+    sources.reduce((total, source) => total + source.value, 0) || 1;
   sources.forEach((source) => {
     source.percent = (source.value / sourceTotal) * 100;
   });
@@ -292,7 +337,11 @@ export function getAnalytics(rangeKey = "30") {
     }),
   );
   const cellTotal = cells.flat().reduce((a, b) => a + b, 0);
-  const heat = cells.map((row) => row.map((value) => Math.round((value / cellTotal) * current.orders * 10) / 10));
+  const heat = cells.map((row) =>
+    row.map(
+      (value) => Math.round((value / cellTotal) * current.orders * 10) / 10,
+    ),
+  );
   const heatMax = Math.max(...heat.flat(), 0.1);
 
   let best = { d: 0, b: 0, value: -1 };
@@ -326,7 +375,11 @@ export function getAnalytics(rangeKey = "30") {
       blocks: TIME_BLOCKS,
       cells: heat,
       max: heatMax,
-      best: { day: WEEK_DAYS[best.d], block: TIME_BLOCKS[best.b], value: best.value },
+      best: {
+        day: WEEK_DAYS[best.d],
+        block: TIME_BLOCKS[best.b],
+        value: best.value,
+      },
     },
     funnel,
   };

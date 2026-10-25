@@ -140,12 +140,14 @@ export const REMAKER_PRODUCTS = [
     id: "rp-1005",
     title: "Cane-Back Accent Chair",
     category: "Furniture",
-    description:
-      "",
+    description: "",
     price: 0,
     stock: 1,
     status: "Draft",
-    images: ["/images/portfolio/tara-chair.jpg", "/images/products/vintage-chair.jpg"],
+    images: [
+      "/images/portfolio/tara-chair.jpg",
+      "/images/products/vintage-chair.jpg",
+    ],
     materials: [],
     originType: "own",
     originItemId: "",

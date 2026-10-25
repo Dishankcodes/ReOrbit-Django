@@ -4,15 +4,51 @@ import AdminFooter from "../../components/AdminFooter";
 
 export default function AdminAbout() {
   const management = [
-    { icon: "group", title: "Users & ReMakers", text: "Review accounts, verify ReMakers and warn, suspend or block when needed, with a clear history for every account." },
-    { icon: "inventory_2", title: "Products & Listings", text: "Approve or reject what members and ReMakers post so everything on the marketplace is accurate and safe to buy." },
-    { icon: "receipt_long", title: "Orders & Payments", text: "Follow each order from payment to delivery and handle cancellations, returns and refunds in one place." },
-    { icon: "volunteer_activism", title: "Donations & Pickups", text: "Decide on each donation, schedule a free pickup and follow it until the item reaches the warehouse or an NGO." },
-    { icon: "warehouse", title: "Warehouse", text: "Know where every item sits, what is being refurbished, and which products have gone unsold for too long." },
-    { icon: "storefront", title: "Buy & Sell", text: "The platform can buy products and sell its own refurbished stock, with full selling-order handling." },
-    { icon: "redeem", title: "Rewards", text: "Orbit points, vouchers and coupons that thank members for donating, buying and reviewing." },
-    { icon: "account_balance_wallet", title: "Earnings & Reports", text: "See what the platform fee and your own sales bring in, and understand how the marketplace is performing." },
-    { icon: "admin_panel_settings", title: "Team & Permissions", text: "The super admin adds sub-admins and chooses, module by module, what each person can view or edit." },
+    {
+      icon: "group",
+      title: "Users & ReMakers",
+      text: "Review accounts, verify ReMakers and warn, suspend or block when needed, with a clear history for every account.",
+    },
+    {
+      icon: "inventory_2",
+      title: "Products & Listings",
+      text: "Approve or reject what members and ReMakers post so everything on the marketplace is accurate and safe to buy.",
+    },
+    {
+      icon: "receipt_long",
+      title: "Orders & Payments",
+      text: "Follow each order from payment to delivery and handle cancellations, returns and refunds in one place.",
+    },
+    {
+      icon: "volunteer_activism",
+      title: "Donations & Pickups",
+      text: "Decide on each donation, schedule a free pickup and follow it until the item reaches the warehouse or an NGO.",
+    },
+    {
+      icon: "warehouse",
+      title: "Warehouse",
+      text: "Know where every item sits, what is being refurbished, and which products have gone unsold for too long.",
+    },
+    {
+      icon: "storefront",
+      title: "Buy & Sell",
+      text: "The platform can buy products and sell its own refurbished stock, with full selling-order handling.",
+    },
+    {
+      icon: "redeem",
+      title: "Rewards",
+      text: "Orbit points, vouchers and coupons that thank members for donating, buying and reviewing.",
+    },
+    {
+      icon: "account_balance_wallet",
+      title: "Earnings & Reports",
+      text: "See what the platform fee and your own sales bring in, and understand how the marketplace is performing.",
+    },
+    {
+      icon: "admin_panel_settings",
+      title: "Team & Permissions",
+      text: "The super admin adds sub-admins and chooses, module by module, what each person can view or edit.",
+    },
   ];
 
   const ecosystem = [
@@ -223,9 +259,9 @@ export default function AdminAbout() {
                     <strong>One loop, many hands.</strong>
 
                     <p>
-                      Donations, pickups, stock, orders and rewards are connected,
-                      so an action in one place updates every other page that
-                      depends on it.
+                      Donations, pickups, stock, orders and rewards are
+                      connected, so an action in one place updates every other
+                      page that depends on it.
                     </p>
                   </div>
                 </div>
@@ -349,7 +385,10 @@ export default function AdminAbout() {
 
                 <p>
                   <strong>Connected ecosystem</strong>
-                  <small>Donate or list → Pickup → Warehouse → Refurbish → Sell → Earn</small>
+                  <small>
+                    Donate or list → Pickup → Warehouse → Refurbish → Sell →
+                    Earn
+                  </small>
                 </p>
               </div>
 
@@ -378,9 +417,9 @@ export default function AdminAbout() {
               </div>
 
               <p>
-                Good administration is not only about records. It is about trust,
-                visibility, accountability and putting the right power in the
-                right hands.
+                Good administration is not only about records. It is about
+                trust, visibility, accountability and putting the right power in
+                the right hands.
               </p>
             </div>
 
@@ -424,9 +463,9 @@ export default function AdminAbout() {
 
                 <p>
                   ReOrbit aims to make reuse the easy choice by connecting
-                  people, creators and products in one circular marketplace.
-                  The admin panel gives the team the structure to do that
-                  carefully, one donation, one repair and one order at a time.
+                  people, creators and products in one circular marketplace. The
+                  admin panel gives the team the structure to do that carefully,
+                  one donation, one repair and one order at a time.
                 </p>
 
                 <div className="admin-about-mission-points">

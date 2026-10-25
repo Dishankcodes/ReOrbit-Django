@@ -28,7 +28,10 @@ export default function ContactCards() {
         <small>Call</small>
         <h4>{SUPPORT.phone}</h4>
         <p>{SUPPORT.hours}. Free from any phone in India.</p>
-        <a href={`tel:${SUPPORT.phone.replace(/\s/g, "")}`} className="rk-btn ghost small">
+        <a
+          href={`tel:${SUPPORT.phone.replace(/\s/g, "")}`}
+          className="rk-btn ghost small"
+        >
           Call support
         </a>
       </article>
@@ -36,7 +39,10 @@ export default function ContactCards() {
       <article className="strong">
         <small>Need a record?</small>
         <h4>Create a support ticket</h4>
-        <p>Tickets keep the whole conversation in one place, with photos and order details.</p>
+        <p>
+          Tickets keep the whole conversation in one place, with photos and
+          order details.
+        </p>
         <Link to="/remaker-help/new" className="rk-btn light small">
           New ticket
         </Link>

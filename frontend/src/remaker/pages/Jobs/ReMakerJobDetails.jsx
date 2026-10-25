@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
 import BeforeAfter from "../../pages-components/BeforeAfter";
 import {
@@ -49,7 +54,10 @@ export default function ReMakerJobDetails() {
             <img src="/images/portfolio/before-arjun-metal.jpg" alt="" />
           </div>
           <h3>We could not find that job</h3>
-          <p>It may have been taken by another ReMaker, or the link is out of date.</p>
+          <p>
+            It may have been taken by another ReMaker, or the link is out of
+            date.
+          </p>
           <Link to="/remaker-jobs" className="rk-btn primary">
             Back to jobs
           </Link>
@@ -80,8 +88,10 @@ function Details({ job }) {
 
   const state = JOB_STATES[job.status];
   const index = stepIndex(job.status);
-  const working = job.status === "In progress" || job.status === "Needs changes";
-  const showCompare = job.afterImage && ["In review", "Completed"].includes(job.status);
+  const working =
+    job.status === "In progress" || job.status === "Needs changes";
+  const showCompare =
+    job.afterImage && ["In review", "Completed"].includes(job.status);
 
   const confirm = () => {
     if (modal === "accept") {
@@ -112,7 +122,9 @@ function Details({ job }) {
         <div>
           <div className="job-head-tags">
             <span className={`rk-badge ${state.tone}`}>{state.label}</span>
-            <span className={`rk-badge ${DIFFICULTY_TONE[job.difficulty]}`}>{job.difficulty}</span>
+            <span className={`rk-badge ${DIFFICULTY_TONE[job.difficulty]}`}>
+              {job.difficulty}
+            </span>
             <span className="job-id">
               {job.id} · Item {job.itemId}
             </span>
@@ -130,7 +142,16 @@ function Details({ job }) {
       {index >= 0 && (
         <ol className="job-steps" aria-label="Job progress">
           {STEPS.map((step, i) => (
-            <li className={i < index || (i === index && job.status === "Completed") ? "done" : i === index ? "current" : ""} key={step}>
+            <li
+              className={
+                i < index || (i === index && job.status === "Completed")
+                  ? "done"
+                  : i === index
+                    ? "current"
+                    : ""
+              }
+              key={step}
+            >
               <span aria-hidden="true" />
               {step === "In review" ? "Quality check" : step}
             </li>
@@ -145,18 +166,33 @@ function Details({ job }) {
             <h3>{showCompare ? "Before and after" : "The item"}</h3>
 
             {showCompare ? (
-              <BeforeAfter before={job.before[0]} after={job.afterImage} title={job.title} interactive className="rpt-ba-lg" />
+              <BeforeAfter
+                before={job.before[0]}
+                after={job.afterImage}
+                title={job.title}
+                interactive
+                className="rpt-ba-lg"
+              />
             ) : (
               <>
                 <div className="job-photo">
-                  <img src={job.before[photo]} alt={`${job.title}, photo ${photo + 1}`} />
+                  <img
+                    src={job.before[photo]}
+                    alt={`${job.title}, photo ${photo + 1}`}
+                  />
                   <span>As received</span>
                 </div>
 
                 {job.before.length > 1 && (
                   <div className="job-thumbs">
                     {job.before.map((src, i) => (
-                      <button type="button" key={src} className={photo === i ? "active" : ""} onClick={() => setPhoto(i)} aria-label={`Show photo ${i + 1}`}>
+                      <button
+                        type="button"
+                        key={src}
+                        className={photo === i ? "active" : ""}
+                        onClick={() => setPhoto(i)}
+                        aria-label={`Show photo ${i + 1}`}
+                      >
                         <img src={src} alt="" />
                       </button>
                     ))}
@@ -168,8 +204,13 @@ function Details({ job }) {
 
           {/* quality result */}
           {job.qc && job.qc.status !== "Pending" && (
-            <section className={`rk-card job-qc ${job.qc.status === "Passed" ? "pass" : "fail"}`}>
-              <h3>Quality check: {job.qc.status === "Passed" ? "passed" : "needs changes"}</h3>
+            <section
+              className={`rk-card job-qc ${job.qc.status === "Passed" ? "pass" : "fail"}`}
+            >
+              <h3>
+                Quality check:{" "}
+                {job.qc.status === "Passed" ? "passed" : "needs changes"}
+              </h3>
               <p>{job.qc.note}</p>
             </section>
           )}
@@ -177,7 +218,10 @@ function Details({ job }) {
           {job.status === "In review" && (
             <section className="rk-card job-qc wait">
               <h3>Waiting for the quality check</h3>
-              <p>The warehouse team is reviewing your photos. This usually takes a day. You will get a notification with the result.</p>
+              <p>
+                The warehouse team is reviewing your photos. This usually takes
+                a day. You will get a notification with the result.
+              </p>
             </section>
           )}
 
@@ -207,7 +251,9 @@ function Details({ job }) {
               }}
               onSubmit={(data) => {
                 submitJob(job.id, data);
-                setNotice("Work submitted. The quality check usually takes a day.");
+                setNotice(
+                  "Work submitted. The quality check usually takes a day.",
+                );
               }}
             />
           )}
@@ -225,8 +271,15 @@ function Details({ job }) {
 
             {job.status === "Open" && (
               <>
-                <p className="job-muted">Accept it and the item is reserved for you. You will have {job.days} days from today to finish.</p>
-                <button type="button" className="rk-btn primary" onClick={() => setModal("accept")}>
+                <p className="job-muted">
+                  Accept it and the item is reserved for you. You will have{" "}
+                  {job.days} days from today to finish.
+                </p>
+                <button
+                  type="button"
+                  className="rk-btn primary"
+                  onClick={() => setModal("accept")}
+                >
                   Accept job
                 </button>
               </>
@@ -234,19 +287,44 @@ function Details({ job }) {
 
             {job.status === "Assigned" && (
               <>
-                <p className="job-muted">Collect the item from the warehouse, then start the job. {dueLabel(job.dueAt)}.</p>
-                <button type="button" className="rk-btn primary" onClick={() => setModal("start")}>
+                <p className="job-muted">
+                  Collect the item from the warehouse, then start the job.{" "}
+                  {dueLabel(job.dueAt)}.
+                </p>
+                <button
+                  type="button"
+                  className="rk-btn primary"
+                  onClick={() => setModal("start")}
+                >
                   Start work
                 </button>
-                <button type="button" className="rk-btn danger-ghost" onClick={() => setModal("decline")}>
+                <button
+                  type="button"
+                  className="rk-btn danger-ghost"
+                  onClick={() => setModal("decline")}
+                >
                   Hand the job back
                 </button>
               </>
             )}
 
-            {working && <p className="job-muted">{dueLabel(job.dueAt)}. Post updates as you go, then submit when you are done.</p>}
-            {job.status === "In review" && <p className="job-muted">Nothing to do right now. We will tell you the result.</p>}
-            {job.status === "Completed" && <p className="job-muted">Completed on {dateLabel(job.completedAt)}. Your fee was paid out.</p>}
+            {working && (
+              <p className="job-muted">
+                {dueLabel(job.dueAt)}. Post updates as you go, then submit when
+                you are done.
+              </p>
+            )}
+            {job.status === "In review" && (
+              <p className="job-muted">
+                Nothing to do right now. We will tell you the result.
+              </p>
+            )}
+            {job.status === "Completed" && (
+              <p className="job-muted">
+                Completed on {dateLabel(job.completedAt)}. Your fee was paid
+                out.
+              </p>
+            )}
 
             <Link to="/remaker-messages/cv-6" className="rk-btn ghost">
               Message the warehouse team
@@ -306,10 +384,18 @@ function Details({ job }) {
               <small>Demo only</small>
               <p>ReOrbit makes this decision. Pick a result to preview it.</p>
               <div>
-                <button type="button" className="rk-btn primary small" onClick={() => decideQuality(job.id, true)}>
+                <button
+                  type="button"
+                  className="rk-btn primary small"
+                  onClick={() => decideQuality(job.id, true)}
+                >
                   Pass the check
                 </button>
-                <button type="button" className="rk-btn danger-ghost small" onClick={() => decideQuality(job.id, false)}>
+                <button
+                  type="button"
+                  className="rk-btn danger-ghost small"
+                  onClick={() => decideQuality(job.id, false)}
+                >
                   Fail the check
                 </button>
               </div>
@@ -320,15 +406,42 @@ function Details({ job }) {
 
       {modal && (
         <ConfirmModal
-          title={modal === "accept" ? "Accept this job?" : modal === "start" ? "Start the job?" : "Hand this job back?"}
-          confirmLabel={modal === "accept" ? "Accept job" : modal === "start" ? "Start work" : "Hand it back"}
+          title={
+            modal === "accept"
+              ? "Accept this job?"
+              : modal === "start"
+                ? "Start the job?"
+                : "Hand this job back?"
+          }
+          confirmLabel={
+            modal === "accept"
+              ? "Accept job"
+              : modal === "start"
+                ? "Start work"
+                : "Hand it back"
+          }
           tone={modal === "decline" ? "danger" : "primary"}
           onConfirm={confirm}
           onClose={() => setModal(null)}
         >
-          {modal === "accept" && <p>You will have {job.days} days to finish. If you cannot make it, you can hand the job back before you start.</p>}
-          {modal === "start" && <p>Only start once you have collected the item from the warehouse. Your deadline keeps counting.</p>}
-          {modal === "decline" && <p>Another ReMaker will be able to take it. Handing back too many jobs can lower your job rating.</p>}
+          {modal === "accept" && (
+            <p>
+              You will have {job.days} days to finish. If you cannot make it,
+              you can hand the job back before you start.
+            </p>
+          )}
+          {modal === "start" && (
+            <p>
+              Only start once you have collected the item from the warehouse.
+              Your deadline keeps counting.
+            </p>
+          )}
+          {modal === "decline" && (
+            <p>
+              Another ReMaker will be able to take it. Handing back too many
+              jobs can lower your job rating.
+            </p>
+          )}
         </ConfirmModal>
       )}
 

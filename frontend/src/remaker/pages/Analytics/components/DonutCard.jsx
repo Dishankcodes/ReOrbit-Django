@@ -18,9 +18,20 @@ export default function DonutCard({ categories }) {
       </header>
 
       <div className="ana-donut-wrap">
-        <div className="ana-donut" role="img" aria-label="Share of earnings by category">
+        <div
+          className="ana-donut"
+          role="img"
+          aria-label="Share of earnings by category"
+        >
           <svg viewBox="0 0 42 42" aria-hidden="true">
-            <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#f4f1ef" strokeWidth="6" />
+            <circle
+              cx="21"
+              cy="21"
+              r="15.9155"
+              fill="none"
+              stroke="#f4f1ef"
+              strokeWidth="6"
+            />
             {categories.map((item, index) => {
               const dash = (item.share / 100) * 100;
               const circle = (

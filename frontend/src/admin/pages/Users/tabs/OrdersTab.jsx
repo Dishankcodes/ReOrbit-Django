@@ -14,7 +14,8 @@ export default function OrdersTab({ user }) {
   const [filter, setFilter] = useState("all");
 
   const rows = useMemo(
-    () => user.orders.filter((order) => filter === "all" || order.role === filter),
+    () =>
+      user.orders.filter((order) => filter === "all" || order.role === filter),
     [user.orders, filter],
   );
 
@@ -42,7 +43,11 @@ export default function OrdersTab({ user }) {
       </header>
 
       {rows.length === 0 ? (
-        <EmptyState icon={PackageSearch} title="No orders to show" text="This user has no orders in this view yet." />
+        <EmptyState
+          icon={PackageSearch}
+          title="No orders to show"
+          text="This user has no orders in this view yet."
+        />
       ) : (
         <div className="aup-table-wrap">
           <table className="aup-table">
@@ -61,7 +66,9 @@ export default function OrdersTab({ user }) {
             <tbody>
               {rows.map((order) => (
                 <tr key={order.order_id}>
-                  <td><span className="aup-mono">{order.order_id}</span></td>
+                  <td>
+                    <span className="aup-mono">{order.order_id}</span>
+                  </td>
                   <td>
                     <div className="aup-cell-item">
                       <img src={order.image} alt="" className="aup-thumb sm" />
@@ -69,8 +76,14 @@ export default function OrdersTab({ user }) {
                     </div>
                   </td>
                   <td>
-                    <span className={`aup-role ${order.role === "Buyer" ? "buy" : "sell"}`}>
-                      {order.role === "Buyer" ? <ArrowDownLeft size={13} /> : <ArrowUpRight size={13} />}
+                    <span
+                      className={`aup-role ${order.role === "Buyer" ? "buy" : "sell"}`}
+                    >
+                      {order.role === "Buyer" ? (
+                        <ArrowDownLeft size={13} />
+                      ) : (
+                        <ArrowUpRight size={13} />
+                      )}
                       {order.role === "Buyer" ? "Bought" : "Sold"}
                     </span>
                   </td>
@@ -78,12 +91,22 @@ export default function OrdersTab({ user }) {
                     <strong className="aup-strong">{order.counterparty}</strong>
                     <span className="aup-sub">{order.counterparty_type}</span>
                   </td>
-                  <td><strong className="aup-strong">{formatINR(order.amount)}</strong></td>
                   <td>
-                    <span className="aup-strong">{order.payment_method.replace("_", " ")}</span>
-                    <span className="aup-sub">{humanize(order.payment_status)}</span>
+                    <strong className="aup-strong">
+                      {formatINR(order.amount)}
+                    </strong>
                   </td>
-                  <td><StatusBadge status={order.order_status} /></td>
+                  <td>
+                    <span className="aup-strong">
+                      {order.payment_method.replace("_", " ")}
+                    </span>
+                    <span className="aup-sub">
+                      {humanize(order.payment_status)}
+                    </span>
+                  </td>
+                  <td>
+                    <StatusBadge status={order.order_status} />
+                  </td>
                   <td className="aup-nowrap">{formatDate(order.order_date)}</td>
                 </tr>
               ))}

@@ -32,23 +32,181 @@ function mulberry(seed) {
 /* ---------- people with real photos (also customers) ---------- */
 
 const KNOWN = [
-  { id: "c-meera", name: "Meera Iyer", type: "User", city: "Bengaluru", state: "Karnataka", image: "/images/users/meera-iyer.jpg", customerId: "c-meera", bio: "Loves warm lighting and old wood. Collecting pieces with a story.", hours: 2300 },
-  { id: "c-rohan", name: "Rohan Shah", type: "User", city: "Pune", state: "Maharashtra", image: "/images/users/rohan-shah.jpg", customerId: "c-rohan", bio: "Restoring a 1960s flat one piece at a time.", hours: 1800 },
-  { id: "c-anaya", name: "Anaya Singh", type: "User", city: "Jaipur", state: "Rajasthan", image: "/images/users/anaya-singh.jpg", customerId: "c-anaya", bio: "Designer who prefers handmade over mass made.", hours: 520 },
-  { id: "c-kabir", name: "Kabir Verma", type: "User", city: "Delhi", state: "Delhi", image: "/images/users/kabir-verma.jpg", customerId: "c-kabir", bio: "Collector of lamps and anything made from metal scrap.", hours: 260 },
-  { id: "c-aarav", name: "Aarav Patel", type: "User", city: "Ahmedabad", state: "Gujarat", image: "/images/users/aarav-patel.jpg", customerId: "c-aarav", bio: "Buys gifts for his team from local makers.", hours: 90 },
-  { id: "c-nisha", name: "Nisha Rao", type: "User", city: "Mumbai", state: "Maharashtra", image: "/images/users/nisha-rao.jpg", customerId: "c-nisha", bio: "Interior stylist hunting for statement furniture.", hours: 3100 },
-  { id: "tara-bose", name: "Tara Bose", type: "ReMaker", city: "Kolkata", state: "West Bengal", image: "/images/remakers/tara-bose.jpg", customerId: "c-tara", bio: "Furniture and wood restoration. Follows makers she admires.", hours: 4200, craft: "Furniture & Wood Restoration" },
-  { id: "arjun-mehta", name: "Arjun Mehta", type: "ReMaker", city: "Ahmedabad", state: "Gujarat", image: "/images/remakers/arjun-mehta.jpg", customerId: "", bio: "Metal and reclaimed wood lighting from old machine parts.", hours: 3600, craft: "Lighting & Metal Upcycling" },
-  { id: "priya-shah", name: "Priya Shah", type: "ReMaker", city: "Mumbai", state: "Maharashtra", image: "/images/remakers/priya-shah.jpg", customerId: "", bio: "Textile upcycling: bags, jackets and home decor.", hours: 2900, craft: "Textile Upcycling" },
+  {
+    id: "c-meera",
+    name: "Meera Iyer",
+    type: "User",
+    city: "Bengaluru",
+    state: "Karnataka",
+    image: "/images/users/meera-iyer.jpg",
+    customerId: "c-meera",
+    bio: "Loves warm lighting and old wood. Collecting pieces with a story.",
+    hours: 2300,
+  },
+  {
+    id: "c-rohan",
+    name: "Rohan Shah",
+    type: "User",
+    city: "Pune",
+    state: "Maharashtra",
+    image: "/images/users/rohan-shah.jpg",
+    customerId: "c-rohan",
+    bio: "Restoring a 1960s flat one piece at a time.",
+    hours: 1800,
+  },
+  {
+    id: "c-anaya",
+    name: "Anaya Singh",
+    type: "User",
+    city: "Jaipur",
+    state: "Rajasthan",
+    image: "/images/users/anaya-singh.jpg",
+    customerId: "c-anaya",
+    bio: "Designer who prefers handmade over mass made.",
+    hours: 520,
+  },
+  {
+    id: "c-kabir",
+    name: "Kabir Verma",
+    type: "User",
+    city: "Delhi",
+    state: "Delhi",
+    image: "/images/users/kabir-verma.jpg",
+    customerId: "c-kabir",
+    bio: "Collector of lamps and anything made from metal scrap.",
+    hours: 260,
+  },
+  {
+    id: "c-aarav",
+    name: "Aarav Patel",
+    type: "User",
+    city: "Ahmedabad",
+    state: "Gujarat",
+    image: "/images/users/aarav-patel.jpg",
+    customerId: "c-aarav",
+    bio: "Buys gifts for his team from local makers.",
+    hours: 90,
+  },
+  {
+    id: "c-nisha",
+    name: "Nisha Rao",
+    type: "User",
+    city: "Mumbai",
+    state: "Maharashtra",
+    image: "/images/users/nisha-rao.jpg",
+    customerId: "c-nisha",
+    bio: "Interior stylist hunting for statement furniture.",
+    hours: 3100,
+  },
+  {
+    id: "tara-bose",
+    name: "Tara Bose",
+    type: "ReMaker",
+    city: "Kolkata",
+    state: "West Bengal",
+    image: "/images/remakers/tara-bose.jpg",
+    customerId: "c-tara",
+    bio: "Furniture and wood restoration. Follows makers she admires.",
+    hours: 4200,
+    craft: "Furniture & Wood Restoration",
+  },
+  {
+    id: "arjun-mehta",
+    name: "Arjun Mehta",
+    type: "ReMaker",
+    city: "Ahmedabad",
+    state: "Gujarat",
+    image: "/images/remakers/arjun-mehta.jpg",
+    customerId: "",
+    bio: "Metal and reclaimed wood lighting from old machine parts.",
+    hours: 3600,
+    craft: "Lighting & Metal Upcycling",
+  },
+  {
+    id: "priya-shah",
+    name: "Priya Shah",
+    type: "ReMaker",
+    city: "Mumbai",
+    state: "Maharashtra",
+    image: "/images/remakers/priya-shah.jpg",
+    customerId: "",
+    bio: "Textile upcycling: bags, jackets and home decor.",
+    hours: 2900,
+    craft: "Textile Upcycling",
+  },
 ];
 
-const FIRST = ["Aditi", "Sameer", "Kavya", "Dhruv", "Riya", "Nikhil", "Ishaan", "Leena", "Pooja", "Harsh", "Devika", "Vikram", "Sana", "Amit", "Tanvi", "Manav", "Gauri", "Yash", "Pranav", "Ishita", "Mansi", "Rahul", "Neha", "Karan", "Divya", "Rohit", "Simran", "Varun", "Ananya", "Siddharth", "Meghna", "Tushar"];
-const LAST = ["Desai", "Nair", "Kulkarni", "Joshi", "Gupta", "Reddy", "Menon", "Bhatt", "Kapoor", "Malhotra", "Chopra", "Sinha", "Pillai", "Mehra", "Shetty", "Bansal", "Trivedi", "Rao", "Jain", "Saxena"];
+const FIRST = [
+  "Aditi",
+  "Sameer",
+  "Kavya",
+  "Dhruv",
+  "Riya",
+  "Nikhil",
+  "Ishaan",
+  "Leena",
+  "Pooja",
+  "Harsh",
+  "Devika",
+  "Vikram",
+  "Sana",
+  "Amit",
+  "Tanvi",
+  "Manav",
+  "Gauri",
+  "Yash",
+  "Pranav",
+  "Ishita",
+  "Mansi",
+  "Rahul",
+  "Neha",
+  "Karan",
+  "Divya",
+  "Rohit",
+  "Simran",
+  "Varun",
+  "Ananya",
+  "Siddharth",
+  "Meghna",
+  "Tushar",
+];
+const LAST = [
+  "Desai",
+  "Nair",
+  "Kulkarni",
+  "Joshi",
+  "Gupta",
+  "Reddy",
+  "Menon",
+  "Bhatt",
+  "Kapoor",
+  "Malhotra",
+  "Chopra",
+  "Sinha",
+  "Pillai",
+  "Mehra",
+  "Shetty",
+  "Bansal",
+  "Trivedi",
+  "Rao",
+  "Jain",
+  "Saxena",
+];
 const PLACES = [
-  ["Ahmedabad", "Gujarat"], ["Mumbai", "Maharashtra"], ["Bengaluru", "Karnataka"], ["Pune", "Maharashtra"], ["Delhi", "Delhi"],
-  ["Jaipur", "Rajasthan"], ["Kolkata", "West Bengal"], ["Surat", "Gujarat"], ["Hyderabad", "Telangana"], ["Chennai", "Tamil Nadu"],
-  ["Kochi", "Kerala"], ["Vadodara", "Gujarat"], ["Indore", "Madhya Pradesh"], ["Lucknow", "Uttar Pradesh"],
+  ["Ahmedabad", "Gujarat"],
+  ["Mumbai", "Maharashtra"],
+  ["Bengaluru", "Karnataka"],
+  ["Pune", "Maharashtra"],
+  ["Delhi", "Delhi"],
+  ["Jaipur", "Rajasthan"],
+  ["Kolkata", "West Bengal"],
+  ["Surat", "Gujarat"],
+  ["Hyderabad", "Telangana"],
+  ["Chennai", "Tamil Nadu"],
+  ["Kochi", "Kerala"],
+  ["Vadodara", "Gujarat"],
+  ["Indore", "Madhya Pradesh"],
+  ["Lucknow", "Uttar Pradesh"],
 ];
 const USER_BIOS = [
   "Upcycling fan. Always looking for something with a past.",
@@ -58,7 +216,13 @@ const USER_BIOS = [
   "Collects vintage finds and gives them a second life.",
   "Sustainable living, one purchase at a time.",
 ];
-const MAKER_CRAFTS = ["Ceramics & Pottery", "Furniture Restoration", "Metal Art", "Textile & Patchwork", "Glass & Mosaic"];
+const MAKER_CRAFTS = [
+  "Ceramics & Pottery",
+  "Furniture Restoration",
+  "Metal Art",
+  "Textile & Patchwork",
+  "Glass & Mosaic",
+];
 
 function generate() {
   const random = mulberry(98765);
@@ -93,7 +257,9 @@ function generate() {
       bio: isMaker
         ? `ReMaker working in ${MAKER_CRAFTS[Math.floor(random() * MAKER_CRAFTS.length)].toLowerCase()}.`
         : USER_BIOS[Math.floor(random() * USER_BIOS.length)],
-      craft: isMaker ? MAKER_CRAFTS[Math.floor(random() * MAKER_CRAFTS.length)] : "",
+      craft: isMaker
+        ? MAKER_CRAFTS[Math.floor(random() * MAKER_CRAFTS.length)]
+        : "",
       followedAt: ago(hours),
       joined: String(2024 + Math.floor(random() * 2)),
       views: Math.floor(random() * 38),
@@ -127,8 +293,30 @@ function seedFollowing() {
     .filter(Boolean);
 
   const others = [
-    { id: "m-ishita", name: "Ishita Rao", craft: "Ceramics & Pottery", city: "Jaipur", image: "", rating: 4.8, followers: 860, products: 24, followedAt: ago(3300), profile: false },
-    { id: "m-vikram", name: "Vikram Joshi", craft: "Metal Art", city: "Pune", image: "", rating: 4.7, followers: 540, products: 15, followedAt: ago(2100), profile: false },
+    {
+      id: "m-ishita",
+      name: "Ishita Rao",
+      craft: "Ceramics & Pottery",
+      city: "Jaipur",
+      image: "",
+      rating: 4.8,
+      followers: 860,
+      products: 24,
+      followedAt: ago(3300),
+      profile: false,
+    },
+    {
+      id: "m-vikram",
+      name: "Vikram Joshi",
+      craft: "Metal Art",
+      city: "Pune",
+      image: "",
+      rating: 4.7,
+      followers: 540,
+      products: 15,
+      followedAt: ago(2100),
+      profile: false,
+    },
   ];
 
   return [...real, ...others];
@@ -146,7 +334,12 @@ function load() {
 
     if (raw) {
       const value = JSON.parse(raw);
-      if (value && Array.isArray(value.followers) && Array.isArray(value.following)) return value;
+      if (
+        value &&
+        Array.isArray(value.followers) &&
+        Array.isArray(value.following)
+      )
+        return value;
     }
   } catch {
     /* fall back to the seed */
@@ -181,7 +374,10 @@ export function useFollowers() {
   const current = useSyncExternalStore(subscribe, getSnapshot);
 
   return useMemo(
-    () => [...current.followers].sort((a, b) => b.followedAt.localeCompare(a.followedAt)),
+    () =>
+      [...current.followers].sort((a, b) =>
+        b.followedAt.localeCompare(a.followedAt),
+      ),
     [current.followers],
   );
 }
@@ -190,7 +386,10 @@ export function useFollowing() {
   const current = useSyncExternalStore(subscribe, getSnapshot);
 
   return useMemo(
-    () => [...current.following].sort((a, b) => b.followedAt.localeCompare(a.followedAt)),
+    () =>
+      [...current.following].sort((a, b) =>
+        b.followedAt.localeCompare(a.followedAt),
+      ),
     [current.following],
   );
 }
@@ -200,7 +399,11 @@ export function useFollowing() {
 export function removeFollower(id) {
   const removed = state.followers.find((person) => person.id === id) || null;
 
-  if (removed) commit({ ...state, followers: state.followers.filter((person) => person.id !== id) });
+  if (removed)
+    commit({
+      ...state,
+      followers: state.followers.filter((person) => person.id !== id),
+    });
 
   return removed;
 }
@@ -237,7 +440,11 @@ export function followBack(person) {
 export function unfollow(id) {
   const removed = state.following.find((item) => item.id === id) || null;
 
-  if (removed) commit({ ...state, following: state.following.filter((item) => item.id !== id) });
+  if (removed)
+    commit({
+      ...state,
+      following: state.following.filter((item) => item.id !== id),
+    });
 
   return removed;
 }
@@ -258,14 +465,18 @@ export function followerStats(followers) {
   const monthAgo = NOW - 30 * 86400000;
   const twoMonthsAgo = NOW - 60 * 86400000;
 
-  const last30 = followers.filter((person) => new Date(person.followedAt).getTime() >= monthAgo).length;
+  const last30 = followers.filter(
+    (person) => new Date(person.followedAt).getTime() >= monthAgo,
+  ).length;
   const previous30 = followers.filter((person) => {
     const time = new Date(person.followedAt).getTime();
     return time >= twoMonthsAgo && time < monthAgo;
   }).length;
 
   const places = new Map();
-  followers.forEach((person) => places.set(person.city, (places.get(person.city) || 0) + 1));
+  followers.forEach((person) =>
+    places.set(person.city, (places.get(person.city) || 0) + 1),
+  );
 
   return {
     total: followers.length,
@@ -273,9 +484,15 @@ export function followerStats(followers) {
     previous30,
     makers: followers.filter((person) => person.type === "ReMaker").length,
     customers: followers.filter((person) => person.customerId).length,
-    engaged: followers.filter((person) => person.views >= 34 || person.saves >= 5).length,
+    engaged: followers.filter(
+      (person) => person.views >= 34 || person.saves >= 5,
+    ).length,
     places: [...places.entries()]
-      .map(([city, count]) => ({ city, count, percent: (count / followers.length) * 100 }))
+      .map(([city, count]) => ({
+        city,
+        count,
+        percent: (count / followers.length) * 100,
+      }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5),
   };
@@ -287,7 +504,9 @@ export function growthSeries(followers, weeks = 12) {
 
   for (let i = weeks - 1; i >= 0; i -= 1) {
     const end = NOW - i * 7 * 86400000;
-    const total = followers.filter((person) => new Date(person.followedAt).getTime() <= end).length;
+    const total = followers.filter(
+      (person) => new Date(person.followedAt).getTime() <= end,
+    ).length;
     const date = new Date(end);
 
     points.push({

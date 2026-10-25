@@ -85,8 +85,8 @@ export default function UserBadges() {
           <h1>Badges</h1>
 
           <p>
-            Every sustainable action moves you one step further
-            around the ReOrbit.
+            Every sustainable action moves you one step further around the
+            ReOrbit.
           </p>
         </div>
 
@@ -116,9 +116,7 @@ export default function UserBadges() {
           return (
             <article
               key={badge.id}
-              className={`badge-card ${
-                badge.unlocked ? "" : "locked"
-              }`}
+              className={`badge-card ${badge.unlocked ? "" : "locked"}`}
             >
               <div className="badge-icon">
                 <Icon size={24} />

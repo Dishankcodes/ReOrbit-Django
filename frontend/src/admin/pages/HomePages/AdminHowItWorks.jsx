@@ -4,32 +4,186 @@ import AdminFooter from "../../components/AdminFooter";
 
 export default function HowItWorks() {
   const managementAreas = [
-    { number: "01", icon: "group", title: "Users & ReMakers", description: "Look after the people who make the marketplace work.", points: ["Search and filter accounts", "Verify ReMaker applications", "Warn, suspend or block with a reason", "See each person's full history"] },
-    { number: "02", icon: "inventory_2", title: "Products & Listings", description: "Make sure everything for sale is accurate and safe.", points: ["Review new listings in a queue", "Approve or reject with a note", "See who posted it and when", "Take down or restore a listing"] },
-    { number: "03", icon: "receipt_long", title: "Orders & Payments", description: "Follow each order from the moment it is placed.", points: ["Confirm payments and orders", "Cancel, return and refund", "Track delivery step by step", "Open buyer and seller profiles"] },
-    { number: "04", icon: "volunteer_activism", title: "Donations & Pickups", description: "Turn a generous offer into a collected item.", points: ["Accept or reject a donation", "Schedule a pickup partner and slot", "Spot pickups that are overdue", "Issue the donor's certificate"] },
-    { number: "05", icon: "warehouse", title: "Warehouse", description: "Know where every item is and what happens to it next.", points: ["Receive stock and assign a bin", "Send items for refurbishment", "List, price-cut or donate on", "Unsold-too-long alerts"] },
-    { number: "06", icon: "storefront", title: "Buy & Sell", description: "ReOrbit trades too, using the same marketplace.", points: ["Buy from members and ReMakers", "Cart, checkout and payment", "List stock with 3 or 4 photos", "Accept, ship and deliver sales"] },
-    { number: "07", icon: "redeem", title: "Rewards", description: "Thank members and bring them back.", points: ["Set how many points each action earns", "Create vouchers and coupons", "Review donation rewards", "Handle redemptions"] },
-    { number: "08", icon: "account_balance_wallet", title: "Earnings & Reports", description: "Understand the money and the marketplace.", points: ["Platform fee and sales income", "Earning flow and cash flow", "Orders, donations and stock reports", "Export to CSV"] },
-    { number: "09", icon: "admin_panel_settings", title: "Team & Settings", description: "Decide the rules and who can change them.", points: ["Add sub-admins with view or edit access", "Preview the panel as a team member", "Fees, delivery and warehouse rules", "Notifications and security"] },
+    {
+      number: "01",
+      icon: "group",
+      title: "Users & ReMakers",
+      description: "Look after the people who make the marketplace work.",
+      points: [
+        "Search and filter accounts",
+        "Verify ReMaker applications",
+        "Warn, suspend or block with a reason",
+        "See each person's full history",
+      ],
+    },
+    {
+      number: "02",
+      icon: "inventory_2",
+      title: "Products & Listings",
+      description: "Make sure everything for sale is accurate and safe.",
+      points: [
+        "Review new listings in a queue",
+        "Approve or reject with a note",
+        "See who posted it and when",
+        "Take down or restore a listing",
+      ],
+    },
+    {
+      number: "03",
+      icon: "receipt_long",
+      title: "Orders & Payments",
+      description: "Follow each order from the moment it is placed.",
+      points: [
+        "Confirm payments and orders",
+        "Cancel, return and refund",
+        "Track delivery step by step",
+        "Open buyer and seller profiles",
+      ],
+    },
+    {
+      number: "04",
+      icon: "volunteer_activism",
+      title: "Donations & Pickups",
+      description: "Turn a generous offer into a collected item.",
+      points: [
+        "Accept or reject a donation",
+        "Schedule a pickup partner and slot",
+        "Spot pickups that are overdue",
+        "Issue the donor's certificate",
+      ],
+    },
+    {
+      number: "05",
+      icon: "warehouse",
+      title: "Warehouse",
+      description: "Know where every item is and what happens to it next.",
+      points: [
+        "Receive stock and assign a bin",
+        "Send items for refurbishment",
+        "List, price-cut or donate on",
+        "Unsold-too-long alerts",
+      ],
+    },
+    {
+      number: "06",
+      icon: "storefront",
+      title: "Buy & Sell",
+      description: "ReOrbit trades too, using the same marketplace.",
+      points: [
+        "Buy from members and ReMakers",
+        "Cart, checkout and payment",
+        "List stock with 3 or 4 photos",
+        "Accept, ship and deliver sales",
+      ],
+    },
+    {
+      number: "07",
+      icon: "redeem",
+      title: "Rewards",
+      description: "Thank members and bring them back.",
+      points: [
+        "Set how many points each action earns",
+        "Create vouchers and coupons",
+        "Review donation rewards",
+        "Handle redemptions",
+      ],
+    },
+    {
+      number: "08",
+      icon: "account_balance_wallet",
+      title: "Earnings & Reports",
+      description: "Understand the money and the marketplace.",
+      points: [
+        "Platform fee and sales income",
+        "Earning flow and cash flow",
+        "Orders, donations and stock reports",
+        "Export to CSV",
+      ],
+    },
+    {
+      number: "09",
+      icon: "admin_panel_settings",
+      title: "Team & Settings",
+      description: "Decide the rules and who can change them.",
+      points: [
+        "Add sub-admins with view or edit access",
+        "Preview the panel as a team member",
+        "Fees, delivery and warehouse rules",
+        "Notifications and security",
+      ],
+    },
   ];
 
   const workflow = [
-    { number: "01", icon: "notifications_active", title: "Notice", text: "The dashboard and notification bell show what needs you: new donations, late pickups, unsold stock, orders to ship." },
-    { number: "02", icon: "fact_check", title: "Review", text: "Open the item, see who it belongs to, what has happened so far and everything needed to decide." },
-    { number: "03", icon: "touch_app", title: "Act", text: "Accept, schedule, approve, ship or refund. Risky actions ask for a short reason first." },
-    { number: "04", icon: "sync", title: "Update", text: "The change shows up everywhere it matters: orders, stock, notifications, rewards and earnings." },
-    { number: "05", icon: "analytics", title: "Learn", text: "Reports and Earnings turn the day's work into numbers that help plan the next move." },
+    {
+      number: "01",
+      icon: "notifications_active",
+      title: "Notice",
+      text: "The dashboard and notification bell show what needs you: new donations, late pickups, unsold stock, orders to ship.",
+    },
+    {
+      number: "02",
+      icon: "fact_check",
+      title: "Review",
+      text: "Open the item, see who it belongs to, what has happened so far and everything needed to decide.",
+    },
+    {
+      number: "03",
+      icon: "touch_app",
+      title: "Act",
+      text: "Accept, schedule, approve, ship or refund. Risky actions ask for a short reason first.",
+    },
+    {
+      number: "04",
+      icon: "sync",
+      title: "Update",
+      text: "The change shows up everywhere it matters: orders, stock, notifications, rewards and earnings.",
+    },
+    {
+      number: "05",
+      icon: "analytics",
+      title: "Learn",
+      text: "Reports and Earnings turn the day's work into numbers that help plan the next move.",
+    },
   ];
 
   const lifecycle = [
-    { icon: "volunteer_activism", label: "Step one", title: "Donate or list", text: "A member offers an item. An admin accepts it, or the listing goes into the review queue." },
-    { icon: "local_shipping", label: "Step two", title: "Pickup", text: "A pickup partner and time slot are scheduled. The member is told when to expect them." },
-    { icon: "warehouse", label: "Step three", title: "Warehouse", text: "The item is received, given a rack and bin, and either listed as it is or sent for refurbishment." },
-    { icon: "handyman", label: "Step four", title: "Refurbish & list", text: "A ReMaker restores it, and the finished product is listed for sale with photos and a price." },
-    { icon: "shopping_bag", label: "Step five", title: "Buy & deliver", text: "A buyer pays, the order is confirmed, shipped and delivered. Returns and refunds are handled if needed." },
-    { icon: "account_balance_wallet", label: "Step six", title: "Earn & reward", text: "The platform fee and sale are recorded in Earnings, and the donor receives Orbit points." },
+    {
+      icon: "volunteer_activism",
+      label: "Step one",
+      title: "Donate or list",
+      text: "A member offers an item. An admin accepts it, or the listing goes into the review queue.",
+    },
+    {
+      icon: "local_shipping",
+      label: "Step two",
+      title: "Pickup",
+      text: "A pickup partner and time slot are scheduled. The member is told when to expect them.",
+    },
+    {
+      icon: "warehouse",
+      label: "Step three",
+      title: "Warehouse",
+      text: "The item is received, given a rack and bin, and either listed as it is or sent for refurbishment.",
+    },
+    {
+      icon: "handyman",
+      label: "Step four",
+      title: "Refurbish & list",
+      text: "A ReMaker restores it, and the finished product is listed for sale with photos and a price.",
+    },
+    {
+      icon: "shopping_bag",
+      label: "Step five",
+      title: "Buy & deliver",
+      text: "A buyer pays, the order is confirmed, shipped and delivered. Returns and refunds are handled if needed.",
+    },
+    {
+      icon: "account_balance_wallet",
+      label: "Step six",
+      title: "Earn & reward",
+      text: "The platform fee and sale are recorded in Earnings, and the donor receives Orbit points.",
+    },
   ];
 
   return (
@@ -64,8 +218,8 @@ export default function HowItWorks() {
               <p>
                 This is how a donated or listed item travels through ReOrbit,
                 and what an admin does at each step: reviewing, collecting,
-                storing, refurbishing, selling, paying out and learning from
-                the numbers.
+                storing, refurbishing, selling, paying out and learning from the
+                numbers.
               </p>
 
               <div className="admin-how-actions">

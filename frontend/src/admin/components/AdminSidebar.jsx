@@ -28,24 +28,59 @@ import { useSettings } from "../data/settingsStore";
 import "./AdminSidebar.css";
 
 const mainMenu = [
-  { key: "dashboard", label: "Dashboard", path: "/admin-dashboard", icon: LayoutDashboard },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    path: "/admin-dashboard",
+    icon: LayoutDashboard,
+  },
   { key: "users", label: "Users", path: "/admin-users", icon: Users },
-  { key: "remakers", label: "ReMakers", path: "/admin-remakers", icon: Palette },
-  { key: "products", label: "Products", path: "/admin-products", icon: ShoppingBag },
+  {
+    key: "remakers",
+    label: "ReMakers",
+    path: "/admin-remakers",
+    icon: Palette,
+  },
+  {
+    key: "products",
+    label: "Products",
+    path: "/admin-products",
+    icon: ShoppingBag,
+  },
   { key: "orders", label: "Orders", path: "/admin-orders", icon: Package },
-  { key: "shop", label: "Buy Products", path: "/admin-shop", icon: ShoppingCart },
+  {
+    key: "shop",
+    label: "Buy Products",
+    path: "/admin-shop",
+    icon: ShoppingCart,
+  },
   { key: "sell", label: "Sell Products", path: "/admin-sell", icon: Store },
 ];
 
 const operationsMenu = [
-  { key: "donations", label: "Donations", path: "/admin-donations", icon: Gift },
+  {
+    key: "donations",
+    label: "Donations",
+    path: "/admin-donations",
+    icon: Gift,
+  },
   { key: "pickups", label: "Pickups", path: "/admin-pickups", icon: Truck },
-  { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: Warehouse },
+  {
+    key: "warehouse",
+    label: "Warehouse",
+    path: "/admin-warehouse",
+    icon: Warehouse,
+  },
 ];
 
 const managementMenu = [
   { key: "rewards", label: "Rewards", path: "/admin-rewards", icon: Star },
-  { key: "notifications", label: "Notifications", path: "/admin-notifications", icon: Bell },
+  {
+    key: "notifications",
+    label: "Notifications",
+    path: "/admin-notifications",
+    icon: Bell,
+  },
   { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
   { key: "reports", label: "Reports", path: "/admin-reports", icon: BarChart3 },
   { key: "team", label: "Team & Roles", path: "/admin-team", icon: UserCog },
@@ -103,10 +138,13 @@ export default function AdminSidebar({
 
   const access = useAccess();
   const { profile } = useSettings();
-  const adminName = access.previewing ? access.me.name : profile?.name || getAdminName(admin);
+  const adminName = access.previewing
+    ? access.me.name
+    : profile?.name || getAdminName(admin);
   const roleLabel = access.isSuper ? "Super admin" : access.me.roleLabel;
   const initials = getInitials(adminName);
-  const visible = (list) => list.filter((item) => !item.key || access.canSee(item.key));
+  const visible = (list) =>
+    list.filter((item) => !item.key || access.canSee(item.key));
 
   const handleNavigation = () => {
     if (window.innerWidth <= 900 && onCloseMobile) {

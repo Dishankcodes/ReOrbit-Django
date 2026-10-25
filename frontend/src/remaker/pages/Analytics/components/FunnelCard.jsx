@@ -42,8 +42,8 @@ export default function FunnelCard({ funnel }) {
       </ol>
 
       <p className="ana-foot">
-        {((funnel[2].value / top) * 100).toFixed(2)}% of views turn into an order. Marketplace sellers usually see
-        1 to 3%.
+        {((funnel[2].value / top) * 100).toFixed(2)}% of views turn into an
+        order. Marketplace sellers usually see 1 to 3%.
       </p>
     </section>
   );

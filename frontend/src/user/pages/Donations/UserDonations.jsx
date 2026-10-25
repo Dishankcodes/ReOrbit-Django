@@ -43,10 +43,26 @@ import "../../css/donations/DonationCard.css";
 import "../../css/donations/UserDonationsHome.css";
 
 const STEPS = [
-  { icon: ClipboardList, title: "Tell us what you're giving", text: "Add photos, condition and quantity in under two minutes." },
-  { icon: CalendarCheck, title: "Pick a free pickup slot", text: "Choose a day and time. We collect from your doorstep, at no cost." },
-  { icon: Warehouse, title: "We check and sort it", text: "Items are verified at our warehouse and matched with a partner NGO." },
-  { icon: Award, title: "Get your certificate", text: "Receive a donation certificate and Orbit Points once it's delivered." },
+  {
+    icon: ClipboardList,
+    title: "Tell us what you're giving",
+    text: "Add photos, condition and quantity in under two minutes.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Pick a free pickup slot",
+    text: "Choose a day and time. We collect from your doorstep, at no cost.",
+  },
+  {
+    icon: Warehouse,
+    title: "We check and sort it",
+    text: "Items are verified at our warehouse and matched with a partner NGO.",
+  },
+  {
+    icon: Award,
+    title: "Get your certificate",
+    text: "Receive a donation certificate and Orbit Points once it's delivered.",
+  },
 ];
 
 export default function UserDonations() {
@@ -62,7 +78,9 @@ export default function UserDonations() {
   /* the donation closest to its next milestone: scheduled pickups first */
   const featured = useMemo(() => {
     const rank = { Picked_Up: 0, Scheduled: 1, Received: 2, Pending: 3 };
-    return [...active].sort((a, b) => rank[a.status] - rank[b.status])[0] || null;
+    return (
+      [...active].sort((a, b) => rank[a.status] - rank[b.status])[0] || null
+    );
   }, [active]);
 
   const recent = donations.slice(0, 3);
@@ -89,9 +107,15 @@ export default function UserDonations() {
           </div>
 
           <ul className="dn-hero-points">
-            <li><Check size={14} /> Free doorstep pickup</li>
-            <li><Check size={14} /> Certificate for every donation</li>
-            <li><Check size={14} /> Earn Orbit Points</li>
+            <li>
+              <Check size={14} /> Free doorstep pickup
+            </li>
+            <li>
+              <Check size={14} /> Certificate for every donation
+            </li>
+            <li>
+              <Check size={14} /> Earn Orbit Points
+            </li>
           </ul>
         </div>
 
@@ -99,43 +123,61 @@ export default function UserDonations() {
           <span className="dn-ring dn-ring--1" />
           <span className="dn-ring dn-ring--2" />
           <span className="dn-ring dn-ring--3" />
-          <span className="dn-hero-core"><HandHeart size={44} /></span>
-          <span className="dn-orbiter dn-orbiter--a"><Leaf size={16} /></span>
-          <span className="dn-orbiter dn-orbiter--b"><Gift size={16} /></span>
-          <span className="dn-orbiter dn-orbiter--c"><Star size={16} /></span>
+          <span className="dn-hero-core">
+            <HandHeart size={44} />
+          </span>
+          <span className="dn-orbiter dn-orbiter--a">
+            <Leaf size={16} />
+          </span>
+          <span className="dn-orbiter dn-orbiter--b">
+            <Gift size={16} />
+          </span>
+          <span className="dn-orbiter dn-orbiter--c">
+            <Star size={16} />
+          </span>
         </div>
       </section>
 
       {/* ---------- impact stats ---------- */}
       <section className="dn-stats" aria-label="Your donation impact">
         <article className="dn-stat">
-          <span className="dn-stat-icon"><Gift size={20} /></span>
+          <span className="dn-stat-icon">
+            <Gift size={20} />
+          </span>
           <div>
             <strong>{stats.items}</strong>
             <span>Items donated</span>
           </div>
         </article>
         <article className="dn-stat">
-          <span className="dn-stat-icon"><Scale size={20} /></span>
+          <span className="dn-stat-icon">
+            <Scale size={20} />
+          </span>
           <div>
             <strong>{kg(stats.weight)}</strong>
             <span>Waste diverted</span>
           </div>
         </article>
         <article className="dn-stat">
-          <span className="dn-stat-icon"><Wind size={20} /></span>
+          <span className="dn-stat-icon">
+            <Wind size={20} />
+          </span>
           <div>
             <strong>{stats.co2} kg</strong>
             <span>CO₂ saved</span>
           </div>
         </article>
         <article className="dn-stat">
-          <span className="dn-stat-icon"><Star size={20} /></span>
+          <span className="dn-stat-icon">
+            <Star size={20} />
+          </span>
           <div>
             <strong>{stats.points.toLocaleString("en-IN")}</strong>
             <span>
               Orbit Points earned
-              {stats.pendingPoints > 0 && <em> · +{stats.pendingPoints} on the way</em>}
+              {stats.pendingPoints > 0 && (
+                <em> · +{stats.pendingPoints} on the way</em>
+              )}
             </span>
           </div>
         </article>
@@ -157,7 +199,11 @@ export default function UserDonations() {
         {featured ? (
           <article className="dn-card dn-featured">
             <div className="dn-featured-top">
-              <SafeImage src={featured.images[0]} alt={featured.title} className="dn-featured-img" />
+              <SafeImage
+                src={featured.images[0]}
+                alt={featured.title}
+                className="dn-featured-img"
+              />
               <div className="dn-featured-info">
                 <div className="dn-featured-row">
                   <span className="dn-dcard-id">{featured.id}</span>
@@ -165,25 +211,43 @@ export default function UserDonations() {
                 </div>
                 <h3>{featured.title}</h3>
                 <ul className="dn-featured-facts">
-                  <li><Gift size={14} /> {featured.quantity} {featured.quantity === 1 ? "item" : "items"} · {featured.category}</li>
+                  <li>
+                    <Gift size={14} /> {featured.quantity}{" "}
+                    {featured.quantity === 1 ? "item" : "items"} ·{" "}
+                    {featured.category}
+                  </li>
                   {featured.pickup.date && (
                     <li>
                       <CalendarDays size={14} />
-                      {relativeDay(featured.pickup.date)}, {formatDayMonth(featured.pickup.date)} · {featured.pickup.slot}
+                      {relativeDay(featured.pickup.date)},{" "}
+                      {formatDayMonth(featured.pickup.date)} ·{" "}
+                      {featured.pickup.slot}
                     </li>
                   )}
-                  <li><MapPin size={14} /> {featured.pickup.address.line}, {featured.pickup.address.city}</li>
+                  <li>
+                    <MapPin size={14} /> {featured.pickup.address.line},{" "}
+                    {featured.pickup.address.city}
+                  </li>
                   {featured.pickup.partner && (
-                    <li><Truck size={14} /> {featured.pickup.partner.team} · {featured.pickup.partner.name}</li>
+                    <li>
+                      <Truck size={14} /> {featured.pickup.partner.team} ·{" "}
+                      {featured.pickup.partner.name}
+                    </li>
                   )}
                 </ul>
               </div>
               <div className="dn-featured-cta">
-                <Link to={`/user-donations/${featured.id}`} className="dn-btn dn-btn--sm">
+                <Link
+                  to={`/user-donations/${featured.id}`}
+                  className="dn-btn dn-btn--sm"
+                >
                   View details <ArrowRight size={14} />
                 </Link>
                 {["Pending", "Scheduled"].includes(featured.status) && (
-                  <Link to={`/user-donations/${featured.id}/pickup`} className="dn-btn dn-btn--ghost dn-btn--sm">
+                  <Link
+                    to={`/user-donations/${featured.id}/pickup`}
+                    className="dn-btn dn-btn--ghost dn-btn--sm"
+                  >
                     Manage pickup
                   </Link>
                 )}
@@ -195,12 +259,19 @@ export default function UserDonations() {
           </article>
         ) : (
           <div className="dn-card dn-quiet">
-            <div className="dn-empty-icon"><HandHeart size={28} /></div>
+            <div className="dn-empty-icon">
+              <HandHeart size={28} />
+            </div>
             <div>
               <h3>No donations in progress</h3>
-              <p>Got something collecting dust? Start a donation and we'll handle the rest.</p>
+              <p>
+                Got something collecting dust? Start a donation and we'll handle
+                the rest.
+              </p>
             </div>
-            <Link to="/user-donations/new" className="dn-btn dn-btn--sm">Donate an item</Link>
+            <Link to="/user-donations/new" className="dn-btn dn-btn--sm">
+              Donate an item
+            </Link>
           </div>
         )}
 
@@ -224,7 +295,9 @@ export default function UserDonations() {
         <div className="dn-section-head">
           <div>
             <h2>What would you like to donate?</h2>
-            <p>Pick a category to start. You can add details on the next screen.</p>
+            <p>
+              Pick a category to start. You can add details on the next screen.
+            </p>
           </div>
         </div>
 
@@ -236,9 +309,15 @@ export default function UserDonations() {
                 type="button"
                 key={cat.id}
                 className="dn-cat"
-                onClick={() => navigate(`/user-donations/new?category=${encodeURIComponent(cat.id)}`)}
+                onClick={() =>
+                  navigate(
+                    `/user-donations/new?category=${encodeURIComponent(cat.id)}`,
+                  )
+                }
               >
-                <span className="dn-cat-icon"><Icon size={22} /></span>
+                <span className="dn-cat-icon">
+                  <Icon size={22} />
+                </span>
                 <strong>{cat.label}</strong>
                 <small>{cat.hint}</small>
                 <ChevronRight size={16} className="dn-cat-go" />
@@ -262,7 +341,9 @@ export default function UserDonations() {
             return (
               <article className="dn-step" key={step.title}>
                 <span className="dn-step-num">{index + 1}</span>
-                <span className="dn-step-icon"><Icon size={22} /></span>
+                <span className="dn-step-icon">
+                  <Icon size={22} />
+                </span>
                 <h3>{step.title}</h3>
                 <p>{step.text}</p>
               </article>
@@ -292,18 +373,28 @@ export default function UserDonations() {
       {/* ---------- guidelines ---------- */}
       <section className="dn-guide">
         <article className="dn-card dn-card-pad">
-          <div className="dn-guide-head ok"><Check size={18} /><h3>What we accept</h3></div>
+          <div className="dn-guide-head ok">
+            <Check size={18} />
+            <h3>What we accept</h3>
+          </div>
           <ul>
             {WHAT_WE_ACCEPT.map((line) => (
-              <li key={line}><Check size={15} /> {line}</li>
+              <li key={line}>
+                <Check size={15} /> {line}
+              </li>
             ))}
           </ul>
         </article>
         <article className="dn-card dn-card-pad">
-          <div className="dn-guide-head no"><XIcon size={18} /><h3>What we can't take</h3></div>
+          <div className="dn-guide-head no">
+            <XIcon size={18} />
+            <h3>What we can't take</h3>
+          </div>
           <ul>
             {WHAT_WE_SKIP.map((line) => (
-              <li key={line}><XIcon size={15} /> {line}</li>
+              <li key={line}>
+                <XIcon size={15} /> {line}
+              </li>
             ))}
           </ul>
         </article>
@@ -311,8 +402,8 @@ export default function UserDonations() {
           <Star size={26} />
           <h3>Earn {REWARD_RULES.base} Orbit Points</h3>
           <p>
-            Plus {REWARD_RULES.perItem} for every item, credited when your donation is completed and
-            your certificate is issued.
+            Plus {REWARD_RULES.perItem} for every item, credited when your
+            donation is completed and your certificate is issued.
           </p>
           <Link to="/user-orbit-points" className="dn-link">
             View Orbit Points <ChevronRight size={15} />

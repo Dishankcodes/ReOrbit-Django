@@ -35,7 +35,11 @@ export default function ConfirmModal({
         <h3>{title}</h3>
         <div className="dn-modal-body">{children}</div>
         <div className="dn-modal-actions">
-          <button type="button" className="dn-btn dn-btn--ghost" onClick={onClose}>
+          <button
+            type="button"
+            className="dn-btn dn-btn--ghost"
+            onClick={onClose}
+          >
             {cancelLabel}
           </button>
           <button

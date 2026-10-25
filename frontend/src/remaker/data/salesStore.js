@@ -167,25 +167,65 @@ export function getCustomer(id) {
 /* ---------- fulfilment flows (seller view) ---------- */
 
 export const DELIVERY_STEPS = [
-  { key: "placed", label: "Order received", note: "A customer placed this order." },
+  {
+    key: "placed",
+    label: "Order received",
+    note: "A customer placed this order.",
+  },
   { key: "confirmed", label: "You accepted", note: "Pack the item carefully." },
-  { key: "packed", label: "Packed", note: "ReOrbit will collect it from your address." },
-  { key: "handed_over", label: "Handed to ReOrbit", note: "The delivery partner has the parcel." },
-  { key: "in_transit", label: "In transit", note: "On its way to the customer." },
-  { key: "delivered", label: "Delivered", note: "The customer has received it." },
+  {
+    key: "packed",
+    label: "Packed",
+    note: "ReOrbit will collect it from your address.",
+  },
+  {
+    key: "handed_over",
+    label: "Handed to ReOrbit",
+    note: "The delivery partner has the parcel.",
+  },
+  {
+    key: "in_transit",
+    label: "In transit",
+    note: "On its way to the customer.",
+  },
+  {
+    key: "delivered",
+    label: "Delivered",
+    note: "The customer has received it.",
+  },
 ];
 
 export const PICKUP_STEPS = [
-  { key: "placed", label: "Order received", note: "A customer placed this order." },
-  { key: "confirmed", label: "You accepted", note: "Get it ready for collection." },
-  { key: "ready", label: "Ready for pickup", note: "The customer will collect it from you." },
-  { key: "collected", label: "Collected", note: "The customer collected the item." },
+  {
+    key: "placed",
+    label: "Order received",
+    note: "A customer placed this order.",
+  },
+  {
+    key: "confirmed",
+    label: "You accepted",
+    note: "Get it ready for collection.",
+  },
+  {
+    key: "ready",
+    label: "Ready for pickup",
+    note: "The customer will collect it from you.",
+  },
+  {
+    key: "collected",
+    label: "Collected",
+    note: "The customer collected the item.",
+  },
 ];
 
-export const stepsOf = (order) => (order.fulfilment === "pickup" ? PICKUP_STEPS : DELIVERY_STEPS);
+export const stepsOf = (order) =>
+  order.fulfilment === "pickup" ? PICKUP_STEPS : DELIVERY_STEPS;
 
 export function stepIndex(order) {
-  return Math.max(0, stepsOf(order).findIndex((step) => step.key === order.stage));
+  return Math.max(
+    0,
+    stepsOf(order).findIndex((step) => step.key === order.stage),
+  );
 }
 
 function statusFromStep(order, index) {
@@ -341,7 +381,12 @@ const SEED_ORDERS = [
     stage: "collected",
     payment: { method: "UPI", status: "Success" },
     payoutId: "PO-2203",
-    times: { placed: ago(700), confirmed: ago(698), ready: ago(670), collected: ago(650) },
+    times: {
+      placed: ago(700),
+      confirmed: ago(698),
+      ready: ago(670),
+      collected: ago(650),
+    },
   }),
   sale({
     id: "SO-30901",
@@ -463,15 +508,52 @@ const SEED_BANK = {
 };
 
 const sumNet = (ids) =>
-  SEED_ORDERS.filter((order) => ids.includes(order.id)).reduce((total, order) => total + netOf(order), 0);
+  SEED_ORDERS.filter((order) => ids.includes(order.id)).reduce(
+    (total, order) => total + netOf(order),
+    0,
+  );
 
 const SEED_PAYOUTS = [
-  { id: "PO-2203", createdAt: ago(480), orderIds: ["SO-30950", "SO-30933"], status: "Paid", reference: "UTR 4410928837" },
-  { id: "PO-2187", createdAt: ago(940), orderIds: ["SO-30820"], status: "Paid", reference: "UTR 4390276615" },
-  { id: "PO-2142", createdAt: ago(1620), orderIds: ["SO-30712"], status: "Paid", reference: "UTR 4361150092" },
-  { id: "PO-2098", createdAt: ago(2480), orderIds: ["SO-30655"], status: "Paid", reference: "UTR 4322984471" },
-  { id: "PO-2051", createdAt: ago(3200), orderIds: ["SO-30540"], status: "Paid", reference: "UTR 4288113506" },
-].map((payout) => ({ ...payout, amount: sumNet(payout.orderIds), bankLast4: SEED_BANK.last4 }));
+  {
+    id: "PO-2203",
+    createdAt: ago(480),
+    orderIds: ["SO-30950", "SO-30933"],
+    status: "Paid",
+    reference: "UTR 4410928837",
+  },
+  {
+    id: "PO-2187",
+    createdAt: ago(940),
+    orderIds: ["SO-30820"],
+    status: "Paid",
+    reference: "UTR 4390276615",
+  },
+  {
+    id: "PO-2142",
+    createdAt: ago(1620),
+    orderIds: ["SO-30712"],
+    status: "Paid",
+    reference: "UTR 4361150092",
+  },
+  {
+    id: "PO-2098",
+    createdAt: ago(2480),
+    orderIds: ["SO-30655"],
+    status: "Paid",
+    reference: "UTR 4322984471",
+  },
+  {
+    id: "PO-2051",
+    createdAt: ago(3200),
+    orderIds: ["SO-30540"],
+    status: "Paid",
+    reference: "UTR 4288113506",
+  },
+].map((payout) => ({
+  ...payout,
+  amount: sumNet(payout.orderIds),
+  bankLast4: SEED_BANK.last4,
+}));
 
 function seedState() {
   return {
@@ -524,7 +606,10 @@ export function useSales() {
   const current = useSyncExternalStore(subscribe, getSnapshot);
 
   return useMemo(
-    () => [...current.orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    () =>
+      [...current.orders].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      ),
     [current.orders],
   );
 }
@@ -539,7 +624,10 @@ export function usePayouts() {
   const current = useSyncExternalStore(subscribe, getSnapshot);
 
   return useMemo(
-    () => [...current.payouts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    () =>
+      [...current.payouts].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      ),
     [current.payouts],
   );
 }
@@ -553,7 +641,9 @@ function patchOrder(id, change) {
     ...state,
     orders: state.orders.map((order) => {
       if (order.id !== id) return order;
-      return typeof change === "function" ? change(order) : { ...order, ...change };
+      return typeof change === "function"
+        ? change(order)
+        : { ...order, ...change };
     }),
   });
 }
@@ -577,12 +667,15 @@ export function summarizeCustomers(orders) {
     entry.orders.push(order);
 
     if (order.status === "Completed") entry.spent += grossOf(order);
-    if (order.createdAt > entry.lastOrderAt) entry.lastOrderAt = order.createdAt;
+    if (order.createdAt > entry.lastOrderAt)
+      entry.lastOrderAt = order.createdAt;
 
     map.set(customer.id, entry);
   });
 
-  return [...map.values()].sort((a, b) => b.spent - a.spent || b.lastOrderAt.localeCompare(a.lastOrderAt));
+  return [...map.values()].sort(
+    (a, b) => b.spent - a.spent || b.lastOrderAt.localeCompare(a.lastOrderAt),
+  );
 }
 
 export function useCustomers() {
@@ -603,7 +696,10 @@ export function acceptSale(id) {
 }
 
 export function canCancelSale(order) {
-  return order.status === "Pending" || (order.status === "Confirmed" && stepIndex(order) <= 1);
+  return (
+    order.status === "Pending" ||
+    (order.status === "Confirmed" && stepIndex(order) <= 1)
+  );
 }
 
 /* Used for both declining a new order and cancelling an accepted one */
@@ -614,24 +710,33 @@ export function cancelSale(id, reason) {
     cancelledAt: new Date().toISOString(),
     cancelledBy: "you",
     cancelReason: reason,
-    payment: { ...order.payment, status: order.payment.method === "COD" ? order.payment.status : "Refunded" },
+    payment: {
+      ...order.payment,
+      status:
+        order.payment.method === "COD" ? order.payment.status : "Refunded",
+    },
   }));
 }
 
 /* Next action the ReMaker can take, or null when it is out of their hands */
 export function nextAction(order) {
-  if (order.status === "Pending") return { key: "accept", label: "Accept order" };
+  if (order.status === "Pending")
+    return { key: "accept", label: "Accept order" };
 
   if (order.status !== "Confirmed") return null;
 
   if (order.fulfilment === "pickup") {
-    if (order.stage === "confirmed") return { key: "ready", label: "Mark ready for pickup" };
-    if (order.stage === "ready") return { key: "collected", label: "Mark as collected" };
+    if (order.stage === "confirmed")
+      return { key: "ready", label: "Mark ready for pickup" };
+    if (order.stage === "ready")
+      return { key: "collected", label: "Mark as collected" };
     return null;
   }
 
-  if (order.stage === "confirmed") return { key: "packed", label: "Mark as packed" };
-  if (order.stage === "packed") return { key: "handed_over", label: "Mark handed to ReOrbit" };
+  if (order.stage === "confirmed")
+    return { key: "packed", label: "Mark as packed" };
+  if (order.stage === "packed")
+    return { key: "handed_over", label: "Mark handed to ReOrbit" };
 
   return null;
 }
@@ -661,7 +766,8 @@ export function moveSale(id, key) {
 /* Demo helper for the steps ReOrbit controls (used with ?demo=1) */
 export function advanceSale(id) {
   patchOrder(id, (order) => {
-    if (order.status === "Cancelled" || order.status === "Returned") return order;
+    if (order.status === "Cancelled" || order.status === "Returned")
+      return order;
 
     const steps = stepsOf(order);
     const index = stepIndex(order);
@@ -670,7 +776,10 @@ export function advanceSale(id) {
     const next = {
       ...order,
       stage: steps[index + 1].key,
-      times: { ...order.times, [steps[index + 1].key]: new Date().toISOString() },
+      times: {
+        ...order.times,
+        [steps[index + 1].key]: new Date().toISOString(),
+      },
     };
 
     next.status = statusFromStep(next, index + 1);
@@ -689,7 +798,9 @@ function completedAt(order) {
 }
 
 export function clearsOn(order) {
-  return new Date(new Date(completedAt(order)).getTime() + CLEARING_DAYS * 86400000).toISOString();
+  return new Date(
+    new Date(completedAt(order)).getTime() + CLEARING_DAYS * 86400000,
+  ).toISOString();
 }
 
 /* The earning state of a single order */
@@ -703,7 +814,9 @@ export function earningStatus(order, payouts = state.payouts) {
     return payout && payout.status === "Processing" ? "In payout" : "Paid out";
   }
 
-  return Date.now() >= new Date(clearsOn(order)).getTime() ? "Available" : "Clearing";
+  return Date.now() >= new Date(clearsOn(order)).getTime()
+    ? "Available"
+    : "Clearing";
 }
 
 export function summarizeEarnings(orders, payouts) {
@@ -729,7 +842,8 @@ export function summarizeEarnings(orders, payouts) {
     if (status === "In payout") summary.inPayout += net;
     if (status === "Paid out") summary.paidOut += net;
     if (status === "In progress") summary.inProgress += net;
-    if (["Available", "Clearing", "In payout", "Paid out"].includes(status)) summary.lifetime += net;
+    if (["Available", "Clearing", "In payout", "Paid out"].includes(status))
+      summary.lifetime += net;
   });
 
   return summary;
@@ -762,7 +876,9 @@ export function monthlyEarnings(orders, count = 6) {
     if (order.status !== "Completed") return;
 
     const date = new Date(completedAt(order));
-    const slot = months.find((month) => month.key === `${date.getFullYear()}-${date.getMonth()}`);
+    const slot = months.find(
+      (month) => month.key === `${date.getFullYear()}-${date.getMonth()}`,
+    );
 
     if (slot) {
       slot.value += netOf(order);
@@ -792,7 +908,9 @@ export function topProducts(orders, limit = 4) {
     map.set(order.productId, entry);
   });
 
-  return [...map.values()].sort((a, b) => b.revenue - a.revenue).slice(0, limit);
+  return [...map.values()]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, limit);
 }
 
 /* Withdraw everything that is available */
@@ -817,7 +935,9 @@ export function requestPayout() {
   commit({
     ...state,
     payouts: [...state.payouts, payout],
-    orders: state.orders.map((order) => (orderIds.includes(order.id) ? { ...order, payoutId: id } : order)),
+    orders: state.orders.map((order) =>
+      orderIds.includes(order.id) ? { ...order, payoutId: id } : order,
+    ),
   });
 
   return payout;
@@ -852,7 +972,10 @@ export function describeSale(order) {
     case "Pending": {
       const hoursLeft = Math.max(
         0,
-        Math.ceil((new Date(order.createdAt).getTime() + 24 * 3600000 - Date.now()) / 3600000),
+        Math.ceil(
+          (new Date(order.createdAt).getTime() + 24 * 3600000 - Date.now()) /
+            3600000,
+        ),
       );
 
       return {
@@ -868,26 +991,55 @@ export function describeSale(order) {
     case "Confirmed": {
       if (order.fulfilment === "pickup") {
         return order.stage === "ready"
-          ? { label: "Waiting for customer", tone: "active", needsAction: false, message: `${first} will collect this from you. Mark it collected after the handover.` }
-          : { label: "Get it ready", tone: "pending", needsAction: true, message: "Prepare the item and mark it ready so the customer can collect it." };
+          ? {
+              label: "Waiting for customer",
+              tone: "active",
+              needsAction: false,
+              message: `${first} will collect this from you. Mark it collected after the handover.`,
+            }
+          : {
+              label: "Get it ready",
+              tone: "pending",
+              needsAction: true,
+              message:
+                "Prepare the item and mark it ready so the customer can collect it.",
+            };
       }
 
       if (order.stage === "confirmed") {
-        return { label: "Pack the order", tone: "pending", needsAction: true, message: "Pack it safely, then mark it as packed so ReOrbit can collect it." };
+        return {
+          label: "Pack the order",
+          tone: "pending",
+          needsAction: true,
+          message:
+            "Pack it safely, then mark it as packed so ReOrbit can collect it.",
+        };
       }
 
       if (order.stage === "packed") {
-        return { label: "Ready for ReOrbit", tone: "active", needsAction: true, message: "Hand the parcel to the ReOrbit rider, then mark it handed over." };
+        return {
+          label: "Ready for ReOrbit",
+          tone: "active",
+          needsAction: true,
+          message:
+            "Hand the parcel to the ReOrbit rider, then mark it handed over.",
+        };
       }
 
-      return { label: step.label, tone: "active", needsAction: false, message: step.note };
+      return {
+        label: step.label,
+        tone: "active",
+        needsAction: false,
+        message: step.note,
+      };
     }
     case "Completed":
       return {
         label: order.fulfilment === "pickup" ? "Collected" : "Delivered",
         tone: "done",
         needsAction: false,
-        message: "This order is complete. Your earnings clear a few days after delivery.",
+        message:
+          "This order is complete. Your earnings clear a few days after delivery.",
       };
     case "Cancelled":
       return {
@@ -907,7 +1059,12 @@ export function describeSale(order) {
         message: "The customer returned this order. The sale was reversed.",
       };
     default:
-      return { label: order.status, tone: "active", needsAction: false, message: "" };
+      return {
+        label: order.status,
+        tone: "active",
+        needsAction: false,
+        message: "",
+      };
   }
 }
 
@@ -917,10 +1074,19 @@ export function buildSaleTimeline(order) {
 
   if (order.status === "Cancelled") {
     return [
-      ...steps.slice(0, index + 1).map((step) => ({ ...step, time: order.times[step.key], state: "done" })),
+      ...steps
+        .slice(0, index + 1)
+        .map((step) => ({
+          ...step,
+          time: order.times[step.key],
+          state: "done",
+        })),
       {
         key: "cancelled",
-        label: order.cancelledBy === "customer" ? "Cancelled by customer" : "Cancelled by you",
+        label:
+          order.cancelledBy === "customer"
+            ? "Cancelled by customer"
+            : "Cancelled by you",
         note: order.cancelReason ? `Reason: ${order.cancelReason}` : "",
         time: order.cancelledAt,
         state: "cancelled",
@@ -932,7 +1098,9 @@ export function buildSaleTimeline(order) {
     ...step,
     time: order.times[step.key],
     state:
-      i < index || (i === index && (order.status === "Completed" || order.status === "Returned"))
+      i < index ||
+      (i === index &&
+        (order.status === "Completed" || order.status === "Returned"))
         ? "done"
         : i === index
           ? "current"

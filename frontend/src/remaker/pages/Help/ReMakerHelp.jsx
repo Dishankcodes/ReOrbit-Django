@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { FAQ_CATEGORIES, FAQS, STATUS_TONE, useTickets } from "../../data/helpStore";
+import {
+  FAQ_CATEGORIES,
+  FAQS,
+  STATUS_TONE,
+  useTickets,
+} from "../../data/helpStore";
 import { useOrders } from "../../data/ordersStore";
 
 import ContactCards from "./components/ContactCards";
@@ -28,7 +33,10 @@ export default function ReMakerHelp() {
   const [showAll, setShowAll] = useState(false);
 
   const reports = useMemo(
-    () => orders.flatMap((order) => order.reports.map((report) => ({ report, order }))).sort((a, b) => b.report.createdAt.localeCompare(a.report.createdAt)),
+    () =>
+      orders
+        .flatMap((order) => order.reports.map((report) => ({ report, order })))
+        .sort((a, b) => b.report.createdAt.localeCompare(a.report.createdAt)),
     [orders],
   );
 
@@ -54,10 +62,16 @@ export default function ReMakerHelp() {
   /* the full list is long: start with the first eight */
   const limitList = category === "all" && !text && !showAll && faqs.length > 8;
 
-  const openCount = tickets.filter((ticket) => !["Resolved", "Closed"].includes(ticket.status)).length;
-  const waiting = tickets.filter((ticket) => ticket.status === "Waiting for you").length;
+  const openCount = tickets.filter(
+    (ticket) => !["Resolved", "Closed"].includes(ticket.status),
+  ).length;
+  const waiting = tickets.filter(
+    (ticket) => ticket.status === "Waiting for you",
+  ).length;
 
-  const shownTickets = tickets.filter((ticket) => ticketFilter === "all" || ticket.status === ticketFilter);
+  const shownTickets = tickets.filter(
+    (ticket) => ticketFilter === "all" || ticket.status === ticketFilter,
+  );
 
   return (
     <section className="rk hlp">
@@ -65,7 +79,10 @@ export default function ReMakerHelp() {
       <header className="hlp-hero">
         <div>
           <h2>How can we help?</h2>
-          <p>Search our help articles, chat with the team, or open a ticket. Most questions are answered in minutes.</p>
+          <p>
+            Search our help articles, chat with the team, or open a ticket. Most
+            questions are answered in minutes.
+          </p>
         </div>
 
         <label className="hlp-search">
@@ -85,7 +102,8 @@ export default function ReMakerHelp() {
       {waiting > 0 && (
         <Link to="/remaker-help?tab=tickets" className="hlp-alert">
           <strong>
-            {waiting} {waiting === 1 ? "ticket is" : "tickets are"} waiting for your reply
+            {waiting} {waiting === 1 ? "ticket is" : "tickets are"} waiting for
+            your reply
           </strong>
           <span>Open tickets →</span>
         </Link>
@@ -93,13 +111,31 @@ export default function ReMakerHelp() {
 
       {/* ================= TABS ================= */}
       <div className="rk-tabs" role="tablist" aria-label="Help sections">
-        <button type="button" role="tab" aria-selected={tab === "help"} className={tab === "help" ? "active" : ""} onClick={() => switchTab("help")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "help"}
+          className={tab === "help" ? "active" : ""}
+          onClick={() => switchTab("help")}
+        >
           Help center
         </button>
-        <button type="button" role="tab" aria-selected={tab === "tickets"} className={tab === "tickets" ? "active" : ""} onClick={() => switchTab("tickets")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "tickets"}
+          className={tab === "tickets" ? "active" : ""}
+          onClick={() => switchTab("tickets")}
+        >
           My tickets <span>{tickets.length}</span>
         </button>
-        <button type="button" role="tab" aria-selected={tab === "reports"} className={tab === "reports" ? "active" : ""} onClick={() => switchTab("reports")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "reports"}
+          className={tab === "reports" ? "active" : ""}
+          onClick={() => switchTab("reports")}
+        >
           My reports <span>{reports.length}</span>
         </button>
       </div>
@@ -108,12 +144,23 @@ export default function ReMakerHelp() {
       {tab === "help" && (
         <>
           <div className="hlp-cats" role="group" aria-label="Topics">
-            <button type="button" className={category === "all" ? "active" : ""} aria-pressed={category === "all"} onClick={() => setCategory("all")}>
+            <button
+              type="button"
+              className={category === "all" ? "active" : ""}
+              aria-pressed={category === "all"}
+              onClick={() => setCategory("all")}
+            >
               <strong>All topics</strong>
               <small>{FAQS.length} articles</small>
             </button>
             {FAQ_CATEGORIES.map((item) => (
-              <button type="button" key={item.key} className={category === item.key ? "active" : ""} aria-pressed={category === item.key} onClick={() => setCategory(item.key)}>
+              <button
+                type="button"
+                key={item.key}
+                className={category === item.key ? "active" : ""}
+                aria-pressed={category === item.key}
+                onClick={() => setCategory(item.key)}
+              >
                 <strong>{item.label}</strong>
                 <small>{item.note}</small>
               </button>
@@ -122,24 +169,43 @@ export default function ReMakerHelp() {
 
           <section className="rk-card hlp-articles">
             <div className="rk-card-head">
-              <h3>{text ? `Results for “${query.trim()}”` : category === "all" ? "Popular questions" : FAQ_CATEGORIES.find((item) => item.key === category)?.label}</h3>
-              <span className="hlp-count">{faqs.length} {faqs.length === 1 ? "article" : "articles"}</span>
+              <h3>
+                {text
+                  ? `Results for “${query.trim()}”`
+                  : category === "all"
+                    ? "Popular questions"
+                    : FAQ_CATEGORIES.find((item) => item.key === category)
+                        ?.label}
+              </h3>
+              <span className="hlp-count">
+                {faqs.length} {faqs.length === 1 ? "article" : "articles"}
+              </span>
             </div>
 
             {faqs.length === 0 ? (
               <div className="hlp-noresult">
                 <h4>We could not find that</h4>
-                <p>Try different words, or ask us directly. A ticket is the fastest way to get a real person.</p>
+                <p>
+                  Try different words, or ask us directly. A ticket is the
+                  fastest way to get a real person.
+                </p>
                 <Link to="/remaker-help/new" className="rk-btn primary">
                   Create a ticket
                 </Link>
               </div>
             ) : (
               <>
-                <FaqList items={limitList ? faqs.slice(0, 8) : faqs} showCategory={category === "all"} />
+                <FaqList
+                  items={limitList ? faqs.slice(0, 8) : faqs}
+                  showCategory={category === "all"}
+                />
 
                 {limitList && (
-                  <button type="button" className="rk-btn ghost hlp-showall" onClick={() => setShowAll(true)}>
+                  <button
+                    type="button"
+                    className="rk-btn ghost hlp-showall"
+                    onClick={() => setShowAll(true)}
+                  >
                     Show all {faqs.length} articles
                   </button>
                 )}
@@ -163,7 +229,13 @@ export default function ReMakerHelp() {
           <div className="hlp-bar">
             <div className="rk-chips" role="group" aria-label="Ticket status">
               {["all", ...Object.keys(STATUS_TONE)].map((item) => (
-                <button type="button" key={item} className={ticketFilter === item ? "active" : ""} aria-pressed={ticketFilter === item} onClick={() => setTicketFilter(item)}>
+                <button
+                  type="button"
+                  key={item}
+                  className={ticketFilter === item ? "active" : ""}
+                  aria-pressed={ticketFilter === item}
+                  onClick={() => setTicketFilter(item)}
+                >
                   {item === "all" ? "All tickets" : item}
                 </button>
               ))}
@@ -179,8 +251,16 @@ export default function ReMakerHelp() {
                 <img src="/images/portfolio/priya-bag.jpg" alt="" />
                 <img src="/images/portfolio/arjun-lamp.jpg" alt="" />
               </div>
-              <h3>{tickets.length === 0 ? "No tickets yet" : "No tickets with this status"}</h3>
-              <p>{tickets.length === 0 ? "When you need help from our team, your tickets will be listed here." : "Try another status."}</p>
+              <h3>
+                {tickets.length === 0
+                  ? "No tickets yet"
+                  : "No tickets with this status"}
+              </h3>
+              <p>
+                {tickets.length === 0
+                  ? "When you need help from our team, your tickets will be listed here."
+                  : "Try another status."}
+              </p>
               <Link to="/remaker-help/new" className="rk-btn primary">
                 Create a ticket
               </Link>
@@ -189,7 +269,12 @@ export default function ReMakerHelp() {
             <TicketList tickets={shownTickets} />
           )}
 
-          {openCount > 0 && <p className="hlp-note">{openCount} open {openCount === 1 ? "ticket" : "tickets"}. {`We usually reply within 24 hours.`}</p>}
+          {openCount > 0 && (
+            <p className="hlp-note">
+              {openCount} open {openCount === 1 ? "ticket" : "tickets"}.{" "}
+              {`We usually reply within 24 hours.`}
+            </p>
+          )}
         </>
       )}
 
@@ -197,7 +282,8 @@ export default function ReMakerHelp() {
       {tab === "reports" && (
         <>
           <p className="hlp-note">
-            These are problems you reported about orders you bought. To report an order, open it from Purchases.
+            These are problems you reported about orders you bought. To report
+            an order, open it from Purchases.
           </p>
 
           {reports.length === 0 ? (
@@ -207,7 +293,10 @@ export default function ReMakerHelp() {
                 <img src="/images/products/ceramic-lamp.jpg" alt="" />
               </div>
               <h3>You have not reported anything</h3>
-              <p>If something goes wrong with an order you bought, you can report it from the order page.</p>
+              <p>
+                If something goes wrong with an order you bought, you can report
+                it from the order page.
+              </p>
               <Link to="/remaker-orders" className="rk-btn ghost">
                 Go to purchases
               </Link>

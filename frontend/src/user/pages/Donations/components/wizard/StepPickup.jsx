@@ -1,5 +1,11 @@
 import React from "react";
-import { BadgeCheck, CheckCircle2, MapPin, Plus, TriangleAlert } from "lucide-react";
+import {
+  BadgeCheck,
+  CheckCircle2,
+  MapPin,
+  Plus,
+  TriangleAlert,
+} from "lucide-react";
 import { SAVED_ADDRESSES, checkPincode } from "../../../../data/donationsStore";
 import DateSlotPicker from "../DateSlotPicker";
 
@@ -12,7 +18,8 @@ export default function StepPickup({ form, set, errors }) {
         <BadgeCheck size={20} />
         <div>
           <strong>Pickup is always free for donations</strong>
-          Our team collects from your doorstep. There are no delivery or handling charges.
+          Our team collects from your doorstep. There are no delivery or
+          handling charges.
         </div>
       </div>
 
@@ -36,11 +43,15 @@ export default function StepPickup({ form, set, errors }) {
                   set("addressId", address.id);
                 }}
               >
-                <span className="dn-addr-icon"><MapPin size={17} /></span>
+                <span className="dn-addr-icon">
+                  <MapPin size={17} />
+                </span>
                 <div>
                   <strong>{address.label}</strong>
                   <p>{address.line}</p>
-                  <small>{address.city}, {address.state} – {address.pincode}</small>
+                  <small>
+                    {address.city}, {address.state} – {address.pincode}
+                  </small>
                 </div>
                 {active && <CheckCircle2 size={19} className="dn-addr-check" />}
               </button>
@@ -54,19 +65,25 @@ export default function StepPickup({ form, set, errors }) {
             className={`dn-addr dn-addr--new ${form.useNewAddress ? "is-active" : ""}`}
             onClick={() => set("useNewAddress", true)}
           >
-            <span className="dn-addr-icon"><Plus size={17} /></span>
+            <span className="dn-addr-icon">
+              <Plus size={17} />
+            </span>
             <div>
               <strong>Use a different address</strong>
               <p>Pickup from another place</p>
             </div>
-            {form.useNewAddress && <CheckCircle2 size={19} className="dn-addr-check" />}
+            {form.useNewAddress && (
+              <CheckCircle2 size={19} className="dn-addr-check" />
+            )}
           </button>
         </div>
 
         {form.useNewAddress && (
           <div className="dn-newaddr">
             <label className="dn-field">
-              <span className="dn-label">Address <em>*</em></span>
+              <span className="dn-label">
+                Address <em>*</em>
+              </span>
               <input
                 className={`dn-input ${errors.line ? "is-error" : ""}`}
                 value={form.line}
@@ -76,24 +93,33 @@ export default function StepPickup({ form, set, errors }) {
               {errors.line && <span className="dn-error">{errors.line}</span>}
             </label>
             <label className="dn-field">
-              <span className="dn-label">Pincode <em>*</em></span>
+              <span className="dn-label">
+                Pincode <em>*</em>
+              </span>
               <input
                 className={`dn-input ${errors.pincode ? "is-error" : ""}`}
                 value={form.pincode}
                 inputMode="numeric"
                 maxLength={6}
                 placeholder="6-digit pincode"
-                onChange={(event) => set("pincode", event.target.value.replace(/\D/g, ""))}
+                onChange={(event) =>
+                  set("pincode", event.target.value.replace(/\D/g, ""))
+                }
               />
               {pin.valid && pin.serviceable && (
-                <span className="dn-ok"><CheckCircle2 size={14} /> We pick up in {pin.city}</span>
+                <span className="dn-ok">
+                  <CheckCircle2 size={14} /> We pick up in {pin.city}
+                </span>
               )}
               {pin.valid && !pin.serviceable && (
                 <span className="dn-error">
-                  <TriangleAlert size={14} /> Sorry, we don't pick up from this pincode yet.
+                  <TriangleAlert size={14} /> Sorry, we don't pick up from this
+                  pincode yet.
                 </span>
               )}
-              {errors.pincode && !pin.valid && <span className="dn-error">{errors.pincode}</span>}
+              {errors.pincode && !pin.valid && (
+                <span className="dn-error">{errors.pincode}</span>
+              )}
             </label>
           </div>
         )}
@@ -102,16 +128,22 @@ export default function StepPickup({ form, set, errors }) {
       {/* contact */}
       <div className="dn-two">
         <label className="dn-field">
-          <span className="dn-label">Contact name <em>*</em></span>
+          <span className="dn-label">
+            Contact name <em>*</em>
+          </span>
           <input
             className={`dn-input ${errors.contactName ? "is-error" : ""}`}
             value={form.contactName}
             onChange={(event) => set("contactName", event.target.value)}
           />
-          {errors.contactName && <span className="dn-error">{errors.contactName}</span>}
+          {errors.contactName && (
+            <span className="dn-error">{errors.contactName}</span>
+          )}
         </label>
         <label className="dn-field">
-          <span className="dn-label">Phone number <em>*</em></span>
+          <span className="dn-label">
+            Phone number <em>*</em>
+          </span>
           <input
             className={`dn-input ${errors.phone ? "is-error" : ""}`}
             value={form.phone}
@@ -132,7 +164,9 @@ export default function StepPickup({ form, set, errors }) {
       />
 
       <label className="dn-field">
-        <span className="dn-label">Note for the pickup team <span className="dn-hint">(optional)</span></span>
+        <span className="dn-label">
+          Note for the pickup team <span className="dn-hint">(optional)</span>
+        </span>
         <textarea
           className="dn-textarea"
           style={{ minHeight: 80 }}

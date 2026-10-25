@@ -35,7 +35,13 @@ export function changeRemakerStatus(ids, newStatus, reason = "") {
           status: newStatus,
           updated_at: at,
           statusHistory: [
-            { id: `${r.remaker_id}-${Date.now()}`, action: newStatus, reason: reason || "No reason provided.", by: "Admin · You", at },
+            {
+              id: `${r.remaker_id}-${Date.now()}`,
+              action: newStatus,
+              reason: reason || "No reason provided.",
+              by: "Admin · You",
+              at,
+            },
             ...r.statusHistory,
           ],
         },
@@ -48,7 +54,12 @@ export function setProductStatus(remakerId, productId, status) {
   remakers = remakers.map((r) =>
     r.remaker_id !== remakerId
       ? r
-      : { ...r, products: r.products.map((p) => (p.product_id === productId ? { ...p, status } : p)) },
+      : {
+          ...r,
+          products: r.products.map((p) =>
+            p.product_id === productId ? { ...p, status } : p,
+          ),
+        },
   );
   emit();
 }

@@ -49,16 +49,23 @@ export default function ReMakerFollowers() {
 
   const stats = useMemo(() => followerStats(followers), [followers]);
   const series = useMemo(() => growthSeries(followers, 12), [followers]);
-  const followingIds = useMemo(() => new Set(following.map((item) => item.id)), [following]);
+  const followingIds = useMemo(
+    () => new Set(following.map((item) => item.id)),
+    [following],
+  );
 
   const counts = useMemo(() => {
     const monthAgo = Date.now() - 30 * 86400000;
 
     return {
       all: followers.length,
-      new: followers.filter((person) => new Date(person.followedAt).getTime() >= monthAgo).length,
+      new: followers.filter(
+        (person) => new Date(person.followedAt).getTime() >= monthAgo,
+      ).length,
       customers: followers.filter((person) => person.customerId).length,
-      engaged: followers.filter((person) => person.views >= 34 || person.saves >= 5).length,
+      engaged: followers.filter(
+        (person) => person.views >= 34 || person.saves >= 5,
+      ).length,
       makers: followers.filter((person) => person.type === "ReMaker").length,
     };
   }, [followers]);
@@ -68,13 +75,18 @@ export default function ReMakerFollowers() {
     const monthAgo = Date.now() - 30 * 86400000;
 
     const filtered = followers.filter((person) => {
-      if (filter === "new" && new Date(person.followedAt).getTime() < monthAgo) return false;
+      if (filter === "new" && new Date(person.followedAt).getTime() < monthAgo)
+        return false;
       if (filter === "customers" && !person.customerId) return false;
-      if (filter === "engaged" && !(person.views >= 34 || person.saves >= 5)) return false;
+      if (filter === "engaged" && !(person.views >= 34 || person.saves >= 5))
+        return false;
       if (filter === "makers" && person.type !== "ReMaker") return false;
       if (!text) return true;
 
-      return [person.name, person.city, person.state].join(" ").toLowerCase().includes(text);
+      return [person.name, person.city, person.state]
+        .join(" ")
+        .toLowerCase()
+        .includes(text);
     });
 
     const sorters = {
@@ -101,7 +113,8 @@ export default function ReMakerFollowers() {
   const handleRemove = (person) => {
     const removed = removeFollower(person.id);
     setOpen(null);
-    if (removed) flash(`Removed ${removed.name}.`, () => restoreFollower(removed));
+    if (removed)
+      flash(`Removed ${removed.name}.`, () => restoreFollower(removed));
   };
 
   const handleFollowBack = (person) => {
@@ -111,10 +124,14 @@ export default function ReMakerFollowers() {
 
   const handleUnfollow = (item) => {
     const removed = unfollow(item.id);
-    if (removed) flash(`Unfollowed ${removed.name}.`, () => restoreFollowing(removed));
+    if (removed)
+      flash(`Unfollowed ${removed.name}.`, () => restoreFollowing(removed));
   };
 
-  const customerFor = (person) => (person.customerId ? customers.find((entry) => entry.customer.id === person.customerId) : null);
+  const customerFor = (person) =>
+    person.customerId
+      ? customers.find((entry) => entry.customer.id === person.customerId)
+      : null;
 
   return (
     <section className="fol">
@@ -123,8 +140,9 @@ export default function ReMakerFollowers() {
         <div>
           <h2>Your followers</h2>
           <p>
-            The people who follow your work see your new products and portfolio first. See who they are, where they
-            are from, and who is already a customer.
+            The people who follow your work see your new products and portfolio
+            first. See who they are, where they are from, and who is already a
+            customer.
           </p>
         </div>
 
@@ -137,11 +155,27 @@ export default function ReMakerFollowers() {
       <FollowersStats stats={stats} series={series} />
 
       {/* ================= TABS ================= */}
-      <div className="fol-tabs" role="tablist" aria-label="Followers or following">
-        <button type="button" role="tab" aria-selected={tab === "followers"} className={tab === "followers" ? "active" : ""} onClick={() => setTab("followers")}>
+      <div
+        className="fol-tabs"
+        role="tablist"
+        aria-label="Followers or following"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "followers"}
+          className={tab === "followers" ? "active" : ""}
+          onClick={() => setTab("followers")}
+        >
           Followers <span>{followers.length}</span>
         </button>
-        <button type="button" role="tab" aria-selected={tab === "following"} className={tab === "following" ? "active" : ""} onClick={() => setTab("following")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "following"}
+          className={tab === "following" ? "active" : ""}
+          onClick={() => setTab("following")}
+        >
           Following <span>{following.length}</span>
         </button>
       </div>
@@ -167,14 +201,22 @@ export default function ReMakerFollowers() {
                 <img src="/images/users/meera-iyer.jpg" alt="" />
                 <img src="/images/users/kabir-verma.jpg" alt="" />
               </div>
-              <h3>{followers.length === 0 ? "No followers yet" : "No followers match"}</h3>
+              <h3>
+                {followers.length === 0
+                  ? "No followers yet"
+                  : "No followers match"}
+              </h3>
               <p>
                 {followers.length === 0
                   ? "Share a portfolio piece or list a product and people will start following you."
                   : "Try a different filter, or clear your search."}
               </p>
               {followers.length > 0 && (
-                <button type="button" className="fol-btn ghost" onClick={resetFilters}>
+                <button
+                  type="button"
+                  className="fol-btn ghost"
+                  onClick={resetFilters}
+                >
                   Show everyone
                 </button>
               )}
@@ -199,7 +241,11 @@ export default function ReMakerFollowers() {
                   Showing {Math.min(shown, visible.length)} of {visible.length}
                 </span>
                 {shown < visible.length && (
-                  <button type="button" className="fol-btn ghost" onClick={() => setShown((value) => value + PAGE_SIZE)}>
+                  <button
+                    type="button"
+                    className="fol-btn ghost"
+                    onClick={() => setShown((value) => value + PAGE_SIZE)}
+                  >
                     Show more followers
                   </button>
                 )}
@@ -219,15 +265,25 @@ export default function ReMakerFollowers() {
                 <img src="/images/remakers/arjun-mehta.jpg" alt="" />
               </div>
               <h3>You are not following anyone</h3>
-              <p>Follow other ReMakers to see their new work and learn from their craft.</p>
-              <Link to="/remaker-marketplace?source=remaker" className="fol-btn primary">
+              <p>
+                Follow other ReMakers to see their new work and learn from their
+                craft.
+              </p>
+              <Link
+                to="/remaker-marketplace?source=remaker"
+                className="fol-btn primary"
+              >
                 Find ReMakers
               </Link>
             </div>
           ) : (
             <div className="fol-following">
               {following.map((item) => (
-                <FollowingCard key={item.id} item={item} onUnfollow={handleUnfollow} />
+                <FollowingCard
+                  key={item.id}
+                  item={item}
+                  onUnfollow={handleUnfollow}
+                />
               ))}
             </div>
           )}

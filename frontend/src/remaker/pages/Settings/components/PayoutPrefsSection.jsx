@@ -2,12 +2,21 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { formatPrice } from "../../../data/remakerMarketplaceData";
-import { CLEARING_DAYS, MIN_PAYOUT, useBank, useEarnings } from "../../../data/salesStore";
+import {
+  CLEARING_DAYS,
+  MIN_PAYOUT,
+  useBank,
+  useEarnings,
+} from "../../../data/salesStore";
 import { saveSection } from "../../../data/settingsStore";
 import { Card, Row, SaveBar, Segmented, Toggle, useDraft } from "./Controls";
 
 export default function PayoutPrefsSection({ settings, onDirty, notify }) {
-  const { draft, set, dirty, reset } = useDraft(settings.payouts, "payouts", onDirty);
+  const { draft, set, dirty, reset } = useDraft(
+    settings.payouts,
+    "payouts",
+    onDirty,
+  );
   const bank = useBank();
   const earnings = useEarnings();
 
@@ -18,7 +27,10 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
 
   return (
     <div className="set-stack">
-      <Card title="Where your money goes" note="Payouts are sent to this bank account.">
+      <Card
+        title="Where your money goes"
+        note="Payouts are sent to this bank account."
+      >
         <div className="set-bank">
           <div>
             <small>{bank.bank}</small>
@@ -42,9 +54,19 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
         </dl>
       </Card>
 
-      <Card title="Automatic payouts" note={`We can send what has cleared to your bank for you, once it reaches ${formatPrice(MIN_PAYOUT)}.`}>
-        <Row title="Pay me automatically" note="You can still withdraw by hand whenever you like.">
-          <Toggle checked={draft.auto} onChange={(value) => set("auto", value)} label="Automatic payouts" />
+      <Card
+        title="Automatic payouts"
+        note={`We can send what has cleared to your bank for you, once it reaches ${formatPrice(MIN_PAYOUT)}.`}
+      >
+        <Row
+          title="Pay me automatically"
+          note="You can still withdraw by hand whenever you like."
+        >
+          <Toggle
+            checked={draft.auto}
+            onChange={(value) => set("auto", value)}
+            label="Automatic payouts"
+          />
         </Row>
 
         {draft.auto && (
@@ -61,7 +83,8 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
               ]}
             />
             <p className="set-note">
-              If less than {formatPrice(MIN_PAYOUT)} has cleared on the day, we wait for the next one.
+              If less than {formatPrice(MIN_PAYOUT)} has cleared on the day, we
+              wait for the next one.
             </p>
           </div>
         )}
@@ -69,8 +92,14 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
 
       <Card title="Good to know">
         <ul className="set-list">
-          <li>ReOrbit keeps 8% of the item price. The buyer pays delivery separately.</li>
-          <li>Money clears {CLEARING_DAYS} days after delivery, to give buyers time to report a problem.</li>
+          <li>
+            ReOrbit keeps 8% of the item price. The buyer pays delivery
+            separately.
+          </li>
+          <li>
+            Money clears {CLEARING_DAYS} days after delivery, to give buyers
+            time to report a problem.
+          </li>
           <li>Payouts reach your bank in 1 to 2 working days.</li>
         </ul>
         <Link to="/remaker-earnings" className="set-link">

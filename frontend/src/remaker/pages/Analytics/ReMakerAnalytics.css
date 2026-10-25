@@ -817,7 +817,9 @@
 }
 
 .ana-heat-cell.best {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--rp-maroon);
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 5px var(--rp-maroon);
 }
 
 .ana-heat-scale {

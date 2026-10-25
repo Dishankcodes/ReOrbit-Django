@@ -1,7 +1,20 @@
 import React from "react";
-import { ArrowRight, Leaf, ShieldCheck, ShieldAlert, Recycle, Gift, ShoppingBag } from "lucide-react";
+import {
+  ArrowRight,
+  Leaf,
+  ShieldCheck,
+  ShieldAlert,
+  Recycle,
+  Gift,
+  ShoppingBag,
+} from "lucide-react";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import { formatDate, formatDateTime, formatINR, timeAgo } from "../../../utils/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatINR,
+  timeAgo,
+} from "../../../utils/format";
 import ProviderBadge from "../components/ProviderBadge";
 
 function Detail({ label, children }) {
@@ -16,7 +29,9 @@ function Detail({ label, children }) {
 export default function OverviewTab({ user, goToTab }) {
   const { profile } = user;
   const recentOrders = user.orders.slice(0, 3);
-  const openReports = user.reports.filter((r) => r.direction === "Against this user");
+  const openReports = user.reports.filter(
+    (r) => r.direction === "Against this user",
+  );
 
   return (
     <div className="aup-grid-2">
@@ -42,7 +57,9 @@ export default function OverviewTab({ user, goToTab }) {
             <Detail label="Joined">{formatDate(user.created_at)}</Detail>
             <Detail label="Last updated">{formatDate(user.updated_at)}</Detail>
             <Detail label="Last active">{`${timeAgo(user.last_active)} · ${formatDateTime(user.last_active)}`}</Detail>
-            <Detail label="Google account">{user.google_id ? `Linked (${user.google_id})` : "Not linked"}</Detail>
+            <Detail label="Google account">
+              {user.google_id ? `Linked (${user.google_id})` : "Not linked"}
+            </Detail>
           </dl>
         </section>
 
@@ -53,7 +70,11 @@ export default function OverviewTab({ user, goToTab }) {
               <p>Latest purchases and sales.</p>
             </div>
             {user.orders.length > 0 && (
-              <button type="button" className="aup-link" onClick={() => goToTab("orders")}>
+              <button
+                type="button"
+                className="aup-link"
+                onClick={() => goToTab("orders")}
+              >
                 View all <ArrowRight size={14} />
               </button>
             )}
@@ -69,7 +90,9 @@ export default function OverviewTab({ user, goToTab }) {
                   <div className="aup-list-main">
                     <strong>{order.title}</strong>
                     <span>
-                      {order.order_id} · {order.role === "Buyer" ? "Bought from" : "Sold to"} {order.counterparty}
+                      {order.order_id} ·{" "}
+                      {order.role === "Buyer" ? "Bought from" : "Sold to"}{" "}
+                      {order.counterparty}
                     </span>
                   </div>
                   <div className="aup-list-end">
@@ -86,16 +109,27 @@ export default function OverviewTab({ user, goToTab }) {
       <div className="aup-stack">
         <section className="aup-card aup-impact">
           <div className="aup-impact-top">
-            <span className="aup-impact-icon"><Leaf size={20} strokeWidth={1.7} /></span>
+            <span className="aup-impact-icon">
+              <Leaf size={20} strokeWidth={1.7} />
+            </span>
             <div>
               <small>Environmental impact</small>
-              <strong>{profile.environmental_impact} <em>kg CO₂ saved</em></strong>
+              <strong>
+                {profile.environmental_impact} <em>kg CO₂ saved</em>
+              </strong>
             </div>
           </div>
           <ul className="aup-impact-rows">
-            <li><Recycle size={15} /> Items rescued <b>{profile.total_uploads}</b></li>
-            <li><Gift size={15} /> Items donated <b>{user.donations.length}</b></li>
-            <li><ShoppingBag size={15} /> Circular purchases <b>{profile.total_purchases}</b></li>
+            <li>
+              <Recycle size={15} /> Items rescued <b>{profile.total_uploads}</b>
+            </li>
+            <li>
+              <Gift size={15} /> Items donated <b>{user.donations.length}</b>
+            </li>
+            <li>
+              <ShoppingBag size={15} /> Circular purchases{" "}
+              <b>{profile.total_purchases}</b>
+            </li>
           </ul>
         </section>
 
@@ -134,9 +168,14 @@ export default function OverviewTab({ user, goToTab }) {
           )}
 
           {openReports.length > 0 && (
-            <button type="button" className="aup-alert" onClick={() => goToTab("reports")}>
+            <button
+              type="button"
+              className="aup-alert"
+              onClick={() => goToTab("reports")}
+            >
               <ShieldAlert size={16} />
-              {openReports.length} report{openReports.length > 1 ? "s" : ""} filed against this user
+              {openReports.length} report{openReports.length > 1 ? "s" : ""}{" "}
+              filed against this user
               <ArrowRight size={14} />
             </button>
           )}
@@ -150,8 +189,14 @@ export default function OverviewTab({ user, goToTab }) {
             </div>
           </header>
           <div className="aup-money">
-            <div><small>Spent</small><strong>{formatINR(user.totals.spent)}</strong></div>
-            <div><small>Earned</small><strong>{formatINR(user.totals.earned)}</strong></div>
+            <div>
+              <small>Spent</small>
+              <strong>{formatINR(user.totals.spent)}</strong>
+            </div>
+            <div>
+              <small>Earned</small>
+              <strong>{formatINR(user.totals.earned)}</strong>
+            </div>
           </div>
         </section>
       </div>

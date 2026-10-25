@@ -36,7 +36,8 @@ const ROUTE_PROGRESS = [0, 6, 18, 46, 88, 100];
 
 /* a stable fake distance per seller city, just for the demo route card */
 const distanceFor = (city = "") =>
-  300 + (Array.from(city).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 1200);
+  300 +
+  (Array.from(city).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 1200);
 
 export default function UserOrderTrack() {
   const { orderId } = useParams();
@@ -60,10 +61,14 @@ export default function UserOrderTrack() {
   const cancelled = order.cancelled;
   const delivered = order.stage >= 5 && !cancelled;
   const onTheWay = order.stage >= 3 && !cancelled && !delivered;
-  const progress = cancelled ? ROUTE_PROGRESS[order.stage] : ROUTE_PROGRESS[order.stage];
+  const progress = cancelled
+    ? ROUTE_PROGRESS[order.stage]
+    : ROUTE_PROGRESS[order.stage];
   const origin = order.seller?.city || "Seller";
   const km = distanceFor(origin);
-  const code = String((parseInt(order.id.replace(/\D/g, ""), 10) * 7) % 9000 + 1000);
+  const code = String(
+    ((parseInt(order.id.replace(/\D/g, ""), 10) * 7) % 9000) + 1000,
+  );
   const next = !cancelled && !delivered ? STAGES[order.stage + 1] : null;
   const lastEvent = order.events[order.events.length - 1];
 
@@ -89,7 +94,8 @@ export default function UserOrderTrack() {
     sub = "Your order reached you. We hope you love it.";
   } else {
     const day = relativeDay(order.eta);
-    title = day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
+    title =
+      day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
     sub = `Expected by ${formatLongDate(order.eta)}`;
   }
 
@@ -104,7 +110,9 @@ export default function UserOrderTrack() {
       />
 
       {/* ---------- hero ---------- */}
-      <section className={`ob-hero ${cancelled ? "is-cancelled" : delivered ? "is-delivered" : ""}`}>
+      <section
+        className={`ob-hero ${cancelled ? "is-cancelled" : delivered ? "is-delivered" : ""}`}
+      >
         <div className="ob-hero-copy">
           <div className="ob-head-meta">
             <span className="ob-hero-id">ORDER {order.id}</span>
@@ -117,13 +125,24 @@ export default function UserOrderTrack() {
             <SafeImage src={order.item.image} alt="" />
             <span>
               <strong>{order.item.title}</strong>
-              <small>{order.qty} {order.qty === 1 ? "item" : "items"} · {inr(order.total)}</small>
+              <small>
+                {order.qty} {order.qty === 1 ? "item" : "items"} ·{" "}
+                {inr(order.total)}
+              </small>
             </span>
           </Link>
         </div>
 
         <div className="ob-hero-icon" aria-hidden="true">
-          {cancelled ? <Ban size={54} /> : delivered ? <PartyPopper size={54} /> : onTheWay ? <Truck size={54} /> : <Warehouse size={54} />}
+          {cancelled ? (
+            <Ban size={54} />
+          ) : delivered ? (
+            <PartyPopper size={54} />
+          ) : onTheWay ? (
+            <Truck size={54} />
+          ) : (
+            <Warehouse size={54} />
+          )}
         </div>
       </section>
 
@@ -145,27 +164,36 @@ export default function UserOrderTrack() {
               <div className="dn-card-head">
                 <div>
                   <h2>Shipment route</h2>
-                  <small>About {km} km from {origin} to {ADDRESS.city}</small>
+                  <small>
+                    About {km} km from {origin} to {ADDRESS.city}
+                  </small>
                 </div>
                 <span className="dn-chip">{progress}% of the way</span>
               </div>
 
               <div className="ob-route">
                 <div className="ob-route-end">
-                  <span><Warehouse size={20} /></span>
+                  <span>
+                    <Warehouse size={20} />
+                  </span>
                   <strong>{origin}</strong>
                   <small>Seller</small>
                 </div>
 
                 <div className="ob-route-line">
                   <i style={{ width: `${progress}%` }} />
-                  <span className="ob-route-truck" style={{ left: `${progress}%` }}>
+                  <span
+                    className="ob-route-truck"
+                    style={{ left: `${progress}%` }}
+                  >
                     {delivered ? <Home size={16} /> : <Truck size={16} />}
                   </span>
                 </div>
 
                 <div className="ob-route-end">
-                  <span className={delivered ? "is-done" : ""}><Home size={20} /></span>
+                  <span className={delivered ? "is-done" : ""}>
+                    <Home size={20} />
+                  </span>
                   <strong>{ADDRESS.city}</strong>
                   <small>You</small>
                 </div>
@@ -187,7 +215,10 @@ export default function UserOrderTrack() {
         <aside className="ob-side">
           {order.courier && !cancelled && (
             <section className="dn-card dn-card-pad">
-              <div className="dn-card-head"><h3>Courier</h3><Truck size={18} /></div>
+              <div className="dn-card-head">
+                <h3>Courier</h3>
+                <Truck size={18} />
+              </div>
               <div className="ob-courier">
                 <span>{order.courier.name.charAt(0)}</span>
                 <div>
@@ -197,11 +228,18 @@ export default function UserOrderTrack() {
                 </div>
               </div>
               <div className="ob-courier-actions">
-                <button type="button" className="dn-btn dn-btn--soft dn-btn--sm" onClick={copyAwb}>
+                <button
+                  type="button"
+                  className="dn-btn dn-btn--soft dn-btn--sm"
+                  onClick={copyAwb}
+                >
                   <Copy size={14} /> Copy number
                 </button>
                 {onTheWay && (
-                  <a href={`tel:${order.courier.phone.replace(/\s/g, "")}`} className="dn-btn dn-btn--ghost dn-btn--sm">
+                  <a
+                    href={`tel:${order.courier.phone.replace(/\s/g, "")}`}
+                    className="dn-btn dn-btn--ghost dn-btn--sm"
+                  >
                     <Phone size={14} /> Call
                   </a>
                 )}
@@ -214,16 +252,24 @@ export default function UserOrderTrack() {
               <KeyRound size={22} />
               <small>Delivery code</small>
               <strong>{code.split("").join(" ")}</strong>
-              <p>Share this code with the courier only when you receive your parcel.</p>
+              <p>
+                Share this code with the courier only when you receive your
+                parcel.
+              </p>
             </section>
           )}
 
           <section className="dn-card dn-card-pad">
-            <div className="dn-card-head"><h3>Delivering to</h3><MapPin size={18} /></div>
+            <div className="dn-card-head">
+              <h3>Delivering to</h3>
+              <MapPin size={18} />
+            </div>
             <div className="ob-addr">
               <strong>{ADDRESS.name}</strong>
               <p>{ADDRESS.line}</p>
-              <p>{ADDRESS.city}, {ADDRESS.state} – {ADDRESS.pincode}</p>
+              <p>
+                {ADDRESS.city}, {ADDRESS.state} – {ADDRESS.pincode}
+              </p>
             </div>
           </section>
 
@@ -234,11 +280,16 @@ export default function UserOrderTrack() {
             <div>
               <strong>Something wrong with delivery?</strong>
               <p>Tell us if the parcel is delayed or damaged.</p>
-              <Link to="/user-help" className="dn-link">Get help →</Link>
+              <Link to="/user-help" className="dn-link">
+                Get help →
+              </Link>
             </div>
           </section>
 
-          <Link to={`/user-orders/${order.id}`} className="dn-btn dn-btn--ghost dn-btn--block">
+          <Link
+            to={`/user-orders/${order.id}`}
+            className="dn-btn dn-btn--ghost dn-btn--block"
+          >
             <MapPinned size={16} /> View order details
           </Link>
         </aside>

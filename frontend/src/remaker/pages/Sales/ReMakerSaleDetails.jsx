@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
 import {
@@ -10,7 +15,11 @@ import {
   SaleTimeline,
 } from "../Sales/SalesParts";
 import { formatPrice } from "../../data/remakerMarketplaceData";
-import { PAYMENT_LABEL, formatDate, formatDateTime } from "../../data/ordersStore";
+import {
+  PAYMENT_LABEL,
+  formatDate,
+  formatDateTime,
+} from "../../data/ordersStore";
 import {
   CANCEL_REASONS,
   FEE_RATE,
@@ -39,10 +48,16 @@ export function SaleNotFound() {
     <section className="rod rsl">
       <div className="rod-empty">
         <div className="rod-empty-art single" aria-hidden="true">
-          <img className="a" src="/images/portfolio/before-tara-chair.jpg" alt="" />
+          <img
+            className="a"
+            src="/images/portfolio/before-tara-chair.jpg"
+            alt=""
+          />
         </div>
         <h2>We couldn&apos;t find that order</h2>
-        <p>The link may be out of date, or the order belongs to another seller.</p>
+        <p>
+          The link may be out of date, or the order belongs to another seller.
+        </p>
         <Link to="/remaker-sales" className="rod-btn primary">
           Back to sales
         </Link>
@@ -93,7 +108,8 @@ function Details({ order }) {
   const action = nextAction(order);
   const earning = earningStatus(order);
 
-  const [modal, setModal] = useState(null); /* "decline" | "cancel" | "action" */
+  const [modal, setModal] =
+    useState(null); /* "decline" | "cancel" | "action" */
   const [notice, setNotice] = useState(location.state?.notice || "");
   const timer = useRef(null);
 
@@ -165,29 +181,47 @@ function Details({ order }) {
 
             <div className="rod-actions">
               {action && (
-                <button type="button" className="rod-btn primary" onClick={runAction}>
+                <button
+                  type="button"
+                  className="rod-btn primary"
+                  onClick={runAction}
+                >
                   {action.label}
                 </button>
               )}
 
               {order.status === "Pending" && (
-                <button type="button" className="rod-btn danger-ghost" onClick={() => setModal("decline")}>
+                <button
+                  type="button"
+                  className="rod-btn danger-ghost"
+                  onClick={() => setModal("decline")}
+                >
                   Decline order
                 </button>
               )}
 
               {order.status === "Confirmed" && canCancelSale(order) && (
-                <button type="button" className="rod-btn danger-ghost" onClick={() => setModal("cancel")}>
+                <button
+                  type="button"
+                  className="rod-btn danger-ghost"
+                  onClick={() => setModal("cancel")}
+                >
                   Cancel order
                 </button>
               )}
 
-              <Link to={`/remaker-customers/${order.customerId}`} className="rod-btn ghost">
+              <Link
+                to={`/remaker-customers/${order.customerId}`}
+                className="rod-btn ghost"
+              >
                 Customer info
               </Link>
 
               {earnsMoney && (
-                <Link to="/remaker-earnings/transactions" className="rod-btn ghost">
+                <Link
+                  to="/remaker-earnings/transactions"
+                  className="rod-btn ghost"
+                >
                   See in earnings
                 </Link>
               )}
@@ -199,18 +233,26 @@ function Details({ order }) {
             <h3>Item sold</h3>
 
             <div className="rod-item">
-              <Link to={`/remaker-products/${order.productId}/edit`} className="rod-item-img">
+              <Link
+                to={`/remaker-products/${order.productId}/edit`}
+                className="rod-item-img"
+              >
                 <img src={order.image} alt="" />
               </Link>
 
               <div className="rod-item-info">
-                <Link to={`/remaker-products/${order.productId}/edit`} className="rod-item-title">
+                <Link
+                  to={`/remaker-products/${order.productId}/edit`}
+                  className="rod-item-title"
+                >
                   {order.title}
                 </Link>
                 <p>{order.category}</p>
                 <p>
                   Product ID {order.productId} ·{" "}
-                  <Link to={`/remaker-products/${order.productId}/edit`}>Edit product</Link>
+                  <Link to={`/remaker-products/${order.productId}/edit`}>
+                    Edit product
+                  </Link>
                 </p>
               </div>
 
@@ -227,7 +269,9 @@ function Details({ order }) {
 
             <div className="sls-route">
               <div>
-                <small>{isPickup ? "Customer collects from" : "Pick up from"}</small>
+                <small>
+                  {isPickup ? "Customer collects from" : "Pick up from"}
+                </small>
                 <strong>{SHIP_FROM.name}</strong>
                 <p>
                   {SHIP_FROM.line}
@@ -278,7 +322,9 @@ function Details({ order }) {
             <section className="rod-panel sls-customer">
               <div className="rod-panel-head">
                 <h3>Customer</h3>
-                <Link to={`/remaker-customers/${customer.id}`}>View profile</Link>
+                <Link to={`/remaker-customers/${customer.id}`}>
+                  View profile
+                </Link>
               </div>
 
               <div className="sls-customer-top">
@@ -287,7 +333,9 @@ function Details({ order }) {
                 </span>
                 <div>
                   <strong>{customer.name}</strong>
-                  <span className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}>
+                  <span
+                    className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}
+                  >
                     {customer.type === "ReMaker" ? "ReMaker" : "Customer"}
                   </span>
                   <small>Member since {customer.joined}</small>
@@ -298,7 +346,9 @@ function Details({ order }) {
                 <div>
                   <dt>Phone</dt>
                   <dd>
-                    <a href={`tel:${customer.phone.replace(/\s/g, "")}`}>{customer.phone}</a>
+                    <a href={`tel:${customer.phone.replace(/\s/g, "")}`}>
+                      {customer.phone}
+                    </a>
                   </dd>
                 </div>
                 <div>
@@ -342,16 +392,25 @@ function Details({ order }) {
             </dl>
 
             {earning === "Clearing" && (
-              <p className="rod-note">Clears for withdrawal on {formatDate(clearsOn(order))}.</p>
+              <p className="rod-note">
+                Clears for withdrawal on {formatDate(clearsOn(order))}.
+              </p>
             )}
             {earning === "Available" && (
-              <p className="rod-note good">This money is ready to withdraw from your earnings page.</p>
+              <p className="rod-note good">
+                This money is ready to withdraw from your earnings page.
+              </p>
             )}
             {earning === "In progress" && (
-              <p className="rod-note">You get paid {`a few days after delivery`}. Complete the order to start the clock.</p>
+              <p className="rod-note">
+                You get paid {`a few days after delivery`}. Complete the order
+                to start the clock.
+              </p>
             )}
             {(earning === "Cancelled" || earning === "Reversed") && (
-              <p className="rod-note">This order will not add to your earnings.</p>
+              <p className="rod-note">
+                This order will not add to your earnings.
+              </p>
             )}
           </section>
 
@@ -371,7 +430,8 @@ function Details({ order }) {
               <div>
                 <dt>Payment</dt>
                 <dd>
-                  {PAYMENT_LABEL[order.payment.method]}, {order.payment.status.toLowerCase()}
+                  {PAYMENT_LABEL[order.payment.method]},{" "}
+                  {order.payment.status.toLowerCase()}
                 </dd>
               </div>
               <div>
@@ -382,20 +442,30 @@ function Details({ order }) {
 
             {order.payment.method === "COD" && order.status !== "Completed" && (
               <p className="rod-note">
-                Cash on delivery. ReOrbit collects the cash and adds your share to your earnings after delivery.
+                Cash on delivery. ReOrbit collects the cash and adds your share
+                to your earnings after delivery.
               </p>
             )}
           </section>
 
-          {demo && ["handed_over", "in_transit"].includes(order.stage) && order.status === "Confirmed" && (
-            <section className="rod-demo">
-              <small>Demo only</small>
-              <p>ReOrbit controls these steps. Move this order forward to preview them.</p>
-              <button type="button" className="rod-btn primary small" onClick={() => advanceSale(order.id)}>
-                Advance to next step
-              </button>
-            </section>
-          )}
+          {demo &&
+            ["handed_over", "in_transit"].includes(order.stage) &&
+            order.status === "Confirmed" && (
+              <section className="rod-demo">
+                <small>Demo only</small>
+                <p>
+                  ReOrbit controls these steps. Move this order forward to
+                  preview them.
+                </p>
+                <button
+                  type="button"
+                  className="rod-btn primary small"
+                  onClick={() => advanceSale(order.id)}
+                >
+                  Advance to next step
+                </button>
+              </section>
+            )}
         </aside>
       </div>
 

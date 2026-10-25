@@ -42,10 +42,14 @@ function Track({ order }) {
   let headline = "";
   if (order.status === "Cancelled") headline = "This order was cancelled";
   else if (order.status === "Returned") headline = "This order was returned";
-  else if (finished) headline = isPickup ? "You collected your order" : "Your order was delivered";
+  else if (finished)
+    headline = isPickup
+      ? "You collected your order"
+      : "Your order was delivered";
   else if (order.stage === "out_for_delivery") headline = "Arriving today";
   else if (order.stage === "ready") headline = "Ready for you to collect";
-  else if (order.eta) headline = `${isPickup ? "Ready by" : "Arriving by"} ${formatDate(order.eta)}`;
+  else if (order.eta)
+    headline = `${isPickup ? "Ready by" : "Arriving by"} ${formatDate(order.eta)}`;
 
   return (
     <section className="rod rod-track">
@@ -81,13 +85,22 @@ function Track({ order }) {
       {!ended && (
         <ol className="rod-stepper" aria-label="Order progress">
           {flow.map((step, i) => {
-            const state = i < index || (finished && i === index) ? "done" : i === index ? "current" : "upcoming";
+            const state =
+              i < index || (finished && i === index)
+                ? "done"
+                : i === index
+                  ? "current"
+                  : "upcoming";
 
             return (
               <li className={state} key={step.key}>
                 <span className="rod-step-dot" aria-hidden="true" />
                 <strong>{step.label}</strong>
-                <small>{order.times[step.key] ? formatDate(order.times[step.key]) : "Pending"}</small>
+                <small>
+                  {order.times[step.key]
+                    ? formatDate(order.times[step.key])
+                    : "Pending"}
+                </small>
               </li>
             );
           })}
@@ -109,8 +122,13 @@ function Track({ order }) {
 
               {order.pickupCode ? (
                 <>
-                  <p className="rod-pickup-lead">Show this code to the seller when you collect your order.</p>
-                  <div className="rod-code-box" aria-label={`Pickup code ${order.pickupCode}`}>
+                  <p className="rod-pickup-lead">
+                    Show this code to the seller when you collect your order.
+                  </p>
+                  <div
+                    className="rod-code-box"
+                    aria-label={`Pickup code ${order.pickupCode}`}
+                  >
                     {order.pickupCode.split("").map((digit, i) => (
                       <span key={i}>{digit}</span>
                     ))}
@@ -118,7 +136,8 @@ function Track({ order }) {
                 </>
               ) : (
                 <p className="rod-pickup-lead">
-                  Your pickup code appears here once the seller marks the order as ready.
+                  Your pickup code appears here once the seller marks the order
+                  as ready.
                 </p>
               )}
 
@@ -171,7 +190,10 @@ function Track({ order }) {
           <section className="rod-panel">
             <h3>Status</h3>
             <p className="rod-status-text">{status.message}</p>
-            <Link to={`/remaker-orders/${order.id}`} className="rod-btn ghost small">
+            <Link
+              to={`/remaker-orders/${order.id}`}
+              className="rod-btn ghost small"
+            >
               View order details
             </Link>
           </section>
@@ -180,7 +202,10 @@ function Track({ order }) {
             <section className="rod-help">
               <strong>Problem with this order?</strong>
               <p>Late, damaged or not what you expected? Let us know.</p>
-              <Link to={`/remaker-orders/${order.id}/report`} className="rod-btn ghost small">
+              <Link
+                to={`/remaker-orders/${order.id}/report`}
+                className="rod-btn ghost small"
+              >
                 Report an issue
               </Link>
             </section>
@@ -190,7 +215,11 @@ function Track({ order }) {
             <section className="rod-demo">
               <small>Demo only</small>
               <p>Move this order to its next step to preview each stage.</p>
-              <button type="button" className="rod-btn primary small" onClick={() => advanceOrder(order.id)}>
+              <button
+                type="button"
+                className="rod-btn primary small"
+                onClick={() => advanceOrder(order.id)}
+              >
                 Advance to next step
               </button>
             </section>

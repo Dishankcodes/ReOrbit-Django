@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { CancelModal, MiniProgress, StatusBadge, Timeline } from "../../pages-components/OrderParts";
+import {
+  CancelModal,
+  MiniProgress,
+  StatusBadge,
+  Timeline,
+} from "../../pages-components/OrderParts";
 import { formatPrice } from "../../data/remakerMarketplaceData";
 import {
   DEFAULT_ADDRESS,
@@ -25,7 +30,9 @@ export function OrderNotFound() {
           <img className="a" src="/images/products/vintage-chair.jpg" alt="" />
         </div>
         <h2>We couldn&apos;t find that order</h2>
-        <p>The link may be out of date, or the order belongs to another account.</p>
+        <p>
+          The link may be out of date, or the order belongs to another account.
+        </p>
         <Link to="/remaker-orders" className="rod-btn primary">
           Back to my orders
         </Link>
@@ -103,31 +110,47 @@ function Details({ order }) {
 
             <div className="rod-actions">
               {active && (
-                <Link to={`/remaker-orders/${order.id}/track`} className="rod-btn primary">
+                <Link
+                  to={`/remaker-orders/${order.id}/track`}
+                  className="rod-btn primary"
+                >
                   Track order
                 </Link>
               )}
 
               {!active && order.status !== "Cancelled" && (
-                <Link to={`/remaker-marketplace/product/${order.listingId}`} className="rod-btn primary">
+                <Link
+                  to={`/remaker-marketplace/product/${order.listingId}`}
+                  className="rod-btn primary"
+                >
                   Buy again
                 </Link>
               )}
 
               {order.status !== "Pending" && (
-                <Link to={`/remaker-orders/${order.id}/track`} className="rod-btn ghost">
+                <Link
+                  to={`/remaker-orders/${order.id}/track`}
+                  className="rod-btn ghost"
+                >
                   View tracking history
                 </Link>
               )}
 
               {canReport(order) && (
-                <Link to={`/remaker-orders/${order.id}/report`} className="rod-btn ghost">
+                <Link
+                  to={`/remaker-orders/${order.id}/report`}
+                  className="rod-btn ghost"
+                >
                   Report an issue
                 </Link>
               )}
 
               {canCancel(order) && (
-                <button type="button" className="rod-btn danger-ghost" onClick={() => setCancelling(true)}>
+                <button
+                  type="button"
+                  className="rod-btn danger-ghost"
+                  onClick={() => setCancelling(true)}
+                >
                   Cancel order
                 </button>
               )}
@@ -139,12 +162,18 @@ function Details({ order }) {
             <h3>Item</h3>
 
             <div className="rod-item">
-              <Link to={`/remaker-marketplace/product/${order.listingId}`} className="rod-item-img">
+              <Link
+                to={`/remaker-marketplace/product/${order.listingId}`}
+                className="rod-item-img"
+              >
                 <img src={order.image} alt="" />
               </Link>
 
               <div className="rod-item-info">
-                <Link to={`/remaker-marketplace/product/${order.listingId}`} className="rod-item-title">
+                <Link
+                  to={`/remaker-marketplace/product/${order.listingId}`}
+                  className="rod-item-title"
+                >
                   {order.title}
                 </Link>
                 <p>
@@ -172,7 +201,9 @@ function Details({ order }) {
             <dl className="rod-facts">
               <div>
                 <dt>Method</dt>
-                <dd>{isPickup ? "Self pickup, free" : "Delivered by ReOrbit"}</dd>
+                <dd>
+                  {isPickup ? "Self pickup, free" : "Delivered by ReOrbit"}
+                </dd>
               </div>
 
               {isPickup ? (
@@ -197,7 +228,8 @@ function Details({ order }) {
                     <dd>
                       {DEFAULT_ADDRESS.name}
                       <br />
-                      {DEFAULT_ADDRESS.line}, {DEFAULT_ADDRESS.city}, {DEFAULT_ADDRESS.state} {order.pincode}
+                      {DEFAULT_ADDRESS.line}, {DEFAULT_ADDRESS.city},{" "}
+                      {DEFAULT_ADDRESS.state} {order.pincode}
                       <br />
                       {DEFAULT_ADDRESS.phone}
                     </dd>
@@ -238,7 +270,11 @@ function Details({ order }) {
                         {report.id} · {formatDate(report.createdAt)}
                       </small>
                     </div>
-                    <span className={`rod-badge report-${report.status.toLowerCase()}`}>{report.status}</span>
+                    <span
+                      className={`rod-badge report-${report.status.toLowerCase()}`}
+                    >
+                      {report.status}
+                    </span>
                   </Link>
                 ))}
               </div>
@@ -253,14 +289,14 @@ function Details({ order }) {
 
             <dl className="rod-sum">
               <div>
-                <dt>
-                  Items ({order.quantity})
-                </dt>
+                <dt>Items ({order.quantity})</dt>
                 <dd>{formatPrice(subtotal)}</dd>
               </div>
               <div>
                 <dt>{isPickup ? "Self pickup" : "ReOrbit delivery"}</dt>
-                <dd>{order.deliveryFee ? formatPrice(order.deliveryFee) : "Free"}</dd>
+                <dd>
+                  {order.deliveryFee ? formatPrice(order.deliveryFee) : "Free"}
+                </dd>
               </div>
               <div className="total">
                 <dt>Total</dt>
@@ -276,7 +312,11 @@ function Details({ order }) {
               <div>
                 <dt>Status</dt>
                 <dd>
-                  <span className={`rod-pay ${order.payment.status.toLowerCase()}`}>{order.payment.status}</span>
+                  <span
+                    className={`rod-pay ${order.payment.status.toLowerCase()}`}
+                  >
+                    {order.payment.status}
+                  </span>
                 </dd>
               </div>
               {order.payment.txnId && (
@@ -289,7 +329,8 @@ function Details({ order }) {
 
             {order.payment.status === "Refunded" && (
               <p className="rod-note">
-                Refunded to your original payment method. It can take 3 to 5 days to show up.
+                Refunded to your original payment method. It can take 3 to 5
+                days to show up.
               </p>
             )}
           </section>
@@ -332,8 +373,14 @@ function Details({ order }) {
           {canReport(order) && (
             <section className="rod-help">
               <strong>Something not right?</strong>
-              <p>Tell us what went wrong and our team will look into it within 24 hours.</p>
-              <Link to={`/remaker-orders/${order.id}/report`} className="rod-btn ghost small">
+              <p>
+                Tell us what went wrong and our team will look into it within 24
+                hours.
+              </p>
+              <Link
+                to={`/remaker-orders/${order.id}/report`}
+                className="rod-btn ghost small"
+              >
                 Report an issue
               </Link>
             </section>
@@ -341,7 +388,13 @@ function Details({ order }) {
         </aside>
       </div>
 
-      {cancelling && <CancelModal order={order} onConfirm={confirmCancel} onClose={() => setCancelling(false)} />}
+      {cancelling && (
+        <CancelModal
+          order={order}
+          onConfirm={confirmCancel}
+          onClose={() => setCancelling(false)}
+        />
+      )}
 
       {notice && (
         <div className="rod-toast" role="status" aria-live="polite">

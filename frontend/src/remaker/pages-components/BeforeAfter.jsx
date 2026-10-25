@@ -18,8 +18,18 @@ export default function BeforeAfter({
       className={`rpt-ba ${interactive ? "interactive" : "static"} ${className}`}
       style={{ "--pos": position }}
     >
-      <img className="rpt-ba-after" src={after} alt={interactive ? `${title}, after` : ""} draggable="false" />
-      <img className="rpt-ba-before" src={before} alt={interactive ? `${title}, before` : ""} draggable="false" />
+      <img
+        className="rpt-ba-after"
+        src={after}
+        alt={interactive ? `${title}, after` : ""}
+        draggable="false"
+      />
+      <img
+        className="rpt-ba-before"
+        src={before}
+        alt={interactive ? `${title}, before` : ""}
+        draggable="false"
+      />
 
       <span className="rpt-ba-line" aria-hidden="true">
         <i />

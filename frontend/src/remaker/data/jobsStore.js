@@ -55,17 +55,27 @@ function seed() {
       itemId: "IT-6041",
       title: "Teak wardrobe door",
       category: "Furniture",
-      summary: "Turn a carved teak wardrobe door into a hall console or wall panel.",
+      summary:
+        "Turn a carved teak wardrobe door into a hall console or wall panel.",
       brief:
         "A 70-year-old carved teak door from a donated wardrobe. The carving is intact but the varnish is cracked and one hinge mortise is damaged. We would like it restored and turned into a useful piece, like a wall console or a bench back.",
-      requirements: ["Keep the original carved panel visible", "Strip the old varnish and re-seal with a natural finish", "Mention the new use in your notes", "Finished piece must be stable and safe to use"],
-      materials: "Item and sandpaper provided. Legs, brackets and finish are your own.",
+      requirements: [
+        "Keep the original carved panel visible",
+        "Strip the old varnish and re-seal with a natural finish",
+        "Mention the new use in your notes",
+        "Finished piece must be stable and safe to use",
+      ],
+      materials:
+        "Item and sandpaper provided. Legs, brackets and finish are your own.",
       difficulty: "Hard",
       fee: 4200,
       days: 14,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 18 kg",
-      before: [P + "before-tara-console.jpg", P + "before-tara-teak-cabinet.jpg"],
+      before: [
+        P + "before-tara-console.jpg",
+        P + "before-tara-teak-cabinet.jpg",
+      ],
       status: "Open",
       postedAt: ago(8),
       dueAt: "",
@@ -75,10 +85,15 @@ function seed() {
       itemId: "IT-6038",
       title: "Worn denim jackets (lot of 6)",
       category: "Clothing",
-      summary: "Six donated denim jackets ready to become bags, cushions or patchwork.",
+      summary:
+        "Six donated denim jackets ready to become bags, cushions or patchwork.",
       brief:
         "Six denim jackets in mixed sizes, washed and sorted. Make something useful and sellable from all of them. Totes, aprons and cushion covers have worked well before.",
-      requirements: ["Use every jacket, or tell us what is left over", "Linings and stitching must be strong", "Finished items need a ReOrbit label we will provide"],
+      requirements: [
+        "Use every jacket, or tell us what is left over",
+        "Linings and stitching must be strong",
+        "Finished items need a ReOrbit label we will provide",
+      ],
       materials: "Jackets provided. Thread, lining and zips are your own.",
       difficulty: "Medium",
       fee: 2800,
@@ -98,7 +113,11 @@ function seed() {
       summary: "Give a scratched drawer unit a clean, modern finish.",
       brief:
         "Two matching drawer units with solid brass handles. The wood is scratched and one runner sticks. Repair the runner, refinish the wood, polish the brass and keep the original look.",
-      requirements: ["Repair or replace the sticking runner", "Sand and refinish all outer surfaces", "Polish the brass handles"],
+      requirements: [
+        "Repair or replace the sticking runner",
+        "Sand and refinish all outer surfaces",
+        "Polish the brass handles",
+      ],
       materials: "Items provided. Finish and runners are your own.",
       difficulty: "Easy",
       fee: 1900,
@@ -118,7 +137,11 @@ function seed() {
       summary: "Wire an old steel machine part into a statement table lamp.",
       brief:
         "A heavy steel machine part with a nice industrial shape. Clean it, treat the rust, then wire it into a lamp with a cloth cable and a dimmer. All wiring must meet ISI safety standards.",
-      requirements: ["Treat and seal rust before wiring", "Use ISI marked wiring and holders", "Test the lamp before submitting"],
+      requirements: [
+        "Treat and seal rust before wiring",
+        "Use ISI marked wiring and holders",
+        "Test the lamp before submitting",
+      ],
       materials: "Item provided. Wiring parts are your own.",
       difficulty: "Medium",
       fee: 2400,
@@ -138,7 +161,11 @@ function seed() {
       summary: "Restore a wobbly chair with a broken cane back.",
       brief:
         "A solid wood dining chair with a torn cane back and loose joints. Re-weave the cane, tighten and glue the joints, and finish it in a calm colour that suits a modern home.",
-      requirements: ["Re-weave the back in natural cane", "Joints must be tight with no wobble", "Finish must be safe for everyday use"],
+      requirements: [
+        "Re-weave the back in natural cane",
+        "Joints must be tight with no wobble",
+        "Finish must be safe for everyday use",
+      ],
       materials: "Chair provided. Cane and finish are your own.",
       difficulty: "Medium",
       fee: 2200,
@@ -152,8 +179,17 @@ function seed() {
       startedAt: ago(70),
       dueAt: inDays(5),
       progress: [
-        { id: "pg1", at: ago(70), text: "Collected the chair. Joints are very loose and two stretchers are cracked." },
-        { id: "pg2", at: ago(40), text: "Took the chair apart and cleaned old glue from all the joints. New dowels are cut.", photo: P + "before-tara-chair.jpg" },
+        {
+          id: "pg1",
+          at: ago(70),
+          text: "Collected the chair. Joints are very loose and two stretchers are cracked.",
+        },
+        {
+          id: "pg2",
+          at: ago(40),
+          text: "Took the chair apart and cleaned old glue from all the joints. New dowels are cut.",
+          photo: P + "before-tara-chair.jpg",
+        },
       ],
     }),
     job({
@@ -164,7 +200,11 @@ function seed() {
       summary: "Turn a pair of old window frames into mirrors or wall decor.",
       brief:
         "Two carved wooden window frames from a demolished house. Clean and strengthen them, then turn them into decorative mirrors or photo frames.",
-      requirements: ["Strengthen loose corners", "Add mirror glass or backing with safe fixings", "Add secure hanging hardware"],
+      requirements: [
+        "Strengthen loose corners",
+        "Add mirror glass or backing with safe fixings",
+        "Add secure hanging hardware",
+      ],
       materials: "Frames provided. Glass and hardware are your own.",
       difficulty: "Easy",
       fee: 1600,
@@ -185,7 +225,11 @@ function seed() {
       summary: "Polish and rewire a tall brass lamp stand.",
       brief:
         "A tall brass lamp stand with a tarnished finish and old wiring. Polish it, rewire it safely and add a new shade.",
-      requirements: ["Rewire with ISI marked parts", "Polish without removing the patina completely", "Add a new shade"],
+      requirements: [
+        "Rewire with ISI marked parts",
+        "Polish without removing the patina completely",
+        "Add a new shade",
+      ],
       materials: "Stand provided. Wiring and shade are your own.",
       difficulty: "Easy",
       fee: 1700,
@@ -202,8 +246,17 @@ function seed() {
       dueAt: inDays(1),
       qc: { status: "Pending", note: "" },
       progress: [
-        { id: "pg3", at: ago(200), text: "Removed old wiring and polished the stand. The patina looks warm and even." },
-        { id: "pg4", at: ago(60), text: "New wiring done and tested. Shade fitted.", photo: P + "arjun-lamp.jpg" },
+        {
+          id: "pg3",
+          at: ago(200),
+          text: "Removed old wiring and polished the stand. The patina looks warm and even.",
+        },
+        {
+          id: "pg4",
+          at: ago(60),
+          text: "New wiring done and tested. Shade fitted.",
+          photo: P + "arjun-lamp.jpg",
+        },
       ],
     }),
     job({
@@ -212,8 +265,13 @@ function seed() {
       title: "Rusted window grille",
       category: "Decor",
       summary: "Make a wall shelf from a rusted iron grille.",
-      brief: "A decorative iron window grille covered in surface rust. Clean, seal and turn it into a wall shelf or plant stand.",
-      requirements: ["Remove loose rust and seal the metal", "Add a wooden shelf", "Mounting must hold at least 10 kg"],
+      brief:
+        "A decorative iron window grille covered in surface rust. Clean, seal and turn it into a wall shelf or plant stand.",
+      requirements: [
+        "Remove loose rust and seal the metal",
+        "Add a wooden shelf",
+        "Mounting must hold at least 10 kg",
+      ],
       materials: "Grille provided. Wood and wall fixings are your own.",
       difficulty: "Medium",
       fee: 2000,
@@ -228,11 +286,27 @@ function seed() {
       startedAt: ago(380),
       submittedAt: ago(130),
       dueAt: inDays(3),
-      qc: { status: "Failed", note: "The shelf plank is not fixed firmly enough and the sealant still looks patchy on the left side. Please re-secure the plank and re-coat the grille, then resubmit." },
+      qc: {
+        status: "Failed",
+        note: "The shelf plank is not fixed firmly enough and the sealant still looks patchy on the left side. Please re-secure the plank and re-coat the grille, then resubmit.",
+      },
       progress: [
-        { id: "pg5", at: ago(370), text: "Wire brushed the whole grille and applied the first sealant coat." },
-        { id: "pg6", at: ago(140), text: "Fitted a pine plank and finished. Ready for review.", photo: P + "arjun-metal.jpg" },
-        { id: "pg7", at: ago(100), text: "Quality check failed. Starting the fixes now." },
+        {
+          id: "pg5",
+          at: ago(370),
+          text: "Wire brushed the whole grille and applied the first sealant coat.",
+        },
+        {
+          id: "pg6",
+          at: ago(140),
+          text: "Fitted a pine plank and finished. Ready for review.",
+          photo: P + "arjun-metal.jpg",
+        },
+        {
+          id: "pg7",
+          at: ago(100),
+          text: "Quality check failed. Starting the fixes now.",
+        },
       ],
     }),
     job({
@@ -241,8 +315,13 @@ function seed() {
       title: "Teak cabinet with brass hinges",
       category: "Furniture",
       summary: "Restore a teak cabinet and keep the original hinges.",
-      brief: "A teak cabinet with original brass hinges and a cracked top. Repair, refinish and keep the hardware.",
-      requirements: ["Repair the cracked top", "Keep the original hinges", "Oil or wax finish"],
+      brief:
+        "A teak cabinet with original brass hinges and a cracked top. Repair, refinish and keep the hardware.",
+      requirements: [
+        "Repair the cracked top",
+        "Keep the original hinges",
+        "Oil or wax finish",
+      ],
       materials: "Cabinet provided. Finish is your own.",
       difficulty: "Hard",
       fee: 3900,
@@ -258,8 +337,17 @@ function seed() {
       submittedAt: ago(900),
       completedAt: ago(860),
       dueAt: ago(840),
-      qc: { status: "Passed", note: "Beautiful repair work. The grain and hinges look great." },
-      progress: [{ id: "pg8", at: ago(1000), text: "Top repaired with a butterfly joint, refinished with hard wax oil." }],
+      qc: {
+        status: "Passed",
+        note: "Beautiful repair work. The grain and hinges look great.",
+      },
+      progress: [
+        {
+          id: "pg8",
+          at: ago(1000),
+          text: "Top repaired with a butterfly joint, refinished with hard wax oil.",
+        },
+      ],
     }),
     job({
       id: "JB-5044",
@@ -267,8 +355,12 @@ function seed() {
       title: "Patchwork quilt offcuts",
       category: "Clothing",
       summary: "Turn quilt offcuts into tote bags.",
-      brief: "A box of cotton quilt offcuts. Make tote bags, pouches or cushion covers.",
-      requirements: ["Use at least 80% of the offcuts", "Strong seams and lining"],
+      brief:
+        "A box of cotton quilt offcuts. Make tote bags, pouches or cushion covers.",
+      requirements: [
+        "Use at least 80% of the offcuts",
+        "Strong seams and lining",
+      ],
       materials: "Offcuts provided. Thread and lining are your own.",
       difficulty: "Easy",
       fee: 1400,
@@ -284,7 +376,10 @@ function seed() {
       submittedAt: ago(1700),
       completedAt: ago(1660),
       dueAt: ago(1640),
-      qc: { status: "Passed", note: "Neat stitching and a clever use of the offcuts." },
+      qc: {
+        status: "Passed",
+        note: "Neat stitching and a clever use of the offcuts.",
+      },
       progress: [],
     }),
   ];
@@ -332,7 +427,10 @@ const getSnapshot = () => jobs;
 export function useJobs() {
   const list = useSyncExternalStore(subscribe, getSnapshot);
 
-  return useMemo(() => [...list].sort((a, b) => b.postedAt.localeCompare(a.postedAt)), [list]);
+  return useMemo(
+    () => [...list].sort((a, b) => b.postedAt.localeCompare(a.postedAt)),
+    [list],
+  );
 }
 
 export function useJob(id) {
@@ -345,7 +443,9 @@ function patch(id, change) {
   commit(
     jobs.map((item) => {
       if (item.id !== id) return item;
-      return typeof change === "function" ? change(item) : { ...item, ...change };
+      return typeof change === "function"
+        ? change(item)
+        : { ...item, ...change };
     }),
   );
 }
@@ -373,7 +473,11 @@ export function startJob(id) {
     startedAt: new Date().toISOString(),
     progress: [
       ...item.progress,
-      { id: `pg-${Date.now()}`, at: new Date().toISOString(), text: "Collected the item and started work." },
+      {
+        id: `pg-${Date.now()}`,
+        at: new Date().toISOString(),
+        text: "Collected the item and started work.",
+      },
     ],
   }));
 }
@@ -381,7 +485,15 @@ export function startJob(id) {
 export function addProgress(id, { text, photo = "" }) {
   patch(id, (item) => ({
     ...item,
-    progress: [...item.progress, { id: `pg-${Date.now()}`, at: new Date().toISOString(), text: text.trim(), photo }],
+    progress: [
+      ...item.progress,
+      {
+        id: `pg-${Date.now()}`,
+        at: new Date().toISOString(),
+        text: text.trim(),
+        photo,
+      },
+    ],
   }));
 }
 
@@ -393,7 +505,15 @@ export function submitJob(id, { afterImage, note }) {
     submittedAt: new Date().toISOString(),
     qc: { status: "Pending", note: "" },
     progress: note.trim()
-      ? [...item.progress, { id: `pg-${Date.now()}`, at: new Date().toISOString(), text: note.trim(), photo: afterImage }]
+      ? [
+          ...item.progress,
+          {
+            id: `pg-${Date.now()}`,
+            at: new Date().toISOString(),
+            text: note.trim(),
+            photo: afterImage,
+          },
+        ]
       : item.progress,
   }));
 }
@@ -412,7 +532,14 @@ export function decideQuality(id, passed) {
     },
     progress: passed
       ? item.progress
-      : [...item.progress, { id: `pg-${Date.now()}`, at: new Date().toISOString(), text: "Quality check failed. Starting the fixes now." }],
+      : [
+          ...item.progress,
+          {
+            id: `pg-${Date.now()}`,
+            at: new Date().toISOString(),
+            text: "Quality check failed. Starting the fixes now.",
+          },
+        ],
   }));
 }
 
@@ -428,9 +555,15 @@ export function resetJobs() {
 
 export function jobTotals(list) {
   return {
-    paid: list.filter((item) => item.status === "Completed").reduce((total, item) => total + item.fee, 0),
-    review: list.filter((item) => item.status === "In review").reduce((total, item) => total + item.fee, 0),
-    active: list.filter((item) => ["Assigned", "In progress", "Needs changes"].includes(item.status)).length,
+    paid: list
+      .filter((item) => item.status === "Completed")
+      .reduce((total, item) => total + item.fee, 0),
+    review: list
+      .filter((item) => item.status === "In review")
+      .reduce((total, item) => total + item.fee, 0),
+    active: list.filter((item) =>
+      ["Assigned", "In progress", "Needs changes"].includes(item.status),
+    ).length,
     done: list.filter((item) => item.status === "Completed").length,
   };
 }
@@ -440,7 +573,8 @@ export function dueLabel(iso) {
 
   const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
 
-  if (days < 0) return `${Math.abs(days)} ${Math.abs(days) === 1 ? "day" : "days"} overdue`;
+  if (days < 0)
+    return `${Math.abs(days)} ${Math.abs(days) === 1 ? "day" : "days"} overdue`;
   if (days === 0) return "Due today";
   if (days === 1) return "Due tomorrow";
   return `Due in ${days} days`;
@@ -457,9 +591,26 @@ export function postedLabel(iso) {
 }
 
 export function dateLabel(iso) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function timeLabel(iso) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) + ", " + new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase();
+  return (
+    new Date(iso).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    }) +
+    ", " +
+    new Date(iso)
+      .toLocaleTimeString("en-IN", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .toLowerCase()
+  );
 }

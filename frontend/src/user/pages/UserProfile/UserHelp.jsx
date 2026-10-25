@@ -72,7 +72,7 @@ export default function UserHelp() {
     return faqData.filter(
       (item) =>
         item.question.toLowerCase().includes(query) ||
-        item.answer.toLowerCase().includes(query)
+        item.answer.toLowerCase().includes(query),
     );
   }, [search]);
 
@@ -84,8 +84,8 @@ export default function UserHelp() {
         <h1>How can we help?</h1>
 
         <p>
-          Find quick answers about shopping, orders, rewards,
-          donations and your ReOrbit account.
+          Find quick answers about shopping, orders, rewards, donations and your
+          ReOrbit account.
         </p>
       </div>
 
@@ -109,15 +109,11 @@ export default function UserHelp() {
             return (
               <article
                 key={faq.id}
-                className={`help-faq ${
-                  open ? "open" : ""
-                }`}
+                className={`help-faq ${open ? "open" : ""}`}
               >
                 <button
                   type="button"
-                  onClick={() =>
-                    setOpenId(open ? null : faq.id)
-                  }
+                  onClick={() => setOpenId(open ? null : faq.id)}
                 >
                   <span className="help-faq-question">
                     <span className="help-faq-question-icon">
@@ -132,11 +128,7 @@ export default function UserHelp() {
                   </span>
                 </button>
 
-                {open && (
-                  <div className="help-faq-answer">
-                    {faq.answer}
-                  </div>
-                )}
+                {open && <div className="help-faq-answer">{faq.answer}</div>}
               </article>
             );
           })}
@@ -167,8 +159,8 @@ export default function UserHelp() {
           <h2>Talk to ReOrbit</h2>
 
           <p>
-            If you cannot find the answer you're looking for,
-            reach out to the ReOrbit support team.
+            If you cannot find the answer you're looking for, reach out to the
+            ReOrbit support team.
           </p>
 
           <button
@@ -176,7 +168,7 @@ export default function UserHelp() {
             className="help-contact-btn"
             onClick={() =>
               window.alert(
-                "Support contact UI is ready. Messaging/backend support will be connected later."
+                "Support contact UI is ready. Messaging/backend support will be connected later.",
               )
             }
           >

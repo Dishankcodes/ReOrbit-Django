@@ -10,7 +10,11 @@ export default function TicketList({ tickets }) {
         const last = ticket.messages[ticket.messages.length - 1];
 
         return (
-          <Link to={`/remaker-help/tickets/${ticket.id}`} className="hlp-ticket" key={ticket.id}>
+          <Link
+            to={`/remaker-help/tickets/${ticket.id}`}
+            className="hlp-ticket"
+            key={ticket.id}
+          >
             <div className="hlp-ticket-main">
               <div className="hlp-ticket-top">
                 <small>
@@ -26,7 +30,9 @@ export default function TicketList({ tickets }) {
             </div>
 
             <div className="hlp-ticket-side">
-              <span className={`rk-badge ${STATUS_TONE[ticket.status]}`}>{ticket.status}</span>
+              <span className={`rk-badge ${STATUS_TONE[ticket.status]}`}>
+                {ticket.status}
+              </span>
               <small>{timeLabel(ticket.updatedAt)}</small>
             </div>
           </Link>

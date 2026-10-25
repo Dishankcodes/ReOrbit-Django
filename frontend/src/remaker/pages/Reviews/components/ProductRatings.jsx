@@ -15,7 +15,9 @@ export default function ProductRatings({ items, active, onSelect }) {
               type="button"
               className={active === item.productId ? "active" : ""}
               aria-pressed={active === item.productId}
-              onClick={() => onSelect(active === item.productId ? "all" : item.productId)}
+              onClick={() =>
+                onSelect(active === item.productId ? "all" : item.productId)
+              }
             >
               <img src={item.image} alt="" />
               <span>

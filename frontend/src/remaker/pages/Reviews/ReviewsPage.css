@@ -1144,7 +1144,9 @@
 
 label.active > .rvp-radio {
   border-color: var(--rp-maroon);
-  box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 9px var(--rp-maroon);
+  box-shadow:
+    inset 0 0 0 3px #fff,
+    inset 0 0 0 9px var(--rp-maroon);
 }
 
 .rvp-modal-actions {

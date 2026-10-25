@@ -54,14 +54,43 @@ function seed() {
       subtitle: "Customer in Bengaluru",
       image: U + "meera-iyer.jpg",
       customerId: "c-meera",
-      context: { label: "Order SO-31084 · Teak Door Console Table", to: "/remaker-sales/SO-31084", image: P + "tara-console.jpg" },
+      context: {
+        label: "Order SO-31084 · Teak Door Console Table",
+        to: "/remaker-sales/SO-31084",
+        image: P + "tara-console.jpg",
+      },
       unread: 2,
       messages: [
-        { id: "a1", from: "system", text: "Meera placed order SO-31084.", at: ago(75) },
-        { id: "a2", from: "them", text: "Hi! I just ordered the console table. Does it come with the iron legs shown in the photos?", at: ago(70) },
-        { id: "a3", from: "me", text: "Hello Meera, thank you! Yes, the iron legs are included and already attached.", at: ago(64) },
-        { id: "a4", from: "them", text: "Lovely. Could you also share a photo of the carved panel up close?", at: ago(12) },
-        { id: "a5", from: "them", text: "And how long will packing take?", at: ago(11) },
+        {
+          id: "a1",
+          from: "system",
+          text: "Meera placed order SO-31084.",
+          at: ago(75),
+        },
+        {
+          id: "a2",
+          from: "them",
+          text: "Hi! I just ordered the console table. Does it come with the iron legs shown in the photos?",
+          at: ago(70),
+        },
+        {
+          id: "a3",
+          from: "me",
+          text: "Hello Meera, thank you! Yes, the iron legs are included and already attached.",
+          at: ago(64),
+        },
+        {
+          id: "a4",
+          from: "them",
+          text: "Lovely. Could you also share a photo of the carved panel up close?",
+          at: ago(12),
+        },
+        {
+          id: "a5",
+          from: "them",
+          text: "And how long will packing take?",
+          at: ago(11),
+        },
       ],
     },
     {
@@ -71,12 +100,31 @@ function seed() {
       subtitle: "Customer in Pune",
       image: U + "rohan-shah.jpg",
       customerId: "c-rohan",
-      context: { label: "Order SO-31079 · 2 × Floor Lamp", to: "/remaker-sales/SO-31079", image: P + "arjun-lamp.jpg" },
+      context: {
+        label: "Order SO-31079 · 2 × Floor Lamp",
+        to: "/remaker-sales/SO-31079",
+        image: P + "arjun-lamp.jpg",
+      },
       unread: 0,
       messages: [
-        { id: "b1", from: "them", text: "Hi, will both lamps be wrapped separately? They are for a gift.", at: ago(500) },
-        { id: "b2", from: "me", text: "Yes, each lamp gets its own box and cloth wrap. I can add a handwritten note too.", at: ago(480) },
-        { id: "b3", from: "them", text: "A note would be perfect, thank you!", at: ago(470) },
+        {
+          id: "b1",
+          from: "them",
+          text: "Hi, will both lamps be wrapped separately? They are for a gift.",
+          at: ago(500),
+        },
+        {
+          id: "b2",
+          from: "me",
+          text: "Yes, each lamp gets its own box and cloth wrap. I can add a handwritten note too.",
+          at: ago(480),
+        },
+        {
+          id: "b3",
+          from: "them",
+          text: "A note would be perfect, thank you!",
+          at: ago(470),
+        },
       ],
     },
     {
@@ -86,11 +134,25 @@ function seed() {
       subtitle: "Customer in Jaipur",
       image: U + "anaya-singh.jpg",
       customerId: "c-anaya",
-      context: { label: "Order SO-31071 · Denim Patchwork Tote", to: "/remaker-sales/SO-31071", image: P + "priya-bag.jpg" },
+      context: {
+        label: "Order SO-31071 · Denim Patchwork Tote",
+        to: "/remaker-sales/SO-31071",
+        image: P + "priya-bag.jpg",
+      },
       unread: 1,
       messages: [
-        { id: "c1", from: "me", text: "Your tote is ready to collect. I am home until 7 pm.", at: ago(190) },
-        { id: "c2", from: "them", text: "Great, I will come by around 6. Is there parking nearby?", at: ago(35) },
+        {
+          id: "c1",
+          from: "me",
+          text: "Your tote is ready to collect. I am home until 7 pm.",
+          at: ago(190),
+        },
+        {
+          id: "c2",
+          from: "them",
+          text: "Great, I will come by around 6. Is there parking nearby?",
+          at: ago(35),
+        },
       ],
     },
     {
@@ -103,9 +165,24 @@ function seed() {
       context: null,
       unread: 0,
       messages: [
-        { id: "d1", from: "them", text: "Your wire brushed grille shelf is gorgeous. What sealant did you use?", at: ago(2600) },
-        { id: "d2", from: "me", text: "Thank you Tara! A matte clear sealant, two thin coats. I can send the product name.", at: ago(2580) },
-        { id: "d3", from: "them", text: "Please do. Thinking of using it on a window frame project.", at: ago(2570) },
+        {
+          id: "d1",
+          from: "them",
+          text: "Your wire brushed grille shelf is gorgeous. What sealant did you use?",
+          at: ago(2600),
+        },
+        {
+          id: "d2",
+          from: "me",
+          text: "Thank you Tara! A matte clear sealant, two thin coats. I can send the product name.",
+          at: ago(2580),
+        },
+        {
+          id: "d3",
+          from: "them",
+          text: "Please do. Thinking of using it on a window frame project.",
+          at: ago(2570),
+        },
       ],
     },
     {
@@ -118,8 +195,18 @@ function seed() {
       context: null,
       unread: 0,
       messages: [
-        { id: "e1", from: "me", text: "Arjun, would you be up for a joint lamp and console set for the festive season?", at: ago(5200) },
-        { id: "e2", from: "them", text: "Sounds great! Let us meet at the workshop next week and sketch it out.", at: ago(5100) },
+        {
+          id: "e1",
+          from: "me",
+          text: "Arjun, would you be up for a joint lamp and console set for the festive season?",
+          at: ago(5200),
+        },
+        {
+          id: "e2",
+          from: "them",
+          text: "Sounds great! Let us meet at the workshop next week and sketch it out.",
+          at: ago(5100),
+        },
       ],
     },
     {
@@ -129,13 +216,37 @@ function seed() {
       subtitle: "Refurbishing jobs",
       image: "",
       customerId: "",
-      context: { label: "Job JB-5098 · Cane-back dining chair", to: "/remaker-jobs/JB-5098", image: P + "before-tara-chair.jpg" },
+      context: {
+        label: "Job JB-5098 · Cane-back dining chair",
+        to: "/remaker-jobs/JB-5098",
+        image: P + "before-tara-chair.jpg",
+      },
       unread: 1,
       messages: [
-        { id: "f1", from: "system", text: "You were assigned job JB-5098.", at: ago(3000) },
-        { id: "f2", from: "them", text: "Hi Nivya! The chair for JB-5098 is ready for collection at the Naroda warehouse. Anytime between 10 am and 5 pm works.", at: ago(2900) },
-        { id: "f3", from: "me", text: "Thanks, I will collect it on Saturday morning.", at: ago(2880) },
-        { id: "f4", from: "them", text: "Reminder: please upload progress photos by Friday so we can plan the quality check.", at: ago(60) },
+        {
+          id: "f1",
+          from: "system",
+          text: "You were assigned job JB-5098.",
+          at: ago(3000),
+        },
+        {
+          id: "f2",
+          from: "them",
+          text: "Hi Nivya! The chair for JB-5098 is ready for collection at the Naroda warehouse. Anytime between 10 am and 5 pm works.",
+          at: ago(2900),
+        },
+        {
+          id: "f3",
+          from: "me",
+          text: "Thanks, I will collect it on Saturday morning.",
+          at: ago(2880),
+        },
+        {
+          id: "f4",
+          from: "them",
+          text: "Reminder: please upload progress photos by Friday so we can plan the quality check.",
+          at: ago(60),
+        },
       ],
     },
     {
@@ -145,10 +256,19 @@ function seed() {
       subtitle: "Help and support",
       image: "",
       customerId: "",
-      context: { label: "Ticket TK-4821 · Payout amount", to: "/remaker-help/tickets/TK-4821", image: "" },
+      context: {
+        label: "Ticket TK-4821 · Payout amount",
+        to: "/remaker-help/tickets/TK-4821",
+        image: "",
+      },
       unread: 0,
       messages: [
-        { id: "g1", from: "them", text: "Welcome to ReOrbit! If you ever need help, message us here or open a ticket from Help and support.", at: ago(9000) },
+        {
+          id: "g1",
+          from: "them",
+          text: "Welcome to ReOrbit! If you ever need help, message us here or open a ticket from Help and support.",
+          at: ago(9000),
+        },
       ],
     },
   ];
@@ -201,7 +321,10 @@ export function useConversations() {
   const list = useSyncExternalStore(subscribe, getSnapshot);
 
   return useMemo(
-    () => [...list].sort((a, b) => lastMessage(b).at.localeCompare(lastMessage(a).at)),
+    () =>
+      [...list].sort((a, b) =>
+        lastMessage(b).at.localeCompare(lastMessage(a).at),
+      ),
     [list],
   );
 }
@@ -215,7 +338,10 @@ export function useConversation(id) {
 export function useTotalUnread() {
   const list = useSyncExternalStore(subscribe, getSnapshot);
 
-  return useMemo(() => list.reduce((total, item) => total + item.unread, 0), [list]);
+  return useMemo(
+    () => list.reduce((total, item) => total + item.unread, 0),
+    [list],
+  );
 }
 
 /* ---------- actions ---------- */
@@ -229,7 +355,16 @@ export function sendMessage(id, { text = "", image = "" }) {
         ? {
             ...item,
             unread: 0,
-            messages: [...item.messages, { id: `${id}-${item.messages.length + 1}-${Date.now()}`, from: "me", text: text.trim(), image, at: now }],
+            messages: [
+              ...item.messages,
+              {
+                id: `${id}-${item.messages.length + 1}-${Date.now()}`,
+                from: "me",
+                text: text.trim(),
+                image,
+                at: now,
+              },
+            ],
           }
         : item,
     ),
@@ -240,11 +375,19 @@ export function markConversationRead(id) {
   const target = conversations.find((item) => item.id === id);
   if (!target || target.unread === 0) return;
 
-  commit(conversations.map((item) => (item.id === id ? { ...item, unread: 0 } : item)));
+  commit(
+    conversations.map((item) =>
+      item.id === id ? { ...item, unread: 0 } : item,
+    ),
+  );
 }
 
 export function markConversationUnread(id) {
-  commit(conversations.map((item) => (item.id === id ? { ...item, unread: Math.max(item.unread, 1) } : item)));
+  commit(
+    conversations.map((item) =>
+      item.id === id ? { ...item, unread: Math.max(item.unread, 1) } : item,
+    ),
+  );
 }
 
 export function resetMessages() {
@@ -252,13 +395,23 @@ export function resetMessages() {
 }
 
 export function clockLabel(iso) {
-  return new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase();
+  return new Date(iso)
+    .toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .toLowerCase();
 }
 
 export function listTime(iso) {
   const date = new Date(iso);
   const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  ).getTime();
 
   if (date.getTime() >= startToday) return clockLabel(iso);
   if (date.getTime() >= startToday - 86400000) return "Yesterday";
@@ -269,10 +422,18 @@ export function listTime(iso) {
 export function dayLabel(iso) {
   const date = new Date(iso);
   const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const startToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  ).getTime();
 
   if (date.getTime() >= startToday) return "Today";
   if (date.getTime() >= startToday - 86400000) return "Yesterday";
 
-  return date.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  return date.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 }

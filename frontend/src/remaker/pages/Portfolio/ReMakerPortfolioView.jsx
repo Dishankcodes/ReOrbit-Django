@@ -75,10 +75,17 @@ function View({ work }) {
         </Link>
 
         <div className="rpt-topbar-actions">
-          <Link to={`/remaker-portfolio/${work.id}/edit`} className="rpt-btn ghost small">
+          <Link
+            to={`/remaker-portfolio/${work.id}/edit`}
+            className="rpt-btn ghost small"
+          >
             Edit
           </Link>
-          <button type="button" className="rpt-btn danger-ghost small" onClick={() => setConfirmDelete(true)}>
+          <button
+            type="button"
+            className="rpt-btn danger-ghost small"
+            onClick={() => setConfirmDelete(true)}
+          >
             Delete
           </button>
         </div>
@@ -106,7 +113,13 @@ function View({ work }) {
           </div>
 
           {mode === "slider" ? (
-            <BeforeAfter before={work.before} after={work.after} title={work.title} interactive className="rpt-ba-lg" />
+            <BeforeAfter
+              before={work.before}
+              after={work.after}
+              title={work.title}
+              interactive
+              className="rpt-ba-lg"
+            />
           ) : (
             <div className="rpt-side-by-side">
               <figure>
@@ -121,7 +134,9 @@ function View({ work }) {
           )}
 
           {mode === "slider" && (
-            <p className="rpt-stage-hint">Drag the line, or use the arrow keys, to compare.</p>
+            <p className="rpt-stage-hint">
+              Drag the line, or use the arrow keys, to compare.
+            </p>
           )}
         </div>
 
@@ -137,14 +152,21 @@ function View({ work }) {
           {product ? (
             <div className="rpt-linked">
               <small>Linked product</small>
-              <Link to={`/remaker-products/${product.id}/edit`} className="rpt-linked-card">
+              <Link
+                to={`/remaker-products/${product.id}/edit`}
+                className="rpt-linked-card"
+              >
                 {product.images[0] && <img src={product.images[0]} alt="" />}
                 <span>
                   <strong>{product.title}</strong>
                   <em>
-                    {product.price ? formatPrice(product.price) : "No price yet"}
+                    {product.price
+                      ? formatPrice(product.price)
+                      : "No price yet"}
                     {" · "}
-                    {product.status === "Listed" ? "Active" : product.status.replace("_", " ")}
+                    {product.status === "Listed"
+                      ? "Active"
+                      : product.status.replace("_", " ")}
                   </em>
                 </span>
               </Link>
@@ -152,7 +174,10 @@ function View({ work }) {
           ) : (
             <div className="rpt-linked none">
               <small>Linked product</small>
-              <p>Not linked to a product. Link one from Edit to show buyers where to find it.</p>
+              <p>
+                Not linked to a product. Link one from Edit to show buyers where
+                to find it.
+              </p>
             </div>
           )}
 
@@ -185,7 +210,11 @@ function View({ work }) {
       </div>
 
       {confirmDelete && (
-        <PortfolioDeleteModal work={work} onConfirm={confirmRemove} onCancel={() => setConfirmDelete(false)} />
+        <PortfolioDeleteModal
+          work={work}
+          onConfirm={confirmRemove}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
 
       {notice && (

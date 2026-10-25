@@ -9,7 +9,9 @@ import { INITIAL_ORDERS } from "./adminOrders";
 import { SEED_SALES } from "./adminSell";
 
 /* purchases + the admin's own sales, newest first */
-let orders = [...SEED_SALES, ...INITIAL_ORDERS].sort((a, b) => new Date(b.order_date) - new Date(a.order_date));
+let orders = [...SEED_SALES, ...INITIAL_ORDERS].sort(
+  (a, b) => new Date(b.order_date) - new Date(a.order_date),
+);
 const listeners = new Set();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l) => {
@@ -23,7 +25,9 @@ function withDerived(order) {
   const pay = order.transaction.payment_status;
   return {
     ...order,
-    refundDue: ["Cancelled", "Returned"].includes(order.order_status) && pay === "Success",
+    refundDue:
+      ["Cancelled", "Returned"].includes(order.order_status) &&
+      pay === "Success",
     isCod: order.transaction.payment_method === "COD",
   };
 }
@@ -76,7 +80,10 @@ export function runOrderAction(orderId, actionKey, reason = "") {
         break;
       case "complete":
         next.order_status = "Completed";
-        if (next.transaction.payment_method === "COD" && next.transaction.payment_status === "Pending") {
+        if (
+          next.transaction.payment_method === "COD" &&
+          next.transaction.payment_status === "Pending"
+        ) {
           next.transaction.payment_status = "Success";
           next.transaction.transaction_date = at;
         }
@@ -86,7 +93,8 @@ export function runOrderAction(orderId, actionKey, reason = "") {
       case "cancel":
         next.order_status = "Cancelled";
         next.cancel_reason = reason || "No reason provided.";
-        if (next.transaction.payment_status === "Pending") next.transaction.payment_status = "Failed";
+        if (next.transaction.payment_status === "Pending")
+          next.transaction.payment_status = "Failed";
         label = "Order cancelled";
         tone = "bad";
         detail = `${by} · “${next.cancel_reason}”`;
@@ -108,7 +116,10 @@ export function runOrderAction(orderId, actionKey, reason = "") {
         return order;
     }
 
-    next.events = [{ id: `${orderId}-${actionKey}-${Date.now()}`, label, detail, at, tone }, ...next.events];
+    next.events = [
+      { id: `${orderId}-${actionKey}-${Date.now()}`, label, detail, at, tone },
+      ...next.events,
+    ];
     return next;
   });
   emit();

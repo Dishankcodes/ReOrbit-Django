@@ -19,7 +19,11 @@ export default function useToast() {
     <div className="ad-toast" role="status">
       <CheckCircle2 size={17} />
       <span>{message}</span>
-      <button type="button" onClick={() => setMessage(null)} aria-label="Dismiss">
+      <button
+        type="button"
+        onClick={() => setMessage(null)}
+        aria-label="Dismiss"
+      >
         <X size={14} />
       </button>
     </div>
