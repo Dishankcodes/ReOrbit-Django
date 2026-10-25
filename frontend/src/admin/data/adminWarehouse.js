@@ -193,19 +193,37 @@ const CAT_CODE = {
 
 /* ReMaker who refurbishes each kind of stock */
 const REFURB_BY_CATEGORY = {
-  Furniture: "Tara Bose",
-  "Home Decor": "Arjun Mehta",
-  Kitchen: "Gaurav Menon",
-  Clothing: "Priya Shah",
-  Fashion: "Divya Nambiar",
-  Electronics: "Arjun Mehta",
-  Books: "Priya Shah",
-  Sports: "Karan Bhatia",
+  Furniture: "Messy Mirror",
+  "Home Decor": "Nivya Maniyar",
+  Kitchen: "Dishank Prajapati",
+  Clothing: "Popular Artist",
+  Fashion: "Nivya Maniar",
+  Electronics: "Nivya Maniyar",
+  Books: "Popular Artist",
+  Sports: "Amit Trivedi",
 };
 const remakerByName = (name) =>
   INITIAL_REMAKERS.find((r) => r.full_name === name);
 export function refurbFor(category, assignedAt, progress = "Assigned") {
-  const rm = remakerByName(REFURB_BY_CATEGORY[category] || "Priya Shah");
+  // Keep refurbishment assignments aligned with the current Admin › ReMakers dummy data.
+  // Fall back safely if a configured name is missing, so warehouse generation cannot crash.
+  const rm =
+    remakerByName(REFURB_BY_CATEGORY[category]) ||
+    INITIAL_REMAKERS.find((r) => r && r.full_name) ||
+    null;
+
+  if (!rm) {
+    return {
+      name: "Unassigned",
+      path: "/admin-remakers",
+      assigned_at: assignedAt,
+      due: new Date(
+        new Date(assignedAt).getTime() + 10 * 86400000,
+      ).toISOString(),
+      progress,
+    };
+  }
+
   return {
     name: rm.full_name,
     path: `/admin-remakers/${rm.remaker_id}`,

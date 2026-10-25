@@ -15,9 +15,15 @@ import {
   MapPin,
   CalendarDays,
   Mail,
+  Ban,
+  Tag,
+  X,
+  CircleCheck,
 } from "lucide-react";
 
 import { useProduct, runProductAction } from "../../data/productsStore";
+import { updateUserItem } from "../../data/usersStore";
+import { updateRemakerProduct } from "../../data/remakersStore";
 import { getProductActions } from "../../data/productActions";
 import {
   formatDate,
@@ -80,6 +86,9 @@ export default function AdminProductDetails() {
   const { toast, toastNode } = useToast();
   const [shot, setShot] = useState(0);
   const [pending, setPending] = useState(null);
+  const [suggestingPrice, setSuggestingPrice] = useState(false);
+  const [suggestedPrice, setSuggestedPrice] = useState("");
+  const [priceMessage, setPriceMessage] = useState("");
 
   useEffect(() => {
     setShot(0);
@@ -110,14 +119,106 @@ export default function AdminProductDetails() {
   }
 
   const p = product;
-  const actions = getProductActions(p);
   const isItem = p.type === "item";
+  const isRemakerProduct = !isItem && p.owner.role === "ReMaker";
+  // Community items are submitted directly. ReMaker products retain their
+  // existing marketplace actions as well as the new disable/price actions.
+  // Hide rejection actions from this details page. Disabling is handled by the
+  // dedicated listing control below, and disabled listings can be reactivated.
+  const actions = isItem
+    ? []
+    : getProductActions(p).filter(
+        (action) =>
+          !/reject/i.test(
+            `${action.key || ""} ${action.label || ""} ${action.short || ""}`,
+          ),
+      );
   const ownerBad = p.owner.status !== "Active";
+  const disableActionKey = isItem ? "disable-item" : "disable-remaker-product";
+
+  const reactivateListing = () => {
+    const updates = {
+      is_disabled: false,
+      disabled_reason: "",
+      disabled_at: null,
+      reactivated_at: new Date().toISOString(),
+    };
+    const saved = isItem
+      ? updateUserItem(p.owner.id, p.id, updates)
+      : updateRemakerProduct(p.owner.id, p.id, updates);
+
+    if (saved === false) {
+      toast("Could not reactivate this listing. Please refresh and try again.");
+      return;
+    }
+    toast(`“${p.title}” is active again.`);
+  };
 
   const confirmAction = (reason) => {
-    runProductAction(p, pending, reason);
-    toast(`“${p.title}” ${pending.toast}.`);
+    if (!pending) return;
+
+    if (
+      pending.key === "disable-item" ||
+      pending.key === "disable-remaker-product"
+    ) {
+      const cleanReason = String(reason || "").trim();
+      if (!cleanReason) {
+        toast("A reason is required to disable this listing.");
+        return;
+      }
+
+      const updates = {
+        is_disabled: true,
+        disabled_reason: cleanReason,
+        disabled_at: new Date().toISOString(),
+      };
+
+      const saved =
+        pending.key === "disable-item"
+          ? updateUserItem(p.owner.id, p.id, updates)
+          : updateRemakerProduct(p.owner.id, p.id, updates);
+
+      if (saved === false) {
+        toast("Could not update this listing. Please refresh and try again.");
+        return;
+      }
+
+      toast(`“${p.title}” has been disabled.`);
+    } else {
+      runProductAction(p, pending, reason);
+      toast(`“${p.title}” ${pending.toast}.`);
+    }
+
     setPending(null);
+  };
+
+  const saveSuggestedPrice = (event) => {
+    event.preventDefault();
+    const amount = Number(suggestedPrice);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast("Enter a valid suggested price greater than zero.");
+      return;
+    }
+
+    const updates = {
+      suggested_price: amount,
+      suggested_price_message: priceMessage.trim(),
+      suggested_price_at: new Date().toISOString(),
+    };
+
+    const saved = isRemakerProduct
+      ? updateRemakerProduct(p.owner.id, p.id, updates)
+      : updateUserItem(p.owner.id, p.id, updates);
+
+    if (saved === false) {
+      toast(
+        "Could not save the price suggestion. Please refresh and try again.",
+      );
+      return;
+    }
+
+    toast(`Suggested price saved for “${p.title}”.`);
+    setSuggestingPrice(false);
   };
 
   return (
@@ -130,21 +231,10 @@ export default function AdminProductDetails() {
         <span aria-current="page">{p.title}</span>
       </nav>
 
-      {p.state === "pending" && (
-        <div className="aup-notice tone-suspended" role="status">
-          <strong>This item is waiting for review.</strong>
-          <span>
-            Check the photos and condition, then verify it to go live or reject
-            it with a message.
-          </span>
-        </div>
-      )}
-      {p.state === "rejected" && (
-        <div className="aup-notice tone-blocked" role="status">
-          <strong>This item was rejected.</strong>
-          {p.rejection_message && (
-            <span>Message to owner: “{p.rejection_message}”</span>
-          )}
+      {(isItem || isRemakerProduct) && p.is_disabled && (
+        <div className="aup-notice tone-deleted" role="status">
+          <strong>This listing is disabled.</strong>
+          <span>Reason: {p.disabled_reason || "No reason provided."}</span>
         </div>
       )}
       {!isItem && p.rawStatus === "Inactive" && (
@@ -178,9 +268,10 @@ export default function AdminProductDetails() {
         <section className="aup-card apd-info">
           <div className="apd-badges">
             <span className={`ap-type ${p.type}`}>{p.typeLabel}</span>
-            <ProductStatus product={p} />
-            {isItem && p.verification === "Verified" && (
-              <StatusBadge status="Verified" />
+            {p.is_disabled ? (
+              <StatusBadge status="Disabled" />
+            ) : (
+              <ProductStatus product={p} />
             )}
           </div>
           <h2>{p.title}</h2>
@@ -192,6 +283,14 @@ export default function AdminProductDetails() {
             <strong>{formatINR(p.price)}</strong>
             <span>{isItem ? "estimated price" : "listing price"}</span>
           </div>
+          {(isItem || isRemakerProduct) && p.suggested_price != null && (
+            <p className="aup-muted-note" style={{ marginTop: 8 }}>
+              Suggested price: <strong>{formatINR(p.suggested_price)}</strong>
+              {p.suggested_price_message
+                ? ` · ${p.suggested_price_message}`
+                : ""}
+            </p>
+          )}
 
           <dl className="apd-facts">
             <Fact label="Category">{p.category}</Fact>
@@ -229,6 +328,54 @@ export default function AdminProductDetails() {
           </dl>
 
           <p className="apd-desc">{p.description}</p>
+
+          {(isItem || isRemakerProduct) && (
+            <div className="apd-actions">
+              {p.is_disabled ? (
+                <button
+                  type="button"
+                  className="ad-btn ad-btn-primary"
+                  onClick={reactivateListing}
+                >
+                  <CircleCheck size={15} /> Active again
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="ad-btn ad-btn-danger"
+                  onClick={() =>
+                    setPending({
+                      key: disableActionKey,
+                      tone: "danger",
+                      icon: "ban",
+                      needsReason: true,
+                      title: isItem
+                        ? "Disable this item?"
+                        : "Disable this product?",
+                      body: "This listing will be marked as disabled in the admin panel. Provide a reason for this action.",
+                      confirmLabel: isItem ? "Disable item" : "Disable product",
+                      placeholder:
+                        "Explain why this listing should be disabled...",
+                      reasonHint: "required",
+                    })
+                  }
+                >
+                  <Ban size={15} /> Disable this listing
+                </button>
+              )}
+              <button
+                type="button"
+                className="ad-btn ad-btn-primary"
+                onClick={() => {
+                  setSuggestedPrice(String(p.suggested_price ?? p.price ?? ""));
+                  setPriceMessage(p.suggested_price_message || "");
+                  setSuggestingPrice(true);
+                }}
+              >
+                <Tag size={15} /> Suggest a new price
+              </button>
+            </div>
+          )}
 
           {actions.length > 0 && (
             <div className="apd-actions">
@@ -468,6 +615,116 @@ export default function AdminProductDetails() {
           </section>
         </div>
       </div>
+
+      {isRemakerProduct && (
+        <section
+          className="aup-card apd-warehouse-cta"
+          style={{
+            marginTop: 20,
+            padding: "22px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 18,
+            flexWrap: "wrap",
+            border: "1px solid #cbded4",
+            background: "linear-gradient(135deg, #f7fbf8 0%, #edf6f0 100%)",
+          }}
+        >
+          <div>
+            <h3 style={{ margin: "0 0 6px", color: "#173d2d" }}>
+              Want to buy this for the ReOrbit warehouse?
+            </h3>
+            <p style={{ margin: 0, color: "#63756b" }}>
+              Open this product in Admin Shop to review its shop details.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ad-btn ad-btn-primary"
+            onClick={() =>
+              navigate(`/admin-shop/product/${encodeURIComponent(p.id)}`)
+            }
+          >
+            View Admin Shop Details
+            <ChevronRight size={16} />
+          </button>
+        </section>
+      )}
+
+      {suggestingPrice && (isItem || isRemakerProduct) && (
+        <div
+          className="ad-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSuggestingPrice(false);
+          }}
+        >
+          <form
+            className="ad-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="apd-suggest-price-title"
+            onSubmit={saveSuggestedPrice}
+          >
+            <button
+              type="button"
+              className="ad-modal-close"
+              onClick={() => setSuggestingPrice(false)}
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+            <div className="ad-modal-icon tone-positive">
+              <Tag size={22} />
+            </div>
+            <h3 id="apd-suggest-price-title">Suggest a new price</h3>
+            <p className="ad-modal-text">
+              Suggest a revised price for “{p.title}”. The current listing price
+              will not be changed.
+            </p>
+            <div className="ad-modal-targets">
+              <span>Current price: {formatINR(p.price)}</span>
+            </div>
+            <label className="ad-modal-field">
+              <span>Suggested price (₹)</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                required
+                autoFocus
+                value={suggestedPrice}
+                onChange={(event) => setSuggestedPrice(event.target.value)}
+                placeholder="Enter suggested price"
+              />
+            </label>
+            <label className="ad-modal-field">
+              <span>
+                Message to {isRemakerProduct ? "the ReMaker" : "owner"}{" "}
+                (optional)
+              </span>
+              <textarea
+                rows={3}
+                value={priceMessage}
+                onChange={(event) => setPriceMessage(event.target.value)}
+                placeholder="Explain why you recommend this price..."
+              />
+            </label>
+            <div className="ad-modal-actions">
+              <button
+                type="button"
+                className="ad-btn ad-btn-ghost"
+                onClick={() => setSuggestingPrice(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="ad-btn ad-btn-primary">
+                Save suggestion
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <ConfirmActionModal
         action={pending}

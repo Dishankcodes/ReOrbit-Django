@@ -104,3 +104,18 @@ export function reviewUserItem(userId, itemId, decision, message = "") {
   });
   emit();
 }
+
+/* Update admin-side fields on one uploaded item without changing other fields. */
+export function updateUserItem(userId, itemId, patch) {
+  users = users.map((user) =>
+    user.user_id !== userId
+      ? user
+      : {
+          ...user,
+          items: user.items.map((item) =>
+            item.item_id !== itemId ? item : { ...item, ...patch },
+          ),
+        },
+  );
+  emit();
+}

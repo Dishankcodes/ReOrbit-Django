@@ -5,8 +5,7 @@ import {
   Download,
   ShoppingBag,
   CircleCheck,
-  Hourglass,
-  XCircle,
+  Ban,
   Archive,
   X,
   ArrowUpDown,
@@ -44,11 +43,17 @@ import "../../css/users/AdminUsers.css";
 import "../../css/remakers/AdminRemakers.css";
 import "../../css/products/AdminProducts.css";
 
+const isDisabledListing = (p) =>
+  Boolean(
+    p.is_disabled ||
+    p.state === "disabled" ||
+    (p.type === "item" && p.verification === "Rejected"),
+  );
+
 const STATE_CARDS = [
   { key: "all", label: "All listings", icon: ShoppingBag, tone: "all" },
   { key: "live", label: "Live", icon: CircleCheck, tone: "good" },
-  { key: "pending", label: "Pending review", icon: Hourglass, tone: "wait" },
-  { key: "rejected", label: "Rejected", icon: XCircle, tone: "bad" },
+  { key: "disabled", label: "Disabled", icon: Ban, tone: "bad" },
   { key: "off", label: "Off market", icon: Archive, tone: "neutral" },
 ];
 
@@ -90,9 +95,11 @@ function exportCsv(rows) {
       formatDate(p.posted_at),
       p.price,
       p.quantity,
-      p.type === "item" && ["Pending", "Rejected"].includes(p.verification)
-        ? p.verification
-        : p.rawStatus,
+      isDisabledListing(p)
+        ? "Disabled"
+        : p.type === "item" && ["Pending", "Rejected"].includes(p.verification)
+          ? p.verification
+          : p.rawStatus,
     ]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),
@@ -130,12 +137,15 @@ export default function AdminProducts() {
     const c = {
       all: products.length,
       live: 0,
-      pending: 0,
-      rejected: 0,
+      disabled: 0,
       off: 0,
     };
     products.forEach((p) => {
-      c[p.state] += 1;
+      if (isDisabledListing(p)) {
+        c.disabled += 1;
+      } else if (Object.prototype.hasOwnProperty.call(c, p.state)) {
+        c[p.state] += 1;
+      }
     });
     return c;
   }, [products]);
@@ -148,7 +158,13 @@ export default function AdminProducts() {
   const filtered = useMemo(() => {
     const text = query.trim().toLowerCase();
     return products
-      .filter((p) => state === "all" || p.state === state)
+      .filter(
+        (p) =>
+          state === "all" ||
+          (state === "disabled"
+            ? isDisabledListing(p)
+            : !isDisabledListing(p) && p.state === state),
+      )
       .filter((p) => type === "all" || p.type === type)
       .filter((p) => category === "all" || p.category === category)
       .filter(
@@ -473,7 +489,13 @@ export default function AdminProducts() {
                       <span className="au-muted-strong">{p.quantity}</span>
                     </td>
                     <td>
-                      <ProductStatus product={p} />
+                      {isDisabledListing(p) ? (
+                        <span className="ap-status ap-status-disabled">
+                          Disabled
+                        </span>
+                      ) : (
+                        <ProductStatus product={p} />
+                      )}
                     </td>
                     <td
                       className="col-menu"
@@ -514,7 +536,13 @@ export default function AdminProducts() {
                     {menu(p)}
                   </div>
                   <span className="ap-card-status">
-                    <ProductStatus product={p} />
+                    {isDisabledListing(p) ? (
+                      <span className="ap-status ap-status-disabled">
+                        Disabled
+                      </span>
+                    ) : (
+                      <ProductStatus product={p} />
+                    )}
                   </span>
                 </div>
                 <div className="ap-card-body">

@@ -29,27 +29,27 @@ const pageInformation = {
     subtitle: "Monitor the ReOrbit ecosystem from one place.",
   },
   "/admin-users": {
-    title: "Users",
+    title: "Manage Users",
     subtitle: "Manage ReOrbit users and account activity.",
   },
   "/admin-remakers": {
-    title: "ReMakers",
+    title: "Manage ReMakers",
     subtitle: "Review and manage the ReMaker community.",
   },
   "/admin-products": {
-    title: "Products",
+    title: "Manage Products",
     subtitle: "Manage marketplace products and listings.",
   },
   "/admin-orders": {
-    title: "Orders",
+    title: "Manage Orders",
     subtitle: "Track and manage customer orders.",
   },
   "/admin-donations": {
-    title: "Donations",
+    title: "Manage Donations",
     subtitle: "Manage donated items and donation activity.",
   },
   "/admin-pickups": {
-    title: "Pickups",
+    title: "Manage Pickups",
     subtitle: "Manage pickup requests and schedules.",
   },
   "/admin-warehouse": {
