@@ -1,17 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Menu,
-  Search,
   Bell,
   ChevronDown,
   User,
   Settings,
   LogOut,
-  X,
   ShieldCheck,
-  Command,
+  UserCog,
+  Eye,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import { useNotifications, markRead, MODULES, timeAgo } from "../data/notificationsStore";
+import { useAccess } from "../data/teamStore";
+import { useSettings } from "../data/settingsStore";
 
 import "./AdminHeader.css";
 
@@ -52,9 +55,20 @@ const pageInformation = {
     title: "Rewards",
     subtitle: "Manage Orbit Points, badges and rewards.",
   },
+  "/admin-sell": { title: "Sell Products", subtitle: "List warehouse and refurbished products and manage their sales." },
+  "/admin-sell/new": { title: "Add Product", subtitle: "Enter the details, add 3 to 4 photos and publish." },
+  "/admin-sell/sales": { title: "Sales", subtitle: "Orders placed for your products. Accept, ship and track them." },
+  "/admin-shop": { title: "Buy Products", subtitle: "Shop community items and ReMaker products as the platform." },
+  "/admin-shop/cart": { title: "Cart", subtitle: "Review the products you are about to buy." },
+  "/admin-shop/checkout": { title: "Checkout", subtitle: "Delivery, payment and review." },
+  "/admin-shop/orders": { title: "My Purchases", subtitle: "Everything you bought as the platform." },
   "/admin-notifications": {
     title: "Notifications",
     subtitle: "Manage system notifications and announcements.",
+  },
+  "/admin-earnings": {
+    title: "Earnings",
+    subtitle: "Platform fees, product sales and where the money goes.",
   },
   "/admin-reports": {
     title: "Reports",
@@ -72,28 +86,12 @@ const pageInformation = {
     title: "Admin Profile",
     subtitle: "View and manage your administrator profile.",
   },
+  "/admin-team": {
+    title: "Team & Roles",
+    subtitle: "Add sub-admins and choose what each person can see and change.",
+  },
 };
 
-const notifications = [
-  {
-    id: 1,
-    title: "New ReMaker application",
-    message: "A new ReMaker application is waiting for review.",
-    time: "12 min ago",
-  },
-  {
-    id: 2,
-    title: "New order received",
-    message: "A new marketplace order has been placed.",
-    time: "38 min ago",
-  },
-  {
-    id: 3,
-    title: "Pickup requires attention",
-    message: "One pickup request needs assignment.",
-    time: "1 hour ago",
-  },
-];
 
 function getStoredAdmin() {
   try {
@@ -135,13 +133,15 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const inbox = useNotifications();
+  const unreadItems = inbox.filter((n) => !n.read);
+  const bellCount = unreadItems.length;
+  const bellList = (unreadItems.length ? unreadItems : inbox).slice(0, 6);
   const notificationRef = useRef(null);
 
   const profileRef = useRef(null);
 
   const [admin, setAdmin] = useState(() => getStoredAdmin());
-
-  const [searchValue, setSearchValue] = useState("");
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
@@ -185,30 +185,91 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
     setProfileOpen(false);
   }, [location.pathname]);
 
-  const adminName = getAdminName(admin);
-  const adminEmail = getAdminEmail(admin);
+  const access = useAccess();
+  const { profile } = useSettings();
+  const person = access.me;
+  const adminName = access.previewing ? person.name : profile?.name || getAdminName(admin);
+  const adminEmail = access.previewing ? person.email : profile?.email || getAdminEmail(admin);
+  const roleLabel = access.isSuper ? "Super admin" : person.roleLabel;
   const initials = getInitials(adminName);
 
-  const currentPage = pageInformation[location.pathname] || {
-    title: "ReOrbit Admin",
-    subtitle: "Manage the ReOrbit ecosystem.",
-  };
+  /* A single user's page (/admin-users/USR-1001) gets its own title. */
+  const isUserProfilePage = /^\/admin-users\/[^/]+$/.test(location.pathname);
 
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
+  const isRemakerProfilePage = /^\/admin-remakers\/[^/]+$/.test(location.pathname);
 
-    const query = searchValue.trim();
+  const isProductDetailsPage = /^\/admin-products\/[^/]+$/.test(location.pathname);
 
-    if (!query) {
-      return;
-    }
+  const isOrderDetailsPage = /^\/admin-orders\/[^/]+$/.test(location.pathname);
 
-    navigate(`/admin-users?search=${encodeURIComponent(query)}`);
-  };
+  const isPickupDetailsPage = /^\/admin-pickups\/[^/]+$/.test(location.pathname);
 
-  const handleSearchClear = () => {
-    setSearchValue("");
-  };
+  const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(location.pathname);
+
+  const isWarehouseItemPage = /^\/admin-warehouse\/[^/]+$/.test(location.pathname);
+
+  const isShopProductPage = /^\/admin-shop\/product\/[^/]+$/.test(location.pathname);
+  const isShopSellerPage = /^\/admin-shop\/seller\/[^/]+$/.test(location.pathname);
+  const isShopSuccessPage = /^\/admin-shop\/success\/[^/]+$/.test(location.pathname);
+  const isShopOrderPage = /^\/admin-shop\/orders\/[^/]+$/.test(location.pathname);
+
+  const isSellListingPage = /^\/admin-sell\/listing\/[^/]+$/.test(location.pathname);
+  const isSellEditPage = /^\/admin-sell\/edit\/[^/]+$/.test(location.pathname);
+  const isSaleDetailsPage = /^\/admin-sell\/sales\/[^/]+$/.test(location.pathname);
+
+  const currentPage = isSellListingPage
+    ? { title: "Listing Details", subtitle: "Photos, stock, performance and the sales of this product." }
+    : isSellEditPage
+    ? { title: "Edit Product", subtitle: "Update the details, photos and price." }
+    : isSaleDetailsPage
+    ? { title: "Sale Details", subtitle: "Buyer, shipping, payment and status of this selling order." }
+    : isShopProductPage
+    ? { title: "Product", subtitle: "Details, seller profile and buying options." }
+    : isShopSellerPage
+    ? { title: "Seller Shop", subtitle: "Everything this seller has listed." }
+    : isShopSuccessPage
+    ? { title: "Order Placed", subtitle: "Your order is confirmed." }
+    : isShopOrderPage
+    ? { title: "Purchase Details", subtitle: "Tracking, payment and delivery for this purchase." }
+    : isPickupDetailsPage
+    ? {
+        title: "Pickup Details",
+        subtitle: "Schedule, pickup team, address and history for this pickup.",
+      }
+    : isDonationDetailsPage
+    ? {
+        title: "Donation Details",
+        subtitle: "Review the donor, the item and the pickup progress.",
+      }
+    : isWarehouseItemPage
+    ? {
+        title: "Stock Details",
+        subtitle: "Location, sales performance and actions for this stock.",
+      }
+    : isOrderDetailsPage
+    ? {
+        title: "Order Details",
+        subtitle: "Payment, buyer, seller and the history of this order.",
+      }
+    : isProductDetailsPage
+    ? {
+        title: "Product Details",
+        subtitle: "Review the listing, who posted it and its history.",
+      }
+    : isRemakerProfilePage
+    ? {
+        title: "ReMaker Profile",
+        subtitle: "Portfolio, products, orders, refurbishments and moderation.",
+      }
+    : isUserProfilePage
+    ? {
+        title: "User Profile",
+        subtitle: "Account details, orders, donations and moderation.",
+      }
+    : pageInformation[location.pathname] || {
+        title: "ReOrbit Admin",
+        subtitle: "Manage the ReOrbit ecosystem.",
+      };
 
   const handleProfile = () => {
     setNotificationsOpen(false);
@@ -279,34 +340,12 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
       </div>
 
       <div className="admin-header-actions">
-        <form className="admin-header-search" onSubmit={handleSearchSubmit}>
-          <Search size={17} strokeWidth={1.8} />
-
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search admin..."
-            aria-label="Search admin"
-          />
-
-          {searchValue && (
-            <button
-              type="button"
-              className="admin-search-clear"
-              onClick={handleSearchClear}
-              aria-label="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
-
-          {!searchValue && (
-            <span className="admin-search-shortcut">
-              <Command size={11} />K
-            </span>
-          )}
-        </form>
+        {access.previewing && (
+          <span className="admin-header-preview-chip" title="You are previewing the panel as this person">
+            <Eye size={14} />
+            Preview
+          </span>
+        )}
 
         <div className="admin-header-icon-wrapper" ref={notificationRef}>
           <button
@@ -323,7 +362,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
           >
             <Bell size={19} strokeWidth={1.8} />
 
-            <span className="admin-notification-count">3</span>
+            {bellCount > 0 && <span className="admin-notification-count">{bellCount > 99 ? "99+" : bellCount}</span>}
           </button>
 
           {notificationsOpen && (
@@ -332,34 +371,40 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                 <div>
                   <strong>Notifications</strong>
 
-                  <span>3 items need attention</span>
+                  <span>{bellCount ? `${bellCount} unread` : "No unread notifications"}</span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setNotificationsOpen(false)}
+                  onClick={() => markRead(unreadItems.map((n) => n.id))}
                 >
                   Mark read
                 </button>
               </div>
 
               <div className="admin-notification-list">
-                {notifications.map((notification) => (
-                  <div
-                    className="admin-notification-item"
-                    key={notification.id}
+                {bellList.map((n) => (
+                  <button
+                    type="button"
+                    className={`admin-notification-item admin-notification-warehouse ${n.read ? "is-read" : ""}`}
+                    key={n.id}
+                    onClick={() => {
+                      markRead([n.id]);
+                      setNotificationsOpen(false);
+                      if (n.path) navigate(n.path);
+                    }}
                   >
-                    <span className="admin-notification-dot" />
-
+                    <span className={`admin-notification-dot sev-${n.severity}`} />
                     <div>
-                      <strong>{notification.title}</strong>
-
-                      <p>{notification.message}</p>
-
-                      <span>{notification.time}</span>
+                      <strong>{n.title}</strong>
+                      <p>{n.message}</p>
+                      <span>{MODULES[n.module].label} · {timeAgo(n.at)}</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
+                {bellList.length === 0 && (
+                  <div className="admin-notification-item"><div><strong>All caught up</strong><p>No notifications right now.</p></div></div>
+                )}
               </div>
 
               <button
@@ -393,7 +438,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
             <div className="admin-header-user-info">
               <strong>{adminName}</strong>
 
-              <span>Administrator</span>
+              <span>{roleLabel}</span>
             </div>
 
             <ChevronDown
@@ -416,6 +461,11 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                 </div>
               </div>
 
+              <div className="admin-profile-dropdown-role">
+                <ShieldCheck size={13} />
+                {roleLabel}
+              </div>
+
               <div className="admin-dropdown-divider" />
 
               <button type="button" onClick={handleProfile}>
@@ -429,6 +479,20 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
 
                 <span>Settings</span>
               </button>
+
+              {access.isSuper && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/admin-team");
+                  }}
+                >
+                  <UserCog size={16} strokeWidth={1.8} />
+
+                  <span>Team & Roles</span>
+                </button>
+              )}
 
               <div className="admin-dropdown-divider" />
 

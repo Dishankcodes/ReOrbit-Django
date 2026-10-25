@@ -1,0 +1,285 @@
+/* =========================================================
+   Shared admin UI pieces (badges, avatars, buttons, modal,
+   toast, pagination, empty state).
+   Uses the same palette + fonts as the existing admin theme.
+   ========================================================= */
+
+/* ---------- badges ---------- */
+.ad-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.ad-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ad-badge-good { background: #e8f4ed; color: #2f7a57; }
+.ad-badge-wait { background: #fbf3df; color: #94701c; }
+.ad-badge-info { background: #e8f1f1; color: #2f6c70; }
+.ad-badge-bad { background: #fbe9e9; color: #a24545; }
+.ad-badge-neutral { background: #edf0ee; color: #66726b; }
+
+/* ---------- avatar ---------- */
+.ad-avatar {
+  display: inline-block;
+  object-fit: cover;
+  background: #edf4f0;
+}
+.ad-avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #d3e6dc, #adcec1);
+  color: #0e3a2d;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- buttons ---------- */
+.ad-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ad-btn:hover { transform: translateY(-1px); }
+.ad-btn:focus-visible,
+.ad-page-btn:focus-visible,
+.au-chip:focus-visible,
+.ad-icon-btn:focus-visible {
+  outline: 2px solid #4f8f78;
+  outline-offset: 2px;
+}
+.ad-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.ad-btn-primary { background: #0e3a2d; color: #fff; }
+.ad-btn-primary:hover { background: #08271f; box-shadow: 0 8px 20px rgba(8, 39, 31, 0.18); }
+.ad-btn-ghost { background: #fff; border-color: #d8e4de; color: #1d3a30; }
+.ad-btn-ghost:hover { background: #f4f8f6; border-color: #adcec1; }
+.ad-btn-warning { background: #b58a26; color: #fff; }
+.ad-btn-warning:hover { background: #9a7420; }
+.ad-btn-danger { background: #b04b4b; color: #fff; }
+.ad-btn-danger:hover { background: #963c3c; }
+.ad-btn-sm { min-height: 34px; padding: 0 12px; font-size: 12px; border-radius: 9px; }
+
+.ad-icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #5d6b63;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.ad-icon-btn:hover { background: #edf4f0; color: #0e3a2d; }
+
+/* ---------- empty state ---------- */
+.ad-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 20px;
+  text-align: center;
+  color: #6a7771;
+}
+.ad-empty-icon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  background: #edf4f0;
+  color: #47645a;
+}
+.ad-empty strong { color: #13221b; font-family: "Bricolage Grotesque", Georgia, serif; font-size: 17px; font-weight: 600; }
+.ad-empty p { max-width: 340px; font-size: 13px; line-height: 1.6; }
+
+/* ---------- pagination ---------- */
+.ad-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid #edf1ef;
+  color: #6a7771;
+  font-size: 12.5px;
+}
+.ad-pagination strong { color: #13221b; }
+.ad-pagination-controls { display: flex; align-items: center; gap: 6px; }
+.ad-pagination-size { display: inline-flex; align-items: center; gap: 8px; margin-right: 10px; }
+.ad-pagination-size select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #d8e4de;
+  border-radius: 8px;
+  background: #fff;
+  color: #13221b;
+  font-size: 12.5px;
+}
+.ad-page-btn {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #d8e4de;
+  border-radius: 8px;
+  background: #fff;
+  color: #34463d;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.ad-page-btn:hover:not(:disabled):not(.active) { background: #f4f8f6; border-color: #adcec1; }
+.ad-page-btn.active { background: #0e3a2d; border-color: #0e3a2d; color: #fff; }
+.ad-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ad-page-gap { padding: 0 2px; color: #9aa49f; }
+
+/* ---------- modal ---------- */
+.ad-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(8, 39, 31, 0.5);
+  backdrop-filter: blur(3px);
+  animation: ad-fade 0.18s ease;
+}
+.ad-modal {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 28px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(8, 39, 31, 0.28);
+  animation: ad-pop 0.2s ease;
+}
+.ad-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: #f1f5f3;
+  color: #5d6b63;
+}
+.ad-modal-close:hover { background: #e4ede8; }
+.ad-modal-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border-radius: 14px;
+}
+.ad-modal-icon.tone-positive { background: #e8f4ed; color: #2f7a57; }
+.ad-modal-icon.tone-warning { background: #fbf3df; color: #94701c; }
+.ad-modal-icon.tone-danger { background: #fbe9e9; color: #a24545; }
+.ad-modal h3 { margin-bottom: 8px; color: #13221b; font-size: 21px; font-weight: 600; letter-spacing: -0.02em; }
+.ad-modal-text { color: #66726b; font-size: 13.5px; line-height: 1.65; }
+.ad-modal-targets { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 4px; }
+.ad-modal-targets span {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #f1f5f3;
+  color: #26352e;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ad-modal-field { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+.ad-modal-field > span { color: #26352e; font-size: 12.5px; font-weight: 700; }
+.ad-modal-field em { color: #8a9690; font-style: normal; font-weight: 500; }
+.ad-modal-field textarea {
+  width: 100%;
+  padding: 11px 13px;
+  resize: vertical;
+  border: 1px solid #d8e4de;
+  border-radius: 11px;
+  background: #fbfcfb;
+  color: #13221b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ad-modal-field textarea:focus { outline: none; border-color: #4f8f78; box-shadow: 0 0 0 3px rgba(79, 143, 120, 0.15); }
+.ad-modal-error { color: #a24545; font-size: 12px; }
+.ad-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+
+/* ---------- toast ---------- */
+.ad-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 13px 14px 13px 16px;
+  border-radius: 13px;
+  background: #08271f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 18px 40px rgba(8, 39, 31, 0.3);
+  animation: ad-pop 0.22s ease;
+}
+.ad-toast svg { color: #adcec1; flex: 0 0 auto; }
+.ad-toast button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+@keyframes ad-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ad-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 520px) {
+  .ad-toast { left: 16px; right: 16px; bottom: 16px; }
+  .ad-modal { padding: 22px; }
+  .ad-modal-actions { flex-direction: column-reverse; }
+  .ad-modal-actions .ad-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-modal, .ad-modal-backdrop, .ad-toast, .ad-btn { animation: none; transition: none; }
+}

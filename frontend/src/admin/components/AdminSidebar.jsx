@@ -5,6 +5,8 @@ import {
   Palette,
   ShoppingBag,
   Package,
+  ShoppingCart,
+  Store,
   Gift,
   Truck,
   Warehouse,
@@ -17,28 +19,36 @@ import {
   X,
   ChevronRight,
   CircleHelp,
+  UserCog,
+  Wallet,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAccess } from "../data/teamStore";
+import { useSettings } from "../data/settingsStore";
 import "./AdminSidebar.css";
 
 const mainMenu = [
-  { label: "Dashboard", path: "/admin-dashboard", icon: LayoutDashboard },
-  { label: "Users", path: "/admin-users", icon: Users },
-  { label: "ReMakers", path: "/admin-remakers", icon: Palette },
-  { label: "Products", path: "/admin-products", icon: ShoppingBag },
-  { label: "Orders", path: "/admin-orders", icon: Package },
+  { key: "dashboard", label: "Dashboard", path: "/admin-dashboard", icon: LayoutDashboard },
+  { key: "users", label: "Users", path: "/admin-users", icon: Users },
+  { key: "remakers", label: "ReMakers", path: "/admin-remakers", icon: Palette },
+  { key: "products", label: "Products", path: "/admin-products", icon: ShoppingBag },
+  { key: "orders", label: "Orders", path: "/admin-orders", icon: Package },
+  { key: "shop", label: "Buy Products", path: "/admin-shop", icon: ShoppingCart },
+  { key: "sell", label: "Sell Products", path: "/admin-sell", icon: Store },
 ];
 
 const operationsMenu = [
-  { label: "Donations", path: "/admin-donations", icon: Gift },
-  { label: "Pickups", path: "/admin-pickups", icon: Truck },
-  { label: "Warehouse", path: "/admin-warehouse", icon: Warehouse },
+  { key: "donations", label: "Donations", path: "/admin-donations", icon: Gift },
+  { key: "pickups", label: "Pickups", path: "/admin-pickups", icon: Truck },
+  { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: Warehouse },
 ];
 
 const managementMenu = [
-  { label: "Rewards", path: "/admin-rewards", icon: Star },
-  { label: "Notifications", path: "/admin-notifications", icon: Bell },
-  { label: "Reports", path: "/admin-reports", icon: BarChart3 },
+  { key: "rewards", label: "Rewards", path: "/admin-rewards", icon: Star },
+  { key: "notifications", label: "Notifications", path: "/admin-notifications", icon: Bell },
+  { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
+  { key: "reports", label: "Reports", path: "/admin-reports", icon: BarChart3 },
+  { key: "team", label: "Team & Roles", path: "/admin-team", icon: UserCog },
 ];
 
 const supportMenu = [
@@ -91,8 +101,12 @@ export default function AdminSidebar({
     };
   }, []);
 
-  const adminName = getAdminName(admin);
+  const access = useAccess();
+  const { profile } = useSettings();
+  const adminName = access.previewing ? access.me.name : profile?.name || getAdminName(admin);
+  const roleLabel = access.isSuper ? "Super admin" : access.me.roleLabel;
   const initials = getInitials(adminName);
+  const visible = (list) => list.filter((item) => !item.key || access.canSee(item.key));
 
   const handleNavigation = () => {
     if (window.innerWidth <= 900 && onCloseMobile) {
@@ -162,18 +176,26 @@ export default function AdminSidebar({
       <nav className="admin-sidebar-navigation">
         <div className="admin-sidebar-section">
           <span className="admin-sidebar-section-label">MAIN MENU</span>
-          {mainMenu.map(renderMenuItem)}
+          {visible(mainMenu).map(renderMenuItem)}
         </div>
-        <div className="admin-sidebar-divider" />
-        <div className="admin-sidebar-section">
-          <span className="admin-sidebar-section-label">OPERATIONS</span>
-          {operationsMenu.map(renderMenuItem)}
-        </div>
-        <div className="admin-sidebar-divider" />
-        <div className="admin-sidebar-section">
-          <span className="admin-sidebar-section-label">MANAGEMENT</span>
-          {managementMenu.map(renderMenuItem)}
-        </div>
+        {visible(operationsMenu).length > 0 && (
+          <>
+            <div className="admin-sidebar-divider" />
+            <div className="admin-sidebar-section">
+              <span className="admin-sidebar-section-label">OPERATIONS</span>
+              {visible(operationsMenu).map(renderMenuItem)}
+            </div>
+          </>
+        )}
+        {visible(managementMenu).length > 0 && (
+          <>
+            <div className="admin-sidebar-divider" />
+            <div className="admin-sidebar-section">
+              <span className="admin-sidebar-section-label">MANAGEMENT</span>
+              {visible(managementMenu).map(renderMenuItem)}
+            </div>
+          </>
+        )}
         <div className="admin-sidebar-divider" />
         <div className="admin-sidebar-section">
           <span className="admin-sidebar-section-label">SUPPORT</span>
@@ -200,7 +222,7 @@ export default function AdminSidebar({
         <div className="admin-sidebar-avatar">{initials}</div>
         <div className="admin-sidebar-profile-info">
           <strong>{adminName}</strong>
-          <span>Administrator</span>
+          <span>{roleLabel}</span>
         </div>
         <ChevronRight size={16} className="admin-sidebar-profile-arrow" />
       </button>

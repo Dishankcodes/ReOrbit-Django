@@ -8,7 +8,9 @@ import { getProductById } from "../../data/remakerProducts";
 import "../../css/ReMakerProductForm.css";
 
 export default function ReMakerEditProduct() {
-  const { productId } = useParams();
+  /* works with both /:productId/edit and /:id/edit */
+  const params = useParams();
+  const productId = params.productId ?? params.id;
   const product = getProductById(productId);
 
   if (!product) {

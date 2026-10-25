@@ -4,36 +4,15 @@ import AdminFooter from "../../components/AdminFooter";
 
 export default function AdminAbout() {
   const management = [
-    {
-      icon: "group",
-      title: "Users",
-      text: "Manage user accounts, review activity and maintain organized account information across ReOrbit.",
-    },
-    {
-      icon: "handyman",
-      title: "ReMakers",
-      text: "Review ReMaker profiles, verification status, activity and products created within the ecosystem.",
-    },
-    {
-      icon: "inventory_2",
-      title: "Products & Listings",
-      text: "Oversee user listings and ReMaker products while keeping marketplace information accurate.",
-    },
-    {
-      icon: "volunteer_activism",
-      title: "Donations",
-      text: "Keep track of donated items and their status throughout the platform's donation process.",
-    },
-    {
-      icon: "payments",
-      title: "Transactions",
-      text: "Monitor purchases, payments and transaction records across the ReOrbit marketplace.",
-    },
-    {
-      icon: "analytics",
-      title: "Reports & Insights",
-      text: "Understand platform performance through reports covering users, products, transactions and activity.",
-    },
+    { icon: "group", title: "Users & ReMakers", text: "Review accounts, verify ReMakers and warn, suspend or block when needed, with a clear history for every account." },
+    { icon: "inventory_2", title: "Products & Listings", text: "Approve or reject what members and ReMakers post so everything on the marketplace is accurate and safe to buy." },
+    { icon: "receipt_long", title: "Orders & Payments", text: "Follow each order from payment to delivery and handle cancellations, returns and refunds in one place." },
+    { icon: "volunteer_activism", title: "Donations & Pickups", text: "Decide on each donation, schedule a free pickup and follow it until the item reaches the warehouse or an NGO." },
+    { icon: "warehouse", title: "Warehouse", text: "Know where every item sits, what is being refurbished, and which products have gone unsold for too long." },
+    { icon: "storefront", title: "Buy & Sell", text: "The platform can buy products and sell its own refurbished stock, with full selling-order handling." },
+    { icon: "redeem", title: "Rewards", text: "Orbit points, vouchers and coupons that thank members for donating, buying and reviewing." },
+    { icon: "account_balance_wallet", title: "Earnings & Reports", text: "See what the platform fee and your own sales bring in, and understand how the marketplace is performing." },
+    { icon: "admin_panel_settings", title: "Team & Permissions", text: "The super admin adds sub-admins and chooses, module by module, what each person can view or edit." },
   ];
 
   const ecosystem = [
@@ -42,44 +21,44 @@ export default function AdminAbout() {
       icon: "person",
       title: "Users",
       label: "THE COMMUNITY",
-      text: "Users can list or donate items they no longer need and discover products available through the ReOrbit marketplace.",
+      text: "Users donate what they no longer need, list items for sale, buy second-life products and earn Orbit points along the way.",
     },
     {
       number: "02",
       icon: "handyman",
       title: "ReMakers",
       label: "THE CREATORS",
-      text: "ReMakers work with useful materials and create products that can be showcased and sold through ReOrbit.",
+      text: "ReMakers turn rescued materials into new products, sell them on ReOrbit, and take on refurbishment work from the warehouse.",
     },
     {
       number: "03",
       icon: "admin_panel_settings",
       title: "Administration",
       label: "THE CONTROL LAYER",
-      text: "Administrators manage users, ReMakers, listings, products, donations, transactions and platform reports.",
+      text: "Admins review, collect, store, refurbish and sell, look after payments and rewards, and keep the whole loop visible.",
     },
   ];
 
   const principles = [
     {
       icon: "verified_user",
-      title: "Trust & Verification",
-      text: "Keep users, ReMakers and marketplace activity organized and easier to review.",
+      title: "Trust first",
+      text: "Donations, listings and accounts are reviewed before they reach the marketplace, and every decision is recorded.",
     },
     {
       icon: "inventory",
-      title: "Product Visibility",
-      text: "Maintain visibility across listings and products available throughout the ecosystem.",
+      title: "Stock you can see",
+      text: "Racks, bins, refurbishment progress and unsold alerts show where every item is and what needs attention.",
     },
     {
-      icon: "receipt_long",
-      title: "Transaction Records",
-      text: "Keep purchases, payments and related activity accessible for administrative review.",
+      icon: "account_balance_wallet",
+      title: "Money you can trace",
+      text: "Each order, fee, refund and sale feeds the Earnings and Reports pages, so the numbers always add up.",
     },
     {
-      icon: "monitoring",
-      title: "Platform Insights",
-      text: "Use activity and reporting information to understand how the platform is performing.",
+      icon: "lock_person",
+      title: "Access you control",
+      text: "Team members only see the parts of the admin they need, and the super admin can preview it as them.",
     },
   ];
 
@@ -108,21 +87,21 @@ export default function AdminAbout() {
               </div>
 
               <h1>
-                The system
+                The control room
                 <br />
                 behind <span>ReOrbit.</span>
               </h1>
 
               <p>
-                ReOrbit connects users, ReMakers and marketplace activity around
-                one simple idea: useful things deserve another opportunity. The
-                administration layer keeps that ecosystem organized, visible and
-                reliable.
+                ReOrbit is a circular marketplace built on one idea: useful
+                things deserve another life. This is the control room where a
+                small team reviews donations, runs the warehouse, looks after
+                orders and rewards, and keeps everything reliable.
               </p>
 
               <div className="admin-about-actions">
-                <a href="/admin" className="admin-about-primary">
-                  Open Admin Panel
+                <a href="/admin-login" className="admin-about-primary">
+                  Admin Login
                   <span className="material-symbols-outlined">
                     arrow_forward
                   </span>
@@ -183,8 +162,8 @@ export default function AdminAbout() {
                 <div>
                   <span className="material-symbols-outlined">visibility</span>
                   <p>
-                    <strong>Visibility</strong>
-                    <small>Across the ecosystem</small>
+                    <strong>Live data</strong>
+                    <small>Orders, stock and rewards in sync</small>
                   </p>
                 </div>
 
@@ -193,8 +172,8 @@ export default function AdminAbout() {
                     account_tree
                   </span>
                   <p>
-                    <strong>Connection</strong>
-                    <small>One management layer</small>
+                    <strong>Team access</strong>
+                    <small>View or edit, per module</small>
                   </p>
                 </div>
               </div>
@@ -213,25 +192,26 @@ export default function AdminAbout() {
                 <span className="admin-about-eyebrow">THE IDEA</span>
 
                 <h2>
-                  One ecosystem.
+                  Circular by design.
                   <br />
-                  <span>One place to manage it.</span>
+                  <span>Run like a business.</span>
                 </h2>
               </div>
 
               <div className="admin-about-intro-copy">
                 <p>
-                  ReOrbit is designed to make it easier for people to keep
-                  useful things in circulation. Users can list or donate items,
-                  while ReMakers can work with useful materials and offer their
-                  own creations through the marketplace.
+                  A donated chair does not simply appear in a shop. Someone
+                  accepts the donation, a pickup partner collects it, the
+                  warehouse shelves it, a ReMaker may refurbish it, and finally
+                  it is listed, bought and delivered. Each step has an owner and
+                  a record.
                 </p>
 
                 <p>
-                  The administration layer connects these activities. It gives
-                  the platform a central place to manage accounts, review
-                  ReMakers, oversee listings and products, monitor transactions
-                  and understand overall platform activity.
+                  The admin panel is where those steps meet. Members earn Orbit
+                  points for what they give, ReOrbit earns a small platform fee
+                  on orders and income from its own refurbished products, and
+                  every rupee and every item stays traceable.
                 </p>
 
                 <div className="admin-about-statement">
@@ -240,12 +220,12 @@ export default function AdminAbout() {
                   </span>
 
                   <div>
-                    <strong>Administration is the connective layer.</strong>
+                    <strong>One loop, many hands.</strong>
 
                     <p>
-                      Instead of treating every part of ReOrbit separately,
-                      admins get a broader view of how the complete ecosystem is
-                      operating.
+                      Donations, pickups, stock, orders and rewards are connected,
+                      so an action in one place updates every other page that
+                      depends on it.
                     </p>
                   </div>
                 </div>
@@ -265,16 +245,16 @@ export default function AdminAbout() {
                 <span className="admin-about-eyebrow">ADMINISTRATION</span>
 
                 <h2>
-                  Everything that keeps
+                  Nine areas that keep
                   <br />
-                  <span>ReOrbit organized.</span>
+                  <span>ReOrbit running.</span>
                 </h2>
               </div>
 
               <p>
-                The administration side provides visibility across the platform,
-                helping the team manage the people, products and activity that
-                make ReOrbit work.
+                Each one is a page in the admin panel with its own list, details
+                and actions. Together they cover the full journey of a person,
+                an item and a payment.
               </p>
             </div>
 
@@ -321,13 +301,13 @@ export default function AdminAbout() {
               <h2>
                 Three sides.
                 <br />
-                <span>One connected system.</span>
+                <span>One circular loop.</span>
               </h2>
 
               <p>
-                ReOrbit works because each side has a clear role. The admin
-                system connects those roles and provides the oversight needed to
-                keep the platform operating smoothly.
+                Each side has a clear role. Users and ReMakers bring the items
+                and the skills, and administration makes sure the loop between
+                them stays safe, fair and visible.
               </p>
             </div>
 
@@ -369,12 +349,12 @@ export default function AdminAbout() {
 
                 <p>
                   <strong>Connected ecosystem</strong>
-                  <small>Users → ReMakers → Marketplace → Administration</small>
+                  <small>Donate or list → Pickup → Warehouse → Refurbish → Sell → Earn</small>
                 </p>
               </div>
 
               <span className="admin-about-ecosystem-status">
-                SYSTEM CONNECTED
+                LOOP CONNECTED
               </span>
             </div>
           </div>
@@ -391,16 +371,16 @@ export default function AdminAbout() {
                 <span className="admin-about-eyebrow">BUILT FOR CONTROL</span>
 
                 <h2>
-                  Visibility where
+                  Four things we
                   <br />
-                  <span>it matters.</span>
+                  <span>never compromise on.</span>
                 </h2>
               </div>
 
               <p>
-                Good administration is not only about managing records. It is
-                about having the right information available when decisions need
-                to be made.
+                Good administration is not only about records. It is about trust,
+                visibility, accountability and putting the right power in the
+                right hands.
               </p>
             </div>
 
@@ -443,10 +423,10 @@ export default function AdminAbout() {
                 </h2>
 
                 <p>
-                  ReOrbit aims to make reuse more accessible by connecting
-                  people, creators and products through one circular
-                  marketplace. The administration system provides the structure
-                  that keeps these activities visible and organized.
+                  ReOrbit aims to make reuse the easy choice by connecting
+                  people, creators and products in one circular marketplace.
+                  The admin panel gives the team the structure to do that
+                  carefully, one donation, one repair and one order at a time.
                 </p>
 
                 <div className="admin-about-mission-points">
@@ -461,9 +441,9 @@ export default function AdminAbout() {
                   <div>
                     <span className="material-symbols-outlined">hub</span>
                     <p>
-                      <strong>Connected platform</strong>
+                      <strong>Rewards that give back</strong>
                       <small>
-                        Bring people, products and activity together.
+                        Orbit points for donating, buying and reviewing.
                       </small>
                     </p>
                   </div>
@@ -503,20 +483,19 @@ export default function AdminAbout() {
                 <span>ADMINISTRATION AT THE CORE</span>
 
                 <h2>
-                  Keep ReOrbit
+                  Ready to keep
                   <br />
-                  <span>moving.</span>
+                  <span>ReOrbit moving?</span>
                 </h2>
 
                 <p>
-                  Manage the platform, review its activity and help create a
-                  reliable environment where users and ReMakers can participate
-                  in the circular marketplace.
+                  Sign in to review what is waiting, move stock along and look
+                  after the members and ReMakers who make the marketplace work.
                 </p>
               </div>
 
-              <a href="/admin" className="admin-about-final-btn">
-                Open Admin Panel
+              <a href="/admin-login" className="admin-about-final-btn">
+                Admin Login
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>
             </div>

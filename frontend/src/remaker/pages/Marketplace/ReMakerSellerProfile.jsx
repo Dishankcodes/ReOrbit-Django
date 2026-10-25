@@ -19,7 +19,11 @@ import {
   Users,
 } from "lucide-react";
 
-import { Avatar, RatingSummary, ReviewList } from "../../pages-components/ReviewBlocks";
+import {
+  Avatar,
+  RatingSummary,
+  ReviewList,
+} from "../../pages-components/ReviewBlocks";
 import {
   formatPrice,
   getListingsBySeller,
@@ -41,11 +45,15 @@ function Photo({ src, alt }) {
     );
   }
 
-  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />;
+  return (
+    <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} />
+  );
 }
 
 export default function ReMakerSellerProfile() {
-  const { sellerId } = useParams();
+  /* works with both /seller/:sellerId and /seller/:id */
+  const params = useParams();
+  const sellerId = params.sellerId ?? params.id;
   const profile = getSellerProfile(sellerId);
 
   if (!profile) {
@@ -83,13 +91,29 @@ function Profile({ profile }) {
 
   const stats = isRemaker
     ? [
-        { icon: Star, value: data.rating, label: `${data.totalReviews} reviews` },
-        { icon: Users, value: followers.toLocaleString("en-IN"), label: "Followers" },
+        {
+          icon: Star,
+          value: data.rating,
+          label: `${data.totalReviews} reviews`,
+        },
+        {
+          icon: Users,
+          value: followers.toLocaleString("en-IN"),
+          label: "Followers",
+        },
         { icon: Package, value: data.productsCount, label: "Pieces listed" },
-        { icon: Briefcase, value: `${data.yearsOfExperience} yrs`, label: "Experience" },
+        {
+          icon: Briefcase,
+          value: `${data.yearsOfExperience} yrs`,
+          label: "Experience",
+        },
       ]
     : [
-        { icon: Star, value: data.rating, label: `${data.totalReviews} reviews` },
+        {
+          icon: Star,
+          value: data.rating,
+          label: `${data.totalReviews} reviews`,
+        },
         { icon: Package, value: data.productsSold, label: "Items sold" },
         { icon: CalendarDays, value: data.joined, label: "Member since" },
         { icon: MapPin, value: data.city, label: "Based in" },
@@ -97,7 +121,9 @@ function Profile({ profile }) {
 
   const tabs = [
     { key: "listings", label: `Listings (${listings.length})` },
-    ...(portfolio.length ? [{ key: "portfolio", label: `Portfolio (${portfolio.length})` }] : []),
+    ...(portfolio.length
+      ? [{ key: "portfolio", label: `Portfolio (${portfolio.length})` }]
+      : []),
     { key: "reviews", label: `Reviews (${data.totalReviews})` },
     { key: "about", label: "About" },
   ];
@@ -157,7 +183,8 @@ function Profile({ profile }) {
               {data.city}
               {data.username && (
                 <>
-                  <span className="rsp-sep" aria-hidden="true" />@{data.username}
+                  <span className="rsp-sep" aria-hidden="true" />@
+                  {data.username}
                 </>
               )}
             </p>
@@ -212,7 +239,9 @@ function Profile({ profile }) {
       {/* LISTINGS */}
       {tab === "listings" &&
         (listings.length === 0 ? (
-          <p className="rsp-empty">{data.name} has no active listings right now.</p>
+          <p className="rsp-empty">
+            {data.name} has no active listings right now.
+          </p>
         ) : (
           <div className="rsp-grid">
             {listings.map((listing) => {
@@ -228,7 +257,11 @@ function Profile({ profile }) {
                       className={`rsp-heart ${saved ? "on" : ""}`}
                       onClick={() => wishlist.toggle(listing.id)}
                       aria-pressed={saved}
-                      aria-label={saved ? `Remove ${listing.title} from saved` : `Save ${listing.title}`}
+                      aria-label={
+                        saved
+                          ? `Remove ${listing.title} from saved`
+                          : `Save ${listing.title}`
+                      }
                     >
                       <Heart size={16} fill={saved ? "currentColor" : "none"} />
                     </button>
@@ -237,7 +270,10 @@ function Profile({ profile }) {
                   <div className="rsp-card-body">
                     <span>{listing.category}</span>
                     <h3>
-                      <Link to={`/remaker-marketplace/product/${listing.id}`} className="rsp-card-link">
+                      <Link
+                        to={`/remaker-marketplace/product/${listing.id}`}
+                        className="rsp-card-link"
+                      >
                         {listing.title}
                       </Link>
                     </h3>
@@ -278,10 +314,15 @@ function Profile({ profile }) {
           <p className="rsp-empty">No reviews for {data.name} yet.</p>
         ) : (
           <div className="rsp-reviews">
-            <RatingSummary reviews={reviews} average={data.rating} total={data.totalReviews} />
+            <RatingSummary
+              reviews={reviews}
+              average={data.rating}
+              total={data.totalReviews}
+            />
             {data.totalReviews > reviews.length && (
               <p className="rsp-more">
-                Showing the latest {reviews.length} of {data.totalReviews} reviews.
+                Showing the latest {reviews.length} of {data.totalReviews}{" "}
+                reviews.
               </p>
             )}
             <ReviewList reviews={reviews} />
@@ -317,7 +358,10 @@ function Profile({ profile }) {
 
           <dl className="rsp-facts">
             {[
-              ["Profile type", isRemaker ? "Verified ReMaker" : "Community seller"],
+              [
+                "Profile type",
+                isRemaker ? "Verified ReMaker" : "Community seller",
+              ],
               isRemaker ? ["Craft", data.craft] : null,
               ["Location", data.city],
               ["Rating", `${data.rating} from ${data.totalReviews} reviews`],

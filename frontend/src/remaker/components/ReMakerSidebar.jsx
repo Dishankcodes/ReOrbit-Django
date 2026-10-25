@@ -18,6 +18,9 @@ import {
   ChevronRight,
   Sparkles,
   Store,
+  Heart,
+  Hammer,
+  MessageSquare,
 } from "lucide-react";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -33,6 +36,12 @@ const marketplaceMenu = [
     label: "Marketplace",
     path: "/remaker-marketplace",
     icon: Store,
+  },
+
+  {
+    label: "Saved items",
+    path: "/remaker-saved",
+    icon: Heart,
   },
 ];
 
@@ -55,6 +64,12 @@ const studioMenu = [
     label: "Products",
     path: "/remaker-products",
     icon: ShoppingBag,
+  },
+
+  {
+    label: "Warehouse jobs",
+    path: "/remaker-jobs",
+    icon: Hammer,
   },
 ];
 
@@ -90,6 +105,12 @@ const ordersMenu = [
    ==== */
 
 const communityMenu = [
+  {
+    label: "Messages",
+    path: "/remaker-messages",
+    icon: MessageSquare,
+  },
+
   {
     label: "Followers",
     path: "/remaker-followers",

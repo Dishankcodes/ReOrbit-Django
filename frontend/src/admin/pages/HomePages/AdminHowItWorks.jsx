@@ -4,143 +4,32 @@ import AdminFooter from "../../components/AdminFooter";
 
 export default function HowItWorks() {
   const managementAreas = [
-    {
-      number: "01",
-      icon: "group",
-      title: "Manage Users",
-      description:
-        "Keep registered users organized and maintain a trusted marketplace.",
-      points: [
-        "View registered users",
-        "Review account activity",
-        "Manage user access",
-        "Handle reported accounts",
-      ],
-    },
-    {
-      number: "02",
-      icon: "construction",
-      title: "Manage ReMakers",
-      description:
-        "Review creators who transform recovered materials into new products.",
-      points: [
-        "Review ReMaker profiles",
-        "Verify applications",
-        "Monitor creator activity",
-        "Manage ReMaker status",
-      ],
-    },
-    {
-      number: "03",
-      icon: "inventory_2",
-      title: "Manage Products",
-      description:
-        "Oversee products and listings moving through the ReOrbit marketplace.",
-      points: [
-        "Review product listings",
-        "Approve or reject products",
-        "Manage categories",
-        "Maintain listing quality",
-      ],
-    },
-    {
-      number: "04",
-      icon: "receipt_long",
-      title: "Transactions",
-      description:
-        "Monitor marketplace purchases, sales and transaction activity.",
-      points: [
-        "View transaction history",
-        "Track pending transactions",
-        "Monitor completed orders",
-        "Review cancelled transactions",
-      ],
-    },
-    {
-      number: "05",
-      icon: "bar_chart",
-      title: "Reports & Insights",
-      description:
-        "Turn platform activity into useful information for better decisions.",
-      points: [
-        "User activity reports",
-        "ReMaker performance",
-        "Product statistics",
-        "Transaction reports",
-      ],
-    },
-    {
-      number: "06",
-      icon: "monitoring",
-      title: "Monitor Platform",
-      description: "Maintain visibility across the complete ReOrbit ecosystem.",
-      points: [
-        "Monitor platform activity",
-        "Identify unusual activity",
-        "Review reported issues",
-        "Maintain platform quality",
-      ],
-    },
+    { number: "01", icon: "group", title: "Users & ReMakers", description: "Look after the people who make the marketplace work.", points: ["Search and filter accounts", "Verify ReMaker applications", "Warn, suspend or block with a reason", "See each person's full history"] },
+    { number: "02", icon: "inventory_2", title: "Products & Listings", description: "Make sure everything for sale is accurate and safe.", points: ["Review new listings in a queue", "Approve or reject with a note", "See who posted it and when", "Take down or restore a listing"] },
+    { number: "03", icon: "receipt_long", title: "Orders & Payments", description: "Follow each order from the moment it is placed.", points: ["Confirm payments and orders", "Cancel, return and refund", "Track delivery step by step", "Open buyer and seller profiles"] },
+    { number: "04", icon: "volunteer_activism", title: "Donations & Pickups", description: "Turn a generous offer into a collected item.", points: ["Accept or reject a donation", "Schedule a pickup partner and slot", "Spot pickups that are overdue", "Issue the donor's certificate"] },
+    { number: "05", icon: "warehouse", title: "Warehouse", description: "Know where every item is and what happens to it next.", points: ["Receive stock and assign a bin", "Send items for refurbishment", "List, price-cut or donate on", "Unsold-too-long alerts"] },
+    { number: "06", icon: "storefront", title: "Buy & Sell", description: "ReOrbit trades too, using the same marketplace.", points: ["Buy from members and ReMakers", "Cart, checkout and payment", "List stock with 3 or 4 photos", "Accept, ship and deliver sales"] },
+    { number: "07", icon: "redeem", title: "Rewards", description: "Thank members and bring them back.", points: ["Set how many points each action earns", "Create vouchers and coupons", "Review donation rewards", "Handle redemptions"] },
+    { number: "08", icon: "account_balance_wallet", title: "Earnings & Reports", description: "Understand the money and the marketplace.", points: ["Platform fee and sales income", "Earning flow and cash flow", "Orders, donations and stock reports", "Export to CSV"] },
+    { number: "09", icon: "admin_panel_settings", title: "Team & Settings", description: "Decide the rules and who can change them.", points: ["Add sub-admins with view or edit access", "Preview the panel as a team member", "Fees, delivery and warehouse rules", "Notifications and security"] },
   ];
 
   const workflow = [
-    {
-      number: "01",
-      icon: "visibility",
-      title: "Review",
-      text: "New users, ReMakers, products and important marketplace activity enter the admin system.",
-    },
-    {
-      number: "02",
-      icon: "verified",
-      title: "Verify",
-      text: "Profiles, listings and important activity are checked against platform requirements.",
-    },
-    {
-      number: "03",
-      icon: "tune",
-      title: "Manage",
-      text: "Admins approve, update, restrict or remove platform records whenever necessary.",
-    },
-    {
-      number: "04",
-      icon: "monitoring",
-      title: "Monitor",
-      text: "Transactions, listings, accounts and platform activity remain visible from one place.",
-    },
-    {
-      number: "05",
-      icon: "analytics",
-      title: "Analyze",
-      text: "Reports turn ReOrbit activity into information that supports better decisions.",
-    },
+    { number: "01", icon: "notifications_active", title: "Notice", text: "The dashboard and notification bell show what needs you: new donations, late pickups, unsold stock, orders to ship." },
+    { number: "02", icon: "fact_check", title: "Review", text: "Open the item, see who it belongs to, what has happened so far and everything needed to decide." },
+    { number: "03", icon: "touch_app", title: "Act", text: "Accept, schedule, approve, ship or refund. Risky actions ask for a short reason first." },
+    { number: "04", icon: "sync", title: "Update", text: "The change shows up everywhere it matters: orders, stock, notifications, rewards and earnings." },
+    { number: "05", icon: "analytics", title: "Learn", text: "Reports and Earnings turn the day's work into numbers that help plan the next move." },
   ];
 
   const lifecycle = [
-    {
-      icon: "person_add",
-      label: "People",
-      title: "Users & ReMakers",
-      text: "Accounts enter the ecosystem and become part of the platform.",
-    },
-    {
-      icon: "inventory_2",
-      label: "Objects",
-      title: "Items & Products",
-      text: "Listings and products are created, reviewed and managed.",
-    },
-    {
-      icon: "payments",
-      label: "Marketplace",
-      title: "Transactions",
-      text: "Purchases and marketplace activity move through the system.",
-    },
-    {
-      icon: "query_stats",
-      label: "Intelligence",
-      title: "Reports",
-      text: "Activity becomes measurable information for administrators.",
-    },
+    { icon: "volunteer_activism", label: "Step one", title: "Donate or list", text: "A member offers an item. An admin accepts it, or the listing goes into the review queue." },
+    { icon: "local_shipping", label: "Step two", title: "Pickup", text: "A pickup partner and time slot are scheduled. The member is told when to expect them." },
+    { icon: "warehouse", label: "Step three", title: "Warehouse", text: "The item is received, given a rack and bin, and either listed as it is or sent for refurbishment." },
+    { icon: "handyman", label: "Step four", title: "Refurbish & list", text: "A ReMaker restores it, and the finished product is listed for sale with photos and a price." },
+    { icon: "shopping_bag", label: "Step five", title: "Buy & deliver", text: "A buyer pays, the order is confirmed, shipped and delivered. Returns and refunds are handled if needed." },
+    { icon: "account_balance_wallet", label: "Step six", title: "Earn & reward", text: "The platform fee and sale are recorded in Earnings, and the donor receives Orbit points." },
   ];
 
   return (
@@ -164,18 +53,19 @@ export default function HowItWorks() {
                 <span className="material-symbols-outlined">
                   admin_panel_settings
                 </span>
-                ADMIN OPERATIONS
+                HOW IT WORKS
               </div>
 
               <h1>
-                Everything behind
-                <span> ReOrbit.</span>
+                From a doorstep
+                <span> to a new home.</span>
               </h1>
 
               <p>
-                The admin system brings users, ReMakers, products, transactions
-                and platform activity together so every important part of
-                ReOrbit can be reviewed, managed and monitored from one place.
+                This is how a donated or listed item travels through ReOrbit,
+                and what an admin does at each step: reviewing, collecting,
+                storing, refurbishing, selling, paying out and learning from
+                the numbers.
               </p>
 
               <div className="admin-how-actions">
@@ -198,13 +88,13 @@ export default function HowItWorks() {
             <div className="admin-control-visual">
               <div className="admin-control-header">
                 <div>
-                  <span className="admin-control-label">PLATFORM OVERVIEW</span>
-                  <h3>ReOrbit Control</h3>
+                  <span className="admin-control-label">THE LOOP</span>
+                  <h3>One item, six steps</h3>
                 </div>
 
                 <div className="admin-live-status">
                   <span />
-                  SYSTEM ACTIVE
+                  LIVE DATA
                 </div>
               </div>
 
@@ -237,7 +127,7 @@ export default function HowItWorks() {
 
                 <div className="control-node node-transactions">
                   <span className="material-symbols-outlined">payments</span>
-                  <small>Transactions</small>
+                  <small>Orders</small>
                 </div>
               </div>
 
@@ -245,24 +135,24 @@ export default function HowItWorks() {
                 <div>
                   <span className="material-symbols-outlined">visibility</span>
                   <p>
-                    <strong>Monitor</strong>
-                    <small>Platform activity</small>
+                    <strong>Review</strong>
+                    <small>What comes in</small>
                   </p>
                 </div>
 
                 <div>
                   <span className="material-symbols-outlined">verified</span>
                   <p>
-                    <strong>Verify</strong>
-                    <small>Important records</small>
+                    <strong>Act</strong>
+                    <small>Accept, ship, refund</small>
                   </p>
                 </div>
 
                 <div>
                   <span className="material-symbols-outlined">analytics</span>
                   <p>
-                    <strong>Analyze</strong>
-                    <small>Platform data</small>
+                    <strong>Learn</strong>
+                    <small>Earnings and reports</small>
                   </p>
                 </div>
               </div>
@@ -276,19 +166,22 @@ export default function HowItWorks() {
 
         <section className="admin-system-strip">
           <div className="admin-how-container admin-system-strip-inner">
-            <span>ONE MANAGEMENT SYSTEM</span>
+            <span>ONE CONNECTED FLOW</span>
 
             <div className="admin-system-flow">
-              <span>Users</span>
+              <span>Donate</span>
               <i className="material-symbols-outlined">arrow_forward</i>
 
-              <span>Products</span>
+              <span>Pickup</span>
               <i className="material-symbols-outlined">arrow_forward</i>
 
-              <span>Transactions</span>
+              <span>Warehouse</span>
               <i className="material-symbols-outlined">arrow_forward</i>
 
-              <span>Reports</span>
+              <span>Sell</span>
+              <i className="material-symbols-outlined">arrow_forward</i>
+
+              <span>Earn</span>
             </div>
           </div>
         </section>
@@ -304,16 +197,15 @@ export default function HowItWorks() {
                 <span className="admin-eyebrow">PLATFORM CONTROL</span>
 
                 <h2>
-                  Six areas.
+                  Nine areas.
                   <br />
                   <span>One control center.</span>
                 </h2>
               </div>
 
               <p>
-                Instead of managing different parts of ReOrbit separately, the
-                admin system brings the platform's main operations into one
-                structured environment.
+                Each area is a page in the admin panel. Every card lists what
+                you can actually do there, so you know where to go for any job.
               </p>
             </div>
 
@@ -359,7 +251,7 @@ export default function HowItWorks() {
         <section className="admin-workflow">
           <div className="admin-how-container">
             <div className="admin-workflow-heading">
-              <span className="admin-eyebrow">ADMIN WORKFLOW</span>
+              <span className="admin-eyebrow">A TYPICAL TASK</span>
 
               <h2>
                 From activity
@@ -368,9 +260,9 @@ export default function HowItWorks() {
               </h2>
 
               <p>
-                Administration is not just about viewing information. Activity
-                moves through a clear management process from the moment it
-                enters the system.
+                Whatever the job, the rhythm is the same. Something needs
+                attention, you look, you decide, and the rest of the system
+                follows.
               </p>
             </div>
 
@@ -413,17 +305,17 @@ export default function HowItWorks() {
           <div className="admin-how-container">
             <div className="admin-lifecycle-layout">
               <div className="admin-lifecycle-copy">
-                <span className="admin-eyebrow">COMPLETE VISIBILITY</span>
+                <span className="admin-eyebrow">THE ITEM JOURNEY</span>
 
                 <h2>
-                  See how the
-                  <span> system connects.</span>
+                  Follow one item
+                  <span> end to end.</span>
                 </h2>
 
                 <p>
-                  ReOrbit involves different people, products and marketplace
-                  activity. The admin layer connects those parts so operations
-                  stay visible instead of becoming isolated processes.
+                  Six steps take an item from someone's home to a new owner. The
+                  admin panel has a page for each step, and each page hands over
+                  to the next.
                 </p>
 
                 <div className="admin-lifecycle-note">
@@ -432,10 +324,10 @@ export default function HowItWorks() {
                   </span>
 
                   <div>
-                    <strong>Connected administration</strong>
+                    <strong>Nothing is entered twice</strong>
                     <p>
-                      Changes in one part of the platform can be understood in
-                      the context of the complete ReOrbit ecosystem.
+                      A completed pickup updates the donation, the warehouse and
+                      the donor's rewards. A delivered order updates earnings.
                     </p>
                   </div>
                 </div>
@@ -476,18 +368,18 @@ export default function HowItWorks() {
           <div className="admin-how-container">
             <div className="admin-insight-box">
               <div className="admin-insight-copy">
-                <span className="admin-eyebrow">REPORTING & INSIGHT</span>
+                <span className="admin-eyebrow">EARNINGS & REPORTS</span>
 
                 <h2>
-                  Management needs
-                  <span> visibility.</span>
+                  See what ReOrbit
+                  <span> earns.</span>
                 </h2>
 
                 <p>
-                  Reports help administrators understand what is happening
-                  across ReOrbit. User activity, ReMaker performance, product
-                  statistics and transaction information can be reviewed to
-                  support platform decisions.
+                  ReOrbit earns a small platform fee on every order a member or
+                  ReMaker places, plus income from its own refurbished products.
+                  Earnings shows how that money flows in, what goes out in
+                  refunds and purchases, and what is still to come.
                 </p>
 
                 <a href="/admin-login" className="admin-how-primary-btn">
@@ -501,8 +393,8 @@ export default function HowItWorks() {
               <div className="admin-report-panel">
                 <div className="admin-report-top">
                   <div>
-                    <small>PLATFORM INSIGHT</small>
-                    <strong>Activity overview</strong>
+                    <small>EARNING FLOW</small>
+                    <strong>Where the money comes from</strong>
                   </div>
 
                   <span className="material-symbols-outlined">monitoring</span>
@@ -511,61 +403,61 @@ export default function HowItWorks() {
                 <div className="admin-report-bars">
                   <div className="report-row">
                     <div>
-                      <span>Users</span>
-                      <b>Account activity</b>
+                      <span>Platform fee</span>
+                      <b>Added to member orders</b>
                     </div>
 
                     <div className="report-track">
-                      <span style={{ width: "82%" }} />
+                      <span style={{ width: "30%" }} />
                     </div>
 
-                    <strong>82%</strong>
+                    <strong>+</strong>
                   </div>
 
                   <div className="report-row">
                     <div>
-                      <span>ReMakers</span>
-                      <b>Creator activity</b>
+                      <span>Own sales</span>
+                      <b>Refurbished products</b>
                     </div>
 
                     <div className="report-track">
-                      <span style={{ width: "64%" }} />
+                      <span style={{ width: "86%" }} />
                     </div>
 
-                    <strong>64%</strong>
+                    <strong>+</strong>
                   </div>
 
                   <div className="report-row">
                     <div>
-                      <span>Products</span>
-                      <b>Marketplace listings</b>
+                      <span>Refunds</span>
+                      <b>Given back to buyers</b>
                     </div>
 
                     <div className="report-track">
-                      <span style={{ width: "76%" }} />
+                      <span style={{ width: "14%" }} />
                     </div>
 
-                    <strong>76%</strong>
+                    <strong>−</strong>
                   </div>
 
                   <div className="report-row">
                     <div>
-                      <span>Transactions</span>
-                      <b>Marketplace activity</b>
+                      <span>Purchases</span>
+                      <b>Stock the platform buys</b>
                     </div>
 
                     <div className="report-track">
-                      <span style={{ width: "70%" }} />
+                      <span style={{ width: "22%" }} />
                     </div>
 
-                    <strong>70%</strong>
+                    <strong>−</strong>
                   </div>
                 </div>
 
                 <div className="admin-report-bottom">
                   <span>
                     <i />
-                    Platform monitoring active
+                    Illustration of the earning flow
                   </span>
 
                   <span className="material-symbols-outlined">analytics</span>
@@ -592,14 +484,14 @@ export default function HowItWorks() {
                 <span>REORBIT ADMINISTRATION</span>
 
                 <h2>
-                  Keep every part of
+                  Notice. Review. Act.
                   <br />
-                  ReOrbit moving.
+                  Keep ReOrbit moving.
                 </h2>
 
                 <p>
-                  Review. Verify. Manage. Monitor. Analyze. One administrative
-                  layer for the complete ReOrbit ecosystem.
+                  Sign in to see what needs you today. Sub-admins only see the
+                  parts of the panel their role allows.
                 </p>
               </div>
 

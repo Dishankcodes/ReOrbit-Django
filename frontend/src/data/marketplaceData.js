@@ -550,6 +550,26 @@ export const REVIEWS = {
     },
   ],
 
+  "user-aarav-patel": [
+    { id: "review-11", name: "Pooja", rating: 5, text: "Lovely lamp, well packed and exactly as shown.", date: "2026-09-12" },
+    { id: "review-12", name: "Harsh", rating: 5, text: "Quick replies and a smooth handover.", date: "2026-08-28" },
+  ],
+
+  "user-nisha-rao": [
+    { id: "review-13", name: "Kavya", rating: 5, text: "The side table is sturdy and the finish is lovely.", date: "2026-09-06" },
+    { id: "review-14", name: "Arnav", rating: 4, text: "Good seller, item matched the photos.", date: "2026-08-14" },
+  ],
+
+  "user-kabir-verma": [
+    { id: "review-15", name: "Sana", rating: 5, text: "The refurbished lamp works perfectly. Great value.", date: "2026-09-01" },
+    { id: "review-16", name: "Tejas", rating: 4, text: "Honest description and careful packing.", date: "2026-08-05" },
+  ],
+
+  "user-anaya-singh": [
+    { id: "review-17", name: "Ritika", rating: 5, text: "The jacket is beautifully finished. Very creative reuse of fabric.", date: "2026-09-10" },
+    { id: "review-18", name: "Dev", rating: 5, text: "Fast delivery and the quality is excellent.", date: "2026-08-22" },
+  ],
+
   "tara-bose": [
     {
       id: "review-4",
@@ -652,8 +672,15 @@ export function getSellerFromItem(item) {
   return getSellerById(item.sellerId, item.sellerType);
 }
 
+/* Reviews buyers post from their orders (UI only, kept in memory). */
+const postedReviews = {};
+
+export function addSellerReview(sellerId, review) {
+  postedReviews[sellerId] = [review, ...(postedReviews[sellerId] || []).filter((r) => r.id !== review.id)];
+}
+
 export function getSellerReviews(sellerId) {
-  return REVIEWS[sellerId] || [];
+  return [...(postedReviews[sellerId] || []), ...(REVIEWS[sellerId] || [])];
 }
 
 export function getProductsBySeller(sellerId) {

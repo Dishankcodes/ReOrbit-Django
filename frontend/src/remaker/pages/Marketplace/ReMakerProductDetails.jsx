@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowUpRight,
   BadgeCheck,
   Check,
   ChevronLeft,
@@ -18,18 +19,19 @@ import {
   Plus,
   Recycle,
   ShieldCheck,
-  Star,
   Truck,
   Package,
 } from "lucide-react";
 
 import MarketOrderModal from "../../pages-components/MarketOrderModal";
+import { Avatar, RatingSummary, ReviewList, Stars } from "../../pages-components/ReviewBlocks";
 import {
   SERVICEABLE_PINCODES,
   SOURCE_LABEL,
   deliveryCharge,
   formatPrice,
   getListingById,
+  getListingsBySeller,
   getRelatedListings,
   getSeller,
   getSellerReviews,
@@ -52,19 +54,11 @@ function Photo({ src, alt }) {
   return <img src={src} alt={alt} onError={() => setFailed(true)} />;
 }
 
-function Stars({ value }) {
-  return (
-    <span className="rmd-stars" role="img" aria-label={`${value} out of 5`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star key={star} size={14} fill={star <= Math.round(value) ? "currentColor" : "none"} />
-      ))}
-    </span>
-  );
-}
-
 /* Wrapper so the page state resets when the product changes */
 export default function ReMakerProductDetails() {
-  const { productId } = useParams();
+  /* works with both /product/:productId and /product/:id */
+  const params = useParams();
+  const productId = params.productId ?? params.id;
   const listing = getListingById(productId);
 
   if (!listing) {
@@ -90,8 +84,14 @@ function Details({ listing }) {
   const wishlist = useWishlist();
 
   const seller = getSeller(listing);
-  const reviews = getSellerReviews(listing.sellerId);
+  const sellerReviews = getSellerReviews(listing.sellerId);
+  const productReviews = getProductReviews(listing.id);
   const related = useMemo(() => getRelatedListings(listing), [listing]);
+  const fromSeller = useMemo(
+    () => getListingsBySeller(listing.sellerId).filter((other) => other.id !== listing.id),
+    [listing],
+  );
+  const profilePath = sellerProfilePath(listing.sellerId);
 
   const [index, setIndex] = useState(0);
   const [tab, setTab] = useState("details");
@@ -101,12 +101,14 @@ function Details({ listing }) {
   const [checked, setChecked] = useState(null); /* null | "ok" | "no" | "bad" */
   const [needPincode, setNeedPincode] = useState(false);
   const [ordering, setOrdering] = useState(false);
+  const [reviewView, setReviewView] = useState(listing.source === "remaker" ? "product" : "seller");
 
   const saved = wishlist.has(listing.id);
   const isRemaker = listing.source === "remaker";
   const charge = deliveryCharge(listing.price);
   const total = listing.price * quantity + (delivery === "platform" ? charge : 0);
   const outOfStock = listing.quantity < 1;
+  const reviewCount = isRemaker ? productReviews.length : seller?.totalReviews ?? sellerReviews.length;
 
   const step = (delta) =>
     setIndex((current) => (current + delta + listing.gallery.length) % listing.gallery.length);
@@ -138,7 +140,7 @@ function Details({ listing }) {
 
   const sellerMetrics = [
     { label: "Rating", value: seller?.rating ?? listing.sellerRating },
-    { label: "Reviews", value: seller?.totalReviews ?? reviews.length },
+    { label: "Reviews", value: seller?.totalReviews ?? sellerReviews.length },
     {
       label: isRemaker ? "Pieces listed" : "Sold so far",
       value: isRemaker ? seller?.productsCount ?? "-" : seller?.productsSold ?? "-",
@@ -227,6 +229,12 @@ function Details({ listing }) {
           </div>
 
           <h2 className="rmd-title">{listing.title}</h2>
+
+          <p className="rmd-postedby">
+            {isRemaker ? "Made by" : "Listed by"}{" "}
+            <Link to={profilePath}>{listing.seller}</Link>
+            {isRemaker && <BadgeCheck size={15} aria-label="Verified ReMaker" />}
+          </p>
 
           <div className="rmd-rating">
             <Stars value={listing.sellerRating} />
@@ -411,35 +419,41 @@ function Details({ listing }) {
 
       {/* SELLER */}
       <div className="rmd-seller">
-        <div className="rmd-seller-main">
-          <span className="rmd-avatar">
-            <Photo src={seller?.image || listing.sellerImage} alt="" />
-          </span>
-          <div>
-            <small>{isRemaker ? "Verified ReMaker" : "Community seller"}</small>
-            <strong>
-              {listing.seller}
-              {isRemaker && <BadgeCheck size={16} />}
-            </strong>
-            <em>
-              <MapPin size={13} />
-              {seller?.city || listing.city}
-              {isRemaker && seller?.craft ? ` · ${seller.craft}` : ""}
-            </em>
-          </div>
+        <div className="rmd-seller-top">
+          <Link to={profilePath} className="rmd-seller-main">
+            <span className="rmd-avatar">
+              <Avatar src={seller?.image || listing.sellerImage} name={listing.seller} />
+            </span>
+            <span className="rmd-seller-text">
+              <small>{isRemaker ? "Verified ReMaker" : "Community seller"}</small>
+              <strong>
+                {listing.seller}
+                {isRemaker && <BadgeCheck size={16} />}
+              </strong>
+              <em>
+                <MapPin size={13} />
+                {seller?.city || listing.city}
+                {isRemaker && seller?.craft ? ` · ${seller.craft}` : ""}
+              </em>
+            </span>
+          </Link>
+
+          <dl className="rmd-metrics">
+            {sellerMetrics.map((metric) => (
+              <div key={metric.label}>
+                <dt>{metric.label}</dt>
+                <dd>{metric.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <Link to={profilePath} className="rmd-btn ghost rmd-seller-cta">
+            View {isRemaker ? "ReMaker" : "seller"} profile
+            <ArrowUpRight size={16} />
+          </Link>
         </div>
 
-        <dl className="rmd-metrics">
-          {sellerMetrics.map((metric) => (
-            <div key={metric.label}>
-              <dt>{metric.label}</dt>
-              <dd>
-                {metric.label === "Rating" && <Star size={14} fill="currentColor" />}
-                {metric.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        {seller?.bio && <p className="rmd-seller-bio">{seller.bio}</p>}
       </div>
 
       {/* TABS */}
@@ -448,7 +462,7 @@ function Details({ listing }) {
           {[
             { key: "details", label: "Details" },
             { key: "journey", label: "Journey" },
-            { key: "reviews", label: `Reviews (${reviews.length})` },
+            { key: "reviews", label: `Reviews (${reviewCount})` },
           ].map((item) => (
             <button
               type="button"
@@ -558,25 +572,89 @@ function Details({ listing }) {
 
         {tab === "reviews" && (
           <div className="rmd-panel">
-            {reviews.length === 0 ? (
-              <p className="rmd-muted">No reviews for this seller yet.</p>
-            ) : (
-              <div className="rmd-reviews">
-                {reviews.map((review) => (
-                  <article key={review.id}>
-                    <header>
-                      <strong>{review.name}</strong>
-                      <Stars value={review.rating} />
-                      <time>{review.date}</time>
-                    </header>
-                    <p>{review.text}</p>
-                  </article>
-                ))}
+            {isRemaker ? (
+              <div className="rvw-switch" role="tablist" aria-label="Which reviews">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reviewView === "product"}
+                  className={reviewView === "product" ? "active" : ""}
+                  onClick={() => setReviewView("product")}
+                >
+                  This product ({productReviews.length})
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={reviewView === "seller"}
+                  className={reviewView === "seller" ? "active" : ""}
+                  onClick={() => setReviewView("seller")}
+                >
+                  About {listing.seller}
+                </button>
               </div>
+            ) : (
+              <p className="rvw-note">
+                Community items are one of a kind, so buyers review the seller. These are reviews
+                for {listing.seller}.
+              </p>
+            )}
+
+            {reviewView === "product" && isRemaker ? (
+              productReviews.length ? (
+                <>
+                  <RatingSummary reviews={productReviews} />
+                  <ReviewList reviews={productReviews} verified />
+                </>
+              ) : (
+                <p className="rvw-empty">No one has reviewed this product yet.</p>
+              )
+            ) : sellerReviews.length ? (
+              <>
+                <RatingSummary
+                  reviews={sellerReviews}
+                  average={seller?.rating}
+                  total={seller?.totalReviews}
+                />
+                <ReviewList reviews={sellerReviews} />
+                <p className="rmd-all-reviews">
+                  <Link to={profilePath}>See all reviews on {listing.seller}&apos;s profile</Link>
+                </p>
+              </>
+            ) : (
+              <p className="rvw-empty">{listing.seller} has no reviews yet.</p>
             )}
           </div>
         )}
       </div>
+
+      {/* MORE FROM SELLER */}
+      {fromSeller.length > 0 && (
+        <div className="rmd-related">
+          <div className="rmd-related-head">
+            <h3>More from {listing.seller}</h3>
+            <Link to={profilePath}>View profile</Link>
+          </div>
+
+          <div className="rmd-related-grid">
+            {fromSeller.slice(0, 4).map((other) => (
+              <Link
+                to={`/remaker-marketplace/product/${other.id}`}
+                className="rmd-mini"
+                key={other.id}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              >
+                <span className="rmd-mini-media">
+                  <Photo src={other.gallery[0]} alt="" />
+                </span>
+                <small>{SOURCE_LABEL[other.source]}</small>
+                <strong>{other.title}</strong>
+                <b>{formatPrice(other.price)}</b>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* RELATED */}
       {related.length > 0 && (
@@ -615,6 +693,7 @@ function Details({ listing }) {
           pincode={pincode}
           onClose={closeOrder}
           onBrowse={() => navigate("/remaker-marketplace")}
+          onViewOrder={(id) => navigate(`/remaker-orders/${id}`)}
         />
       )}
     </section>

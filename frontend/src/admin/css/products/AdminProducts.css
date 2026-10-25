@@ -1,0 +1,112 @@
+/* =========================================================
+   Admin › Products (list + details)
+   Re-uses au-* (list), aup-* (profile) and ad-* (shared).
+   ========================================================= */
+
+.ap-muted { color: #6a7771; font-size: 12.5px; }
+.ap-thumb { width: 46px; height: 46px; flex: 0 0 46px; object-fit: cover; border-radius: 12px; background: #edf4f0; }
+.ap-table { min-width: 960px; }
+
+.ap-type { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+.ap-type.item { color: #2f6c70; }
+.ap-type.product { color: #2f7a57; }
+
+.ap-owner { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ap-owner > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ap-owner-name { overflow: hidden; color: #13221b; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ap-owner-name:hover { color: #2f7a57; text-decoration: underline; }
+.ap-role { align-self: flex-start; padding: 2px 7px; border-radius: 6px; background: #e8f1f1; color: #2f6c70; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.ap-role.rm { background: #e8f4ed; color: #2f7a57; }
+
+/* ---------- grid view ---------- */
+.ap-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 20px; }
+.ap-card { overflow: hidden; border: 1px solid #d8e4de; border-radius: 18px; background: #fff; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.ap-card:hover { transform: translateY(-3px); border-color: #adcec1; box-shadow: 0 16px 40px rgba(8, 39, 31, 0.09); }
+.ap-card:focus-visible { outline: 2px solid #4f8f78; outline-offset: 2px; }
+.ap-card.is-selected { border-color: #0e3a2d; box-shadow: 0 0 0 1px #0e3a2d; }
+.ap-card-image { position: relative; aspect-ratio: 4 / 3; background: #edf4f0; }
+.ap-card-image img { width: 100%; height: 100%; object-fit: cover; }
+.ap-card-overlay { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; }
+.ap-card-overlay input { width: 17px; height: 17px; accent-color: #0e3a2d; cursor: pointer; border-radius: 3px; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92); }
+.ap-card-overlay .ad-icon-btn { background: rgba(255, 255, 255, 0.92); box-shadow: 0 4px 14px rgba(8, 39, 31, 0.15); }
+.ap-card-status { position: absolute; left: 10px; bottom: 10px; }
+.ap-card-status .ad-badge { box-shadow: 0 4px 14px rgba(8, 39, 31, 0.15); }
+.ap-card-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; }
+.ap-card-body h4 { color: #13221b; font-size: 15.5px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
+.ap-card-price { display: flex; align-items: baseline; justify-content: space-between; }
+.ap-card-price strong { color: #13221b; font-size: 16px; }
+.ap-card-price span { color: #7b8781; font-size: 12.5px; }
+.ap-card-foot { display: flex; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid #edf1ef; color: #8a9690; font-size: 12px; }
+.ap-card-foot span { display: inline-flex; align-items: center; gap: 4px; }
+.ap-card-foot span:first-child { margin-right: auto; }
+
+/* ---------- details page ---------- */
+.apd-top { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 22px; margin-bottom: 20px; align-items: start; }
+.apd-gallery { padding: 14px; }
+.apd-main { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border-radius: 14px; background: #edf4f0; }
+.apd-main img { width: 100%; height: 100%; object-fit: cover; transition: object-position 0.3s ease, transform 0.3s ease; }
+.apd-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+.apd-thumbs button { aspect-ratio: 1; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: 11px; background: #edf4f0; }
+.apd-thumbs button.active { border-color: #0e3a2d; }
+.apd-thumbs button:focus-visible { outline: 2px solid #4f8f78; outline-offset: 2px; }
+.apd-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+.apd-info { padding: 26px; }
+.apd-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.apd-info h2 { color: #13221b; font-size: 30px; font-weight: 500; letter-spacing: -0.035em; line-height: 1.12; }
+.apd-id { margin-top: 8px; color: #8a9690; font-size: 12.5px; }
+.apd-price { display: flex; align-items: baseline; gap: 12px; margin: 18px 0 20px; }
+.apd-price strong { font-family: "Bricolage Grotesque", Georgia, serif; font-size: 34px; font-weight: 600; letter-spacing: -0.03em; }
+.apd-price span { color: #7b8781; font-size: 13px; }
+.apd-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; margin: 0 0 20px; }
+.apd-facts .aup-detail { padding: 11px 0; }
+.apd-desc { color: #4a5a52; font-size: 14px; line-height: 1.7; }
+.apd-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; padding-top: 22px; border-top: 1px solid #edf1ef; }
+.apd-actions .ad-btn { min-height: 42px; }
+
+.apd-owner { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.apd-owner > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.apd-owner strong { font-size: 16px; color: #13221b; }
+.apd-owner span { color: #7b8781; font-size: 12.5px; overflow-wrap: anywhere; }
+.apd-owner-rows { margin: 0 0 18px; }
+.apd-warn { display: flex; gap: 8px; margin-bottom: 14px; padding: 10px 12px; border-radius: 10px; background: #fdf8ea; color: #7a5a14; font-size: 12.5px; line-height: 1.5; }
+.apd-warn svg { flex: 0 0 auto; margin-top: 2px; }
+
+.apd-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.apd-metrics > div { padding: 14px 10px; border-radius: 13px; background: #f4f8f6; text-align: center; }
+.apd-metrics small { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 6px; color: #7b8781; font-size: 11.5px; font-weight: 600; }
+.apd-metrics strong { font-family: "Bricolage Grotesque", Georgia, serif; font-size: 22px; font-weight: 600; }
+
+.apd-tl { margin: 0; padding: 0; list-style: none; }
+.apd-tl li { position: relative; display: flex; gap: 14px; padding-bottom: 18px; }
+.apd-tl li:not(:last-child)::before { content: ""; position: absolute; left: 6px; top: 20px; bottom: 0; width: 1px; background: #d8e4de; }
+.apd-tl li:last-child { padding-bottom: 0; }
+.apd-dot { width: 13px; height: 13px; flex: 0 0 13px; margin-top: 4px; border: 3px solid #fff; border-radius: 50%; background: #adcec1; box-shadow: 0 0 0 1px #d8e4de; }
+.apd-dot.good { background: #4f8f78; }
+.apd-dot.bad { background: #b04b4b; }
+.apd-dot.wait { background: #c9a03c; }
+.apd-dot.info { background: #4a8a90; }
+.apd-dot.neutral { background: #8a9690; }
+.apd-tl strong { display: block; color: #13221b; font-size: 13.5px; }
+.apd-tl p { margin: 3px 0 2px; color: #5d6b63; font-size: 12.5px; line-height: 1.5; }
+.apd-tl time { color: #9aa49f; font-size: 12px; }
+
+.au-person .ap-mobile-meta { display: none; color: #4f8f78; font-weight: 600; }
+@media (max-width: 900px) {
+  .ap-table { min-width: 0; }
+  .ap-table .col-owner, .ap-table .col-posted, .ap-table .col-loc { display: none; }
+  .au-person .ap-mobile-meta { display: block; }
+}
+@media (max-width: 1500px) { .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1100px) {
+  .ap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .apd-top { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .ap-grid { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .apd-info { padding: 20px; }
+  .apd-info h2 { font-size: 25px; }
+  .apd-facts { grid-template-columns: minmax(0, 1fr); }
+  .apd-actions .ad-btn { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .ap-card, .apd-main img { transition: none; } }

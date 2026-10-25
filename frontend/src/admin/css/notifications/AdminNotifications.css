@@ -1,0 +1,84 @@
+/* =========================================================
+   Admin › Notifications
+   Re-uses au-*, ao-*, aup-*, rw-chips and ad-*. Only inbox bits here.
+   ========================================================= */
+
+.nt-headrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.nt-headrow .aup-tabs { margin-bottom: 0; }
+.nt-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 18px 10px; }
+.nt-toolbar .au-search { flex: 1 1 240px; max-width: 360px; margin-left: auto; }
+.nt-modules { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 18px 14px; border-bottom: 1px solid #e8efeb; }
+.nt-modules button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid transparent; border-radius: 8px; background: #f2f6f4; color: #4a5a52; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.nt-modules button:hover { background: #e8f0ec; }
+.nt-modules button em { color: #7a8b82; font-size: 11.5px; font-style: normal; font-weight: 800; }
+.nt-modules button.on { background: #fff; border-color: #0e3a2d; color: #0e3a2d; }
+
+.nt-list { list-style: none; margin: 0; padding: 0; }
+.nt-item { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: flex-start; padding: 16px 18px; border-bottom: 1px solid #eef3f0; transition: background 0.2s ease; }
+.nt-item:last-child { border-bottom: 0; }
+.nt-item:hover { background: #fafcfb; }
+.nt-item.unread { background: #f6fbf8; }
+.nt-item.unread::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0; background: #2f7a57; }
+.nt-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #e9f0ff; color: #3b63b8; }
+.sev-critical .nt-ico { background: #fdeceb; color: #b3372f; }
+.sev-warning .nt-ico { background: #fbf3df; color: #94701c; }
+.sev-success .nt-ico { background: #e8f4ed; color: #2f7a57; }
+.nt-body { min-width: 0; cursor: default; }
+.nt-body[role="button"] { cursor: pointer; }
+.nt-body:focus-visible { outline: 2px solid #4f8f78; outline-offset: 4px; border-radius: 8px; }
+.nt-line { display: flex; align-items: center; gap: 8px; }
+.nt-line strong { color: #13221b; font-size: 14.5px; font-weight: 700; }
+.nt-item:not(.unread) .nt-line strong { font-weight: 600; color: #2b3a33; }
+.nt-dot { width: 8px; height: 8px; border-radius: 50%; background: #2f7a57; flex: none; }
+.nt-body p { margin: 4px 0 8px; color: #5a6a62; font-size: 13.5px; line-height: 1.5; }
+.nt-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700; }
+.nt-meta > span { padding: 2px 9px; border-radius: 999px; background: #eef3f0; color: #4a5a52; }
+.nt-meta .nt-sev.sev-critical { background: #fdeceb; color: #b3372f; }
+.nt-meta .nt-sev.sev-warning { background: #fbf3df; color: #94701c; }
+.nt-meta .nt-sev.sev-success { background: #e8f4ed; color: #2f7a57; }
+.nt-meta .nt-sev.sev-info { background: #e9f0ff; color: #3b63b8; }
+.nt-meta .nt-need { background: #0e3a2d; color: #fff; }
+.nt-meta .nt-time { display: inline-flex; align-items: center; gap: 4px; padding-left: 0; background: transparent; color: #7a8b82; font-weight: 600; }
+.nt-actions { display: flex; align-items: center; gap: 6px; }
+.nt-open { min-height: 36px; padding: 0 12px; font-size: 12.5px; }
+.nt-icon-btn { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #6a7b72; cursor: pointer; }
+.nt-icon-btn:hover { background: #eef3f0; color: #13221b; }
+.nt-foot { margin: 0; padding: 14px 18px 18px; color: #7a8b82; font-size: 12.5px; text-align: center; border-top: 1px solid #eef3f0; }
+
+/* ---------- announcements ---------- */
+.nt-ann-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.nt-ann { display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid #e3ebe7; border-radius: 18px; background: #fff; box-shadow: 0 6px 22px rgba(8, 39, 31, 0.04); }
+.nt-ann header { display: flex; justify-content: space-between; align-items: center; }
+.nt-ann h4 { margin: 0; color: #13221b; font-size: 16px; font-weight: 700; }
+.nt-ann p { margin: 0; color: #5a6a62; font-size: 13.5px; line-height: 1.55; flex: 1; }
+.nt-ann footer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding-top: 12px; border-top: 1px dashed #dde7e2; color: #6a7b72; font-size: 12px; font-weight: 600; }
+.nt-ann footer span { display: inline-flex; align-items: center; gap: 5px; }
+.nt-ann footer .nt-by { margin-left: auto; }
+.nt-ann-type { padding: 3px 11px; border-radius: 999px; background: #e9f0ff; color: #3b63b8; font-size: 11.5px; font-weight: 800; }
+.nt-ann-type.t-offer { background: #e8f4ed; color: #2f7a57; }
+.nt-ann-type.t-maintenance { background: #fbf3df; color: #94701c; }
+.nt-ann-type.t-reminder { background: #f1eafb; color: #6b45b0; }
+.nt-ann-status { font-size: 11.5px; font-weight: 800; color: #2f7a57; }
+.nt-ann-status.sched { color: #94701c; }
+
+/* ---------- composer ---------- */
+.nt-modal { max-width: 520px; }
+.nt-modal-sub { margin: -6px 0 14px; color: #6a7b72; font-size: 13px; }
+.nt-aud { display: flex; gap: 8px; flex-wrap: wrap; }
+.nt-aud button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border: 1px solid #d8e4de; border-radius: 11px; background: #fff; color: #4a5a52; font-size: 13px; font-weight: 600; cursor: pointer; }
+.nt-aud button.on { border-color: #0e3a2d; background: #0e3a2d; color: #fff; }
+.nt-reach { color: #6a7b72; font-size: 12px; }
+.nt-modal textarea, .nt-modal select, .nt-modal input[type="datetime-local"] { width: 100%; padding: 10px 12px; border: 1px solid #d8e4de; border-radius: 11px; background: #fbfcfb; color: #13221b; font: inherit; font-size: 13px; }
+.nt-modal textarea { resize: vertical; }
+.nt-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+@media (max-width: 820px) {
+  .nt-item { grid-template-columns: 40px minmax(0, 1fr); }
+  .nt-actions { grid-column: 2; justify-content: flex-start; }
+  .nt-toolbar .au-search { max-width: none; margin-left: 0; }
+  .nt-two { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .nt-ann-grid { grid-template-columns: 1fr; }
+  .nt-headrow .ad-btn { width: 100%; }
+}

@@ -373,6 +373,22 @@ export default function UserMarketplace() {
               Explore verified ReMakers who turn rescued materials into pieces
               worth keeping.
             </p>
+            <button
+              type="button"
+              onClick={() => navigate("/user-remakers")}
+              style={{
+                marginTop: 12,
+                padding: 0,
+                border: 0,
+                background: "none",
+                color: "#2a4d3a",
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              View all ReMakers →
+            </button>
           </div>
           <div className="um-maker-list">
             {REMAKERS.map((maker) => (

@@ -126,6 +126,14 @@ export default function UserFollowing() {
         <div className="following-count">
           {followingCount} creators following
         </div>
+
+        <button
+          type="button"
+          className="following-btn"
+          onClick={() => navigate("/user-remakers")}
+        >
+          Discover all ReMakers
+        </button>
       </div>
 
       <div className="following-grid">

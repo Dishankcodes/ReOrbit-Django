@@ -849,7 +849,7 @@
 }
 .admin-dashboard-quick-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 9px;
   margin-top: 17px;
 }
@@ -1042,3 +1042,15 @@
     transition: none;
   }
 }
+
+/* live-data additions */
+.dash-empty { margin: 14px 4px; color: #6f8379; font-size: 13px; }
+.dash-order-link { cursor: pointer; }
+.dash-order-link:hover { background: #f6faf8; }
+.dash-order-link:focus-visible { outline: 2px solid #2f7a57; outline-offset: -2px; }
+.admin-dashboard-order-status.pending { background: #fbf1dc; color: #8a6414; }
+.admin-dashboard-order-status.cancelled { background: #f9e6e6; color: #a23c3c; }
+.rp-scope { --rp-c1: #2f7a57; --rp-c2: #eb6834; --rp-surface: #fff; --rp-ink: #14281f; --rp-ink2: #4d6459; --rp-ink3: #6f8379; --rp-line: #e3ece7; --rp-grid: #e9efec; min-width: 0; width: 100%; }
+.admin-dashboard-revenue-panel .rp-scope { margin-top: 6px; }
+
+@media (min-width: 1101px) { .admin-dashboard-quick-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } }

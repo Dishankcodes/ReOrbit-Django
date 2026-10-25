@@ -14,7 +14,9 @@ import {
 import "../../css/ReMakerPortfolio.css";
 
 export default function ReMakerPortfolioView() {
-  const { workId } = useParams();
+  /* works with both /:workId and /:id */
+  const params = useParams();
+  const workId = params.workId ?? params.id;
   const work = useWork(workId);
 
   if (!work) {

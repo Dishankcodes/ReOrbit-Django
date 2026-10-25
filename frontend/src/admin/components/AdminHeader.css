@@ -5,9 +5,9 @@
   z-index: 800;
 
   width: 100%;
-  height: 82px;
+  height: 76px;
 
-  flex: 0 0 82px;
+  flex: 0 0 76px;
 
   display: flex;
   align-items: center;
@@ -82,12 +82,12 @@
 
   color: #7b8781;
 
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 700;
 
   line-height: 1;
 
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .admin-header-breadcrumb svg {
@@ -105,7 +105,7 @@
 
   font-family: "Bricolage Grotesque", Georgia, serif;
 
-  font-size: 21px;
+  font-size: 23px;
   font-weight: 600;
 
   line-height: 1.15;
@@ -116,9 +116,9 @@
 .admin-header-page-info p {
   margin: 0;
 
-  color: #7a857f;
+  color: #6a7771;
 
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 400;
 
   white-space: nowrap;
@@ -273,8 +273,8 @@
   top: 5px;
   right: 5px;
 
-  min-width: 14px;
-  height: 14px;
+  min-width: 17px;
+  height: 17px;
 
   display: flex;
   align-items: center;
@@ -289,7 +289,7 @@
 
   color: #ffffff;
 
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -789,3 +789,31 @@
     transition: none;
   }
 }
+
+/* Warehouse unsold alert row inside the bell */
+.admin-notification-warehouse { width: 100%; border: 0; background: #fbf3df; text-align: left; cursor: pointer; font: inherit; }
+.admin-notification-warehouse:hover { background: #f7ecc9; }
+.admin-notification-warehouse .admin-notification-dot { background: #c9a03c; }
+
+.admin-notification-item.is-read { opacity: 0.72; }
+.admin-notification-dot.sev-critical { background: #d64a40; }
+.admin-notification-dot.sev-warning { background: #d99a1f; }
+.admin-notification-dot.sev-success { background: #2f7a57; }
+
+.admin-notification-item.is-read { opacity: 0.7; }
+.admin-notification-dot.sev-critical { background: #c8453b; }
+.admin-notification-dot.sev-warning { background: #d49a1f; }
+.admin-notification-dot.sev-success { background: #2f7a57; }
+
+/* ---------- tidy header (no search; readable sizes) ---------- */
+:root, .admin-layout { --admin-header-height: 76px; }
+.admin-header-page-info p { max-width: 62ch; }
+.admin-header-actions { gap: 12px; }
+.admin-header-user-info strong { font-size: 14px; }
+.admin-header-user-info span { font-size: 12px; }
+.admin-header-preview-chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; background: #fbf1dc; color: #7a5a12; font-size: 12.5px; font-weight: 700; border: 1px solid #ecd9a6; }
+.admin-profile-dropdown-role { display: inline-flex; align-items: center; gap: 6px; margin: 0 16px 12px; padding: 4px 10px; border-radius: 999px; background: #e5f2ea; color: #12503c; font-size: 12px; font-weight: 700; }
+.admin-dropdown-header strong { font-size: 14px; }
+.admin-notification-item strong { font-size: 13.5px; }
+.admin-notification-item p { font-size: 12.5px; }
+@media (max-width: 760px) { .admin-header-preview-chip span, .admin-header-preview-chip { padding: 0 9px; } .admin-header-page-info p { display: none; } }

@@ -15,6 +15,14 @@ import {
 
 import { useLocation, useNavigate } from "react-router-dom";
 
+import {
+  markAllRead,
+  markRead,
+  timeLabel,
+  useNotifications,
+  useUnreadCount,
+} from "../data/notificationsStore";
+
 import "./ReMakerHeader.css";
 
 /* =========================================================
@@ -40,6 +48,26 @@ const pageInformation = {
   "/remaker-orders": {
     title: "My Purchases",
     subtitle: "Everything you have bought on ReOrbit.",
+  },
+
+  "/remaker-saved": {
+    title: "Saved items",
+    subtitle: "Marketplace pieces you saved for later.",
+  },
+
+  "/remaker-jobs": {
+    title: "Warehouse jobs",
+    subtitle: "Refurbishing work from the ReOrbit warehouse.",
+  },
+
+  "/remaker-messages": {
+    title: "Messages",
+    subtitle: "Chat with customers, ReMakers and ReOrbit.",
+  },
+
+  "/remaker-help/new": {
+    title: "New ticket",
+    subtitle: "Tell our team what you need help with.",
   },
 
   "/remaker-sales": {
@@ -163,6 +191,21 @@ const customerProfileInformation = {
   subtitle: "Contact details and order history.",
 };
 
+const jobDetailInformation = {
+  title: "Job details",
+  subtitle: "Brief, fee and your progress on this job.",
+};
+
+const ticketInformation = {
+  title: "Support ticket",
+  subtitle: "Your conversation with ReOrbit Support.",
+};
+
+const messagesChatInformation = {
+  title: "Messages",
+  subtitle: "Chat with customers, ReMakers and ReOrbit.",
+};
+
 const editProductInformation = {
   title: "Edit Product",
   subtitle: "Update details, photos and availability.",
@@ -187,6 +230,18 @@ function getPageInformation(pathname) {
 
   if (/^\/remaker-portfolio\/[^/]+$/.test(pathname)) {
     return portfolioViewInformation;
+  }
+
+  if (/^\/remaker-jobs\/[^/]+$/.test(pathname)) {
+    return jobDetailInformation;
+  }
+
+  if (/^\/remaker-help\/tickets\/[^/]+$/.test(pathname)) {
+    return ticketInformation;
+  }
+
+  if (/^\/remaker-messages\/[^/]+$/.test(pathname)) {
+    return messagesChatInformation;
   }
 
   if (/^\/remaker-sales\/[^/]+$/.test(pathname)) {
@@ -223,28 +278,8 @@ function getPageInformation(pathname) {
    NOTIFICATIONS
    ========================================================= */
 
-const notifications = [
-  {
-    id: 1,
-    title: "New order received",
-    message: "A customer placed an order for your product.",
-    time: "14 min ago",
-  },
-
-  {
-    id: 2,
-    title: "New follower",
-    message: "Someone started following your studio.",
-    time: "1 hour ago",
-  },
-
-  {
-    id: 3,
-    title: "New review",
-    message: "A customer left a new review.",
-    time: "3 hours ago",
-  },
-];
+/* The list now comes from the shared notifications store, so the bell and the
+   Notifications page always show the same thing. */
 
 /* =========================================================
    STORAGE
@@ -311,6 +346,11 @@ function getInitials(name) {
 
 export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
   const location = useLocation();
+
+  /* notifications for the bell */
+  const allNotifications = useNotifications();
+  const unreadCount = useUnreadCount();
+  const latestNotifications = allNotifications.slice(0, 4);
   const navigate = useNavigate();
 
   const notificationRef = useRef(null);
@@ -565,7 +605,11 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
           >
             <Bell size={19} strokeWidth={1.8} />
 
-            <span className="remaker-notification-count">3</span>
+            {unreadCount > 0 && (
+              <span className="remaker-notification-count">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
@@ -574,31 +618,59 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
                 <div>
                   <strong>Notifications</strong>
 
-                  <span>3 new updates</span>
+                  <span>
+                    {unreadCount > 0
+                      ? `${unreadCount} new ${unreadCount === 1 ? "update" : "updates"}`
+                      : "You are all caught up"}
+                  </span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setNotificationsOpen(false)}
+                  onClick={() => {
+                    markAllRead();
+                    setNotificationsOpen(false);
+                  }}
+                  disabled={unreadCount === 0}
                 >
                   Mark read
                 </button>
               </div>
 
               <div className="remaker-notification-list">
-                {notifications.map((notification) => (
+                {latestNotifications.map((notification) => (
                   <div
                     className="remaker-notification-item"
                     key={notification.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      markRead(notification.id);
+                      setNotificationsOpen(false);
+
+                      if (notification.link) {
+                        navigate(notification.link.to);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.currentTarget.click();
+                      }
+                    }}
                   >
-                    <span className="remaker-notification-dot" />
+                    <span
+                      className="remaker-notification-dot"
+                      style={{
+                        visibility: notification.read ? "hidden" : "visible",
+                      }}
+                    />
 
                     <div>
                       <strong>{notification.title}</strong>
 
-                      <p>{notification.message}</p>
+                      <p>{notification.text}</p>
 
-                      <span>{notification.time}</span>
+                      <span>{timeLabel(notification.createdAt)}</span>
                     </div>
                   </div>
                 ))}

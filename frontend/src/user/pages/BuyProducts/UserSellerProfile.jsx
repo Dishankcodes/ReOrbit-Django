@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getProductsBySeller,
   getSellerReviews,
@@ -58,7 +58,11 @@ export default function UserSellerProfile() {
   const products = getProductsBySeller(sellerId);
   const reviews = getSellerReviews(sellerId);
   const [following, setFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState("listings");
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    ["listings", "reviews", "about"].includes(requestedTab) ? requestedTab : "listings",
+  );
 
   if (!seller)
     return (
@@ -85,7 +89,7 @@ export default function UserSellerProfile() {
     <main className="usp-page">
       <div className="usp-container">
         <button type="button" className="usp-back" onClick={() => navigate(-1)}>
-          <i className="bi bi-arrow-left" /> Back to marketplace
+          <i className="bi bi-arrow-left" /> Back
         </button>
         <section className="usp-profile">
           <div className="usp-cover">
@@ -251,12 +255,7 @@ export default function UserSellerProfile() {
                       <i>
                         <b
                           style={{
-                            width:
-                              rating === 5
-                                ? "78%"
-                                : rating === 4
-                                  ? "18%"
-                                  : "4%",
+                            width: `${reviews.length ? Math.round((reviews.filter((r) => Math.round(r.rating) === rating).length / reviews.length) * 100) : 0}%`,
                           }}
                         />
                       </i>

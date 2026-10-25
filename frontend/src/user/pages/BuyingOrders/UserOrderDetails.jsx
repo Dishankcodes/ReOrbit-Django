@@ -1,283 +1,297 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
-  Check,
-  CheckCircle2,
-  Package,
-  MapPin,
+  Ban,
+  CalendarDays,
+  CircleHelp,
   CreditCard,
+  FileText,
+  MapPin,
+  MapPinned,
+  Package,
+  Phone,
+  Receipt,
+  RotateCcw,
+  Star,
+  Store,
   Truck,
-  Clock3,
+  CheckCircle2,
+  Info,
+  Leaf,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
 
-import "../../css/UserBuyingOrders-css/UserOrderDetails.css";
+import { PAYMENT_LABEL, ADDRESS, cancelOrder, canCancel, reviewOrder, useOrder } from "../../data/ordersStore";
+import { formatDate, formatDateTime, relativeDay } from "../../utils/format";
+import Crumbs from "../../components/ui/Crumbs";
+import EmptyState from "../../components/ui/EmptyState";
+import SafeImage from "../../components/ui/SafeImage";
+import useToast from "../../components/ui/useToast";
+import CancelOrderModal from "./components/CancelOrderModal";
+import ReviewModal from "./components/ReviewModal";
+import SellerCard from "./components/SellerCard";
+import OrderStepper from "./components/OrderStepper";
+import { StatusBadge } from "./components/OrderBadges";
+import { Stars } from "../../components/ui/Stars";
+import { etaLine, inr } from "./components/OrderCard";
 
-const orders = {
-  ROD12548: {
-    id: "ROD12548",
-    product: "Reclaimed Wooden Chair",
-    category: "Furniture",
-    description: "Restored solid-wood chair with a natural finish.",
-    price: 2800,
-    quantity: 1,
-    date: "12 Aug 2026",
-    status: "Delivered",
-    image:
-      "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=1000&q=80",
-  },
-
-  ROD12549: {
-    id: "ROD12549",
-    product: "Recycled Table Lamp",
-    category: "Home Decor",
-    description: "Upcycled table lamp crafted from reclaimed materials.",
-    price: 1100,
-    quantity: 1,
-    date: "16 Aug 2026",
-    status: "Shipped",
-    image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1000&q=80",
-  },
-
-  ROD12550: {
-    id: "ROD12550",
-    product: "Vintage Canvas Bag",
-    category: "Accessories",
-    description: "Hand-restored canvas bag designed for everyday use.",
-    price: 1300,
-    quantity: 1,
-    date: "19 Aug 2026",
-    status: "Processing",
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=80",
-  },
-};
-
-const timeline = [
-  {
-    title: "Order placed",
-    description: "Your order has been successfully created.",
-    date: "12 Aug · 10:30 AM",
-    icon: Check,
-    active: true,
-  },
-  {
-    title: "Packed",
-    description: "The seller prepared your item for shipment.",
-    date: "12 Aug · 02:45 PM",
-    icon: Package,
-    active: true,
-  },
-  {
-    title: "Shipped",
-    description: "Your package is on its way.",
-    date: "13 Aug · 09:00 AM",
-    icon: Truck,
-    active: true,
-  },
-  {
-    title: "Out for delivery",
-    description: "Your order is with the delivery partner.",
-    date: "14 Aug · 08:10 AM",
-    icon: MapPin,
-    active: true,
-  },
-  {
-    title: "Delivered",
-    description: "Package delivered successfully.",
-    date: "14 Aug · 01:35 PM",
-    icon: CheckCircle2,
-    active: true,
-  },
-];
+import "../../css/shared/ui-base.css";
+import "../../css/orders/orders-base.css";
+import "../../css/orders/UserOrderDetails.css";
 
 export default function UserOrderDetails() {
-  const navigate = useNavigate();
   const { orderId } = useParams();
+  const order = useOrder(orderId);
+  const { toast, show } = useToast();
 
-  const order = orders[orderId] || orders.ROD12548;
+  const [cancelling, setCancelling] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
-  const subtotal = order.price * order.quantity;
-  const delivery = 50;
-  const total = subtotal + delivery;
+  if (!order) {
+    return (
+      <div className="dn">
+        <EmptyState
+          icon={Package}
+          title="We couldn't find that order"
+          text="The link may be wrong or the order may have been removed."
+          actionLabel="Back to my orders"
+          to="/user-orders"
+        />
+      </div>
+    );
+  }
+
+  const delivered = order.stage >= 5 && !order.cancelled;
+  const shippedPhase = order.stage >= 3 && !order.cancelled && !delivered;
+  const latest = order.events[order.events.length - 1];
+  const co2 = Math.round((order.item.co2SavedKg || 0) * order.qty);
 
   return (
-    <section className="user-order-details">
-      <div className="order-details-top">
-        <button
-          type="button"
-          className="order-details-back"
-          onClick={() => navigate("/user-orders")}
-        >
-          <ArrowLeft size={14} />
-          Back to Orders
-        </button>
+    <div className="dn ob ob-details">
+      <Crumbs
+        items={[
+          { label: "My orders", to: "/user-orders" },
+          { label: order.id },
+        ]}
+      />
 
-        <span className="order-details-top-status">
-          <CheckCircle2 size={13} />
-          {order.status}
-        </span>
-      </div>
-
-      <div className="order-details-hero">
-        <small>Order #{order.id}</small>
-
-        <h1>Your order journey</h1>
-
-        <p>
-          Everything about this purchase, from payment to delivery, in one
-          place.
-        </p>
-      </div>
-
-      <div className="order-details-layout">
+      <header className="ob-head">
         <div>
-          <article className="order-details-card">
-            <div className="order-details-card-header">
-              <div>
-                <span>Purchased item</span>
-                <h2>Order summary</h2>
-              </div>
-
-              <span>{order.date}</span>
-            </div>
-
-            <div className="order-detail-product">
-              <div className="order-detail-product-image">
-                <img src={order.image} alt={order.product} />
-              </div>
-
-              <div>
-                <h3>{order.product}</h3>
-
-                <p>
-                  {order.category} · Quantity {order.quantity}
-                </p>
-
-                <p>{order.description}</p>
-              </div>
-
-              <strong className="order-detail-product-price">
-                ₹{order.price.toLocaleString("en-IN")}
-              </strong>
-            </div>
-          </article>
-
-          <article className="order-details-card">
-            <div className="order-details-card-header">
-              <div>
-                <span>Live journey</span>
-                <h2>Order tracking</h2>
-              </div>
-
-              <Truck size={19} />
-            </div>
-
-            <div className="order-timeline">
-              {timeline.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <div
-                    className={`order-timeline-item ${
-                      item.active ? "completed" : ""
-                    }`}
-                    key={item.title}
-                  >
-                    <div className="order-timeline-dot">
-                      <Icon size={14} />
-                    </div>
-
-                    <div className="order-timeline-content">
-                      <strong>{item.title}</strong>
-
-                      <p>{item.description}</p>
-
-                      <p>{item.date}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </article>
+          <div className="ob-head-meta">
+            <span className="dn-dcard-id">ORDER {order.id}</span>
+            <StatusBadge status={order.status} />
+          </div>
+          <h1>{order.item.title}</h1>
+          <p className="dn-muted">
+            Placed on {formatDateTime(order.placedAt)} · {order.qty} {order.qty === 1 ? "item" : "items"}
+          </p>
         </div>
 
-        <aside>
-          <article className="order-details-card">
-            <div className="order-details-card-header">
-              <div>
-                <span>Payment</span>
-                <h2>Price details</h2>
-              </div>
-
-              <CreditCard size={18} />
-            </div>
-
-            <div className="order-summary-list">
-              <div className="order-summary-row">
-                <span>Item price</span>
-                <strong>₹{subtotal.toLocaleString("en-IN")}</strong>
-              </div>
-
-              <div className="order-summary-row">
-                <span>Delivery</span>
-                <strong>₹{delivery}</strong>
-              </div>
-
-              <div className="order-summary-total">
-                <span>Total paid</span>
-
-                <strong>₹{total.toLocaleString("en-IN")}</strong>
-              </div>
-            </div>
-
-            <div className="order-address">
-              <span className="order-address-label">Delivery address</span>
-
-              <strong>Dishank Prajapati</strong>
-
-              <p>
-                82, Sunrise Apartment,
-                <br />
-                Ahmedabad, Gujarat 380015
-              </p>
-            </div>
-          </article>
-
-          <article className="order-details-card">
-            <div className="order-details-card-header">
-              <div>
-                <span>Need assistance?</span>
-                <h2>Order support</h2>
-              </div>
-
-              <Clock3 size={18} />
-            </div>
-
-            <p
-              style={{
-                marginTop: 14,
-                color: "#6b756d",
-                fontSize: 8,
-                lineHeight: 1.7,
-              }}
-            >
-              Need help with this order? Visit Help & FAQ or contact ReOrbit
-              support.
-            </p>
-
-            <button
-              type="button"
-              className="order-view-btn"
-              style={{ marginTop: 14 }}
-              onClick={() => navigate("/user-help")}
-            >
-              Open Help & FAQ
+        <div className="ob-head-actions">
+          {!order.cancelled && !delivered && (
+            <Link to={`/user-orders/${order.id}/track`} className="dn-btn">
+              <MapPinned size={16} /> Track order
+            </Link>
+          )}
+          {delivered && !order.review && (
+            <button type="button" className="dn-btn" onClick={() => setReviewing(true)}>
+              <Star size={16} /> Rate order
             </button>
-          </article>
+          )}
+          {delivered && (
+            <Link to={`/user-marketplace/product/${order.itemId}`} className="dn-btn dn-btn--ghost">
+              <RotateCcw size={16} /> Buy again
+            </Link>
+          )}
+          <button type="button" className="dn-btn dn-btn--ghost" onClick={() => show("Invoice downloaded (demo).")}>
+            <FileText size={16} /> Invoice
+          </button>
+          {canCancel(order) && (
+            <button type="button" className="dn-btn dn-btn--danger" onClick={() => setCancelling(true)}>
+              <Ban size={16} /> Cancel
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ---------- state banner ---------- */}
+      {order.cancelled && (
+        <div className="dn-banner dn-banner--bad ob-banner">
+          <Ban size={20} />
+          <div>
+            <strong>This order was cancelled</strong>
+            Reason: {order.cancelReason}.{" "}
+            {order.refund && (
+              <>Refund of {inr(order.refund.amount)} is {order.refund.status === "Refunded" ? `completed on ${formatDate(order.refund.at)}` : "being processed to your original payment method"}.</>
+            )}
+          </div>
+        </div>
+      )}
+      {shippedPhase && (
+        <div className="dn-banner ob-banner">
+          <Truck size={20} />
+          <div>
+            <strong>{etaLine(order)}</strong>
+            {order.courier?.name} · AWB {order.courier?.awb}. <Link to={`/user-orders/${order.id}/track`} className="dn-link">See live tracking →</Link>
+          </div>
+        </div>
+      )}
+      {!order.cancelled && !shippedPhase && !delivered && (
+        <div className="dn-banner dn-banner--warn ob-banner">
+          <Info size={20} />
+          <div>
+            <strong>{order.status === "Processing" ? "The seller is packing your item" : "Order confirmed"}</strong>
+            Expected delivery {relativeDay(order.eta).toLowerCase()} ({formatDate(order.eta)}). You can cancel for free until it ships.
+          </div>
+        </div>
+      )}
+      {delivered && (
+        <div className="dn-banner ob-banner">
+          <CheckCircle2 size={20} />
+          <div>
+            <strong>Delivered on {formatDate(latest.at)}</strong>
+            This purchase saved about {co2} kg of CO₂. Thank you for choosing second-life products.
+          </div>
+        </div>
+      )}
+
+      <div className="ob-layout">
+        {/* ================= main ================= */}
+        <div className="ob-main">
+          <section className="dn-card dn-card-pad">
+            <div className="dn-card-head">
+              <h2>Item</h2>
+              <Link to={`/user-marketplace/product/${order.itemId}`} className="dn-link">View product →</Link>
+            </div>
+            <div className="ob-item">
+              <SafeImage src={order.item.image} alt={order.item.title} />
+              <div>
+                <span className="dn-chip">{order.item.category}</span>
+                <h3>{order.item.title}</h3>
+                <p>{order.item.summary}</p>
+                <ul>
+                  <li>Condition: <b>{order.item.condition}</b></li>
+                  <li>Qty: <b>{order.qty}</b></li>
+                  <li><Leaf size={13} /> <b>{co2} kg</b> CO₂ saved</li>
+                </ul>
+              </div>
+              <strong className="ob-item-price">{inr(order.price)}</strong>
+            </div>
+          </section>
+
+          <section className="dn-card dn-card-pad">
+            <div className="dn-card-head">
+              <div>
+                <h2>Order progress</h2>
+                <small>{order.cancelled ? "Stopped when the order was cancelled." : etaLine(order)}</small>
+              </div>
+              {!order.cancelled && !delivered && (
+                <Link to={`/user-orders/${order.id}/track`} className="dn-btn dn-btn--soft dn-btn--sm">
+                  Full tracking
+                </Link>
+              )}
+            </div>
+            <OrderStepper order={order} />
+            <ul className="ob-latest">
+              {[...order.events].reverse().slice(0, 3).map((event) => (
+                <li key={event.id}>
+                  <b>{event.label}</b>
+                  <span>{formatDateTime(event.at)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {order.review && (
+            <section className="dn-card dn-card-pad">
+              <div className="dn-card-head">
+                <h2>Your review</h2>
+                <Stars value={order.review.rating} size={18} />
+              </div>
+              <p className="ob-review-text">{order.review.text || "You rated this order without a written review."}</p>
+              <Link to={order.sellerPath + "?tab=reviews"} className="dn-link" style={{ marginTop: 12 }}>
+                See it on {order.seller?.name}'s profile →
+              </Link>
+            </section>
+          )}
+        </div>
+
+        {/* ================= side ================= */}
+        <aside className="ob-side">
+          <SellerCard order={order} />
+
+          <section className="dn-card dn-card-pad">
+            <div className="dn-card-head">
+              <h3>Price details</h3>
+              <Receipt size={18} />
+            </div>
+            <dl className="ob-price">
+              <div><dt>Item ({order.qty} × {inr(order.price)})</dt><dd>{inr(order.price * order.qty)}</dd></div>
+              <div><dt>Delivery</dt><dd>{order.shipping ? inr(order.shipping) : "Free"}</dd></div>
+              {order.discount > 0 && <div className="is-save"><dt>Discount</dt><dd>− {inr(order.discount)}</dd></div>}
+              <div className="is-total"><dt>{order.cancelled ? "Order total" : "Total paid"}</dt><dd>{inr(order.total)}</dd></div>
+            </dl>
+            <p className="ob-pay"><CreditCard size={15} /> Paid via {PAYMENT_LABEL[order.payment]}</p>
+          </section>
+
+          <section className="dn-card dn-card-pad">
+            <div className="dn-card-head"><h3>Delivery address</h3><MapPin size={18} /></div>
+            <div className="ob-addr">
+              <strong>{ADDRESS.name}</strong>
+              <p>{ADDRESS.line}</p>
+              <p>{ADDRESS.city}, {ADDRESS.state} – {ADDRESS.pincode}</p>
+              <p className="dn-muted"><Phone size={13} /> {ADDRESS.phone}</p>
+            </div>
+          </section>
+
+          {order.courier && !order.cancelled && (
+            <section className="dn-card dn-card-pad">
+              <div className="dn-card-head"><h3>Courier</h3><Truck size={18} /></div>
+              <div className="ob-addr">
+                <strong>{order.courier.name}</strong>
+                <p className="dn-muted">AWB {order.courier.awb}</p>
+              </div>
+            </section>
+          )}
+
+          <section className="dn-card dn-card-pad ob-help">
+            <CircleHelp size={22} />
+            <div>
+              <strong>Need help with this order?</strong>
+              <p>Delivery, returns or refunds, we're here to help.</p>
+              <Link to="/user-help" className="dn-link">Open Help & FAQ →</Link>
+            </div>
+          </section>
+
+          <Link to="/user-orders" className="dn-btn dn-btn--ghost dn-btn--block">
+            <Store size={16} /> Back to all orders
+          </Link>
         </aside>
       </div>
-    </section>
+
+      {cancelling && (
+        <CancelOrderModal
+          order={order}
+          onClose={() => setCancelling(false)}
+          onConfirm={(reason) => {
+            cancelOrder(order.id, reason);
+            setCancelling(false);
+            show("Order cancelled. Your refund has started.");
+          }}
+        />
+      )}
+      {reviewing && (
+        <ReviewModal
+          order={order}
+          onClose={() => setReviewing(false)}
+          onSubmit={(review) => {
+            reviewOrder(order.id, review);
+            setReviewing(false);
+            show("Thanks! Your review has been posted.");
+          }}
+        />
+      )}
+
+      {toast}
+    </div>
   );
 }

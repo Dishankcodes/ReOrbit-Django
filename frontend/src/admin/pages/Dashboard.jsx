@@ -25,239 +25,57 @@ import {
   Sparkles,
   Boxes,
   ClipboardCheck,
+  Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { useReport } from "../data/reportsStore";
+import { useUsers } from "../data/usersStore";
+import { useRemakers } from "../data/remakersStore";
+import { useProducts } from "../data/productsStore";
+import { useOrders } from "../data/ordersStore";
+import { useDonations } from "../data/donationsStore";
+import { usePickups } from "../data/pickupsStore";
+import { useNotifications } from "../data/notificationsStore";
+import { useSettings } from "../data/settingsStore";
+import { useAccess } from "../data/teamStore";
+import { LineChart, delta, compactInr, inr, num } from "./Reports/charts";
+import { timeAgo } from "../utils/format";
+
 import "../css/Dashboard.css";
+import "../css/reports/AdminReports.css";
 
-const stats = [
-  {
-    title: "Total Users",
-    value: "12,458",
-    change: "+8.4%",
-    trend: "up",
-    description: "vs. last month",
-    icon: Users,
-    path: "/admin-users",
-  },
-  {
-    title: "ReMakers",
-    value: "842",
-    change: "+5.7%",
-    trend: "up",
-    description: "vs. last month",
-    icon: Palette,
-    path: "/admin-remakers",
-  },
-  {
-    title: "Products",
-    value: "3,216",
-    change: "+12.2%",
-    trend: "up",
-    description: "active listings",
-    icon: ShoppingBag,
-    path: "/admin-products",
-  },
-  {
-    title: "Orders",
-    value: "1,984",
-    change: "+6.8%",
-    trend: "up",
-    description: "this month",
-    icon: Package,
-    path: "/admin-orders",
-  },
-  {
-    title: "Revenue",
-    value: "₹8.7L",
-    change: "+14.6%",
-    trend: "up",
-    description: "vs. last month",
-    icon: IndianRupee,
-    path: "/admin-orders",
-  },
-  {
-    title: "Donations",
-    value: "587",
-    change: "+9.1%",
-    trend: "up",
-    description: "items received",
-    icon: Gift,
-    path: "/admin-donations",
-  },
-  {
-    title: "Pickups",
-    value: "129",
-    change: "-3.2%",
-    trend: "down",
-    description: "pending requests",
-    icon: Truck,
-    path: "/admin-pickups",
-  },
-  {
-    title: "CO₂ Saved",
-    value: "2.4T",
-    change: "+18.9%",
-    trend: "up",
-    description: "estimated impact",
-    icon: Leaf,
-    path: "/admin-reports",
-  },
+const QUICK = [
+  { key: "users", label: "Manage Users", path: "/admin-users", icon: <Users size={17} /> },
+  { key: "remakers", label: "Review ReMakers", path: "/admin-remakers", icon: <Palette size={17} /> },
+  { key: "products", label: "Manage Products", path: "/admin-products", icon: <ShoppingBag size={17} /> },
+  { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: <WarehouseIcon /> },
+  { key: "pickups", label: "Manage Pickups", path: "/admin-pickups", icon: <Truck size={17} /> },
+  { key: "reports", label: "View Reports", path: "/admin-reports", icon: <TrendingUp size={17} /> },
+  { key: "shop", label: "Buy Products", path: "/admin-shop", icon: <ShoppingCart size={17} /> },
+  { key: "sell", label: "Sell Products", path: "/admin-sell", icon: <IndianRupee size={17} /> },
+  { key: "rewards", label: "Rewards", path: "/admin-rewards", icon: <Gift size={17} /> },
+  { key: "team", label: "Team & Roles", path: "/admin-team", icon: <Users size={17} /> },
+  { key: null, label: "Settings", path: "/admin-settings", icon: <Settings size={17} /> },
 ];
 
-const monthlyData = [
-  { month: "Apr", orders: 112, revenue: 420 },
-  { month: "May", orders: 138, revenue: 510 },
-  { month: "Jun", orders: 154, revenue: 580 },
-  { month: "Jul", orders: 171, revenue: 640 },
-  { month: "Aug", orders: 194, revenue: 730 },
-  { month: "Sep", orders: 226, revenue: 870 },
-];
-
-const activities = [
-  {
-    id: 1,
-    icon: UserPlus,
-    title: "New user registered",
-    description: "A new user joined ReOrbit.",
-    time: "8 minutes ago",
-    type: "user",
-  },
-  {
-    id: 2,
-    icon: BadgeCheck,
-    title: "ReMaker approved",
-    description: "EarthCraft Studio was approved.",
-    time: "24 minutes ago",
-    type: "remaker",
-  },
-  {
-    id: 3,
-    icon: ShoppingCart,
-    title: "New order received",
-    description: "Order #RO-10482 was placed.",
-    time: "42 minutes ago",
-    type: "order",
-  },
-  {
-    id: 4,
-    icon: Gift,
-    title: "Donation completed",
-    description: "Donation #DN-2084 was processed.",
-    time: "1 hour ago",
-    type: "donation",
-  },
-  {
-    id: 5,
-    icon: Truck,
-    title: "Pickup scheduled",
-    description: "Pickup #PK-1032 was assigned.",
-    time: "2 hours ago",
-    type: "pickup",
-  },
-];
-
-const pendingApprovals = [
-  {
-    id: 1,
-    type: "ReMaker Verification",
-    title: "Green Threads Studio",
-    description: "Profile verification pending",
-    time: "18 min ago",
-    action: "Review",
-    path: "/admin-remakers",
-    icon: Palette,
-  },
-  {
-    id: 2,
-    type: "Product Review",
-    title: "Upcycled Denim Collection",
-    description: "3 products waiting for approval",
-    time: "34 min ago",
-    action: "Review",
-    path: "/admin-products",
-    icon: ShoppingBag,
-  },
-  {
-    id: 3,
-    type: "Pickup Request",
-    title: "Pickup #PK-1048",
-    description: "Requires warehouse assignment",
-    time: "51 min ago",
-    action: "Assign",
-    path: "/admin-pickups",
-    icon: Truck,
-  },
-  {
-    id: 4,
-    type: "Donation Review",
-    title: "Donation #DN-2091",
-    description: "Item inspection required",
-    time: "1 hr ago",
-    action: "Inspect",
-    path: "/admin-donations",
-    icon: ClipboardCheck,
-  },
-];
-
-const recentOrders = [
-  {
-    id: "#RO-10482",
-    customer: "Aarav Shah",
-    product: "Reclaimed Wood Lamp",
-    amount: "₹1,249",
-    status: "Delivered",
-  },
-  {
-    id: "#RO-10479",
-    customer: "Meera Patel",
-    product: "Upcycled Denim Tote",
-    amount: "₹749",
-    status: "Processing",
-  },
-  {
-    id: "#RO-10474",
-    customer: "Riya Mehta",
-    product: "Recycled Glass Vase",
-    amount: "₹899",
-    status: "In Transit",
-  },
-  {
-    id: "#RO-10468",
-    customer: "Dev Joshi",
-    product: "Reclaimed Wood Organizer",
-    amount: "₹699",
-    status: "Delivered",
-  },
-];
-
-const categories = [
-  {
-    name: "Home & Decor",
-    value: 34,
-    count: "1,094 products",
-  },
-  {
-    name: "Fashion",
-    value: 27,
-    count: "868 products",
-  },
-  {
-    name: "Lifestyle",
-    value: 21,
-    count: "675 products",
-  },
-  {
-    name: "Furniture",
-    value: 11,
-    count: "354 products",
-  },
-  {
-    name: "Other",
-    value: 7,
-    count: "225 products",
-  },
-];
+const MODULE_ICON = {
+  Warehouse: Boxes, Donations: Gift, Pickups: Truck, Orders: ShoppingCart, Products: ShoppingBag,
+  Rewards: Gift, Sales: IndianRupee, Users: UserPlus, ReMakers: BadgeCheck, System: Sparkles,
+};
+const MODULE_TYPE = {
+  Users: "user", ReMakers: "remaker", Orders: "order", Sales: "order", Donations: "donation", Pickups: "pickup", Warehouse: "pickup", Products: "order",
+};
+const ORDER_STATUS = {
+  Completed: ["Delivered", "delivered"], Confirmed: ["Processing", "processing"], Pending: ["Pending", "pending"],
+  Cancelled: ["Cancelled", "cancelled"], Returned: ["Returned", "cancelled"],
+};
+const pctChange = (cur, prev) => delta(cur, prev);
+const changeLabel = (cur, prev) => {
+  const d = pctChange(cur, prev);
+  if (d == null) return { change: "New", trend: "up" };
+  return { change: `${d >= 0 ? "+" : ""}${d}%`, trend: d < 0 ? "down" : "up" };
+};
 
 function StatCard({ stat, onClick }) {
   const Icon = stat.icon;
@@ -299,85 +117,6 @@ function StatCard({ stat, onClick }) {
   );
 }
 
-function SimpleLineChart() {
-  const values = monthlyData.map((item) => item.revenue);
-
-  const width = 700;
-  const height = 260;
-  const paddingX = 30;
-  const paddingY = 25;
-
-  const maxValue = Math.max(...values);
-  const minValue = Math.min(...values);
-
-  const points = values.map((value, index) => {
-    const x = paddingX + (index * (width - paddingX * 2)) / (values.length - 1);
-
-    const y =
-      height -
-      paddingY -
-      ((value - minValue) / (maxValue - minValue)) * (height - paddingY * 2);
-
-    return `${x},${y}`;
-  });
-
-  const polygonPoints = [
-    `${paddingX},${height - paddingY}`,
-    ...points,
-    `${width - paddingX},${height - paddingY}`,
-  ].join(" ");
-
-  return (
-    <div className="admin-dashboard-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="adminChartGradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopOpacity="0.22" />
-            <stop offset="100%" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {[0, 1, 2, 3].map((line) => {
-          const y = paddingY + (line * (height - paddingY * 2)) / 3;
-
-          return (
-            <line
-              key={line}
-              x1={paddingX}
-              x2={width - paddingX}
-              y1={y}
-              y2={y}
-              className="admin-chart-grid-line"
-            />
-          );
-        })}
-
-        <polygon points={polygonPoints} className="admin-chart-area" />
-
-        <polyline points={points.join(" ")} className="admin-chart-line" />
-
-        {values.map((value, index) => {
-          const [x, y] = points[index].split(",").map(Number);
-
-          return (
-            <g key={index}>
-              <circle cx={x} cy={y} r="4" className="admin-chart-point" />
-
-              <circle cx={x} cy={y} r="7" className="admin-chart-point-ring" />
-            </g>
-          );
-        })}
-      </svg>
-
-      <div className="admin-dashboard-chart-labels">
-        {monthlyData.map((item) => (
-          <span key={item.month}>{item.month}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -397,7 +136,59 @@ export default function AdminDashboard() {
     }
   })();
 
-  const firstName = adminName.trim().split(/\s+/)[0];
+  const access = useAccess();
+  const settings = useSettings();
+  const firstName = (settings.profile?.name || adminName).trim().split(/\s+/)[0];
+
+  const report = useReport("6m");
+  const users = useUsers();
+  const remakers = useRemakers();
+  const products = useProducts();
+  const orders = useOrders();
+  const donations = useDonations();
+  const pickups = usePickups();
+  const notifications = useNotifications();
+
+  const live = React.useMemo(() => {
+    const o = report.orders.kpi;
+    const dn = report.donations.kpi;
+    const activeUsers = users.filter((u) => u.status !== "Deleted").length;
+    const activeMakers = remakers.filter((r) => r.status !== "Deleted").length;
+    const liveProducts = products.filter((p) => p.state === "live").length;
+    const pendingPickups = pickups.filter((p) => ["Requested", "Scheduled"].includes(p.status)).length;
+    const items = donations.filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status));
+    const kg = Math.round(items.reduce((n, d) => n + (d.weight_kg || 0), 0));
+    const reused = orders.filter((x) => x.order_status === "Completed").reduce((n, x) => n + (x.listing?.quantity || 1), 0) + items.reduce((n, d) => n + d.quantity, 0);
+    const co2 = Math.round((kg * 1.9 + reused * 4.2)) / 1000;
+    const newUsers = report.community.kpi.newInRange;
+    const monthAgo = report.orders.trend;
+    const cats = report.orders.categoryRows.slice(0, 5);
+    const catTotal = cats.reduce((n, c) => n + c.value, 0) || 1;
+    const listed = {};
+    products.filter((p) => p.state === "live").forEach((p) => { listed[p.category] = (listed[p.category] || 0) + 1; });
+    return {
+      stats: [
+        { title: "Total Users", value: num(activeUsers), change: `+${newUsers} new`, trend: "up", description: "joined in 6 months", icon: Users, path: "/admin-users" },
+        { title: "ReMakers", value: num(activeMakers), change: `${remakers.filter((r) => r.status === "Active").length} active`, trend: "up", description: "verified makers", icon: Palette, path: "/admin-remakers" },
+        { title: "Products", value: num(liveProducts), change: `${products.filter((p) => p.state === "pending").length} pending`, trend: "down", description: "live listings", icon: ShoppingBag, path: "/admin-products" },
+        { title: "Orders", value: num(o.orders), ...changeLabel(o.orders, o.ordersPrev), description: "last 6 months", icon: Package, path: "/admin-orders" },
+        { title: "Revenue", value: compactInr(o.revenue), ...changeLabel(o.revenue, o.revenuePrev), description: "paid order value", icon: IndianRupee, path: "/admin-reports?tab=sales" },
+        { title: "Donations", value: num(dn.total), ...changeLabel(dn.total, dn.totalPrev), description: `${dn.pending} awaiting review`, icon: Gift, path: "/admin-donations" },
+        { title: "Pickups", value: num(pendingPickups), change: `${report.donations.pk.kpi.overdue} overdue`, trend: report.donations.pk.kpi.overdue ? "down" : "up", description: "open requests", icon: Truck, path: "/admin-pickups" },
+        { title: "CO₂ Saved", value: `${co2.toFixed(1)}T`, change: `${num(reused)} items`, trend: "up", description: "estimated impact", icon: Leaf, path: "/admin-reports?tab=donations" },
+      ],
+      revenue: o.revenue, revenueChange: changeLabel(o.revenue, o.revenuePrev),
+      categories: cats.map((c) => ({ name: c.label, value: Math.round((c.value / catTotal) * 100), count: `${listed[c.label] || 0} live products · ${compactInr(c.value)}` })),
+      approvals: notifications.filter((n) => n.needsAction).slice(0, 4),
+      pendingCount: notifications.filter((n) => n.needsAction).length,
+      activities: notifications.slice(0, 5),
+      recentOrders: orders.slice(0, 5),
+      kg, reused, co2, activeUsers, trend: monthAgo,
+    };
+  }, [report, users, remakers, products, orders, donations, pickups, notifications]);
+  const PATH_KEY = { "/admin-users": "users", "/admin-remakers": "remakers", "/admin-products": "products", "/admin-orders": "orders", "/admin-reports?tab=sales": "reports", "/admin-donations": "donations", "/admin-pickups": "pickups", "/admin-reports?tab=donations": "reports" };
+  const stats = live.stats.filter((x) => access.canSee(PATH_KEY[x.path] || "dashboard"));
+  const { categories, approvals: pendingApprovals, activities, recentOrders } = live;
 
   return (
     <div className="admin-dashboard">
@@ -420,23 +211,23 @@ export default function AdminDashboard() {
             </p>
 
             <div className="admin-dashboard-welcome-actions">
-              <button
+              {access.canSee("reports") && <button
                 type="button"
                 className="admin-dashboard-primary-button"
                 onClick={() => navigate("/admin-reports")}
               >
                 View Reports
                 <ArrowRight size={15} />
-              </button>
+              </button>}
 
-              <button
+              {access.canSee("remakers") && <button
                 type="button"
                 className="admin-dashboard-secondary-button"
                 onClick={() => navigate("/admin-remakers")}
               >
                 <BadgeCheck size={15} />
                 Review ReMakers
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -453,7 +244,7 @@ export default function AdminDashboard() {
               <Recycle size={14} />
               <div>
                 <span>Impact</span>
-                <strong>+18.9%</strong>
+                <strong>{live.co2.toFixed(1)}T</strong>
               </div>
             </div>
 
@@ -461,7 +252,7 @@ export default function AdminDashboard() {
               <Users size={14} />
               <div>
                 <span>Users</span>
-                <strong>12.4K</strong>
+                <strong>{num(live.activeUsers)}</strong>
               </div>
             </div>
           </div>
@@ -487,28 +278,27 @@ export default function AdminDashboard() {
 
                 <h3>Revenue overview</h3>
 
-                <p>Monthly marketplace revenue performance.</p>
+                <p>Paid order value, last 6 months. Hover for details.</p>
               </div>
 
               <div className="admin-dashboard-chart-value">
-                <strong>₹8.7L</strong>
+                <strong>{compactInr(live.revenue)}</strong>
 
                 <span>
-                  <TrendingUp size={11} />
-                  14.6%
+                  {live.revenueChange.trend === "down" ? <TrendingDown size={11} /> : <TrendingUp size={11} />}
+                  {live.revenueChange.change}
                 </span>
               </div>
             </div>
 
-            <div className="admin-dashboard-chart-wrapper">
-              <div className="admin-dashboard-chart-y-axis">
-                <span>₹1L</span>
-                <span>₹75K</span>
-                <span>₹50K</span>
-                <span>₹25K</span>
-              </div>
-
-              <SimpleLineChart />
+            <div className="rp-scope">
+              <LineChart
+                data={report.orders.trend}
+                series={[{ key: "revenue", label: "Order value", color: "var(--rp-c1)" }]}
+                format={inr}
+                axisFormat={compactInr}
+                area
+              />
             </div>
           </div>
 
@@ -517,15 +307,15 @@ export default function AdminDashboard() {
               <div>
                 <span className="admin-dashboard-panel-label">MARKETPLACE</span>
 
-                <h3>Product categories</h3>
+                <h3>Sales by category</h3>
 
-                <p>Current listing distribution.</p>
+                <p>Share of paid order value.</p>
               </div>
 
               <button
                 type="button"
                 className="admin-dashboard-more-button"
-                onClick={() => navigate("/admin-products")}
+                onClick={() => navigate("/admin-reports?tab=sales")}
               >
                 <MoreHorizontal size={18} />
               </button>
@@ -567,12 +357,13 @@ export default function AdminDashboard() {
                 <h3>Pending approvals</h3>
               </div>
 
-              <span className="admin-dashboard-count-badge">4 pending</span>
+              <span className="admin-dashboard-count-badge">{live.pendingCount} to do</span>
             </div>
 
             <div className="admin-dashboard-approval-list">
+              {pendingApprovals.length === 0 && <p className="dash-empty">Nothing needs your attention right now.</p>}
               {pendingApprovals.map((approval) => {
-                const Icon = approval.icon;
+                const Icon = MODULE_ICON[approval.module] || AlertCircle;
 
                 return (
                   <div
@@ -584,24 +375,24 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="admin-dashboard-approval-content">
-                      <span>{approval.type}</span>
+                      <span>{approval.module}</span>
 
                       <strong>{approval.title}</strong>
 
-                      <p>{approval.description}</p>
+                      <p>{approval.message.length > 70 ? `${approval.message.slice(0, 68)}…` : approval.message}</p>
                     </div>
 
                     <div className="admin-dashboard-approval-right">
                       <small>
                         <Clock3 size={10} />
-                        {approval.time}
+                        {timeAgo(approval.at)}
                       </small>
 
                       <button
                         type="button"
                         onClick={() => navigate(approval.path)}
                       >
-                        {approval.action}
+                        {approval.actionLabel}
                         <ArrowUpRight size={12} />
                       </button>
                     </div>
@@ -613,7 +404,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               className="admin-dashboard-panel-footer"
-              onClick={() => navigate("/admin-remakers")}
+              onClick={() => navigate("/admin-notifications")}
             >
               View all pending items
               <ArrowRight size={13} />
@@ -633,7 +424,7 @@ export default function AdminDashboard() {
 
             <div className="admin-dashboard-activity-list">
               {activities.map((activity) => {
-                const Icon = activity.icon;
+                const Icon = MODULE_ICON[activity.module] || Sparkles;
 
                 return (
                   <div
@@ -641,7 +432,7 @@ export default function AdminDashboard() {
                     key={activity.id}
                   >
                     <div
-                      className={`admin-dashboard-activity-icon ${activity.type}`}
+                      className={`admin-dashboard-activity-icon ${MODULE_TYPE[activity.module] || "order"}`}
                     >
                       <Icon size={14} strokeWidth={1.8} />
                     </div>
@@ -649,11 +440,11 @@ export default function AdminDashboard() {
                     <div className="admin-dashboard-activity-content">
                       <strong>{activity.title}</strong>
 
-                      <p>{activity.description}</p>
+                      <p>{activity.message.length > 64 ? `${activity.message.slice(0, 62)}…` : activity.message}</p>
 
                       <span>
                         <Clock3 size={10} />
-                        {activity.time}
+                        {timeAgo(activity.at)}
                       </span>
                     </div>
                   </div>
@@ -701,31 +492,28 @@ export default function AdminDashboard() {
                 <span>STATUS</span>
               </div>
 
-              {recentOrders.map((order) => (
-                <div className="admin-dashboard-order-row" key={order.id}>
-                  <strong>{order.id}</strong>
+              {recentOrders.map((order) => {
+                const [label, cls] = ORDER_STATUS[order.order_status] || [order.order_status, "pending"];
+                return (
+                  <div className="admin-dashboard-order-row dash-order-link" key={order.order_id} role="link" tabIndex={0} onClick={() => navigate(`/admin-orders/${order.order_id}`)} onKeyDown={(e) => e.key === "Enter" && navigate(`/admin-orders/${order.order_id}`)}>
+                    <strong>{order.order_id}</strong>
 
-                  <span>{order.customer}</span>
+                    <span>{order.buyer?.name || "—"}</span>
 
-                  <div className="admin-dashboard-order-product">
-                    <div>
-                      <Package size={15} />
+                    <div className="admin-dashboard-order-product">
+                      <div>
+                        <Package size={15} />
+                      </div>
+
+                      <span>{order.listing?.title || "Order"}</span>
                     </div>
 
-                    <span>{order.product}</span>
+                    <strong>{inr(order.amount)}</strong>
+
+                    <span className={`admin-dashboard-order-status ${cls}`}>{label}</span>
                   </div>
-
-                  <strong>{order.amount}</strong>
-
-                  <span
-                    className={`admin-dashboard-order-status ${order.status
-                      .toLowerCase()
-                      .replace(" ", "-")}`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -745,7 +533,7 @@ export default function AdminDashboard() {
             <div className="admin-dashboard-impact-main">
               <div className="admin-dashboard-impact-circle">
                 <div>
-                  <strong>2.4</strong>
+                  <strong>{live.co2.toFixed(1)}</strong>
 
                   <span>tons</span>
                 </div>
@@ -754,9 +542,9 @@ export default function AdminDashboard() {
               <div>
                 <span>Estimated CO₂ saved</span>
 
-                <strong>+18.9%</strong>
+                <strong>{num(live.reused)} items</strong>
 
-                <small>compared with last month</small>
+                <small>kept in use, not landfill</small>
               </div>
             </div>
 
@@ -765,7 +553,7 @@ export default function AdminDashboard() {
                 <Recycle size={15} />
 
                 <div>
-                  <strong>4,892</strong>
+                  <strong>{num(live.reused)}</strong>
 
                   <span>items reused</span>
                 </div>
@@ -775,9 +563,9 @@ export default function AdminDashboard() {
                 <Boxes size={15} />
 
                 <div>
-                  <strong>1,284</strong>
+                  <strong>{num(live.kg)}</strong>
 
-                  <span>kg material saved</span>
+                  <span>kg donated</span>
                 </div>
               </div>
             </div>
@@ -804,65 +592,15 @@ export default function AdminDashboard() {
           </div>
 
           <div className="admin-dashboard-quick-grid">
-            <button type="button" onClick={() => navigate("/admin-users")}>
-              <div>
-                <Users size={17} />
-              </div>
+            {QUICK.filter((q) => !q.key || access.canSee(q.key)).map((q) => (
+              <button type="button" key={q.path} onClick={() => navigate(q.path)}>
+                <div>{q.icon}</div>
 
-              <span>Manage Users</span>
+                <span>{q.label}</span>
 
-              <ChevronRight size={15} />
-            </button>
-
-            <button type="button" onClick={() => navigate("/admin-remakers")}>
-              <div>
-                <Palette size={17} />
-              </div>
-
-              <span>Review ReMakers</span>
-
-              <ChevronRight size={15} />
-            </button>
-
-            <button type="button" onClick={() => navigate("/admin-products")}>
-              <div>
-                <ShoppingBag size={17} />
-              </div>
-
-              <span>Manage Products</span>
-
-              <ChevronRight size={15} />
-            </button>
-
-            <button type="button" onClick={() => navigate("/admin-warehouse")}>
-              <div>
-                <WarehouseIcon />
-              </div>
-
-              <span>Warehouse</span>
-
-              <ChevronRight size={15} />
-            </button>
-
-            <button type="button" onClick={() => navigate("/admin-pickups")}>
-              <div>
-                <Truck size={17} />
-              </div>
-
-              <span>Manage Pickups</span>
-
-              <ChevronRight size={15} />
-            </button>
-
-            <button type="button" onClick={() => navigate("/admin-reports")}>
-              <div>
-                <TrendingUp size={17} />
-              </div>
-
-              <span>View Reports</span>
-
-              <ChevronRight size={15} />
-            </button>
+                <ChevronRight size={15} />
+              </button>
+            ))}
           </div>
         </section>
       </div>

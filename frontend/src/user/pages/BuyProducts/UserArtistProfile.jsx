@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { followerCount, useFollowing } from "../../data/followStore";
 import {
   formatPrice,
   getRemakerById,
@@ -57,8 +58,13 @@ export default function UserArtistProfile() {
   const artist = getRemakerById(artistId);
   const products = getRemakerProducts(artistId);
   const reviews = getSellerReviews(artistId);
-  const [following, setFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState("studio");
+  const { isFollowing, toggle: toggleFollow } = useFollowing();
+  const following = isFollowing(artistId);
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    ["studio", "portfolio", "products", "reviews"].includes(requestedTab) ? requestedTab : "studio",
+  );
 
   const portfolio = artist?.portfolio || [];
   const totalProducts = useMemo(
@@ -91,7 +97,7 @@ export default function UserArtistProfile() {
     <main className="uap-page">
       <div className="uap-container">
         <button type="button" className="uap-back" onClick={() => navigate(-1)}>
-          <i className="bi bi-arrow-left" /> Back to marketplace
+          <i className="bi bi-arrow-left" /> Back
         </button>
         <section className="uap-profile">
           <div className="uap-cover">
@@ -125,7 +131,7 @@ export default function UserArtistProfile() {
                 <button
                   type="button"
                   className={`uap-follow ${following ? "active" : ""}`}
-                  onClick={() => setFollowing((value) => !value)}
+                  onClick={() => toggleFollow(artistId)}
                 >
                   <i
                     className={following ? "bi bi-check2" : "bi bi-person-plus"}
@@ -157,7 +163,7 @@ export default function UserArtistProfile() {
             </div>
             <div>
               <small>Followers</small>
-              <strong>{artist.followers.toLocaleString("en-IN")}</strong>
+              <strong>{followerCount(artist.followers, following).toLocaleString("en-IN")}</strong>
             </div>
             <div>
               <small>Experience</small>
