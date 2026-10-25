@@ -12,12 +12,7 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-  useNotifications,
-  markRead,
-  MODULES,
-  timeAgo,
-} from "../data/notificationsStore";
+import { useNotifications, markRead, MODULES, timeAgo } from "../data/notificationsStore";
 import { useAccess } from "../data/teamStore";
 import { useSettings } from "../data/settingsStore";
 
@@ -29,28 +24,32 @@ const pageInformation = {
     subtitle: "Monitor the ReOrbit ecosystem from one place.",
   },
   "/admin-users": {
-    title: "Manage Users",
+    title: "Users",
     subtitle: "Manage ReOrbit users and account activity.",
   },
   "/admin-remakers": {
-    title: "Manage ReMakers",
+    title: "ReMakers",
     subtitle: "Review and manage the ReMaker community.",
   },
   "/admin-products": {
-    title: "Manage Products",
+    title: "Products",
     subtitle: "Manage marketplace products and listings.",
   },
   "/admin-orders": {
-    title: "Manage Orders",
+    title: "Orders",
     subtitle: "Track and manage customer orders.",
   },
   "/admin-donations": {
-    title: "Manage Donations",
+    title: "Donations",
     subtitle: "Manage donated items and donation activity.",
   },
   "/admin-pickups": {
-    title: "Manage Pickups",
+    title: "Pickups",
     subtitle: "Manage pickup requests and schedules.",
+  },
+  "/admin-complaints": {
+    title: "Complaints",
+    subtitle: "Review reports about users, ReMakers, listings and reviews.",
   },
   "/admin-warehouse": {
     title: "Warehouse",
@@ -60,34 +59,13 @@ const pageInformation = {
     title: "Rewards",
     subtitle: "Manage Orbit Points, badges and rewards.",
   },
-  "/admin-sell": {
-    title: "Sell Products",
-    subtitle: "List warehouse and refurbished products and manage their sales.",
-  },
-  "/admin-sell/new": {
-    title: "Add Product",
-    subtitle: "Enter the details, add 3 to 4 photos and publish.",
-  },
-  "/admin-sell/sales": {
-    title: "Sales",
-    subtitle: "Orders placed for your products. Accept, ship and track them.",
-  },
-  "/admin-shop": {
-    title: "Buy Products",
-    subtitle: "Shop community items and ReMaker products as the platform.",
-  },
-  "/admin-shop/cart": {
-    title: "Cart",
-    subtitle: "Review the products you are about to buy.",
-  },
-  "/admin-shop/checkout": {
-    title: "Checkout",
-    subtitle: "Delivery, payment and review.",
-  },
-  "/admin-shop/orders": {
-    title: "My Purchases",
-    subtitle: "Everything you bought as the platform.",
-  },
+  "/admin-sell": { title: "Sell Products", subtitle: "List warehouse and refurbished products and manage their sales." },
+  "/admin-sell/new": { title: "Add Product", subtitle: "Enter the details, add 3 to 4 photos and publish." },
+  "/admin-sell/sales": { title: "Sales", subtitle: "Orders placed for your products. Accept, ship and track them." },
+  "/admin-shop": { title: "Buy Products", subtitle: "Shop community items and ReMaker products as the platform." },
+  "/admin-shop/cart": { title: "Cart", subtitle: "Review the products you are about to buy." },
+  "/admin-shop/checkout": { title: "Checkout", subtitle: "Delivery, payment and review." },
+  "/admin-shop/orders": { title: "My Purchases", subtitle: "Everything you bought as the platform." },
   "/admin-notifications": {
     title: "Notifications",
     subtitle: "Manage system notifications and announcements.",
@@ -117,6 +95,7 @@ const pageInformation = {
     subtitle: "Add sub-admins and choose what each person can see and change.",
   },
 };
+
 
 function getStoredAdmin() {
   try {
@@ -213,141 +192,95 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
   const access = useAccess();
   const { profile } = useSettings();
   const person = access.me;
-  const adminName = access.previewing
-    ? person.name
-    : profile?.name || getAdminName(admin);
-  const adminEmail = access.previewing
-    ? person.email
-    : profile?.email || getAdminEmail(admin);
+  const adminName = access.previewing ? person.name : profile?.name || getAdminName(admin);
+  const adminEmail = access.previewing ? person.email : profile?.email || getAdminEmail(admin);
   const roleLabel = access.isSuper ? "Super admin" : person.roleLabel;
   const initials = getInitials(adminName);
 
   /* A single user's page (/admin-users/USR-1001) gets its own title. */
   const isUserProfilePage = /^\/admin-users\/[^/]+$/.test(location.pathname);
 
-  const isRemakerProfilePage = /^\/admin-remakers\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isRemakerProfilePage = /^\/admin-remakers\/[^/]+$/.test(location.pathname);
 
-  const isProductDetailsPage = /^\/admin-products\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isProductDetailsPage = /^\/admin-products\/[^/]+$/.test(location.pathname);
 
   const isOrderDetailsPage = /^\/admin-orders\/[^/]+$/.test(location.pathname);
 
-  const isPickupDetailsPage = /^\/admin-pickups\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isComplaintDetailsPage = /^\/admin-complaints\/[^/]+$/.test(location.pathname);
 
-  const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isPickupDetailsPage = /^\/admin-pickups\/[^/]+$/.test(location.pathname);
 
-  const isWarehouseItemPage = /^\/admin-warehouse\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(location.pathname);
 
-  const isShopProductPage = /^\/admin-shop\/product\/[^/]+$/.test(
-    location.pathname,
-  );
-  const isShopSellerPage = /^\/admin-shop\/seller\/[^/]+$/.test(
-    location.pathname,
-  );
-  const isShopSuccessPage = /^\/admin-shop\/success\/[^/]+$/.test(
-    location.pathname,
-  );
-  const isShopOrderPage = /^\/admin-shop\/orders\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isWarehouseItemPage = /^\/admin-warehouse\/[^/]+$/.test(location.pathname);
 
-  const isSellListingPage = /^\/admin-sell\/listing\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isShopProductPage = /^\/admin-shop\/product\/[^/]+$/.test(location.pathname);
+  const isShopSellerPage = /^\/admin-shop\/seller\/[^/]+$/.test(location.pathname);
+  const isShopSuccessPage = /^\/admin-shop\/success\/[^/]+$/.test(location.pathname);
+  const isShopOrderPage = /^\/admin-shop\/orders\/[^/]+$/.test(location.pathname);
+
+  const isSellListingPage = /^\/admin-sell\/listing\/[^/]+$/.test(location.pathname);
   const isSellEditPage = /^\/admin-sell\/edit\/[^/]+$/.test(location.pathname);
-  const isSaleDetailsPage = /^\/admin-sell\/sales\/[^/]+$/.test(
-    location.pathname,
-  );
+  const isSaleDetailsPage = /^\/admin-sell\/sales\/[^/]+$/.test(location.pathname);
 
   const currentPage = isSellListingPage
-    ? {
-        title: "Listing Details",
-        subtitle: "Photos, stock, performance and the sales of this product.",
-      }
+    ? { title: "Listing Details", subtitle: "Photos, stock, performance and the sales of this product." }
     : isSellEditPage
-      ? {
-          title: "Edit Product",
-          subtitle: "Update the details, photos and price.",
-        }
-      : isSaleDetailsPage
-        ? {
-            title: "Sale Details",
-            subtitle:
-              "Buyer, shipping, payment and status of this selling order.",
-          }
-        : isShopProductPage
-          ? {
-              title: "Product",
-              subtitle: "Details, seller profile and buying options.",
-            }
-          : isShopSellerPage
-            ? {
-                title: "Seller Shop",
-                subtitle: "Everything this seller has listed.",
-              }
-            : isShopSuccessPage
-              ? { title: "Order Placed", subtitle: "Your order is confirmed." }
-              : isShopOrderPage
-                ? {
-                    title: "Purchase Details",
-                    subtitle:
-                      "Tracking, payment and delivery for this purchase.",
-                  }
-                : isPickupDetailsPage
-                  ? {
-                      title: "Pickup Details",
-                      subtitle:
-                        "Schedule, pickup team, address and history for this pickup.",
-                    }
-                  : isDonationDetailsPage
-                    ? {
-                        title: "Donation Details",
-                        subtitle:
-                          "Review the donor, the item and the pickup progress.",
-                      }
-                    : isWarehouseItemPage
-                      ? {
-                          title: "Stock Details",
-                          subtitle:
-                            "Location, sales performance and actions for this stock.",
-                        }
-                      : isOrderDetailsPage
-                        ? {
-                            title: "Order Details",
-                            subtitle:
-                              "Payment, buyer, seller and the history of this order.",
-                          }
-                        : isProductDetailsPage
-                          ? {
-                              title: "Product Details",
-                              subtitle:
-                                "Review the listing, who posted it and its history.",
-                            }
-                          : isRemakerProfilePage
-                            ? {
-                                title: "ReMaker Profile",
-                                subtitle:
-                                  "Portfolio, products, orders, refurbishments and moderation.",
-                              }
-                            : isUserProfilePage
-                              ? {
-                                  title: "User Profile",
-                                  subtitle:
-                                    "Account details, orders, donations and moderation.",
-                                }
-                              : pageInformation[location.pathname] || {
-                                  title: "ReOrbit Admin",
-                                  subtitle: "Manage the ReOrbit ecosystem.",
-                                };
+    ? { title: "Edit Product", subtitle: "Update the details, photos and price." }
+    : isSaleDetailsPage
+    ? { title: "Sale Details", subtitle: "Buyer, shipping, payment and status of this selling order." }
+    : isShopProductPage
+    ? { title: "Product", subtitle: "Details, seller profile and buying options." }
+    : isShopSellerPage
+    ? { title: "Seller Shop", subtitle: "Everything this seller has listed." }
+    : isShopSuccessPage
+    ? { title: "Order Placed", subtitle: "Your order is confirmed." }
+    : isShopOrderPage
+    ? { title: "Purchase Details", subtitle: "Tracking, payment and delivery for this purchase." }
+    : isComplaintDetailsPage
+    ? {
+        title: "Complaint Details",
+        subtitle: "What was reported, the evidence and the decision.",
+      }
+    : isPickupDetailsPage
+    ? {
+        title: "Pickup Details",
+        subtitle: "Schedule, pickup team, address and history for this pickup.",
+      }
+    : isDonationDetailsPage
+    ? {
+        title: "Donation Details",
+        subtitle: "Review the donor, the item and the pickup progress.",
+      }
+    : isWarehouseItemPage
+    ? {
+        title: "Stock Details",
+        subtitle: "Location, sales performance and actions for this stock.",
+      }
+    : isOrderDetailsPage
+    ? {
+        title: "Order Details",
+        subtitle: "Payment, buyer, seller and the history of this order.",
+      }
+    : isProductDetailsPage
+    ? {
+        title: "Product Details",
+        subtitle: "Review the listing, who posted it and its history.",
+      }
+    : isRemakerProfilePage
+    ? {
+        title: "ReMaker Profile",
+        subtitle: "Portfolio, products, orders, refurbishments and moderation.",
+      }
+    : isUserProfilePage
+    ? {
+        title: "User Profile",
+        subtitle: "Account details, orders, donations and moderation.",
+      }
+    : pageInformation[location.pathname] || {
+        title: "ReOrbit Admin",
+        subtitle: "Manage the ReOrbit ecosystem.",
+      };
 
   const handleProfile = () => {
     setNotificationsOpen(false);
@@ -419,10 +352,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
 
       <div className="admin-header-actions">
         {access.previewing && (
-          <span
-            className="admin-header-preview-chip"
-            title="You are previewing the panel as this person"
-          >
+          <span className="admin-header-preview-chip" title="You are previewing the panel as this person">
             <Eye size={14} />
             Preview
           </span>
@@ -443,11 +373,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
           >
             <Bell size={19} strokeWidth={1.8} />
 
-            {bellCount > 0 && (
-              <span className="admin-notification-count">
-                {bellCount > 99 ? "99+" : bellCount}
-              </span>
-            )}
+            {bellCount > 0 && <span className="admin-notification-count">{bellCount > 99 ? "99+" : bellCount}</span>}
           </button>
 
           {notificationsOpen && (
@@ -456,11 +382,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                 <div>
                   <strong>Notifications</strong>
 
-                  <span>
-                    {bellCount
-                      ? `${bellCount} unread`
-                      : "No unread notifications"}
-                  </span>
+                  <span>{bellCount ? `${bellCount} unread` : "No unread notifications"}</span>
                 </div>
 
                 <button
@@ -483,25 +405,16 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                       if (n.path) navigate(n.path);
                     }}
                   >
-                    <span
-                      className={`admin-notification-dot sev-${n.severity}`}
-                    />
+                    <span className={`admin-notification-dot sev-${n.severity}`} />
                     <div>
                       <strong>{n.title}</strong>
                       <p>{n.message}</p>
-                      <span>
-                        {MODULES[n.module].label} · {timeAgo(n.at)}
-                      </span>
+                      <span>{MODULES[n.module].label} · {timeAgo(n.at)}</span>
                     </div>
                   </button>
                 ))}
                 {bellList.length === 0 && (
-                  <div className="admin-notification-item">
-                    <div>
-                      <strong>All caught up</strong>
-                      <p>No notifications right now.</p>
-                    </div>
-                  </div>
+                  <div className="admin-notification-item"><div><strong>All caught up</strong><p>No notifications right now.</p></div></div>
                 )}
               </div>
 

@@ -24,7 +24,6 @@ import UserProductDetails from "./user/pages/BuyProducts/UserProductDetails";
 import UserSellerProfile from "./user/pages/BuyProducts/UserSellerProfile";
 import UserOrderDetails from "./user/pages/BuyingOrders/UserOrderDetails";
 import UserOrders from "./user/pages/BuyingOrders/UserOrders";
-import UserOrderTrack from "./user/pages/BuyingOrders/UserOrderTrack";
 import UserBadges from "./user/pages/UserProfile/UserBadges";
 import UserHelp from "./user/pages/UserProfile/UserHelp";
 import UserOrbitPoints from "./user/pages/UserProfile/UserOrbitPoints";
@@ -32,15 +31,8 @@ import UserProfile from "./user/pages/UserProfile/UserProfile";
 import UserSettings from "./user/pages/UserProfile/UserSettings";
 import UserWishlist from "./user/pages/UserWishlists/UserWishlist";
 import UserCheckout from "./user/pages/UserCheckout";
-import UserDonations from "./user/pages/Donations/UserDonations";
-import UserDonationNew from "./user/pages/Donations/UserDonationNew";
-import UserDonationSuccess from "./user/pages/Donations/UserDonationSuccess";
-import UserDonationHistory from "./user/pages/Donations/UserDonationHistory";
-import UserDonationDetails from "./user/pages/Donations/UserDonationDetails";
-import UserDonationPickup from "./user/pages/Donations/UserDonationPickup";
-import UserDonationCertificate from "./user/pages/Donations/UserDonationCertificate";
+import UserDonations from "./user/pages/UserDonations";
 import UserFollowing from "./user/pages/UserFollowing";
-import UserRemakers from "./user/pages/Remakers/UserRemakers";
 
 /* =========================================================
    REMAKER SIDE (IMPORTS)
@@ -138,10 +130,6 @@ import AdminDonationDetails from "./admin/pages/Donations/AdminDonationDetails";
 import AdminPickups from "./admin/pages/Pickups/AdminPickups";
 import AdminPickupDetails from "./admin/pages/Pickups/AdminPickupDetails";
 import AdminRewards from "./admin/pages/Rewards/AdminRewards";
-import AdminReports from "./admin/pages/Reports/AdminReports";
-import AdminSettings from "./admin/pages/Settings/AdminSettings";
-import AdminTeam from "./admin/pages/Team/AdminTeam";
-import AdminEarnings from "./admin/pages/Earnings/AdminEarnings";
 import AdminNotifications from "./admin/pages/Notifications/AdminNotifications";
 import AdminShop from "./admin/pages/Shop/AdminShop";
 import AdminShopProduct from "./admin/pages/Shop/AdminShopProduct";
@@ -151,11 +139,6 @@ import AdminShopCheckout from "./admin/pages/Shop/AdminShopCheckout";
 import AdminShopSuccess from "./admin/pages/Shop/AdminShopSuccess";
 import AdminShopOrders from "./admin/pages/Shop/AdminShopOrders";
 import AdminShopOrderDetails from "./admin/pages/Shop/AdminShopOrderDetails";
-import AdminSell from "./admin/pages/Sell/AdminSell";
-import AdminSellForm from "./admin/pages/Sell/AdminSellForm";
-import AdminSellListing from "./admin/pages/Sell/AdminSellListing";
-import AdminSales from "./admin/pages/Sell/AdminSales";
-import AdminSaleDetails from "./admin/pages/Sell/AdminSaleDetails";
 
 export default function App() {
   return (
@@ -191,64 +174,27 @@ export default function App() {
         {/* Marketplace */}
         <Route path="/user-marketplace" element={<UserMarketplace />} />
         <Route
-          path="/user-marketplace/product/:productId"
+          path="/user-marketplace/product/:id"
           element={<UserProductDetails />}
         />
-        {/* Profiles: the product and marketplace pages also link to the
-            shorter /user-seller-profile and /user-artist-profile paths */}
         <Route
-          path="/user-marketplace/seller/:sellerId"
+          path="/user-marketplace/seller/:id"
           element={<UserSellerProfile />}
         />
         <Route
-          path="/user-seller-profile/:sellerId"
-          element={<UserSellerProfile />}
-        />
-        <Route
-          path="/user-marketplace/remaker/:artistId"
-          element={<UserArtistProfile />}
-        />
-        <Route
-          path="/user-artist-profile/:artistId"
+          path="/user-marketplace/remaker/:id"
           element={<UserArtistProfile />}
         />
 
         {/* Orders + checkout */}
         <Route path="/user-orders" element={<UserOrders />} />
         <Route path="/user-orders/:orderId" element={<UserOrderDetails />} />
-        <Route
-          path="/user-orders/:orderId/track"
-          element={<UserOrderTrack />}
-        />
         <Route path="/user-wishlist" element={<UserWishlist />} />
         <Route path="/user-checkout" element={<UserCheckout />} />
 
         {/* Community */}
-        {/* Donations: static paths first, then the :donationId pages */}
         <Route path="/user-donations" element={<UserDonations />} />
-        <Route path="/user-donations/new" element={<UserDonationNew />} />
-        <Route
-          path="/user-donations/history"
-          element={<UserDonationHistory />}
-        />
-        <Route
-          path="/user-donations/success/:donationId"
-          element={<UserDonationSuccess />}
-        />
-        <Route
-          path="/user-donations/:donationId"
-          element={<UserDonationDetails />}
-        />
-        <Route
-          path="/user-donations/:donationId/pickup"
-          element={<UserDonationPickup />}
-        />
-        <Route
-          path="/user-donations/:donationId/certificate"
-          element={<UserDonationCertificate />}
-        />
         <Route path="/user-following" element={<UserFollowing />} />
-        <Route path="/user-remakers" element={<UserRemakers />} />
 
         {/* Profile, rewards and help */}
         <Route path="/user-profile" element={<UserProfile />} />
@@ -428,11 +374,33 @@ export default function App() {
           path="/admin-pickups/:pickupId"
           element={<AdminPickupDetails />}
         />
+        {/* These destinations are not implemented in the current source tree. Keep links in-app. */}
+        <Route
+          path="/admin-complaints"
+          element={<Navigate to="/admin-orders" replace />}
+        />
+        <Route
+          path="/admin-complaints/:complaintId"
+          element={<Navigate to="/admin-orders" replace />}
+        />
         <Route path="/admin-rewards" element={<AdminRewards />} />
-        <Route path="/admin-reports" element={<AdminReports />} />
-        <Route path="/admin-settings" element={<AdminSettings />} />
-        <Route path="/admin-team" element={<AdminTeam />} />
-        <Route path="/admin-earnings" element={<AdminEarnings />} />
+        {/* Placeholder destinations: the corresponding page components are absent from this source tree. */}
+        <Route
+          path="/admin-reports"
+          element={<Navigate to="/admin-dashboard" replace />}
+        />
+        <Route
+          path="/admin-settings"
+          element={<Navigate to="/admin-notifications" replace />}
+        />
+        <Route
+          path="/admin-team"
+          element={<Navigate to="/admin-remakers" replace />}
+        />
+        <Route
+          path="/admin-earnings"
+          element={<Navigate to="/admin-dashboard" replace />}
+        />
         <Route
           path="/admin-profile"
           element={<Navigate to="/admin-settings" replace />}
@@ -449,14 +417,30 @@ export default function App() {
           path="/admin-shop/orders/:orderId"
           element={<AdminShopOrderDetails />}
         />
-        <Route path="/admin-sell" element={<AdminSell />} />
-        <Route path="/admin-sell/new" element={<AdminSellForm />} />
-        <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
-        <Route path="/admin-sell/listing/:id" element={<AdminSellListing />} />
-        <Route path="/admin-sell/sales" element={<AdminSales />} />
+        {/* Selling pages are not present in this source tree; route users to the existing shop. */}
+        <Route
+          path="/admin-sell"
+          element={<Navigate to="/admin-shop" replace />}
+        />
+        <Route
+          path="/admin-sell/new"
+          element={<Navigate to="/admin-shop" replace />}
+        />
+        <Route
+          path="/admin-sell/edit/:id"
+          element={<Navigate to="/admin-shop" replace />}
+        />
+        <Route
+          path="/admin-sell/listing/:id"
+          element={<Navigate to="/admin-shop" replace />}
+        />
+        <Route
+          path="/admin-sell/sales"
+          element={<Navigate to="/admin-shop/orders" replace />}
+        />
         <Route
           path="/admin-sell/sales/:orderId"
-          element={<AdminSaleDetails />}
+          element={<Navigate to="/admin-shop/orders" replace />}
         />
       </Route>
 

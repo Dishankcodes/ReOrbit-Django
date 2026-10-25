@@ -418,3 +418,17 @@
     transition: none;
   }
 }
+
+.admin-sidebar-count {
+  min-width: 20px;
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #d97a4a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+.admin-sidebar.collapsed .admin-sidebar-count { display: none; }

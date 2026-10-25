@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   BadgeCheck,
   Heart,
@@ -45,6 +45,7 @@ function Photo({ src, alt }) {
 
 export default function ReMakerMarketplace() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const wishlist = useWishlist();
   const [savedOnly, setSavedOnly] = useState(false);
 
@@ -275,7 +276,28 @@ export default function ReMakerMarketplace() {
             const saved = wishlist.has(listing.id);
 
             return (
-              <article className="rmk-card" key={listing.id}>
+              <article
+                className="rmk-card"
+                key={listing.id}
+                role="link"
+                tabIndex={0}
+                aria-label={`View details for ${listing.title}`}
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  navigate(
+                    `/remaker-marketplace/product/${encodeURIComponent(listing.id)}`,
+                  )
+                }
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate(
+                      `/remaker-marketplace/product/${encodeURIComponent(listing.id)}`,
+                    );
+                  }
+                }}
+              >
                 <div className="rmk-media">
                   <Photo src={listing.gallery[0]} alt="" />
 
@@ -293,7 +315,10 @@ export default function ReMakerMarketplace() {
                   <button
                     type="button"
                     className={`rmk-heart ${saved ? "on" : ""}`}
-                    onClick={() => wishlist.toggle(listing.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      wishlist.toggle(listing.id);
+                    }}
                     aria-pressed={saved}
                     aria-label={
                       saved
@@ -312,6 +337,7 @@ export default function ReMakerMarketplace() {
                     <Link
                       to={`/remaker-marketplace/product/${listing.id}`}
                       className="rmk-link"
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {listing.title}
                     </Link>

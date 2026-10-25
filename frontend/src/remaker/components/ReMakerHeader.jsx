@@ -2,15 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 
 import {
   Menu,
-  Search,
   Bell,
   ChevronDown,
   User,
   Settings,
   LogOut,
-  X,
   Palette,
-  Plus,
 } from "lucide-react";
 
 import { useLocation, useNavigate } from "react-router-dom";
@@ -132,8 +129,7 @@ const pageInformation = {
 
   "/remaker-marketplace": {
     title: "Marketplace",
-    subtitle:
-      "Source materials and finished pieces from the ReOrbit community.",
+    subtitle: "Source materials and finished pieces from the ReOrbit community.",
   },
 
   "/remaker-portfolio/new": {
@@ -359,8 +355,6 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
 
   const [remaker, setReMaker] = useState(() => getStoredReMaker());
 
-  const [searchValue, setSearchValue] = useState("");
-
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -424,30 +418,6 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
   const currentPage = getPageInformation(location.pathname);
 
   /* =========================================================
-     SEARCH
-     ========================================================= */
-
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-
-    const query = searchValue.trim();
-
-    if (!query) {
-      return;
-    }
-
-    const target = location.pathname.startsWith("/remaker-marketplace")
-      ? "/remaker-marketplace"
-      : "/remaker-products";
-
-    navigate(`${target}?search=${encodeURIComponent(query)}`);
-  };
-
-  const handleSearchClear = () => {
-    setSearchValue("");
-  };
-
-  /* =========================================================
      PROFILE
      ========================================================= */
 
@@ -471,18 +441,6 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     setProfileOpen(false);
 
     navigate("/remaker-settings");
-
-    if (onCloseMobile) {
-      onCloseMobile();
-    }
-  };
-
-  /* =========================================================
-     CREATE PRODUCT
-     ========================================================= */
-
-  const handleCreateProduct = () => {
-    navigate("/remaker-products/new");
 
     if (onCloseMobile) {
       onCloseMobile();
@@ -548,47 +506,6 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
           ===================================================== */}
 
       <div className="remaker-header-actions">
-        {/* CREATE */}
-
-        <button
-          type="button"
-          className="remaker-create-button"
-          onClick={handleCreateProduct}
-        >
-          <Plus size={15} />
-
-          <span>Add Product</span>
-        </button>
-
-        {/* SEARCH */}
-
-        <form className="remaker-header-search" onSubmit={handleSearchSubmit}>
-          <Search size={17} strokeWidth={1.8} />
-
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder={
-              location.pathname.startsWith("/remaker-marketplace")
-                ? "Search marketplace..."
-                : "Search products..."
-            }
-            aria-label="Search"
-          />
-
-          {searchValue && (
-            <button
-              type="button"
-              className="remaker-search-clear"
-              onClick={handleSearchClear}
-              aria-label="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </form>
-
         {/* NOTIFICATIONS */}
 
         <div className="remaker-header-icon-wrapper" ref={notificationRef}>
