@@ -3,6 +3,9 @@ import {
   LayoutDashboard,
   Store,
   Package,
+  PackagePlus,
+  ClipboardList,
+  PackageSearch,
   Heart,
   Gift,
   Users,
@@ -45,10 +48,31 @@ const mainMenu = [
     path: "/user-donations",
     icon: Gift,
   },
+];
+
+const communityMenu = [
   {
     label: "Following",
     path: "/user-following",
     icon: Users,
+  },
+];
+
+const sellingMenu = [
+  {
+    label: "Add Product / Sell Item",
+    path: "/user-sell/new",
+    icon: PackagePlus,
+  },
+  {
+    label: "My Listings",
+    path: "/user-sell",
+    icon: PackageSearch,
+  },
+  {
+    label: "Selling Orders",
+    path: "/user-sell/sales",
+    icon: ClipboardList,
   },
 ];
 
@@ -219,6 +243,22 @@ export default function UserSidebar({
           <span className="user-sidebar-section-label">MAIN MENU</span>
 
           {mainMenu.map(renderMenuItem)}
+        </div>
+
+        <div className="user-sidebar-divider" />
+
+        <div className="user-sidebar-section">
+          <span className="user-sidebar-section-label">COMMUNITY</span>
+
+          {communityMenu.map(renderMenuItem)}
+        </div>
+
+        <div className="user-sidebar-divider" />
+
+        <div className="user-sidebar-section">
+          <span className="user-sidebar-section-label">SELLING</span>
+
+          {sellingMenu.map(renderMenuItem)}
         </div>
 
         <div className="user-sidebar-divider" />

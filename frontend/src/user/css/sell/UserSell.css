@@ -17,7 +17,6 @@
 .sl-alert strong { display: block; font-size: 14px; }
 .sl-alert span { font-size: 12.5px; }
 .sl-alert.ship { border-color: #cfe1d5; background: #eef5f0; color: var(--dn-p); }
-.sl-alert.bad { border-color: #efc9c4; background: #fdf0ee; color: #8f352d; }
 
 .sl-filters { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 10px; }
 .sl-search { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 14px; border: 1px solid var(--dn-border); border-radius: 12px; background: #fff; color: var(--dn-muted); }

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Image as ImageIcon, Loader2, MapPin, Package, ShieldAlert, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Image as ImageIcon, Loader2, MapPin, Package, Info } from "lucide-react";
 
 import {
   PICKUP_OPTIONS,
@@ -138,8 +138,8 @@ export default function UserSellForm() {
           <h1>{editing ? "Update your listing" : "Sell an item"}</h1>
           <p className="dn-muted">
             {editing && existing.status === "Live"
-              ? "Changes to a live listing show on the marketplace straight away."
-              : "Good photos and an honest description sell faster."}
+              ? "Changes to your listing show on the marketplace straight away."
+              : "Add clear photos and an honest description, then publish your item to the marketplace."}
           </p>
         </div>
         <button type="button" className="dn-btn dn-btn--ghost" onClick={() => submit(true)} disabled={busy}>Save as draft</button>
@@ -239,11 +239,6 @@ export default function UserSellForm() {
                 </div>
               </div>
 
-              <div className="dn-banner dn-banner--warn">
-                <ShieldAlert size={18} />
-                <div><strong>Verification takes about 24 hours</strong>Our team checks every listing. Items that don't match their photos or description are rejected.</div>
-              </div>
-
               <label className={`sl-agree ${errors.agree ? "is-error" : ""}`}>
                 <input type="checkbox" checked={form.agree} onChange={(e) => set("agree", e.target.checked)} />
                 <span>I confirm I own this item, the photos and details are accurate, and I agree to ReOrbit's selling terms.</span>
@@ -262,7 +257,7 @@ export default function UserSellForm() {
               <button type="button" className="dn-btn" onClick={next}>Continue <ArrowRight size={16} /></button>
             ) : (
               <button type="button" className="dn-btn" onClick={() => submit(false)} disabled={busy}>
-                {busy ? <><Loader2 size={16} className="dn-spin" /> Submitting…</> : <>{editing ? "Save & resubmit" : "Submit for review"} <Check size={16} /></>}
+                {busy ? <><Loader2 size={16} className="dn-spin" /> Submitting…</> : <>{editing ? "Save changes" : "Publish listing"} <Check size={16} /></>}
               </button>
             )}
           </footer>

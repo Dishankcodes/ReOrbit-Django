@@ -86,6 +86,10 @@ const pageInformation = {
     title: "Settings",
     subtitle: "Manage administration and platform settings.",
   },
+  "/admin-states": {
+    title: "System States",
+    subtitle: "Loading, empty and error screens, for review.",
+  },
   "/admin-help": {
     title: "Help & Support",
     subtitle: "Find help and manage support resources.",

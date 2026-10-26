@@ -1,8 +1,7 @@
 /* =========================================================
    User › Selling (UI only, in-memory).
-   A user lists pre-loved items. Each listing goes
-   Draft -> Under review -> Live -> Reserved -> Sold
-   (or Rejected by the team / Withdrawn by the seller).
+   A user lists pre-loved items. Submitted listings go live immediately:
+   Draft -> Live -> Reserved -> Sold (or Withdrawn by the seller).
    Live listings are added to the marketplace, and sales come
    in as orders the seller has to pack and ship.
    Backend later: Items, Item_Images, Orders (seller side).
@@ -39,11 +38,9 @@ export const PICKUP_OPTIONS = [
 
 export const LISTING_STATUS = {
   Draft: { label: "Draft", tone: "grey", blurb: "Not submitted yet." },
-  Pending: { label: "Under review", tone: "amber", blurb: "Our team is verifying your item." },
   Live: { label: "Live", tone: "green", blurb: "Visible to buyers on the marketplace." },
   Reserved: { label: "Reserved", tone: "blue", blurb: "A buyer has ordered it. Pack and ship it." },
   Sold: { label: "Sold", tone: "violet", blurb: "Delivered to the buyer." },
-  Rejected: { label: "Rejected", tone: "red", blurb: "It didn't pass verification." },
   Withdrawn: { label: "Withdrawn", tone: "grey", blurb: "You took it off the marketplace." },
 };
 
@@ -72,26 +69,22 @@ const seedListings = () => [
     condition: "Excellent", price: 1650, images: ["/images/products/ceramic-lamp.jpg"], status: "Live",
     createdAt: ago(40), views: 212, likes: 38,
     events: [
-      ev("e1", "Listing submitted", "Sent for verification", ago(40), "neutral"),
-      ev("e2", "Verified and live", "Now visible on the marketplace", ago(39), "good"),
+      ev("e1", "Listing published", "Now visible on the marketplace", ago(39), "good"),
     ],
   }),
   baseListing({
     id: "LST-3002", title: "Walnut bookshelf, 4 shelves", category: "Furniture",
     description: "Solid walnut bookshelf with four adjustable shelves. A few light scratches on the side panel.",
-    condition: "Very Good", price: 3800, images: ["/images/products/wooden-table.jpg"], status: "Pending",
+    condition: "Very Good", price: 3800, images: ["/images/products/wooden-table.jpg"], status: "Live",
     createdAt: ago(1, 4), pickup: "platform",
-    events: [ev("e1", "Listing submitted", "Sent for verification", ago(1, 4), "neutral")],
+    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(1, 4), "good")],
   }),
   baseListing({
     id: "LST-3003", title: "Brass floor lamp", category: "Home & Living",
     description: "Vintage brass floor lamp, needs a new bulb holder.",
-    condition: "Good", price: 2200, images: ["/images/products/default-item.jpg"], status: "Rejected",
-    createdAt: ago(9), rejectReason: "The photo is too dark to judge the condition and the description mentions a fault. Please add clear photos and say what needs fixing.",
-    events: [
-      ev("e1", "Listing submitted", "Sent for verification", ago(9), "neutral"),
-      ev("e2", "Not approved", "Photos unclear and a fault is mentioned.", ago(8), "bad"),
-    ],
+    condition: "Good", price: 2200, images: ["/images/products/default-item.jpg"], status: "Live",
+    createdAt: ago(9),
+    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(9), "good")],
   }),
   baseListing({
     id: "LST-3004", title: "Cane stool set (2)", category: "Furniture",
@@ -99,8 +92,7 @@ const seedListings = () => [
     condition: "Very Good", price: 2400, quantity: 1, images: ["/images/products/vintage-chair.jpg"], status: "Sold",
     createdAt: ago(30), views: 164, likes: 21,
     events: [
-      ev("e1", "Listing submitted", "Sent for verification", ago(30), "neutral"),
-      ev("e2", "Verified and live", "Now visible on the marketplace", ago(29), "good"),
+      ev("e1", "Listing published", "Now visible on the marketplace", ago(29), "good"),
       ev("e3", "Sold", "Order SL-5102 delivered", ago(14), "good"),
     ],
   }),
@@ -110,8 +102,7 @@ const seedListings = () => [
     condition: "Very Good", price: 900, images: ["https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=80"], status: "Reserved",
     createdAt: ago(12), views: 96, likes: 14,
     events: [
-      ev("e1", "Listing submitted", "Sent for verification", ago(12), "neutral"),
-      ev("e2", "Verified and live", "Now visible on the marketplace", ago(11), "good"),
+      ev("e1", "Listing published", "Now visible on the marketplace", ago(11), "good"),
       ev("e3", "Order received", "Order SL-5104 is waiting to be packed", ago(1), "info"),
     ],
   }),
@@ -199,22 +190,6 @@ const patchListing = (id, fn) => {
 const now = () => new Date().toISOString();
 const evId = (l) => `e${l.events.length + 1}-${Date.now()}`;
 
-/* The review is simulated: a new listing goes Live a few seconds later. */
-const REVIEW_MS = 7000;
-function scheduleApproval(id) {
-  setTimeout(() => {
-    const target = listings.find((l) => l.id === id);
-    if (!target || target.status !== "Pending") return;
-    patchListing(id, (l) => ({
-      ...l,
-      status: "Live",
-      events: [...l.events, { id: evId(l), label: "Verified and live", detail: "Now visible on the marketplace", at: now(), tone: "good" }],
-    }));
-    publish(listings.find((l) => l.id === id));
-    commit();
-  }, REVIEW_MS);
-}
-
 export function saveListing(form, { submit = true, id = null } = {}) {
   const data = {
     title: form.title.trim(),
@@ -231,25 +206,25 @@ export function saveListing(form, { submit = true, id = null } = {}) {
 
   if (id) {
     patchListing(id, (l) => {
-      const wasRejected = l.status === "Rejected" || l.status === "Draft" || l.status === "Withdrawn";
-      const status = submit ? (l.status === "Live" || l.status === "Reserved" ? l.status : "Pending") : l.status;
+      const status = submit ? (l.status === "Reserved" || l.status === "Sold" ? l.status : "Live") : l.status;
       return {
         ...l,
         ...data,
         status,
-        rejectReason: submit && wasRejected ? "" : l.rejectReason,
         events: [
           ...l.events,
-          { id: evId(l), label: submit && wasRejected ? "Resubmitted for review" : "Listing updated", detail: submit && wasRejected ? "Sent for verification" : "Your changes were saved", at: now(), tone: "neutral" },
+          { id: evId(l), label: submit ? (l.status === "Draft" || l.status === "Withdrawn" ? "Listing published" : "Listing updated") : "Listing updated", detail: submit ? "Your listing is available on the marketplace" : "Your changes were saved", at: now(), tone: submit ? "good" : "neutral" },
         ],
       };
     });
     const updated = listings.find((l) => l.id === id);
-    if (updated.status === "Pending") scheduleApproval(id);
     if (updated.marketId) {
       const m = ITEMS.find((i) => i.id === updated.marketId);
       if (m) Object.assign(m, { title: data.title, category: data.category, price: data.price, description: data.description, summary: data.description.slice(0, 110), condition: data.condition, image: data.images[0] || m.image, quantity: data.quantity });
+    } else if (submit && updated.status === "Live") {
+      publish(updated);
     }
+    commit();
     return updated;
   }
 
@@ -257,17 +232,17 @@ export function saveListing(form, { submit = true, id = null } = {}) {
   const listing = {
     id: `LST-${seq}`,
     ...data,
-    status: submit ? "Pending" : "Draft",
+    status: submit ? "Live" : "Draft",
     createdAt: now(),
     views: 0,
     likes: 0,
     rejectReason: "",
     marketId: null,
-    events: [{ id: "e1", label: submit ? "Listing submitted" : "Draft saved", detail: submit ? "Sent for verification" : "Not submitted yet", at: now(), tone: "neutral" }],
+    events: [{ id: "e1", label: submit ? "Listing published" : "Draft saved", detail: submit ? "Your listing is available on the marketplace" : "Not published yet", at: now(), tone: submit ? "good" : "neutral" }],
   };
   listings = [listing, ...listings];
   commit();
-  if (submit) scheduleApproval(listing.id);
+  if (submit) publish(listing);
   return listing;
 }
 
@@ -285,10 +260,11 @@ export function withdrawListing(id) {
 export function relistListing(id) {
   patchListing(id, (x) => ({
     ...x,
-    status: "Pending",
-    events: [...x.events, { id: evId(x), label: "Relisted", detail: "Sent for verification", at: now(), tone: "neutral" }],
+    status: "Live",
+    events: [...x.events, { id: evId(x), label: "Relisted", detail: "Available on the marketplace again", at: now(), tone: "good" }],
   }));
-  scheduleApproval(id);
+  const listing = listings.find((x) => x.id === id);
+  if (listing) publish(listing);
 }
 
 export function deleteListing(id) {
@@ -360,7 +336,6 @@ export function summarizeSelling(listings, sales) {
   const inFlight = sales.filter((s) => s.status !== "Delivered");
   return {
     live: listings.filter((l) => l.status === "Live").length,
-    review: listings.filter((l) => l.status === "Pending").length,
     drafts: listings.filter((l) => l.status === "Draft").length,
     sold: listings.filter((l) => l.status === "Sold").length,
     toShip: sales.filter((s) => ["Confirmed", "Packed"].includes(s.status)).length,

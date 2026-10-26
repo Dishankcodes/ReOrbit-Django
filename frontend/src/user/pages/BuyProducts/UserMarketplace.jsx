@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, ShoppingBag, Tag } from "lucide-react";
-import { addToCart, useCartCount, useInCart, useStockOf } from "../../data/shopStore";
+import {
+  addToCart,
+  useCartCount,
+  useInCart,
+  useStockOf,
+} from "../../data/shopStore";
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
   CATEGORIES,
@@ -180,8 +185,10 @@ function ProductCard({ item, wished, onWishlist, onAdded, listView = false }) {
                 onAdded?.(item);
               }}
             >
-              {inCart ? <Check size={13} /> : <ShoppingBag size={13} />}
-              {stock.own ? "Your listing" : !stock.purchasable ? "Sold" : inCart ? "In cart" : "Add"}
+              {inCart ? <Check size={14} /> : <ShoppingBag size={14} />}
+              <span className="um-add-label">
+                {!stock.purchasable ? "Sold" : inCart ? "In cart" : "Add"}
+              </span>
             </button>
             <button type="button" className="um-view" onClick={openProduct}>
               View item <i className="bi bi-arrow-up-right" />
@@ -210,12 +217,18 @@ export default function UserMarketplace() {
   const showCartToast = (item) => {
     setCartToast(item);
     window.clearTimeout(window.__reorbitMarketCartTimer);
-    window.__reorbitMarketCartTimer = window.setTimeout(() => setCartToast(null), 3200);
+    window.__reorbitMarketCartTimer = window.setTimeout(
+      () => setCartToast(null),
+      3200,
+    );
   };
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = ITEMS.filter((item) => {
+      // Do not show the logged-in demo user's own listings in the buying marketplace.
+      if (item.sellerId === "user-aarav-patel") return false;
+
       const matchesSearch =
         !query ||
         [item.title, item.category, item.city, item.seller, item.summary].some(

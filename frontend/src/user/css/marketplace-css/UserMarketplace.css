@@ -1068,3 +1068,85 @@
     justify-content: center;
   }
 }
+
+/* Marketplace product-card actions: keep cart labels on one line and use ReOrbit's softer palette. */
+.um-page .um-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.um-page .um-add {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 88px;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid #cbded0;
+  border-radius: 999px;
+  background: #eaf2ec;
+  color: #2a4d3a;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.um-page .um-add .um-add-label {
+  display: inline-block;
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.um-page .um-add:hover:not(:disabled) {
+  background: #dce9df;
+  border-color: #a9c8b2;
+  transform: translateY(-1px);
+}
+
+.um-page .um-add.in {
+  background: #e4eee6;
+  border-color: #c8dace;
+  color: #2a4d3a;
+}
+
+.um-page .um-add:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #f0f2ef;
+  color: #78867d;
+  border-color: #e0e6e0;
+}
+
+.um-page .um-view {
+  color: #557361;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.um-page .um-view:hover {
+  color: #2a4d3a;
+}
+
+@media (max-width: 420px) {
+  .um-page .um-product-footer {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .um-page .um-card-actions {
+    gap: 8px;
+  }
+}

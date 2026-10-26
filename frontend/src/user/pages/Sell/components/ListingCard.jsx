@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, Heart, Pencil, ChevronRight, ExternalLink, AlertTriangle } from "lucide-react";
+import { Eye, Heart, Pencil, ChevronRight, ExternalLink } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { LISTING_STATUS } from "../../../data/listingsStore";
 import { formatPrice } from "../../../../data/marketplaceData";
@@ -10,7 +10,7 @@ import { ListingBadge } from "./SellBadges";
 export default function ListingCard({ listing }) {
   const navigate = useNavigate();
   const open = () => navigate(`/user-sell/${listing.id}`);
-  const editable = ["Draft", "Rejected", "Withdrawn", "Live", "Pending"].includes(listing.status);
+  const editable = ["Draft", "Withdrawn", "Live"].includes(listing.status);
 
   return (
     <article className="sl-card" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
@@ -23,11 +23,7 @@ export default function ListingCard({ listing }) {
         <span className="dn-dcard-id">{listing.id} · {listing.category}</span>
         <h3>{listing.title}</h3>
         <p className="sl-card-note">
-          {listing.status === "Rejected" ? (
-            <span className="bad"><AlertTriangle size={13} /> {listing.rejectReason.slice(0, 70)}…</span>
-          ) : (
-            LISTING_STATUS[listing.status].blurb
-          )}
+          {LISTING_STATUS[listing.status].blurb}
         </p>
 
         <div className="sl-card-row">

@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
-import { addToCart, startCheckout, useCartCount, useInCart, useShopItem } from "../../data/shopStore";
+import {
+  addToCart,
+  startCheckout,
+  useCartCount,
+  useInCart,
+  useShopItem,
+} from "../../data/shopStore";
 import { useWishlist } from "../../data/wishlistStore";
 import {
   getItemById,
@@ -69,7 +75,9 @@ function Stat({ icon, label, value }) {
 }
 
 export default function UserProductDetails() {
-  const { productId } = useParams();
+  const params = useParams();
+  // Support both the current :productId route and older :id links.
+  const productId = params.productId ?? params.id;
   const navigate = useNavigate();
   const item = getItemById(productId);
   const wish = useWishlist();

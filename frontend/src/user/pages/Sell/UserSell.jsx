@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, X, Package, Wallet, Truck, Tag, Hourglass, CheckCircle2, ReceiptText, SearchX, AlertTriangle, ArrowRight } from "lucide-react";
+import { Plus, Search, X, Package, Wallet, Truck, Tag, CheckCircle2, ReceiptText, SearchX, ArrowRight } from "lucide-react";
 
 import { summarizeSelling, useListings, useSales } from "../../data/listingsStore";
 import { formatPrice } from "../../../data/marketplaceData";
@@ -14,10 +14,8 @@ import "../../css/sell/UserSell.css";
 const TABS = [
   { id: "all", label: "All" },
   { id: "live", label: "Live", match: (l) => l.status === "Live" },
-  { id: "review", label: "Under review", match: (l) => l.status === "Pending" },
   { id: "sold", label: "Reserved & sold", match: (l) => ["Reserved", "Sold"].includes(l.status) },
   { id: "draft", label: "Drafts", match: (l) => l.status === "Draft" },
-  { id: "closed", label: "Rejected & withdrawn", match: (l) => ["Rejected", "Withdrawn"].includes(l.status) },
 ];
 
 const SORTS = {
@@ -50,10 +48,9 @@ export default function UserSell() {
       .sort(SORTS[sort].fn);
   }, [listings, tab, query, sort]);
 
-  const rejected = listings.filter((l) => l.status === "Rejected");
   const summary = [
     { icon: Tag, label: "Live listings", value: stats.live },
-    { icon: Hourglass, label: "Under review", value: stats.review },
+    { icon: Package, label: "Drafts", value: stats.drafts },
     { icon: CheckCircle2, label: "Items sold", value: stats.sold },
     { icon: Wallet, label: "Earned so far", value: formatPrice(stats.earned) },
   ];
@@ -64,7 +61,7 @@ export default function UserSell() {
         <div>
           <span className="dn-eyebrow">Sell on ReOrbit</span>
           <h1>Give your pre-loved things a new home, and earn from it.</h1>
-          <p>List an item in minutes. Our team verifies it, buyers find it, and you get paid once it's delivered.</p>
+          <p>List an item in minutes. It appears in the marketplace, and you get paid once it's delivered.</p>
           <div className="sl-hero-actions">
             <Link to="/user-sell/new" className="dn-btn"><Plus size={17} /> Sell an item</Link>
             <Link to="/user-sell/sales" className="dn-btn dn-btn--ghost"><ReceiptText size={16} /> Sales &amp; payouts</Link>
@@ -72,7 +69,7 @@ export default function UserSell() {
         </div>
         <ul className="sl-hero-steps">
           <li><b>1</b><span>List it<small>Photos, condition, price</small></span></li>
-          <li><b>2</b><span>We verify<small>Usually within 24 hours</small></span></li>
+          <li><b>2</b><span>Reach buyers<small>Your item goes live</small></span></li>
           <li><b>3</b><span>Get paid<small>After delivery</small></span></li>
         </ul>
       </section>
@@ -86,7 +83,7 @@ export default function UserSell() {
         })}
       </section>
 
-      {(stats.toShip > 0 || rejected.length > 0) && (
+      {(stats.toShip > 0) && (
         <section className="sl-attention" aria-label="Needs your attention">
           {stats.toShip > 0 && (
             <Link to="/user-sell/sales" className="sl-alert ship">
@@ -94,13 +91,6 @@ export default function UserSell() {
               <div><strong>{stats.toShip} {stats.toShip === 1 ? "order" : "orders"} to pack and ship</strong><span>Buyers are waiting for these.</span></div>
               <ArrowRight size={16} />
             </Link>
-          )}
-          {rejected.length > 0 && (
-            <button type="button" className="sl-alert bad" onClick={() => setTab("closed")}>
-              <AlertTriangle size={18} />
-              <div><strong>{rejected.length} {rejected.length === 1 ? "listing was" : "listings were"} not approved</strong><span>Fix the issues and resubmit.</span></div>
-              <ArrowRight size={16} />
-            </button>
           )}
         </section>
       )}

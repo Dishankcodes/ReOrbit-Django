@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./styles/theme.css";
 
 /* Shared layouts */
@@ -115,6 +115,9 @@ import ReMakerNotFound from "./remaker/pages/NotFound/ReMakerNotFound";
 import UnknownRoute from "./remaker/pages/NotFound/UnknownRoute";
 
 /* Admin public pages and dashboard */
+import AdminNotFound from "./admin/pages/States/AdminNotFound";
+import AdminStates from "./admin/pages/States/AdminStates";
+
 import AdminLogin from "./admin/pages/Auth/AdminLogin";
 import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
@@ -161,6 +164,24 @@ import AdminSellListing from "./admin/pages/Sell/AdminSellListing";
 import AdminSales from "./admin/pages/Sell/AdminSales";
 import AdminSaleDetails from "./admin/pages/Sell/AdminSaleDetails";
 
+function RouteFallback() {
+  const { pathname } = useLocation();
+
+  if (pathname === "/admin" || pathname === "/admin/") {
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
+  if (pathname.startsWith("/admin")) {
+    return (
+      <AdminLayout>
+        <AdminNotFound />
+      </AdminLayout>
+    );
+  }
+
+  return <Navigate to="/" replace />;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -190,16 +211,8 @@ export default function App() {
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/user-marketplace" element={<UserMarketplace />} />
         <Route
-          path="/user-marketplace/product/:id"
-          element={<UserProductDetails />}
-        />
-        <Route
           path="/user-marketplace/product/:productId"
           element={<UserProductDetails />}
-        />
-        <Route
-          path="/user-marketplace/seller/:id"
-          element={<UserSellerProfile />}
         />
         <Route
           path="/user-marketplace/seller/:sellerId"
@@ -208,10 +221,6 @@ export default function App() {
         <Route
           path="/user-seller-profile/:sellerId"
           element={<UserSellerProfile />}
-        />
-        <Route
-          path="/user-marketplace/remaker/:id"
-          element={<UserArtistProfile />}
         />
         <Route
           path="/user-marketplace/remaker/:artistId"
@@ -455,6 +464,7 @@ export default function App() {
         <Route path="/admin-notifications" element={<AdminNotifications />} />
         <Route path="/admin-content" element={<AdminContent />} />
         <Route path="/admin-help" element={<AdminHelp />} />
+        <Route path="/admin-states" element={<AdminStates />} />
 
         <Route path="/admin-shop" element={<AdminShop />} />
         <Route path="/admin-shop/product/:id" element={<AdminShopProduct />} />
@@ -484,7 +494,8 @@ export default function App() {
         />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}
+      <Route path="*" element={<RouteFallback />} />
     </Routes>
   );
 }

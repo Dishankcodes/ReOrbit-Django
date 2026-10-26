@@ -1,14 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Menu,
-  Search,
   Bell,
   Heart,
   ChevronDown,
   User,
   Settings,
   LogOut,
-  X,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -31,7 +29,7 @@ const pageInformation = {
   },
 
   "/user-wishlist": {
-    title: "Wishlist",
+    title: "Your Wishlist",
     subtitle: "Products you want to keep in your orbit.",
   },
 
@@ -212,7 +210,6 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
 
   const [user, setUser] = useState(() => getStoredUser());
 
-  const [searchValue, setSearchValue] = useState("");
 
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
@@ -268,22 +265,6 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
     subtitle: "Reuse, recreate and reimagine your everyday items.",
   };
 
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-
-    const query = searchValue.trim();
-
-    if (!query) {
-      navigate("/user-marketplace");
-      return;
-    }
-
-    navigate(`/user-marketplace?search=${encodeURIComponent(query)}`);
-  };
-
-  const handleSearchClear = () => {
-    setSearchValue("");
-  };
 
   const handleWishlist = () => {
     setNotificationsOpen(false);
@@ -352,29 +333,6 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
 
       {/* Right */}
       <div className="user-header-actions">
-        {/* Search */}
-        <form className="user-header-search" onSubmit={handleSearchSubmit}>
-          <Search size={17} strokeWidth={1.8} />
-
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Search marketplace..."
-            aria-label="Search marketplace"
-          />
-
-          {searchValue && (
-            <button
-              type="button"
-              className="user-search-clear"
-              onClick={handleSearchClear}
-              aria-label="Clear search"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </form>
 
         {/* Notifications */}
         <div className="user-header-icon-wrapper" ref={notificationRef}>

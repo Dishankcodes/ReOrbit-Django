@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Eye, Lock, ShieldOff, X } from "lucide-react";
+import { Eye, Lock, ShieldOff, WifiOff, X } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
 import { useAccess, moduleForPath, MODULES, setPreview } from "../data/teamStore";
 import useToast from "./ui/useToast";
+import AdminErrorBoundary from "./AdminErrorBoundary";
+import { PageSkeleton, variantForPath } from "./ui/Skeleton";
 import "./AdminLayout.css";
 
 /* Buttons that change data. In view-only mode these are blocked (and dimmed by CSS).
@@ -30,7 +32,7 @@ function NoAccess({ moduleKey, onHome, isSuper }) {
   );
 }
 
-export default function AdminLayout() {
+export default function AdminLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
@@ -38,6 +40,18 @@ export default function AdminLayout() {
   const access = useAccess();
   const { toast, toastNode } = useToast();
   const mainRef = useRef(null);
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine !== false));
+  const [backOnline, setBackOnline] = useState(false);
+
+  /* Tell people when the connection drops, and when it comes back. */
+  useEffect(() => {
+    let timer;
+    const down = () => { setOnline(false); setBackOnline(false); };
+    const up = () => { setOnline(true); setBackOnline(true); clearTimeout(timer); timer = setTimeout(() => setBackOnline(false), 3500); };
+    window.addEventListener("offline", down);
+    window.addEventListener("online", up);
+    return () => { window.removeEventListener("offline", down); window.removeEventListener("online", up); clearTimeout(timer); };
+  }, []);
 
   const moduleKey = moduleForPath(location.pathname);
   const level = moduleKey ? access.level(moduleKey) : "edit";
@@ -110,6 +124,15 @@ export default function AdminLayout() {
             </button>
           </div>
         )}
+        {!online && (
+          <div className="admin-net-bar is-offline" role="alert">
+            <WifiOff size={16} />
+            <span><b>You are offline.</b> You can keep reading, but changes may not be saved until the connection is back.</span>
+          </div>
+        )}
+        {online && backOnline && (
+          <div className="admin-net-bar is-online" role="status"><span><b>Back online.</b> Everything is up to date.</span></div>
+        )}
         <main className="admin-page-content" ref={mainRef}>
           {readOnly && (
             <div className="admin-readonly-bar" role="status">
@@ -120,7 +143,11 @@ export default function AdminLayout() {
           {blocked ? (
             <NoAccess moduleKey={moduleKey} isSuper={access.isSuper} onHome={() => navigate("/admin-dashboard")} />
           ) : (
-            <Outlet />
+            <AdminErrorBoundary key={location.pathname}>
+              <Suspense fallback={<PageSkeleton variant={variantForPath(location.pathname)} />}>
+                {children ?? <Outlet />}
+              </Suspense>
+            </AdminErrorBoundary>
           )}
         </main>
       </div>

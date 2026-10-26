@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
 import UserSidebar from "./UserSidebar";
 import UserHeader from "./UserHeader";
@@ -10,7 +10,25 @@ export default function UserLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Toggle sidebar depending on screen size.
+  const location = useLocation();
+
+  // Reset scroll position whenever the user navigates to another route.
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+
+    // Also reset the page container if it becomes a scroll container.
+    const pageContent = document.querySelector(".user-page-content");
+
+    if (pageContent) {
+      pageContent.scrollTop = 0;
+      pageContent.scrollLeft = 0;
+    }
+  }, [location.pathname, location.search]);
+
   const toggleSidebar = () => {
     if (window.innerWidth <= 900) {
       setMobileSidebarOpen((current) => !current);
@@ -20,7 +38,6 @@ export default function UserLayout() {
     setSidebarCollapsed((current) => !current);
   };
 
-  // Close mobile sidebar.
   const closeMobileSidebar = () => {
     setMobileSidebarOpen(false);
   };
