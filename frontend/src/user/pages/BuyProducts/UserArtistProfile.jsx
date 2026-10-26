@@ -63,9 +63,7 @@ export default function UserArtistProfile() {
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    ["studio", "portfolio", "products", "reviews"].includes(requestedTab)
-      ? requestedTab
-      : "studio",
+    ["studio", "portfolio", "products", "reviews"].includes(requestedTab) ? requestedTab : "studio",
   );
 
   const portfolio = artist?.portfolio || [];
@@ -165,11 +163,7 @@ export default function UserArtistProfile() {
             </div>
             <div>
               <small>Followers</small>
-              <strong>
-                {followerCount(artist.followers, following).toLocaleString(
-                  "en-IN",
-                )}
-              </strong>
+              <strong>{followerCount(artist.followers, following).toLocaleString("en-IN")}</strong>
             </div>
             <div>
               <small>Experience</small>

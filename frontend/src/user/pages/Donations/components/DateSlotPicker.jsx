@@ -44,11 +44,7 @@ export default function DateSlotPicker({ date, slot, onDate, onSlot, error }) {
             </button>
           ))}
         </div>
-        {date && (
-          <span className="dn-hint">
-            {relativeDay(`${date}T09:00:00`)} · pickups are never charged.
-          </span>
-        )}
+        {date && <span className="dn-hint">{relativeDay(`${date}T09:00:00`)} · pickups are never charged.</span>}
       </div>
 
       <div className="dn-field">

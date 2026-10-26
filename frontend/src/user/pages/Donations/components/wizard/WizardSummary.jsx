@@ -1,17 +1,11 @@
 import React from "react";
 import { Leaf, Scale, Star, Wind, CalendarDays, Sparkles } from "lucide-react";
-import {
-  REWARD_RULES,
-  estimatePoints,
-  estimateWeight,
-} from "../../../../data/donationsStore";
+import { REWARD_RULES, estimatePoints, estimateWeight } from "../../../../data/donationsStore";
 import { formatDayMonth, kg } from "../../../../utils/format";
 
 /* Live side card: what's been entered so far + the impact of this donation. */
 export default function WizardSummary({ form }) {
-  const weight = form.category
-    ? estimateWeight(form.category, form.quantity)
-    : 0;
+  const weight = form.category ? estimateWeight(form.category, form.quantity) : 0;
   const co2 = Math.round(weight * REWARD_RULES.co2PerKg * 10) / 10;
   const cover = form.images[0]?.url;
 
@@ -32,8 +26,7 @@ export default function WizardSummary({ form }) {
         <span className="dn-eyebrow">Your donation</span>
         <h3>{form.title.trim() || "Untitled item"}</h3>
         <p className="dn-muted">
-          {form.category || "No category"} · {form.quantity}{" "}
-          {form.quantity === 1 ? "item" : "items"}
+          {form.category || "No category"} · {form.quantity} {form.quantity === 1 ? "item" : "items"}
         </p>
 
         {form.date && (

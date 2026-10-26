@@ -1,14 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function EmptyState({
-  icon: Icon,
-  title,
-  text,
-  actionLabel,
-  to,
-  onAction,
-}) {
+export default function EmptyState({ icon: Icon, title, text, actionLabel, to, onAction }) {
   return (
     <div className="dn-card dn-empty">
       <div className="dn-empty-icon">{Icon && <Icon size={30} />}</div>

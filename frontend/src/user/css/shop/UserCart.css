@@ -1,0 +1,35 @@
+/* User › Cart */
+
+.sp-line { display: grid; grid-template-columns: 132px minmax(0, 1fr) auto; align-items: center; gap: 20px; padding: 16px; }
+.sp-line.is-off { opacity: 0.8; border-style: dashed; }
+
+.sp-line-img { display: block; width: 132px; height: 132px; border-radius: 16px; background: #eef2ee; overflow: hidden; }
+.sp-line-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease; }
+.sp-line-img:hover img { transform: scale(1.05); }
+
+.sp-cat { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--dn-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.sp-cat b { display: inline-flex; align-items: center; gap: 4px; color: var(--dn-p); }
+.sp-line-main h3 { margin: 4px 0 4px; font-size: 20px; }
+.sp-line-main h3 a:hover { text-decoration: underline; }
+.sp-seller { font-size: 12.5px; }
+
+.sp-line-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 14px; }
+
+.sp-qty { display: inline-flex; align-items: center; border: 1px solid var(--dn-border); border-radius: 12px; background: #fff; overflow: hidden; }
+.sp-qty button { display: grid; place-items: center; width: 36px; height: 38px; border: 0; background: var(--dn-soft); color: var(--dn-p); cursor: pointer; }
+.sp-qty button:disabled { opacity: 0.4; cursor: not-allowed; }
+.sp-qty output { min-width: 40px; color: var(--dn-text); font-size: 14px; font-weight: 800; text-align: center; }
+.sp-low { padding: 4px 10px; border-radius: 999px; background: #fdf3dc; color: #8a5d0f; font-size: 11px; font-weight: 800; }
+
+.sp-warn { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #fdf0ee; color: #8f352d; font-size: 12.5px; font-weight: 600; }
+
+.sp-line-price { display: grid; justify-items: end; gap: 2px; text-align: right; }
+.sp-line-price strong { color: var(--dn-p); font-family: var(--font-display, serif); font-size: 24px; }
+.sp-line-price span { color: var(--dn-muted); font-size: 12px; }
+.sp-line-price em { color: #2a7a4f; font-size: 12px; font-style: normal; font-weight: 700; }
+
+@media (max-width: 760px) {
+  .sp-line { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .sp-line-img { width: 96px; height: 96px; }
+  .sp-line-price { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; text-align: left; }
+}

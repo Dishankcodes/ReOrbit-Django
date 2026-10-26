@@ -1,0 +1,25 @@
+/* User › Listing details */
+
+.sl-gallery { overflow: hidden; }
+.sl-gallery-main { aspect-ratio: 16 / 9; background: #eef2ee; }
+.sl-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.sl-thumbs { display: flex; gap: 10px; padding: 14px; }
+.sl-thumbs button { width: 78px; height: 78px; padding: 0; border: 2px solid transparent; border-radius: 14px; background: #eef2ee; opacity: 0.65; overflow: hidden; cursor: pointer; }
+.sl-thumbs button.on, .sl-thumbs button:hover { border-color: var(--dn-p); opacity: 1; }
+.sl-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+.sl-desc { margin-bottom: 18px; color: #4a5a50; font-size: 14px; }
+.sl-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 0; }
+.sl-facts > div { display: grid; gap: 3px; padding: 14px 16px; border-radius: 14px; background: #f6faf7; }
+.sl-facts .wide { grid-column: 1 / -1; }
+.sl-facts dt { display: flex; align-items: center; gap: 6px; color: var(--dn-muted); font-size: 12px; font-weight: 700; }
+.sl-facts dd { margin: 0; color: var(--dn-text); font-size: 15px; font-weight: 700; }
+
+.sl-perf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.sl-perf > div { display: grid; gap: 2px; padding: 12px; border-radius: 14px; background: #f6faf7; }
+.sl-perf svg { margin-bottom: 4px; color: var(--dn-leaf); }
+.sl-perf strong { color: var(--dn-p); font-family: var(--font-display, serif); font-size: 21px; line-height: 1.1; }
+.sl-perf span { color: var(--dn-muted); font-size: 11px; font-weight: 600; }
+.sl-saleline { margin-bottom: 14px; color: #4a5a50; font-size: 13px; }
+
+@media (max-width: 640px) { .sl-facts, .sl-perf { grid-template-columns: 1fr; } }

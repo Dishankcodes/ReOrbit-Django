@@ -640,3 +640,52 @@
 .st-fieldset:disabled {
   opacity: 0.85;
 }
+
+/* Settings navigation layout fix: keep labels and descriptions in a full-width
+   text column instead of allowing global admin button/span rules to squeeze them. */
+.st-nav {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.st-nav button {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: 12px;
+}
+.st-nav button > span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.st-nav button b,
+.st-nav button small {
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  line-height: 1.35;
+}
+.st-nav button b {
+  margin: 0;
+}
+@media (max-width: 1000px) {
+  .st-nav button {
+    width: auto;
+    grid-template-columns: 20px max-content;
+  }
+  .st-nav button > span {
+    width: auto;
+  }
+}

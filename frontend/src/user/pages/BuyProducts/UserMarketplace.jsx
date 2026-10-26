@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Check, ShoppingBag, Tag } from "lucide-react";
+import { addToCart, useCartCount, useInCart, useStockOf } from "../../data/shopStore";
+import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
   CATEGORIES,
   CONDITIONS,
@@ -10,6 +13,7 @@ import {
 } from "../../../data/marketplaceData";
 import "../../css/marketplace-css/UserMarketplace.css";
 import "../../css/marketplace-css/marketplace-icons.css";
+import "../../css/shop/marketplace-cart.css";
 
 const categoryIcons = {
   Furniture: "bi-lamp",
@@ -66,8 +70,10 @@ function Stars({ rating = 0 }) {
   );
 }
 
-function ProductCard({ item, wished, onWishlist, listView = false }) {
+function ProductCard({ item, wished, onWishlist, onAdded, listView = false }) {
   const navigate = useNavigate();
+  const stock = useStockOf()(item);
+  const inCart = useInCart(item.id);
 
   const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
   const openSeller = (event) => {
@@ -162,9 +168,25 @@ function ProductCard({ item, wished, onWishlist, listView = false }) {
             <small>Listed price</small>
             <strong>{formatPrice(item.price)}</strong>
           </div>
-          <button type="button" className="um-view" onClick={openProduct}>
-            View item <i className="bi bi-arrow-up-right" />
-          </button>
+          <div className="um-card-actions">
+            <button
+              type="button"
+              className={`um-add ${inCart ? "in" : ""}`}
+              disabled={!stock.purchasable}
+              title={stock.reason || ""}
+              onClick={(event) => {
+                event.stopPropagation();
+                addToCart(item.id, 1, stock.available);
+                onAdded?.(item);
+              }}
+            >
+              {inCart ? <Check size={13} /> : <ShoppingBag size={13} />}
+              {stock.own ? "Your listing" : !stock.purchasable ? "Sold" : inCart ? "In cart" : "Add"}
+            </button>
+            <button type="button" className="um-view" onClick={openProduct}>
+              View item <i className="bi bi-arrow-up-right" />
+            </button>
+          </div>
         </div>
       </div>
     </article>
@@ -179,8 +201,17 @@ export default function UserMarketplace() {
   const [sort, setSort] = useState("featured");
   const [view, setView] = useState("grid");
   const [maxPrice, setMaxPrice] = useState(10000);
-  const [wishlist, setWishlist] = useState([]);
+  const wish = useWishlist();
+  const wishlist = wish.ids;
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const cartCount = useCartCount();
+  const [cartToast, setCartToast] = useState(null);
+
+  const showCartToast = (item) => {
+    setCartToast(item);
+    window.clearTimeout(window.__reorbitMarketCartTimer);
+    window.__reorbitMarketCartTimer = window.setTimeout(() => setCartToast(null), 3200);
+  };
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -224,13 +255,7 @@ export default function UserMarketplace() {
     setSort("featured");
   };
 
-  const toggleWishlist = (id) => {
-    setWishlist((current) =>
-      current.includes(id)
-        ? current.filter((itemId) => itemId !== id)
-        : [...current, id],
-    );
-  };
+  const toggleWishlist = (id) => wish.toggle(id);
 
   return (
     <main className="um-page">
@@ -336,6 +361,20 @@ export default function UserMarketplace() {
           >
             <i className="bi bi-sliders2" /> Filters{" "}
             {activeFilterCount > 0 && <b>{activeFilterCount}</b>}
+          </button>
+          <button
+            type="button"
+            className={`um-filter-trigger um-cart-trigger ${cartCount ? "has-count" : ""}`}
+            onClick={() => navigate("/user-cart")}
+          >
+            <ShoppingBag size={16} /> Cart {cartCount > 0 && <b>{cartCount}</b>}
+          </button>
+          <button
+            type="button"
+            className="um-filter-trigger um-cart-trigger"
+            onClick={() => navigate("/user-sell")}
+          >
+            <Tag size={15} /> Sell an item
           </button>
         </section>
 
@@ -562,6 +601,7 @@ export default function UserMarketplace() {
                     item={item}
                     wished={wishlist.includes(item.id)}
                     onWishlist={toggleWishlist}
+                    onAdded={showCartToast}
                     listView={view === "list"}
                   />
                 ))}
@@ -587,13 +627,26 @@ export default function UserMarketplace() {
         </section>
       </div>
 
+      {cartToast && (
+        <div className="um-wishlist-toast um-cart-toast" role="status">
+          <ShoppingBag size={15} />
+          <span>{cartToast.title} added to cart</span>
+          <button type="button" onClick={() => navigate("/user-cart")}>
+            View cart
+          </button>
+        </div>
+      )}
+
       {wishlist.length > 0 && (
         <div className="um-wishlist-toast">
           <i className="bi bi-heart-fill" />
           <span>
             {wishlist.length} saved {wishlist.length === 1 ? "piece" : "pieces"}
           </span>
-          <button type="button" onClick={() => setWishlist([])}>
+          <button type="button" onClick={() => navigate("/user-wishlist")}>
+            View
+          </button>
+          <button type="button" onClick={clearWishlist}>
             Clear
           </button>
         </div>

@@ -22,6 +22,7 @@ import {
   UserCog,
   Wallet,
   ShieldAlert,
+  LayoutTemplate,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
@@ -49,6 +50,7 @@ const operationsMenu = [
 const managementMenu = [
   { key: "rewards", label: "Rewards", path: "/admin-rewards", icon: Star },
   { key: "notifications", label: "Notifications", path: "/admin-notifications", icon: Bell },
+  { key: "content", label: "Content", path: "/admin-content", icon: LayoutTemplate },
   { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
   { key: "reports", label: "Reports", path: "/admin-reports", icon: BarChart3 },
   { key: "team", label: "Team & Roles", path: "/admin-team", icon: UserCog },

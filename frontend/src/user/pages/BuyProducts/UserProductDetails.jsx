@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
+import { addToCart, startCheckout, useCartCount, useInCart, useShopItem } from "../../data/shopStore";
+import { useWishlist } from "../../data/wishlistStore";
 import {
   getItemById,
   getProductsBySeller,
@@ -9,6 +12,7 @@ import {
 } from "../../../data/marketplaceData";
 import "../../css/marketplace-css/UserProductDetails.css";
 import "../../css/marketplace-css/marketplace-icons.css";
+import "../../css/shop/product-cart.css";
 
 const getInitials = (name = "") =>
   name
@@ -68,9 +72,18 @@ export default function UserProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const item = getItemById(productId);
-  const [liked, setLiked] = useState(false);
+  const wish = useWishlist();
+  const liked = wish.has(productId);
   const [activeTab, setActiveTab] = useState("details");
   const [cartMessage, setCartMessage] = useState(false);
+  const [qty, setQty] = useState(1);
+  const stock = useShopItem(productId);
+  const cartCount = useCartCount();
+  const inCart = useInCart(productId);
+
+  useEffect(() => {
+    setQty(1);
+  }, [productId]);
 
   const seller = useMemo(() => getSellerFromItem(item), [item]);
   const reviews = useMemo(
@@ -125,6 +138,16 @@ export default function UserProductDetails() {
     navigate(`/user-marketplace/product/${id}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const maxQty = Math.max(1, stock?.available || 1);
+  const buyable = Boolean(stock?.purchasable);
+  const addCart = () => {
+    addToCart(item.id, qty, stock.available);
+    showCart();
+  };
+  const buyNow = () => {
+    startCheckout([{ id: item.id, qty }], "buy");
+    navigate("/user-checkout");
+  };
   const showCart = () => {
     setCartMessage(true);
     window.clearTimeout(window.__reorbitCartTimer);
@@ -145,6 +168,14 @@ export default function UserProductDetails() {
           <span>{item.category}</span>
           <i className="bi bi-chevron-right" />
           <strong>{item.title}</strong>
+          <button
+            type="button"
+            className="upd-cartlink"
+            onClick={() => navigate("/user-cart")}
+          >
+            <ShoppingBag size={14} /> Cart
+            {cartCount > 0 && <b>{cartCount}</b>}
+          </button>
         </div>
         <button type="button" className="upd-back" onClick={() => navigate(-1)}>
           <i className="bi bi-arrow-left" /> Back
@@ -164,7 +195,7 @@ export default function UserProductDetails() {
               <button
                 type="button"
                 className={`upd-like ${liked ? "active" : ""}`}
-                onClick={() => setLiked((value) => !value)}
+                onClick={() => wish.toggle(productId)}
                 aria-label={liked ? "Remove from wishlist" : "Save product"}
               >
                 <i className={liked ? "bi bi-heart-fill" : "bi bi-heart"} />
@@ -226,18 +257,70 @@ export default function UserProductDetails() {
               </div>
             </div>
 
+            {!buyable && stock?.reason && (
+              <p className="upd-unavailable" role="status">
+                {stock.reason}
+              </p>
+            )}
+
+            {buyable && stock.available > 1 && (
+              <div className="upd-qty-row">
+                <div className="upd-qty" role="group" aria-label="Quantity">
+                  <button
+                    type="button"
+                    onClick={() => setQty((n) => Math.max(1, n - 1))}
+                    disabled={qty <= 1}
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <output aria-live="polite">{qty}</output>
+                  <button
+                    type="button"
+                    onClick={() => setQty((n) => Math.min(maxQty, n + 1))}
+                    disabled={qty >= maxQty}
+                    aria-label="Increase quantity"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <span>
+                  {stock.available <= 2
+                    ? `Only ${stock.available} left`
+                    : `${stock.available} available`}{" "}
+                  · Subtotal <b>{formatPrice(item.price * qty)}</b>
+                </span>
+              </div>
+            )}
+
             <div className="upd-actions">
-              <button type="button" className="upd-primary" onClick={showCart}>
-                <i className="bi bi-bag-plus" /> Add to collection
+              <button
+                type="button"
+                className="upd-primary"
+                onClick={buyNow}
+                disabled={!buyable}
+              >
+                <Zap size={15} /> Buy now
               </button>
               <button
                 type="button"
                 className="upd-secondary"
-                onClick={showCart}
+                onClick={addCart}
+                disabled={!buyable}
               >
-                Buy now <i className="bi bi-arrow-right" />
+                <ShoppingBag size={15} />{" "}
+                {inCart ? "Add one more" : "Add to cart"}
               </button>
             </div>
+            {inCart && (
+              <button
+                type="button"
+                className="upd-incart"
+                onClick={() => navigate("/user-cart")}
+              >
+                Already in your cart · View cart →
+              </button>
+            )}
             <p className="upd-trust">
               <i className="bi bi-shield-check" /> Secure checkout <span />{" "}
               <i className="bi bi-arrow-repeat" /> Circular purchase
@@ -485,9 +568,16 @@ export default function UserProductDetails() {
             <i className="bi bi-check2" />
           </span>
           <div>
-            <strong>Saved to your collection</strong>
-            <small>{item.title} is ready for the next step.</small>
+            <strong>Added to your cart</strong>
+            <small>{item.title} is ready for checkout.</small>
           </div>
+          <button
+            type="button"
+            className="upd-toast-link"
+            onClick={() => navigate("/user-cart")}
+          >
+            View cart
+          </button>
           <button type="button" onClick={() => setCartMessage(false)}>
             <i className="bi bi-x-lg" />
           </button>

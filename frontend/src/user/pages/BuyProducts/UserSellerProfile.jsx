@@ -61,9 +61,7 @@ export default function UserSellerProfile() {
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    ["listings", "reviews", "about"].includes(requestedTab)
-      ? requestedTab
-      : "listings",
+    ["listings", "reviews", "about"].includes(requestedTab) ? requestedTab : "listings",
   );
 
   if (!seller)

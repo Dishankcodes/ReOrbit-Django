@@ -1,0 +1,34 @@
+/* Cart additions on the existing marketplace page. */
+
+@media (min-width: 900px) {
+  .um-discovery-bar { grid-template-columns: 1fr auto auto auto; }
+}
+
+.um-cart-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.um-cart-trigger b { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--green); color: #fff; font-size: 10px; }
+
+.um-card-actions { display: flex; align-items: center; gap: 8px; }
+
+.um-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  background: var(--green);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.um-add:hover:not(:disabled) { background: #1e3d2f; transform: translateY(-1px); }
+.um-add.in { background: #e4ede7; border-color: #cfe1d5; color: var(--green); }
+.um-add:disabled { border-color: #dfe5e0; background: #eef1ee; color: #8b958d; cursor: not-allowed; }
+
+.um-cart-toast { right: auto; left: 24px; }
+.um-cart-toast svg { color: var(--green); }
+.um-cart-toast button { color: var(--green); font-size: 9px; }

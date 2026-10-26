@@ -27,6 +27,7 @@ import {
   ClipboardCheck,
   Settings,
   ShieldAlert,
+  LayoutTemplate,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -52,6 +53,7 @@ const QUICK = [
   { key: "products", label: "Manage Products", path: "/admin-products", icon: <ShoppingBag size={17} /> },
   { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: <WarehouseIcon /> },
   { key: "pickups", label: "Manage Pickups", path: "/admin-pickups", icon: <Truck size={17} /> },
+  { key: "content", label: "Content & Categories", path: "/admin-content", icon: <LayoutTemplate size={17} /> },
   { key: "complaints", label: "Complaints", path: "/admin-complaints", icon: <ShieldAlert size={17} /> },
   { key: "reports", label: "View Reports", path: "/admin-reports", icon: <TrendingUp size={17} /> },
   { key: "shop", label: "Buy Products", path: "/admin-shop", icon: <ShoppingCart size={17} /> },

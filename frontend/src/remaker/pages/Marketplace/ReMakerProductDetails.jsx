@@ -36,6 +36,7 @@ import {
   deliveryCharge,
   formatPrice,
   getListingById,
+  getProductReviews,
   getListingsBySeller,
   getRelatedListings,
   getSeller,
@@ -44,6 +45,10 @@ import {
 import useWishlist from "../../hooks/useWishlist";
 
 import "../../css/ReMakerProductDetails.css";
+
+function sellerProfilePath(sellerId) {
+  return `/remaker-marketplace/seller/${encodeURIComponent(String(sellerId ?? ""))}`;
+}
 
 function Photo({ src, alt }) {
   const [failed, setFailed] = useState(false);

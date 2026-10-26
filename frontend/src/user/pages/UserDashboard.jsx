@@ -18,6 +18,12 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { useOrders } from "../data/ordersStore";
+import { summarize, useDonations } from "../data/donationsStore";
+import { useWishlist } from "../data/wishlistStore";
+import { useRewards } from "../data/rewardsStore";
+import { formatDate, relativeDay } from "../utils/format";
+
 import "../css/UserDashboard.css";
 
 function getStoredUser() {
@@ -60,30 +66,6 @@ function getInitials(name) {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-const recentOrders = [
-  {
-    id: "#RO-10284",
-    product: "Reclaimed Wooden Lamp",
-    status: "Delivered",
-    date: "Sep 12, 2026",
-    amount: "₹1,249",
-  },
-  {
-    id: "#RO-10271",
-    product: "Upcycled Denim Tote",
-    status: "In Transit",
-    date: "Sep 10, 2026",
-    amount: "₹749",
-  },
-  {
-    id: "#RO-10253",
-    product: "Recycled Glass Vase",
-    status: "Processing",
-    date: "Sep 08, 2026",
-    amount: "₹899",
-  },
-];
-
 const recommendedProducts = [
   {
     id: 1,
@@ -111,45 +93,42 @@ const recommendedProducts = [
   },
 ];
 
-const activities = [
-  {
-    id: 1,
-    icon: CheckCircle2,
-    title: "Order delivered",
-    description: "Your reclaimed wooden lamp was delivered.",
-    time: "Today",
-    type: "success",
-  },
-  {
-    id: 2,
-    icon: Star,
-    title: "Orbit Points earned",
-    description: "You earned 75 points from your recent purchase.",
-    time: "Yesterday",
-    type: "reward",
-  },
-  {
-    id: 3,
-    icon: Heart,
-    title: "Wishlist updated",
-    description: "You saved a new product to your wishlist.",
-    time: "2 days ago",
-    type: "wishlist",
-  },
-  {
-    id: 4,
-    icon: Gift,
-    title: "Donation completed",
-    description: "Your donated item has been accepted.",
-    time: "4 days ago",
-    type: "donation",
-  },
-];
+const ORDER_LABEL = { Shipped: "In Transit", Confirmed: "Processing", Processing: "Processing", Delivered: "Delivered", Cancelled: "Cancelled" };
+const ACTIVITY_ICON = { purchase: CheckCircle2, donation: Gift, listing: Sparkles, review: Star, follow: Heart, spend: Star };
+const ACTIVITY_TYPE = { purchase: "success", donation: "donation", listing: "reward", review: "reward", follow: "wishlist", spend: "reward" };
 
 export default function UserDashboard() {
   const navigate = useNavigate();
 
   const user = useMemo(() => getStoredUser(), []);
+
+  /* real numbers from the orders, donations, wishlist and rewards stores */
+  const orders = useOrders();
+  const donationList = useDonations();
+  const wish = useWishlist();
+  const rewards = useRewards();
+  const donationStats = summarize(donationList);
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const ordersThisMonth = orders.filter((o) => new Date(o.placedAt) >= monthStart).length;
+  const pointsFmt = rewards.balance.toLocaleString("en-IN");
+  const reuseKg = Math.round((donationStats.weight + orders.filter((o) => o.status === "Delivered").reduce((n, o) => n + (o.item.co2SavedKg || 0) * o.qty, 0)) * 10) / 10;
+
+  const recentOrders = orders.slice(0, 3).map((o) => ({
+    id: `#${o.id}`,
+    product: o.item.title,
+    status: ORDER_LABEL[o.status] || o.status,
+    date: formatDate(o.placedAt),
+    amount: `₹${o.total.toLocaleString("en-IN")}`,
+  }));
+
+  const activities = rewards.ledger.slice(0, 4).map((e, i) => ({
+    id: e.id,
+    icon: ACTIVITY_ICON[e.kind] || Star,
+    title: e.title,
+    description: `${e.detail} · ${e.points > 0 ? "+" : "−"}${Math.abs(e.points)} points`,
+    time: relativeDay(e.at),
+    type: ACTIVITY_TYPE[e.kind] || "reward",
+  }));
 
   const fullName = getUserName(user);
   const firstName = getFirstName(fullName);
@@ -234,13 +213,13 @@ export default function UserDashboard() {
           <div className="user-dashboard-floating-card floating-card-one">
             <Recycle size={15} />
             <span>Reuse Impact</span>
-            <strong>+12.4 kg</strong>
+            <strong>+{reuseKg} kg</strong>
           </div>
 
           <div className="user-dashboard-floating-card floating-card-two">
             <Star size={14} />
             <span>Orbit Points</span>
-            <strong>1,280</strong>
+            <strong>{pointsFmt}</strong>
           </div>
         </div>
       </section>
@@ -255,9 +234,9 @@ export default function UserDashboard() {
 
           <div className="user-dashboard-stat-content">
             <span>Total Orders</span>
-            <strong>12</strong>
+            <strong>{orders.length}</strong>
             <small>
-              <TrendingUp size={11} />3 this month
+              <TrendingUp size={11} />{ordersThisMonth} this month
             </small>
           </div>
         </div>
@@ -269,8 +248,8 @@ export default function UserDashboard() {
 
           <div className="user-dashboard-stat-content">
             <span>Wishlist Items</span>
-            <strong>8</strong>
-            <small>2 added recently</small>
+            <strong>{wish.count}</strong>
+            <small>Saved for later</small>
           </div>
         </div>
 
@@ -281,7 +260,7 @@ export default function UserDashboard() {
 
           <div className="user-dashboard-stat-content">
             <span>Donations</span>
-            <strong>5</strong>
+            <strong>{donationStats.total}</strong>
             <small>Giving items another life</small>
           </div>
         </div>
@@ -293,8 +272,8 @@ export default function UserDashboard() {
 
           <div className="user-dashboard-stat-content">
             <span>Orbit Points</span>
-            <strong>1,280</strong>
-            <small>120 points to next badge</small>
+            <strong>{pointsFmt}</strong>
+            <small>{rewards.next ? `${rewards.toNext.toLocaleString("en-IN")} points to ${rewards.next.name}` : "Top level reached"}</small>
           </div>
         </div>
       </section>
@@ -322,7 +301,7 @@ export default function UserDashboard() {
           </div>
 
           <div className="user-dashboard-impact-number">
-            <strong>12.4</strong>
+            <strong>{reuseKg}</strong>
             <span>kg</span>
           </div>
 

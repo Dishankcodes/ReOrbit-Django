@@ -33,32 +33,14 @@ const PAGE_SIZE = 6;
 
 const TABS = [
   { id: "all", label: "All" },
-  {
-    id: "active",
-    label: "In progress",
-    match: (d) => ACTIVE_STATUSES.includes(d.status),
-  },
-  {
-    id: "completed",
-    label: "Completed",
-    match: (d) => d.status === "Completed",
-  },
-  {
-    id: "closed",
-    label: "Closed",
-    match: (d) => CLOSED_STATUSES.includes(d.status),
-  },
+  { id: "active", label: "In progress", match: (d) => ACTIVE_STATUSES.includes(d.status) },
+  { id: "completed", label: "Completed", match: (d) => d.status === "Completed" },
+  { id: "closed", label: "Closed", match: (d) => CLOSED_STATUSES.includes(d.status) },
 ];
 
 const SORTS = {
-  newest: {
-    label: "Newest first",
-    fn: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  },
-  oldest: {
-    label: "Oldest first",
-    fn: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-  },
+  newest: { label: "Newest first", fn: (a, b) => new Date(b.createdAt) - new Date(a.createdAt) },
+  oldest: { label: "Oldest first", fn: (a, b) => new Date(a.createdAt) - new Date(b.createdAt) },
   items: { label: "Most items", fn: (a, b) => b.quantity - a.quantity },
   weight: { label: "Heaviest", fn: (a, b) => b.weightKg - a.weightKg },
 };
@@ -77,10 +59,7 @@ export default function UserDonationHistory() {
   const counts = useMemo(
     () =>
       Object.fromEntries(
-        TABS.map((item) => [
-          item.id,
-          item.match ? donations.filter(item.match).length : donations.length,
-        ]),
+        TABS.map((item) => [item.id, item.match ? donations.filter(item.match).length : donations.length]),
       ),
     [donations],
   );
@@ -94,9 +73,7 @@ export default function UserDonationHistory() {
       .filter((d) => (category === "all" ? true : d.category === category))
       .filter((d) =>
         text
-          ? [d.id, d.title, d.category, d.ngo?.name || ""].some((field) =>
-              field.toLowerCase().includes(text),
-            )
+          ? [d.id, d.title, d.category, d.ngo?.name || ""].some((field) => field.toLowerCase().includes(text))
           : true,
       )
       .sort(SORTS[sort].fn);
@@ -121,20 +98,13 @@ export default function UserDonationHistory() {
 
   return (
     <div className="dn dn-history">
-      <Crumbs
-        items={[
-          { label: "Donations", to: "/user-donations" },
-          { label: "History" },
-        ]}
-      />
+      <Crumbs items={[{ label: "Donations", to: "/user-donations" }, { label: "History" }]} />
 
       <header className="dn-hist-head">
         <div>
           <span className="dn-eyebrow">Your giving</span>
           <h1>Donation history</h1>
-          <p className="dn-muted">
-            Every donation you've made, with its status, pickup and certificate.
-          </p>
+          <p className="dn-muted">Every donation you've made, with its status, pickup and certificate.</p>
         </div>
         <Link to="/user-donations/new" className="dn-btn">
           <Plus size={17} /> New donation
@@ -146,9 +116,7 @@ export default function UserDonationHistory() {
           const Icon = item.icon;
           return (
             <article key={item.label}>
-              <span>
-                <Icon size={18} />
-              </span>
+              <span><Icon size={18} /></span>
               <div>
                 <strong>{item.value}</strong>
                 <small>{item.label}</small>
@@ -189,11 +157,7 @@ export default function UserDonationHistory() {
               }}
             />
             {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Clear search"
-              >
+              <button type="button" onClick={() => setQuery("")} aria-label="Clear search">
                 <X size={14} />
               </button>
             )}
@@ -210,9 +174,7 @@ export default function UserDonationHistory() {
           >
             <option value="all">All categories</option>
             {DONATION_CATEGORIES.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.label}
-              </option>
+              <option key={cat.id} value={cat.id}>{cat.label}</option>
             ))}
           </select>
 
@@ -223,27 +185,15 @@ export default function UserDonationHistory() {
             onChange={(event) => setSort(event.target.value)}
           >
             {Object.entries(SORTS).map(([key, item]) => (
-              <option key={key} value={key}>
-                {item.label}
-              </option>
+              <option key={key} value={key}>{item.label}</option>
             ))}
           </select>
 
           <div className="dn-view" role="group" aria-label="Layout">
-            <button
-              type="button"
-              className={view === "list" ? "is-active" : ""}
-              onClick={() => setView("list")}
-              aria-label="List view"
-            >
+            <button type="button" className={view === "list" ? "is-active" : ""} onClick={() => setView("list")} aria-label="List view">
               <List size={16} />
             </button>
-            <button
-              type="button"
-              className={view === "grid" ? "is-active" : ""}
-              onClick={() => setView("grid")}
-              aria-label="Grid view"
-            >
+            <button type="button" className={view === "grid" ? "is-active" : ""} onClick={() => setView("grid")} aria-label="Grid view">
               <LayoutGrid size={16} />
             </button>
           </div>
@@ -269,32 +219,21 @@ export default function UserDonationHistory() {
       ) : (
         <>
           <p className="dn-hist-count">
-            Showing {shown.length} of {results.length}{" "}
-            {results.length === 1 ? "donation" : "donations"}
+            Showing {shown.length} of {results.length} {results.length === 1 ? "donation" : "donations"}
             {filtered && (
-              <button type="button" className="dn-link" onClick={reset}>
-                Clear filters
-              </button>
+              <button type="button" className="dn-link" onClick={reset}>Clear filters</button>
             )}
           </p>
 
           <div className={view === "grid" ? "dn-hist-grid" : "dn-list"}>
             {shown.map((donation) => (
-              <DonationCard
-                key={donation.id}
-                donation={donation}
-                variant={view}
-              />
+              <DonationCard key={donation.id} donation={donation} variant={view} />
             ))}
           </div>
 
           {results.length > visible && (
             <div className="dn-hist-more">
-              <button
-                type="button"
-                className="dn-btn dn-btn--ghost"
-                onClick={() => setVisible((n) => n + PAGE_SIZE)}
-              >
+              <button type="button" className="dn-btn dn-btn--ghost" onClick={() => setVisible((n) => n + PAGE_SIZE)}>
                 Show more
               </button>
             </div>

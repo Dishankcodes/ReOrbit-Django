@@ -47,6 +47,10 @@ const pageInformation = {
     title: "Pickups",
     subtitle: "Manage pickup requests and schedules.",
   },
+  "/admin-content": {
+    title: "Content",
+    subtitle: "Categories, home banners, FAQs and policy text.",
+  },
   "/admin-complaints": {
     title: "Complaints",
     subtitle: "Review reports about users, ReMakers, listings and reviews.",
@@ -208,7 +212,8 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
 
   const isComplaintDetailsPage = /^\/admin-complaints\/[^/]+$/.test(location.pathname);
 
-  const isPickupDetailsPage = /^\/admin-pickups\/[^/]+$/.test(location.pathname);
+  const isPickupTeamsPage = location.pathname === "/admin-pickups/teams";
+  const isPickupDetailsPage = /^\/admin-pickups\/(?!teams$)[^/]+$/.test(location.pathname);
 
   const isDonationDetailsPage = /^\/admin-donations\/[^/]+$/.test(location.pathname);
 
@@ -237,6 +242,8 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
     ? { title: "Order Placed", subtitle: "Your order is confirmed." }
     : isShopOrderPage
     ? { title: "Purchase Details", subtitle: "Tracking, payment and delivery for this purchase." }
+    : isPickupTeamsPage
+    ? { title: "Pickup Teams", subtitle: "Crews, members and how busy each team is." }
     : isComplaintDetailsPage
     ? {
         title: "Complaint Details",

@@ -18,6 +18,20 @@ import {
 
 export { formatPrice, getSellerReviews };
 
+/**
+ * Product-specific reviews for ReMaker marketplace listings.
+ * The current shared marketplace data exposes seller reviews only;
+ * return an empty list until product-level review records are available.
+ * This keeps the product details page renderable without inventing reviews.
+ */
+export function getProductReviews(productId) {
+  if (productId === undefined || productId === null || productId === "") {
+    return [];
+  }
+
+  return [];
+}
+
 const IMG = "/images/";
 
 const EXTRA = {

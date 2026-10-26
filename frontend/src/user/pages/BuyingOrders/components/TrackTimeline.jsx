@@ -17,19 +17,11 @@ export default function TrackTimeline({ order }) {
           const last = index === 0 && stage.key === "delivered";
           return (
             <li key={stage.key} className="is-upcoming">
-              <span className="ob-tl-dot">
-                <Circle size={10} />
-              </span>
+              <span className="ob-tl-dot"><Circle size={10} /></span>
               <div>
                 <strong>{stage.label}</strong>
                 <p>{stage.text}</p>
-                <time>
-                  {last && order.eta
-                    ? `Expected by ${formatDate(order.eta)}`
-                    : arr.length
-                      ? "Upcoming"
-                      : ""}
-                </time>
+                <time>{last && order.eta ? `Expected by ${formatDate(order.eta)}` : arr.length ? "Upcoming" : ""}</time>
               </div>
             </li>
           );
@@ -39,13 +31,8 @@ export default function TrackTimeline({ order }) {
         const isCancel = event.id === "cancel";
         const latest = index === 0;
         return (
-          <li
-            key={event.id}
-            className={`${isCancel ? "is-bad" : "is-done"} ${latest ? "is-latest" : ""}`}
-          >
-            <span className="ob-tl-dot">
-              {isCancel ? <Ban size={14} /> : <Check size={14} />}
-            </span>
+          <li key={event.id} className={`${isCancel ? "is-bad" : "is-done"} ${latest ? "is-latest" : ""}`}>
+            <span className="ob-tl-dot">{isCancel ? <Ban size={14} /> : <Check size={14} />}</span>
             <div>
               <strong>{event.label}</strong>
               <p>{event.detail}</p>

@@ -40,6 +40,16 @@ const pageInformation = {
     subtitle: "Give useful items another meaningful life.",
   },
 
+  "/user-cart": {
+    title: "My Cart",
+    subtitle: "Review the pieces you're about to give a new home.",
+  },
+
+  "/user-checkout": {
+    title: "Checkout",
+    subtitle: "Delivery, payment and review in three quick steps.",
+  },
+
   "/user-remakers": {
     title: "All ReMakers",
     subtitle: "Discover and follow the makers behind second-life pieces.",
@@ -81,22 +91,13 @@ function getDonationPage(pathname) {
   if (!pathname.startsWith("/user-donations/")) return null;
 
   if (pathname === "/user-donations/new") {
-    return {
-      title: "Donate an item",
-      subtitle: "Share something useful with someone who needs it.",
-    };
+    return { title: "Donate an item", subtitle: "Share something useful with someone who needs it." };
   }
   if (pathname === "/user-donations/history") {
-    return {
-      title: "Donation History",
-      subtitle: "Everything you've given, in one place.",
-    };
+    return { title: "Donation History", subtitle: "Everything you've given, in one place." };
   }
   if (pathname.startsWith("/user-donations/success/")) {
-    return {
-      title: "Donation Submitted",
-      subtitle: "Thank you for giving an item another orbit.",
-    };
+    return { title: "Donation Submitted", subtitle: "Thank you for giving an item another orbit." };
   }
   if (pathname.endsWith("/pickup")) {
     return { title: "Pickup", subtitle: "Manage your free donation pickup." };
@@ -104,26 +105,45 @@ function getDonationPage(pathname) {
   if (pathname.endsWith("/certificate")) {
     return { title: "Certificate", subtitle: "Proof of your contribution." };
   }
-  return {
-    title: "Donation Details",
-    subtitle: "Track your donation from pickup to delivery.",
-  };
+  return { title: "Donation Details", subtitle: "Track your donation from pickup to delivery." };
+}
+
+/* Titles for selling, Orbit Points, badges and help sub-pages. */
+function getMorePages(pathname) {
+  if (pathname.startsWith("/user-sell")) {
+    if (pathname === "/user-sell") return { title: "Sell on ReOrbit", subtitle: "List items, track reviews and earn from what you no longer use." };
+    if (pathname === "/user-sell/new") return { title: "Sell an Item", subtitle: "Add photos, a fair price and let us verify it." };
+    if (pathname === "/user-sell/sales") return { title: "Sales & Payouts", subtitle: "Pack orders and follow every payout." };
+    if (pathname.startsWith("/user-sell/sales/")) return { title: "Sale Details", subtitle: "Order, payout and buyer information." };
+    if (pathname.endsWith("/edit")) return { title: "Edit Listing", subtitle: "Update your photos, price or description." };
+    return { title: "Listing Details", subtitle: "Status, performance and activity for this listing." };
+  }
+  if (pathname.startsWith("/user-orbit-points/")) {
+    if (pathname.endsWith("/history")) return { title: "Points History", subtitle: "Everything you've earned and spent." };
+    if (pathname.endsWith("/earn")) return { title: "Ways to Earn", subtitle: "Every sustainable action adds up." };
+    if (pathname.endsWith("/vouchers")) return { title: "Rewards & Vouchers", subtitle: "Spend your Orbit Points." };
+    return { title: "Reward Details", subtitle: "Terms and redemption." };
+  }
+  if (pathname.startsWith("/user-badges/")) return { title: "Badge Details", subtitle: "What it takes and how far you are." };
+  if (pathname.startsWith("/user-help/")) {
+    if (pathname.endsWith("/contact")) return { title: "Contact Support", subtitle: "Tell us what's wrong and we'll fix it." };
+    if (pathname === "/user-help/tickets") return { title: "My Tickets", subtitle: "Follow every request you've sent." };
+    return { title: "Ticket Details", subtitle: "Conversation and status." };
+  }
+  return null;
 }
 
 /* Titles for the nested order pages. */
 function getOrderPage(pathname) {
+  if (pathname.startsWith("/user-checkout/success/")) {
+    return { title: "Order Placed", subtitle: "Your order is confirmed. Thank you for choosing second life." };
+  }
   if (!pathname.startsWith("/user-orders/")) return null;
 
   if (pathname.endsWith("/track")) {
-    return {
-      title: "Track Order",
-      subtitle: "Follow your parcel from seller to doorstep.",
-    };
+    return { title: "Track Order", subtitle: "Follow your parcel from seller to doorstep." };
   }
-  return {
-    title: "Order Details",
-    subtitle: "Items, payment, delivery and seller in one place.",
-  };
+  return { title: "Order Details", subtitle: "Items, payment, delivery and seller in one place." };
 }
 
 const notifications = [
@@ -242,10 +262,11 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
 
   const currentPage = pageInformation[location.pathname] ||
     getDonationPage(location.pathname) ||
-    getOrderPage(location.pathname) || {
-      title: "ReOrbit",
-      subtitle: "Reuse, recreate and reimagine your everyday items.",
-    };
+    getOrderPage(location.pathname) ||
+    getMorePages(location.pathname) || {
+    title: "ReOrbit",
+    subtitle: "Reuse, recreate and reimagine your everyday items.",
+  };
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();

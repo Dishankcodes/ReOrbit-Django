@@ -26,6 +26,7 @@ export const MODULES = [
   { key: "warehouse", label: "Warehouse", group: "Operations", path: "/admin-warehouse", hint: "Stock, locations, refurbishment" },
   { key: "rewards", label: "Rewards", group: "Management", path: "/admin-rewards", hint: "Points, vouchers, redemptions" },
   { key: "notifications", label: "Notifications", group: "Management", path: "/admin-notifications", hint: "Alerts and announcements" },
+  { key: "content", label: "Content", group: "Management", path: "/admin-content", hint: "Categories, banners, FAQs and policy text" },
   { key: "earnings", label: "Earnings", group: "Management", path: "/admin-earnings", hint: "Platform fees, sales income and cash flow" },
   { key: "reports", label: "Reports", group: "Management", path: "/admin-reports", hint: "Analytics and exports" },
   { key: "settings", label: "Platform settings", group: "Management", path: "/admin-settings", hint: "Fees, delivery, warehouse rules, rewards" },
@@ -53,11 +54,11 @@ export const ROLE_PRESETS = [
   },
   {
     key: "support", label: "Support agent", blurb: "Helps members: accounts, orders and donations.",
-    permissions: mk({ users: "edit", remakers: "view", orders: "edit", donations: "view", complaints: "edit", rewards: "view", notifications: "edit" }),
+    permissions: mk({ users: "edit", remakers: "view", orders: "edit", donations: "view", complaints: "edit", rewards: "view", content: "view", notifications: "edit" }),
   },
   {
     key: "catalog", label: "Catalog manager", blurb: "Keeps listings and ReMakers in good order.",
-    permissions: mk({ products: "edit", remakers: "edit", users: "view", sell: "view", complaints: "view", notifications: "view" }),
+    permissions: mk({ products: "edit", remakers: "edit", users: "view", sell: "view", complaints: "view", content: "edit", notifications: "view" }),
   },
   {
     key: "finance", label: "Finance", blurb: "Payments, refunds, rewards, earnings and reporting.",

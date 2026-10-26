@@ -55,10 +55,7 @@ export default function PhotoUploader({ images, onChange, error }) {
     <div className="dn-field">
       <span className="dn-label">
         Photos <em>*</em>
-        <span className="dn-hint">
-          {" "}
-          · {images.length}/{MAX_PHOTOS} added, first photo is the cover
-        </span>
+        <span className="dn-hint"> · {images.length}/{MAX_PHOTOS} added, first photo is the cover</span>
       </span>
 
       <div className="dn-photos">
@@ -121,12 +118,9 @@ export default function PhotoUploader({ images, onChange, error }) {
         onChange={(event) => addFiles(event.target.files)}
       />
 
-      {(error || localError) && (
-        <span className="dn-error">{error || localError}</span>
-      )}
+      {(error || localError) && <span className="dn-error">{error || localError}</span>}
       <span className="dn-hint">
-        Clear, well-lit photos help us review faster. Photos must match the real
-        condition of the item.
+        Clear, well-lit photos help us review faster. Photos must match the real condition of the item.
       </span>
     </div>
   );

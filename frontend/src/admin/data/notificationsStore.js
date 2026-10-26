@@ -20,6 +20,7 @@ import { useUsers } from "./usersStore";
 import { useRemakers } from "./remakersStore";
 import { useAccess } from "./teamStore";
 import { useComplaints, isActive } from "./complaintsStore";
+import { usePickupTeams } from "./pickupTeamsStore";
 
 const PERM_OF = { Warehouse: "warehouse", Donations: "donations", Pickups: "pickups", Orders: "orders", Products: "products", Rewards: "rewards", Sales: "sell", Users: "users", Complaints: "complaints" };
 import { DEMO_TODAY } from "../utils/format";
@@ -65,6 +66,7 @@ export function useNotifications() {
   const donations = useDonations();
   const pickups = usePickups();
   const complaints = useComplaints();
+  const pickupTeams = usePickupTeams();
   const orders = useOrders();
   const products = useProducts();
   const vouchers = useVouchers();
@@ -121,6 +123,11 @@ export function useNotifications() {
     const toShip = sales.filter((o) => o.order_status === "Confirmed" && !o.shipment).length;
     if (toShip) add({ id: "sale-ship", module: "Sales", severity: "info", needsAction: true, title: `${toShip} sales order${toShip === 1 ? "" : "s"} ready to ship`, message: "Hand them to a courier and add the tracking number.", at: ago(4), path: "/admin-sell/sales", actionLabel: "Ship orders" });
 
+    pickupTeams.filter((t) => t.status === "Active" && t.noLead).forEach((t) =>
+      add({ id: `pt-nolead-${t.id}`, module: "Pickups", severity: "warning", needsAction: true, title: `${t.name} has no lead`, message: "A team needs an active lead before it can take new pickups. Make someone the lead.", at: ago(6), path: "/admin-pickups/teams", actionLabel: "Open teams" }));
+    pickupTeams.filter((t) => t.status === "Paused" && t.movable.length > 0).forEach((t) =>
+      add({ id: `pt-paused-${t.id}`, module: "Pickups", severity: "warning", needsAction: true, title: `${t.name} is paused but has ${t.movable.length} pickup${t.movable.length === 1 ? "" : "s"}`, message: "Move the scheduled pickups to another team so customers are not left waiting.", at: ago(8), path: "/admin-pickups/teams", actionLabel: "Open teams" }));
+
     /* Rewards */
     vouchers.filter((v) => v.expiringSoon).forEach((v) => add({ id: `rw-end-${v.id}`, module: "Rewards", severity: "info", title: `Coupon ${v.code} ends in ${v.daysLeft} day${v.daysLeft === 1 ? "" : "s"}`, message: `${v.title} has been used ${v.usagePct}% so far. Extend it or let it end.`, at: ago(18), path: "/admin-rewards", actionLabel: "Open rewards" }));
     vouchers.filter((v) => v.status === "Active" && v.usagePct >= 90).forEach((v) => add({ id: `rw-full-${v.id}`, module: "Rewards", severity: "warning", needsAction: true, title: `${v.code} is almost used up`, message: `${v.used} of ${v.usage_limit} uses are gone. Raise the limit if you want it to keep running.`, at: ago(10), path: "/admin-rewards", actionLabel: "Open rewards" }));
@@ -148,7 +155,7 @@ export function useNotifications() {
       .filter((n) => !PERM_OF[n.module] || access.canSee(PERM_OF[n.module]))
       .map((n) => ({ ...n, read: n.severity === "success" && !unread.has(n.id) ? true : read.has(n.id) && !unread.has(n.id) }))
       .sort((a, b) => new Date(b.at) - new Date(a.at));
-  }, [alerts, stock, donations, pickups, complaints, orders, products, vouchers, users, remakers, sales, read, unread, dismissed, access]);
+  }, [alerts, stock, donations, pickups, complaints, pickupTeams, orders, products, vouchers, users, remakers, sales, read, unread, dismissed, access]);
 }
 
 export function markRead(ids) {

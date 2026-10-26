@@ -15,11 +15,7 @@ import {
   Plus,
 } from "lucide-react";
 
-import {
-  REWARD_RULES,
-  estimatePoints,
-  useDonation,
-} from "../../data/donationsStore";
+import { REWARD_RULES, estimatePoints, useDonation } from "../../data/donationsStore";
 import { formatLongDate, kg } from "../../utils/format";
 import SafeImage from "../../components/ui/SafeImage";
 import DonationNotFound from "./components/DonationNotFound";
@@ -29,21 +25,9 @@ import "../../css/shared/ui-base.css";
 import "../../css/donations/UserDonationSuccess.css";
 
 const NEXT = [
-  {
-    icon: ClipboardList,
-    title: "We review it",
-    text: "Our team checks your photos and details, usually within 24 hours.",
-  },
-  {
-    icon: Truck,
-    title: "We collect it",
-    text: "A pickup partner visits at your chosen time. It's always free.",
-  },
-  {
-    icon: Award,
-    title: "You get a certificate",
-    text: "Once delivered to an NGO, your certificate and points are issued.",
-  },
+  { icon: ClipboardList, title: "We review it", text: "Our team checks your photos and details, usually within 24 hours." },
+  { icon: Truck, title: "We collect it", text: "A pickup partner visits at your chosen time. It's always free." },
+  { icon: Award, title: "You get a certificate", text: "Once delivered to an NGO, your certificate and points are issued." },
 ];
 
 export default function UserDonationSuccess() {
@@ -65,18 +49,15 @@ export default function UserDonationSuccess() {
         <span className="dn-eyebrow">Donation submitted</span>
         <h1>Thank you. Your donation is on its way.</h1>
         <p>
-          We've received your request <strong>{donation.id}</strong>. You'll get
-          an update as soon as our team reviews it.
+          We've received your request <strong>{donation.id}</strong>. You'll get an update as soon as our team
+          reviews it.
         </p>
 
         <div className="dn-success-actions">
           <Link to={`/user-donations/${donation.id}`} className="dn-btn">
             View donation <ArrowRight size={16} />
           </Link>
-          <Link
-            to={`/user-donations/${donation.id}/pickup`}
-            className="dn-btn dn-btn--ghost"
-          >
+          <Link to={`/user-donations/${donation.id}/pickup`} className="dn-btn dn-btn--ghost">
             Manage pickup
           </Link>
         </div>
@@ -95,8 +76,7 @@ export default function UserDonationSuccess() {
               <span className="dn-dcard-id">{donation.id}</span>
               <h3>{donation.title}</h3>
               <p className="dn-muted">
-                {donation.category} · {donation.quantity}{" "}
-                {donation.quantity === 1 ? "item" : "items"}
+                {donation.category} · {donation.quantity} {donation.quantity === 1 ? "item" : "items"}
               </p>
             </div>
           </div>
@@ -115,9 +95,7 @@ export default function UserDonationSuccess() {
               <div>
                 <small>Pickup address</small>
                 <strong>{pickup.address.line}</strong>
-                <span>
-                  {pickup.address.city} – {pickup.address.pincode}
-                </span>
+                <span>{pickup.address.city} – {pickup.address.pincode}</span>
               </div>
             </li>
             <li>
@@ -141,13 +119,9 @@ export default function UserDonationSuccess() {
                 const Icon = step.icon;
                 return (
                   <li key={step.title}>
-                    <span className="dn-next-icon">
-                      <Icon size={18} />
-                    </span>
+                    <span className="dn-next-icon"><Icon size={18} /></span>
                     <div>
-                      <strong>
-                        {index + 1}. {step.title}
-                      </strong>
+                      <strong>{index + 1}. {step.title}</strong>
                       <p>{step.text}</p>
                     </div>
                   </li>
@@ -159,18 +133,9 @@ export default function UserDonationSuccess() {
           <article className="dn-card dn-card-pad dn-success-impact">
             <h3>Your impact once completed</h3>
             <div>
-              <span>
-                <Star size={16} />{" "}
-                <strong>{estimatePoints(donation.quantity)}</strong> Orbit
-                Points
-              </span>
-              <span>
-                <Scale size={16} /> <strong>{kg(donation.weightKg)}</strong>{" "}
-                diverted
-              </span>
-              <span>
-                <Wind size={16} /> <strong>{co2} kg</strong> CO₂ saved
-              </span>
+              <span><Star size={16} /> <strong>{estimatePoints(donation.quantity)}</strong> Orbit Points</span>
+              <span><Scale size={16} /> <strong>{kg(donation.weightKg)}</strong> diverted</span>
+              <span><Wind size={16} /> <strong>{co2} kg</strong> CO₂ saved</span>
             </div>
           </article>
         </div>

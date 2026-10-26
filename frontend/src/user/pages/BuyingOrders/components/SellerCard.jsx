@@ -1,13 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  ChevronRight,
-  MapPin,
-  BadgeCheck,
-  Images,
-  Star,
-  MessageSquareText,
-} from "lucide-react";
+import { ChevronRight, MapPin, BadgeCheck, Images, Star, MessageSquareText } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { SellerTypeBadge } from "./OrderBadges";
 import { Stars } from "../../../components/ui/Stars";
@@ -47,17 +40,11 @@ export default function SellerCard({ order, compact = false }) {
       </div>
 
       <div className="ob-seller-main">
-        <SafeImage
-          src={seller.image}
-          alt={seller.name}
-          className="ob-seller-img"
-        />
+        <SafeImage src={seller.image} alt={seller.name} className="ob-seller-img" />
         <div>
           <strong>
             {seller.name}
-            {sellerIsRemaker && seller.verified && (
-              <BadgeCheck size={16} className="ob-chip-verified" />
-            )}
+            {sellerIsRemaker && seller.verified && <BadgeCheck size={16} className="ob-chip-verified" />}
           </strong>
           <p>{sellerIsRemaker ? seller.craft : `@${seller.username}`}</p>
           <div className="ob-seller-rate">
@@ -70,23 +57,14 @@ export default function SellerCard({ order, compact = false }) {
 
       {!compact && (
         <ul className="ob-seller-facts">
-          <li>
-            <MapPin size={14} /> {seller.city}
-          </li>
+          <li><MapPin size={14} /> {seller.city}</li>
           {sellerIsRemaker ? (
             <>
-              <li>
-                <Images size={14} /> {seller.portfolio?.length || 0} portfolio
-                works
-              </li>
-              <li>
-                <Star size={14} /> {seller.yearsOfExperience} yrs experience
-              </li>
+              <li><Images size={14} /> {seller.portfolio?.length || 0} portfolio works</li>
+              <li><Star size={14} /> {seller.yearsOfExperience} yrs experience</li>
             </>
           ) : (
-            <li>
-              <Star size={14} /> {seller.productsSold} items sold
-            </li>
+            <li><Star size={14} /> {seller.productsSold} items sold</li>
           )}
         </ul>
       )}
@@ -96,17 +74,11 @@ export default function SellerCard({ order, compact = false }) {
           View profile <ChevronRight size={14} />
         </Link>
         {sellerIsRemaker ? (
-          <Link
-            to={`${sellerPath}?tab=portfolio`}
-            className="dn-btn dn-btn--ghost dn-btn--sm"
-          >
+          <Link to={`${sellerPath}?tab=portfolio`} className="dn-btn dn-btn--ghost dn-btn--sm">
             <Images size={14} /> Portfolio
           </Link>
         ) : (
-          <Link
-            to={`${sellerPath}?tab=reviews`}
-            className="dn-btn dn-btn--ghost dn-btn--sm"
-          >
+          <Link to={`${sellerPath}?tab=reviews`} className="dn-btn dn-btn--ghost dn-btn--sm">
             <MessageSquareText size={14} /> Reviews
           </Link>
         )}
