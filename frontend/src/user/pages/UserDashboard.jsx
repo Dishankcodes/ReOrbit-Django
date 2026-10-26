@@ -93,9 +93,29 @@ const recommendedProducts = [
   },
 ];
 
-const ORDER_LABEL = { Shipped: "In Transit", Confirmed: "Processing", Processing: "Processing", Delivered: "Delivered", Cancelled: "Cancelled" };
-const ACTIVITY_ICON = { purchase: CheckCircle2, donation: Gift, listing: Sparkles, review: Star, follow: Heart, spend: Star };
-const ACTIVITY_TYPE = { purchase: "success", donation: "donation", listing: "reward", review: "reward", follow: "wishlist", spend: "reward" };
+const ORDER_LABEL = {
+  Shipped: "In Transit",
+  Confirmed: "Processing",
+  Processing: "Processing",
+  Delivered: "Delivered",
+  Cancelled: "Cancelled",
+};
+const ACTIVITY_ICON = {
+  purchase: CheckCircle2,
+  donation: Gift,
+  listing: Sparkles,
+  review: Star,
+  follow: Heart,
+  spend: Star,
+};
+const ACTIVITY_TYPE = {
+  purchase: "success",
+  donation: "donation",
+  listing: "reward",
+  review: "reward",
+  follow: "wishlist",
+  spend: "reward",
+};
 
 export default function UserDashboard() {
   const navigate = useNavigate();
@@ -108,10 +128,23 @@ export default function UserDashboard() {
   const wish = useWishlist();
   const rewards = useRewards();
   const donationStats = summarize(donationList);
-  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  const ordersThisMonth = orders.filter((o) => new Date(o.placedAt) >= monthStart).length;
+  const monthStart = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth(),
+    1,
+  );
+  const ordersThisMonth = orders.filter(
+    (o) => new Date(o.placedAt) >= monthStart,
+  ).length;
   const pointsFmt = rewards.balance.toLocaleString("en-IN");
-  const reuseKg = Math.round((donationStats.weight + orders.filter((o) => o.status === "Delivered").reduce((n, o) => n + (o.item.co2SavedKg || 0) * o.qty, 0)) * 10) / 10;
+  const reuseKg =
+    Math.round(
+      (donationStats.weight +
+        orders
+          .filter((o) => o.status === "Delivered")
+          .reduce((n, o) => n + (o.item.co2SavedKg || 0) * o.qty, 0)) *
+        10,
+    ) / 10;
 
   const recentOrders = orders.slice(0, 3).map((o) => ({
     id: `#${o.id}`,
@@ -236,7 +269,8 @@ export default function UserDashboard() {
             <span>Total Orders</span>
             <strong>{orders.length}</strong>
             <small>
-              <TrendingUp size={11} />{ordersThisMonth} this month
+              <TrendingUp size={11} />
+              {ordersThisMonth} this month
             </small>
           </div>
         </div>
@@ -273,7 +307,11 @@ export default function UserDashboard() {
           <div className="user-dashboard-stat-content">
             <span>Orbit Points</span>
             <strong>{pointsFmt}</strong>
-            <small>{rewards.next ? `${rewards.toNext.toLocaleString("en-IN")} points to ${rewards.next.name}` : "Top level reached"}</small>
+            <small>
+              {rewards.next
+                ? `${rewards.toNext.toLocaleString("en-IN")} points to ${rewards.next.name}`
+                : "Top level reached"}
+            </small>
           </div>
         </div>
       </section>

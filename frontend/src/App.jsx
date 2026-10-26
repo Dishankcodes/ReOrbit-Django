@@ -64,7 +64,7 @@ import UserSellForm from "./user/pages/Sell/UserSellForm";
 import UserListingDetails from "./user/pages/Sell/UserListingDetails";
 import UserSales from "./user/pages/Sell/UserSales";
 import UserSaleDetails from "./user/pages/Sell/UserSaleDetails";
-
+import UserNotifications from "./user/pages/Notifications/UserNotifications";
 /* ReMaker public pages */
 import ReMakerAuth from "./remaker/pages/Auth/ReMakerAuth";
 import ReMakersHome from "./remaker/pages/HomePages/ReMakersHome";
@@ -288,6 +288,7 @@ export default function App() {
         <Route path="/user-badges" element={<UserBadges />} />
         <Route path="/user-badges/:badgeId" element={<UserBadgeDetail />} />
 
+        <Route path="/user-notifications" element={<UserNotifications />} />
         <Route path="/user-sell" element={<UserSell />} />
         <Route path="/user-sell/new" element={<UserSellForm />} />
         <Route path="/user-sell/sales" element={<UserSales />} />
