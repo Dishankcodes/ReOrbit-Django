@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useNavTracker } from "./shared/backNav";
 import "./styles/theme.css";
 
 /* Shared layouts */
@@ -184,6 +185,7 @@ function RouteFallback() {
 }
 
 export default function App() {
+  useNavTracker();
   return (
     <Routes>
       {/* Public website */}

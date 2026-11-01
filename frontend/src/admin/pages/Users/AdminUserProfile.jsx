@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight,
@@ -156,9 +157,7 @@ export default function AdminUserProfile() {
     <div className="aup-page">
       {/* ---------- breadcrumb ---------- */}
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-users" className="aup-back">
-          <ArrowLeft size={15} /> Users
-        </Link>
+        <BackLink to="/admin-users" className="aup-back" icon={<ArrowLeft size={15} />} label="Users" />
         <ChevronRight size={14} />
         <span aria-current="page">{user.full_name}</span>
       </nav>

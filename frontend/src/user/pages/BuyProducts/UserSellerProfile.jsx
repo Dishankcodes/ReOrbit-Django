@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useGoBack } from "../../../shared/backNav";
 import ReportButton from "../../../shared/components/ReportButton";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -54,6 +55,7 @@ function Stars({ rating = 0 }) {
 }
 
 export default function UserSellerProfile() {
+  const { goBack } = useGoBack("/user-marketplace");
   const { sellerId } = useParams();
   const navigate = useNavigate();
   const seller = getUserById(sellerId);
@@ -91,7 +93,7 @@ export default function UserSellerProfile() {
   return (
     <main className="usp-page">
       <div className="usp-container">
-        <button type="button" className="usp-back" onClick={() => navigate(-1)}>
+        <button type="button" className="usp-back" onClick={goBack}>
           <i className="bi bi-arrow-left" /> Back
         </button>
         <section className="usp-profile">

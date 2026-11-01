@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { useSettings } from "../../data/settingsStore";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -209,9 +210,7 @@ export default function AdminShopCheckout() {
           <h2>Checkout</h2>
           <p>Three quick steps to place your order.</p>
         </div>
-        <Link to="/admin-shop/cart" className="sh-link">
-          <ArrowLeft size={14} /> Back to cart
-        </Link>
+        <BackLink to="/admin-shop/cart" className="sh-link" icon={<ArrowLeft size={14} />} label="Back to cart" />
       </header>
 
       <ol className="sh-steps" aria-label="Checkout progress">

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -181,7 +182,7 @@ export default function UserCheckout() {
           <h1>Checkout</h1>
           <p className="dn-muted">Three quick steps to place your order.</p>
         </div>
-        <Link to="/user-cart" className="dn-link"><ArrowLeft size={14} /> Back to cart</Link>
+        <BackLink to="/user-cart" className="dn-link" icon={<ArrowLeft size={14} />} label="Back to cart" />
       </header>
 
       <ol className="sp-steps" aria-label="Checkout progress">

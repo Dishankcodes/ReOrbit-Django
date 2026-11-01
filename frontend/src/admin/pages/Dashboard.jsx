@@ -39,6 +39,9 @@ import { useOrders } from "../data/ordersStore";
 import { useDonations } from "../data/donationsStore";
 import { usePickups } from "../data/pickupsStore";
 import { useNotifications } from "../data/notificationsStore";
+import { useComplaintCounts } from "../data/complaintsStore";
+import { useTickets as useUserTickets } from "../../user/data/supportStore";
+import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
 import { useSettings } from "../data/settingsStore";
 import { useAccess } from "../data/teamStore";
 import { LineChart, delta, compactInr, inr, num } from "./Reports/charts";
@@ -152,6 +155,30 @@ export default function AdminDashboard() {
   const donations = useDonations();
   const pickups = usePickups();
   const notifications = useNotifications();
+  const complaintCounts = useComplaintCounts();
+  const userTickets = useUserTickets();
+  const remakerTickets = useRemakerTickets();
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const todayLabel = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+
+  /* What needs a person today. Hidden if the team member can't open that area. */
+  const attention = React.useMemo(() => {
+    const openTickets = [...userTickets, ...remakerTickets].filter((t) => t.status === "Open").length;
+    const toReview = donations.filter((d) => d.status === "Pending").length;
+    const openPickups = pickups.filter((p) => ["Requested", "Scheduled"].includes(p.status));
+    const reported = products.filter((p) => (p.reports || []).some((r) => r.status === "Pending")).length;
+    const overduePickups = report.donations.pk.kpi.overdue || 0;
+    const tiles = [
+      { key: "complaints", area: "complaints", icon: ShieldAlert, label: "Open complaints", count: complaintCounts.active, sub: complaintCounts.overdue ? `${complaintCounts.overdue} past deadline` : `${complaintCounts.high} high priority`, urgent: complaintCounts.overdue > 0, path: "/admin-complaints" },
+      { key: "support", area: "support", icon: Sparkles, label: "Support tickets", count: openTickets, sub: "waiting for a reply", urgent: false, path: "/admin-support" },
+      { key: "reported", area: "products", icon: AlertCircle, label: "Reported listings", count: reported, sub: "reports to look at", urgent: reported > 0, path: "/admin-products" },
+      { key: "donations", area: "donations", icon: Gift, label: "Donations to review", count: toReview, sub: "accept or reject", urgent: false, path: "/admin-donations" },
+      { key: "pickups", area: "pickups", icon: Truck, label: "Open pickups", count: openPickups.length, sub: overduePickups ? `${overduePickups} overdue` : "to assign or complete", urgent: overduePickups > 0, path: "/admin-pickups" },
+    ].filter((t) => access.canSee(t.area));
+    return { tiles, total: tiles.reduce((n, t) => n + t.count, 0) };
+  }, [userTickets, remakerTickets, donations, pickups, products, complaintCounts, access, report]);
 
   const live = React.useMemo(() => {
     const o = report.orders.kpi;
@@ -197,156 +224,53 @@ export default function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-container">
-        {/* HERO */}
-        <section className="admin-dashboard-welcome">
-          <div className="admin-dashboard-welcome-content">
+        {/* HEADER */}
+        <section className="dash-head">
+          <div>
             <div className="admin-dashboard-eyebrow">
               <span className="admin-dashboard-eyebrow-dot" />
               REORBIT ADMIN CONTROL CENTER
             </div>
-
             <h2>
-              Good to see you, <span>{firstName}.</span>
+              {greeting}, <span>{firstName}.</span>
             </h2>
-
-            <p>
-              Monitor users, ReMakers, products, orders and the sustainability
-              impact of the ReOrbit ecosystem.
-            </p>
-
-            <div className="admin-dashboard-welcome-actions">
-              {access.canSee("reports") && <button
-                type="button"
-                className="admin-dashboard-primary-button"
-                onClick={() => navigate("/admin-reports")}
-              >
-                View Reports
+            <p>{todayLabel} · {attention.total > 0 ? `${attention.total} thing${attention.total === 1 ? "" : "s"} need your attention.` : "Everything is up to date."}</p>
+          </div>
+          <div className="dash-head-actions">
+            {access.canSee("reports") && (
+              <button type="button" className="admin-dashboard-primary-button" onClick={() => navigate("/admin-reports")}>
+                View reports
                 <ArrowRight size={15} />
-              </button>}
-
-              {access.canSee("remakers") && <button
-                type="button"
-                className="admin-dashboard-secondary-button"
-                onClick={() => navigate("/admin-remakers")}
-              >
-                <BadgeCheck size={15} />
-                Review ReMakers
-              </button>}
-            </div>
-          </div>
-
-          <div className="admin-dashboard-welcome-art">
-            <div className="admin-dashboard-art-orbit orbit-one" />
-            <div className="admin-dashboard-art-orbit orbit-two" />
-            <div className="admin-dashboard-art-orbit orbit-three" />
-
-            <div className="admin-dashboard-art-center">
-              <Leaf size={43} strokeWidth={1.2} />
-            </div>
-
-            <div className="admin-dashboard-art-card art-card-one">
-              <Recycle size={14} />
-              <div>
-                <span>Impact</span>
-                <strong>{live.co2.toFixed(1)}T</strong>
-              </div>
-            </div>
-
-            <div className="admin-dashboard-art-card art-card-two">
-              <Users size={14} />
-              <div>
-                <span>Users</span>
-                <strong>{num(live.activeUsers)}</strong>
-              </div>
-            </div>
+              </button>
+            )}
+            <button type="button" className="admin-dashboard-secondary-button" onClick={() => navigate("/admin-notifications")}>
+              <Clock3 size={15} />
+              Notifications
+            </button>
           </div>
         </section>
 
-        {/* STATS */}
-        <section className="admin-dashboard-stats">
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.title}
-              stat={stat}
-              onClick={() => navigate(stat.path)}
-            />
-          ))}
-        </section>
-
-        {/* ANALYTICS */}
-        <section className="admin-dashboard-analytics-grid">
-          <div className="admin-dashboard-panel admin-dashboard-revenue-panel">
-            <div className="admin-dashboard-panel-header">
-              <div>
-                <span className="admin-dashboard-panel-label">PERFORMANCE</span>
-
-                <h3>Revenue overview</h3>
-
-                <p>Paid order value, last 6 months. Hover for details.</p>
-              </div>
-
-              <div className="admin-dashboard-chart-value">
-                <strong>{compactInr(live.revenue)}</strong>
-
-                <span>
-                  {live.revenueChange.trend === "down" ? <TrendingDown size={11} /> : <TrendingUp size={11} />}
-                  {live.revenueChange.change}
-                </span>
-              </div>
-            </div>
-
-            <div className="rp-scope">
-              <LineChart
-                data={report.orders.trend}
-                series={[{ key: "revenue", label: "Order value", color: "var(--rp-c1)" }]}
-                format={inr}
-                axisFormat={compactInr}
-                area
-              />
-            </div>
-          </div>
-
-          <div className="admin-dashboard-panel admin-dashboard-category-panel">
-            <div className="admin-dashboard-panel-header">
-              <div>
-                <span className="admin-dashboard-panel-label">MARKETPLACE</span>
-
-                <h3>Sales by category</h3>
-
-                <p>Share of paid order value.</p>
-              </div>
-
+        {/* NEEDS ATTENTION */}
+        <section className="dash-attn" aria-label="Needs attention">
+          {attention.tiles.map((t) => {
+            const Icon = t.icon;
+            return (
               <button
                 type="button"
-                className="admin-dashboard-more-button"
-                onClick={() => navigate("/admin-reports?tab=sales")}
+                key={t.key}
+                className={`dash-attn-tile ${t.count > 0 ? (t.urgent ? "urgent" : "open") : "clear"}`}
+                onClick={() => navigate(t.path)}
               >
-                <MoreHorizontal size={18} />
+                <span className="dash-attn-icon"><Icon size={18} strokeWidth={1.8} /></span>
+                <span className="dash-attn-body">
+                  <strong>{t.count}</strong>
+                  <em>{t.label}</em>
+                  <small>{t.count === 0 ? "All clear" : t.sub}</small>
+                </span>
+                <ArrowUpRight size={14} className="dash-attn-arrow" />
               </button>
-            </div>
-
-            <div className="admin-dashboard-category-list">
-              {categories.map((category) => (
-                <div className="admin-dashboard-category" key={category.name}>
-                  <div className="admin-dashboard-category-top">
-                    <span>{category.name}</span>
-
-                    <strong>{category.value}%</strong>
-                  </div>
-
-                  <div className="admin-dashboard-category-track">
-                    <div
-                      style={{
-                        width: `${category.value}%`,
-                      }}
-                    />
-                  </div>
-
-                  <small>{category.count}</small>
-                </div>
-              ))}
-            </div>
-          </div>
+            );
+          })}
         </section>
 
         {/* APPROVALS + ACTIVITY */}
@@ -358,7 +282,7 @@ export default function AdminDashboard() {
                   NEEDS ATTENTION
                 </span>
 
-                <h3>Pending approvals</h3>
+                <h3>Waiting on you</h3>
               </div>
 
               <span className="admin-dashboard-count-badge">{live.pendingCount} to do</span>
@@ -464,6 +388,93 @@ export default function AdminDashboard() {
               View notification center
               <ArrowRight size={13} />
             </button>
+          </div>
+        </section>
+
+        {/* STATS */}
+        <section className="admin-dashboard-stats">
+          {stats.map((stat) => (
+            <StatCard
+              key={stat.title}
+              stat={stat}
+              onClick={() => navigate(stat.path)}
+            />
+          ))}
+        </section>
+
+        {/* ANALYTICS */}
+        <section className="admin-dashboard-analytics-grid">
+          <div className="admin-dashboard-panel admin-dashboard-revenue-panel">
+            <div className="admin-dashboard-panel-header">
+              <div>
+                <span className="admin-dashboard-panel-label">PERFORMANCE</span>
+
+                <h3>Revenue overview</h3>
+
+                <p>Paid order value, last 6 months. Hover for details.</p>
+              </div>
+
+              <div className="admin-dashboard-chart-value">
+                <strong>{compactInr(live.revenue)}</strong>
+
+                <span>
+                  {live.revenueChange.trend === "down" ? <TrendingDown size={11} /> : <TrendingUp size={11} />}
+                  {live.revenueChange.change}
+                </span>
+              </div>
+            </div>
+
+            <div className="rp-scope">
+              <LineChart
+                data={report.orders.trend}
+                series={[{ key: "revenue", label: "Order value", color: "var(--rp-c1)" }]}
+                format={inr}
+                axisFormat={compactInr}
+                area
+              />
+            </div>
+          </div>
+
+          <div className="admin-dashboard-panel admin-dashboard-category-panel">
+            <div className="admin-dashboard-panel-header">
+              <div>
+                <span className="admin-dashboard-panel-label">MARKETPLACE</span>
+
+                <h3>Sales by category</h3>
+
+                <p>Share of paid order value.</p>
+              </div>
+
+              <button
+                type="button"
+                className="admin-dashboard-more-button"
+                onClick={() => navigate("/admin-reports?tab=sales")}
+              >
+                <MoreHorizontal size={18} />
+              </button>
+            </div>
+
+            <div className="admin-dashboard-category-list">
+              {categories.map((category) => (
+                <div className="admin-dashboard-category" key={category.name}>
+                  <div className="admin-dashboard-category-top">
+                    <span>{category.name}</span>
+
+                    <strong>{category.value}%</strong>
+                  </div>
+
+                  <div className="admin-dashboard-category-track">
+                    <div
+                      style={{
+                        width: `${category.value}%`,
+                      }}
+                    />
+                  </div>
+
+                  <small>{category.count}</small>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

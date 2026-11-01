@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight, ArrowLeft, ShieldAlert, ExternalLink, Check, Quote, Repeat2, Mail, MapPin, CalendarDays,
@@ -187,7 +188,7 @@ export default function AdminComplaintDetails() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-complaints" className="aup-back"><ArrowLeft size={15} /> Complaints</Link>
+        <BackLink to="/admin-complaints" className="aup-back" icon={<ArrowLeft size={15} />} label="Complaints" />
         <ChevronRight size={14} />
         <span aria-current="page">{c.id}</span>
       </nav>

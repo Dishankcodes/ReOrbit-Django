@@ -1,4 +1,5 @@
 import React from "react";
+import { useGoBack } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
@@ -16,6 +17,7 @@ import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
 
 export default function ReMakerCustomerProfile() {
+  const { goBack } = useGoBack("/remaker-customers");
   const { customerId } = useParams();
   const navigate = useNavigate();
   const customers = useCustomers();
@@ -54,7 +56,7 @@ export default function ReMakerCustomerProfile() {
   return (
     <section className="rod rsl">
       <nav className="rod-crumbs" aria-label="Breadcrumb">
-        <button type="button" className="sls-back" onClick={() => navigate(-1)}>
+        <button type="button" className="sls-back" onClick={goBack}>
           Back
         </button>
         <span aria-hidden="true">/</span>

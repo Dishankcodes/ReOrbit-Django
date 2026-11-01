@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -178,10 +179,7 @@ function Details({ listing }) {
     <section className="rmd">
       {/* BREADCRUMB */}
       <nav className="rmd-crumbs" aria-label="Breadcrumb">
-        <Link to="/remaker-marketplace" className="rmd-back">
-          <ArrowLeft size={15} />
-          Marketplace
-        </Link>
+        <BackLink to="/remaker-marketplace" className="rmd-back" icon={<ArrowLeft size={15} />} label="Marketplace" />
         <span aria-hidden="true">/</span>
         <Link
           to={`/remaker-marketplace?category=${encodeURIComponent(listing.category)}`}

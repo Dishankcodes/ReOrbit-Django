@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, ChevronRight, Search, X, Users, UserPlus, Plus, Truck, MapPin, Phone, Crown, Pencil, PauseCircle, PlayCircle,
@@ -144,7 +145,7 @@ export default function AdminPickupTeams() {
   return (
     <div className="au-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-pickups" className="aup-back"><ArrowLeft size={15} /> Pickups</Link>
+        <BackLink to="/admin-pickups" className="aup-back" icon={<ArrowLeft size={15} />} label="Pickups" />
         <ChevronRight size={14} />
         <span aria-current="page">Pickup teams</span>
       </nav>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, FileText, Images, IndianRupee, ClipboardCheck, Warehouse, RefreshCw, Package, Info, PackageX } from "lucide-react";
 
@@ -136,7 +137,7 @@ export default function AdminSellForm() {
     <div className="au-page sh-page">
       <SellNav />
       <header className="sh-pagehead"><div><h2>{editing ? "Edit product" : "Add a product to sell"}</h2><p>{editing ? `Editing ${editing.id}` : "Fill in the details, add 3 to 4 photos and publish."}</p></div>
-        <Link to="/admin-sell" className="sh-link"><ArrowLeft size={14} /> Back to listings</Link></header>
+        <BackLink to="/admin-sell" className="sh-link" icon={<ArrowLeft size={14} />} label="Back to listings" /></header>
 
       <ol className="sh-steps sl-steps" aria-label="Progress">
         {STEPS.map((s, i) => {

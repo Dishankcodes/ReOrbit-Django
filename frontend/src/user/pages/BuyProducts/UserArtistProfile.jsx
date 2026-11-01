@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useGoBack } from "../../../shared/backNav";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { followerCount, useFollowing } from "../../data/followStore";
 import ReportButton from "../../../shared/components/ReportButton";
@@ -55,6 +56,7 @@ function Stars({ rating = 0 }) {
 }
 
 export default function UserArtistProfile() {
+  const { goBack } = useGoBack("/user-marketplace");
   const { artistId } = useParams();
   const navigate = useNavigate();
   const artist = getRemakerById(artistId);
@@ -99,7 +101,7 @@ export default function UserArtistProfile() {
   return (
     <main className="uap-page">
       <div className="uap-container">
-        <button type="button" className="uap-back" onClick={() => navigate(-1)}>
+        <button type="button" className="uap-back" onClick={goBack}>
           <i className="bi bi-arrow-left" /> Back
         </button>
         <section className="uap-profile">

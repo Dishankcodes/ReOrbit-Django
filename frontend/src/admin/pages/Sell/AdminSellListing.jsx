@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight,
@@ -137,9 +138,7 @@ export default function AdminSellListing() {
     <div className="au-page sh-page">
       <SellNav />
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-sell" className="aup-back">
-          <ArrowLeft size={15} /> My listings
-        </Link>
+        <BackLink to="/admin-sell" className="aup-back" icon={<ArrowLeft size={15} />} label="My listings" />
         <ChevronRight size={14} />
         <span aria-current="page">{l.id}</span>
       </nav>

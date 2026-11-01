@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight,
@@ -178,9 +179,7 @@ export default function AdminRemakerProfile() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-remakers" className="aup-back">
-          <ArrowLeft size={15} /> ReMakers
-        </Link>
+        <BackLink to="/admin-remakers" className="aup-back" icon={<ArrowLeft size={15} />} label="ReMakers" />
         <ChevronRight size={14} />
         <span aria-current="page">{remaker.full_name}</span>
       </nav>

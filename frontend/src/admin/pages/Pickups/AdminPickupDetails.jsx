@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ChevronRight, ArrowLeft, PackageX, Truck, CalendarDays, MapPin, Phone, Mail, ExternalLink, Check,
@@ -85,7 +86,7 @@ export default function AdminPickupDetails() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <Link to="/admin-pickups" className="aup-back"><ArrowLeft size={15} /> Pickups</Link>
+        <BackLink to="/admin-pickups" className="aup-back" icon={<ArrowLeft size={15} />} label="Pickups" />
         <ChevronRight size={14} />
         <span aria-current="page">{p.id}</span>
       </nav>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useGoBack } from "../../shared/backNav";
 import {
   MapPin,
   CreditCard,
@@ -62,6 +63,7 @@ const paymentOptions = [
 ];
 
 export default function UserCheckout() {
+  const { goBack } = useGoBack("/user-cart");
   const navigate = useNavigate();
 
   const [selectedAddress, setSelectedAddress] = useState(1);
@@ -265,7 +267,7 @@ export default function UserCheckout() {
 
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             style={{
               minHeight: 38,
               padding: "0 12px",

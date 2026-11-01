@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useGoBack } from "../../../shared/backNav";
 import { useNavigate, useParams } from "react-router-dom";
 import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import {
@@ -77,6 +78,7 @@ function Stat({ icon, label, value }) {
 }
 
 export default function UserProductDetails() {
+  const { goBack } = useGoBack("/user-marketplace");
   const params = useParams();
   // Support both the current :productId route and older :id links.
   const productId = params.productId ?? params.id;
@@ -188,7 +190,7 @@ export default function UserProductDetails() {
             {cartCount > 0 && <b>{cartCount}</b>}
           </button>
         </div>
-        <button type="button" className="upd-back" onClick={() => navigate(-1)}>
+        <button type="button" className="upd-back" onClick={goBack}>
           <i className="bi bi-arrow-left" /> Back
         </button>
 

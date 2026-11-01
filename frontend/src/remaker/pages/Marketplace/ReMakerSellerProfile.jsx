@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useGoBack } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -75,6 +76,7 @@ export default function ReMakerSellerProfile() {
 }
 
 function Profile({ profile }) {
+  const { goBack } = useGoBack("/remaker-marketplace");
   const navigate = useNavigate();
   const wishlist = useWishlist();
   const { type, data } = profile;
@@ -131,7 +133,7 @@ function Profile({ profile }) {
   return (
     <section className="rsp">
       <nav className="rsp-crumbs" aria-label="Breadcrumb">
-        <button type="button" onClick={() => navigate(-1)}>
+        <button type="button" onClick={goBack}>
           <ArrowLeft size={15} />
           Back
         </button>
