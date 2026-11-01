@@ -14,10 +14,17 @@ import "./AccountGate.css";
 
 const WRITE_VERB =
   /^(add to cart|buy|checkout|place order|pay|sell|list|submit|post|publish|save|send|schedule|donate|redeem|follow|unfollow|create|edit|update|delete|remove|apply|claim|report|write|reply|accept|decline|cancel|confirm|upload|reorder|request|book|message|start|mark|withdraw)\b/i;
-const SAFE = /^(view|open|details|track|download|print|close|back|next|previous|filter|sort|search|clear|menu|notifications?|log ?out|sign ?out|contact|help)/i;
+const SAFE =
+  /^(view|open|details|track|download|print|close|back|next|previous|filter|sort|search|clear|menu|notifications?|log ?out|sign ?out|contact|help)/i;
 
 const dateOf = (iso) =>
-  iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
+  iso
+    ? new Date(iso).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
 
 export default function AccountGate({ info, role, children }) {
   const navigate = useNavigate();
@@ -31,12 +38,24 @@ export default function AccountGate({ info, role, children }) {
     let timer;
     const guard = (event) => {
       const btn = event.target.closest?.("button, [role=button]");
-      if (!btn || btn.closest("[data-safe], .account-gate-banner, header, nav, aside, [role=dialog][data-safe]")) return;
-      const text = (btn.getAttribute("aria-label") || btn.textContent || "").trim();
+      if (
+        !btn ||
+        btn.closest(
+          "[data-safe], .account-gate-banner, header, nav, aside, [role=dialog][data-safe]",
+        )
+      )
+        return;
+      const text = (
+        btn.getAttribute("aria-label") ||
+        btn.textContent ||
+        ""
+      ).trim();
       if (!text || SAFE.test(text) || !WRITE_VERB.test(text)) return;
       event.preventDefault();
       event.stopPropagation();
-      setNote("Your account is suspended, so this action is turned off. You can still look around.");
+      setNote(
+        "Your account is suspended, so this action is turned off. You can still look around.",
+      );
       clearTimeout(timer);
       timer = setTimeout(() => setNote(""), 3200);
     };
@@ -48,10 +67,21 @@ export default function AccountGate({ info, role, children }) {
   }, [suspended]);
 
   const logout = () => {
-    ["reorbit_access_token", "reorbit_refresh_token", "reorbit_account_type", role === "remaker" ? "reorbit_remaker" : "reorbit_user"].forEach((k) => {
-      try { localStorage.removeItem(k); } catch { /* ignore */ }
+    [
+      "reorbit_access_token",
+      "reorbit_refresh_token",
+      "reorbit_account_type",
+      role === "remaker" ? "reorbit_remaker" : "reorbit_user",
+    ].forEach((k) => {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        /* ignore */
+      }
     });
-    navigate(role === "remaker" ? "/remakers-auth" : "/auth", { replace: true });
+    navigate(role === "remaker" ? "/remakers-auth" : "/auth", {
+      replace: true,
+    });
   };
   const help = role === "remaker" ? "/remakers-contact" : "/user-help/contact";
 
@@ -60,8 +90,12 @@ export default function AccountGate({ info, role, children }) {
     const deleted = info.status === "Deleted";
     return (
       <div className="account-lock" role="alert">
-        <span className="account-lock-icon"><Lock size={30} /></span>
-        <h1>{deleted ? "This account was closed" : "This account is blocked"}</h1>
+        <span className="account-lock-icon">
+          <Lock size={30} />
+        </span>
+        <h1>
+          {deleted ? "This account was closed" : "This account is blocked"}
+        </h1>
         <p>
           {deleted
             ? "The account was deleted, so it can no longer be used."
@@ -73,12 +107,24 @@ export default function AccountGate({ info, role, children }) {
             {info.reason}
           </blockquote>
         )}
-        <p className="account-lock-help">Think this is a mistake? Write to us and we’ll take another look.</p>
+        <p className="account-lock-help">
+          Think this is a mistake? Write to us and we’ll take another look.
+        </p>
         <div className="account-lock-actions">
-          <button type="button" data-safe className="account-gate-btn primary" onClick={() => navigate(help)}>
+          <button
+            type="button"
+            data-safe
+            className="account-gate-btn primary"
+            onClick={() => navigate(help)}
+          >
             <LifeBuoy size={16} /> Contact support
           </button>
-          <button type="button" data-safe className="account-gate-btn" onClick={logout}>
+          <button
+            type="button"
+            data-safe
+            className="account-gate-btn"
+            onClick={logout}
+          >
             <LogOut size={16} /> Log out
           </button>
         </div>
@@ -94,17 +140,27 @@ export default function AccountGate({ info, role, children }) {
           <div>
             <strong>Your account is suspended</strong>
             <span>
-              You can look around, but buying, selling, posting and saving are turned off
+              You can look around, but buying, selling, posting and saving are
+              turned off
               {info.reason ? `. Reason: ${info.reason}` : "."}
             </span>
           </div>
-          <button type="button" data-safe className="account-gate-btn" onClick={() => navigate(help)}>
+          <button
+            type="button"
+            data-safe
+            className="account-gate-btn"
+            onClick={() => navigate(help)}
+          >
             Contact support
           </button>
         </div>
       )}
       {children}
-      {note && <div className="account-gate-toast" role="status">{note}</div>}
+      {note && (
+        <div className="account-gate-toast" role="status">
+          {note}
+        </div>
+      )}
     </>
   );
 }

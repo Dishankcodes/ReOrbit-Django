@@ -1,7 +1,9 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import PolicyContent, { policyDate } from "../../../shared/components/PolicyContent";
+import PolicyContent, {
+  policyDate,
+} from "../../../shared/components/PolicyContent";
 import { usePolicyText } from "../../../shared/content";
 
 export default function Privacy() {
@@ -462,7 +464,8 @@ export default function Privacy() {
             </p>
 
             <div className="privacy-updated">
-              Version {policy?.version} · Last updated: {policyDate(policy?.updatedAt)}
+              Version {policy?.version} · Last updated:{" "}
+              {policyDate(policy?.updatedAt)}
             </div>
           </div>
         </section>
@@ -472,7 +475,12 @@ export default function Privacy() {
         ===================================================== */}
 
         <section className="privacy-content">
-          <PolicyContent prefix="privacy" policy={policy} contactTitle="Questions about your data?" contactText="If you have questions about how your information is handled on ReOrbit, our support team can help." />
+          <PolicyContent
+            prefix="privacy"
+            policy={policy}
+            contactTitle="Questions about your data?"
+            contactText="If you have questions about how your information is handled on ReOrbit, our support team can help."
+          />
         </section>
 
         <Footer />

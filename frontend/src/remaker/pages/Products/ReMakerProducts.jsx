@@ -55,7 +55,8 @@ export default function ReMakerProducts() {
   }, [products, moderation]);
 
   const visible = products.filter((product) => {
-    const matchesFilter = filter === "all" || bucket(product, holdOf(product)) === filter;
+    const matchesFilter =
+      filter === "all" || bucket(product, holdOf(product)) === filter;
     const matchesQuery =
       !query ||
       product.title.toLowerCase().includes(query) ||
@@ -68,7 +69,8 @@ export default function ReMakerProducts() {
   const toggleActive = (id) =>
     setProducts((current) =>
       current.map((product) => {
-        if (product.id !== id || product.status === "Draft" || holdOf(product)) return product;
+        if (product.id !== id || product.status === "Draft" || holdOf(product))
+          return product;
 
         if (product.status === "Inactive") {
           return {

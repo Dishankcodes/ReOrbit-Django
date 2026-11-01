@@ -172,17 +172,29 @@ const STATIC_GROUPS = [
   },
 ];
 
-const TOPIC_ORDER = ["ReMakers", "Selling", "Payments & refunds", "Account", "Buying", "Donating"];
+const TOPIC_ORDER = [
+  "ReMakers",
+  "Selling",
+  "Payments & refunds",
+  "Account",
+  "Buying",
+  "Donating",
+];
 
 export default function ReMakerFAQ() {
   /* The questions are written in Admin > Content > FAQs. */
   const published = usePublishedFaqs();
   const faqGroups = useMemo(() => {
-    const topics = [...TOPIC_ORDER, ...FAQ_TOPICS.filter((t) => !TOPIC_ORDER.includes(t))];
+    const topics = [
+      ...TOPIC_ORDER,
+      ...FAQ_TOPICS.filter((t) => !TOPIC_ORDER.includes(t)),
+    ];
     const groups = topics
       .map((topic) => ({
         title: topic,
-        questions: published.filter((f) => f.topic === topic).map((f) => ({ question: f.q, answer: f.a })),
+        questions: published
+          .filter((f) => f.topic === topic)
+          .map((f) => ({ question: f.q, answer: f.a })),
       }))
       .filter((g) => g.questions.length);
     return groups.length ? groups : STATIC_GROUPS;

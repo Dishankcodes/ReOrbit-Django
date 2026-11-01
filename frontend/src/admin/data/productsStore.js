@@ -73,7 +73,8 @@ const REPORT_POOL = [
 ];
 
 function groupState(type, rawStatus) {
-  if (type === "item") return ["Listed", "Reserved"].includes(rawStatus) ? "live" : "off";
+  if (type === "item")
+    return ["Listed", "Reserved"].includes(rawStatus) ? "live" : "off";
   return rawStatus === "Listed" ? "live" : "off";
 }
 

@@ -86,11 +86,7 @@ export default function UserListingDetails() {
 
   const { status } = listing;
   const meta = LISTING_STATUS[status];
-  const editable = [
-    "Draft",
-    "Withdrawn",
-    "Live",
-  ].includes(status);
+  const editable = ["Draft", "Withdrawn", "Live"].includes(status);
   const pickup = PICKUP_OPTIONS.find((o) => o.id === listing.pickup);
 
   return (
@@ -163,25 +159,31 @@ export default function UserListingDetails() {
           <AlertTriangle size={20} />
           <div>
             <strong>ReOrbit turned this listing off</strong>
-            {listing.adminDisabled.reason} Buyers can't see it until the team turns it back on.{" "}
+            {listing.adminDisabled.reason} Buyers can't see it until the team
+            turns it back on.{" "}
             <Link to="/user-help/contact" className="dn-link">
               Contact support →
             </Link>
           </div>
         </div>
       )}
-      {listing.suggestedPrice != null && ["Live", "Draft"].includes(status) && listing.suggestedPrice !== listing.price && (
-        <div className="dn-banner dn-banner--warn sl-banner">
-          <Tag size={20} />
-          <div>
-            <strong>ReOrbit suggests {formatPrice(listing.suggestedPrice)}</strong>
-            {listing.suggestedMessage || "Our team thinks this price will help it sell."}{" "}
-            <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
-              Change the price →
-            </Link>
+      {listing.suggestedPrice != null &&
+        ["Live", "Draft"].includes(status) &&
+        listing.suggestedPrice !== listing.price && (
+          <div className="dn-banner dn-banner--warn sl-banner">
+            <Tag size={20} />
+            <div>
+              <strong>
+                ReOrbit suggests {formatPrice(listing.suggestedPrice)}
+              </strong>
+              {listing.suggestedMessage ||
+                "Our team thinks this price will help it sell."}{" "}
+              <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
+                Change the price →
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       {status === "Live" && (
         <div className="dn-banner sl-banner">
           <CheckCircle2 size={20} />

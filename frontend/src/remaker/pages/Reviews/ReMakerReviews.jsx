@@ -99,7 +99,8 @@ export default function ReMakerReviews() {
 
   const submitReport = (reason) => {
     reportReview(reporting.id, reason);
-    const reviewerName = reporting.reviewer?.name || String(reporting.reviewer || "A customer");
+    const reviewerName =
+      reporting.reviewer?.name || String(reporting.reviewer || "A customer");
     fileComplaint({
       type: "Review",
       name: `${reviewerName}’s review`,

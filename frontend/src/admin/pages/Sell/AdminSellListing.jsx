@@ -138,7 +138,12 @@ export default function AdminSellListing() {
     <div className="au-page sh-page">
       <SellNav />
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-sell" className="aup-back" icon={<ArrowLeft size={15} />} label="My listings" />
+        <BackLink
+          to="/admin-sell"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="My listings"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{l.id}</span>
       </nav>

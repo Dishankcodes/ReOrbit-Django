@@ -9,7 +9,6 @@ import {
 } from "../../data/shopStore";
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
-  
   CONDITIONS,
   IMPACT,
   ITEMS,

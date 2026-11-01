@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { useLiveBanners } from "../content";
 import "./BannerSlot.css";
 
-const RATIO = { "Home hero": "16 / 6", "Home strip": "16 / 2", "Shop top": "16 / 4" };
+const RATIO = {
+  "Home hero": "16 / 6",
+  "Home strip": "16 / 2",
+  "Shop top": "16 / 4",
+};
 
 export default function BannerSlot({ placement, viewer }) {
   const banners = useLiveBanners(placement, viewer);
@@ -29,18 +33,34 @@ export default function BannerSlot({ placement, viewer }) {
   };
 
   return (
-    <section className={`bn-slot ${strip ? "strip" : ""}`} aria-label="Promotions" style={{ aspectRatio: RATIO[placement] }}>
+    <section
+      className={`bn-slot ${strip ? "strip" : ""}`}
+      aria-label="Promotions"
+      style={{ aspectRatio: RATIO[placement] }}
+    >
       <img src={b.image} alt="" />
       <div className="bn-shade" />
       <div className="bn-copy">
         <h3>{b.title}</h3>
         {b.subtitle && <p>{b.subtitle}</p>}
-        {b.cta && b.link && <button type="button" onClick={go}>{b.cta}</button>}
+        {b.cta && b.link && (
+          <button type="button" onClick={go}>
+            {b.cta}
+          </button>
+        )}
       </div>
       {count > 1 && (
         <div className="bn-dots" role="tablist" aria-label="Choose a banner">
           {banners.map((x, i) => (
-            <button key={x.id} type="button" role="tab" aria-selected={i === index} aria-label={`Banner ${i + 1}`} className={i === index ? "on" : ""} onClick={() => setIndex(i)} />
+            <button
+              key={x.id}
+              type="button"
+              role="tab"
+              aria-selected={i === index}
+              aria-label={`Banner ${i + 1}`}
+              className={i === index ? "on" : ""}
+              onClick={() => setIndex(i)}
+            />
           ))}
         </div>
       )}

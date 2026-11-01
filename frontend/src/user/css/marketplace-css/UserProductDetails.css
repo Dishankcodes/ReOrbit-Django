@@ -996,5 +996,13 @@
   }
 }
 
-.upd-report { margin-top: 10px; display: flex; justify-content: center; }
-.upd-review-list article .rb-trigger { margin-top: 8px; padding: 3px 10px; font-size: 0.74rem; }
+.upd-report {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+.upd-review-list article .rb-trigger {
+  margin-top: 8px;
+  padding: 3px 10px;
+  font-size: 0.74rem;
+}

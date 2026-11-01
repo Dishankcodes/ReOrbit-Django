@@ -5,7 +5,12 @@
    ========================================================= */
 
 import { useMemo } from "react";
-import { useBanners, useFaqs, usePolicies, fillTokens } from "../admin/data/contentStore";
+import {
+  useBanners,
+  useFaqs,
+  usePolicies,
+  fillTokens,
+} from "../admin/data/contentStore";
 import { useCommerce } from "./commerce";
 import { useSettings } from "../admin/data/settingsStore";
 

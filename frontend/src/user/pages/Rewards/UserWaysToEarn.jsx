@@ -1,6 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Gift, HandHeart, ShoppingBag, Tag, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Gift,
+  HandHeart,
+  ShoppingBag,
+  Tag,
+  Users,
+} from "lucide-react";
 
 import { LEVELS, useRewards, useWaysToEarn } from "../../data/rewardsStore";
 import PointsNav from "./components/PointsNav";
@@ -22,37 +29,57 @@ export default function UserWaysToEarn() {
         <div>
           <span className="dn-eyebrow">Orbit Points</span>
           <h1>Ways to earn</h1>
-          <p className="dn-muted">Every sustainable action adds up. Points never expire.</p>
+          <p className="dn-muted">
+            Every sustainable action adds up. Points never expire.
+          </p>
         </div>
-        <Link to="/user-orbit-points/vouchers" className="dn-btn"><Gift size={16} /> Spend points</Link>
+        <Link to="/user-orbit-points/vouchers" className="dn-btn">
+          <Gift size={16} /> Spend points
+        </Link>
       </header>
 
       {groups.map((g) => {
         const Icon = ICON[g] || Tag;
         return (
           <section key={g} className="rw-group">
-            <h3><Icon size={18} /> {g}</h3>
+            <h3>
+              <Icon size={18} /> {g}
+            </h3>
             <div className="rw-earn-grid">
-              {ways.filter((w) => w.group === g).map((w) => (
-                <article key={w.id} className="dn-card rw-earn">
-                  <span className="rw-earn-pts">{w.points}</span>
-                  <h4>{w.title}</h4>
-                  <p>{w.text}</p>
-                  <Link to={w.path} className="dn-link">{w.cta} <ArrowRight size={14} /></Link>
-                </article>
-              ))}
+              {ways
+                .filter((w) => w.group === g)
+                .map((w) => (
+                  <article key={w.id} className="dn-card rw-earn">
+                    <span className="rw-earn-pts">{w.points}</span>
+                    <h4>{w.title}</h4>
+                    <p>{w.text}</p>
+                    <Link to={w.path} className="dn-link">
+                      {w.cta} <ArrowRight size={14} />
+                    </Link>
+                  </article>
+                ))}
             </div>
           </section>
         );
       })}
 
       <section className="dn-card dn-card-pad">
-        <div className="dn-card-head"><div><h2>Levels</h2><small>You've earned {lifetime.toLocaleString("en-IN")} points in total</small></div></div>
+        <div className="dn-card-head">
+          <div>
+            <h2>Levels</h2>
+            <small>
+              You've earned {lifetime.toLocaleString("en-IN")} points in total
+            </small>
+          </div>
+        </div>
         <ol className="rw-level-list">
           {LEVELS.map((l, i) => (
             <li key={l.key} className={i <= levelIndex ? "on" : ""}>
               <span>{i + 1}</span>
-              <div><strong>{l.name}</strong><small>{l.min.toLocaleString("en-IN")}+ lifetime points</small></div>
+              <div>
+                <strong>{l.name}</strong>
+                <small>{l.min.toLocaleString("en-IN")}+ lifetime points</small>
+              </div>
               <em>{l.perk}</em>
             </li>
           ))}

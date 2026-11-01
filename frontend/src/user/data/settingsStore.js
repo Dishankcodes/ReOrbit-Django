@@ -19,7 +19,16 @@ const DEFAULT_PROFILE = {
 };
 
 const DEFAULT_PREFS = {
-  notifications: { orderUpdates: true, donationUpdates: true, rewards: true, offers: false, newsletter: false, channelEmail: true, channelPush: true, channelSms: false },
+  notifications: {
+    orderUpdates: true,
+    donationUpdates: true,
+    rewards: true,
+    offers: false,
+    newsletter: false,
+    channelEmail: true,
+    channelPush: true,
+    channelSms: false,
+  },
   privacy: { publicProfile: true, showActivity: true, showFollowing: false },
   security: { twoFactor: false, loginAlerts: true },
 };
@@ -46,25 +55,46 @@ let state = {
 };
 
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const getSnapshot = () => state;
 const commit = (next) => {
   state = next;
   try {
-    window.localStorage.setItem(USER_KEY, JSON.stringify({ ...read(USER_KEY, {}), ...next.profile }));
+    window.localStorage.setItem(
+      USER_KEY,
+      JSON.stringify({ ...read(USER_KEY, {}), ...next.profile }),
+    );
     window.localStorage.setItem(PREFS_KEY, JSON.stringify(next.prefs));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   listeners.forEach((l) => l());
 };
 
-export const saveProfile = (profile) => commit({ ...state, profile: { ...state.profile, ...profile } });
+export const saveProfile = (profile) =>
+  commit({ ...state, profile: { ...state.profile, ...profile } });
 export const setPref = (group, key, value) =>
-  commit({ ...state, prefs: { ...state.prefs, [group]: { ...state.prefs[group], [key]: value } } });
+  commit({
+    ...state,
+    prefs: { ...state.prefs, [group]: { ...state.prefs[group], [key]: value } },
+  });
 
 export function deleteAccountData() {
   try {
-    ["reorbit_user", "reorbit_user_prefs", "reorbit_user_cart", "reorbit_user_wishlist", "reorbit_user_following", "reorbit_user_redeemed"].forEach((k) => window.localStorage.removeItem(k));
-  } catch { /* ignore */ }
+    [
+      "reorbit_user",
+      "reorbit_user_prefs",
+      "reorbit_user_cart",
+      "reorbit_user_wishlist",
+      "reorbit_user_following",
+      "reorbit_user_redeemed",
+    ].forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function useSettings() {
@@ -73,7 +103,25 @@ export function useSettings() {
 }
 
 export const SESSIONS = [
-  { id: "s1", device: "Chrome on Windows", place: "Ahmedabad, India", current: true, when: "Active now" },
-  { id: "s2", device: "ReOrbit app on Android", place: "Ahmedabad, India", current: false, when: "2 hours ago" },
-  { id: "s3", device: "Safari on iPhone", place: "Gandhinagar, India", current: false, when: "6 days ago" },
+  {
+    id: "s1",
+    device: "Chrome on Windows",
+    place: "Ahmedabad, India",
+    current: true,
+    when: "Active now",
+  },
+  {
+    id: "s2",
+    device: "ReOrbit app on Android",
+    place: "Ahmedabad, India",
+    current: false,
+    when: "2 hours ago",
+  },
+  {
+    id: "s3",
+    device: "Safari on iPhone",
+    place: "Gandhinagar, India",
+    current: false,
+    when: "6 days ago",
+  },
 ];

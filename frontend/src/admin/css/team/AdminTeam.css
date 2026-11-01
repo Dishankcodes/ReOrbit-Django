@@ -220,10 +220,9 @@
 }
 .tm-row {
   display: grid;
-  grid-template-columns: minmax(220px, 2.2fr) minmax(120px, 1fr) minmax(
-      150px,
-      1.3fr
-    ) 110px minmax(120px, 1fr) 190px;
+  grid-template-columns:
+    minmax(220px, 2.2fr) minmax(120px, 1fr) minmax(150px, 1.3fr)
+    110px minmax(120px, 1fr) 190px;
   gap: 14px;
   align-items: center;
   padding: 12px 8px;
@@ -732,10 +731,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .tm-row {
-    grid-template-columns: minmax(200px, 2fr) 110px minmax(
-        130px,
-        1.2fr
-      ) 100px 150px;
+    grid-template-columns:
+      minmax(200px, 2fr) 110px minmax(130px, 1.2fr)
+      100px 150px;
   }
   .tm-row > :nth-child(5) {
     display: none;

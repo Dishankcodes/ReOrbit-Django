@@ -24,9 +24,14 @@ export const platformFeeOf = (subtotal, c = getCommerce()) =>
    - Member items (user listings): free when the seller hands it to the
      courier, `itemDelivery` when ReOrbit manages the pickup and delivery.
    - ReMaker products: `productDelivery`, free from `freeDeliveryFrom`. */
-export function deliveryFor({ sellerType, pickup, subtotal }, c = getCommerce()) {
+export function deliveryFor(
+  { sellerType, pickup, subtotal },
+  c = getCommerce(),
+) {
   if (sellerType === "user") {
-    return pickup === "platform" || pickup === "Managed by platform" ? num(c.itemDelivery) : 0;
+    return pickup === "platform" || pickup === "Managed by platform"
+      ? num(c.itemDelivery)
+      : 0;
   }
   return num(subtotal) >= num(c.freeDeliveryFrom) ? 0 : num(c.productDelivery);
 }
@@ -34,11 +39,13 @@ export function deliveryFor({ sellerType, pickup, subtotal }, c = getCommerce())
 /* Cash on delivery: off, or too large an order. Returns "" when allowed. */
 export function codBlockReason(total, c = getCommerce()) {
   if (!c.codEnabled) return "Pay on delivery is switched off right now.";
-  if (num(total) > num(c.codLimit)) return `Pay on delivery is available for orders up to ₹${num(c.codLimit).toLocaleString("en-IN")}.`;
+  if (num(total) > num(c.codLimit))
+    return `Pay on delivery is available for orders up to ₹${num(c.codLimit).toLocaleString("en-IN")}.`;
   return "";
 }
 
-export const feeLabel = (c = getCommerce()) => `Platform fee (${num(c.platformFeePct)}%)`;
+export const feeLabel = (c = getCommerce()) =>
+  `Platform fee (${num(c.platformFeePct)}%)`;
 
 /* What a seller keeps: the full price. No commission is taken from sellers. */
 export const sellerKeeps = (gross) => num(gross);

@@ -13,11 +13,23 @@ export const READ_ONLY = ["Suspended"];
 export const LOCKED = ["Blocked", "Deleted"];
 
 function summarise(account, kind) {
-  if (!account) return { status: "Active", reason: "", at: "", readOnly: false, locked: false, account: null, kind };
-  const last = (account.statusHistory || []).find((h) => h.action === account.status);
+  if (!account)
+    return {
+      status: "Active",
+      reason: "",
+      at: "",
+      readOnly: false,
+      locked: false,
+      account: null,
+      kind,
+    };
+  const last = (account.statusHistory || []).find(
+    (h) => h.action === account.status,
+  );
   return {
     status: account.status,
-    reason: last?.reason && last.reason !== "No reason provided." ? last.reason : "",
+    reason:
+      last?.reason && last.reason !== "No reason provided." ? last.reason : "",
     at: last?.at || account.updated_at || "",
     readOnly: READ_ONLY.includes(account.status),
     locked: LOCKED.includes(account.status),
@@ -27,4 +39,5 @@ function summarise(account, kind) {
 }
 
 export const useUserAccountStatus = () => summarise(useMyUserAccount(), "user");
-export const useRemakerAccountStatus = () => summarise(useMyRemakerAccount(), "remaker");
+export const useRemakerAccountStatus = () =>
+  summarise(useMyRemakerAccount(), "remaker");

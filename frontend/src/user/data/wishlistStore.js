@@ -8,7 +8,12 @@ import { useMemo, useSyncExternalStore } from "react";
 import { saveWishlistIds } from "./userUiState";
 
 const KEY = "reorbit_user_wishlist";
-const DEFAULT = ["vintage-reading-chair", "restored-teak-cabinet", "recovered-textile-bag", "classic-novel-collection"];
+const DEFAULT = [
+  "vintage-reading-chair",
+  "restored-teak-cabinet",
+  "recovered-textile-bag",
+  "classic-novel-collection",
+];
 
 function load() {
   try {
@@ -23,7 +28,10 @@ function load() {
 
 let ids = load();
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const getSnapshot = () => ids;
 
 const commit = (next) => {
@@ -43,7 +51,12 @@ export const clearWishlist = () => commit([]);
 export function useWishlist() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   return useMemo(
-    () => ({ ids: list, count: list.length, has: (id) => list.includes(id), toggle: toggleWishlist }),
+    () => ({
+      ids: list,
+      count: list.length,
+      has: (id) => list.includes(id),
+      toggle: toggleWishlist,
+    }),
     [list],
   );
 }

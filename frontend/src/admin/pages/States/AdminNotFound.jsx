@@ -23,18 +23,39 @@ export default function AdminNotFound() {
     <div className="st-crash st-404" role="status">
       <div className="st-404-art" aria-hidden="true">
         <span>4</span>
-        <span className="st-404-planet"><Compass size={44} strokeWidth={1.4} /></span>
+        <span className="st-404-planet">
+          <Compass size={44} strokeWidth={1.4} />
+        </span>
         <span>4</span>
       </div>
       <h2>We could not find that page</h2>
-      <p>The address <code>{pathname}</code> does not match anything in the admin. It may have been moved, or the link has a typo.</p>
+      <p>
+        The address <code>{pathname}</code> does not match anything in the
+        admin. It may have been moved, or the link has a typo.
+      </p>
       <div className="st-actions">
-        <button type="button" className="ad-btn ad-btn-ghost" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/admin-dashboard"))}><ArrowLeft size={15} /> Go back</button>
-        <Link to="/admin-dashboard" className="ad-btn ad-btn-primary"><LayoutDashboard size={15} /> Go to dashboard</Link>
+        <button
+          type="button"
+          className="ad-btn ad-btn-ghost"
+          onClick={() =>
+            window.history.length > 1
+              ? navigate(-1)
+              : navigate("/admin-dashboard")
+          }
+        >
+          <ArrowLeft size={15} /> Go back
+        </button>
+        <Link to="/admin-dashboard" className="ad-btn ad-btn-primary">
+          <LayoutDashboard size={15} /> Go to dashboard
+        </Link>
       </div>
       <div className="st-quick">
         <span>Or jump to</span>
-        {links.map((l) => <Link key={l.path} to={l.path}>{l.label}</Link>)}
+        {links.map((l) => (
+          <Link key={l.path} to={l.path}>
+            {l.label}
+          </Link>
+        ))}
       </div>
     </div>
   );

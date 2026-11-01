@@ -7,8 +7,15 @@
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
-import { addUserDonation, updateUserDonation, onUsersChange } from "../../admin/data/usersStore";
-import { getDonationExtras, onDonationExtrasChange } from "../../admin/data/donationsStore";
+import {
+  addUserDonation,
+  updateUserDonation,
+  onUsersChange,
+} from "../../admin/data/usersStore";
+import {
+  getDonationExtras,
+  onDonationExtrasChange,
+} from "../../admin/data/donationsStore";
 import { getPickupTeams, leadOf } from "../../admin/data/pickupTeamsStore";
 import { getMyUserAccount } from "../../shared/identity";
 import { getRewardRules, pointsOf } from "../../shared/rewardRules";
@@ -52,14 +59,66 @@ export const SAVED_ADDRESSES = [
 ];
 
 export const DONATION_CATEGORIES = [
-  { id: "Furniture", label: "Furniture", hint: "Chairs, tables, shelves", weight: 9, image: "/images/products/vintage-chair.jpg" },
-  { id: "Clothing", label: "Clothing", hint: "Clean, wearable clothes", weight: 0.8, image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=900&q=80" },
-  { id: "Books", label: "Books", hint: "Novels, textbooks, kids' books", weight: 0.5, image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=80" },
-  { id: "Electronics", label: "Electronics", hint: "Working devices & accessories", weight: 3, image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80" },
-  { id: "Home Decor", label: "Home Decor", hint: "Lamps, frames, vases", weight: 1.5, image: "/images/products/ceramic-lamp.jpg" },
-  { id: "Kitchen", label: "Kitchen", hint: "Utensils, cookware, appliances", weight: 2.5, image: "/images/products/default-item.jpg" },
-  { id: "Fashion", label: "Fashion", hint: "Bags, shoes, accessories", weight: 0.7, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80" },
-  { id: "Sports", label: "Sports & Toys", hint: "Gear, games, toys", weight: 1.5, image: "/images/products/default-item.jpg" },
+  {
+    id: "Furniture",
+    label: "Furniture",
+    hint: "Chairs, tables, shelves",
+    weight: 9,
+    image: "/images/products/vintage-chair.jpg",
+  },
+  {
+    id: "Clothing",
+    label: "Clothing",
+    hint: "Clean, wearable clothes",
+    weight: 0.8,
+    image:
+      "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: "Books",
+    label: "Books",
+    hint: "Novels, textbooks, kids' books",
+    weight: 0.5,
+    image:
+      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: "Electronics",
+    label: "Electronics",
+    hint: "Working devices & accessories",
+    weight: 3,
+    image:
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: "Home Decor",
+    label: "Home Decor",
+    hint: "Lamps, frames, vases",
+    weight: 1.5,
+    image: "/images/products/ceramic-lamp.jpg",
+  },
+  {
+    id: "Kitchen",
+    label: "Kitchen",
+    hint: "Utensils, cookware, appliances",
+    weight: 2.5,
+    image: "/images/products/default-item.jpg",
+  },
+  {
+    id: "Fashion",
+    label: "Fashion",
+    hint: "Bags, shoes, accessories",
+    weight: 0.7,
+    image:
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: "Sports",
+    label: "Sports & Toys",
+    hint: "Gear, games, toys",
+    weight: 1.5,
+    image: "/images/products/default-item.jpg",
+  },
 ];
 
 /* The categories the team lets people pick (Admin > Content). */
@@ -70,7 +129,11 @@ export function useDonationCategories() {
       names.map(
         (n) =>
           DONATION_CATEGORIES.find((c) => c.id === n) || {
-            id: n, label: n, hint: "Clean, usable items", weight: 1.5, image: "/images/products/default-item.jpg",
+            id: n,
+            label: n,
+            hint: "Clean, usable items",
+            weight: 1.5,
+            image: "/images/products/default-item.jpg",
           },
       ),
     [names],
@@ -78,9 +141,21 @@ export function useDonationCategories() {
 }
 
 export const CONDITIONS = [
-  { id: "Good", label: "Good", help: "Works / looks great. Minor signs of use at most." },
-  { id: "Medium", label: "Medium", help: "Fully usable but visibly used or lightly worn." },
-  { id: "Worst", label: "Needs repair", help: "Usable only after repair. Reviewed with extra care." },
+  {
+    id: "Good",
+    label: "Good",
+    help: "Works / looks great. Minor signs of use at most.",
+  },
+  {
+    id: "Medium",
+    label: "Medium",
+    help: "Fully usable but visibly used or lightly worn.",
+  },
+  {
+    id: "Worst",
+    label: "Needs repair",
+    help: "Usable only after repair. Reviewed with extra care.",
+  },
 ];
 
 export const SLOTS = [
@@ -104,8 +179,12 @@ export const NGOS = [
 /* Points come from Admin > Rewards. CO2 per kg is a fixed estimate. */
 export const REWARD_RULES = {
   co2PerKg: 1.9,
-  get base() { return pointsOf(getRewardRules(), "donationBase"); },
-  get perItem() { return pointsOf(getRewardRules(), "donationItem"); },
+  get base() {
+    return pointsOf(getRewardRules(), "donationBase");
+  },
+  get perItem() {
+    return pointsOf(getRewardRules(), "donationItem");
+  },
 };
 
 export const CANCEL_REASONS = [
@@ -135,13 +214,41 @@ export const WHAT_WE_SKIP = [
    --------------------------------------------------------- */
 
 export const STATUS_META = {
-  Pending: { label: "Under review", tone: "amber", blurb: "We're reviewing your donation." },
-  Scheduled: { label: "Pickup scheduled", tone: "blue", blurb: "Your free pickup is booked." },
-  Picked_Up: { label: "Picked up", tone: "violet", blurb: "On its way to our warehouse." },
-  Received: { label: "Received", tone: "teal", blurb: "Checked in at the warehouse." },
-  Completed: { label: "Completed", tone: "green", blurb: "Delivered. Certificate issued." },
-  Rejected: { label: "Not accepted", tone: "red", blurb: "We couldn't accept this item." },
-  Cancelled: { label: "Cancelled", tone: "grey", blurb: "You cancelled this donation." },
+  Pending: {
+    label: "Under review",
+    tone: "amber",
+    blurb: "We're reviewing your donation.",
+  },
+  Scheduled: {
+    label: "Pickup scheduled",
+    tone: "blue",
+    blurb: "Your free pickup is booked.",
+  },
+  Picked_Up: {
+    label: "Picked up",
+    tone: "violet",
+    blurb: "On its way to our warehouse.",
+  },
+  Received: {
+    label: "Received",
+    tone: "teal",
+    blurb: "Checked in at the warehouse.",
+  },
+  Completed: {
+    label: "Completed",
+    tone: "green",
+    blurb: "Delivered. Certificate issued.",
+  },
+  Rejected: {
+    label: "Not accepted",
+    tone: "red",
+    blurb: "We couldn't accept this item.",
+  },
+  Cancelled: {
+    label: "Cancelled",
+    tone: "grey",
+    blurb: "You cancelled this donation.",
+  },
 };
 
 export const TRACK_STEPS = [
@@ -152,14 +259,22 @@ export const TRACK_STEPS = [
   { key: "Completed", label: "Completed", sub: "Certificate issued" },
 ];
 
-export const ACTIVE_STATUSES = ["Pending", "Scheduled", "Picked_Up", "Received"];
+export const ACTIVE_STATUSES = [
+  "Pending",
+  "Scheduled",
+  "Picked_Up",
+  "Received",
+];
 export const CLOSED_STATUSES = ["Rejected", "Cancelled"];
 export const canCancel = (d) => ["Pending", "Scheduled"].includes(d.status);
 export const canReschedule = (d) =>
   ["Pending", "Scheduled"].includes(d.status) && d.pickup.rescheduleCount < 2;
 
 export const stepIndex = (status) =>
-  Math.max(0, TRACK_STEPS.findIndex((step) => step.key === status));
+  Math.max(
+    0,
+    TRACK_STEPS.findIndex((step) => step.key === status),
+  );
 
 /* ---------------------------------------------------------
    Pincode serviceability (Serviceable_Pincodes table)
@@ -173,10 +288,15 @@ const RANGES = [
 
 export function checkPincode(value) {
   const text = String(value || "").trim();
-  if (!/^\d{6}$/.test(text)) return { valid: false, serviceable: false, city: "" };
+  if (!/^\d{6}$/.test(text))
+    return { valid: false, serviceable: false, city: "" };
   const num = Number(text);
   const range = RANGES.find(([from, to]) => num >= from && num <= to);
-  return { valid: true, serviceable: Boolean(range), city: range ? range[2] : "" };
+  return {
+    valid: true,
+    serviceable: Boolean(range),
+    city: range ? range[2] : "",
+  };
 }
 
 /* ---------------------------------------------------------
@@ -198,18 +318,28 @@ const basePickup = (over = {}) => ({
   ...over,
 });
 
-const ev = (id, label, detail, when, tone = "neutral") => ({ id, label, detail, at: when, tone });
+const ev = (id, label, detail, when, tone = "neutral") => ({
+  id,
+  label,
+  detail,
+  at: when,
+  tone,
+});
 
 const seed = () => [
   {
     id: "DON-2048",
     title: "Study chair set",
     category: "Furniture",
-    description: "Two sturdy wooden study chairs, cushions in good shape. Cleaned and ready to use.",
+    description:
+      "Two sturdy wooden study chairs, cushions in good shape. Cleaned and ready to use.",
     condition: "Good",
     quantity: 2,
     weightKg: 16,
-    images: ["/images/products/vintage-chair.jpg", "/images/products/wooden-table.jpg"],
+    images: [
+      "/images/products/vintage-chair.jpg",
+      "/images/products/wooden-table.jpg",
+    ],
     status: "Scheduled",
     createdAt: at(-2, 18),
     pickup: basePickup({
@@ -223,8 +353,20 @@ const seed = () => [
     rejectReason: "",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "2 × Study chair set", at(-2, 18), "neutral"),
-      ev("e2", "Accepted · pickup scheduled", `Free pickup · ${SLOTS[1]}`, at(-1, 11), "good"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "2 × Study chair set",
+        at(-2, 18),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Accepted · pickup scheduled",
+        `Free pickup · ${SLOTS[1]}`,
+        at(-1, 11),
+        "good",
+      ),
     ],
   },
   {
@@ -247,13 +389,22 @@ const seed = () => [
     certificateId: null,
     rejectReason: "",
     cancelReason: "",
-    events: [ev("e1", "Donation submitted", "8 × Winter jackets & sweaters", at(-1, 20), "neutral")],
+    events: [
+      ev(
+        "e1",
+        "Donation submitted",
+        "8 × Winter jackets & sweaters",
+        at(-1, 20),
+        "neutral",
+      ),
+    ],
   },
   {
     id: "DON-2046",
     title: "Engineering textbooks",
     category: "Books",
-    description: "Fourteen engineering textbooks, latest editions, no torn pages.",
+    description:
+      "Fourteen engineering textbooks, latest editions, no torn pages.",
     condition: "Medium",
     quantity: 14,
     weightKg: 11,
@@ -273,32 +424,82 @@ const seed = () => [
     rejectReason: "",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "14 × Engineering textbooks", at(-4, 9), "neutral"),
-      ev("e2", "Accepted · pickup scheduled", `Free pickup · ${SLOTS[0]}`, at(-3, 12), "good"),
-      ev("e3", "Picked up from you", "Pickup team B · Imran Qureshi", at(0, 10), "info"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "14 × Engineering textbooks",
+        at(-4, 9),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Accepted · pickup scheduled",
+        `Free pickup · ${SLOTS[0]}`,
+        at(-3, 12),
+        "good",
+      ),
+      ev(
+        "e3",
+        "Picked up from you",
+        "Pickup team B · Imran Qureshi",
+        at(0, 10),
+        "info",
+      ),
     ],
   },
   {
     id: "DON-2044",
     title: "Kitchen utensil set",
     category: "Kitchen",
-    description: "Steel utensils, pressure cooker and a non-stick pan. All working fine.",
+    description:
+      "Steel utensils, pressure cooker and a non-stick pan. All working fine.",
     condition: "Good",
     quantity: 1,
     weightKg: 4,
-    images: ["/images/products/default-item.jpg", "/images/products/ceramic-lamp.jpg"],
+    images: [
+      "/images/products/default-item.jpg",
+      "/images/products/ceramic-lamp.jpg",
+    ],
     status: "Received",
     createdAt: at(-8, 10),
-    pickup: basePickup({ date: at(-4, 9), slot: SLOTS[2], partner: PARTNERS[2] }),
+    pickup: basePickup({
+      date: at(-4, 9),
+      slot: SLOTS[2],
+      partner: PARTNERS[2],
+    }),
     ngo: null,
     certificateId: null,
     rejectReason: "",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "1 × Kitchen utensil set", at(-8, 10), "neutral"),
-      ev("e2", "Accepted · pickup scheduled", `Free pickup · ${SLOTS[2]}`, at(-7, 12), "good"),
-      ev("e3", "Picked up from you", "Pickup team C · Sunita Devi", at(-4, 16), "info"),
-      ev("e4", "Received at warehouse", "Checked in and sorted", at(-3, 11), "info"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "1 × Kitchen utensil set",
+        at(-8, 10),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Accepted · pickup scheduled",
+        `Free pickup · ${SLOTS[2]}`,
+        at(-7, 12),
+        "good",
+      ),
+      ev(
+        "e3",
+        "Picked up from you",
+        "Pickup team C · Sunita Devi",
+        at(-4, 16),
+        "info",
+      ),
+      ev(
+        "e4",
+        "Received at warehouse",
+        "Checked in and sorted",
+        at(-3, 11),
+        "info",
+      ),
     ],
   },
   {
@@ -309,20 +510,57 @@ const seed = () => [
     condition: "Good",
     quantity: 1,
     weightKg: 8,
-    images: ["/images/products/vintage-chair.jpg", "/images/products/teak-drawer-chest.jpg"],
+    images: [
+      "/images/products/vintage-chair.jpg",
+      "/images/products/teak-drawer-chest.jpg",
+    ],
     status: "Completed",
     createdAt: at(-26, 10),
-    pickup: basePickup({ date: at(-23, 9), slot: SLOTS[1], partner: PARTNERS[0] }),
+    pickup: basePickup({
+      date: at(-23, 9),
+      slot: SLOTS[1],
+      partner: PARTNERS[0],
+    }),
     ngo: NGOS[0],
     certificateId: "CERT-2041",
     rejectReason: "",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "1 × Cotton study chair", at(-26, 10), "neutral"),
-      ev("e2", "Accepted · pickup scheduled", `Free pickup · ${SLOTS[1]}`, at(-25, 12), "good"),
-      ev("e3", "Picked up from you", "Pickup team A · Ravi Kumar", at(-23, 13), "info"),
-      ev("e4", "Received at warehouse", "Checked in and sorted", at(-22, 11), "info"),
-      ev("e5", "Donation completed", "Given to Asha Kiran Trust · certificate issued", at(-19, 15), "good"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "1 × Cotton study chair",
+        at(-26, 10),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Accepted · pickup scheduled",
+        `Free pickup · ${SLOTS[1]}`,
+        at(-25, 12),
+        "good",
+      ),
+      ev(
+        "e3",
+        "Picked up from you",
+        "Pickup team A · Ravi Kumar",
+        at(-23, 13),
+        "info",
+      ),
+      ev(
+        "e4",
+        "Received at warehouse",
+        "Checked in and sorted",
+        at(-22, 11),
+        "info",
+      ),
+      ev(
+        "e5",
+        "Donation completed",
+        "Given to Asha Kiran Trust · certificate issued",
+        at(-19, 15),
+        "good",
+      ),
     ],
   },
   {
@@ -339,24 +577,59 @@ const seed = () => [
     ],
     status: "Completed",
     createdAt: at(-48, 10),
-    pickup: basePickup({ date: at(-45, 9), slot: SLOTS[0], partner: PARTNERS[1] }),
+    pickup: basePickup({
+      date: at(-45, 9),
+      slot: SLOTS[0],
+      partner: PARTNERS[1],
+    }),
     ngo: NGOS[1],
     certificateId: "CERT-2039",
     rejectReason: "",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "22 × Kids' story books", at(-48, 10), "neutral"),
-      ev("e2", "Accepted · pickup scheduled", `Free pickup · ${SLOTS[0]}`, at(-47, 12), "good"),
-      ev("e3", "Picked up from you", "Pickup team B · Imran Qureshi", at(-45, 11), "info"),
-      ev("e4", "Received at warehouse", "Checked in and sorted", at(-44, 11), "info"),
-      ev("e5", "Donation completed", "Given to Nayi Disha Foundation · certificate issued", at(-41, 15), "good"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "22 × Kids' story books",
+        at(-48, 10),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Accepted · pickup scheduled",
+        `Free pickup · ${SLOTS[0]}`,
+        at(-47, 12),
+        "good",
+      ),
+      ev(
+        "e3",
+        "Picked up from you",
+        "Pickup team B · Imran Qureshi",
+        at(-45, 11),
+        "info",
+      ),
+      ev(
+        "e4",
+        "Received at warehouse",
+        "Checked in and sorted",
+        at(-44, 11),
+        "info",
+      ),
+      ev(
+        "e5",
+        "Donation completed",
+        "Given to Nayi Disha Foundation · certificate issued",
+        at(-41, 15),
+        "good",
+      ),
     ],
   },
   {
     id: "DON-2036",
     title: "Old ceiling fan",
     category: "Electronics",
-    description: "A ceiling fan that stopped working. Hoped it could be repaired.",
+    description:
+      "A ceiling fan that stopped working. Hoped it could be repaired.",
     condition: "Worst",
     quantity: 1,
     weightKg: 4,
@@ -366,11 +639,24 @@ const seed = () => [
     pickup: basePickup({ date: null, slot: SLOTS[1] }),
     ngo: null,
     certificateId: null,
-    rejectReason: "Electronics must power on and work safely. This fan could not be accepted as it needs a motor replacement.",
+    rejectReason:
+      "Electronics must power on and work safely. This fan could not be accepted as it needs a motor replacement.",
     cancelReason: "",
     events: [
-      ev("e1", "Donation submitted", "1 × Old ceiling fan", at(-33, 10), "neutral"),
-      ev("e2", "Not accepted", "Electronics must power on and work safely.", at(-32, 14), "bad"),
+      ev(
+        "e1",
+        "Donation submitted",
+        "1 × Old ceiling fan",
+        at(-33, 10),
+        "neutral",
+      ),
+      ev(
+        "e2",
+        "Not accepted",
+        "Electronics must power on and work safely.",
+        at(-32, 14),
+        "bad",
+      ),
     ],
   },
   {
@@ -391,7 +677,13 @@ const seed = () => [
     cancelReason: "I want to give it to someone I know",
     events: [
       ev("e1", "Donation submitted", "3 × Decor lamps", at(-60, 10), "neutral"),
-      ev("e2", "Cancelled by you", "I want to give it to someone I know", at(-59, 9), "bad"),
+      ev(
+        "e2",
+        "Cancelled by you",
+        "I want to give it to someone I know",
+        at(-59, 9),
+        "bad",
+      ),
     ],
   },
 ];
@@ -467,14 +759,25 @@ export function createDonation(form) {
 export function cancelDonation(id, reason) {
   const adminId = donations.find((d) => d.id === id)?.adminDonationId;
   const user = getMyUserAccount();
-  if (adminId && user) updateUserDonation(user.user_id, adminId, { donation_status: "Cancelled", pickup_date: null, pickup_slot: null });
+  if (adminId && user)
+    updateUserDonation(user.user_id, adminId, {
+      donation_status: "Cancelled",
+      pickup_date: null,
+      pickup_slot: null,
+    });
   update(id, (item) => ({
     ...item,
     status: "Cancelled",
     cancelReason: reason,
     events: [
       ...item.events,
-      { id: eventId(item), label: "Cancelled by you", detail: reason, at: new Date().toISOString(), tone: "bad" },
+      {
+        id: eventId(item),
+        label: "Cancelled by you",
+        detail: reason,
+        at: new Date().toISOString(),
+        tone: "bad",
+      },
     ],
   }));
 }
@@ -482,7 +785,11 @@ export function cancelDonation(id, reason) {
 export function reschedulePickup(id, { date, slot, reason }) {
   const adminId = donations.find((d) => d.id === id)?.adminDonationId;
   const user = getMyUserAccount();
-  if (adminId && user) updateUserDonation(user.user_id, adminId, { pickup_date: new Date(`${date}T09:00:00`).toISOString(), pickup_slot: slot });
+  if (adminId && user)
+    updateUserDonation(user.user_id, adminId, {
+      pickup_date: new Date(`${date}T09:00:00`).toISOString(),
+      pickup_slot: slot,
+    });
   update(id, (item) => ({
     ...item,
     pickup: {
@@ -515,7 +822,8 @@ export function updatePickupNote(id, note) {
 export function useDonations() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   return useMemo(
-    () => [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    () =>
+      [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
     [list],
   );
 }
@@ -530,11 +838,15 @@ export const estimatePoints = (quantity) =>
 
 export const estimateWeight = (category, quantity) => {
   const meta = DONATION_CATEGORIES.find((item) => item.id === category);
-  return Math.round((meta ? meta.weight : 1) * Math.max(1, quantity || 1) * 10) / 10;
+  return (
+    Math.round((meta ? meta.weight : 1) * Math.max(1, quantity || 1) * 10) / 10
+  );
 };
 
 export function summarize(list) {
-  const counted = list.filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status));
+  const counted = list.filter((d) =>
+    ["Picked_Up", "Received", "Completed"].includes(d.status),
+  );
   const completed = list.filter((d) => d.status === "Completed");
   const weight = counted.reduce((sum, d) => sum + d.weightKg, 0);
   return {
@@ -546,7 +858,9 @@ export function summarize(list) {
     co2: Math.round(weight * REWARD_RULES.co2PerKg * 10) / 10,
     points: completed.reduce((sum, d) => sum + estimatePoints(d.quantity), 0),
     pendingPoints: list
-      .filter((d) => ["Pending", "Scheduled", "Picked_Up", "Received"].includes(d.status))
+      .filter((d) =>
+        ["Pending", "Scheduled", "Picked_Up", "Received"].includes(d.status),
+      )
       .reduce((sum, d) => sum + estimatePoints(d.quantity), 0),
   };
 }
@@ -597,36 +911,86 @@ function syncFromAdmin() {
     const ex = extras[d.adminDonationId];
     let next = d;
 
-    const team = ex?.partner ? getPickupTeams().find((t) => t.name === ex.partner) : null;
+    const team = ex?.partner
+      ? getPickupTeams().find((t) => t.name === ex.partner)
+      : null;
     const lead = team ? leadOf(team) : null;
     const partner = ex?.partner
-      ? { name: lead?.name || ex.partner, team: ex.partner, phone: lead?.phone || d.pickup.partner?.phone || "" }
+      ? {
+          name: lead?.name || ex.partner,
+          team: ex.partner,
+          phone: lead?.phone || d.pickup.partner?.phone || "",
+        }
       : d.pickup.partner;
-    const partnerChanged = (partner?.name || "") !== (d.pickup.partner?.name || "") || (partner?.team || "") !== (d.pickup.partner?.team || "");
-    const dateChanged = (a.pickup_date || null) !== (d.pickup.date || null) || (a.pickup_slot || null) !== (d.pickup.slot || null);
+    const partnerChanged =
+      (partner?.name || "") !== (d.pickup.partner?.name || "") ||
+      (partner?.team || "") !== (d.pickup.partner?.team || "");
+    const dateChanged =
+      (a.pickup_date || null) !== (d.pickup.date || null) ||
+      (a.pickup_slot || null) !== (d.pickup.slot || null);
 
     if (a.donation_status !== d.status && STATUS_EVENT[a.donation_status]) {
       const [label, tone] = STATUS_EVENT[a.donation_status];
       const detail =
-        a.donation_status === "Rejected" ? a.reject_reason || "" :
-        a.donation_status === "Scheduled" ? `Free pickup · ${a.pickup_slot || ""}` :
-        a.donation_status === "Completed" && ex?.ngo ? `Given to ${ex.ngo}` : "";
+        a.donation_status === "Rejected"
+          ? a.reject_reason || ""
+          : a.donation_status === "Scheduled"
+            ? `Free pickup · ${a.pickup_slot || ""}`
+            : a.donation_status === "Completed" && ex?.ngo
+              ? `Given to ${ex.ngo}`
+              : "";
       next = {
         ...next,
         status: a.donation_status,
-        rejectReason: a.donation_status === "Rejected" ? a.reject_reason || "" : "",
-        ngo: a.donation_status === "Completed" && ex?.ngo ? { name: ex.ngo, city: NGOS.find((n) => n.name === ex.ngo)?.city || "Ahmedabad" } : next.ngo,
-        certificateId: a.donation_status === "Completed" ? `CERT-${d.id.replace(/\D/g, "")}` : next.certificateId,
-        events: [...next.events, { id: eventId(next), label, detail, at: new Date().toISOString(), tone }],
+        rejectReason:
+          a.donation_status === "Rejected" ? a.reject_reason || "" : "",
+        ngo:
+          a.donation_status === "Completed" && ex?.ngo
+            ? {
+                name: ex.ngo,
+                city: NGOS.find((n) => n.name === ex.ngo)?.city || "Ahmedabad",
+              }
+            : next.ngo,
+        certificateId:
+          a.donation_status === "Completed"
+            ? `CERT-${d.id.replace(/\D/g, "")}`
+            : next.certificateId,
+        events: [
+          ...next.events,
+          {
+            id: eventId(next),
+            label,
+            detail,
+            at: new Date().toISOString(),
+            tone,
+          },
+        ],
       };
     }
     if (partnerChanged || dateChanged) {
       next = {
         ...next,
-        pickup: { ...next.pickup, date: a.pickup_date || next.pickup.date, slot: a.pickup_slot || next.pickup.slot, partner },
+        pickup: {
+          ...next.pickup,
+          date: a.pickup_date || next.pickup.date,
+          slot: a.pickup_slot || next.pickup.slot,
+          partner,
+        },
       };
       if (dateChanged && a.donation_status === d.status && a.pickup_date) {
-        next = { ...next, events: [...next.events, { id: eventId(next), label: "Pickup rescheduled by ReOrbit", detail: `${a.pickup_slot || ""}${partner?.team ? ` · ${partner.team}` : ""}`, at: new Date().toISOString(), tone: "wait" }] };
+        next = {
+          ...next,
+          events: [
+            ...next.events,
+            {
+              id: eventId(next),
+              label: "Pickup rescheduled by ReOrbit",
+              detail: `${a.pickup_slot || ""}${partner?.team ? ` · ${partner.team}` : ""}`,
+              at: new Date().toISOString(),
+              tone: "wait",
+            },
+          ],
+        };
       }
     }
     if (next !== d) changed = true;
@@ -637,7 +1001,9 @@ function syncFromAdmin() {
 
 /* Puts the demo donation that is still waiting in front of the team. */
 function ensureSeedDonations() {
-  donations.filter((d) => d.adminDonationId && d.status === "Pending").forEach(sendToAdmin);
+  donations
+    .filter((d) => d.adminDonationId && d.status === "Pending")
+    .forEach(sendToAdmin);
 }
 
 ensureSeedDonations();

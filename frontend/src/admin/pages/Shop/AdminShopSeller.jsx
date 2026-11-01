@@ -67,7 +67,12 @@ export default function AdminShopSeller() {
     <div className="au-page sh-page">
       <ShopNav />
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-shop" className="aup-back" icon={<ArrowLeft size={15} />} label="Shop" />
+        <BackLink
+          to="/admin-shop"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="Shop"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{owner.name}</span>
       </nav>
@@ -175,9 +180,7 @@ export default function AdminShopSeller() {
                     <Link to={`/admin-shop/product/${p.id}`}>{p.title}</Link>
                   </h3>
                   <StatusBadge
-                    status={
-                      p.available <= 0 ? "Sold" : "Inactive"
-                    }
+                    status={p.available <= 0 ? "Sold" : "Inactive"}
                   />
                 </div>
               </article>

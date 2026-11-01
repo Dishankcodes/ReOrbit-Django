@@ -225,7 +225,12 @@ export default function AdminProductDetails() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-products" className="aup-back" icon={<ArrowLeft size={15} />} label="Products" />
+        <BackLink
+          to="/admin-products"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="Products"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{p.title}</span>
       </nav>

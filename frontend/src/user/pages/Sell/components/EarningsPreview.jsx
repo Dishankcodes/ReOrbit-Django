@@ -16,15 +16,31 @@ export default function EarningsPreview({ price, pickup, qty }) {
   const buyerFee = platformFeeOf(e.gross, commerce);
   return (
     <div className="sl-earn">
-      <header><Wallet size={16} /> You'll receive</header>
+      <header>
+        <Wallet size={16} /> You'll receive
+      </header>
       <strong>{formatPrice(e.net)}</strong>
       <dl>
-        <div><dt>Selling price</dt><dd>{formatPrice(e.gross)}</dd></div>
-        <div><dt>Fees taken from you</dt><dd>None</dd></div>
+        <div>
+          <dt>Selling price</dt>
+          <dd>{formatPrice(e.gross)}</dd>
+        </div>
+        <div>
+          <dt>Fees taken from you</dt>
+          <dd>None</dd>
+        </div>
         {e.gross > 0 && (
-          <div><dt>Buyer pays {commerce.platformFeePct}% platform fee</dt><dd>{formatPrice(buyerFee)}</dd></div>
+          <div>
+            <dt>Buyer pays {commerce.platformFeePct}% platform fee</dt>
+            <dd>{formatPrice(buyerFee)}</dd>
+          </div>
         )}
-        {pickup === "platform" && <div><dt>ReOrbit pickup and delivery</dt><dd>Free for you</dd></div>}
+        {pickup === "platform" && (
+          <div>
+            <dt>ReOrbit pickup and delivery</dt>
+            <dd>Free for you</dd>
+          </div>
+        )}
       </dl>
     </div>
   );

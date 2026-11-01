@@ -66,7 +66,9 @@ export default function UserSellerProfile() {
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    ["listings", "reviews", "about"].includes(requestedTab) ? requestedTab : "listings",
+    ["listings", "reviews", "about"].includes(requestedTab)
+      ? requestedTab
+      : "listings",
   );
 
   if (!seller)
@@ -131,7 +133,11 @@ export default function UserSellerProfile() {
                   type="User"
                   label="Report"
                   file={fileComplaint}
-                  target={{ name: seller.name, sub: `${seller.city} · @${seller.username}`, image: seller.image }}
+                  target={{
+                    name: seller.name,
+                    sub: `${seller.city} · @${seller.username}`,
+                    image: seller.image,
+                  }}
                 />
               </div>
               <div className="usp-location">

@@ -129,7 +129,10 @@ export default function PortfolioForm({ mode = "add", work = null }) {
 
   const categoryNames = useCategoryNames();
   const categoryOptions = useMemo(
-    () => (work?.category && !categoryNames.includes(work.category) ? [work.category, ...categoryNames] : categoryNames),
+    () =>
+      work?.category && !categoryNames.includes(work.category)
+        ? [work.category, ...categoryNames]
+        : categoryNames,
     [categoryNames, work],
   );
   const initial = useMemo(() => buildInitial(work), [work]);

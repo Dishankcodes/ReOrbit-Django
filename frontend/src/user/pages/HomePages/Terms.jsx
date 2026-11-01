@@ -1,7 +1,9 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import PolicyContent, { policyDate } from "../../../shared/components/PolicyContent";
+import PolicyContent, {
+  policyDate,
+} from "../../../shared/components/PolicyContent";
 import { usePolicyText } from "../../../shared/content";
 
 export default function Terms() {
@@ -530,7 +532,8 @@ export default function Terms() {
             </p>
 
             <div className="terms-updated">
-              Version {policy?.version} · Last updated: {policyDate(policy?.updatedAt)}
+              Version {policy?.version} · Last updated:{" "}
+              {policyDate(policy?.updatedAt)}
             </div>
           </div>
         </section>
@@ -540,7 +543,12 @@ export default function Terms() {
         ===================================================== */}
 
         <section className="terms-content">
-          <PolicyContent prefix="terms" policy={policy} contactTitle="Need clarification?" contactText="If you have questions about these terms, marketplace rules or your use of ReOrbit, our support team can help." />
+          <PolicyContent
+            prefix="terms"
+            policy={policy}
+            contactTitle="Need clarification?"
+            contactText="If you have questions about these terms, marketplace rules or your use of ReOrbit, our support team can help."
+          />
         </section>
 
         <Footer />

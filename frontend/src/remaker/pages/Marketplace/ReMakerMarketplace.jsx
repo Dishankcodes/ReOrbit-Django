@@ -232,7 +232,10 @@ export default function ReMakerMarketplace() {
       </div>
 
       <div className="rmk-chips" role="group" aria-label="Category">
-        {["all", ...MARKET_CATEGORIES.filter((c) => liveCategories.includes(c))].map((item) => (
+        {[
+          "all",
+          ...MARKET_CATEGORIES.filter((c) => liveCategories.includes(c)),
+        ].map((item) => (
           <button
             type="button"
             key={item}

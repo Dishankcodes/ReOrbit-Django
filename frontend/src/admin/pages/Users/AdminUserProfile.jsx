@@ -157,7 +157,12 @@ export default function AdminUserProfile() {
     <div className="aup-page">
       {/* ---------- breadcrumb ---------- */}
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-users" className="aup-back" icon={<ArrowLeft size={15} />} label="Users" />
+        <BackLink
+          to="/admin-users"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="Users"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{user.full_name}</span>
       </nav>

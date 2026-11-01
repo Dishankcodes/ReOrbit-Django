@@ -13,7 +13,12 @@
    - useGoBack(path)  for plain buttons that used navigate(-1)
    ========================================================= */
 
-import { useLocation, useNavigate, useNavigationType, Link } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useNavigationType,
+  Link,
+} from "react-router-dom";
 
 const STORE_KEY = "reorbit_nav_stack";
 const MAX = 60;
@@ -112,10 +117,17 @@ export function labelForPath(path = "") {
   if (!segs.length) return "Home";
   const row = NAMES[segs[0]];
   if (row) {
-    if (segs[0] === "admin-sell" && segs[1] === "sales") return segs.length > 2 ? "Sale" : "Sales";
-    if (segs[0] === "admin-pickups" && segs[1] === "teams") return "Pickup teams";
-    if (segs[0] === "user-marketplace" && (segs[1] === "seller" || segs[1] === "remaker")) return segs[1] === "seller" ? "Seller" : "ReMaker";
-    if (segs[0] === "remaker-marketplace" && segs[1] === "seller") return "Seller";
+    if (segs[0] === "admin-sell" && segs[1] === "sales")
+      return segs.length > 2 ? "Sale" : "Sales";
+    if (segs[0] === "admin-pickups" && segs[1] === "teams")
+      return "Pickup teams";
+    if (
+      segs[0] === "user-marketplace" &&
+      (segs[1] === "seller" || segs[1] === "remaker")
+    )
+      return segs[1] === "seller" ? "Seller" : "ReMaker";
+    if (segs[0] === "remaker-marketplace" && segs[1] === "seller")
+      return "Seller";
     return segs.length > 1 && row[1] ? row[1] : row[0];
   }
   const word = segs[0].replace(/^(admin|user|remaker)-/, "").replace(/-/g, " ");
@@ -126,7 +138,8 @@ export function labelForPath(path = "") {
 function previous(currentPath) {
   if (stack.length < 2) return null;
   const prev = stack[stack.length - 2];
-  if (!prev || prev.path.split("?")[0] === currentPath.split("?")[0]) return null;
+  if (!prev || prev.path.split("?")[0] === currentPath.split("?")[0])
+    return null;
   return prev;
 }
 

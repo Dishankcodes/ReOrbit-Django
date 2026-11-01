@@ -37,7 +37,8 @@ export function onUsersChange(listener) {
    waits in the admin's Donations queue. */
 export function addUserDonation(userId, donation) {
   users = users.map((user) =>
-    user.user_id !== userId || user.donations.some((d) => d.donation_id === donation.donation_id)
+    user.user_id !== userId ||
+    user.donations.some((d) => d.donation_id === donation.donation_id)
       ? user
       : { ...user, donations: [donation, ...user.donations] },
   );
@@ -48,7 +49,8 @@ export function addUserDonation(userId, donation) {
    shown in the admin's Products list. */
 export function addUserItem(userId, item) {
   users = users.map((user) =>
-    user.user_id !== userId || user.items.some((i) => i.item_id === item.item_id)
+    user.user_id !== userId ||
+    user.items.some((i) => i.item_id === item.item_id)
       ? user
       : { ...user, items: [item, ...user.items] },
   );

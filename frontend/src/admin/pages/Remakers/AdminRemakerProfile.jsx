@@ -179,7 +179,12 @@ export default function AdminRemakerProfile() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-remakers" className="aup-back" icon={<ArrowLeft size={15} />} label="ReMakers" />
+        <BackLink
+          to="/admin-remakers"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="ReMakers"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{remaker.full_name}</span>
       </nav>

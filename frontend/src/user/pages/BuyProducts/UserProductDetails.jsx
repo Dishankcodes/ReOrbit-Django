@@ -552,7 +552,8 @@ export default function UserProductDetails() {
                           rating: review.rating,
                           text: review.text,
                           ownerName: item.seller,
-                          ownerRole: item.sellerType === "remaker" ? "ReMaker" : "User",
+                          ownerRole:
+                            item.sellerType === "remaker" ? "ReMaker" : "User",
                         }}
                       />
                     </article>

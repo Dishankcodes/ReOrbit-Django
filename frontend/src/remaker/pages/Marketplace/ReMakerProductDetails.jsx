@@ -179,7 +179,12 @@ function Details({ listing }) {
     <section className="rmd">
       {/* BREADCRUMB */}
       <nav className="rmd-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/remaker-marketplace" className="rmd-back" icon={<ArrowLeft size={15} />} label="Marketplace" />
+        <BackLink
+          to="/remaker-marketplace"
+          className="rmd-back"
+          icon={<ArrowLeft size={15} />}
+          label="Marketplace"
+        />
         <span aria-hidden="true">/</span>
         <Link
           to={`/remaker-marketplace?category=${encodeURIComponent(listing.category)}`}

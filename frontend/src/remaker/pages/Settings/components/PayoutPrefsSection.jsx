@@ -93,8 +93,8 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
       <Card title="Good to know">
         <ul className="set-list">
           <li>
-            You keep the full item price. The buyer pays the platform fee
-            and delivery on top.
+            You keep the full item price. The buyer pays the platform fee and
+            delivery on top.
           </li>
           <li>
             Money clears {CLEARING_DAYS} days after delivery, to give buyers

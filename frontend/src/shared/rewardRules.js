@@ -6,7 +6,12 @@
    ========================================================= */
 
 import { useMemo } from "react";
-import { getRewardsState, voucherStatus, useRules, useVouchers } from "../admin/data/rewardsStore";
+import {
+  getRewardsState,
+  voucherStatus,
+  useRules,
+  useVouchers,
+} from "../admin/data/rewardsStore";
 
 const LEVEL_KEYS = ["seedling", "sprout", "orbiter", "guardian", "champion"];
 
@@ -26,8 +31,17 @@ const ZERO = { points: 0, active: false };
 
 function ruleMap(rules) {
   const map = {};
-  Object.values(RULE_KEYS).forEach((k) => { map[k] = ZERO; });
-  rules.forEach((r) => { if (RULE_KEYS[r.id]) map[RULE_KEYS[r.id]] = { points: Number(r.points) || 0, active: !!r.active, rule: r }; });
+  Object.values(RULE_KEYS).forEach((k) => {
+    map[k] = ZERO;
+  });
+  rules.forEach((r) => {
+    if (RULE_KEYS[r.id])
+      map[RULE_KEYS[r.id]] = {
+        points: Number(r.points) || 0,
+        active: !!r.active,
+        rule: r,
+      };
+  });
   return map;
 }
 export const getRewardRules = () => ruleMap(getRewardsState().rules);
@@ -37,13 +51,18 @@ export function useRewardRules() {
 }
 
 /* Points a rule gives (0 when the team switched it off). */
-export const pointsOf = (rules, key) => (rules[key]?.active ? rules[key].points : 0);
+export const pointsOf = (rules, key) =>
+  rules[key]?.active ? rules[key].points : 0;
 
 function audienceOf(text = "") {
   if (/new users/i.test(text)) return { audience: "new", level: 0 };
   if (/donors/i.test(text)) return { audience: "donors", level: 0 };
   const m = /^level (\w+)/i.exec(text);
-  if (m) return { audience: "all", level: Math.max(0, LEVEL_KEYS.indexOf(m[1].toLowerCase())) };
+  if (m)
+    return {
+      audience: "all",
+      level: Math.max(0, LEVEL_KEYS.indexOf(m[1].toLowerCase())),
+    };
   return { audience: "all", level: 0 };
 }
 
@@ -74,7 +93,8 @@ export function mapVoucher(v) {
 
 /* Vouchers a member can see: not drafts, expired or not started yet. */
 const visible = (m) => ["Active", "Paused", "Used_Up"].includes(m.status);
-export const getVouchers = () => getRewardsState().vouchers.map(mapVoucher).filter(visible);
+export const getVouchers = () =>
+  getRewardsState().vouchers.map(mapVoucher).filter(visible);
 export function useVoucherList() {
   const all = useVouchers();
   return useMemo(() => all.map((v) => mapVoucher(v)).filter(visible), [all]);

@@ -1327,10 +1327,7 @@ export default function ReMakerDiscover() {
                       {maker.description}
                     </p>
 
-                    <a
-                      href="/remakers"
-                      className="remaker-card-link"
-                    >
+                    <a href="/remakers" className="remaker-card-link">
                       View studio
                       <span className="material-symbols-outlined">
                         arrow_forward

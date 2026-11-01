@@ -1169,10 +1169,33 @@
   background: var(--secondary);
   color: var(--primary);
 }
-.rpf-mod > svg { flex: none; margin-top: 2px; }
-.rpf-mod strong { display: block; font-size: 0.95rem; }
-.rpf-mod p { margin: 4px 0 0; font-size: 0.86rem; line-height: 1.5; }
-.rpf-mod a { color: inherit; font-weight: 600; text-decoration: underline; }
-.rpf-mod .rpf-btn { margin-top: 10px; }
-.rpf-mod.danger { background: #fbe9e7; border-color: #f1c5bf; color: #8a2a1f; }
-.rpf-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+.rpf-mod > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.rpf-mod strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.rpf-mod p {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.rpf-mod a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.rpf-mod .rpf-btn {
+  margin-top: 10px;
+}
+.rpf-mod.danger {
+  background: #fbe9e7;
+  border-color: #f1c5bf;
+  color: #8a2a1f;
+}
+.rpf-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

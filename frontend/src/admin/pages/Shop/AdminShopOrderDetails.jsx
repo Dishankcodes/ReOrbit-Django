@@ -157,7 +157,12 @@ export default function AdminShopOrderDetails() {
     <div className="au-page sh-page">
       <ShopNav />
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-shop/orders" className="aup-back" icon={<ArrowLeft size={15} />} label="My purchases" />
+        <BackLink
+          to="/admin-shop/orders"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="My purchases"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{o.order_id}</span>
       </nav>

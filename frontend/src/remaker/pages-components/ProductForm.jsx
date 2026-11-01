@@ -401,11 +401,14 @@ export default function ProductForm({ mode = "add", product = null }) {
             <strong>ReOrbit deactivated this product</strong>
             <p>
               Reason: {hold.reason}
-              {hold.at ? ` (${new Date(hold.at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })})` : ""}
+              {hold.at
+                ? ` (${new Date(hold.at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })})`
+                : ""}
             </p>
             <p>
               It stays hidden from buyers until the team turns it back on. Fix
-              what was flagged, then <Link to="/remakers-contact">write to support</Link>.
+              what was flagged, then{" "}
+              <Link to="/remakers-contact">write to support</Link>.
             </p>
           </div>
         </div>
@@ -922,10 +925,10 @@ export default function ProductForm({ mode = "add", product = null }) {
                     {hold
                       ? "Turned off by ReOrbit. You can't switch it on yourself."
                       : values.active
-                      ? "Buyers can find and buy this product."
-                      : product?.status === "Draft"
-                        ? "Still a draft. Turn this on to publish it."
-                        : "Hidden from the marketplace. You can turn it back on anytime."}
+                        ? "Buyers can find and buy this product."
+                        : product?.status === "Draft"
+                          ? "Still a draft. Turn this on to publish it."
+                          : "Hidden from the marketplace. You can turn it back on anytime."}
                   </p>
                 </div>
 

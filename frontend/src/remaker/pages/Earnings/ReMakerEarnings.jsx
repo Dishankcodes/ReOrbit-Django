@@ -218,9 +218,8 @@ export default function ReMakerEarnings() {
           <section className="rod-help">
             <strong>How you get paid</strong>
             <p>
-              You keep the full item price. The buyer pays the{" "}
-              {feeRatePct()}% platform fee and delivery on top. Money becomes
-              withdrawable{" "}
+              You keep the full item price. The buyer pays the {feeRatePct()}%
+              platform fee and delivery on top. Money becomes withdrawable{" "}
               {CLEARING_DAYS} days after delivery, and payouts reach your bank
               in 1 to 2 working days.
             </p>

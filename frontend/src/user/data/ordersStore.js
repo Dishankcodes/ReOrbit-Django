@@ -6,22 +6,57 @@
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
-import { addSellerReview, getItemById, getSellerFromItem } from "../../data/marketplaceData";
+import {
+  addSellerReview,
+  getItemById,
+  getSellerFromItem,
+} from "../../data/marketplaceData";
 import { deliveryFor, platformFeeOf } from "../../shared/commerce";
 
 const DAY = 86400000;
 const HOUR = 3600000;
 
-const ago = (days, hours = 0) => new Date(Date.now() - days * DAY - hours * HOUR).toISOString();
+const ago = (days, hours = 0) =>
+  new Date(Date.now() - days * DAY - hours * HOUR).toISOString();
 const ahead = (days) => new Date(Date.now() + days * DAY).toISOString();
 
 export const STAGES = [
-  { key: "placed", label: "Order placed", short: "Placed", text: "We received your order and payment." },
-  { key: "confirmed", label: "Seller confirmed", short: "Confirmed", text: "The seller accepted your order." },
-  { key: "packed", label: "Packed", short: "Packed", text: "Your item is packed and ready to ship." },
-  { key: "shipped", label: "Shipped", short: "Shipped", text: "Handed to the delivery partner." },
-  { key: "out", label: "Out for delivery", short: "Out for delivery", text: "Your parcel is with the courier near you." },
-  { key: "delivered", label: "Delivered", short: "Delivered", text: "Delivered and handed over." },
+  {
+    key: "placed",
+    label: "Order placed",
+    short: "Placed",
+    text: "We received your order and payment.",
+  },
+  {
+    key: "confirmed",
+    label: "Seller confirmed",
+    short: "Confirmed",
+    text: "The seller accepted your order.",
+  },
+  {
+    key: "packed",
+    label: "Packed",
+    short: "Packed",
+    text: "Your item is packed and ready to ship.",
+  },
+  {
+    key: "shipped",
+    label: "Shipped",
+    short: "Shipped",
+    text: "Handed to the delivery partner.",
+  },
+  {
+    key: "out",
+    label: "Out for delivery",
+    short: "Out for delivery",
+    text: "Your parcel is with the courier near you.",
+  },
+  {
+    key: "delivered",
+    label: "Delivered",
+    short: "Delivered",
+    text: "Delivered and handed over.",
+  },
 ];
 
 /* the tab / badge status for a stage */
@@ -41,7 +76,13 @@ export const STATUS_TONE = {
   Cancelled: "red",
 };
 
-export const PAYMENT_LABEL = { UPI: "UPI", CARD: "Card", NET_BANKING: "Net banking", WALLET: "Wallet", COD: "Cash on delivery" };
+export const PAYMENT_LABEL = {
+  UPI: "UPI",
+  CARD: "Card",
+  NET_BANKING: "Net banking",
+  WALLET: "Wallet",
+  COD: "Cash on delivery",
+};
 
 export const ADDRESS = {
   name: "Aarav Patel",
@@ -84,8 +125,13 @@ const COURIER = { name: "Delhivery", awb: "DLV", phone: "+91 98111 22334" };
 function make(id, itemId, qty, days, stage, extra = {}) {
   const item = getItemById(itemId);
   const placedAt = ago(days);
-  const shipping = deliveryFor({ sellerType: item.sellerType === "remaker" ? "remaker" : "user", pickup: "platform", subtotal: item.price * qty });
-  const platformFee = item.sellerType === "platform" ? 0 : platformFeeOf(item.price * qty);
+  const shipping = deliveryFor({
+    sellerType: item.sellerType === "remaker" ? "remaker" : "user",
+    pickup: "platform",
+    subtotal: item.price * qty,
+  });
+  const platformFee =
+    item.sellerType === "platform" ? 0 : platformFeeOf(item.price * qty);
   const order = {
     id,
     itemId,
@@ -98,7 +144,8 @@ function make(id, itemId, qty, days, stage, extra = {}) {
     stage,
     cancelled: false,
     payment: extra.payment || "UPI",
-    courier: stage >= 3 ? { ...COURIER, awb: `DLV${id.replace(/\D/g, "")}9` } : null,
+    courier:
+      stage >= 3 ? { ...COURIER, awb: `DLV${id.replace(/\D/g, "")}9` } : null,
     eta: stage >= 5 ? null : ahead(extra.etaDays ?? 3),
     review: extra.review || null,
     ...extra.over,
@@ -108,20 +155,42 @@ function make(id, itemId, qty, days, stage, extra = {}) {
 }
 
 const seed = () => [
-  make("RO-10531", "restored-teak-cabinet", 1, 1, 1, { etaDays: 5, payment: "CARD" }),
+  make("RO-10531", "restored-teak-cabinet", 1, 1, 1, {
+    etaDays: 5,
+    payment: "CARD",
+  }),
   make("RO-10499", "recovered-textile-bag", 1, 3, 2, { etaDays: 4 }),
-  make("RO-10377", "solid-wood-side-table", 1, 4, 4, { etaDays: 0, payment: "UPI" }),
-  make("RO-10291", "vintage-reading-chair", 1, 6, 3, { etaDays: 2, payment: "COD" }),
-  make("RO-10482", "teak-drawer-chest", 1, 22, 5, { review: { rating: 5, text: "Beautiful piece, exactly as described and packed very well." } }),
+  make("RO-10377", "solid-wood-side-table", 1, 4, 4, {
+    etaDays: 0,
+    payment: "UPI",
+  }),
+  make("RO-10291", "vintage-reading-chair", 1, 6, 3, {
+    etaDays: 2,
+    payment: "COD",
+  }),
+  make("RO-10482", "teak-drawer-chest", 1, 22, 5, {
+    review: {
+      rating: 5,
+      text: "Beautiful piece, exactly as described and packed very well.",
+    },
+  }),
   make("RO-10388", "reclaimed-wood-shelf", 2, 35, 5, { discount: 150 }),
   make("RO-10302", "classic-novel-collection", 1, 48, 5, { payment: "WALLET" }),
   (() => {
-    const o = make("RO-10244", "refurbished-desk-lamp", 1, 60, 1, { payment: "NET_BANKING" });
+    const o = make("RO-10244", "refurbished-desk-lamp", 1, 60, 1, {
+      payment: "NET_BANKING",
+    });
     o.cancelled = true;
     o.cancelReason = "Found a better option";
     o.events = [
       ...o.events,
-      { id: "cancel", label: "Order cancelled", detail: "Cancelled by you. Refund started to the original payment method.", at: ago(59, 4) },
+      {
+        id: "cancel",
+        label: "Order cancelled",
+        detail:
+          "Cancelled by you. Refund started to the original payment method.",
+        at: ago(59, 4),
+      },
     ];
     o.eta = null;
     o.refund = { amount: 1000, status: "Refunded", at: ago(57) };
@@ -135,9 +204,15 @@ let orders = seed();
 let orderSeq = 10600;
 orders.forEach((o) => o.review && publish(o, { ...o.review, at: ago(20) }));
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const getSnapshot = () => orders;
-const commit = (next) => { orders = next; listeners.forEach((l) => l()); };
+const commit = (next) => {
+  orders = next;
+  listeners.forEach((l) => l());
+};
 
 /* Orders created at checkout: one order per listing so sellers can ship
    separately. specs: [{ itemId, qty, price, shipping, payment, address,
@@ -172,11 +247,31 @@ export function placeOrders(specs) {
       eta: new Date(Date.now() + 5 * DAY).toISOString(),
       review: null,
       events: [
-        { id: "placed", label: "Order placed", detail: `Ordered “${item.title}”.`, at: at(0) },
+        {
+          id: "placed",
+          label: "Order placed",
+          detail: `Ordered “${item.title}”.`,
+          at: at(0),
+        },
         paid
-          ? { id: "payment", label: "Payment received", detail: `${methodName}${spec.reference ? ` · ${spec.reference}` : ""}`, at: at(20000) }
-          : { id: "payment", label: "Pay on delivery", detail: "The amount will be collected on delivery.", at: at(20000) },
-        { id: "confirmed", label: "Seller confirmed", detail: `${item.seller} will get it ready.`, at: at(60000) },
+          ? {
+              id: "payment",
+              label: "Payment received",
+              detail: `${methodName}${spec.reference ? ` · ${spec.reference}` : ""}`,
+              at: at(20000),
+            }
+          : {
+              id: "payment",
+              label: "Pay on delivery",
+              detail: "The amount will be collected on delivery.",
+              at: at(20000),
+            },
+        {
+          id: "confirmed",
+          label: "Seller confirmed",
+          detail: `${item.seller} will get it ready.`,
+          at: at(60000),
+        },
       ],
     };
   });
@@ -196,9 +291,22 @@ export function cancelOrder(id, reason) {
             eta: null,
             events: [
               ...o.events,
-              { id: "cancel", label: "Order cancelled", detail: `${reason}. Refund started to the original payment method.`, at: new Date().toISOString() },
+              {
+                id: "cancel",
+                label: "Order cancelled",
+                detail: `${reason}. Refund started to the original payment method.`,
+                at: new Date().toISOString(),
+              },
             ],
-            refund: { amount: o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount, status: "Processing", at: new Date().toISOString() },
+            refund: {
+              amount:
+                o.price * o.qty +
+                o.shipping +
+                (o.platformFee || 0) -
+                o.discount,
+              status: "Processing",
+              at: new Date().toISOString(),
+            },
           }
         : o,
     ),
@@ -226,7 +334,8 @@ export function reviewOrder(id, review) {
 /* ---------- derived ---------- */
 
 export const canCancel = (o) => !o.cancelled && o.stage <= 2;
-export const orderTotal = (o) => o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount;
+export const orderTotal = (o) =>
+  o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount;
 export const isActive = (o) => !o.cancelled && o.stage < 5;
 
 /* ReMaker sellers have their own profile route */
@@ -253,7 +362,10 @@ function decorate(order) {
 export function useOrders() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   return useMemo(
-    () => list.map(decorate).sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt)),
+    () =>
+      list
+        .map(decorate)
+        .sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt)),
     [list],
   );
 }

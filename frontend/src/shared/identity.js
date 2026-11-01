@@ -21,18 +21,29 @@ function stored(key) {
     return {};
   }
 }
-const same = (a, b) => !!a && !!b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+const same = (a, b) =>
+  !!a &&
+  !!b &&
+  String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 
 export function useMyUserAccount() {
   const users = useUsers();
   const email = stored("reorbit_user").email;
-  return users.find((u) => same(u.email, email)) || users.find((u) => u.user_id === DEMO_USER_ID) || null;
+  return (
+    users.find((u) => same(u.email, email)) ||
+    users.find((u) => u.user_id === DEMO_USER_ID) ||
+    null
+  );
 }
 
 export function useMyRemakerAccount() {
   const remakers = useRemakers();
   const email = stored("reorbit_remaker").email;
-  return remakers.find((r) => same(r.email, email)) || remakers.find((r) => r.remaker_id === DEMO_REMAKER_ID) || null;
+  return (
+    remakers.find((r) => same(r.email, email)) ||
+    remakers.find((r) => r.remaker_id === DEMO_REMAKER_ID) ||
+    null
+  );
 }
 
 /* Same lookup without a hook, for stores that live outside React. */
@@ -40,5 +51,9 @@ import { getUsers } from "../admin/data/usersStore";
 export function getMyUserAccount() {
   const email = stored("reorbit_user").email;
   const users = getUsers();
-  return users.find((u) => same(u.email, email)) || users.find((u) => u.user_id === DEMO_USER_ID) || null;
+  return (
+    users.find((u) => same(u.email, email)) ||
+    users.find((u) => u.user_id === DEMO_USER_ID) ||
+    null
+  );
 }

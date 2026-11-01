@@ -210,7 +210,12 @@ export default function AdminShopCheckout() {
           <h2>Checkout</h2>
           <p>Three quick steps to place your order.</p>
         </div>
-        <BackLink to="/admin-shop/cart" className="sh-link" icon={<ArrowLeft size={14} />} label="Back to cart" />
+        <BackLink
+          to="/admin-shop/cart"
+          className="sh-link"
+          icon={<ArrowLeft size={14} />}
+          label="Back to cart"
+        />
       </header>
 
       <ol className="sh-steps" aria-label="Checkout progress">

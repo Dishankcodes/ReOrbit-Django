@@ -12,7 +12,10 @@ export function useMyAnnouncements(role /* "users" | "remakers" */) {
   return useMemo(
     () =>
       all
-        .filter((a) => !a.scheduled && (a.audience === "everyone" || a.audience === role))
+        .filter(
+          (a) =>
+            !a.scheduled && (a.audience === "everyone" || a.audience === role),
+        )
         .map((a) => ({
           id: `ann-${a.id}`,
           kind: "announcement",

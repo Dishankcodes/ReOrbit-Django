@@ -130,7 +130,9 @@ function ProductCard({ product, className }) {
 
 const viewerKind = () => {
   try {
-    return localStorage.getItem("reorbit_access_token") ? "Signed-in members" : "Visitors only";
+    return localStorage.getItem("reorbit_access_token")
+      ? "Signed-in members"
+      : "Visitors only";
   } catch {
     return "Visitors only";
   }
@@ -156,9 +158,9 @@ export default function Home() {
             </h1>
 
             <p className="hero-description">
-              List what you no longer use. We arrange a pincode
-              pickup, restore what needs work, and connect it with someone who
-              can give it a meaningful new life.
+              List what you no longer use. We arrange a pincode pickup, restore
+              what needs work, and connect it with someone who can give it a
+              meaningful new life.
             </p>
 
             <div className="hero-actions">
@@ -342,8 +344,8 @@ export default function Home() {
               </div>
               <h3>For buyers</h3>
               <p>
-                Discover pre-loved and refurbished products with honest condition
-                details and their complete item history.
+                Discover pre-loved and refurbished products with honest
+                condition details and their complete item history.
               </p>
               <a href="/discover-marketplace" className="role-button">
                 Browse marketplace <Icon>arrow_forward</Icon>

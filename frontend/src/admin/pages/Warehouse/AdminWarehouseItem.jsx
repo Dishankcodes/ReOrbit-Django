@@ -120,7 +120,12 @@ export default function AdminWarehouseItem() {
   return (
     <div className="aup-page">
       <nav className="aup-crumbs" aria-label="Breadcrumb">
-        <BackLink to="/admin-warehouse" className="aup-back" icon={<ArrowLeft size={15} />} label="Warehouse" />
+        <BackLink
+          to="/admin-warehouse"
+          className="aup-back"
+          icon={<ArrowLeft size={15} />}
+          label="Warehouse"
+        />
         <ChevronRight size={14} />
         <span aria-current="page">{s.inventory_id}</span>
       </nav>

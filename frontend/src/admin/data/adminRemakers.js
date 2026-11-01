@@ -748,24 +748,20 @@ function buildActivity(rm) {
   const events = [
     { type: "account", text: "Joined ReOrbit as a ReMaker", at: rm.created_at },
   ];
-  rm.portfolio
-    .slice(0, 2)
-    .forEach((p) =>
-      events.push({
-        type: "item",
-        text: `Added “${p.title}” to portfolio`,
-        at: p.uploaded_at,
-      }),
-    );
-  rm.products
-    .slice(0, 2)
-    .forEach((p) =>
-      events.push({
-        type: "item",
-        text: `Listed product “${p.title}”`,
-        at: p.created_at,
-      }),
-    );
+  rm.portfolio.slice(0, 2).forEach((p) =>
+    events.push({
+      type: "item",
+      text: `Added “${p.title}” to portfolio`,
+      at: p.uploaded_at,
+    }),
+  );
+  rm.products.slice(0, 2).forEach((p) =>
+    events.push({
+      type: "item",
+      text: `Listed product “${p.title}”`,
+      at: p.created_at,
+    }),
+  );
   rm.orders.slice(0, 3).forEach((o) =>
     events.push({
       type: "order",
@@ -776,15 +772,13 @@ function buildActivity(rm) {
       at: o.order_date,
     }),
   );
-  rm.refurbishments
-    .slice(0, 2)
-    .forEach((r) =>
-      events.push({
-        type: "donation",
-        text: `Refurbishment ${r.refurbishment_id} ${r.refurbishment_status === "Completed" ? "completed" : "assigned"}`,
-        at: r.completion_date || r.assigned_date,
-      }),
-    );
+  rm.refurbishments.slice(0, 2).forEach((r) =>
+    events.push({
+      type: "donation",
+      text: `Refurbishment ${r.refurbishment_id} ${r.refurbishment_status === "Completed" ? "completed" : "assigned"}`,
+      at: r.completion_date || r.assigned_date,
+    }),
+  );
   return events.sort((a, b) => new Date(b.at) - new Date(a.at));
 }
 

@@ -168,7 +168,10 @@ export const REMAKER_PRODUCTS = [
     price: 3399,
     stock: 4,
     status: "Listed",
-    images: ["/images/products/vintage-chair.jpg", "/images/portfolio/tara-chair.jpg"],
+    images: [
+      "/images/products/vintage-chair.jpg",
+      "/images/portfolio/tara-chair.jpg",
+    ],
     materials: ["Reclaimed wood", "Jute"],
     originType: "own",
     originItemId: "",

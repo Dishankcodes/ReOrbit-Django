@@ -85,13 +85,25 @@ export default function ItemsTab({ user, toast }) {
     );
   }
 
-  const liveItems = user.items.filter((i) => !i.is_disabled && ["Listed", "Reserved"].includes(i.item_status));
+  const liveItems = user.items.filter(
+    (i) => !i.is_disabled && ["Listed", "Reserved"].includes(i.item_status),
+  );
 
   return (
     <>
       {liveItems.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <button type="button" className="ad-btn ad-btn-danger" onClick={() => setDisablingAll(true)}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 12,
+          }}
+        >
+          <button
+            type="button"
+            className="ad-btn ad-btn-danger"
+            onClick={() => setDisablingAll(true)}
+          >
             <Ban size={15} /> Turn off all live listings ({liveItems.length})
           </button>
         </div>
@@ -102,9 +114,15 @@ export default function ItemsTab({ user, toast }) {
         onClose={() => setDisablingAll(false)}
         onConfirm={(reason) => {
           liveItems.forEach((i) =>
-            updateUserItem(user.user_id, i.item_id, { is_disabled: true, disabled_reason: reason, disabled_at: new Date().toISOString() }),
+            updateUserItem(user.user_id, i.item_id, {
+              is_disabled: true,
+              disabled_reason: reason,
+              disabled_at: new Date().toISOString(),
+            }),
           );
-          notify(`${liveItems.length} listing${liveItems.length === 1 ? "" : "s"} turned off.`);
+          notify(
+            `${liveItems.length} listing${liveItems.length === 1 ? "" : "s"} turned off.`,
+          );
           setDisablingAll(false);
         }}
       />

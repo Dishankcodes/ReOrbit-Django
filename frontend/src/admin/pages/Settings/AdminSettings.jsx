@@ -502,7 +502,10 @@ function CommerceSection({ s, toast }) {
         sub="Members' listings go live straight away. This caps how many new listings one member can publish in a day, which keeps spam out."
       >
         <div className="st-grid">
-          <Field label="New listings per member, per day" error={e.maxListingsPerDay}>
+          <Field
+            label="New listings per member, per day"
+            error={e.maxListingsPerDay}
+          >
             <input
               type="number"
               min="1"

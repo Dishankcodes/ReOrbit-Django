@@ -31,15 +31,24 @@ const load = () => {
 
 let readIds = load();
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const getSnapshot = () => readIds;
 const commit = (next) => {
   readIds = next;
-  try { window.localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
   listeners.forEach((l) => l());
 };
 
-export const markRead = (id) => { if (!readIds.includes(id)) commit([...readIds, id]); };
+export const markRead = (id) => {
+  if (!readIds.includes(id)) commit([...readIds, id]);
+};
 export const markAllRead = (ids) => commit([...new Set([...readIds, ...ids])]);
 
 export const NOTIFICATION_TYPES = {
@@ -68,31 +77,89 @@ export function useNotifications() {
 
     orders.forEach((o) => {
       const e = o.events[o.events.length - 1];
-      out.push({ id: `order-${o.id}-${e.id}`, type: "order", title: e.label, message: `${o.item.title} · ${o.id}`, at: e.at, to: `/user-orders/${o.id}` });
+      out.push({
+        id: `order-${o.id}-${e.id}`,
+        type: "order",
+        title: e.label,
+        message: `${o.item.title} · ${o.id}`,
+        at: e.at,
+        to: `/user-orders/${o.id}`,
+      });
     });
     donations.forEach((d) => {
       const e = d.events[d.events.length - 1];
-      out.push({ id: `don-${d.id}-${e.id}`, type: "donation", title: e.label, message: `${d.title} · ${d.id}`, at: e.at, to: `/user-donations/${d.id}` });
+      out.push({
+        id: `don-${d.id}-${e.id}`,
+        type: "donation",
+        title: e.label,
+        message: `${d.title} · ${d.id}`,
+        at: e.at,
+        to: `/user-donations/${d.id}`,
+      });
     });
     listings.forEach((l) => {
       if (!["Live", "Rejected", "Pending"].includes(l.status)) return;
       const e = l.events[l.events.length - 1];
-      out.push({ id: `lst-${l.id}-${e.id}`, type: "sell", title: e.label, message: l.title, at: e.at, to: `/user-sell/${l.id}` });
+      out.push({
+        id: `lst-${l.id}-${e.id}`,
+        type: "sell",
+        title: e.label,
+        message: l.title,
+        at: e.at,
+        to: `/user-sell/${l.id}`,
+      });
     });
-    sales.filter((s) => ["Confirmed", "Packed"].includes(s.status)).forEach((s) => {
-      out.push({ id: `sale-${s.id}-${s.status}`, type: "sell", title: s.status === "Confirmed" ? "New order to pack" : "Ready to ship", message: `${s.title} · ${s.id}`, at: s.events[s.events.length - 1].at, to: `/user-sell/sales/${s.id}` });
-    });
+    sales
+      .filter((s) => ["Confirmed", "Packed"].includes(s.status))
+      .forEach((s) => {
+        out.push({
+          id: `sale-${s.id}-${s.status}`,
+          type: "sell",
+          title:
+            s.status === "Confirmed" ? "New order to pack" : "Ready to ship",
+          message: `${s.title} · ${s.id}`,
+          at: s.events[s.events.length - 1].at,
+          to: `/user-sell/sales/${s.id}`,
+        });
+      });
     tickets.forEach((t) => {
       const last = t.messages[t.messages.length - 1];
       if (last.from !== "team") return;
-      out.push({ id: `tkt-${t.id}-${last.id}`, type: "support", title: t.status === "Resolved" ? "Ticket resolved" : "Support replied", message: `${t.id} · ${t.subject}`, at: last.at, to: `/user-help/tickets/${t.id}` });
+      out.push({
+        id: `tkt-${t.id}-${last.id}`,
+        type: "support",
+        title: t.status === "Resolved" ? "Ticket resolved" : "Support replied",
+        message: `${t.id} · ${t.subject}`,
+        at: last.at,
+        to: `/user-help/tickets/${t.id}`,
+      });
     });
     announcements.forEach((a) => {
-      out.push({ id: a.id, type: "announcement", title: a.title, message: a.message, at: a.at, to: a.link && a.link.startsWith("/") && !a.link.startsWith("/admin") ? a.link : "/user-notifications" });
+      out.push({
+        id: a.id,
+        type: "announcement",
+        title: a.title,
+        message: a.message,
+        at: a.at,
+        to:
+          a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
+            ? a.link
+            : "/user-notifications",
+      });
     });
-    ledger.filter((e) => e.points >= 100).slice(0, 4).forEach((e) => {
-      out.push({ id: `pts-${e.id}`, type: "reward", title: `+${e.points} Orbit Points`, message: e.title, at: e.at, to: "/user-orbit-points/history" });
-    });
+    ledger
+      .filter((e) => e.points >= 100)
+      .slice(0, 4)
+      .forEach((e) => {
+        out.push({
+          id: `pts-${e.id}`,
+          type: "reward",
+          title: `+${e.points} Orbit Points`,
+          message: e.title,
+          at: e.at,
+          to: "/user-orbit-points/history",
+        });
+      });
 
     const prefs = settings.prefs.notifications;
     const items = out
@@ -105,5 +172,15 @@ export function useNotifications() {
       .map((n) => ({ ...n, read: read.includes(n.id) }));
 
     return { items, unread: items.filter((n) => !n.read).length };
-  }, [read, orders, donations, listings, sales, tickets, ledger, settings, announcements]);
+  }, [
+    read,
+    orders,
+    donations,
+    listings,
+    sales,
+    tickets,
+    ledger,
+    settings,
+    announcements,
+  ]);
 }

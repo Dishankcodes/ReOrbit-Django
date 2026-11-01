@@ -1079,13 +1079,11 @@ export function buildSaleTimeline(order) {
 
   if (order.status === "Cancelled") {
     return [
-      ...steps
-        .slice(0, index + 1)
-        .map((step) => ({
-          ...step,
-          time: order.times[step.key],
-          state: "done",
-        })),
+      ...steps.slice(0, index + 1).map((step) => ({
+        ...step,
+        time: order.times[step.key],
+        state: "done",
+      })),
       {
         key: "cancelled",
         label:

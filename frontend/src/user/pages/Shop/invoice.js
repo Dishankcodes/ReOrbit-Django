@@ -9,11 +9,13 @@ export function printInvoice(o) {
   const w = window.open("", "_blank", "width=820,height=900");
   if (!w) return false;
 
-  const row = (a, b, cls = "") => `<tr class="${cls}"><td>${a}</td><td class="r">${b}</td></tr>`;
+  const row = (a, b, cls = "") =>
+    `<tr class="${cls}"><td>${a}</td><td class="r">${b}</td></tr>`;
   const paid = o.payment !== "COD" || o.stage >= 5;
   const a = o.address;
 
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${o.id}</title>
+  w.document
+    .write(`<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${o.id}</title>
 <style>body{font-family:"Plus Jakarta Sans",Arial,sans-serif;color:#1f2923;margin:40px;font-size:14px}h1{font-size:26px;margin:0 0 4px;color:#2a4d3a}
 .top{display:flex;justify-content:space-between;border-bottom:2px solid #2a4d3a;padding-bottom:16px;margin-bottom:22px}
 .muted{color:#6b756d}table{width:100%;border-collapse:collapse;margin:14px 0}td,th{padding:9px 6px;border-bottom:1px solid #dce5de;text-align:left}

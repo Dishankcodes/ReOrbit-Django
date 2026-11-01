@@ -3,7 +3,12 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Eye, Lock, ShieldOff, WifiOff, X } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
-import { useAccess, moduleForPath, MODULES, setPreview } from "../data/teamStore";
+import {
+  useAccess,
+  moduleForPath,
+  MODULES,
+  setPreview,
+} from "../data/teamStore";
 import useToast from "./ui/useToast";
 import AdminErrorBoundary from "./AdminErrorBoundary";
 import { PageSkeleton, variantForPath } from "./ui/Skeleton";
@@ -11,23 +16,32 @@ import "./AdminLayout.css";
 
 /* Buttons that change data. In view-only mode these are blocked (and dimmed by CSS).
    Anything marked data-safe, and plain links, still work. */
-const WRITE_SELECTOR = ".ad-btn-primary, .ad-btn-danger, .ad-btn-warning, .ad-modal-actions button[type='submit'], .sh-big";
-const WRITE_VERB = /^(accept|reject|approve|decline|delete|remove|block|unblock|suspend|activate|re-?activate|reopen|cancel|confirm|save|update|create|add|publish|submit|send|schedule|reschedule|assign|ship|mark|refund|restore|revoke|credit|adjust|release|refurbish|unlist|pause|resume|issue|complete|deliver|return|edit|post|place|pay|buy|checkout|announce|dismiss|undo|snooze|promote|cut|archive|verify|flag|resolve|accept|warn|log|start|hide|dismiss|move|make|pause|resume|create)\b/i;
+const WRITE_SELECTOR =
+  ".ad-btn-primary, .ad-btn-danger, .ad-btn-warning, .ad-modal-actions button[type='submit'], .sh-big";
+const WRITE_VERB =
+  /^(accept|reject|approve|decline|delete|remove|block|unblock|suspend|activate|re-?activate|reopen|cancel|confirm|save|update|create|add|publish|submit|send|schedule|reschedule|assign|ship|mark|refund|restore|revoke|credit|adjust|release|refurbish|unlist|pause|resume|issue|complete|deliver|return|edit|post|place|pay|buy|checkout|announce|dismiss|undo|snooze|promote|cut|archive|verify|flag|resolve|accept|warn|log|start|hide|dismiss|move|make|pause|resume|create)\b/i;
 const SAFE_LABEL = /^(mark.*read|view|open|details|download|export|copy)\b/i;
 const SAFE_MENU = /^(view|open|see|details|copy|download|export|track|print)/i;
 
 function NoAccess({ moduleKey, onHome, isSuper }) {
-  const label = moduleKey === "team" ? "Team & Roles" : MODULES.find((m) => m.key === moduleKey)?.label || "this page";
+  const label =
+    moduleKey === "team"
+      ? "Team & Roles"
+      : MODULES.find((m) => m.key === moduleKey)?.label || "this page";
   return (
     <div className="admin-noaccess">
-      <span><ShieldOff size={28} /></span>
+      <span>
+        <ShieldOff size={28} />
+      </span>
       <h2>You don’t have access to {label}</h2>
       <p>
         {moduleKey === "team" && !isSuper
           ? "Only the super admin can add team members and change permissions."
           : "Your role doesn’t include this part of the admin. Ask the super admin if you need it."}
       </p>
-      <button type="button" className="ad-btn ad-btn-primary" onClick={onHome}>Back to dashboard</button>
+      <button type="button" className="ad-btn ad-btn-primary" onClick={onHome}>
+        Back to dashboard
+      </button>
     </div>
   );
 }
@@ -40,17 +54,31 @@ export default function AdminLayout({ children }) {
   const access = useAccess();
   const { toast, toastNode } = useToast();
   const mainRef = useRef(null);
-  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine !== false));
+  const [online, setOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine !== false,
+  );
   const [backOnline, setBackOnline] = useState(false);
 
   /* Tell people when the connection drops, and when it comes back. */
   useEffect(() => {
     let timer;
-    const down = () => { setOnline(false); setBackOnline(false); };
-    const up = () => { setOnline(true); setBackOnline(true); clearTimeout(timer); timer = setTimeout(() => setBackOnline(false), 3500); };
+    const down = () => {
+      setOnline(false);
+      setBackOnline(false);
+    };
+    const up = () => {
+      setOnline(true);
+      setBackOnline(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setBackOnline(false), 3500);
+    };
     window.addEventListener("offline", down);
     window.addEventListener("online", up);
-    return () => { window.removeEventListener("offline", down); window.removeEventListener("online", up); clearTimeout(timer); };
+    return () => {
+      window.removeEventListener("offline", down);
+      window.removeEventListener("online", up);
+      clearTimeout(timer);
+    };
   }, []);
 
   const moduleKey = moduleForPath(location.pathname);
@@ -77,9 +105,15 @@ export default function AdminLayout({ children }) {
     if (!readOnly) return undefined;
     const guard = (event) => {
       const btn = event.target.closest?.("button");
-      if (!btn || btn.closest("[data-safe], [role=tablist], .ad-modal-close")) return;
-      const text = (btn.getAttribute("aria-label") || btn.textContent || "").trim();
-      const isMenuWrite = btn.getAttribute("role") === "menuitem" && !SAFE_MENU.test(text);
+      if (!btn || btn.closest("[data-safe], [role=tablist], .ad-modal-close"))
+        return;
+      const text = (
+        btn.getAttribute("aria-label") ||
+        btn.textContent ||
+        ""
+      ).trim();
+      const isMenuWrite =
+        btn.getAttribute("role") === "menuitem" && !SAFE_MENU.test(text);
       const isVerb = WRITE_VERB.test(text) && !SAFE_LABEL.test(text);
       if (isMenuWrite || isVerb || btn.matches(WRITE_SELECTOR)) {
         event.preventDefault();
@@ -117,9 +151,18 @@ export default function AdminLayout({ children }) {
           <div className="admin-preview-bar" role="status">
             <Eye size={16} />
             <span>
-              Previewing as <b>{access.previewing.name}</b> ({access.previewing.roleLabel}). This is exactly what they would see.
+              Previewing as <b>{access.previewing.name}</b> (
+              {access.previewing.roleLabel}). This is exactly what they would
+              see.
             </span>
-            <button type="button" data-safe onClick={() => { setPreview(null); navigate("/admin-team"); }}>
+            <button
+              type="button"
+              data-safe
+              onClick={() => {
+                setPreview(null);
+                navigate("/admin-team");
+              }}
+            >
               <X size={14} /> Exit preview
             </button>
           </div>
@@ -127,24 +170,43 @@ export default function AdminLayout({ children }) {
         {!online && (
           <div className="admin-net-bar is-offline" role="alert">
             <WifiOff size={16} />
-            <span><b>You are offline.</b> You can keep reading, but changes may not be saved until the connection is back.</span>
+            <span>
+              <b>You are offline.</b> You can keep reading, but changes may not
+              be saved until the connection is back.
+            </span>
           </div>
         )}
         {online && backOnline && (
-          <div className="admin-net-bar is-online" role="status"><span><b>Back online.</b> Everything is up to date.</span></div>
+          <div className="admin-net-bar is-online" role="status">
+            <span>
+              <b>Back online.</b> Everything is up to date.
+            </span>
+          </div>
         )}
         <main className="admin-page-content" ref={mainRef}>
           {readOnly && (
             <div className="admin-readonly-bar" role="status">
               <Lock size={15} />
-              <span><b>View only.</b> You can look at everything here, but buttons that change data are switched off. Ask the super admin for edit access.</span>
+              <span>
+                <b>View only.</b> You can look at everything here, but buttons
+                that change data are switched off. Ask the super admin for edit
+                access.
+              </span>
             </div>
           )}
           {blocked ? (
-            <NoAccess moduleKey={moduleKey} isSuper={access.isSuper} onHome={() => navigate("/admin-dashboard")} />
+            <NoAccess
+              moduleKey={moduleKey}
+              isSuper={access.isSuper}
+              onHome={() => navigate("/admin-dashboard")}
+            />
           ) : (
             <AdminErrorBoundary key={location.pathname}>
-              <Suspense fallback={<PageSkeleton variant={variantForPath(location.pathname)} />}>
+              <Suspense
+                fallback={
+                  <PageSkeleton variant={variantForPath(location.pathname)} />
+                }
+              >
                 {children ?? <Outlet />}
               </Suspense>
             </AdminErrorBoundary>

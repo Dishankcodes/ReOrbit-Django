@@ -208,7 +208,11 @@ export default function MarketOrderModal({
                   <label
                     className={payment === item.key ? "active" : ""}
                     key={item.key}
-                    style={item.key === "COD" && codBlocked ? { opacity: 0.55 } : undefined}
+                    style={
+                      item.key === "COD" && codBlocked
+                        ? { opacity: 0.55 }
+                        : undefined
+                    }
                   >
                     <input
                       type="radio"
@@ -224,7 +228,9 @@ export default function MarketOrderModal({
                     <span className="rmd-pay-text">
                       <strong>{item.label}</strong>
                       <small>
-                        {item.key === "COD" && codBlocked ? codBlocked : item.note}
+                        {item.key === "COD" && codBlocked
+                          ? codBlocked
+                          : item.note}
                       </small>
                     </span>
                     <span className="rmd-radio" aria-hidden="true" />

@@ -431,4 +431,6 @@
   line-height: 18px;
   text-align: center;
 }
-.admin-sidebar.collapsed .admin-sidebar-count { display: none; }
+.admin-sidebar.collapsed .admin-sidebar-count {
+  display: none;
+}

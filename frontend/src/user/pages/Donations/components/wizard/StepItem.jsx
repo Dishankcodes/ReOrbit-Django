@@ -1,6 +1,9 @@
 import React from "react";
 import { Minus, Plus, ShieldAlert } from "lucide-react";
-import { CONDITIONS, useDonationCategories } from "../../../../data/donationsStore";
+import {
+  CONDITIONS,
+  useDonationCategories,
+} from "../../../../data/donationsStore";
 import { categoryIcon } from "../categoryIcons";
 import PhotoUploader from "../../../../components/ui/PhotoUploader";
 
@@ -64,7 +67,9 @@ export default function StepItem({ form, set, errors }) {
         <span className="dn-hint" style={{ textAlign: "right" }}>
           {form.description.length}/400
         </span>
-        {errors.description && <span className="dn-error">{errors.description}</span>}
+        {errors.description && (
+          <span className="dn-error">{errors.description}</span>
+        )}
       </label>
 
       {/* condition + quantity */}
@@ -88,7 +93,9 @@ export default function StepItem({ form, set, errors }) {
               </button>
             ))}
           </div>
-          {errors.condition && <span className="dn-error">{errors.condition}</span>}
+          {errors.condition && (
+            <span className="dn-error">{errors.condition}</span>
+          )}
         </div>
 
         <div className="dn-field">
@@ -111,7 +118,10 @@ export default function StepItem({ form, set, errors }) {
               value={form.quantity}
               aria-label="Quantity"
               onChange={(event) =>
-                set("quantity", Math.min(99, Math.max(1, Number(event.target.value) || 1)))
+                set(
+                  "quantity",
+                  Math.min(99, Math.max(1, Number(event.target.value) || 1)),
+                )
               }
             />
             <button
@@ -122,17 +132,24 @@ export default function StepItem({ form, set, errors }) {
               <Plus size={16} />
             </button>
           </div>
-          {errors.quantity && <span className="dn-error">{errors.quantity}</span>}
+          {errors.quantity && (
+            <span className="dn-error">{errors.quantity}</span>
+          )}
         </div>
       </div>
 
-      <PhotoUploader images={form.images} onChange={(next) => set("images", next)} error={errors.images} />
+      <PhotoUploader
+        images={form.images}
+        onChange={(next) => set("images", next)}
+        error={errors.images}
+      />
 
       <div className="dn-banner dn-banner--warn">
         <ShieldAlert size={18} />
         <div>
           <strong>Be honest about the condition</strong>
-          If the condition or photos don't match the item, the donation may be rejected and removed by our team.
+          If the condition or photos don't match the item, the donation may be
+          rejected and removed by our team.
         </div>
       </div>
     </div>

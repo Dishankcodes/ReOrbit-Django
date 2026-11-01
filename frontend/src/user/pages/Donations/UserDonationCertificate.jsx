@@ -1,8 +1,21 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
-import { Award, Download, Leaf, Lock, Printer, Share2, ArrowLeft } from "lucide-react";
+import {
+  Award,
+  Download,
+  Leaf,
+  Lock,
+  Printer,
+  Share2,
+  ArrowLeft,
+} from "lucide-react";
 
-import { DONOR, estimatePoints, REWARD_RULES, useDonation } from "../../data/donationsStore";
+import {
+  DONOR,
+  estimatePoints,
+  REWARD_RULES,
+  useDonation,
+} from "../../data/donationsStore";
 import { formatDate, kg } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import DonationNotFound from "./components/DonationNotFound";
@@ -63,14 +76,25 @@ export default function UserDonationCertificate() {
       />
 
       <header className="dn-cert-bar dn-no-print">
-        <Link to={`/user-donations/${donation.id}`} className="dn-btn dn-btn--ghost">
+        <Link
+          to={`/user-donations/${donation.id}`}
+          className="dn-btn dn-btn--ghost"
+        >
           <ArrowLeft size={16} /> Back
         </Link>
         <div>
-          <button type="button" className="dn-btn dn-btn--ghost" onClick={share}>
+          <button
+            type="button"
+            className="dn-btn dn-btn--ghost"
+            onClick={share}
+          >
             <Share2 size={16} /> Share
           </button>
-          <button type="button" className="dn-btn" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="dn-btn"
+            onClick={() => window.print()}
+          >
             <Download size={16} /> Download / Print
           </button>
         </div>
@@ -82,24 +106,42 @@ export default function UserDonationCertificate() {
           <span className="dn-cert-corner dn-cert-corner--br" />
 
           <div className="dn-cert-brand">
-            <span><Leaf size={20} /></span> ReOrbit
+            <span>
+              <Leaf size={20} />
+            </span>{" "}
+            ReOrbit
           </div>
 
           <p className="dn-cert-kicker">Certificate of donation</p>
           <h1>Thank you for giving.</h1>
-          <p className="dn-cert-line">This certificate is proudly presented to</p>
+          <p className="dn-cert-line">
+            This certificate is proudly presented to
+          </p>
           <h2 className="dn-cert-name">{DONOR.name}</h2>
 
           <p className="dn-cert-body">
-            for donating <strong>{donation.quantity} × {donation.title}</strong> ({donation.category}),
-            which has been delivered to <strong>{donation.ngo?.name}</strong>, {donation.ngo?.city}, giving
+            for donating{" "}
+            <strong>
+              {donation.quantity} × {donation.title}
+            </strong>{" "}
+            ({donation.category}), which has been delivered to{" "}
+            <strong>{donation.ngo?.name}</strong>, {donation.ngo?.city}, giving
             these items a second life and keeping them out of landfill.
           </p>
 
           <div className="dn-cert-stats">
-            <div><strong>{kg(donation.weightKg)}</strong><span>Waste diverted</span></div>
-            <div><strong>{co2} kg</strong><span>CO₂ saved</span></div>
-            <div><strong>{estimatePoints(donation.quantity)}</strong><span>Orbit Points</span></div>
+            <div>
+              <strong>{kg(donation.weightKg)}</strong>
+              <span>Waste diverted</span>
+            </div>
+            <div>
+              <strong>{co2} kg</strong>
+              <span>CO₂ saved</span>
+            </div>
+            <div>
+              <strong>{estimatePoints(donation.quantity)}</strong>
+              <span>Orbit Points</span>
+            </div>
           </div>
 
           <footer className="dn-cert-foot">
@@ -107,7 +149,9 @@ export default function UserDonationCertificate() {
               <small>Certificate no.</small>
               <strong>{donation.certificateId}</strong>
             </div>
-            <span className="dn-cert-seal"><Award size={34} /></span>
+            <span className="dn-cert-seal">
+              <Award size={34} />
+            </span>
             <div>
               <small>Issued on</small>
               <strong>{formatDate(issued)}</strong>
@@ -116,8 +160,12 @@ export default function UserDonationCertificate() {
         </div>
       </article>
 
-      <p className="dn-hint dn-no-print" style={{ textAlign: "center", marginTop: 14 }}>
-        Tip: choose "Save as PDF" in the print dialog to download your certificate.
+      <p
+        className="dn-hint dn-no-print"
+        style={{ textAlign: "center", marginTop: 14 }}
+      >
+        Tip: choose "Save as PDF" in the print dialog to download your
+        certificate.
       </p>
 
       {toast}
