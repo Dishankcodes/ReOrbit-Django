@@ -7,6 +7,7 @@ import {
   SELL_CONDITIONS,
   SELLER,
   saveListing,
+  listingLimitStatus,
   useListing,
 } from "../../data/listingsStore";
 import { formatPrice } from "../../../data/marketplaceData";
@@ -114,9 +115,21 @@ export default function UserSellForm() {
 
   const payload = () => ({ ...form, images: form.images.map((i) => i.url), price });
 
+  const [limitMsg, setLimitMsg] = useState("");
+
   const submit = (asDraft = false) => {
     if (!asDraft && !validate(2)) return;
     if (asDraft && form.title.trim().length < 3) { setErrors({ title: "Add a name before saving a draft." }); setStep(0); return; }
+    const publishesNow = !asDraft && (!editing || ["Draft", "Withdrawn"].includes(existing?.status));
+    if (publishesNow) {
+      const lim = listingLimitStatus();
+      if (lim.reached) {
+        setLimitMsg(`You have reached today's limit of ${lim.cap} new listings. You can save this one as a draft and publish it tomorrow.`);
+        topRef.current?.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+    setLimitMsg("");
     setBusy(true);
     window.setTimeout(() => {
       const saved = saveListing(payload(), { submit: !asDraft, id: editing ? listingId : null });
@@ -136,6 +149,8 @@ export default function UserSellForm() {
   return (
     <div className="dn sl sl-form" ref={topRef}>
       <Crumbs items={[{ label: "Sell", to: "/user-sell" }, { label: editing ? `Edit ${existing.id}` : "Sell an item" }]} />
+
+      {limitMsg && <div className="dn-error" role="alert" style={{ margin: "0 0 14px", padding: "12px 14px", border: "1px solid currentColor", borderRadius: 12 }}>{limitMsg}</div>}
 
       <header className="sl-head">
         <div>

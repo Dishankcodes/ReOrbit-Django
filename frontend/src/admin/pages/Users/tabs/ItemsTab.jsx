@@ -20,12 +20,25 @@ const DISABLE_ACTION = {
   reasonHint: "required",
 };
 
+const DISABLE_ALL_ACTION = {
+  key: "disable-all-items",
+  tone: "danger",
+  icon: "ban",
+  needsReason: true,
+  title: "Turn off all live listings?",
+  body: "Every live listing from this member is switched off at once. They can't be bought, and the member sees your reason. Use it for spam or fake listings.",
+  confirmLabel: "Turn off all",
+  placeholder: "Explain why these listings are being turned off...",
+  reasonHint: "required",
+};
+
 export default function ItemsTab({ user, toast }) {
   const navigate = useNavigate();
 
   const [openMenu, setOpenMenu] = useState(null);
   const [disabling, setDisabling] = useState(null);
   const [pricing, setPricing] = useState(null);
+  const [disablingAll, setDisablingAll] = useState(false);
   const [suggestedPrice, setSuggestedPrice] = useState("");
   const [priceMessage, setPriceMessage] = useState("");
 
@@ -72,8 +85,29 @@ export default function ItemsTab({ user, toast }) {
     );
   }
 
+  const liveItems = user.items.filter((i) => !i.is_disabled && ["Listed", "Reserved"].includes(i.item_status));
+
   return (
     <>
+      {liveItems.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <button type="button" className="ad-btn ad-btn-danger" onClick={() => setDisablingAll(true)}>
+            <Ban size={15} /> Turn off all live listings ({liveItems.length})
+          </button>
+        </div>
+      )}
+      <ConfirmActionModal
+        action={disablingAll ? DISABLE_ALL_ACTION : null}
+        targets={liveItems.map((i) => i.title)}
+        onClose={() => setDisablingAll(false)}
+        onConfirm={(reason) => {
+          liveItems.forEach((i) =>
+            updateUserItem(user.user_id, i.item_id, { is_disabled: true, disabled_reason: reason, disabled_at: new Date().toISOString() }),
+          );
+          notify(`${liveItems.length} listing${liveItems.length === 1 ? "" : "s"} turned off.`);
+          setDisablingAll(false);
+        }}
+      />
       <div className="aup-items">
         {user.items.map((item) => (
           <article

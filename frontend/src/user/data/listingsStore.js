@@ -12,6 +12,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { ITEMS } from "../../data/marketplaceData";
 import { addUserItem, updateUserItem, onUsersChange } from "../../admin/data/usersStore";
+import { getSettings } from "../../admin/data/settingsStore";
 import { refreshMarketListings } from "../../remaker/data/remakerMarketplaceData";
 import { getMyUserAccount } from "../../shared/identity";
 
@@ -285,6 +286,14 @@ const patchListing = (id, fn) => {
 };
 const now = () => new Date().toISOString();
 const evId = (l) => `e${l.events.length + 1}-${Date.now()}`;
+
+/* How many listings this member has published today, and the daily cap set in Admin > Settings. */
+export function listingLimitStatus() {
+  const cap = Math.max(1, Number(getSettings().commerce.maxListingsPerDay) || 5);
+  const today = new Date().toDateString();
+  const used = listings.filter((l) => l.events.some((e) => e.label === "Listing published" && new Date(e.at).toDateString() === today)).length;
+  return { cap, used, reached: used >= cap };
+}
 
 export function saveListing(form, { submit = true, id = null } = {}) {
   const data = {

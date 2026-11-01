@@ -53,7 +53,7 @@ const SECTIONS = [
   {
     key: "commerce",
     label: "Fees & delivery",
-    hint: "Platform fee, shipping rules",
+    hint: "Platform fee, shipping, listing limits",
     icon: Receipt,
   },
   {
@@ -463,6 +463,7 @@ function CommerceSection({ s, toast }) {
     "sellDelivery",
     "sellFreeFrom",
     "codLimit",
+    "maxListingsPerDay",
   ].forEach((k) => {
     if (c[k] === "" || c[k] < 0) e[k] = "Enter 0 or more.";
   });
@@ -494,6 +495,23 @@ function CommerceSection({ s, toast }) {
             </strong>
             <p>Seller receives {formatINR(demo - fee)}.</p>
           </div>
+        </div>
+      </Card>
+      <Card
+        title="Listing limits"
+        sub="Members' listings go live straight away. This caps how many new listings one member can publish in a day, which keeps spam out."
+      >
+        <div className="st-grid">
+          <Field label="New listings per member, per day" error={e.maxListingsPerDay}>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={c.maxListingsPerDay}
+              onChange={numIn(d.set, "maxListingsPerDay")}
+              aria-invalid={!!e.maxListingsPerDay}
+            />
+          </Field>
         </div>
       </Card>
       <Card

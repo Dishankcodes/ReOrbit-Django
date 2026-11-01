@@ -31,6 +31,7 @@ let state = {
     sellFreeFrom: 5000,
     codEnabled: true,
     codLimit: 20000,
+    maxListingsPerDay: 5, // new listings one member can publish per day
   },
   warehouse: {
     unsoldDays: 7, // listed this long without a sale -> alert
