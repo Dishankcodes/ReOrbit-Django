@@ -55,6 +55,10 @@ const pageInformation = {
     title: "Complaints",
     subtitle: "Review reports about users, ReMakers, listings and reviews.",
   },
+  "/admin-support": {
+    title: "Support",
+    subtitle: "Answer help tickets from users and ReMakers.",
+  },
   "/admin-warehouse": {
     title: "Warehouse",
     subtitle: "Monitor inventory and refurbishment operations.",

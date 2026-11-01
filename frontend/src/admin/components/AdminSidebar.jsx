@@ -22,12 +22,15 @@ import {
   UserCog,
   Wallet,
   ShieldAlert,
+  LifeBuoy,
   LayoutTemplate,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
 import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
+import { useTickets as useUserTickets } from "../../user/data/supportStore";
+import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
 import "./AdminSidebar.css";
 
 const mainMenu = [
@@ -44,6 +47,7 @@ const operationsMenu = [
   { key: "donations", label: "Donations", path: "/admin-donations", icon: Gift },
   { key: "pickups", label: "Pickups", path: "/admin-pickups", icon: Truck },
   { key: "complaints", label: "Complaints", path: "/admin-complaints", icon: ShieldAlert },
+  { key: "support", label: "Support", path: "/admin-support", icon: LifeBuoy },
   { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: Warehouse },
 ];
 
@@ -108,6 +112,9 @@ export default function AdminSidebar({
 
   const access = useAccess();
   const complaintCounts = useComplaintCounts();
+  const userTickets = useUserTickets();
+  const remakerTickets = useRemakerTickets();
+  const openTickets = [...userTickets, ...remakerTickets].filter((t) => t.status === "Open").length;
   const { profile } = useSettings();
   const adminName = access.previewing ? access.me.name : profile?.name || getAdminName(admin);
   const roleLabel = access.isSuper ? "Super admin" : access.me.roleLabel;
@@ -152,6 +159,9 @@ export default function AdminSidebar({
       >
         <Icon size={18} strokeWidth={1.8} className="admin-sidebar-link-icon" />
         <span className="admin-sidebar-link-text">{item.label}</span>
+        {item.key === "support" && openTickets > 0 && (
+          <span className="admin-sidebar-count" aria-label={`${openTickets} waiting for a reply`}>{openTickets}</span>
+        )}
         {item.key === "complaints" && complaintCounts.open > 0 && (
           <span className="admin-sidebar-count" aria-label={`${complaintCounts.open} open`}>{complaintCounts.open}</span>
         )}

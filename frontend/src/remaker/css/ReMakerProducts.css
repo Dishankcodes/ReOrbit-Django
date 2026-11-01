@@ -369,3 +369,13 @@
     transition: none !important;
   }
 }
+
+.rpl-hold, .rpl-suggest {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.rpl-hold { background: #fbe9e7; color: #8a2a1f; }
+.rpl-suggest { background: var(--secondary); color: var(--primary); }

@@ -10,6 +10,13 @@ import {
 } from "lucide-react";
 
 import { formatPrice } from "../data/remakerMarketplaceData";
+import { createOrder } from "../data/ordersStore";
+import {
+  codBlockReason,
+  feeLabel,
+  platformFeeOf,
+  useCommerce,
+} from "../../shared/commerce";
 
 /* Payment_method ENUM from the Transactions table */
 const PAYMENTS = [
@@ -54,9 +61,12 @@ export default function MarketOrderModal({
 
   const dialogRef = useRef(null);
 
+  const commerce = useCommerce();
   const subtotal = listing.price * quantity;
   const deliveryFee = delivery === "platform" ? charge : 0;
-  const total = subtotal + deliveryFee;
+  const platformFee = platformFeeOf(subtotal, commerce);
+  const total = subtotal + deliveryFee + platformFee;
+  const codBlocked = codBlockReason(total, commerce);
 
   useEffect(() => {
     const previous = document.activeElement;
@@ -78,9 +88,22 @@ export default function MarketOrderModal({
     };
   }, [onClose]);
 
+  /* A method that stops being allowed (limit changed, COD off) falls back. */
+  useEffect(() => {
+    if (payment === "COD" && codBlocked) setPayment("UPI");
+  }, [payment, codBlocked]);
+
   const placeOrder = () => {
-    const number = String(Math.floor(10000 + Math.random() * 89999));
-    setPlaced({ id: `RO-${number}`, payment });
+    if (payment === "COD" && codBlocked) return;
+    const order = createOrder({
+      listing,
+      quantity,
+      delivery,
+      charge: deliveryFee,
+      pincode,
+      paymentMethod: payment,
+    });
+    setPlaced({ id: order?.id || "", payment });
   };
 
   const paymentLabel = PAYMENTS.find(
@@ -185,12 +208,14 @@ export default function MarketOrderModal({
                   <label
                     className={payment === item.key ? "active" : ""}
                     key={item.key}
+                    style={item.key === "COD" && codBlocked ? { opacity: 0.55 } : undefined}
                   >
                     <input
                       type="radio"
                       name="payment"
                       value={item.key}
                       checked={payment === item.key}
+                      disabled={item.key === "COD" && !!codBlocked}
                       onChange={() => setPayment(item.key)}
                     />
                     <span className="rmd-pay-icon">
@@ -198,7 +223,9 @@ export default function MarketOrderModal({
                     </span>
                     <span className="rmd-pay-text">
                       <strong>{item.label}</strong>
-                      <small>{item.note}</small>
+                      <small>
+                        {item.key === "COD" && codBlocked ? codBlocked : item.note}
+                      </small>
                     </span>
                     <span className="rmd-radio" aria-hidden="true" />
                   </label>
@@ -218,6 +245,10 @@ export default function MarketOrderModal({
                     : "Self pickup"}
                 </dt>
                 <dd>{deliveryFee ? formatPrice(deliveryFee) : "Free"}</dd>
+              </div>
+              <div>
+                <dt>{feeLabel(commerce)}</dt>
+                <dd>{formatPrice(platformFee)}</dd>
               </div>
               <div className="total">
                 <dt>Total</dt>

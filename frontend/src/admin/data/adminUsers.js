@@ -514,9 +514,8 @@ function buildItems(random, userId, count, joined, userStatus) {
     const base =
       ITEM_POOL[(index * 3 + Math.floor(random() * 5)) % ITEM_POOL.length];
     const created = addDays(joined, between(random, 6, 160));
-    const roll = random();
+    random(); /* keeps the dummy data the same as before */
 
-    let verification = "Verified";
     let itemStatus = pick(random, [
       "Listed",
       "Listed",
@@ -528,16 +527,6 @@ function buildItems(random, userId, count, joined, userStatus) {
       "Completed",
       "Donated",
     ]);
-    let rejectionMessage = "";
-
-    if (roll < 0.12) {
-      verification = "Pending";
-      itemStatus = "Draft";
-    } else if (roll < 0.2 || (userStatus === "Blocked" && index === 0)) {
-      verification = "Rejected";
-      itemStatus = "Draft";
-      rejectionMessage = pick(random, REJECTION_MESSAGES);
-    }
 
     items.push({
       item_id: `ITM-${userId.slice(4)}${index + 1}`,
@@ -548,9 +537,7 @@ function buildItems(random, userId, count, joined, userStatus) {
       quantity: between(random, 1, 3),
       estimated_price: base.price + between(random, -3, 5) * 50,
       pickup_preference: pick(random, ["Self Pickup", "Managed by platform"]),
-      verification_status: verification,
       item_status: itemStatus,
-      rejection_message: rejectionMessage,
       created_at: created,
     });
   }

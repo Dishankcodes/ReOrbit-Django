@@ -7,7 +7,7 @@ import { formatPrice } from "../../data/remakerMarketplaceData";
 import { formatDate } from "../../data/ordersStore";
 import {
   CLEARING_DAYS,
-  FEE_RATE,
+  feeRatePct,
   MIN_PAYOUT,
   getCustomer,
   monthlyEarnings,
@@ -218,8 +218,9 @@ export default function ReMakerEarnings() {
           <section className="rod-help">
             <strong>How you get paid</strong>
             <p>
-              ReOrbit keeps {Math.round(FEE_RATE * 100)}% of the item price.
-              Delivery is paid by the customer. Money becomes withdrawable{" "}
+              You keep the full item price. The buyer pays the{" "}
+              {feeRatePct()}% platform fee and delivery on top. Money becomes
+              withdrawable{" "}
               {CLEARING_DAYS} days after delivery, and payouts reach your bank
               in 1 to 2 working days.
             </p>

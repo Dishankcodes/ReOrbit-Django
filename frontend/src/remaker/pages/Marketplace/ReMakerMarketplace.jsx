@@ -25,6 +25,7 @@ import {
 } from "../../data/remakerMarketplaceData";
 import useWishlist from "../../hooks/useWishlist";
 
+import { useCategoryNames } from "../../../shared/catalog";
 import "../../css/ReMakerMarketplace.css";
 
 function Photo({ src, alt }) {
@@ -44,6 +45,7 @@ function Photo({ src, alt }) {
 }
 
 export default function ReMakerMarketplace() {
+  const liveCategories = useCategoryNames();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const wishlist = useWishlist();
@@ -230,7 +232,7 @@ export default function ReMakerMarketplace() {
       </div>
 
       <div className="rmk-chips" role="group" aria-label="Category">
-        {["all", ...MARKET_CATEGORIES].map((item) => (
+        {["all", ...MARKET_CATEGORIES.filter((c) => liveCategories.includes(c))].map((item) => (
           <button
             type="button"
             key={item}

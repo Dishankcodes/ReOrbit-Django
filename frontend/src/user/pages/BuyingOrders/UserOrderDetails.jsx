@@ -228,6 +228,7 @@ export default function UserOrderDetails() {
             <dl className="ob-price">
               <div><dt>Item ({order.qty} × {inr(order.price)})</dt><dd>{inr(order.price * order.qty)}</dd></div>
               <div><dt>Delivery</dt><dd>{order.shipping ? inr(order.shipping) : "Free"}</dd></div>
+              {order.platformFee > 0 && <div><dt>Platform fee</dt><dd>{inr(order.platformFee)}</dd></div>}
               {order.discount > 0 && <div className="is-save"><dt>Discount</dt><dd>− {inr(order.discount)}</dd></div>}
               <div className="is-total"><dt>{order.cancelled ? "Order total" : "Total paid"}</dt><dd>{inr(order.total)}</dd></div>
             </dl>

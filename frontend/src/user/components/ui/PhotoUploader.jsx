@@ -120,7 +120,7 @@ export default function PhotoUploader({ images, onChange, error }) {
 
       {(error || localError) && <span className="dn-error">{error || localError}</span>}
       <span className="dn-hint">
-        Clear, well-lit photos help us review faster. Photos must match the real condition of the item.
+        Clear, well-lit photos help buyers trust your listing. Photos must match the real condition of the item.
       </span>
     </div>
   );

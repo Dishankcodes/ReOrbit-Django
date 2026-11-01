@@ -11,7 +11,7 @@ const managementItems = [
   {
     icon: "group",
     title: "Users & ReMakers",
-    text: "Review accounts, verify ReMakers, and warn, suspend or block when something is wrong. Every action is recorded.",
+    text: "Review accounts, and warn, suspend or block when something is wrong. Every action is recorded.",
   },
   {
     icon: "inventory_2",
@@ -59,8 +59,8 @@ const responsibilities = [
   {
     number: "01",
     icon: "verified_user",
-    title: "Review & verify",
-    text: "Check new donations, listings, ReMakers and reported accounts before they affect the marketplace.",
+    title: "Review & act",
+    text: "Check new donations, reported listings and reported accounts, and step in before they affect the marketplace.",
   },
   {
     number: "02",

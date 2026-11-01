@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 
 import UserSidebar from "./UserSidebar";
 import UserHeader from "./UserHeader";
+import AccountGate from "../../shared/components/AccountGate";
+import { useUserAccountStatus } from "../../shared/accountStatus";
 
 import "./UserLayout.css";
 
@@ -11,6 +13,7 @@ export default function UserLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const location = useLocation();
+  const account = useUserAccountStatus();
 
   // Reset scroll position whenever the user navigates to another route.
   useEffect(() => {
@@ -70,7 +73,9 @@ export default function UserLayout() {
         />
 
         <main className="user-page-content">
-          <Outlet />
+          <AccountGate info={account} role="user">
+            <Outlet />
+          </AccountGate>
         </main>
       </div>
     </div>

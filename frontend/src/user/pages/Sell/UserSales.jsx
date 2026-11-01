@@ -85,7 +85,7 @@ export default function UserSales() {
               <div className="sl-sale-money">
                 <strong>{formatPrice(s.net)}</strong>
                 <span>You receive</span>
-                <small>{formatPrice(s.gross)} − {formatPrice(s.commission + s.pickupFee)} fees</small>
+                <small>Full price, no fees</small>
               </div>
               <div className="sl-sale-actions">
                 {NEXT_LABEL[s.status] && (

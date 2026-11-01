@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 
 import {
-  COD_LIMIT,
   PAYMENT_METHODS,
   WALLET_BALANCE,
   payAndPlace,
@@ -33,6 +32,7 @@ import {
   useAddresses,
   useCheckoutLines,
 } from "../../data/shopStore";
+import { codBlockReason, feeLabel, useCommerce } from "../../../shared/commerce";
 import { formatPrice } from "../../../data/marketplaceData";
 import { checkCoupon, useRewards } from "../../data/rewardsStore";
 import EmptyState from "../../components/ui/EmptyState";
@@ -118,7 +118,9 @@ export default function UserCheckout() {
   const removeCoupon = () => { setCouponCode(""); setCouponError(""); };
 
   const walletShort = method === "WALLET" && finalTotal > WALLET_BALANCE;
-  const codOk = finalTotal <= COD_LIMIT;
+  useCommerce();
+  const codReason = codBlockReason(finalTotal);
+  const codOk = !codReason;
 
   const payErrors = useMemo(() => {
     if (method === "UPI") return UPI_RE.test(upi.trim()) ? {} : { upi: "Enter a valid UPI ID, like name@okbank." };
@@ -370,7 +372,7 @@ export default function UserCheckout() {
 
               {!codOk && (
                 <p className="sp-note" style={{ marginTop: 12 }}>
-                  Pay on delivery is available for orders up to {formatPrice(COD_LIMIT)}.
+                  {codReason}
                 </p>
               )}
 
@@ -457,6 +459,7 @@ export default function UserCheckout() {
           <dl>
             <div><dt>Subtotal</dt><dd>{formatPrice(quote.subtotal)}</dd></div>
             <div><dt>Delivery</dt><dd>{quote.delivery ? formatPrice(quote.delivery) : "Free"}</dd></div>
+            {quote.platformFee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platformFee)}</dd></div>}
             {coupon && <div className="save"><dt>Coupon ({coupon.code})</dt><dd>− {formatPrice(discount)}</dd></div>}
             <div className="total"><dt>Total</dt><dd>{formatPrice(finalTotal)}</dd></div>
           </dl>

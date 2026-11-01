@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Gift, HandHeart, ShoppingBag, Tag, Users } from "lucide-react";
 
-import { LEVELS, WAYS_TO_EARN, useRewards } from "../../data/rewardsStore";
+import { LEVELS, useRewards, useWaysToEarn } from "../../data/rewardsStore";
 import PointsNav from "./components/PointsNav";
 
 import "../../css/shared/ui-base.css";
@@ -12,7 +12,8 @@ const ICON = { Buying: ShoppingBag, Donating: HandHeart, Community: Users };
 
 export default function UserWaysToEarn() {
   const { lifetime, levelIndex } = useRewards();
-  const groups = [...new Set(WAYS_TO_EARN.map((w) => w.group))];
+  const ways = useWaysToEarn();
+  const groups = [...new Set(ways.map((w) => w.group))];
 
   return (
     <div className="dn rw">
@@ -32,7 +33,7 @@ export default function UserWaysToEarn() {
           <section key={g} className="rw-group">
             <h3><Icon size={18} /> {g}</h3>
             <div className="rw-earn-grid">
-              {WAYS_TO_EARN.filter((w) => w.group === g).map((w) => (
+              {ways.filter((w) => w.group === g).map((w) => (
                 <article key={w.id} className="dn-card rw-earn">
                   <span className="rw-earn-pts">{w.points}</span>
                   <h4>{w.title}</h4>

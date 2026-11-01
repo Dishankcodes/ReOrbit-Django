@@ -76,8 +76,7 @@ export default function UserSaleDetails() {
             <div className="dn-card-head"><h3>Your payout</h3><Receipt size={18} /></div>
             <dl className="sl-money">
               <div><dt>Sale price</dt><dd>{formatPrice(sale.gross)}</dd></div>
-              <div><dt>Commission (8%)</dt><dd>− {formatPrice(sale.commission)}</dd></div>
-              {sale.pickupFee > 0 && <div><dt>Managed pickup fee</dt><dd>− {formatPrice(sale.pickupFee)}</dd></div>}
+              <div><dt>Fees taken from you</dt><dd>None</dd></div>
               <div className="total"><dt>You receive</dt><dd>{formatPrice(sale.net)}</dd></div>
             </dl>
             <p className="sl-payline">{sale.payout.status === "Paid" ? `Paid on ${formatDateTime(sale.payout.at)}` : sale.payout.status === "Processing" ? "Payout is being processed." : "Released after the buyer receives the item."}</p>

@@ -7,6 +7,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { addSellerReview, getItemById, getSellerFromItem } from "../../data/marketplaceData";
+import { deliveryFor, platformFeeOf } from "../../shared/commerce";
 
 const DAY = 86400000;
 const HOUR = 3600000;
@@ -83,13 +84,15 @@ const COURIER = { name: "Delhivery", awb: "DLV", phone: "+91 98111 22334" };
 function make(id, itemId, qty, days, stage, extra = {}) {
   const item = getItemById(itemId);
   const placedAt = ago(days);
-  const shipping = item.price > 5000 ? 0 : 50;
+  const shipping = deliveryFor({ sellerType: item.sellerType === "remaker" ? "remaker" : "user", pickup: "platform", subtotal: item.price * qty });
+  const platformFee = item.sellerType === "platform" ? 0 : platformFeeOf(item.price * qty);
   const order = {
     id,
     itemId,
     qty,
     price: item.price,
     shipping,
+    platformFee,
     discount: extra.discount || 0,
     placedAt,
     stage,
@@ -155,6 +158,7 @@ export function placeOrders(specs) {
       qty: spec.qty,
       price: spec.price,
       shipping: spec.shipping,
+      platformFee: spec.platformFee || 0,
       discount: spec.discount || 0,
       placedAt: at(0),
       stage: 1,
@@ -194,7 +198,7 @@ export function cancelOrder(id, reason) {
               ...o.events,
               { id: "cancel", label: "Order cancelled", detail: `${reason}. Refund started to the original payment method.`, at: new Date().toISOString() },
             ],
-            refund: { amount: o.price * o.qty + o.shipping - o.discount, status: "Processing", at: new Date().toISOString() },
+            refund: { amount: o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount, status: "Processing", at: new Date().toISOString() },
           }
         : o,
     ),
@@ -222,7 +226,7 @@ export function reviewOrder(id, review) {
 /* ---------- derived ---------- */
 
 export const canCancel = (o) => !o.cancelled && o.stage <= 2;
-export const orderTotal = (o) => o.price * o.qty + o.shipping - o.discount;
+export const orderTotal = (o) => o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount;
 export const isActive = (o) => !o.cancelled && o.stage < 5;
 
 /* ReMaker sellers have their own profile route */

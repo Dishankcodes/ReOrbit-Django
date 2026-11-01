@@ -1,7 +1,9 @@
 /* =========================================================
    User › Selling (UI only, in-memory).
-   A user lists pre-loved items. Submitted listings go live immediately:
-   Draft -> Live -> Reserved -> Sold (or Withdrawn by the seller).
+   A user lists pre-loved items. Published listings go live straight away:
+   Draft -> Live -> Reserved -> Sold (or Withdrawn by the seller). The team
+   can still switch one off, with a reason, from Admin > Products.
+   Sellers keep the full price: no commission and no pickup fee.
    Live listings are added to the marketplace, and sales come
    in as orders the seller has to pack and ship.
    Backend later: Items, Item_Images, Orders (seller side).
@@ -9,6 +11,9 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { ITEMS } from "../../data/marketplaceData";
+import { addUserItem, updateUserItem, onUsersChange } from "../../admin/data/usersStore";
+import { refreshMarketListings } from "../../remaker/data/remakerMarketplaceData";
+import { getMyUserAccount } from "../../shared/identity";
 
 const DAY = 86400000;
 const ago = (d, h = 0) => new Date(Date.now() - d * DAY - h * 3600000).toISOString();
@@ -22,10 +27,7 @@ export const SELLER = {
   rating: 4.9,
 };
 
-export const COMMISSION_PCT = 8;
-export const PLATFORM_PICKUP_FEE = 99;
-
-export const SELL_CATEGORIES = ["Furniture", "Electronics", "Home & Living", "Clothing", "Books", "Decor"];
+export const SELL_CATEGORIES = ["Furniture", "Electronics", "Home Decor", "Clothing", "Books"]; /* fallback; the form reads Admin > Content */
 export const SELL_CONDITIONS = [
   { id: "Excellent", help: "Like new. No visible wear." },
   { id: "Very Good", help: "Light signs of use, fully working." },
@@ -33,11 +35,11 @@ export const SELL_CONDITIONS = [
 ];
 export const PICKUP_OPTIONS = [
   { id: "self", label: "I'll hand it over to the courier", help: "You pack it and the buyer's courier collects from your door. No extra fee." },
-  { id: "platform", label: "Managed by ReOrbit", help: `We collect, check and deliver it for you. A ₹${PLATFORM_PICKUP_FEE} service fee is taken from your payout.` },
+  { id: "platform", label: "Managed by ReOrbit", help: "We collect, check and deliver it for you. It's free for you, and the buyer pays for delivery." },
 ];
 
 export const LISTING_STATUS = {
-  Draft: { label: "Draft", tone: "grey", blurb: "Not submitted yet." },
+  Draft: { label: "Draft", tone: "grey", blurb: "Not published yet." },
   Live: { label: "Live", tone: "green", blurb: "Visible to buyers on the marketplace." },
   Reserved: { label: "Reserved", tone: "blue", blurb: "A buyer has ordered it. Pack and ship it." },
   Sold: { label: "Sold", tone: "violet", blurb: "Delivered to the buyer." },
@@ -57,8 +59,10 @@ const baseListing = (over) => ({
   pickup: "self",
   views: 0,
   likes: 0,
-  rejectReason: "",
   marketId: null,
+  adminItemId: null,
+  suggestedPrice: null,
+  suggestedMessage: "",
   ...over,
 });
 
@@ -105,6 +109,20 @@ const seedListings = () => [
       ev("e1", "Listing published", "Now visible on the marketplace", ago(11), "good"),
       ev("e3", "Order received", "Order SL-5104 is waiting to be packed", ago(1), "info"),
     ],
+  }),
+  baseListing({
+    id: "LST-3007", adminItemId: "ITM-3007", title: "Mid-century teak side table", category: "Furniture",
+    description: "Teak side table with tapered legs and a small drawer. Light wear on the top, sturdy and wobble-free.",
+    condition: "Very Good", price: 4200, images: ["/images/products/wooden-table.jpg"], status: "Live",
+    createdAt: ago(0, 6), pickup: "platform",
+    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(0, 6), "good")],
+  }),
+  baseListing({
+    id: "LST-3008", adminItemId: "ITM-3008", title: "Office chair, mesh back", category: "Furniture",
+    description: "Ergonomic mesh-back office chair with adjustable arms. Gas lift works but the seat is a bit worn.",
+    condition: "Good", price: 1800, images: ["/images/products/default-item.jpg"], status: "Live",
+    createdAt: ago(3),
+    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(3), "good")],
   }),
   baseListing({
     id: "LST-3006", title: "Vintage brass wall mirror", category: "Decor",
@@ -162,17 +180,18 @@ function publish(listing) {
     likes: 0,
     listedDate: new Date().toISOString().slice(0, 10),
   });
+  refreshMarketListings();
 }
 function unpublish(listing) {
   const i = ITEMS.findIndex((x) => x.id === listing.marketId);
-  if (i >= 0 && listing.id !== "LST-3001") ITEMS.splice(i, 1);
+  if (i >= 0 && listing.id !== "LST-3001") { ITEMS.splice(i, 1); refreshMarketListings(); }
 }
 
 /* ---------- store ---------- */
 
 let listings = seedListings();
 let sales = seedSales();
-let seq = 3006;
+let seq = 3008;
 let saleSeq = 5104;
 const listeners = new Set();
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
@@ -182,6 +201,83 @@ const getSnapshot = () => snap;
 const commit = () => { snap = { listings, sales }; emit(); };
 
 listings.filter((l) => l.status === "Live" || l.status === "Reserved").forEach(publish);
+
+/* ---------- link to the admin's Products list ---------- */
+/* Every listing a member publishes also shows up in Admin > Products. The team
+   can switch it off (with a reason) or suggest a price. Nothing waits for approval. */
+
+const CONDITION_TO_ADMIN = { Excellent: "Good", "Very Good": "Good", Good: "Medium" };
+const adminItemOf = (l, extra = {}) => ({
+  item_id: l.adminItemId,
+  title: l.title,
+  category: l.category,
+  image: l.images[0] || "/images/products/default-item.jpg",
+  condition: CONDITION_TO_ADMIN[l.condition] || "Medium",
+  quantity: l.quantity,
+  estimated_price: l.price,
+  pickup_preference: l.pickup === "platform" ? "Managed by platform" : "Self Pickup",
+  item_status: "Listed",
+  created_at: new Date().toISOString(),
+  ...extra,
+});
+
+/* Shows a listing in the admin's Products list (new, or after the member edits it). */
+function shareWithAdmin(l, extra) {
+  const user = getMyUserAccount();
+  if (!user || !l.adminItemId) return;
+  if (user.items.some((i) => i.item_id === l.adminItemId)) {
+    const item = adminItemOf(l, extra);
+    updateUserItem(user.user_id, l.adminItemId, {
+      title: item.title, category: item.category, image: item.image, condition: item.condition, quantity: item.quantity,
+      estimated_price: item.estimated_price, pickup_preference: item.pickup_preference,
+    });
+  } else {
+    addUserItem(user.user_id, adminItemOf(l, extra));
+  }
+}
+
+/* The team switched a listing off or on, or suggested a price. Bring the listing up to date. */
+function syncFromAdmin() {
+  const user = getMyUserAccount();
+  if (!user) return;
+  let changed = false;
+  listings = listings.map((l) => {
+    if (!l.adminItemId) return l;
+    const it = user.items.find((i) => i.item_id === l.adminItemId);
+    if (!it) return l;
+    let next = l;
+    /* The team switched the listing off (or back on) from Admin > Products. */
+    const dis = it.is_disabled ? { reason: it.disabled_reason || "No reason was given.", at: it.disabled_at } : null;
+    if (!!dis !== !!next.adminDisabled) {
+      if (dis) unpublish(next);
+      else if (next.status === "Live") publish(next);
+      next = {
+        ...next,
+        adminDisabled: dis,
+        events: [...next.events, dis
+          ? { id: evId(next), label: "Turned off by ReOrbit", detail: dis.reason, at: now(), tone: "bad" }
+          : { id: evId(next), label: "Turned back on", detail: "Visible to buyers again", at: now(), tone: "good" }],
+      };
+    }
+    const sp = it.suggested_price ?? null;
+    if (sp !== (next.suggestedPrice ?? null)) {
+      next = { ...next, suggestedPrice: sp, suggestedMessage: it.suggested_price_message || "" };
+    }
+    if (next !== l) changed = true;
+    return next;
+  });
+  if (changed) commit();
+}
+
+/* Adds the demo listings to the admin's Products list. */
+export function ensureSeedListings() {
+  const user = getMyUserAccount();
+  if (!user) return;
+  listings.filter((l) => l.adminItemId && l.status !== "Draft").forEach((l) => {
+    if (user.items.some((i) => i.item_id === l.adminItemId)) return;
+    addUserItem(user.user_id, adminItemOf(l, { created_at: l.createdAt }));
+  });
+}
 
 const patchListing = (id, fn) => {
   listings = listings.map((l) => (l.id === id ? fn(l) : l));
@@ -205,19 +301,23 @@ export function saveListing(form, { submit = true, id = null } = {}) {
   };
 
   if (id) {
-    patchListing(id, (l) => {
-      const status = submit ? (l.status === "Reserved" || l.status === "Sold" ? l.status : "Live") : l.status;
-      return {
-        ...l,
-        ...data,
-        status,
-        events: [
-          ...l.events,
-          { id: evId(l), label: submit ? (l.status === "Draft" || l.status === "Withdrawn" ? "Listing published" : "Listing updated") : "Listing updated", detail: submit ? "Your listing is available on the marketplace" : "Your changes were saved", at: now(), tone: submit ? "good" : "neutral" },
-        ],
-      };
-    });
+    const before = listings.find((l) => l.id === id);
+    const keepsStatus = ["Reserved", "Sold", "Live"].includes(before.status);
+    /* Publishing a draft or a withdrawn listing puts it live straight away. */
+    const publishing = submit && ["Draft", "Withdrawn"].includes(before.status);
+    const status = !submit ? before.status : keepsStatus ? before.status : "Live";
+    const label = !submit ? "Listing updated" : publishing ? "Listing published" : "Listing updated";
+    const detail = !submit ? "Your changes were saved" : "Your listing is available on the marketplace";
+
+    patchListing(id, (l) => ({
+      ...l,
+      ...data,
+      status,
+      adminItemId: submit ? l.adminItemId || `ITM-${l.id.replace(/\D/g, "")}` : l.adminItemId,
+      events: [...l.events, { id: evId(l), label, detail, at: now(), tone: submit ? "good" : "neutral" }],
+    }));
     const updated = listings.find((l) => l.id === id);
+    if (submit) shareWithAdmin(updated);
     if (updated.marketId) {
       const m = ITEMS.find((i) => i.id === updated.marketId);
       if (m) Object.assign(m, { title: data.title, category: data.category, price: data.price, description: data.description, summary: data.description.slice(0, 110), condition: data.condition, image: data.images[0] || m.image, quantity: data.quantity });
@@ -229,20 +329,26 @@ export function saveListing(form, { submit = true, id = null } = {}) {
   }
 
   seq += 1;
+  const listingId = `LST-${seq}`;
   const listing = {
-    id: `LST-${seq}`,
+    id: listingId,
     ...data,
     status: submit ? "Live" : "Draft",
     createdAt: now(),
     views: 0,
     likes: 0,
-    rejectReason: "",
     marketId: null,
-    events: [{ id: "e1", label: submit ? "Listing published" : "Draft saved", detail: submit ? "Your listing is available on the marketplace" : "Not published yet", at: now(), tone: submit ? "good" : "neutral" }],
+    adminItemId: submit ? `ITM-${seq}` : null,
+    suggestedPrice: null,
+    suggestedMessage: "",
+    events: [{ id: "e1", label: submit ? "Listing published" : "Draft saved", detail: submit ? "Now visible on the marketplace" : "Not published yet", at: now(), tone: submit ? "good" : "neutral" }],
   };
   listings = [listing, ...listings];
   commit();
-  if (submit) publish(listing);
+  if (submit) {
+    shareWithAdmin(listing);
+    publish(listing);
+  }
   return listing;
 }
 
@@ -304,11 +410,9 @@ export function advanceSale(id) {
 /* ---------- hooks + derived ---------- */
 
 export const netOf = (sale) => {
+  /* Sellers keep the full price. The buyer pays the platform fee and delivery on top. */
   const gross = sale.price * sale.qty;
-  const commission = Math.round((gross * COMMISSION_PCT) / 100);
-  const l = listings.find((x) => x.id === sale.listingId);
-  const pickupFee = l?.pickup === "platform" ? PLATFORM_PICKUP_FEE : 0;
-  return { gross, commission, pickupFee, net: gross - commission - pickupFee };
+  return { gross, commission: 0, pickupFee: 0, net: gross };
 };
 
 export function useListings() {
@@ -345,3 +449,8 @@ export function summarizeSelling(listings, sales) {
   };
 }
 
+
+/* ---------- start-up ---------- */
+ensureSeedListings();
+syncFromAdmin();
+onUsersChange(syncFromAdmin);

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  AlertTriangle,
   Ban,
   CalendarDays,
+  Clock,
+  Tag,
   CheckCircle2,
   Eye,
   ExternalLink,
@@ -42,7 +45,7 @@ import "../../css/sell/sell-base.css";
 import "../../css/sell/UserListingDetails.css";
 
 const JUST = {
-  submitted: "Listing published and available on the marketplace.",
+  submitted: "Your listing is live. Buyers can find it on the marketplace now.",
   updated: "Listing updated.",
   draft: "Draft saved.",
 };
@@ -155,6 +158,30 @@ export default function UserListingDetails() {
           )}
         </div>
       </header>
+      {listing.adminDisabled && (
+        <div className="dn-banner dn-banner--bad sl-banner" role="alert">
+          <AlertTriangle size={20} />
+          <div>
+            <strong>ReOrbit turned this listing off</strong>
+            {listing.adminDisabled.reason} Buyers can't see it until the team turns it back on.{" "}
+            <Link to="/user-help/contact" className="dn-link">
+              Contact support →
+            </Link>
+          </div>
+        </div>
+      )}
+      {listing.suggestedPrice != null && ["Live", "Draft"].includes(status) && listing.suggestedPrice !== listing.price && (
+        <div className="dn-banner dn-banner--warn sl-banner">
+          <Tag size={20} />
+          <div>
+            <strong>ReOrbit suggests {formatPrice(listing.suggestedPrice)}</strong>
+            {listing.suggestedMessage || "Our team thinks this price will help it sell."}{" "}
+            <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
+              Change the price →
+            </Link>
+          </div>
+        </div>
+      )}
       {status === "Live" && (
         <div className="dn-banner sl-banner">
           <CheckCircle2 size={20} />

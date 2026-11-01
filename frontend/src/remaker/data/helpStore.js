@@ -93,7 +93,7 @@ export const FAQS = [
     id: "f10",
     category: "money",
     q: "How much does ReOrbit charge?",
-    a: "ReOrbit keeps 8% of the item price. Delivery is paid by the customer and never comes out of your earnings.",
+    a: "Nothing comes out of your earnings. You keep the full item price. The buyer pays the platform fee and delivery on top of it.",
   },
   {
     id: "f11",
@@ -380,6 +380,33 @@ export function replyToTicket(id, text) {
                 from: "me",
                 name: "You",
                 text,
+                at: now,
+              },
+            ],
+          }
+        : ticket,
+    ),
+  );
+}
+
+/* The ReOrbit team answers from Admin > Support. */
+export function teamReply(id, text, status) {
+  const now = new Date().toISOString();
+
+  commit(
+    tickets.map((ticket) =>
+      ticket.id === id
+        ? {
+            ...ticket,
+            status: status || ticket.status,
+            updatedAt: now,
+            messages: [
+              ...ticket.messages,
+              {
+                id: `${id}-${ticket.messages.length + 1}`,
+                from: "support",
+                name: "ReOrbit Support",
+                text: text.trim(),
                 at: now,
               },
             ],

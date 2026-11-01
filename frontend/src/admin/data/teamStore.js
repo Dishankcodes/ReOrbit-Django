@@ -15,7 +15,7 @@ import { getSettings, useSettings } from "./settingsStore";
 export const MODULES = [
   { key: "dashboard", label: "Dashboard", group: "Main", path: "/admin-dashboard", locked: true, hint: "Overview for every admin (always view only)" },
   { key: "users", label: "Users", group: "Main", path: "/admin-users", hint: "Accounts, moderation, blocking" },
-  { key: "remakers", label: "ReMakers", group: "Main", path: "/admin-remakers", hint: "Verification, portfolios, moderation" },
+  { key: "remakers", label: "ReMakers", group: "Main", path: "/admin-remakers", hint: "Accounts, portfolios, moderation" },
   { key: "products", label: "Products", group: "Main", path: "/admin-products", hint: "Review and manage listings" },
   { key: "orders", label: "Orders", group: "Main", path: "/admin-orders", hint: "Payments, status, refunds" },
   { key: "shop", label: "Buy Products", group: "Main", path: "/admin-shop", hint: "Buy as the platform" },
@@ -23,6 +23,7 @@ export const MODULES = [
   { key: "donations", label: "Donations", group: "Operations", path: "/admin-donations", hint: "Accept, reject, complete" },
   { key: "pickups", label: "Pickups", group: "Operations", path: "/admin-pickups", hint: "Schedule and track pickups" },
   { key: "complaints", label: "Complaints", group: "Operations", path: "/admin-complaints", hint: "Reports about users, ReMakers, listings and reviews" },
+  { key: "support", label: "Support", group: "Operations", path: "/admin-support", hint: "Help tickets from users and ReMakers" },
   { key: "warehouse", label: "Warehouse", group: "Operations", path: "/admin-warehouse", hint: "Stock, locations, refurbishment" },
   { key: "rewards", label: "Rewards", group: "Management", path: "/admin-rewards", hint: "Points, vouchers, redemptions" },
   { key: "notifications", label: "Notifications", group: "Management", path: "/admin-notifications", hint: "Alerts and announcements" },
@@ -54,7 +55,7 @@ export const ROLE_PRESETS = [
   },
   {
     key: "support", label: "Support agent", blurb: "Helps members: accounts, orders and donations.",
-    permissions: mk({ users: "edit", remakers: "view", orders: "edit", donations: "view", complaints: "edit", rewards: "view", content: "view", notifications: "edit" }),
+    permissions: mk({ users: "edit", remakers: "view", orders: "edit", donations: "view", complaints: "edit", support: "edit", rewards: "view", content: "view", notifications: "edit" }),
   },
   {
     key: "catalog", label: "Catalog manager", blurb: "Keeps listings and ReMakers in good order.",

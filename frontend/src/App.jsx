@@ -141,6 +141,7 @@ import AdminPickups from "./admin/pages/Pickups/AdminPickups";
 import AdminPickupDetails from "./admin/pages/Pickups/AdminPickupDetails";
 import AdminPickupTeams from "./admin/pages/Pickups/AdminPickupTeams";
 import AdminComplaints from "./admin/pages/Complaints/AdminComplaints";
+import AdminSupport from "./admin/pages/Support/AdminSupport";
 import AdminComplaintDetails from "./admin/pages/Complaints/AdminComplaintDetails";
 import AdminRewards from "./admin/pages/Rewards/AdminRewards";
 import AdminReports from "./admin/pages/Reports/AdminReports";
@@ -408,6 +409,7 @@ export default function App() {
         <Route path="/remaker-jobs" element={<ReMakerJobs />} />
         <Route path="/remaker-jobs/:jobId" element={<ReMakerJobDetails />} />
         <Route path="/remaker-messages" element={<ReMakerMessages />} />
+        <Route path="/remaker-messages/:id" element={<ReMakerMessages />} />
         <Route path="/remaker-saved" element={<ReMakerSaved />} />
         <Route path="/remaker-not-found" element={<ReMakerNotFound />} />
         <Route path="/remaker-unknown-route" element={<UnknownRoute />} />
@@ -453,6 +455,7 @@ export default function App() {
           element={<AdminPickupDetails />}
         />
         <Route path="/admin-complaints" element={<AdminComplaints />} />
+        <Route path="/admin-support" element={<AdminSupport />} />
         <Route
           path="/admin-complaints/:complaintId"
           element={<AdminComplaintDetails />}

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import MarketOrderModal from "../../pages-components/MarketOrderModal";
+import { platformFeeOf } from "../../../shared/commerce";
 import {
   Avatar,
   RatingSummary,
@@ -120,9 +121,12 @@ function Details({ listing }) {
 
   const saved = wishlist.has(listing.id);
   const isRemaker = listing.source === "remaker";
-  const charge = deliveryCharge(listing.price);
+  const charge = deliveryCharge(listing.price * quantity, listing.source);
+  const platformFee = platformFeeOf(listing.price * quantity);
   const total =
-    listing.price * quantity + (delivery === "platform" ? charge : 0);
+    listing.price * quantity +
+    (delivery === "platform" ? charge : 0) +
+    platformFee;
   const outOfStock = listing.quantity < 1;
   const reviewCount = isRemaker
     ? productReviews.length
@@ -434,7 +438,7 @@ function Details({ listing }) {
             </fieldset>
 
             <div className="rmd-total">
-              <span>Total</span>
+              <span>Total (incl. {formatPrice(platformFee)} platform fee)</span>
               <strong>{formatPrice(total)}</strong>
             </div>
 

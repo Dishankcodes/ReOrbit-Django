@@ -135,7 +135,7 @@ function getMorePages(pathname) {
     if (pathname === "/user-sell/new")
       return {
         title: "Sell an Item",
-        subtitle: "Add photos, a fair price and let us verify it.",
+        subtitle: "Add photos, a fair price and publish it.",
       };
     if (pathname === "/user-sell/sales")
       return {

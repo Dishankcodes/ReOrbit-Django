@@ -15,6 +15,7 @@
 import { useSyncExternalStore } from "react";
 
 import { deliveryCharge, getListingById } from "./remakerMarketplaceData";
+import { platformFeeOf } from "../../shared/commerce";
 
 const KEY = "reorbit_remaker_orders_v1";
 
@@ -121,13 +122,17 @@ function build(base) {
   const item = snapshot(base.listingId);
   const quantity = base.quantity || 1;
   const deliveryFee =
-    base.fulfilment === "delivery" ? deliveryCharge(item.unitPrice) : 0;
+    base.fulfilment === "delivery"
+      ? deliveryCharge(item.unitPrice * quantity, item.sellerType)
+      : 0;
+  const platformFee = platformFeeOf(item.unitPrice * quantity);
 
   return {
     ...item,
     quantity,
     deliveryFee,
-    total: item.unitPrice * quantity + deliveryFee,
+    platformFee,
+    total: item.unitPrice * quantity + deliveryFee + platformFee,
     pincode: base.fulfilment === "delivery" ? "380015" : "",
     reports: [],
     ...base,
@@ -358,7 +363,9 @@ export function createOrder({
     unitPrice: listing.price,
     quantity,
     deliveryFee: fee,
-    total: listing.price * quantity + fee,
+    platformFee: platformFeeOf(listing.price * quantity),
+    total:
+      listing.price * quantity + fee + platformFeeOf(listing.price * quantity),
     fulfilment,
     pincode: fulfilment === "delivery" ? pincode : "",
     status: "Pending",

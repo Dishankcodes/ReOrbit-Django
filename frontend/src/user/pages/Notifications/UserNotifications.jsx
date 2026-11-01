@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   Star,
   Tag,
+  Megaphone,
 } from "lucide-react";
 
 import {
@@ -30,6 +31,7 @@ const ICON = {
   sell: Tag,
   support: LifeBuoy,
   reward: Star,
+  announcement: Megaphone,
 };
 
 export default function UserNotifications() {

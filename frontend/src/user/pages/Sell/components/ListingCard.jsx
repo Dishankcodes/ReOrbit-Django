@@ -23,7 +23,7 @@ export default function ListingCard({ listing }) {
         <span className="dn-dcard-id">{listing.id} · {listing.category}</span>
         <h3>{listing.title}</h3>
         <p className="sl-card-note">
-          {LISTING_STATUS[listing.status].blurb}
+          {listing.adminDisabled ? `Turned off by ReOrbit: ${listing.adminDisabled.reason}` : LISTING_STATUS[listing.status].blurb}
         </p>
 
         <div className="sl-card-row">

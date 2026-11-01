@@ -22,7 +22,7 @@ import {
 } from "../../data/ordersStore";
 import {
   CANCEL_REASONS,
-  FEE_RATE,
+  feeRatePct,
   SHIP_FROM,
   acceptSale,
   advanceSale,
@@ -381,13 +381,13 @@ function Details({ order }) {
                 </dt>
                 <dd>{formatPrice(gross)}</dd>
               </div>
-              <div>
-                <dt>ReOrbit fee ({Math.round(FEE_RATE * 100)}%)</dt>
-                <dd>− {formatPrice(fee)}</dd>
-              </div>
               <div className="total">
                 <dt>You receive</dt>
                 <dd>{formatPrice(net)}</dd>
+              </div>
+              <div>
+                <dt>Platform fee ({feeRatePct()}%), paid by the buyer</dt>
+                <dd>{formatPrice(fee)}</dd>
               </div>
             </dl>
 

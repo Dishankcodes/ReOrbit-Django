@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { followerCount, useFollowing } from "../../data/followStore";
+import ReportButton from "../../../shared/components/ReportButton";
+import { useUserComplaintFiler } from "../../../shared/complaints";
 import {
   formatPrice,
   getRemakerById,
@@ -59,6 +61,7 @@ export default function UserArtistProfile() {
   const products = getRemakerProducts(artistId);
   const reviews = getSellerReviews(artistId);
   const { isFollowing, toggle: toggleFollow } = useFollowing();
+  const fileComplaint = useUserComplaintFiler();
   const following = isFollowing(artistId);
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
@@ -138,6 +141,12 @@ export default function UserArtistProfile() {
                   />{" "}
                   {following ? "Following" : "Follow ReMaker"}
                 </button>
+                <ReportButton
+                  type="ReMaker"
+                  label="Report"
+                  file={fileComplaint}
+                  target={{ name: artist.name, sub: `${artist.city} · @${artist.username}`, image: artist.image }}
+                />
               </div>
               <div className="uap-location">
                 <i className="bi bi-geo-alt" /> {artist.city} · {artist.pincode}

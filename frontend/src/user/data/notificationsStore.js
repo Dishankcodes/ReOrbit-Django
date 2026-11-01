@@ -14,6 +14,7 @@ import { useListings, useSales } from "./listingsStore";
 import { useTickets } from "./supportStore";
 import { useRewards } from "./rewardsStore";
 import { useSettings } from "./settingsStore";
+import { useMyAnnouncements } from "../../shared/announcements";
 
 const KEY = "reorbit_user_notif_read";
 const DAY = 86400000;
@@ -47,6 +48,7 @@ export const NOTIFICATION_TYPES = {
   sell: { label: "Selling", pref: "orderUpdates" },
   support: { label: "Support", pref: null },
   reward: { label: "Rewards", pref: "rewards" },
+  announcement: { label: "From ReOrbit", pref: null },
 };
 
 export function useNotifications() {
@@ -58,6 +60,7 @@ export function useNotifications() {
   const tickets = useTickets();
   const { ledger } = useRewards();
   const settings = useSettings();
+  const announcements = useMyAnnouncements("users");
 
   return useMemo(() => {
     const since = Date.now() - WINDOW_DAYS * DAY;
@@ -84,6 +87,9 @@ export function useNotifications() {
       if (last.from !== "team") return;
       out.push({ id: `tkt-${t.id}-${last.id}`, type: "support", title: t.status === "Resolved" ? "Ticket resolved" : "Support replied", message: `${t.id} · ${t.subject}`, at: last.at, to: `/user-help/tickets/${t.id}` });
     });
+    announcements.forEach((a) => {
+      out.push({ id: a.id, type: "announcement", title: a.title, message: a.message, at: a.at, to: a.link && a.link.startsWith("/") && !a.link.startsWith("/admin") ? a.link : "/user-notifications" });
+    });
     ledger.filter((e) => e.points >= 100).slice(0, 4).forEach((e) => {
       out.push({ id: `pts-${e.id}`, type: "reward", title: `+${e.points} Orbit Points`, message: e.title, at: e.at, to: "/user-orbit-points/history" });
     });
@@ -99,5 +105,5 @@ export function useNotifications() {
       .map((n) => ({ ...n, read: read.includes(n.id) }));
 
     return { items, unread: items.filter((n) => !n.read).length };
-  }, [read, orders, donations, listings, sales, tickets, ledger, settings]);
+  }, [read, orders, donations, listings, sales, tickets, ledger, settings, announcements]);
 }

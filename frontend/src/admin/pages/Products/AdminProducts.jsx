@@ -44,11 +44,7 @@ import "../../css/remakers/AdminRemakers.css";
 import "../../css/products/AdminProducts.css";
 
 const isDisabledListing = (p) =>
-  Boolean(
-    p.is_disabled ||
-    p.state === "disabled" ||
-    (p.type === "item" && p.verification === "Rejected"),
-  );
+  Boolean(p.is_disabled || p.state === "disabled");
 
 const STATE_CARDS = [
   { key: "all", label: "All listings", icon: ShoppingBag, tone: "all" },
@@ -95,11 +91,7 @@ function exportCsv(rows) {
       formatDate(p.posted_at),
       p.price,
       p.quantity,
-      isDisabledListing(p)
-        ? "Disabled"
-        : p.type === "item" && ["Pending", "Rejected"].includes(p.verification)
-          ? p.verification
-          : p.rawStatus,
+      isDisabledListing(p) ? "Disabled" : p.rawStatus,
     ]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),

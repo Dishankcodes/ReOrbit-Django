@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, HandHeart, Loader2, Package, CalendarDays, ClipboardCheck } from "lucide-react";
 
 import {
-  DONATION_CATEGORIES,
+  useDonationCategories,
   DONOR,
   SAVED_ADDRESSES,
   checkPincode,
@@ -46,6 +46,7 @@ const emptyForm = {
 };
 
 export default function UserDonationNew() {
+  const categories = useDonationCategories();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const topRef = useRef(null);
@@ -54,7 +55,7 @@ export default function UserDonationNew() {
   const repeat = useDonation(params.get("repeat") || "");
   const initial = useMemo(() => {
     const category = params.get("category");
-    const valid = DONATION_CATEGORIES.some((item) => item.id === category);
+    const valid = categories.some((item) => item.id === category);
     return {
       ...emptyForm,
       category: repeat?.category || (valid ? category : ""),

@@ -128,7 +128,7 @@ export const addressOf = (person, party) =>
 
 const verifiedItems = INITIAL_USERS.flatMap((user) =>
   user.items
-    .filter((item) => item.verification_status === "Verified")
+    .filter((item) => item.item_status !== "Draft")
     .map((item) => ({ ...item, owner: user })),
 );
 const sellableProducts = INITIAL_REMAKERS.flatMap((rm) =>

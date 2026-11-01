@@ -241,8 +241,8 @@ const RAW = [
   ],
   [
     "system",
-    "Platform fee stays at 8%",
-    "No change to how much ReOrbit keeps from each sale. Delivery is still paid by the customer.",
+    "You keep the full price of every sale",
+    "The platform fee is paid by the buyer on top of your price. Nothing is deducted from your earnings.",
     800,
     true,
     "/remaker-earnings",
@@ -398,10 +398,58 @@ export function markAllRead(category = "all") {
   );
 }
 
+/* ---------- admin announcements ---------- */
+
+const GONE_KEY = "reorbit_remaker_ann_gone_v1";
+const loadGone = () => {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(GONE_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+};
+const saveGone = (set) => {
+  try {
+    localStorage.setItem(GONE_KEY, JSON.stringify([...set]));
+  } catch {
+    /* ignore */
+  }
+};
+
+/* Adds announcements the admin sent to ReMakers (audience everyone or
+   remakers). Ones the ReMaker deleted stay deleted. */
+export function syncAnnouncements(list) {
+  const gone = loadGone();
+  const have = new Set(items.map((item) => item.id));
+  const add = list
+    .filter((a) => !have.has(a.id) && !gone.has(a.id))
+    .map((a) => ({
+      id: a.id,
+      category: "system",
+      title: a.title,
+      text: a.message,
+      createdAt: a.at,
+      read: false,
+      link: a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
+        ? { to: a.link, label: "Open" }
+        : null,
+      image: "",
+    }));
+
+  if (add.length) commit([...items, ...add]);
+}
+
 /* Returns what was removed so the UI can offer Undo */
 export function removeNotifications(ids) {
   const set = new Set(Array.isArray(ids) ? ids : [ids]);
   const removed = items.filter((item) => set.has(item.id));
+
+  const annGone = removed.filter((item) => String(item.id).startsWith("ann-"));
+  if (annGone.length) {
+    const gone = loadGone();
+    annGone.forEach((item) => gone.add(item.id));
+    saveGone(gone);
+  }
 
   if (removed.length) commit(items.filter((item) => !set.has(item.id)));
 
@@ -411,6 +459,12 @@ export function removeNotifications(ids) {
 export function restoreNotifications(list) {
   const existing = new Set(items.map((item) => item.id));
   const back = list.filter((item) => !existing.has(item.id));
+  const gone = loadGone();
+  let changed = false;
+  back.forEach((item) => {
+    if (gone.delete(item.id)) changed = true;
+  });
+  if (changed) saveGone(gone);
 
   if (back.length) commit([...items, ...back]);
 }

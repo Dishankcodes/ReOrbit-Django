@@ -8,6 +8,7 @@
    source "remaker" -> ReMaker_Products table (finished piece)
    ========================================================= */
 
+import { deliveryFor } from "../../shared/commerce";
 import {
   ITEMS,
   formatPrice,
@@ -201,23 +202,22 @@ export const SERVICEABLE_PINCODES = [
 
 /* ReOrbit-managed delivery is chargeable (Items.pickup_preference) */
 
-export function deliveryCharge(price) {
-  if (price < 1500) {
-    return 99;
-  }
-
-  if (price < 5000) {
-    return 199;
-  }
-
-  return 349;
+/* Rates come from Admin > Settings > Commerce (shared/commerce.js):
+   ReMaker products ship for the product rate (free over the limit),
+   member items use the item rate. `source` is "remaker" or "user". */
+export function deliveryCharge(price, source = "remaker") {
+  return deliveryFor({
+    sellerType: source === "remaker" ? "remaker" : "user",
+    pickup: "platform",
+    subtotal: price,
+  });
 }
 
 /* =========================================================
    MARKET LISTINGS
 ========================================================= */
 
-export const MARKET_LISTINGS = ITEMS.map((item) => {
+const decorate = (item) => {
   const extra = EXTRA[item.id] || {};
 
   const gallery = (extra.gallery || []).map((path) => IMG + path);
@@ -239,7 +239,15 @@ export const MARKET_LISTINGS = ITEMS.map((item) => {
 
     madeFrom: extra.madeFrom || "",
   };
-});
+};
+
+export const MARKET_LISTINGS = ITEMS.map(decorate);
+
+/* Called when a member publishes or withdraws a listing, so the ReMaker
+   marketplace (which reads this array) shows it straight away. */
+export function refreshMarketListings() {
+  MARKET_LISTINGS.splice(0, MARKET_LISTINGS.length, ...ITEMS.map(decorate));
+}
 
 /* =========================================================
    SOURCE LABEL

@@ -3,12 +3,17 @@ import { Outlet } from "react-router-dom";
 
 import ReMakerSidebar from "./ReMakerSidebar";
 import ReMakerHeader from "./ReMakerHeader";
+import AccountGate from "../../shared/components/AccountGate";
+import { useRemakerAccountStatus } from "../../shared/accountStatus";
+import AnnouncementSync from "../../shared/components/AnnouncementSync";
+import { syncAnnouncements } from "../data/notificationsStore";
 
 import "./ReMakerLayout.css";
 
 export default function ReMakerLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const account = useRemakerAccountStatus();
 
   /* =========================================================
      SIDEBAR TOGGLE
@@ -37,6 +42,7 @@ export default function ReMakerLayout() {
         sidebarCollapsed ? "sidebar-collapsed" : ""
       } ${mobileSidebarOpen ? "mobile-sidebar-open" : ""}`}
     >
+      <AnnouncementSync audience="remakers" onSync={syncAnnouncements} />
       <ReMakerSidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileSidebarOpen}
@@ -59,7 +65,9 @@ export default function ReMakerLayout() {
         />
 
         <main className="remaker-page-content">
-          <Outlet />
+          <AccountGate info={account} role="remaker">
+            <Outlet />
+          </AccountGate>
         </main>
       </div>
     </div>

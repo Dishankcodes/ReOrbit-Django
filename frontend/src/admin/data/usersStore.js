@@ -27,6 +27,34 @@ function getSnapshot() {
 
 export const getUsers = () => users;
 
+/* For stores outside the admin that need to react when the team changes a user
+   (for example the User app showing a listing as verified). Returns an unsubscribe. */
+export function onUsersChange(listener) {
+  return subscribe(listener);
+}
+
+/* A member offered a donation in the User app: it joins their donations and
+   waits in the admin's Donations queue. */
+export function addUserDonation(userId, donation) {
+  users = users.map((user) =>
+    user.user_id !== userId || user.donations.some((d) => d.donation_id === donation.donation_id)
+      ? user
+      : { ...user, donations: [donation, ...user.donations] },
+  );
+  emit();
+}
+
+/* A member submitted an item for sale in the User app: it joins their items,
+   shown in the admin's Products list. */
+export function addUserItem(userId, item) {
+  users = users.map((user) =>
+    user.user_id !== userId || user.items.some((i) => i.item_id === item.item_id)
+      ? user
+      : { ...user, items: [item, ...user.items] },
+  );
+  emit();
+}
+
 /* Change one donation inside a user's record (admin accept / reject / progress). */
 export function updateUserDonation(userId, donationId, patch) {
   users = users.map((user) =>
@@ -72,34 +100,6 @@ export function changeUserStatus(userIds, newStatus, reason = "") {
         },
         ...user.statusHistory,
       ],
-    };
-  });
-  emit();
-}
-
-/* Verify / reject an uploaded item from the profile page. */
-export function reviewUserItem(userId, itemId, decision, message = "") {
-  users = users.map((user) => {
-    if (user.user_id !== userId) return user;
-    return {
-      ...user,
-      items: user.items.map((item) =>
-        item.item_id !== itemId
-          ? item
-          : decision === "Verified"
-            ? {
-                ...item,
-                verification_status: "Verified",
-                item_status: "Listed",
-                rejection_message: "",
-              }
-            : {
-                ...item,
-                verification_status: "Rejected",
-                item_status: "Draft",
-                rejection_message: message,
-              },
-      ),
     };
   });
   emit();

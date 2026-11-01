@@ -1,10 +1,11 @@
 import React from "react";
 import { Minus, Plus, ShieldAlert } from "lucide-react";
-import { CONDITIONS, DONATION_CATEGORIES } from "../../../../data/donationsStore";
+import { CONDITIONS, useDonationCategories } from "../../../../data/donationsStore";
 import { categoryIcon } from "../categoryIcons";
 import PhotoUploader from "../../../../components/ui/PhotoUploader";
 
 export default function StepItem({ form, set, errors }) {
+  const categories = useDonationCategories();
   return (
     <div className="dn-form">
       {/* category */}
@@ -13,7 +14,7 @@ export default function StepItem({ form, set, errors }) {
           Category <em>*</em>
         </span>
         <div className="dn-catpick">
-          {DONATION_CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const Icon = categoryIcon(cat.id);
             const active = form.category === cat.id;
             return (

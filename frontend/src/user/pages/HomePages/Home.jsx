@@ -1,6 +1,7 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import BannerSlot from "../../../shared/components/BannerSlot";
 import "../../css/Home.css";
 
 const products = [
@@ -127,7 +128,16 @@ function ProductCard({ product, className }) {
   );
 }
 
+const viewerKind = () => {
+  try {
+    return localStorage.getItem("reorbit_access_token") ? "Signed-in members" : "Visitors only";
+  } catch {
+    return "Visitors only";
+  }
+};
+
 export default function Home() {
+  const viewer = viewerKind();
   return (
     <div className="home">
       <Navbar />
@@ -146,7 +156,7 @@ export default function Home() {
             </h1>
 
             <p className="hero-description">
-              List what you no longer use. We verify it, arrange a pincode
+              List what you no longer use. We arrange a pincode
               pickup, restore what needs work, and connect it with someone who
               can give it a meaningful new life.
             </p>
@@ -196,11 +206,17 @@ export default function Home() {
           </div>
         </section>
 
+        {/* BANNERS from Admin > Content */}
+        <div className="container">
+          <BannerSlot placement="Home hero" viewer={viewer} />
+          <BannerSlot placement="Home strip" viewer={viewer} />
+        </div>
+
         {/* TRUST BAR */}
         <section className="trust-bar">
           <div className="container trust-grid">
             {[
-              ["verified", "Verified listings"],
+              ["fact_check", "Honest condition notes"],
               ["local_shipping", "Pincode pickup"],
               ["handyman", "Professional refurbishment"],
               ["park", "Tracked environmental impact"],
@@ -326,7 +342,7 @@ export default function Home() {
               </div>
               <h3>For buyers</h3>
               <p>
-                Discover verified and refurbished products with honest condition
+                Discover pre-loved and refurbished products with honest condition
                 details and their complete item history.
               </p>
               <a href="/discover-marketplace" className="role-button">

@@ -177,13 +177,7 @@ export default function AdminShopSeller() {
                   </h3>
                   <StatusBadge
                     status={
-                      p.state === "pending"
-                        ? "Pending"
-                        : p.state === "rejected"
-                          ? "Rejected"
-                          : p.available <= 0
-                            ? "Sold"
-                            : "Inactive"
+                      p.available <= 0 ? "Sold" : "Inactive"
                     }
                   />
                 </div>

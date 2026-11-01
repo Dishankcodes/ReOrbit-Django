@@ -173,8 +173,8 @@ export default function AdminDashboard() {
     return {
       stats: [
         { title: "Total Users", value: num(activeUsers), change: `+${newUsers} new`, trend: "up", description: "joined in 6 months", icon: Users, path: "/admin-users" },
-        { title: "ReMakers", value: num(activeMakers), change: `${remakers.filter((r) => r.status === "Active").length} active`, trend: "up", description: "verified makers", icon: Palette, path: "/admin-remakers" },
-        { title: "Products", value: num(liveProducts), change: `${products.filter((p) => p.state === "pending").length} pending`, trend: "down", description: "live listings", icon: ShoppingBag, path: "/admin-products" },
+        { title: "ReMakers", value: num(activeMakers), change: `${remakers.filter((r) => r.status === "Active").length} active`, trend: "up", description: "creators on ReOrbit", icon: Palette, path: "/admin-remakers" },
+        { title: "Products", value: num(liveProducts), change: `${products.filter((p) => p.state !== "live").length} off market`, trend: "down", description: "live listings", icon: ShoppingBag, path: "/admin-products" },
         { title: "Orders", value: num(o.orders), ...changeLabel(o.orders, o.ordersPrev), description: "last 6 months", icon: Package, path: "/admin-orders" },
         { title: "Revenue", value: compactInr(o.revenue), ...changeLabel(o.revenue, o.revenuePrev), description: "paid order value", icon: IndianRupee, path: "/admin-reports?tab=sales" },
         { title: "Donations", value: num(dn.total), ...changeLabel(dn.total, dn.totalPrev), description: `${dn.pending} awaiting review`, icon: Gift, path: "/admin-donations" },

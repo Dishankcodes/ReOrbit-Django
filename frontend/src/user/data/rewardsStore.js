@@ -13,6 +13,7 @@ import { estimatePoints, useDonations } from "./donationsStore";
 import { useListings } from "./listingsStore";
 import { useFollowing } from "./followStore";
 import { useWishlist } from "./wishlistStore";
+import { getRewardRules, getVouchers, pointsOf, useRewardRules } from "../../shared/rewardRules";
 
 const DAY = 86400000;
 const dayISO = (offset) => new Date(new Date().setHours(0, 0, 0, 0) + offset * DAY).toISOString();
@@ -26,28 +27,32 @@ export const LEVELS = [
 ];
 export const levelIndex = (lifetime) => LEVELS.reduce((n, l, i) => (lifetime >= l.min ? i : n), 0);
 
-export const WAYS_TO_EARN = [
-  { id: "purchase", group: "Buying", title: "Marketplace purchase", text: "10 points for every ₹100 on a delivered order.", points: "10 / ₹100", path: "/user-marketplace", cta: "Browse marketplace" },
-  { id: "firstOrder", group: "Buying", title: "First order bonus", text: "A welcome bonus on your first delivered order.", points: "+50", path: "/user-marketplace", cta: "Start shopping" },
-  { id: "donation", group: "Donating", title: "Donation completed", text: "100 points per donation, plus 20 for every item, once your certificate is issued.", points: "100 + 20 / item", path: "/user-donations/new", cta: "Donate an item" },
-  { id: "listing", group: "Community", title: "Item verified and listed", text: "When an item you sell passes verification.", points: "+30", path: "/user-sell/new", cta: "Sell an item" },
-  { id: "review", group: "Community", title: "Write a review", text: "For each review you post after delivery.", points: "+20", path: "/user-orders", cta: "Review an order" },
-  { id: "follow", group: "Community", title: "Follow a ReMaker", text: "A small reward for following, up to 10 ReMakers.", points: "+5", path: "/user-remakers", cta: "Find ReMakers" },
-];
+/* Where each rule sends the member. The wording and the points come from the rules. */
+const EARN_LINKS = {
+  purchase: ["/user-marketplace", "Browse marketplace"],
+  firstOrder: ["/user-marketplace", "Start shopping"],
+  donationBase: ["/user-donations/new", "Donate an item"],
+  donationItem: ["/user-donations/new", "Donate an item"],
+  listing: ["/user-sell/new", "Sell an item"],
+  review: ["/user-orders", "Review an order"],
+  follow: ["/user-remakers", "Find ReMakers"],
+  referral: ["/user-profile", "Invite a friend"],
+};
+export function buildWaysToEarn(rules) {
+  return Object.entries(EARN_LINKS)
+    .filter(([key]) => rules[key]?.active && rules[key].rule)
+    .map(([key, [path, cta]]) => {
+      const r = rules[key].rule;
+      return { id: key, group: r.group, title: r.title, text: r.description, points: `+${r.points}${/per/.test(r.unit) ? ` ${r.unit.replace(/^per\s+/, "/ ")}` : ""}`, path, cta };
+    });
+}
+export function useWaysToEarn() {
+  const rules = useRewardRules();
+  return useMemo(() => buildWaysToEarn(rules), [rules]);
+}
 
-/* ---------- vouchers ---------- */
-export const VOUCHERS = [
-  { id: "VCH-1001", code: "ORBIT100", title: "₹100 Marketplace Voucher", description: "Save ₹100 on a sustainable purchase.", kind: "points", type: "fixed", value: 100, minOrder: 499, maxDiscount: 100, cost: 500, left: 336, validTo: dayISO(120), level: 0, paused: false },
-  { id: "VCH-1002", code: "FREEDEL", title: "Free Delivery", description: "Takes ₹99 off one eligible order.", kind: "points", type: "fixed", value: 99, minOrder: 299, maxDiscount: 99, cost: 750, left: 213, validTo: dayISO(90), level: 0, paused: false },
-  { id: "VCH-1003", code: "GREEN250", title: "₹250 Sustainability Voucher", description: "A bigger reward for a bigger basket.", kind: "points", type: "fixed", value: 250, minOrder: 999, maxDiscount: 250, cost: 1200, left: 159, validTo: dayISO(200), level: 2, paused: false },
-  { id: "VCH-1009", code: "DECOR150", title: "₹150 Home Decor Voucher", description: "For home decor and lighting.", kind: "points", type: "fixed", value: 150, minOrder: 699, maxDiscount: 150, cost: 900, left: 128, validTo: dayISO(150), level: 0, paused: true },
-  { id: "VCH-1010", code: "PICKUPPASS", title: "Priority Pickup Pass", description: "Jump the queue for one donation pickup.", kind: "points", type: "fixed", value: 0, minOrder: 0, maxDiscount: 0, cost: 400, left: 0, validTo: dayISO(60), level: 0, paused: false },
-  { id: "VCH-1004", code: "WELCOME10", title: "Welcome 10% off", description: "10% off, for new users only.", kind: "code", type: "percent", value: 10, minOrder: 299, maxDiscount: 150, cost: 0, audience: "new", validTo: dayISO(160) },
-  { id: "VCH-1006", code: "THANKS50", title: "Donor Thank-you ₹50", description: "A thank-you for completing a donation.", kind: "code", type: "fixed", value: 50, minOrder: 199, maxDiscount: 50, cost: 0, audience: "donors", validTo: dayISO(5) },
-  { id: "VCH-1007", code: "REMAKER20", title: "ReMaker Spotlight 20%", description: "20% off products from ReMakers.", kind: "code", type: "percent", value: 20, minOrder: 999, maxDiscount: 500, cost: 0, audience: "all", validTo: dayISO(40), remakerOnly: true },
-  { id: "VCH-1012", code: "BOOKS5", title: "Books ₹50 off", description: "₹50 off a bundle of books.", kind: "code", type: "fixed", value: 50, minOrder: 349, maxDiscount: 50, cost: 0, audience: "all", validTo: dayISO(6) },
-];
-export const getVoucher = (id) => VOUCHERS.find((v) => v.id === id) || null;
+/* ---------- vouchers (from Admin > Rewards) ---------- */
+export const getVoucher = (id) => getVouchers().find((v) => v.id === id) || null;
 
 /* ---------- redeemed state ---------- */
 const KEY = "reorbit_user_redeemed";
@@ -96,7 +101,7 @@ export function checkCoupon(raw, { subtotal, ctx }) {
   if (!code) return { ok: false, error: "Enter a coupon code." };
 
   const owned = redeemed.find((r) => r.code.toUpperCase() === code);
-  const voucher = owned ? getVoucher(owned.voucherId) : VOUCHERS.find((v) => v.kind === "code" && v.code === code);
+  const voucher = owned ? getVoucher(owned.voucherId) : getVouchers().find((v) => v.kind === "code" && v.code === code && v.status === "Active");
   if (!voucher) return { ok: false, error: "That code isn't valid." };
   if (owned?.used) return { ok: false, error: "You've already used this voucher." };
   if (new Date(voucher.validTo) < new Date()) return { ok: false, error: "This coupon has expired." };
@@ -120,6 +125,7 @@ export function useRewards() {
   const listings = useListings();
   const { ids: following } = useFollowing();
   const wishlist = useWishlist();
+  const rules = useRewardRules();
 
   return useMemo(() => {
     const earn = [];
@@ -129,17 +135,17 @@ export function useRewards() {
 
     delivered.forEach((o, i) => {
       const at = o.events[o.events.length - 1].at;
-      const pts = Math.floor(o.total / 100) * 10;
+      const pts = Math.floor((o.price * o.qty) / 100) * pointsOf(rules, "purchase");
       if (pts > 0) earn.push({ id: `buy-${o.id}`, kind: "purchase", title: "Order delivered", detail: `${o.item.title} · ${o.id}`, points: pts, at, to: `/user-orders/${o.id}` });
-      if (i === 0) earn.push({ id: "first-order", kind: "purchase", title: "First order bonus", detail: "Your first delivered order", points: 50, at, to: `/user-orders/${o.id}` });
+      if (i === 0 && pointsOf(rules, "firstOrder") > 0) earn.push({ id: "first-order", kind: "purchase", title: "First order bonus", detail: "Your first delivered order", points: pointsOf(rules, "firstOrder"), at, to: `/user-orders/${o.id}` });
     });
-    orders.filter((o) => o.review).forEach((o) => earn.push({ id: `rev-${o.id}`, kind: "review", title: "Review posted", detail: o.item.title, points: 20, at: o.review.at || o.events[o.events.length - 1].at, to: `/user-orders/${o.id}` }));
-    donations.filter((d) => d.status === "Completed").forEach((d) => earn.push({ id: `don-${d.id}`, kind: "donation", title: "Donation completed", detail: `${d.title} · ${d.quantity} ${d.quantity === 1 ? "item" : "items"}`, points: estimatePoints(d.quantity), at: d.events[d.events.length - 1].at, to: `/user-donations/${d.id}` }));
-    listings.filter((l) => ["Live", "Reserved", "Sold"].includes(l.status)).forEach((l) => {
-      const e = l.events.find((x) => x.label === "Verified and live");
-      earn.push({ id: `lst-${l.id}`, kind: "listing", title: "Item verified and listed", detail: l.title, points: 30, at: e ? e.at : l.createdAt, to: `/user-sell/${l.id}` });
+    if (pointsOf(rules, "review") > 0) orders.filter((o) => o.review).forEach((o) => earn.push({ id: `rev-${o.id}`, kind: "review", title: "Review posted", detail: o.item.title, points: pointsOf(rules, "review"), at: o.review.at || o.events[o.events.length - 1].at, to: `/user-orders/${o.id}` }));
+    donations.filter((d) => d.status === "Completed" && estimatePoints(d.quantity) > 0).forEach((d) => earn.push({ id: `don-${d.id}`, kind: "donation", title: "Donation completed", detail: `${d.title} · ${d.quantity} ${d.quantity === 1 ? "item" : "items"}`, points: estimatePoints(d.quantity), at: d.events[d.events.length - 1].at, to: `/user-donations/${d.id}` }));
+    listings.filter((l) => ["Live", "Reserved", "Sold"].includes(l.status) && pointsOf(rules, "listing") > 0).forEach((l) => {
+      const e = l.events.find((x) => x.label === "Listing published");
+      earn.push({ id: `lst-${l.id}`, kind: "listing", title: "Item listed", detail: l.title, points: pointsOf(rules, "listing"), at: e ? e.at : l.createdAt, to: `/user-sell/${l.id}` });
     });
-    following.slice(0, 10).forEach((id, i) => earn.push({ id: `fol-${id}`, kind: "follow", title: "Followed a ReMaker", detail: id.replace(/-/g, " "), points: 5, at: dayISO(-(i + 1) * 3), to: `/user-marketplace/remaker/${id}` }));
+    if (pointsOf(rules, "follow") > 0) following.slice(0, 10).forEach((id, i) => earn.push({ id: `fol-${id}`, kind: "follow", title: "Followed a ReMaker", detail: id.replace(/-/g, " "), points: pointsOf(rules, "follow"), at: dayISO(-(i + 1) * 3), to: `/user-marketplace/remaker/${id}` }));
 
     const spend = used.map((r) => ({ id: r.rid, kind: "spend", title: "Reward redeemed", detail: r.title, points: -r.cost, at: r.at, to: "/user-orbit-points/vouchers" }));
     const ledger = [...earn, ...spend].sort((a, b) => new Date(b.at) - new Date(a.at));
@@ -176,7 +182,7 @@ export function useRewards() {
       mk("second-life", "recycle", "Second Life", "Help rescue 25 items from waste, by buying or donating.", donatedItems + boughtItems, 25, dayISO(-1), { label: "Donate an item", to: "/user-donations/new" }),
       mk("makers-friend", "users", "Maker's Friend", "Follow 3 ReMakers.", following.length, 3, dayISO(-1), { label: "Find ReMakers", to: "/user-remakers" }),
       mk("reviewer", "star", "Helpful Reviewer", "Post 3 order reviews.", reviewCount, 3, dayISO(-1), { label: "Review an order", to: "/user-orders" }),
-      mk("seller-starter", "tag", "Seller Starter", "Get your first item verified and listed.", liveCount, 1, dayISO(-1), { label: "Sell an item", to: "/user-sell/new" }),
+      mk("seller-starter", "tag", "Seller Starter", "List your first item for sale.", liveCount, 1, dayISO(-1), { label: "Sell an item", to: "/user-sell/new" }),
       mk("trusted-seller", "badge", "Trusted Seller", "Sell 3 items to happy buyers.", soldCount, 3, dayISO(-1), { label: "Sell an item", to: "/user-sell/new" }),
       mk("impact-champion", "trophy", "Impact Champion", "Reach 5,000 lifetime Orbit Points.", lifetime, 5000, dayISO(-1), { label: "Ways to earn", to: "/user-orbit-points/earn" }),
     ];
@@ -188,5 +194,5 @@ export function useRewards() {
       earnedBadges: badges.filter((b) => b.earned).length,
       counts: { orders: orders.length, delivered: deliveredCount, donated: donatedItems, following: following.length, wishlist: wishlist.count },
     };
-  }, [used, orders, donations, listings, following, wishlist]);
+  }, [used, orders, donations, listings, following, wishlist, rules]);
 }

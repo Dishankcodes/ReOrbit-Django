@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Image as ImageIcon, Loade
 
 import {
   PICKUP_OPTIONS,
-  SELL_CATEGORIES,
   SELL_CONDITIONS,
   SELLER,
   saveListing,
@@ -16,6 +15,7 @@ import Crumbs from "../../components/ui/Crumbs";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import EmptyState from "../../components/ui/EmptyState";
 import EarningsPreview, { earningsFor } from "./components/EarningsPreview";
+import { useCategoryNames } from "../../../shared/catalog";
 
 import "../../css/shared/ui-base.css";
 import "../../css/sell/sell-base.css";
@@ -43,6 +43,11 @@ export default function UserSellForm() {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const existing = useListing(listingId || "");
+  const categoryNames = useCategoryNames();
+  const categoryOptions = useMemo(
+    () => (existing?.category && !categoryNames.includes(existing.category) ? [existing.category, ...categoryNames] : categoryNames),
+    [categoryNames, existing],
+  );
   const editing = Boolean(listingId);
   const topRef = useRef(null);
 
@@ -91,7 +96,7 @@ export default function UserSellForm() {
       if (form.description.trim().length < 20) e.description = "Describe the item in at least 20 characters. Mention size, age and any flaws.";
       if (!form.condition) e.condition = "Select the condition.";
       if (!(price >= 50)) e.price = "Enter a price of at least ₹50.";
-      else if (price > 200000) e.price = "Prices above ₹2,00,000 need manual approval. Contact support.";
+      else if (price > 200000) e.price = "The maximum listing price is ₹2,00,000.";
       if (form.quantity < 1) e.quantity = "Quantity must be at least 1.";
     }
     if (index === 1) {
@@ -166,7 +171,7 @@ export default function UserSellForm() {
               <div className="dn-field">
                 <span className="dn-label">Category <em>*</em></span>
                 <div className="sl-chips" role="radiogroup" aria-label="Category">
-                  {SELL_CATEGORIES.map((c) => (
+                  {categoryOptions.map((c) => (
                     <button type="button" key={c} role="radio" aria-checked={form.category === c} className={form.category === c ? "on" : ""} onClick={() => set("category", c)}>{c}</button>
                   ))}
                 </div>
@@ -257,7 +262,7 @@ export default function UserSellForm() {
               <button type="button" className="dn-btn" onClick={next}>Continue <ArrowRight size={16} /></button>
             ) : (
               <button type="button" className="dn-btn" onClick={() => submit(false)} disabled={busy}>
-                {busy ? <><Loader2 size={16} className="dn-spin" /> Submitting…</> : <>{editing ? "Save changes" : "Publish listing"} <Check size={16} /></>}
+                {busy ? <><Loader2 size={16} className="dn-spin" /> Submitting…</> : <>{editing ? (["Draft", "Withdrawn"].includes(existing.status) ? "Publish listing" : "Save changes") : "Publish listing"} <Check size={16} /></>}
               </button>
             )}
           </footer>

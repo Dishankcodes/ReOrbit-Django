@@ -1,0 +1,54 @@
+.account-gate-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #f0d9a6;
+  background: #fdf5e1;
+  color: #6b4b08;
+  border-radius: var(--radius, 1rem);
+  font-family: var(--font-sans);
+}
+.account-gate-banner > svg { flex: none; }
+.account-gate-banner > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.86rem; line-height: 1.4; }
+.account-gate-banner strong { font-size: 0.92rem; }
+
+.account-gate-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--card); color: var(--primary);
+  font: 600 0.86rem var(--font-sans); cursor: pointer;
+}
+.account-gate-btn:hover { background: var(--secondary); }
+.account-gate-btn.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+.account-gate-btn.primary:hover { background: var(--primary-dark); }
+
+.account-gate-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 1000;
+  max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 12px;
+  background: var(--primary-dark); color: var(--primary-foreground);
+  font: 500 0.86rem var(--font-sans); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.account-lock {
+  max-width: 520px; margin: 8vh auto 0; padding: 40px 28px; text-align: center;
+  background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+  font-family: var(--font-sans);
+}
+.account-lock-icon {
+  display: inline-grid; place-items: center; width: 68px; height: 68px; border-radius: 50%;
+  background: #fbe9e7; color: #a6362a; margin-bottom: 14px;
+}
+.account-lock h1 { margin: 0 0 8px; font: 700 1.5rem var(--font-display); color: var(--primary); }
+.account-lock p { margin: 0 0 14px; color: var(--muted-foreground); line-height: 1.55; }
+.account-lock blockquote {
+  margin: 0 0 16px; padding: 12px 16px; text-align: left; border-left: 3px solid #a6362a;
+  background: var(--muted); border-radius: 0 12px 12px 0; color: var(--foreground); line-height: 1.5;
+}
+.account-lock blockquote small { display: block; margin-bottom: 4px; color: var(--muted-foreground); font-weight: 600; }
+.account-lock-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+@media (max-width: 600px) {
+  .account-gate-banner { flex-wrap: wrap; }
+  .account-lock { margin-top: 3vh; padding: 28px 18px; }
+}

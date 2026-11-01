@@ -15,6 +15,8 @@ import {
   formatPrice,
 } from "../../data/remakerProducts";
 
+import { useRemakerModeration } from "../../../shared/moderation";
+
 import "../../css/ReMakerProducts.css";
 
 const FILTERS = [
@@ -25,7 +27,8 @@ const FILTERS = [
 ];
 
 /* Sold_Out products are still "active" listings with no stock */
-function bucket(product) {
+function bucket(product, held) {
+  if (held) return "inactive";
   if (product.status === "Draft") return "draft";
   if (product.status === "Inactive") return "inactive";
   return "active";
@@ -36,6 +39,8 @@ export default function ReMakerProducts() {
   const [params, setParams] = useSearchParams();
 
   const [products, setProducts] = useState(REMAKER_PRODUCTS);
+  const moderation = useRemakerModeration();
+  const holdOf = (product) => moderation[product.adminId]?.hold || null;
   const [filter, setFilter] = useState("all");
 
   const query = (params.get("search") || "").trim().toLowerCase();
@@ -43,13 +48,14 @@ export default function ReMakerProducts() {
   const counts = useMemo(() => {
     const result = { all: products.length, active: 0, inactive: 0, draft: 0 };
     products.forEach((product) => {
-      result[bucket(product)] += 1;
+      result[bucket(product, holdOf(product))] += 1;
     });
     return result;
-  }, [products]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, moderation]);
 
   const visible = products.filter((product) => {
-    const matchesFilter = filter === "all" || bucket(product) === filter;
+    const matchesFilter = filter === "all" || bucket(product, holdOf(product)) === filter;
     const matchesQuery =
       !query ||
       product.title.toLowerCase().includes(query) ||
@@ -62,7 +68,7 @@ export default function ReMakerProducts() {
   const toggleActive = (id) =>
     setProducts((current) =>
       current.map((product) => {
-        if (product.id !== id || product.status === "Draft") return product;
+        if (product.id !== id || product.status === "Draft" || holdOf(product)) return product;
 
         if (product.status === "Inactive") {
           return {
@@ -129,14 +135,19 @@ export default function ReMakerProducts() {
       ) : (
         <div className="rpl-grid">
           {visible.map((product) => {
-            const status = PRODUCT_STATUS[product.status];
+            const hold = holdOf(product);
+            const suggested = moderation[product.adminId]?.suggested;
+            const status = hold
+              ? { label: "Deactivated by ReOrbit", tone: "inactive" }
+              : PRODUCT_STATUS[product.status];
             const isActive =
-              product.status === "Listed" || product.status === "Sold_Out";
+              !hold &&
+              (product.status === "Listed" || product.status === "Sold_Out");
             const isDraft = product.status === "Draft";
 
             return (
               <article
-                className={`rpl-card ${product.status === "Inactive" ? "is-off" : ""}`}
+                className={`rpl-card ${product.status === "Inactive" || hold ? "is-off" : ""}`}
                 key={product.id}
               >
                 <Link
@@ -186,8 +197,21 @@ export default function ReMakerProducts() {
                     </span>
                   </div>
 
+                  {hold && (
+                    <p className="rpl-hold" role="note">
+                      <strong>Why:</strong> {hold.reason}
+                    </p>
+                  )}
+                  {!hold && suggested && (
+                    <p className="rpl-suggest" role="note">
+                      ReOrbit suggests {formatPrice(suggested.price)}
+                    </p>
+                  )}
+
                   <div className="rpl-foot">
-                    {isDraft ? (
+                    {hold ? (
+                      <span className="rpl-draft-note">Hidden by ReOrbit</span>
+                    ) : isDraft ? (
                       <span className="rpl-draft-note">
                         Finish it to publish
                       </span>

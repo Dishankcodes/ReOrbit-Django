@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { usePublishedFaqs } from "../../../shared/content";
+import { FAQ_TOPICS } from "../../../admin/data/contentStore";
 
-const faqGroups = [
+/* Only used if the admin has published no FAQs at all. */
+const STATIC_GROUPS = [
   {
     title: "Getting started",
     questions: [
@@ -202,6 +205,15 @@ const faqGroups = [
 ];
 
 export default function FAQ() {
+  /* The questions are written in Admin > Content > FAQs. */
+  const published = usePublishedFaqs();
+  const faqGroups = useMemo(() => {
+    const groups = FAQ_TOPICS.map((topic) => ({
+      title: topic,
+      questions: published.filter((f) => f.topic === topic).map((f) => ({ question: f.q, answer: f.a })),
+    })).filter((g) => g.questions.length);
+    return groups.length ? groups : STATIC_GROUPS;
+  }, [published]);
   const [openItem, setOpenItem] = useState("0-0");
 
   const toggleItem = (id) => {

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy, Ticket, TicketPercent, CheckCircle2 } from "lucide-react";
 
-import { VOUCHERS, useRewards } from "../../data/rewardsStore";
+import { useRewards } from "../../data/rewardsStore";
+import { useVoucherList } from "../../../shared/rewardRules";
 import { formatDate } from "../../utils/format";
 import EmptyState from "../../components/ui/EmptyState";
 import useToast from "../../components/ui/useToast";
@@ -14,11 +15,12 @@ import "../../css/rewards/rewards-base.css";
 
 export default function UserVouchers() {
   const { balance, levelIndex, redeemed } = useRewards();
+  const vouchers = useVoucherList();
   const [tab, setTab] = useState("store");
   const { toast, show } = useToast();
 
-  const store = VOUCHERS.filter((v) => v.kind === "points");
-  const codes = VOUCHERS.filter((v) => v.kind === "code" && new Date(v.validTo) > new Date());
+  const store = vouchers.filter((v) => v.kind === "points");
+  const codes = vouchers.filter((v) => v.kind === "code" && new Date(v.validTo) > new Date());
   const mine = redeemed;
   const copy = async (code) => {
     try { await navigator.clipboard.writeText(code); show("Code copied."); } catch { show("Couldn't copy. Select the code and copy it."); }

@@ -67,8 +67,8 @@ export const INITIAL_RULES = [
   {
     id: "listing",
     group: "Community",
-    title: "Item verified and listed",
-    description: "When an uploaded item passes verification.",
+    title: "Item listed",
+    description: "When a member lists an item for sale.",
     points: 30,
     unit: "per item",
     active: true,

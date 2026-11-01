@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import BeforeAfter from "./BeforeAfter";
 import PortfolioDeleteModal from "./PortfolioDeleteModal";
-import { CATEGORIES, REMAKER_PRODUCTS } from "../data/remakerProducts";
+import { REMAKER_PRODUCTS } from "../data/remakerProducts";
+import { useCategoryNames } from "../../shared/catalog";
 import {
   addWork,
   deleteWork,
@@ -126,6 +127,11 @@ export default function PortfolioForm({ mode = "add", work = null }) {
   const navigate = useNavigate();
   const isEdit = mode === "edit";
 
+  const categoryNames = useCategoryNames();
+  const categoryOptions = useMemo(
+    () => (work?.category && !categoryNames.includes(work.category) ? [work.category, ...categoryNames] : categoryNames),
+    [categoryNames, work],
+  );
   const initial = useMemo(() => buildInitial(work), [work]);
 
   const [values, setValues] = useState(initial);
@@ -310,7 +316,7 @@ export default function PortfolioForm({ mode = "add", work = null }) {
                     aria-invalid={show("category") ? "true" : undefined}
                   >
                     <option value="">Select a category</option>
-                    {CATEGORIES.map((category) => (
+                    {categoryOptions.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>

@@ -21,10 +21,11 @@ export function printInvoice(o) {
 h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6b756d}@media print{button{display:none}}</style></head><body>
 <div class="top"><div><h1>ReOrbit</h1><span class="muted">Tax invoice · ${o.id}</span></div><div class="r"><strong>${formatDate(o.placedAt)}</strong><br><span class="muted">Payment: ${paid ? "Paid" : "Pending (pay on delivery)"}</span></div></div>
 <div class="grid"><div><h4>Billed to</h4><strong>${a.name}</strong><br>${a.line}, ${a.city}, ${a.state} ${a.pincode}<br>${a.phone}</div>
-<div><h4>Sold by</h4><strong>${o.seller?.name || o.item.seller}</strong><br>${o.item.city}<br><span class="muted">${o.sellerIsRemaker ? "Verified ReMaker" : "Community seller"}</span></div></div>
+<div><h4>Sold by</h4><strong>${o.seller?.name || o.item.seller}</strong><br>${o.item.city}<br><span class="muted">${o.sellerIsRemaker ? "ReMaker" : "Community seller"}</span></div></div>
 <table><thead><tr><th>Item</th><th class="r">Amount</th></tr></thead><tbody>
 ${row(`${o.item.title}<br><span class="muted">${o.qty} × ${inr(o.price)}</span>`, inr(o.price * o.qty))}
 ${row("Delivery", o.shipping ? inr(o.shipping) : "Free")}
+${o.platformFee ? row("Platform fee", inr(o.platformFee)) : ""}
 ${o.discount ? row("Discount", `− ${inr(o.discount)}`) : ""}
 ${row(paid ? "Total paid" : "Total to pay on delivery", inr(o.total), "tot")}
 </tbody></table>

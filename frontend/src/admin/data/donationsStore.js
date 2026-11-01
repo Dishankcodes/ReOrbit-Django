@@ -187,6 +187,10 @@ function build(user, d, ex) {
   };
 }
 
+/* For the User app: what the team added to a donation (pickup team, NGO). */
+export const getDonationExtras = () => extras;
+export const onDonationExtrasChange = (listener) => subscribe(listener);
+
 export function useDonations() {
   const users = useUsers();
   const ex = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);

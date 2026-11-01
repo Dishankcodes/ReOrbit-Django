@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, CircleHelp, Gift, Package, Search, Star, Store, Tag, User, X, MessageSquarePlus, SearchX } from "lucide-react";
 
-import { FAQS, HELP_CATEGORIES } from "../../data/supportStore";
+import { HELP_CATEGORIES, useHelpFaqs } from "../../data/supportStore";
 import EmptyState from "../../components/ui/EmptyState";
 import HelpNav from "./components/HelpNav";
 
@@ -15,11 +15,12 @@ export default function UserHelp() {
   const [cat, setCat] = useState("all");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(null);
+  const allFaqs = useHelpFaqs();
 
   const results = useMemo(() => {
     const t = query.trim().toLowerCase();
-    return FAQS.filter((f) => (cat === "all" ? true : f.cat === cat)).filter((f) => (t ? `${f.q} ${f.a}`.toLowerCase().includes(t) : true));
-  }, [cat, query]);
+    return allFaqs.filter((f) => (cat === "all" ? true : f.cat === cat)).filter((f) => (t ? `${f.q} ${f.a}`.toLowerCase().includes(t) : true));
+  }, [allFaqs, cat, query]);
 
   const grouped = cat === "all" && !query.trim();
 

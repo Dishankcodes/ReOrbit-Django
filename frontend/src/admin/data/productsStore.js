@@ -6,12 +6,12 @@
    - ReMaker products -> made by ReMakers    (data/adminRemakers.js)
 
    The list is derived live from the Users and ReMakers stores,
-   so verifying an item here also shows on that user's profile.
+   so a change made here also shows on that user's profile.
    Backend later: replace useProducts() with an API call.
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
-import { useUsers, reviewUserItem } from "./usersStore";
+import { useUsers } from "./usersStore";
 import { useRemakers, setProductStatus } from "./remakersStore";
 
 /* ---------- admin actions taken this session ---------- */
@@ -72,12 +72,8 @@ const REPORT_POOL = [
   { reason: "Misleading description", by: "Ishita Nair" },
 ];
 
-function groupState(type, verification, rawStatus) {
-  if (type === "item") {
-    if (verification === "Pending") return "pending";
-    if (verification === "Rejected") return "rejected";
-    return ["Listed", "Reserved"].includes(rawStatus) ? "live" : "off";
-  }
+function groupState(type, rawStatus) {
+  if (type === "item") return ["Listed", "Reserved"].includes(rawStatus) ? "live" : "off";
   return rawStatus === "Listed" ? "live" : "off";
 }
 
@@ -94,57 +90,30 @@ function timelineFor(p, extra) {
   const reviewAt = capNow(addDays(p.posted_at, 1 + (hash(p.id) % 2)));
 
   if (p.type === "item") {
-    if (p.verification === "Verified") {
+    /* Members publish their own listings. They go live straight away. */
+    events.push({
+      id: "listed",
+      label: "Listed",
+      detail: "Visible on the marketplace",
+      at: reviewAt,
+      tone: "good",
+    });
+    const later = {
+      Reserved: "Reserved by a buyer",
+      Sold: "Sold",
+      Donated: "Donated",
+      Warehouse: "Received at the warehouse",
+      Refurbishment: "Sent for refurbishment",
+      Completed: "Refurbishment completed",
+    }[p.rawStatus];
+    if (later)
       events.push({
-        id: "verified",
-        label: "Verified",
-        detail: "Approved by Admin · Nikhil Rao",
-        at: reviewAt,
-        tone: "good",
+        id: "later",
+        label: p.rawStatus.replace("_", " "),
+        detail: later,
+        at: capNow(addDays(p.posted_at, 4 + (hash(p.id) % 14))),
+        tone: "info",
       });
-    } else if (p.verification === "Rejected") {
-      events.push({
-        id: "rejected",
-        label: "Rejected",
-        detail: p.rejection_message || "Rejected by admin",
-        at: reviewAt,
-        tone: "bad",
-      });
-    } else {
-      events.push({
-        id: "waiting",
-        label: "Waiting for review",
-        detail: "In the verification queue",
-        at: p.posted_at,
-        tone: "wait",
-        pending: true,
-      });
-    }
-    if (p.verification === "Verified") {
-      events.push({
-        id: "listed",
-        label: "Listed",
-        detail: "Visible on the marketplace",
-        at: reviewAt,
-        tone: "good",
-      });
-      const later = {
-        Reserved: "Reserved by a buyer",
-        Sold: "Sold",
-        Donated: "Donated",
-        Warehouse: "Received at the warehouse",
-        Refurbishment: "Sent for refurbishment",
-        Completed: "Refurbishment completed",
-      }[p.rawStatus];
-      if (later)
-        events.push({
-          id: "later",
-          label: p.rawStatus.replace("_", " "),
-          detail: later,
-          at: capNow(addDays(p.posted_at, 4 + (hash(p.id) % 14))),
-          tone: "info",
-        });
-    }
   } else {
     events.push({
       id: "listed",
@@ -201,9 +170,7 @@ function build(users, remakers, extraHistory) {
         condition: item.condition,
         pickup: item.pickup_preference,
         source_item: null,
-        verification: item.verification_status,
         rawStatus: item.item_status,
-        rejection_message: item.rejection_message,
         is_disabled: Boolean(item.is_disabled),
         disabled_reason: item.disabled_reason || "",
         suggested_price: item.suggested_price ?? null,
@@ -260,9 +227,7 @@ function build(users, remakers, extraHistory) {
         condition: null,
         pickup: null,
         source_item: prod.source_item,
-        verification: null,
         rawStatus: prod.status,
-        rejection_message: "",
         posted_at: prod.created_at,
         views: 120 + (h % 1400),
         wishlisted: 2 + (h % 90),
@@ -302,7 +267,7 @@ function build(users, remakers, extraHistory) {
       const extra = extraHistory[p.id] || [];
       const withState = {
         ...p,
-        state: groupState(p.type, p.verification, p.rawStatus),
+        state: groupState(p.type, p.rawStatus),
         history: extra,
       };
       return { ...withState, timeline: timelineFor(withState, extra) };
@@ -323,14 +288,7 @@ export function useProduct(id) {
 
 /* Apply one action to one listing (writes to the source store). */
 export function runProductAction(product, action, reason = "") {
-  if (product.type === "item") {
-    reviewUserItem(
-      product.owner.id,
-      product.id,
-      action.key === "reject" ? "Rejected" : "Verified",
-      reason,
-    );
-  } else {
+  if (product.type !== "item") {
     setProductStatus(
       product.owner.id,
       product.id,
@@ -340,8 +298,6 @@ export function runProductAction(product, action, reason = "") {
   addHistory(product.id, {
     id: `${product.id}-${Date.now()}`,
     label: {
-      verify: "Verified",
-      reject: "Rejected",
       deactivate: "Deactivated",
       reactivate: "Reactivated",
     }[action.key],

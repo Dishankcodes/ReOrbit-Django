@@ -5,6 +5,8 @@
    backend later is a straight swap.
    ========================================================= */
 
+/* Fallback only. The forms read the live list from Admin > Content
+   (see shared/catalog.js). */
 export const CATEGORIES = [
   "Furniture",
   "Home Decor",
@@ -53,6 +55,7 @@ export const PRODUCT_STATUS = {
 export const REMAKER_PRODUCTS = [
   {
     id: "rp-1001",
+    adminId: "PRD-20025",
     title: "Teak Door Console Table",
     category: "Furniture",
     description:
@@ -97,7 +100,7 @@ export const REMAKER_PRODUCTS = [
   {
     id: "rp-1003",
     title: "Denim Patchwork Tote",
-    category: "Bags & Totes",
+    category: "Fashion",
     description:
       "Six worn denim jackets, cut and pieced into one sturdy everyday tote. Every bag has its own pattern, so yours will not match anyone else's. Lined with cotton and stitched to carry laptops and groceries.",
     price: 1850,
@@ -118,7 +121,7 @@ export const REMAKER_PRODUCTS = [
   {
     id: "rp-1004",
     title: "Iron Grille Wall Shelf",
-    category: "Storage & Organisers",
+    category: "Home Decor",
     description:
       "A rusted window grille, wire-brushed and sealed, turned into a wall shelf with a reclaimed pine plank. The pattern throws soft shadows on the wall in the evening.",
     price: 4200,
@@ -154,6 +157,24 @@ export const REMAKER_PRODUCTS = [
     views: 0,
     sales: 0,
     updated: "Today",
+  },
+  {
+    id: "rp-1006",
+    adminId: "PRD-20026",
+    title: "Refurbished Study Chair",
+    category: "Furniture",
+    description:
+      "A school-era study chair stripped, re-glued and finished in natural oil. New webbing seat, original frame.",
+    price: 3399,
+    stock: 4,
+    status: "Listed",
+    images: ["/images/products/vintage-chair.jpg", "/images/portfolio/tara-chair.jpg"],
+    materials: ["Reclaimed wood", "Jute"],
+    originType: "own",
+    originItemId: "",
+    views: 320,
+    sales: 3,
+    updated: "4 days ago",
   },
 ];
 

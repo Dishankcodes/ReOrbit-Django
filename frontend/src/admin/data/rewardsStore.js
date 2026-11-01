@@ -219,8 +219,7 @@ export function useUserPoints() {
           const purchases = Math.round(((u.totals?.spent || 0) / 100) * 10);
           const reviews = (u.reviews?.length || 0) * 20;
           const listings =
-            u.items.filter((i) => i.verification_status === "Verified").length *
-            30;
+            u.items.filter((i) => i.item_status !== "Draft").length * 30;
           const donated = donationRewards
             .filter((r) => r.donor.id === u.user_id && r.status === "Credited")
             .reduce((n, r) => n + r.points, 0);

@@ -1,10 +1,10 @@
+/* Fallback only. Pages read the live list from Admin > Content (shared/catalog.js). */
 export const CATEGORIES = [
   "Furniture",
   "Electronics",
-  "Home & Living",
+  "Home Decor",
   "Clothing",
   "Books",
-  "Decor",
 ];
 
 export const CONDITIONS = ["Excellent", "Very Good", "Good"];
@@ -284,7 +284,7 @@ export const ITEMS = [
   {
     id: "ceramic-table-lamp",
     title: "Handmade ceramic table lamp",
-    category: "Home & Living",
+    category: "Home Decor",
     price: 1650,
     image: "/images/products/ceramic-lamp.jpg",
     summary:
@@ -404,7 +404,7 @@ export const ITEMS = [
   {
     id: "reclaimed-wall-decor",
     title: "Reclaimed wood wall decor",
-    category: "Decor",
+    category: "Home Decor",
     price: 1250,
     image: "/images/products/default-item.jpg",
     summary:
@@ -452,7 +452,7 @@ export const ITEMS = [
   {
     id: "reclaimed-wood-shelf",
     title: "Reclaimed wood wall shelf",
-    category: "Decor",
+    category: "Home Decor",
     price: 1850,
     image: "/images/products/default-item.jpg",
     summary:
@@ -476,7 +476,7 @@ export const ITEMS = [
   {
     id: "upcycled-home-lamp",
     title: "Upcycled industrial lamp",
-    category: "Home & Living",
+    category: "Home Decor",
     price: 2450,
     image: "/images/products/default-item.jpg",
     summary:

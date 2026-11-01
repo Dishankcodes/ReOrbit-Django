@@ -113,7 +113,7 @@ export default function ReMakerTransactions() {
       "Item",
       "Qty",
       "Item price",
-      "ReOrbit fee",
+      "Platform fee (paid by buyer)",
       "You receive",
       "Status",
     ];
@@ -153,8 +153,8 @@ export default function ReMakerTransactions() {
           <strong>{formatPrice(totals.gross)}</strong>
         </div>
         <div>
-          <small>ReOrbit fees</small>
-          <strong>− {formatPrice(totals.fee)}</strong>
+          <small>Fees paid by buyers</small>
+          <strong>{formatPrice(totals.fee)}</strong>
         </div>
         <div className="net">
           <small>You receive</small>
@@ -238,7 +238,7 @@ export default function ReMakerTransactions() {
                 <th>Order</th>
                 <th>Customer</th>
                 <th className="num">Item price</th>
-                <th className="num">Fee</th>
+                <th className="num">Buyer fee</th>
                 <th className="num">You receive</th>
                 <th>Status</th>
               </tr>
@@ -271,7 +271,7 @@ export default function ReMakerTransactions() {
                       {formatPrice(grossOf(order))}
                     </td>
                     <td className="num" data-label="Fee">
-                      {dead ? "-" : `− ${formatPrice(feeOf(order))}`}
+                      {dead ? "-" : formatPrice(feeOf(order))}
                     </td>
                     <td className="num strong" data-label="You receive">
                       {dead ? "-" : formatPrice(netOf(order))}

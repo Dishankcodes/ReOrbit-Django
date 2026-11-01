@@ -112,8 +112,6 @@ export function useNotifications() {
     if (awaiting) add({ id: "ord-pay", module: "Orders", severity: "warning", needsAction: true, title: `${awaiting} orders are waiting for payment`, message: "Mark payments as received once the money arrives, or cancel stale orders.", at: ago(13), path: "/admin-orders", actionLabel: "Review orders" });
 
     /* Products */
-    const review = products.filter((p) => p.state === "pending").length;
-    if (review) add({ id: "prd-review", module: "Products", severity: "warning", needsAction: true, title: `${review} listings are waiting for review`, message: "Community items must be verified before they go live on the marketplace.", at: ago(6), path: "/admin-products", actionLabel: "Review listings" });
     const reported = products.filter((p) => (p.reports || []).some((r) => r.status === "Pending")).length;
     if (reported) add({ id: "prd-report", module: "Products", severity: "critical", needsAction: true, title: `${reported} listings were reported`, message: "Users flagged these listings. Check them and take action if needed.", at: ago(15), path: "/admin-products", actionLabel: "Open products" });
 

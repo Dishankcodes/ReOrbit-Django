@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Gift, ShoppingBag, Trophy, History, Wallet, TrendingUp } from "lucide-react";
 
-import { VOUCHERS, WAYS_TO_EARN, useRewards } from "../../data/rewardsStore";
+import { useRewards, useWaysToEarn } from "../../data/rewardsStore";
+import { useVoucherList } from "../../../shared/rewardRules";
 import { kg } from "../../utils/format";
 import PointsHero from "./components/PointsHero";
 import PointsNav from "./components/PointsNav";
@@ -15,9 +16,11 @@ import "../../css/rewards/rewards-base.css";
 
 export default function UserOrbitPoints() {
   const rewards = useRewards();
+  const vouchers = useVoucherList();
+  const ways = useWaysToEarn();
   const { ledger, balance, levelIndex, badges, earnedBadges, lifetime } = rewards;
   const spent = ledger.filter((e) => e.points < 0).reduce((n, e) => n + Math.abs(e.points), 0);
-  const claimable = VOUCHERS.filter((v) => v.kind === "points" && v.left > 0 && !v.paused).slice(0, 3);
+  const claimable = vouchers.filter((v) => v.kind === "points" && v.left > 0 && !v.paused).slice(0, 3);
   const nextBadges = badges.filter((b) => !b.earned).sort((a, b) => b.value / b.target - a.value / a.target).slice(0, 3);
 
   return (
@@ -73,7 +76,7 @@ export default function UserOrbitPoints() {
       <section className="rw-earn-strip">
         <div><Gift size={22} /><h3>Earn more points</h3><p>Buy, donate, sell, review and follow ReMakers.</p></div>
         <ul>
-          {WAYS_TO_EARN.slice(0, 4).map((w) => <li key={w.id}><b>{w.points}</b><span>{w.title}</span></li>)}
+          {ways.slice(0, 4).map((w) => <li key={w.id}><b>{w.points}</b><span>{w.title}</span></li>)}
         </ul>
         <Link to="/user-orbit-points/earn" className="dn-btn dn-btn--ghost">See all ways <ChevronRight size={15} /></Link>
       </section>

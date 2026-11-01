@@ -7,7 +7,7 @@ export default function AdminAbout() {
     {
       icon: "group",
       title: "Users & ReMakers",
-      text: "Review accounts, verify ReMakers and warn, suspend or block when needed, with a clear history for every account.",
+      text: "Review accounts and warn, suspend or block when needed, with a clear history for every account.",
     },
     {
       icon: "inventory_2",

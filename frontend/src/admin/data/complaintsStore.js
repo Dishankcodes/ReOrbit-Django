@@ -205,7 +205,7 @@ function build(users, remakers, products, members, ov, cust, warn) {
   });
 
   /* join live targets */
-  const withTarget = merged.map((c) => ({ ...c, target: describe(c.type, c.targetId, P) })).filter((c) => c.target);
+  const withTarget = merged.map((c) => ({ ...c, target: c.target || describe(c.type, c.targetId, P) })).filter((c) => c.target);
 
   /* repeat reports + priority + response time */
   const byTarget = new Map();
@@ -276,13 +276,21 @@ export function useComplaintCounts() {
 }
 
 /* ---------- actions ---------- */
-export function logComplaint({ type, targetId, category, description, reporterName, reporterRole, by }) {
+/* `target` (optional) is a ready-made snapshot of the reported thing. The User and ReMaker apps
+   send it when the reported person or listing is not one of the admin's own records yet.
+   `source` marks complaints that members filed themselves. */
+export function logComplaint({ type, targetId, category, description, reporterName, reporterRole, by, target, source }) {
   const id = `CP-${seq++}`;
   const createdAt = stamp();
   custom = [...custom, {
     id, type, targetId, category, description, reporter: { name: reporterName || "ReOrbit team", role: reporterRole || "Staff" },
-    createdAt, status: "Open", assigneeId: null, resolution: null,
-    events: [{ id: `${id}-f`, label: "Complaint logged", detail: `Logged by ${by} on behalf of ${reporterName || "the team"}`, tone: "wait", at: createdAt }],
+    createdAt, status: "Open", assigneeId: null, resolution: null, target: target || null,
+    events: [{
+      id: `${id}-f`,
+      label: source === "member" ? "Complaint filed" : "Complaint logged",
+      detail: source === "member" ? `Reported by ${reporterName || "a member"}` : `Logged by ${by} on behalf of ${reporterName || "the team"}`,
+      tone: "wait", at: createdAt,
+    }],
   }];
   emit();
   return id;

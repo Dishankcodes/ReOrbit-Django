@@ -7,6 +7,12 @@
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
+import { addUserDonation, updateUserDonation, onUsersChange } from "../../admin/data/usersStore";
+import { getDonationExtras, onDonationExtrasChange } from "../../admin/data/donationsStore";
+import { getPickupTeams, leadOf } from "../../admin/data/pickupTeamsStore";
+import { getMyUserAccount } from "../../shared/identity";
+import { getRewardRules, pointsOf } from "../../shared/rewardRules";
+import { useCategoryNames } from "../../shared/catalog";
 
 const DAY = 86400000;
 
@@ -56,6 +62,21 @@ export const DONATION_CATEGORIES = [
   { id: "Sports", label: "Sports & Toys", hint: "Gear, games, toys", weight: 1.5, image: "/images/products/default-item.jpg" },
 ];
 
+/* The categories the team lets people pick (Admin > Content). */
+export function useDonationCategories() {
+  const names = useCategoryNames();
+  return useMemo(
+    () =>
+      names.map(
+        (n) =>
+          DONATION_CATEGORIES.find((c) => c.id === n) || {
+            id: n, label: n, hint: "Clean, usable items", weight: 1.5, image: "/images/products/default-item.jpg",
+          },
+      ),
+    [names],
+  );
+}
+
 export const CONDITIONS = [
   { id: "Good", label: "Good", help: "Works / looks great. Minor signs of use at most." },
   { id: "Medium", label: "Medium", help: "Fully usable but visibly used or lightly worn." },
@@ -80,7 +101,12 @@ export const NGOS = [
   { name: "Jeevan Jyoti NGO", city: "Ahmedabad" },
 ];
 
-export const REWARD_RULES = { base: 100, perItem: 20, co2PerKg: 1.9 };
+/* Points come from Admin > Rewards. CO2 per kg is a fixed estimate. */
+export const REWARD_RULES = {
+  co2PerKg: 1.9,
+  get base() { return pointsOf(getRewardRules(), "donationBase"); },
+  get perItem() { return pointsOf(getRewardRules(), "donationItem"); },
+};
 
 export const CANCEL_REASONS = [
   "I no longer want to donate this",
@@ -203,6 +229,7 @@ const seed = () => [
   },
   {
     id: "DON-2047",
+    adminDonationId: "DN-U2047",
     title: "Winter jackets & sweaters",
     category: "Clothing",
     description: "Washed and folded jackets and sweaters, mixed sizes M to XL.",
@@ -399,6 +426,7 @@ export function createDonation(form) {
 
   const donation = {
     id,
+    adminDonationId: `DN-U${id.replace(/\D/g, "")}`,
     title: form.title.trim(),
     category: form.category,
     description: form.description.trim(),
@@ -432,10 +460,14 @@ export function createDonation(form) {
   };
 
   commit([donation, ...donations]);
+  sendToAdmin(donation);
   return donation;
 }
 
 export function cancelDonation(id, reason) {
+  const adminId = donations.find((d) => d.id === id)?.adminDonationId;
+  const user = getMyUserAccount();
+  if (adminId && user) updateUserDonation(user.user_id, adminId, { donation_status: "Cancelled", pickup_date: null, pickup_slot: null });
   update(id, (item) => ({
     ...item,
     status: "Cancelled",
@@ -448,6 +480,9 @@ export function cancelDonation(id, reason) {
 }
 
 export function reschedulePickup(id, { date, slot, reason }) {
+  const adminId = donations.find((d) => d.id === id)?.adminDonationId;
+  const user = getMyUserAccount();
+  if (adminId && user) updateUserDonation(user.user_id, adminId, { pickup_date: new Date(`${date}T09:00:00`).toISOString(), pickup_slot: slot });
   update(id, (item) => ({
     ...item,
     pickup: {
@@ -515,3 +550,97 @@ export function summarize(list) {
       .reduce((sum, d) => sum + estimatePoints(d.quantity), 0),
   };
 }
+
+/* ---------------------------------------------------------
+   Link to the admin's Donations queue.
+   A new donation joins the donor's donations there. When the team
+   accepts, schedules, rejects or completes it (and picks a pickup
+   team), the donor sees the same here.
+   --------------------------------------------------------- */
+
+function sendToAdmin(d) {
+  const user = getMyUserAccount();
+  if (!user || !d.adminDonationId) return;
+  addUserDonation(user.user_id, {
+    donation_id: d.adminDonationId,
+    title: d.title,
+    category: d.category,
+    image: d.images[0] || "/images/products/default-item.jpg",
+    quantity: d.quantity,
+    donation_date: d.createdAt,
+    donation_status: "Pending",
+    pickup_date: null,
+    pickup_slot: null,
+    certificate: false,
+  });
+}
+
+const STATUS_EVENT = {
+  Scheduled: ["Accepted · pickup scheduled", "good"],
+  Picked_Up: ["Picked up from you", "info"],
+  Received: ["Received at the warehouse", "info"],
+  Completed: ["Donation completed", "good"],
+  Rejected: ["Not accepted", "bad"],
+  Pending: ["Back in review", "neutral"],
+};
+
+function syncFromAdmin() {
+  const user = getMyUserAccount();
+  if (!user) return;
+  const extras = getDonationExtras();
+  let changed = false;
+
+  donations = donations.map((d) => {
+    if (!d.adminDonationId || d.status === "Cancelled") return d;
+    const a = user.donations.find((x) => x.donation_id === d.adminDonationId);
+    if (!a) return d;
+    const ex = extras[d.adminDonationId];
+    let next = d;
+
+    const team = ex?.partner ? getPickupTeams().find((t) => t.name === ex.partner) : null;
+    const lead = team ? leadOf(team) : null;
+    const partner = ex?.partner
+      ? { name: lead?.name || ex.partner, team: ex.partner, phone: lead?.phone || d.pickup.partner?.phone || "" }
+      : d.pickup.partner;
+    const partnerChanged = (partner?.name || "") !== (d.pickup.partner?.name || "") || (partner?.team || "") !== (d.pickup.partner?.team || "");
+    const dateChanged = (a.pickup_date || null) !== (d.pickup.date || null) || (a.pickup_slot || null) !== (d.pickup.slot || null);
+
+    if (a.donation_status !== d.status && STATUS_EVENT[a.donation_status]) {
+      const [label, tone] = STATUS_EVENT[a.donation_status];
+      const detail =
+        a.donation_status === "Rejected" ? a.reject_reason || "" :
+        a.donation_status === "Scheduled" ? `Free pickup · ${a.pickup_slot || ""}` :
+        a.donation_status === "Completed" && ex?.ngo ? `Given to ${ex.ngo}` : "";
+      next = {
+        ...next,
+        status: a.donation_status,
+        rejectReason: a.donation_status === "Rejected" ? a.reject_reason || "" : "",
+        ngo: a.donation_status === "Completed" && ex?.ngo ? { name: ex.ngo, city: NGOS.find((n) => n.name === ex.ngo)?.city || "Ahmedabad" } : next.ngo,
+        certificateId: a.donation_status === "Completed" ? `CERT-${d.id.replace(/\D/g, "")}` : next.certificateId,
+        events: [...next.events, { id: eventId(next), label, detail, at: new Date().toISOString(), tone }],
+      };
+    }
+    if (partnerChanged || dateChanged) {
+      next = {
+        ...next,
+        pickup: { ...next.pickup, date: a.pickup_date || next.pickup.date, slot: a.pickup_slot || next.pickup.slot, partner },
+      };
+      if (dateChanged && a.donation_status === d.status && a.pickup_date) {
+        next = { ...next, events: [...next.events, { id: eventId(next), label: "Pickup rescheduled by ReOrbit", detail: `${a.pickup_slot || ""}${partner?.team ? ` · ${partner.team}` : ""}`, at: new Date().toISOString(), tone: "wait" }] };
+      }
+    }
+    if (next !== d) changed = true;
+    return next;
+  });
+  if (changed) commit(donations);
+}
+
+/* Puts the demo donation that is still waiting in front of the team. */
+function ensureSeedDonations() {
+  donations.filter((d) => d.adminDonationId && d.status === "Pending").forEach(sendToAdmin);
+}
+
+ensureSeedDonations();
+syncFromAdmin();
+onUsersChange(syncFromAdmin);
+onDonationExtrasChange(syncFromAdmin);

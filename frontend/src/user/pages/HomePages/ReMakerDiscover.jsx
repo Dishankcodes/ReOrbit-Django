@@ -1255,7 +1255,7 @@ export default function ReMakerDiscover() {
                 stopped noticing.”
               </div>
 
-              <a href="/remakers/aarav-studio" className="remakers-primary-btn">
+              <a href="/remakers" className="remakers-primary-btn">
                 Visit studio
                 <span className="material-symbols-outlined">arrow_forward</span>
               </a>
@@ -1328,9 +1328,7 @@ export default function ReMakerDiscover() {
                     </p>
 
                     <a
-                      href={`/remakers/${maker.name
-                        .toLowerCase()
-                        .replaceAll(" ", "-")}`}
+                      href="/remakers"
                       className="remaker-card-link"
                     >
                       View studio

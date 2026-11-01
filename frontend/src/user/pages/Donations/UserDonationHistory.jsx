@@ -17,7 +17,7 @@ import {
 import {
   ACTIVE_STATUSES,
   CLOSED_STATUSES,
-  DONATION_CATEGORIES,
+  useDonationCategories,
   summarize,
   useDonations,
 } from "../../data/donationsStore";
@@ -46,6 +46,7 @@ const SORTS = {
 };
 
 export default function UserDonationHistory() {
+  const categories = useDonationCategories();
   const donations = useDonations();
   const stats = useMemo(() => summarize(donations), [donations]);
 
@@ -173,7 +174,7 @@ export default function UserDonationHistory() {
             }}
           >
             <option value="all">All categories</option>
-            {DONATION_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.label}</option>
             ))}
           </select>

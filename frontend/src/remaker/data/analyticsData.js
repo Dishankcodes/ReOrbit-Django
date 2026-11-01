@@ -10,7 +10,6 @@
    ========================================================= */
 
 import { REMAKER_PRODUCTS } from "./remakerProducts";
-import { FEE_RATE } from "./salesStore";
 
 export const RANGES = [
   { key: "7", label: "7 days", days: 7, long: "Last 7 days" },
@@ -116,7 +115,7 @@ function buildDays() {
       let orders = Math.floor(expected);
       if (random() < expected - orders) orders += 1;
 
-      const revenue = Math.round(orders * product.price * (1 - FEE_RATE));
+      const revenue = Math.round(orders * product.price);
 
       day.perProduct[product.id] = { views, saves, orders, revenue };
       day.views += views;

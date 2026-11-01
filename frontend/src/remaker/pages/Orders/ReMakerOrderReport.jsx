@@ -14,6 +14,7 @@ import {
   useOrder,
 } from "../../data/ordersStore";
 import { StatusBadge } from "../../pages-components/OrderParts";
+import { useRemakerComplaintFiler } from "../../../shared/complaints";
 
 import "../../css/ReMakerOrders.css";
 
@@ -63,6 +64,7 @@ function OrderSummary({ order }) {
 }
 
 function Report({ order }) {
+  const fileComplaint = useRemakerComplaintFiler();
   const navigate = useNavigate();
 
   const existing = order.reports[order.reports.length - 1] || null;
@@ -259,6 +261,24 @@ function Report({ order }) {
       description: description.trim(),
       photos,
     });
+
+    /* Item and seller problems go to the admin Complaints queue.
+       Delivery and payment problems stay with the order. */
+    if (topic === "item" || topic === "seller") {
+      const seller = topic === "seller";
+      fileComplaint({
+        type: seller ? (order.sellerType === "remaker" ? "ReMaker" : "User") : "Product",
+        name: seller ? order.sellerName : order.title,
+        sub: seller ? `${order.sellerCity || ""} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}` : `${order.sellerName} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}`,
+        image: seller ? null : order.image,
+        ownerName: order.sellerName,
+        ownerRole: order.sellerType === "remaker" ? "ReMaker" : "User",
+        price: order.unitPrice,
+        category: order.category,
+        reason,
+        description: `${description.trim()} (Order ${order.id})`,
+      });
+    }
 
     navigate(`/remaker-orders/${order.id}`, {
       state: {

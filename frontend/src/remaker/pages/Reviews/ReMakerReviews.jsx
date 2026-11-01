@@ -10,6 +10,7 @@ import {
 
 import ProductRatings from "./components/ProductRatings";
 import ReportReviewModal from "./components/ReportReviewModal";
+import { useRemakerComplaintFiler } from "../../../shared/complaints";
 import ReviewCard from "./components/ReviewCard";
 import ReviewToolbar from "./components/ReviewToolbar";
 import ReviewsHero from "./components/ReviewsHero";
@@ -20,6 +21,7 @@ const PAGE_SIZE = 6;
 
 export default function ReMakerReviews() {
   const reviews = useReviews();
+  const fileComplaint = useRemakerComplaintFiler();
 
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -97,6 +99,18 @@ export default function ReMakerReviews() {
 
   const submitReport = (reason) => {
     reportReview(reporting.id, reason);
+    const reviewerName = reporting.reviewer?.name || String(reporting.reviewer || "A customer");
+    fileComplaint({
+      type: "Review",
+      name: `${reviewerName}’s review`,
+      sub: `On ${reporting.productTitle} · ${reporting.rating}★`,
+      reviewer: reviewerName,
+      onProduct: reporting.productTitle,
+      rating: reporting.rating,
+      text: reporting.text,
+      reason,
+      description: `Reported by the seller: ${reason}.`,
+    });
     setReporting(null);
     setNotice("Report sent. Our team will review it within 48 hours.");
     setTimeout(() => setNotice(""), 3600);

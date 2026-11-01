@@ -63,8 +63,8 @@ function fromDonation(d) {
 function fromItem(user, item, index, ov) {
   const id = `PK-${item.item_id.replace("ITM-", "I")}`;
   let status; let date = null; let slot = null; let agent = null;
-  if (item.verification_status === "Pending") status = "Requested";
-  else if (item.verification_status === "Rejected") status = "Cancelled";
+  /* A listing a member published after "today" has no pickup booked yet. */
+  if (new Date(item.created_at) > DEMO_TODAY) status = "Requested";
   else {
     const m = index % 6;
     status = m < 2 ? "Scheduled" : m === 2 ? "Picked_Up" : "Completed";
@@ -76,7 +76,7 @@ function fromItem(user, item, index, ov) {
   if (date) { slot = SLOTS[h % 3]; agent = AGENTS[h % AGENTS.length]; }
   const requested = new Date(new Date(item.created_at).getTime()).toISOString();
 
-  const base = { status, date, slot, agent, cancel_reason: status === "Cancelled" ? "Item was not approved, so no pickup is needed." : "" };
+  const base = { status, date, slot, agent, cancel_reason: "" };
   const cur = { ...base, ...(ov || {}) };
 
   const events = [{ id: "req", label: "Pickup requested", detail: `${user.full_name} chose “Managed by platform”`, at: requested, tone: "neutral" }];

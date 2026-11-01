@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import ReportButton from "../../../shared/components/ReportButton";
+import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getProductsBySeller,
@@ -58,6 +60,7 @@ export default function UserSellerProfile() {
   const products = getProductsBySeller(sellerId);
   const reviews = getSellerReviews(sellerId);
   const [following, setFollowing] = useState(false);
+  const fileComplaint = useUserComplaintFiler();
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
@@ -122,6 +125,12 @@ export default function UserSellerProfile() {
                   />{" "}
                   {following ? "Following" : "Follow seller"}
                 </button>
+                <ReportButton
+                  type="User"
+                  label="Report"
+                  file={fileComplaint}
+                  target={{ name: seller.name, sub: `${seller.city} · @${seller.username}`, image: seller.image }}
+                />
               </div>
               <div className="usp-location">
                 <i className="bi bi-geo-alt" /> {seller.city} · {seller.pincode}

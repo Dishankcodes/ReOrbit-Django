@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Copy, Info, Lock, Star, Ticket } from "lucide-react";
 
-import { LEVELS, getVoucher, redeemVoucher, useRewards } from "../../data/rewardsStore";
+import { LEVELS, redeemVoucher, useRewards } from "../../data/rewardsStore";
+import { useVoucherList } from "../../../shared/rewardRules";
 import { formatDate } from "../../utils/format";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import Crumbs from "../../components/ui/Crumbs";
@@ -14,7 +15,7 @@ import "../../css/rewards/rewards-base.css";
 
 export default function UserRewardDetail() {
   const { voucherId } = useParams();
-  const voucher = getVoucher(voucherId);
+  const voucher = useVoucherList().find((v) => v.id === voucherId) || null;
   const { balance, levelIndex } = useRewards();
   const { toast, show } = useToast();
   const [confirm, setConfirm] = useState(false);

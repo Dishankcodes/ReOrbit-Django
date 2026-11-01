@@ -1,34 +1,11 @@
 /* =========================================================
    Moderation actions an admin can take on a listing.
-   - Community items (uploaded by Users) are verified or rejected.
    - ReMaker products are deactivated or reactivated.
+   - Community items go live as soon as the member publishes them. The team
+     can switch one off, with a reason, from the product page.
    ========================================================= */
 
 const ACTIONS = {
-  verify: {
-    key: "verify",
-    label: "Verify & list",
-    short: "Verify",
-    tone: "positive",
-    icon: "check",
-    needsReason: false,
-    title: "Verify this item?",
-    body: "The item is marked Verified and goes live on the marketplace.",
-    confirmLabel: "Verify item",
-    toast: "verified and listed",
-  },
-  reject: {
-    key: "reject",
-    label: "Reject listing",
-    short: "Reject",
-    tone: "danger",
-    icon: "ban",
-    needsReason: true,
-    title: "Reject this item?",
-    body: "The owner is told the item was rejected, together with your message. They can fix the listing and upload it again.",
-    confirmLabel: "Reject item",
-    toast: "rejected",
-  },
   deactivate: {
     key: "deactivate",
     label: "Deactivate product",
@@ -59,17 +36,7 @@ export const PRODUCT_ACTION_LIST = ACTIONS;
 
 /* Which actions apply to a listing in its current state. */
 export function getProductActions(product) {
-  if (product.type === "item") {
-    if (product.verification === "Pending")
-      return [ACTIONS.verify, ACTIONS.reject];
-    if (product.verification === "Rejected") return [ACTIONS.verify];
-    if (
-      product.verification === "Verified" &&
-      ["Listed", "Reserved"].includes(product.rawStatus)
-    )
-      return [ACTIONS.reject];
-    return [];
-  }
+  if (product.type === "item") return [];
   if (product.rawStatus === "Listed") return [ACTIONS.deactivate];
   if (product.rawStatus === "Inactive") return [ACTIONS.reactivate];
   return [];

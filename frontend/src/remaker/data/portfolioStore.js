@@ -41,7 +41,7 @@ const SEED = [
   {
     id: "pf-1004",
     title: "Denim Patchwork Tote",
-    category: "Bags & Totes",
+    category: "Fashion",
     description:
       "Six worn denim jackets cut and pieced into one sturdy everyday tote. Cotton lined and stitched to carry a laptop and groceries. Every bag has its own pattern.",
     before: IMG + "before-priya-bag.jpg",
@@ -52,7 +52,7 @@ const SEED = [
   {
     id: "pf-1003",
     title: "Iron Grille Wall Shelf",
-    category: "Storage & Organisers",
+    category: "Home Decor",
     description:
       "A rusted window grille, wire-brushed and sealed, paired with a reclaimed pine plank. The pattern throws soft shadows on the wall in the evening.",
     before: IMG + "before-arjun-metal.jpg",

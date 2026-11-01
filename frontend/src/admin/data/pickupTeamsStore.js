@@ -74,6 +74,9 @@ const set = (patch) => { state = { ...state, ...patch }; listeners.forEach((l) =
 const useRaw = () => useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 const stamp = () => new Date().toISOString();
 
+/* Plain read of the teams, for stores outside React. */
+export const getPickupTeams = () => state.teams;
+
 /* ---------- derived ---------- */
 export const activeCrew = (t) => t.members.filter((m) => m.status === "Active");
 export const hasLead = (t) => activeCrew(t).some((m) => m.role === "Lead");

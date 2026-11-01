@@ -16,6 +16,8 @@ import {
   getSellerReviews,
   formatPrice,
 } from "../../../data/marketplaceData";
+import ReportButton from "../../../shared/components/ReportButton";
+import { useUserComplaintFiler } from "../../../shared/complaints";
 import "../../css/marketplace-css/UserProductDetails.css";
 import "../../css/marketplace-css/marketplace-icons.css";
 import "../../css/shop/product-cart.css";
@@ -94,6 +96,7 @@ export default function UserProductDetails() {
   }, [productId]);
 
   const seller = useMemo(() => getSellerFromItem(item), [item]);
+  const fileComplaint = useUserComplaintFiler();
   const reviews = useMemo(
     () => (item ? getSellerReviews(item.sellerId) : []),
     [item],
@@ -333,6 +336,22 @@ export default function UserProductDetails() {
               <i className="bi bi-shield-check" /> Secure checkout <span />{" "}
               <i className="bi bi-arrow-repeat" /> Circular purchase
             </p>
+            <div className="upd-report">
+              <ReportButton
+                type="Product"
+                label="Report this listing"
+                file={fileComplaint}
+                target={{
+                  name: item.title,
+                  sub: `${item.seller} · ${item.sellerType === "remaker" ? "ReMaker" : "User"}`,
+                  image: item.image,
+                  ownerName: item.seller,
+                  ownerRole: item.sellerType === "remaker" ? "ReMaker" : "User",
+                  price: item.price,
+                  category: item.category,
+                }}
+              />
+            </div>
           </div>
         </section>
 
@@ -519,6 +538,21 @@ export default function UserProductDetails() {
                       </div>
                       <time>{review.date}</time>
                       <p>{review.text}</p>
+                      <ReportButton
+                        type="Review"
+                        label="Report review"
+                        file={fileComplaint}
+                        target={{
+                          name: `${review.name}’s review`,
+                          sub: `On ${item.seller} · ${review.rating}★`,
+                          reviewer: review.name,
+                          onProduct: item.title,
+                          rating: review.rating,
+                          text: review.text,
+                          ownerName: item.seller,
+                          ownerRole: item.sellerType === "remaker" ? "ReMaker" : "User",
+                        }}
+                      />
                     </article>
                   ))
                 ) : (

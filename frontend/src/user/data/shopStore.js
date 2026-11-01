@@ -12,14 +12,14 @@ import { useMemo, useSyncExternalStore } from "react";
 import { ITEMS, getItemById } from "../../data/marketplaceData";
 import { placeOrders } from "./ordersStore";
 import { markVoucherUsed } from "./rewardsStore";
+import { deliveryFor, platformFeeOf, getCommerce } from "../../shared/commerce";
 
 const OWN_SELLER_ID = "user-aarav-patel"; // the logged-in demo user
 const CART_KEY = "reorbit_user_cart";
 
 export const WALLET_BALANCE = 15000;
-export const COD_LIMIT = 10000;
-export const FREE_DELIVERY_FROM = 5000;
-export const DELIVERY_FEE = 50;
+/* Delivery, the platform fee and the cash-on-delivery limit come from
+   Admin > Settings > Commerce (see shared/commerce.js). */
 
 const loadCart = () => {
   try {
@@ -77,19 +77,26 @@ export function useStockOf() {
 }
 
 /* ---------- money ---------- */
-export const deliveryFee = (subtotal) => (subtotal >= FREE_DELIVERY_FROM ? 0 : DELIVERY_FEE);
+/* ReOrbit's own listings carry no platform fee. */
+const feeApplies = (item) => item.sellerType !== "platform";
+export const deliveryFee = (subtotal, item = {}) =>
+  deliveryFor({ sellerType: item.sellerType === "remaker" ? "remaker" : "user", pickup: item.pickup || "platform", subtotal });
+export const platformFee = (subtotal, item = {}) => (feeApplies(item) ? platformFeeOf(subtotal) : 0);
 
 export function priceLines(lines, discount = 0) {
   let subtotal = 0;
   let delivery = 0;
+  let fees = 0;
   let co2 = 0;
   const priced = lines.map((l) => {
     const lineSubtotal = l.item.price * l.qty;
-    const fee = deliveryFee(lineSubtotal);
+    const fee = deliveryFee(lineSubtotal, l.item);
+    const pfee = platformFee(lineSubtotal, l.item);
     subtotal += lineSubtotal;
     delivery += fee;
+    fees += pfee;
     co2 += (l.item.co2SavedKg || 0) * l.qty;
-    return { ...l, lineSubtotal, fee, lineTotal: lineSubtotal + fee };
+    return { ...l, lineSubtotal, fee, platformFee: pfee, lineTotal: lineSubtotal + fee + pfee };
   });
   /* a coupon is shared across the orders in proportion to their value */
   let left = Math.min(discount, subtotal);
@@ -99,7 +106,7 @@ export function priceLines(lines, discount = 0) {
     left -= share;
     l.lineTotal -= share;
   });
-  return { lines: priced, subtotal, delivery, co2, discount: Math.min(discount, subtotal), total: subtotal + delivery - Math.min(discount, subtotal) };
+  return { lines: priced, subtotal, delivery, platformFee: fees, co2, discount: Math.min(discount, subtotal), total: subtotal + delivery + fees - Math.min(discount, subtotal) };
 }
 
 /* ---------- cart ---------- */
@@ -216,6 +223,7 @@ export async function payAndPlace({ lines, address, method, detail = {}, note = 
       qty: l.qty,
       price: l.item.price,
       shipping: l.fee,
+      platformFee: l.platformFee,
       discount: l.discount || 0,
       payment: method,
       address: { name: address.name, line: address.line, city: address.city, state: address.state, pincode: address.pincode, phone: address.phone },
@@ -235,3 +243,4 @@ export async function payAndPlace({ lines, address, method, detail = {}, note = 
 }
 
 export const SHOP_ITEMS = ITEMS;
+export { getCommerce };

@@ -11,7 +11,7 @@ export default function HowItWorks() {
       description: "Look after the people who make the marketplace work.",
       points: [
         "Search and filter accounts",
-        "Verify ReMaker applications",
+        "Review ReMaker accounts",
         "Warn, suspend or block with a reason",
         "See each person's full history",
       ],

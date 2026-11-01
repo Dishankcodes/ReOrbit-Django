@@ -9,25 +9,32 @@ import {
 } from "../../data/shopStore";
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
-  CATEGORIES,
+  
   CONDITIONS,
   IMPACT,
   ITEMS,
   REMAKERS,
   formatPrice,
 } from "../../../data/marketplaceData";
+import { useCategoryNames } from "../../../shared/catalog";
 import "../../css/marketplace-css/UserMarketplace.css";
 import "../../css/marketplace-css/marketplace-icons.css";
 import "../../css/shop/marketplace-cart.css";
+import BannerSlot from "../../../shared/components/BannerSlot";
 
 const categoryIcons = {
   Furniture: "bi-lamp",
   Electronics: "bi-phone",
-  "Home & Living": "bi-house-heart",
+  "Home Decor": "bi-house-heart",
+  Kitchen: "bi-cup-hot",
+  Fashion: "bi-handbag",
   Clothing: "bi-bag-heart",
   Books: "bi-book",
-  Decor: "bi-palette",
+  Sports: "bi-bicycle",
+  Lighting: "bi-lightbulb",
+  Other: "bi-grid",
 };
+const iconFor = (name) => categoryIcons[name] || "bi-tag";
 
 const getInitials = (name = "") =>
   name
@@ -203,6 +210,7 @@ function ProductCard({ item, wished, onWishlist, onAdded, listView = false }) {
 export default function UserMarketplace() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const categoryNames = useCategoryNames();
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
   const [sort, setSort] = useState("featured");
@@ -349,6 +357,10 @@ export default function UserMarketplace() {
       </section>
 
       <div className="um-container">
+        <BannerSlot placement="Shop top" viewer="Signed-in members" />
+      </div>
+
+      <div className="um-container">
         <section className="um-discovery-bar">
           <div className="um-search">
             <i className="bi bi-search" />
@@ -402,7 +414,7 @@ export default function UserMarketplace() {
             </span>
             All items
           </button>
-          {CATEGORIES.map((item) => (
+          {categoryNames.map((item) => (
             <button
               key={item}
               type="button"
@@ -410,7 +422,7 @@ export default function UserMarketplace() {
               onClick={() => setCategory(item)}
             >
               <span>
-                <i className={`bi ${categoryIcons[item]}`} />
+                <i className={`bi ${iconFor(item)}`} />
               </span>
               {item}
             </button>
@@ -491,7 +503,7 @@ export default function UserMarketplace() {
                 >
                   All categories
                 </button>
-                {CATEGORIES.map((item) => (
+                {categoryNames.map((item) => (
                   <button
                     type="button"
                     key={item}

@@ -1,0 +1,50 @@
+/* Admin › Support. Re-uses au-*, ao-* and ad-*; only the ticket bits live here. */
+.sp-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sp-main strong { color: #1f3d2d; font-size: 13.5px; }
+.sp-main span { color: #6b7a72; font-size: 12px; }
+.sp-from { display: flex; align-items: center; gap: 9px; }
+.sp-from > div { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.sp-source { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.sp-source.user { background: #e8f1f1; color: #2f6c70; }
+.sp-source.remaker { background: #eee9f8; color: #6250a8; }
+.sp-pri { display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.sp-pri.high { background: #fbe9e9; color: #a24545; }
+.sp-pri.normal { background: #edf0ee; color: #66726b; }
+.sp-pri.low { background: #edf0ee; color: #66726b; }
+.sp-status { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.sp-status.wait { background: #fdf3da; color: #8a6a14; }
+.sp-status.info { background: #e6f0f7; color: #2d6a8f; }
+.sp-status.waiting { background: #eee9f8; color: #6250a8; }
+.sp-status.good { background: #e4f3ea; color: #2a7a4f; }
+.sp-status.neutral { background: #edf0ee; color: #66726b; }
+.sp-sub { display: block; color: #8a968f; font-size: 11.5px; margin-top: 2px; }
+.sp-table tbody tr { cursor: pointer; }
+
+.sp-modal { width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; text-align: left; }
+.sp-head h3 { margin: 4px 0 8px; font-size: 18px; color: #1f3d2d; padding-right: 28px; }
+.sp-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #5d6c64; font-size: 12.5px; }
+.sp-thread { list-style: none; margin: 16px 0; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #f6f8f6; border: 1px solid #e3e9e5; border-radius: 14px; overflow-y: auto; min-height: 140px; max-height: 38vh; }
+.sp-thread li { display: flex; }
+.sp-thread li.team { justify-content: flex-end; }
+.sp-bubble { max-width: 86%; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid #e3e9e5; }
+.sp-thread li.team .sp-bubble { background: #e4ede7; border-color: #cfe0d5; }
+.sp-bubble header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 4px; font-size: 11.5px; color: #66726b; }
+.sp-bubble header strong { color: #1f3d2d; }
+.sp-bubble p { margin: 0; font-size: 13.5px; line-height: 1.5; color: #2b3a32; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sp-photos { display: flex; gap: 8px; flex-wrap: wrap; }
+.sp-photos img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; }
+.sp-reply-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.sp-reply-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .sp-bubble { max-width: 94%; }
+  .sp-reply-actions { width: 100%; }
+  .sp-reply-actions .ad-btn { flex: 1; justify-content: center; }
+}
+
+/* layout fixes */
+.sp-cards { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.sp-modal .sp-head { display: block; text-align: left; width: 100%; }
+.sp-modal .sp-head h3 { text-align: left; }
+.sp-modal .sp-head-meta { justify-content: flex-start; }
+.sp-modal .sp-head .aup-mono { display: inline-block; }
+.sp-modal .sp-thread, .sp-modal .sp-reply { width: 100%; }

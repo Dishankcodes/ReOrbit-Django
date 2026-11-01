@@ -6,8 +6,9 @@
      order_status   Pending | Confirmed | Cancelled | Completed | Returned
      buyer_         User | ReMaker
    Earnings rules used in this UI:
-     - ReOrbit keeps FEE_RATE of the item price. The buyer pays
-       delivery separately, so it never touches your earnings.
+     - The seller keeps the full item price. The BUYER pays the
+       platform fee (Admin > Settings > Commerce) and delivery on
+       top, so neither touches your earnings.
      - Money becomes withdrawable CLEARING_DAYS after delivery.
      - Cancelled and returned orders earn nothing.
 
@@ -18,10 +19,12 @@
 import { useMemo, useSyncExternalStore } from "react";
 
 import { REMAKER_PRODUCTS } from "./remakerProducts";
+import { getCommerce, platformFeeOf } from "../../shared/commerce";
 
 const KEY = "reorbit_remaker_sales_v1";
 
-export const FEE_RATE = 0.08;
+/* The platform fee % the buyer pays (set by admin). Display only. */
+export const feeRatePct = () => Number(getCommerce().platformFeePct) || 0;
 export const CLEARING_DAYS = 3;
 export const MIN_PAYOUT = 500;
 
@@ -237,8 +240,10 @@ function statusFromStep(order, index) {
 /* ---------- money ---------- */
 
 export const grossOf = (order) => order.unitPrice * order.quantity;
-export const feeOf = (order) => Math.round(grossOf(order) * FEE_RATE);
-export const netOf = (order) => grossOf(order) - feeOf(order);
+/* Platform fee paid by the BUYER on top of the price (not taken from you). */
+export const feeOf = (order) => platformFeeOf(grossOf(order));
+/* You keep the full price. */
+export const netOf = (order) => grossOf(order);
 
 /* ---------- seed ---------- */
 

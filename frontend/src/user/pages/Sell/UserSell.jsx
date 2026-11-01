@@ -69,7 +69,7 @@ export default function UserSell() {
         </div>
         <ul className="sl-hero-steps">
           <li><b>1</b><span>List it<small>Photos, condition, price</small></span></li>
-          <li><b>2</b><span>Reach buyers<small>Your item goes live</small></span></li>
+          <li><b>2</b><span>Reach buyers<small>It goes live straight away</small></span></li>
           <li><b>3</b><span>Get paid<small>After delivery</small></span></li>
         </ul>
       </section>

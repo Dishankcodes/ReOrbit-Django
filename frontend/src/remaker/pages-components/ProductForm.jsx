@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 
 import {
-  CATEGORIES,
   MATERIAL_SUGGESTIONS,
   ORIGIN_ITEMS,
   formatPrice,
 } from "../data/remakerProducts";
+
+import { useCategoryNames } from "../../shared/catalog";
+import { useRemakerModeration } from "../../shared/moderation";
 
 import "../css/ReMakerProductForm.css";
 
@@ -69,10 +71,26 @@ export default function ProductForm({ mode = "add", product = null }) {
   const navigate = useNavigate();
   const isEdit = mode === "edit";
 
-  const initial = useMemo(() => buildInitial(product), [product]);
+  const categoryNames = useCategoryNames();
+  const moderation = useRemakerModeration()[product?.adminId] || {};
+  const hold = moderation.hold;
+  const suggested = moderation.suggested;
+
+  const initial = useMemo(() => {
+    const base = buildInitial(product);
+    return hold ? { ...base, active: false } : base;
+  }, [product, hold]);
   const initialSnapshot = useMemo(() => snapshot(initial), [initial]);
 
   const [values, setValues] = useState(initial);
+  /* Keep a product's older category pickable even if admin renamed or hid it. */
+  const categoryOptions = useMemo(
+    () =>
+      product?.category && !categoryNames.includes(product.category)
+        ? [product.category, ...categoryNames]
+        : categoryNames,
+    [categoryNames, product],
+  );
   const [attempted, setAttempted] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [dragSlot, setDragSlot] = useState(null);
@@ -376,6 +394,40 @@ export default function ProductForm({ mode = "add", product = null }) {
 
   return (
     <section className="rpf">
+      {hold && (
+        <div className="rpf-mod danger" role="alert">
+          <CircleAlert size={20} />
+          <div>
+            <strong>ReOrbit deactivated this product</strong>
+            <p>
+              Reason: {hold.reason}
+              {hold.at ? ` (${new Date(hold.at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })})` : ""}
+            </p>
+            <p>
+              It stays hidden from buyers until the team turns it back on. Fix
+              what was flagged, then <Link to="/remakers-contact">write to support</Link>.
+            </p>
+          </div>
+        </div>
+      )}
+      {suggested && !hold && (
+        <div className="rpf-mod" role="status">
+          <Info size={20} />
+          <div>
+            <strong>ReOrbit suggests {formatPrice(suggested.price)}</strong>
+            {suggested.message && <p>{suggested.message}</p>}
+            {String(suggested.price) !== values.price && (
+              <button
+                type="button"
+                className="rpf-btn"
+                onClick={() => setField("price", String(suggested.price))}
+              >
+                Use this price
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* TOP BAR */}
       <div className="rpf-topbar">
         <Link to="/remaker-products" className="rpf-back">
@@ -557,7 +609,7 @@ export default function ProductForm({ mode = "add", product = null }) {
                     data-invalid={show("category") ? "true" : undefined}
                   >
                     <option value="">Select a category</option>
-                    {CATEGORIES.map((category) => (
+                    {categoryOptions.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
@@ -867,7 +919,9 @@ export default function ProductForm({ mode = "add", product = null }) {
                 <div>
                   <h3>{values.active ? "Active" : "Inactive"}</h3>
                   <p>
-                    {values.active
+                    {hold
+                      ? "Turned off by ReOrbit. You can't switch it on yourself."
+                      : values.active
                       ? "Buyers can find and buy this product."
                       : product?.status === "Draft"
                         ? "Still a draft. Turn this on to publish it."
@@ -880,6 +934,7 @@ export default function ProductForm({ mode = "add", product = null }) {
                   role="switch"
                   aria-checked={values.active}
                   aria-label="Product is active"
+                  disabled={!!hold}
                   className={`rpf-switch ${values.active ? "on" : ""}`}
                   onClick={() => setField("active", !values.active)}
                 >

@@ -298,6 +298,12 @@ function Details({ order }) {
                   {order.deliveryFee ? formatPrice(order.deliveryFee) : "Free"}
                 </dd>
               </div>
+              {order.platformFee > 0 && (
+                <div>
+                  <dt>Platform fee</dt>
+                  <dd>{formatPrice(order.platformFee)}</dd>
+                </div>
+              )}
               <div className="total">
                 <dt>Total</dt>
                 <dd>{formatPrice(order.total)}</dd>

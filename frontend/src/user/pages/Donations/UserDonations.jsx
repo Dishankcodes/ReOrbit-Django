@@ -24,7 +24,7 @@ import {
 
 import {
   ACTIVE_STATUSES,
-  DONATION_CATEGORIES,
+  useDonationCategories,
   REWARD_RULES,
   WHAT_WE_ACCEPT,
   WHAT_WE_SKIP,
@@ -50,6 +50,7 @@ const STEPS = [
 ];
 
 export default function UserDonations() {
+  const categories = useDonationCategories();
   const navigate = useNavigate();
   const donations = useDonations();
   const stats = useMemo(() => summarize(donations), [donations]);
@@ -229,7 +230,7 @@ export default function UserDonations() {
         </div>
 
         <div className="dn-cats">
-          {DONATION_CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const Icon = categoryIcon(cat.id);
             return (
               <button

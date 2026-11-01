@@ -55,6 +55,7 @@ export default function UserOrderSuccess() {
   const total = orders.reduce((n, o) => n + o.total, 0);
   const subtotal = orders.reduce((n, o) => n + o.price * o.qty, 0);
   const delivery = orders.reduce((n, o) => n + o.shipping, 0);
+  const platformFee = orders.reduce((n, o) => n + (o.platformFee || 0), 0);
   const discount = orders.reduce((n, o) => n + (o.discount || 0), 0);
   const cod = first.payment === "COD";
   const co2 = orders.reduce((n, o) => n + (o.item.co2SavedKg || 0) * o.qty, 0);
@@ -120,6 +121,7 @@ export default function UserOrderSuccess() {
           <dl>
             <div><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
             <div><dt>Delivery</dt><dd>{delivery ? formatPrice(delivery) : "Free"}</dd></div>
+            {platformFee > 0 && <div><dt>Platform fee</dt><dd>{formatPrice(platformFee)}</dd></div>}
             {discount > 0 && <div className="save"><dt>Coupon</dt><dd>− {formatPrice(discount)}</dd></div>}
             <div className="total"><dt>{cod ? "To pay on delivery" : "Paid"}</dt><dd>{formatPrice(total)}</dd></div>
           </dl>

@@ -61,10 +61,6 @@ const stars = (n) =>
 function whyNot(p) {
   if (!p.sellerOk)
     return `The seller account is ${p.owner.status.toLowerCase()}, so this listing cannot be bought.`;
-  if (p.state === "pending")
-    return "This item is still waiting for verification.";
-  if (p.state === "rejected")
-    return "This item was rejected and is not on the marketplace.";
   if (p.available <= 0 && p.state === "live")
     return "This listing is sold out.";
   return "This listing is not live on the marketplace right now.";
