@@ -57,7 +57,7 @@ function seed() {
       context: {
         label: "Order SO-31084 · Teak Door Console Table",
         to: "/remaker-sales/SO-31084",
-        image: P + "tara-console.jpg",
+        image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
       },
       unread: 2,
       messages: [
@@ -103,7 +103,7 @@ function seed() {
       context: {
         label: "Order SO-31079 · 2 × Floor Lamp",
         to: "/remaker-sales/SO-31079",
-        image: P + "arjun-lamp.jpg",
+        image: "https://images.pexels.com/photos/6825324/pexels-photo-6825324.jpeg?auto=compress&cs=tinysrgb&w=1000",
       },
       unread: 0,
       messages: [
@@ -137,7 +137,7 @@ function seed() {
       context: {
         label: "Order SO-31071 · Denim Patchwork Tote",
         to: "/remaker-sales/SO-31071",
-        image: P + "priya-bag.jpg",
+        image: "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
       },
       unread: 1,
       messages: [
@@ -219,7 +219,7 @@ function seed() {
       context: {
         label: "Job JB-5098 · Cane-back dining chair",
         to: "/remaker-jobs/JB-5098",
-        image: P + "before-tara-chair.jpg",
+        image: "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
       },
       unread: 1,
       messages: [

@@ -16,7 +16,7 @@ export default function Marketplace() {
       condition: "Refurbished",
       material: "Rescued wood",
       image:
-        "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Handmade Ceramic Lamp",
@@ -27,7 +27,7 @@ export default function Marketplace() {
       condition: "Handmade",
       material: "Reclaimed materials",
       image:
-        "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Reclaimed Wood Console",
@@ -38,7 +38,7 @@ export default function Marketplace() {
       condition: "Upcycled",
       material: "Rescued timber",
       image:
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Vintage Study Table",
@@ -49,7 +49,7 @@ export default function Marketplace() {
       condition: "Good",
       material: "Wood",
       image:
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Upcycled Side Table",
@@ -60,7 +60,7 @@ export default function Marketplace() {
       condition: "Upcycled",
       material: "Recovered wood",
       image:
-        "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Refurbished Lounge Chair",
@@ -71,7 +71,7 @@ export default function Marketplace() {
       condition: "Refurbished",
       material: "Recovered frame",
       image:
-        "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85",
+        "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
   ];
 
@@ -931,7 +931,7 @@ export default function Marketplace() {
 
             <div className="marketplace-hero-visual">
               <img
-                src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=85"
+                src="https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000"
                 alt="Beautiful restored furniture and home objects"
               />
 

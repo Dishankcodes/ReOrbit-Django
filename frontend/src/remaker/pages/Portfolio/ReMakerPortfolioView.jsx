@@ -23,7 +23,7 @@ export default function ReMakerPortfolioView() {
     return (
       <section className="rpt">
         <div className="rpt-missing">
-          <img src="/images/portfolio/before-tara-chair.jpg" alt="" />
+          <img src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
           <h2>We couldn&apos;t find that work</h2>
           <p>It may have been deleted, or the link is out of date.</p>
           <Link to="/remaker-portfolio" className="rpt-btn primary">

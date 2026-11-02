@@ -28,7 +28,7 @@ const featuredProducts = [
     price: "₹2,800",
     location: "Pune",
     image:
-      "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Rescued wood",
   },
   {
@@ -37,7 +37,7 @@ const featuredProducts = [
     price: "₹1,650",
     location: "Ahmedabad",
     image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Reclaimed materials",
   },
   {
@@ -46,7 +46,7 @@ const featuredProducts = [
     price: "₹4,200",
     location: "Bengaluru",
     image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Rescued timber",
   },
   {
@@ -55,7 +55,7 @@ const featuredProducts = [
     price: "₹2,200",
     location: "Mumbai",
     image:
-      "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Recovered wood",
   },
   {
@@ -64,7 +64,7 @@ const featuredProducts = [
     price: "₹1,200",
     location: "Delhi",
     image:
-      "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Repurposed materials",
   },
   {
@@ -73,7 +73,7 @@ const featuredProducts = [
     price: "₹3,600",
     location: "Jaipur",
     image:
-      "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85",
+      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
     material: "Rescued frame",
   },
 ];
@@ -84,7 +84,7 @@ const makers = [
     specialty: "Furniture & wood",
     location: "Ahmedabad",
     image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
     quote: "I turn rescued timber into pieces people want to keep.",
   },
   {
@@ -92,7 +92,7 @@ const makers = [
     specialty: "Upcycled objects",
     location: "Bengaluru",
     image:
-      "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
     quote: "Every overlooked object has another version waiting to happen.",
   },
   {
@@ -100,7 +100,7 @@ const makers = [
     specialty: "Home & decor",
     location: "Mumbai",
     image:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     quote: "The best material is often the material already around us.",
   },
 ];
@@ -222,21 +222,21 @@ export default function ReMakers() {
               <div className="rm-gallery" aria-label="ReMaker creations">
                 <div className="rm-photo">
                   <img
-                    src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85"
+                    src="https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000"
                     alt="Handcrafted furniture in a bright studio"
                   />
                 </div>
 
                 <div className="rm-photo rm-photo-raised">
                   <img
-                    src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=1000&q=85"
+                    src="https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000"
                     alt="Colorful handmade artwork"
                   />
                 </div>
 
                 <div className="rm-photo">
                   <img
-                    src="https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=1000&q=85"
+                    src="https://images.pexels.com/photos/8762879/pexels-photo-8762879.jpeg?auto=compress&cs=tinysrgb&w=1000"
                     alt="Crafted interior objects"
                   />
                 </div>

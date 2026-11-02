@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 
 import { MiniProgress, StatusBadge } from "../../pages-components/OrderParts";
@@ -33,6 +34,7 @@ const TABS = [
 ];
 
 export default function ReMakerOrders() {
+  const loading = useLoading(450);
   const orders = useOrders();
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -70,10 +72,10 @@ export default function ReMakerOrders() {
           <div className="rod-empty-art" aria-hidden="true">
             <img
               className="a"
-              src="/images/products/teak-drawer-chest.jpg"
+              src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
               alt=""
             />
-            <img className="b" src="/images/products/ceramic-lamp.jpg" alt="" />
+            <img className="b" src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
           </div>
           <h2>You haven&apos;t bought anything yet</h2>
           <p>
@@ -132,7 +134,9 @@ export default function ReMakerOrders() {
         </label>
       </div>
 
-      {visible.length === 0 ? (
+      {loading ? (
+        <SkeletonRows count={5} />
+      ) : visible.length === 0 ? (
         <div className="rod-empty small">
           <h2>No orders match</h2>
           <p>Try a different tab, or clear your search.</p>

@@ -77,12 +77,12 @@ export default function ReMakerPortfolio() {
           <div className="rpt-empty-art" aria-hidden="true">
             <img
               className="a"
-              src="/images/portfolio/before-tara-console.jpg"
+              src="https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000"
               alt=""
             />
             <img
               className="b"
-              src="/images/portfolio/tara-console.jpg"
+              src="https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000"
               alt=""
             />
           </div>

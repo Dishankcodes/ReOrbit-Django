@@ -13,7 +13,7 @@ export const ITEMS = [
     title: "Teak drawer chest, 1970s",
     category: "Furniture",
     price: 4200,
-    image: "/images/products/teak-drawer-chest.jpg",
+    image: "https://images.pexels.com/photos/10397037/pexels-photo-10397037.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Solid teak four-drawer chest with original brass pulls. Sun-faded top panel, structurally sound.",
     city: "Bengaluru",
@@ -29,7 +29,7 @@ export const ITEMS = [
     title: "Vintage reading chair",
     category: "Furniture",
     price: 2800,
-    image: "/images/products/vintage-chair.jpg",
+    image: "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A classic wooden reading chair with a restored frame and freshly finished seat.",
     city: "Pune",
@@ -45,7 +45,7 @@ export const ITEMS = [
     title: "Handmade ceramic table lamp",
     category: "Home & Living",
     price: 1650,
-    image: "/images/products/ceramic-lamp.jpg",
+    image: "https://images.pexels.com/photos/6825324/pexels-photo-6825324.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Warm ceramic table lamp with a handmade textured base and carefully restored wiring.",
     city: "Ahmedabad",
@@ -61,7 +61,7 @@ export const ITEMS = [
     title: "Solid wood side table",
     category: "Furniture",
     price: 2200,
-    image: "/images/products/wooden-table.jpg",
+    image: "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Compact solid-wood side table with natural grain, restored legs, and a smooth finish.",
     city: "Mumbai",
@@ -77,7 +77,7 @@ export const ITEMS = [
     title: "Refurbished desk lamp",
     category: "Electronics",
     price: 950,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Compact desk lamp cleaned, tested, and refurbished for everyday workspace use.",
     city: "Delhi",
@@ -93,7 +93,7 @@ export const ITEMS = [
     title: "Upcycled cotton jacket",
     category: "Clothing",
     price: 1450,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A comfortable cotton jacket created using recovered textile material and careful stitching.",
     city: "Jaipur",
@@ -109,7 +109,7 @@ export const ITEMS = [
     title: "Classic novel collection",
     category: "Books",
     price: 750,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/16009657/pexels-photo-16009657.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A curated collection of classic novels looking for a new bookshelf and reader.",
     city: "Kolkata",
@@ -125,7 +125,7 @@ export const ITEMS = [
     title: "Reclaimed wood wall decor",
     category: "Decor",
     price: 1250,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/7055956/pexels-photo-7055956.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Decorative wall piece made from reclaimed wood with a natural finish and minimal design.",
     city: "Surat",

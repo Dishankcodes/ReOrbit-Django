@@ -1,14 +1,6 @@
 import React, { useState } from "react";
 
-const EMPTY = {
-  label: "Other",
-  name: "",
-  phone: "",
-  line: "",
-  city: "",
-  state: "",
-  pincode: "",
-};
+const EMPTY = { label: "Other", name: "", phone: "", line: "", city: "", state: "", pincode: "" };
 
 /* Add a new delivery address (inline, validated). */
 export default function AddressForm({ onSave, onCancel, initial = null }) {
@@ -30,19 +22,11 @@ export default function AddressForm({ onSave, onCancel, initial = null }) {
     event.preventDefault();
     setTouched(true);
     if (bad) return;
-    onSave({
-      ...f,
-      name: f.name.trim(),
-      line: f.line.trim(),
-      city: f.city.trim(),
-      state: f.state.trim(),
-      pincode: f.pincode.trim(),
-      phone: f.phone.trim(),
-    });
+    onSave({ ...f, name: f.name.trim(), line: f.line.trim(), city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(), phone: f.phone.trim() });
   };
 
   const field = (key, label, msg, props = {}, wide = false) => (
-    <label className={`dn-field ${wide ? "sp-wide" : ""}`}>
+    <label className={`dn-field ${wide ? "ushp-wide" : ""}`}>
       <span className="dn-label">{label}</span>
       <input
         className={`dn-input ${touched && err[key] ? "is-error" : ""}`}
@@ -55,51 +39,27 @@ export default function AddressForm({ onSave, onCancel, initial = null }) {
   );
 
   return (
-    <form className="sp-addr-form" onSubmit={submit} noValidate>
+    <form className="ushp-addr-form" onSubmit={submit} noValidate>
       <h4>{initial ? "Edit address" : "New delivery address"}</h4>
-      <div className="sp-form-grid">
+      <div className="ushp-form-grid">
         {field("name", "Full name", "Enter the receiver's name.")}
-        {field("phone", "Phone", "Enter a valid phone number.", {
-          inputMode: "tel",
-          placeholder: "+91 98765 43210",
-        })}
-        {field(
-          "line",
-          "Address",
-          "Add the flat, building and street.",
-          { placeholder: "Flat, building, street, area" },
-          true,
-        )}
+        {field("phone", "Phone", "Enter a valid phone number.", { inputMode: "tel", placeholder: "+91 98765 43210" })}
+        {field("line", "Address", "Add the flat, building and street.", { placeholder: "Flat, building, street, area" }, true)}
         {field("city", "City", "Enter the city.")}
         {field("state", "State", "Enter the state.")}
-        {field("pincode", "Pincode", "Pincode must be 6 digits.", {
-          inputMode: "numeric",
-          maxLength: 6,
-        })}
+        {field("pincode", "Pincode", "Pincode must be 6 digits.", { inputMode: "numeric", maxLength: 6 })}
         <label className="dn-field">
           <span className="dn-label">Save as</span>
-          <select
-            className="dn-select"
-            value={f.label}
-            onChange={(event) => set("label", event.target.value)}
-          >
+          <select className="dn-select" value={f.label} onChange={(event) => set("label", event.target.value)}>
             <option>Home</option>
             <option>Work</option>
             <option>Other</option>
           </select>
         </label>
       </div>
-      <div className="sp-form-actions">
-        <button
-          type="button"
-          className="dn-btn dn-btn--ghost dn-btn--sm"
-          onClick={onCancel}
-        >
-          Cancel
-        </button>
-        <button type="submit" className="dn-btn dn-btn--sm">
-          Save address
-        </button>
+      <div className="ushp-form-actions">
+        <button type="button" className="dn-btn dn-btn--ghost dn-btn--sm" onClick={onCancel}>Cancel</button>
+        <button type="submit" className="dn-btn dn-btn--sm">Save address</button>
       </div>
     </form>
   );

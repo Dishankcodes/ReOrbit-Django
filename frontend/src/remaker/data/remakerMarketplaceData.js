@@ -38,9 +38,9 @@ const IMG = "/images/";
 const EXTRA = {
   "teak-drawer-chest": {
     gallery: [
-      "products/teak-drawer-chest.jpg",
-      "portfolio/tara-teak-cabinet.jpg",
-      "products/wooden-table.jpg",
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Solid teak", "Brass pulls"],
     dimensions: "92 × 45 × 78 cm",
@@ -50,9 +50,9 @@ const EXTRA = {
 
   "vintage-reading-chair": {
     gallery: [
-      "products/vintage-chair.jpg",
-      "portfolio/tara-chair.jpg",
-      "products/wooden-table.jpg",
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Hardwood frame", "Wooden seat"],
     dimensions: "58 × 60 × 92 cm",
@@ -62,9 +62,9 @@ const EXTRA = {
 
   "ceramic-table-lamp": {
     gallery: [
-      "products/ceramic-lamp.jpg",
-      "portfolio/arjun-lamp.jpg",
-      "products/default-item.jpg",
+      "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Glazed ceramic", "Copper wiring"],
     dimensions: "Ø 24 × 41 cm",
@@ -74,9 +74,9 @@ const EXTRA = {
 
   "solid-wood-side-table": {
     gallery: [
-      "products/wooden-table.jpg",
-      "portfolio/tara-console.jpg",
-      "products/vintage-chair.jpg",
+      "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Solid sheesham"],
     dimensions: "45 × 45 × 55 cm",
@@ -85,7 +85,7 @@ const EXTRA = {
   },
 
   "refurbished-desk-lamp": {
-    gallery: ["products/default-item.jpg", "products/ceramic-lamp.jpg"],
+    gallery: ["https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000"],
     materials: ["Steel arm", "LED holder"],
     dimensions: "18 × 18 × 46 cm",
     age: "About 4 years old",
@@ -98,9 +98,9 @@ const EXTRA = {
 
   "cotton-handloom-jacket": {
     gallery: [
-      "portfolio/priya-jacket.jpg",
-      "portfolio/priya-bag.jpg",
-      "portfolio/priya-home.jpg",
+      "https://images.pexels.com/photos/9316208/pexels-photo-9316208.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8762879/pexels-photo-8762879.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Handloom cotton", "Cotton lining"],
     dimensions: "Size M, chest 98 cm",
@@ -109,7 +109,7 @@ const EXTRA = {
   },
 
   "classic-novel-collection": {
-    gallery: ["products/default-item.jpg", "portfolio/priya-home.jpg"],
+    gallery: ["https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000"],
     materials: ["Paper", "Cloth-bound covers"],
     dimensions: "12 books, 20 × 13 cm each",
     age: "Mixed, 1980s to 2000s",
@@ -118,9 +118,9 @@ const EXTRA = {
 
   "reclaimed-wall-decor": {
     gallery: [
-      "portfolio/arjun-shelf.jpg",
-      "portfolio/arjun-metal.jpg",
-      "products/wooden-table.jpg",
+      "https://images.pexels.com/photos/19109111/pexels-photo-19109111.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Reclaimed pine", "Natural oil finish"],
     dimensions: "90 × 30 × 4 cm",
@@ -130,10 +130,10 @@ const EXTRA = {
 
   "restored-teak-cabinet": {
     gallery: [
-      "portfolio/tara-teak-cabinet.jpg",
-      "products/teak-drawer-chest.jpg",
-      "portfolio/tara-console.jpg",
-      "portfolio/tara-chair.jpg",
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Teak", "Original brass hinges", "Plant-based wax"],
     dimensions: "110 × 40 × 85 cm",
@@ -143,9 +143,9 @@ const EXTRA = {
 
   "reclaimed-wood-shelf": {
     gallery: [
-      "portfolio/arjun-shelf.jpg",
-      "portfolio/arjun-metal.jpg",
-      "portfolio/arjun-lamp.jpg",
+      "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Reclaimed wood", "Iron brackets"],
     dimensions: "75 × 22 × 18 cm",
@@ -155,9 +155,9 @@ const EXTRA = {
 
   "upcycled-home-lamp": {
     gallery: [
-      "portfolio/arjun-lamp.jpg",
-      "products/ceramic-lamp.jpg",
-      "portfolio/arjun-metal.jpg",
+      "https://images.pexels.com/photos/33375682/pexels-photo-33375682.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Recovered steel", "Brass", "Cloth cable"],
     dimensions: "Ø 20 × 52 cm",
@@ -167,9 +167,9 @@ const EXTRA = {
 
   "recovered-textile-bag": {
     gallery: [
-      "portfolio/priya-bag.jpg",
-      "portfolio/priya-jacket.jpg",
-      "portfolio/priya-home.jpg",
+      "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8266834/pexels-photo-8266834.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/8762879/pexels-photo-8762879.jpeg?auto=compress&cs=tinysrgb&w=1000",
     ],
     materials: ["Recovered cotton", "Canvas lining"],
     dimensions: "38 × 32 × 12 cm",
@@ -220,7 +220,7 @@ export function deliveryCharge(price, source = "remaker") {
 const decorate = (item) => {
   const extra = EXTRA[item.id] || {};
 
-  const gallery = (extra.gallery || []).map((path) => IMG + path);
+  const gallery = (extra.gallery || []).map((path) => (path.startsWith("http") ? path : IMG + path));
 
   return {
     ...item,

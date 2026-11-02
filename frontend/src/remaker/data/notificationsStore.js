@@ -37,7 +37,7 @@ const RAW = [
     false,
     "/remaker-sales/SO-31084",
     "Accept order",
-    P + "tara-console.jpg",
+    "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "followers",
@@ -57,7 +57,7 @@ const RAW = [
     false,
     "/remaker-orders/RO-48213/track",
     "Track order",
-    "/images/products/vintage-chair.jpg",
+    "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "payouts",
@@ -77,7 +77,7 @@ const RAW = [
     false,
     "/remaker-orders/RO-47990",
     "View order",
-    "/images/products/ceramic-lamp.jpg",
+    "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "orders",
@@ -87,7 +87,7 @@ const RAW = [
     false,
     "/remaker-sales/SO-31079",
     "Mark as packed",
-    P + "arjun-lamp.jpg",
+    "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "reviews",
@@ -107,7 +107,7 @@ const RAW = [
     false,
     "/remaker-products/rp-1001/edit",
     "Update stock",
-    P + "tara-console.jpg",
+    "https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "orders",
@@ -117,7 +117,7 @@ const RAW = [
     true,
     "/remaker-sales/SO-31040",
     "View order",
-    P + "arjun-lamp.jpg",
+    "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "followers",
@@ -157,7 +157,7 @@ const RAW = [
     true,
     "/remaker-products/rp-1003/edit",
     "View product",
-    P + "priya-bag.jpg",
+    "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "system",
@@ -207,7 +207,7 @@ const RAW = [
     true,
     "/remaker-products/rp-1002/edit",
     "View product",
-    P + "arjun-lamp.jpg",
+    "https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "reviews",
@@ -267,7 +267,7 @@ const RAW = [
     true,
     "/remaker-portfolio/new",
     "Add work",
-    P + "tara-teak-cabinet.jpg",
+    "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
   ],
   [
     "system",
@@ -430,10 +430,9 @@ export function syncAnnouncements(list) {
       text: a.message,
       createdAt: a.at,
       read: false,
-      link:
-        a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
-          ? { to: a.link, label: "Open" }
-          : null,
+      link: a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
+        ? { to: a.link, label: "Open" }
+        : null,
       image: "",
     }));
 

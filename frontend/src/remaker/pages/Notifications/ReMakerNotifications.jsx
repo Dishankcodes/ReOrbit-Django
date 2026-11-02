@@ -256,8 +256,8 @@ export default function ReMakerNotifications() {
           {visible.length === 0 ? (
             <div className="ntf-empty">
               <div className="ntf-empty-art" aria-hidden="true">
-                <img src="/images/portfolio/tara-console.jpg" alt="" />
-                <img src="/images/portfolio/arjun-lamp.jpg" alt="" />
+                <img src="https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+                <img src="https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
               </div>
               <h3>
                 {all.length === 0

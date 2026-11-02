@@ -22,6 +22,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { useOrders } from "../../data/ordersStore";
+import { useWishlist } from "../../data/wishlistStore";
+import { useDonations } from "../../data/donationsStore";
+import { useRewards } from "../../data/rewardsStore";
+
 import "../../css/UserProfile-css/UserProfile.css";
 
 const defaultProfile = {
@@ -84,6 +89,17 @@ const sustainabilityStats = [
 ];
 
 export default function UserProfile() {
+  /* the numbers come from the same stores as the dashboard, so they always agree */
+  const myOrders = useOrders();
+  const myWishlist = useWishlist();
+  const myDonations = useDonations();
+  const rewards = useRewards();
+  const liveStats = [
+    { ...profileStats[0], value: String(myOrders.length) },
+    { ...profileStats[1], value: String(myWishlist.count) },
+    { ...profileStats[2], value: String(myDonations.length) },
+    { ...profileStats[3], value: rewards.balance.toLocaleString("en-IN") },
+  ];
   const [profile, setProfile] = useState(defaultProfile);
   const [formData, setFormData] = useState(defaultProfile);
 
@@ -307,20 +323,20 @@ export default function UserProfile() {
             <div className="profile-level">
               <span className="profile-level-label">MEMBER LEVEL</span>
 
-              <strong>Eco Explorer</strong>
+              <strong>{rewards.level.name}</strong>
 
               <div className="profile-level-progress">
-                <span />
+                <span style={{ width: `${rewards.progress}%` }} />
               </div>
 
-              <small>72% to Eco Champion</small>
+              <small>{rewards.next ? `${rewards.progress}% to ${rewards.next.name}` : "Top level reached"}</small>
             </div>
           </div>
         </section>
 
         {/* PROFILE STATS */}
         <section className="profile-stat-grid">
-          {profileStats.map((stat) => {
+          {liveStats.map((stat) => {
             const Icon = stat.icon;
 
             return (

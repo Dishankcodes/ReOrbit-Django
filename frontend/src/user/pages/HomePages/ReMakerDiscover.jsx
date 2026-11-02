@@ -20,7 +20,7 @@ export default function ReMakerDiscover() {
       location: "Ahmedabad",
       category: "Furniture",
       image:
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 24,
       description:
         "Transforms rescued timber and overlooked furniture into functional pieces designed to last.",
@@ -33,7 +33,7 @@ export default function ReMakerDiscover() {
       location: "Bengaluru",
       category: "Home & Decor",
       image:
-        "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 18,
       description:
         "Reimagines everyday objects and materials into distinctive pieces for modern spaces.",
@@ -45,7 +45,7 @@ export default function ReMakerDiscover() {
       location: "Mumbai",
       category: "Home & Decor",
       image:
-        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 31,
       description:
         "Creates expressive home pieces by combining recovered materials with traditional craft.",
@@ -57,7 +57,7 @@ export default function ReMakerDiscover() {
       location: "Pune",
       category: "Furniture",
       image:
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 16,
       description:
         "Gives old furniture a refreshed identity through careful restoration and redesign.",
@@ -70,7 +70,7 @@ export default function ReMakerDiscover() {
       location: "Jaipur",
       category: "Art & Craft",
       image:
-        "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 21,
       description:
         "Combines handmade ceramics with recovered materials to create characterful decor.",
@@ -82,7 +82,7 @@ export default function ReMakerDiscover() {
       location: "Delhi",
       category: "Electronics",
       image:
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=85",
+        "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
       creations: 13,
       description:
         "Repairs, repurposes and redesigns usable electronic components into practical creations.",
@@ -1178,14 +1178,14 @@ export default function ReMakerDiscover() {
             <div className="remakers-hero-visual">
               <div className="remakers-main-image">
                 <img
-                  src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1100&q=85"
+                  src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
                   alt="ReMaker working in a creative studio"
                 />
               </div>
 
               <div className="remakers-small-image">
                 <img
-                  src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=85"
+                  src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000"
                   alt="Handcrafted objects in a studio"
                 />
               </div>
@@ -1216,7 +1216,7 @@ export default function ReMakerDiscover() {
           <div className="container featured-remaker-grid">
             <div className="featured-remaker-image">
               <img
-                src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1100&q=85"
+                src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
                 alt="Aarav Studio workspace"
               />
             </div>
@@ -1327,7 +1327,10 @@ export default function ReMakerDiscover() {
                       {maker.description}
                     </p>
 
-                    <a href="/remakers" className="remaker-card-link">
+                    <a
+                      href="/remakers"
+                      className="remaker-card-link"
+                    >
                       View studio
                       <span className="material-symbols-outlined">
                         arrow_forward

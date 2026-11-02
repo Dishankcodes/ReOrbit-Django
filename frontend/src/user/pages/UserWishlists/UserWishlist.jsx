@@ -12,7 +12,7 @@ const initialWishlist = [
     seller: "GreenCraft Studio",
     price: 2000,
     image:
-      "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&w=900&q=80",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ const initialWishlist = [
     seller: "Clay Orbit",
     price: 850,
     image:
-      "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=900&q=80",
+      "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 3,
@@ -30,7 +30,7 @@ const initialWishlist = [
     seller: "ReThread",
     price: 1300,
     image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
+      "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 4,
@@ -39,7 +39,7 @@ const initialWishlist = [
     seller: "Luma ReMade",
     price: 1100,
     image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=80",
+      "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
 ];
 

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -115,6 +116,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminUsers() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const users = useUsers();
   const { toast, toastNode } = useToast();
@@ -346,7 +348,9 @@ export default function AdminUsers() {
           </div>
         )}
 
-        <div className="au-table-wrap">
+        {loading && <SkeletonTable rows={8} cols={6} />}
+
+        <div className="au-table-wrap" style={loading ? { display: "none" } : undefined}>
           <table className="au-table">
             <thead>
               <tr>
@@ -460,7 +464,7 @@ export default function AdminUsers() {
             </tbody>
           </table>
 
-          {rows.length === 0 && (
+          {!loading && rows.length === 0 && (
             <EmptyState
               icon={SearchX}
               title="No users match your filters"

@@ -43,73 +43,73 @@ const PRODUCT_POOL = [
     title: "Reclaimed Wood Lamp",
     category: "Home Decor",
     price: 1249,
-    image: "/images/products/ceramic-lamp.jpg",
+    image: "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Refurbished Study Chair",
     category: "Furniture",
     price: 3199,
-    image: "/images/products/vintage-chair.jpg",
+    image: "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Rustic Coffee Table",
     category: "Furniture",
     price: 5400,
-    image: "/images/products/wooden-table.jpg",
+    image: "https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Teak Offcut Organizer",
     category: "Home Decor",
     price: 699,
-    image: "/images/products/teak-drawer-chest.jpg",
+    image: "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Upcycled Denim Tote",
     category: "Fashion",
     price: 749,
-    image: "/images/portfolio/priya-bag.jpg",
+    image: "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Patchwork Denim Jacket",
     category: "Fashion",
     price: 1899,
-    image: "/images/portfolio/priya-jacket.jpg",
+    image: "https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Metal Pipe Wall Shelf",
     category: "Furniture",
     price: 2650,
-    image: "/images/portfolio/arjun-shelf.jpg",
+    image: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Industrial Metal Stool",
     category: "Furniture",
     price: 2200,
-    image: "/images/portfolio/arjun-metal.jpg",
+    image: "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Teak Console Table",
     category: "Furniture",
     price: 7800,
-    image: "/images/portfolio/tara-console.jpg",
+    image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Glass Jar Planters (set of 3)",
     category: "Home Decor",
     price: 899,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Cane Weave Side Table",
     category: "Furniture",
     price: 3400,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     title: "Saree Cushion Covers (set of 4)",
     category: "Home Decor",
     price: 1100,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
 ];
 
@@ -181,60 +181,60 @@ const PORTFOLIO_REAL = {
       title: "Denim to Tote",
       description:
         "Worn-out denim turned into a sturdy everyday tote with leather handles.",
-      before: "/images/portfolio/before-priya-bag.jpg",
-      after: "/images/portfolio/priya-bag.jpg",
+      before: "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Patchwork Jacket",
       description: "Three old jackets stitched into one statement piece.",
-      before: "/images/portfolio/before-priya-jacket.jpg",
-      after: "/images/portfolio/priya-jacket.jpg",
+      before: "https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Home Textile Set",
       description: "Saree offcuts became cushion covers and table runners.",
-      before: "/images/portfolio/before-priya-home.jpg",
-      after: "/images/portfolio/priya-home.jpg",
+      before: "https://images.pexels.com/photos/9316208/pexels-photo-9316208.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/8266834/pexels-photo-8266834.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
   ],
   arjun: [
     {
       title: "Lamp Revival",
       description: "A broken fixture rewired and finished in brushed brass.",
-      before: "/images/portfolio/before-arjun-lamp.jpg",
-      after: "/images/portfolio/arjun-lamp.jpg",
+      before: "https://images.pexels.com/photos/6825324/pexels-photo-6825324.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Rust to Stool",
       description: "Rusted pipes cleaned and powder-coated into a stool.",
-      before: "/images/portfolio/before-arjun-metal.jpg",
-      after: "/images/portfolio/arjun-metal.jpg",
+      before: "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Pipe Shelf",
       description: "Scrap pipe and plank turned into a wall shelf.",
-      before: "/images/portfolio/before-arjun-shelf.jpg",
-      after: "/images/portfolio/arjun-shelf.jpg",
+      before: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/19109111/pexels-photo-19109111.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
   ],
   tara: [
     {
       title: "Chair Restoration",
       description: "A cracked teak chair rebuilt and re-caned.",
-      before: "/images/portfolio/before-tara-chair.jpg",
-      after: "/images/portfolio/tara-chair.jpg",
+      before: "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Console from Door",
       description: "An old carved door became a console table.",
-      before: "/images/portfolio/before-tara-console.jpg",
-      after: "/images/portfolio/tara-console.jpg",
+      before: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
     {
       title: "Teak Cabinet",
       description: "Water-damaged cabinet restored to its original glow.",
-      before: "/images/portfolio/before-tara-teak-cabinet.jpg",
-      after: "/images/portfolio/tara-teak-cabinet.jpg",
+      before: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      after: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
   ],
 };
@@ -540,7 +540,7 @@ function buildPortfolio(random, rid, person, joined) {
       portfolio_id: `PF-${rid.slice(4)}${i + 1}`,
       title: product.title,
       description: `Rebuilt from ${pick(random, MATERIAL_POOL).toLowerCase()} using traditional methods.`,
-      before_image: "/images/products/default-item.jpg",
+      before_image: "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
       after_image: product.image,
       uploaded_at: addDays(joined, between(random, 30, 240)),
     };
@@ -632,7 +632,7 @@ function buildOrders(random, rid, products, sales, purchases, joined) {
       order_id: `ORD-${rid.slice(4)}${String(counter).padStart(2, "0")}`,
       role: "Buyer",
       title: material,
-      image: "/images/products/default-item.jpg",
+      image: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
       counterparty: fromAdmin ? "ReOrbit Platform" : pick(random, BUYERS),
       counterparty_type: fromAdmin ? "Admin" : "User",
       amount: between(random, 4, 40) * 100,
@@ -672,7 +672,7 @@ function buildRefurbishments(random, rid, count, joined) {
           ? pick(random, ["Passed", "Passed", "Passed", "Failed"])
           : "Pending",
       refurbishment_status: status,
-      before_image: "/images/products/default-item.jpg",
+      before_image: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
       after_image: status === "Completed" ? product.image : null,
       notes: pick(random, NOTES),
       assigned_by: "Admin · Nikhil Rao",
@@ -748,20 +748,24 @@ function buildActivity(rm) {
   const events = [
     { type: "account", text: "Joined ReOrbit as a ReMaker", at: rm.created_at },
   ];
-  rm.portfolio.slice(0, 2).forEach((p) =>
-    events.push({
-      type: "item",
-      text: `Added “${p.title}” to portfolio`,
-      at: p.uploaded_at,
-    }),
-  );
-  rm.products.slice(0, 2).forEach((p) =>
-    events.push({
-      type: "item",
-      text: `Listed product “${p.title}”`,
-      at: p.created_at,
-    }),
-  );
+  rm.portfolio
+    .slice(0, 2)
+    .forEach((p) =>
+      events.push({
+        type: "item",
+        text: `Added “${p.title}” to portfolio`,
+        at: p.uploaded_at,
+      }),
+    );
+  rm.products
+    .slice(0, 2)
+    .forEach((p) =>
+      events.push({
+        type: "item",
+        text: `Listed product “${p.title}”`,
+        at: p.created_at,
+      }),
+    );
   rm.orders.slice(0, 3).forEach((o) =>
     events.push({
       type: "order",
@@ -772,13 +776,15 @@ function buildActivity(rm) {
       at: o.order_date,
     }),
   );
-  rm.refurbishments.slice(0, 2).forEach((r) =>
-    events.push({
-      type: "donation",
-      text: `Refurbishment ${r.refurbishment_id} ${r.refurbishment_status === "Completed" ? "completed" : "assigned"}`,
-      at: r.completion_date || r.assigned_date,
-    }),
-  );
+  rm.refurbishments
+    .slice(0, 2)
+    .forEach((r) =>
+      events.push({
+        type: "donation",
+        text: `Refurbishment ${r.refurbishment_id} ${r.refurbishment_status === "Completed" ? "completed" : "assigned"}`,
+        at: r.completion_date || r.assigned_date,
+      }),
+    );
   return events.sort((a, b) => new Date(b.at) - new Date(a.at));
 }
 

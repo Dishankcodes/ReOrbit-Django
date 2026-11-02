@@ -97,7 +97,7 @@ const SECTIONS = [
 
 function Toggle({ checked, onChange, label, hint, disabled }) {
   return (
-    <label className={`st-toggle ${disabled ? "is-off" : ""}`}>
+    <label className={`ust-toggle ${disabled ? "is-off" : ""}`}>
       <div>
         <strong>{label}</strong>
 
@@ -112,7 +112,7 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
         onChange={(e) => onChange(e.target.checked)}
       />
 
-      <span className="st-switch" aria-hidden="true" />
+      <span className="ust-switch" aria-hidden="true" />
     </label>
   );
 }
@@ -176,7 +176,7 @@ function ProfileSection({ settings, show }) {
   );
 
   return (
-    <form className="dn-card st-card" onSubmit={submit} noValidate>
+    <form className="dn-card ust-card" onSubmit={submit} noValidate>
       <div className="dn-card-head">
         <div>
           <h2>Profile</h2>
@@ -187,7 +187,7 @@ function ProfileSection({ settings, show }) {
         </div>
       </div>
 
-      <div className="st-grid">
+      <div className="ust-grid">
         {field("full_name", "Full name", {}, "Enter your full name.")}
 
         {field(
@@ -212,7 +212,7 @@ function ProfileSection({ settings, show }) {
 
         {field("city", "City")}
 
-        <label className="dn-field st-wide">
+        <label className="dn-field ust-wide">
           <span className="dn-label">
             Bio <span className="dn-hint">(optional)</span>
           </span>
@@ -231,7 +231,7 @@ function ProfileSection({ settings, show }) {
         </label>
       </div>
 
-      <div className="st-actions">
+      <div className="ust-actions">
         <button
           type="button"
           className="dn-btn dn-btn--ghost"
@@ -263,7 +263,7 @@ function AddressSection({ show }) {
   const [removing, setRemoving] = useState(null);
 
   return (
-    <section className="dn-card st-card">
+    <section className="dn-card ust-card">
       <div className="dn-card-head">
         <div>
           <h2>Addresses</h2>
@@ -284,7 +284,7 @@ function AddressSection({ show }) {
         )}
       </div>
 
-      <div className="st-addrs">
+      <div className="ust-addrs">
         {addresses.map((a) =>
           mode === a.id ? (
             <AddressForm
@@ -300,13 +300,13 @@ function AddressSection({ show }) {
               }}
             />
           ) : (
-            <article key={a.id} className="st-addr">
+            <article key={a.id} className="ust-addr">
               <span>
                 <MapPin size={18} />
               </span>
 
               <div>
-                <div className="st-addr-top">
+                <div className="ust-addr-top">
                   <strong>{a.name}</strong>
 
                   <em>{a.label}</em>
@@ -321,7 +321,7 @@ function AddressSection({ show }) {
                 <small>{a.phone}</small>
               </div>
 
-              <div className="st-addr-actions">
+              <div className="ust-addr-actions">
                 <button
                   type="button"
                   className="dn-btn dn-btn--ghost dn-btn--sm"
@@ -406,7 +406,7 @@ function NotificationSection({ settings }) {
   const noChannel = !n.channelEmail && !n.channelPush && !n.channelSms;
 
   return (
-    <section className="dn-card st-card">
+    <section className="dn-card ust-card">
       <div className="dn-card-head">
         <div>
           <h2>Notifications</h2>
@@ -415,9 +415,9 @@ function NotificationSection({ settings }) {
         </div>
       </div>
 
-      <h4 className="st-sub">What to notify me about</h4>
+      <h4 className="ust-sub">What to notify me about</h4>
 
-      <div className="st-toggles">
+      <div className="ust-toggles">
         <Toggle
           checked={n.orderUpdates}
           onChange={set("orderUpdates")}
@@ -454,9 +454,9 @@ function NotificationSection({ settings }) {
         />
       </div>
 
-      <h4 className="st-sub">How to reach me</h4>
+      <h4 className="ust-sub">How to reach me</h4>
 
-      <div className="st-toggles">
+      <div className="ust-toggles">
         <Toggle
           checked={n.channelEmail}
           onChange={set("channelEmail")}
@@ -478,7 +478,7 @@ function NotificationSection({ settings }) {
       </div>
 
       {noChannel && (
-        <p className="st-warn">
+        <p className="ust-warn">
           <TriangleAlert size={14} /> All channels are off, so you won't receive
           any notifications.
         </p>
@@ -493,7 +493,7 @@ function PrivacySection({ settings }) {
   const set = (k) => (v) => setPref("privacy", k, v);
 
   return (
-    <section className="dn-card st-card">
+    <section className="dn-card ust-card">
       <div className="dn-card-head">
         <div>
           <h2>Privacy</h2>
@@ -502,7 +502,7 @@ function PrivacySection({ settings }) {
         </div>
       </div>
 
-      <div className="st-toggles">
+      <div className="ust-toggles">
         <Toggle
           checked={p.publicProfile}
           onChange={set("publicProfile")}
@@ -590,8 +590,8 @@ function SecuritySection({ settings, show }) {
   };
 
   return (
-    <div className="st-stack">
-      <form className="dn-card st-card" onSubmit={submit} noValidate>
+    <div className="ust-stack">
+      <form className="dn-card ust-card" onSubmit={submit} noValidate>
         <div className="dn-card-head">
           <div>
             <h2>Change password</h2>
@@ -602,8 +602,8 @@ function SecuritySection({ settings, show }) {
           </div>
         </div>
 
-        <div className="st-grid">
-          <label className="dn-field st-wide">
+        <div className="ust-grid">
+          <label className="dn-field ust-wide">
             <span className="dn-label">Current password</span>
 
             <input
@@ -630,7 +630,7 @@ function SecuritySection({ settings, show }) {
               onChange={(e) => setPw({ ...pw, next: e.target.value })}
             />
 
-            <i className={`st-meter s${score}`}>
+            <i className={`ust-meter s${score}`}>
               <b />
 
               <b />
@@ -671,7 +671,7 @@ function SecuritySection({ settings, show }) {
           </label>
         </div>
 
-        <div className="st-actions between">
+        <div className="ust-actions between">
           <button
             type="button"
             className="dn-link"
@@ -687,14 +687,14 @@ function SecuritySection({ settings, show }) {
         </div>
       </form>
 
-      <section className="dn-card st-card">
+      <section className="dn-card ust-card">
         <div className="dn-card-head">
           <div>
             <h2>Extra protection</h2>
           </div>
         </div>
 
-        <div className="st-toggles">
+        <div className="ust-toggles">
           <Toggle
             checked={s.twoFactor}
             onChange={(v) => {
@@ -719,7 +719,7 @@ function SecuritySection({ settings, show }) {
         </div>
       </section>
 
-      <section className="dn-card st-card">
+      <section className="dn-card ust-card">
         <div className="dn-card-head">
           <div>
             <h2>Where you're logged in</h2>
@@ -728,7 +728,7 @@ function SecuritySection({ settings, show }) {
           </div>
         </div>
 
-        <div className="st-sessions">
+        <div className="ust-sessions">
           {sessions.map((x) => (
             <article key={x.id}>
               <span>
@@ -748,7 +748,7 @@ function SecuritySection({ settings, show }) {
               </div>
 
               {x.current ? (
-                <em className="st-current">This device</em>
+                <em className="ust-current">This device</em>
               ) : (
                 <button
                   type="button"
@@ -808,8 +808,8 @@ function AccountSection({ show }) {
   };
 
   return (
-    <div className="st-stack">
-      <section className="dn-card st-card">
+    <div className="ust-stack">
+      <section className="dn-card ust-card">
         <div className="dn-card-head">
           <div>
             <h2>Your data</h2>
@@ -827,7 +827,7 @@ function AccountSection({ show }) {
         </button>
       </section>
 
-      <section className="dn-card st-card">
+      <section className="dn-card ust-card">
         <div className="dn-card-head">
           <div>
             <h2>Log out</h2>
@@ -845,7 +845,7 @@ function AccountSection({ show }) {
         </button>
       </section>
 
-      <section className="dn-card st-card st-danger">
+      <section className="dn-card ust-card ust-danger">
         <div className="dn-card-head">
           <div>
             <h2>Delete account</h2>
@@ -857,7 +857,7 @@ function AccountSection({ show }) {
           </div>
         </div>
 
-        <ul className="st-risk">
+        <ul className="ust-risk">
           <li>Open orders and sales must be completed first.</li>
 
           <li>Your Orbit Points and vouchers can't be restored.</li>
@@ -969,7 +969,7 @@ export default function UserSettings() {
 
   return (
     <div className="dn st">
-      <header className="st-head">
+      <header className="ust-head">
         <span className="dn-eyebrow">Account</span>
 
         <h1>Settings</h1>
@@ -979,8 +979,8 @@ export default function UserSettings() {
         </p>
       </header>
 
-      <div className="st-layout">
-        <nav className="st-nav" aria-label="Settings sections">
+      <div className="ust-layout">
+        <nav className="ust-nav" aria-label="Settings sections">
           {SECTIONS.map((s) => {
             const Icon = s.icon;
 
@@ -1006,7 +1006,7 @@ export default function UserSettings() {
           })}
         </nav>
 
-        <div className="st-body">{body}</div>
+        <div className="ust-body">{body}</div>
       </div>
 
       {toast}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
 import { Link, useParams } from "react-router-dom";
 import {
   Ban,
@@ -20,13 +21,7 @@ import {
   Leaf,
 } from "lucide-react";
 
-import {
-  PAYMENT_LABEL,
-  cancelOrder,
-  canCancel,
-  reviewOrder,
-  useOrder,
-} from "../../data/ordersStore";
+import { PAYMENT_LABEL, cancelOrder, canCancel, reviewOrder, useOrder } from "../../data/ordersStore";
 import { formatDate, formatDateTime, relativeDay } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import EmptyState from "../../components/ui/EmptyState";
@@ -89,8 +84,7 @@ export default function UserOrderDetails() {
           </div>
           <h1>{order.item.title}</h1>
           <p className="dn-muted">
-            Placed on {formatDateTime(order.placedAt)} · {order.qty}{" "}
-            {order.qty === 1 ? "item" : "items"}
+            Placed on {formatDateTime(order.placedAt)} · {order.qty} {order.qty === 1 ? "item" : "items"}
           </p>
         </div>
 
@@ -101,38 +95,24 @@ export default function UserOrderDetails() {
             </Link>
           )}
           {delivered && !order.review && (
-            <button
-              type="button"
-              className="dn-btn"
-              onClick={() => setReviewing(true)}
-            >
+            <button type="button" className="dn-btn" onClick={() => setReviewing(true)}>
               <Star size={16} /> Rate order
             </button>
           )}
           {delivered && (
-            <Link
-              to={`/user-marketplace/product/${order.itemId}`}
-              className="dn-btn dn-btn--ghost"
-            >
+            <Link to={`/user-marketplace/product/${order.itemId}`} className="dn-btn dn-btn--ghost">
               <RotateCcw size={16} /> Buy again
             </Link>
           )}
-          <button
-            type="button"
-            className="dn-btn dn-btn--ghost"
-            onClick={() => {
-              if (!printInvoice(order))
-                show("Allow pop-ups to open the invoice.");
-            }}
-          >
+          <MessageButton
+            target={{ ...sellerChat(order.item), context: { label: `Order ${order.id} · ${order.item.title}`, to: `/user-orders/${order.id}`, image: order.item.image } }}
+            label={order.sellerIsRemaker ? "Message the ReMaker" : "Message the seller"}
+          />
+          <button type="button" className="dn-btn dn-btn--ghost" onClick={() => { if (!printInvoice(order)) show("Allow pop-ups to open the invoice."); }}>
             <FileText size={16} /> Invoice
           </button>
           {canCancel(order) && (
-            <button
-              type="button"
-              className="dn-btn dn-btn--danger"
-              onClick={() => setCancelling(true)}
-            >
+            <button type="button" className="dn-btn dn-btn--danger" onClick={() => setCancelling(true)}>
               <Ban size={16} /> Cancel
             </button>
           )}
@@ -147,13 +127,7 @@ export default function UserOrderDetails() {
             <strong>This order was cancelled</strong>
             Reason: {order.cancelReason}.{" "}
             {order.refund && (
-              <>
-                Refund of {inr(order.refund.amount)} is{" "}
-                {order.refund.status === "Refunded"
-                  ? `completed on ${formatDate(order.refund.at)}`
-                  : "being processed to your original payment method"}
-                .
-              </>
+              <>Refund of {inr(order.refund.amount)} is {order.refund.status === "Refunded" ? `completed on ${formatDate(order.refund.at)}` : "being processed to your original payment method"}.</>
             )}
           </div>
         </div>
@@ -163,10 +137,7 @@ export default function UserOrderDetails() {
           <Truck size={20} />
           <div>
             <strong>{etaLine(order)}</strong>
-            {order.courier?.name} · AWB {order.courier?.awb}.{" "}
-            <Link to={`/user-orders/${order.id}/track`} className="dn-link">
-              See live tracking →
-            </Link>
+            {order.courier?.name} · AWB {order.courier?.awb}. <Link to={`/user-orders/${order.id}/track`} className="dn-link">See live tracking →</Link>
           </div>
         </div>
       )}
@@ -174,13 +145,8 @@ export default function UserOrderDetails() {
         <div className="dn-banner dn-banner--warn ob-banner">
           <Info size={20} />
           <div>
-            <strong>
-              {order.status === "Processing"
-                ? "The seller is packing your item"
-                : "Order confirmed"}
-            </strong>
-            Expected delivery {relativeDay(order.eta).toLowerCase()} (
-            {formatDate(order.eta)}). You can cancel for free until it ships.
+            <strong>{order.status === "Processing" ? "The seller is packing your item" : "Order confirmed"}</strong>
+            Expected delivery {relativeDay(order.eta).toLowerCase()} ({formatDate(order.eta)}). You can cancel for free until it ships.
           </div>
         </div>
       )}
@@ -189,8 +155,7 @@ export default function UserOrderDetails() {
           <CheckCircle2 size={20} />
           <div>
             <strong>Delivered on {formatDate(latest.at)}</strong>
-            This purchase saved about {co2} kg of CO₂. Thank you for choosing
-            second-life products.
+            This purchase saved about {co2} kg of CO₂. Thank you for choosing second-life products.
           </div>
         </div>
       )}
@@ -201,12 +166,7 @@ export default function UserOrderDetails() {
           <section className="dn-card dn-card-pad">
             <div className="dn-card-head">
               <h2>Item</h2>
-              <Link
-                to={`/user-marketplace/product/${order.itemId}`}
-                className="dn-link"
-              >
-                View product →
-              </Link>
+              <Link to={`/user-marketplace/product/${order.itemId}`} className="dn-link">View product →</Link>
             </div>
             <div className="ob-item">
               <SafeImage src={order.item.image} alt={order.item.title} />
@@ -215,15 +175,9 @@ export default function UserOrderDetails() {
                 <h3>{order.item.title}</h3>
                 <p>{order.item.summary}</p>
                 <ul>
-                  <li>
-                    Condition: <b>{order.item.condition}</b>
-                  </li>
-                  <li>
-                    Qty: <b>{order.qty}</b>
-                  </li>
-                  <li>
-                    <Leaf size={13} /> <b>{co2} kg</b> CO₂ saved
-                  </li>
+                  <li>Condition: <b>{order.item.condition}</b></li>
+                  <li>Qty: <b>{order.qty}</b></li>
+                  <li><Leaf size={13} /> <b>{co2} kg</b> CO₂ saved</li>
                 </ul>
               </div>
               <strong className="ob-item-price">{inr(order.price)}</strong>
@@ -234,32 +188,22 @@ export default function UserOrderDetails() {
             <div className="dn-card-head">
               <div>
                 <h2>Order progress</h2>
-                <small>
-                  {order.cancelled
-                    ? "Stopped when the order was cancelled."
-                    : etaLine(order)}
-                </small>
+                <small>{order.cancelled ? "Stopped when the order was cancelled." : etaLine(order)}</small>
               </div>
               {!order.cancelled && !delivered && (
-                <Link
-                  to={`/user-orders/${order.id}/track`}
-                  className="dn-btn dn-btn--soft dn-btn--sm"
-                >
+                <Link to={`/user-orders/${order.id}/track`} className="dn-btn dn-btn--soft dn-btn--sm">
                   Full tracking
                 </Link>
               )}
             </div>
             <OrderStepper order={order} />
             <ul className="ob-latest">
-              {[...order.events]
-                .reverse()
-                .slice(0, 3)
-                .map((event) => (
-                  <li key={event.id}>
-                    <b>{event.label}</b>
-                    <span>{formatDateTime(event.at)}</span>
-                  </li>
-                ))}
+              {[...order.events].reverse().slice(0, 3).map((event) => (
+                <li key={event.id}>
+                  <b>{event.label}</b>
+                  <span>{formatDateTime(event.at)}</span>
+                </li>
+              ))}
             </ul>
           </section>
 
@@ -269,15 +213,8 @@ export default function UserOrderDetails() {
                 <h2>Your review</h2>
                 <Stars value={order.review.rating} size={18} />
               </div>
-              <p className="ob-review-text">
-                {order.review.text ||
-                  "You rated this order without a written review."}
-              </p>
-              <Link
-                to={order.sellerPath + "?tab=reviews"}
-                className="dn-link"
-                style={{ marginTop: 12 }}
-              >
+              <p className="ob-review-text">{order.review.text || "You rated this order without a written review."}</p>
+              <Link to={order.sellerPath + "?tab=reviews"} className="dn-link" style={{ marginTop: 12 }}>
                 See it on {order.seller?.name}'s profile →
               </Link>
             </section>
@@ -294,32 +231,11 @@ export default function UserOrderDetails() {
               <Receipt size={18} />
             </div>
             <dl className="ob-price">
-              <div>
-                <dt>
-                  Item ({order.qty} × {inr(order.price)})
-                </dt>
-                <dd>{inr(order.price * order.qty)}</dd>
-              </div>
-              <div>
-                <dt>Delivery</dt>
-                <dd>{order.shipping ? inr(order.shipping) : "Free"}</dd>
-              </div>
-              {order.platformFee > 0 && (
-                <div>
-                  <dt>Platform fee</dt>
-                  <dd>{inr(order.platformFee)}</dd>
-                </div>
-              )}
-              {order.discount > 0 && (
-                <div className="is-save">
-                  <dt>Discount</dt>
-                  <dd>− {inr(order.discount)}</dd>
-                </div>
-              )}
-              <div className="is-total">
-                <dt>{order.cancelled ? "Order total" : "Total paid"}</dt>
-                <dd>{inr(order.total)}</dd>
-              </div>
+              <div><dt>Item ({order.qty} × {inr(order.price)})</dt><dd>{inr(order.price * order.qty)}</dd></div>
+              <div><dt>Delivery</dt><dd>{order.shipping ? inr(order.shipping) : "Free"}</dd></div>
+              {order.platformFee > 0 && <div><dt>Platform fee</dt><dd>{inr(order.platformFee)}</dd></div>}
+              {order.discount > 0 && <div className="is-save"><dt>Discount</dt><dd>− {inr(order.discount)}</dd></div>}
+              <div className="is-total"><dt>{order.cancelled ? "Order total" : "Total paid"}</dt><dd>{inr(order.total)}</dd></div>
             </dl>
             <p className="ob-pay">
               <CreditCard size={15} />{" "}
@@ -331,29 +247,18 @@ export default function UserOrderDetails() {
           </section>
 
           <section className="dn-card dn-card-pad">
-            <div className="dn-card-head">
-              <h3>Delivery address</h3>
-              <MapPin size={18} />
-            </div>
+            <div className="dn-card-head"><h3>Delivery address</h3><MapPin size={18} /></div>
             <div className="ob-addr">
               <strong>{order.address.name}</strong>
               <p>{order.address.line}</p>
-              <p>
-                {order.address.city}, {order.address.state} –{" "}
-                {order.address.pincode}
-              </p>
-              <p className="dn-muted">
-                <Phone size={13} /> {order.address.phone}
-              </p>
+              <p>{order.address.city}, {order.address.state} – {order.address.pincode}</p>
+              <p className="dn-muted"><Phone size={13} /> {order.address.phone}</p>
             </div>
           </section>
 
           {order.courier && !order.cancelled && (
             <section className="dn-card dn-card-pad">
-              <div className="dn-card-head">
-                <h3>Courier</h3>
-                <Truck size={18} />
-              </div>
+              <div className="dn-card-head"><h3>Courier</h3><Truck size={18} /></div>
               <div className="ob-addr">
                 <strong>{order.courier.name}</strong>
                 <p className="dn-muted">AWB {order.courier.awb}</p>
@@ -366,16 +271,11 @@ export default function UserOrderDetails() {
             <div>
               <strong>Need help with this order?</strong>
               <p>Delivery, returns or refunds, we're here to help.</p>
-              <Link to="/user-help" className="dn-link">
-                Open Help & FAQ →
-              </Link>
+              <Link to="/user-help" className="dn-link">Open Help & FAQ →</Link>
             </div>
           </section>
 
-          <Link
-            to="/user-orders"
-            className="dn-btn dn-btn--ghost dn-btn--block"
-          >
+          <Link to="/user-orders" className="dn-btn dn-btn--ghost dn-btn--block">
             <Store size={16} /> Back to all orders
           </Link>
         </aside>

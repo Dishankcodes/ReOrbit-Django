@@ -17,6 +17,6 @@ export function WaitChip({ donation }) {
 
 export function ConditionTag({ condition }) {
   return (
-    <span className={`dn-cond ${condition.toLowerCase()}`}>{condition}</span>
+    <span className={`adn-cond ${condition.toLowerCase()}`}>{condition}</span>
   );
 }

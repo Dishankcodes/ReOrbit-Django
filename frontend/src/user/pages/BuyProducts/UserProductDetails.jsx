@@ -1,633 +1,205 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { BadgeCheck, Boxes, Eye, Heart, Leaf, MapPin, Minus, Plus, ShoppingBag, ShoppingCart, Star, Zap, PackageX, Sparkles } from "lucide-react";
+
 import { useGoBack } from "../../../shared/backNav";
-import { useNavigate, useParams } from "react-router-dom";
-import { Minus, Plus, ShoppingBag, Zap } from "lucide-react";
-import {
-  addToCart,
-  startCheckout,
-  useCartCount,
-  useInCart,
-  useShopItem,
-} from "../../data/shopStore";
+import { addToCart, startCheckout, useCartCount, useInCart, useShopItem } from "../../data/shopStore";
 import { useWishlist } from "../../data/wishlistStore";
-import {
-  getItemById,
-  getProductsBySeller,
-  getSellerFromItem,
-  getSellerReviews,
-  formatPrice,
-} from "../../../data/marketplaceData";
+import { getItemById, getProductsBySeller, getSellerFromItem, getSellerReviews, formatPrice } from "../../../data/marketplaceData";
 import ReportButton from "../../../shared/components/ReportButton";
 import { useUserComplaintFiler } from "../../../shared/complaints";
-import "../../css/marketplace-css/UserProductDetails.css";
-import "../../css/marketplace-css/marketplace-icons.css";
-import "../../css/shop/product-cart.css";
+import SafeImage from "../../components/ui/SafeImage";
+import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
 
-const getInitials = (name = "") =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+import "../../css/shared/ui-base.css";
+import "../../css/marketplace-css/UserProductDetailsV2.css";
 
-function ImageWithFallback({ src, alt, className = "" }) {
-  const [failed, setFailed] = useState(false);
-  if (failed || !src)
-    return (
-      <div className={`upd-image-fallback ${className}`}>
-        <i className="bi bi-image" />
-      </div>
-    );
-  return (
-    <img
-      className={className}
-      src={src}
-      alt={alt}
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-function Stars({ rating = 0 }) {
-  return (
-    <span className="upd-stars" aria-label={`${rating} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <i
-          key={star}
-          className={
-            star <= Math.round(rating) ? "bi bi-star-fill" : "bi bi-star"
-          }
-        />
-      ))}
-    </span>
-  );
-}
-
-function Stat({ icon, label, value }) {
-  return (
-    <div className="upd-stat">
-      <span>
-        <i className={`bi ${icon}`} />
-      </span>
-      <small>{label}</small>
-      <strong>{value}</strong>
-    </div>
-  );
-}
+const Stars = ({ rating = 0 }) => (
+  <span className="pd-stars" aria-label={`${rating} out of 5 stars`}>
+    {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={13} fill={s <= Math.round(rating) ? "currentColor" : "none"} />)}
+  </span>
+);
 
 export default function UserProductDetails() {
-  const { goBack } = useGoBack("/user-marketplace");
+  const { goBack, canGoBack, prevLabel } = useGoBack("/user-marketplace");
   const params = useParams();
-  // Support both the current :productId route and older :id links.
   const productId = params.productId ?? params.id;
   const navigate = useNavigate();
   const item = getItemById(productId);
   const wish = useWishlist();
-  const liked = wish.has(productId);
-  const [activeTab, setActiveTab] = useState("details");
-  const [cartMessage, setCartMessage] = useState(false);
-  const [qty, setQty] = useState(1);
   const stock = useShopItem(productId);
   const cartCount = useCartCount();
   const inCart = useInCart(productId);
+  const fileComplaint = useUserComplaintFiler();
+  const [tab, setTab] = useState("details");
+  const [qty, setQty] = useState(1);
+  const [toast, setToast] = useState(false);
 
-  useEffect(() => {
-    setQty(1);
-  }, [productId]);
+  useEffect(() => { setQty(1); setTab("details"); }, [productId]);
 
   const seller = useMemo(() => getSellerFromItem(item), [item]);
-  const fileComplaint = useUserComplaintFiler();
-  const reviews = useMemo(
-    () => (item ? getSellerReviews(item.sellerId) : []),
-    [item],
-  );
-  const related = useMemo(
-    () =>
-      item
-        ? getProductsBySeller(item.sellerId)
-            .filter((product) => product.id !== item.id)
-            .slice(0, 4)
-        : [],
-    [item],
-  );
+  const reviews = useMemo(() => (item ? getSellerReviews(item.sellerId) : []), [item]);
+  const related = useMemo(() => (item ? getProductsBySeller(item.sellerId).filter((p) => p.id !== item.id).slice(0, 4) : []), [item]);
 
   if (!item) {
     return (
-      <main className="upd-page">
-        <div className="upd-not-found">
-          <div>
-            <i className="bi bi-box2-heart" />
-          </div>
-          <span className="upd-kicker">Marketplace</span>
+      <div className="dn pd">
+        <div className="pd-missing">
+          <PackageX size={34} />
           <h1>Product not found</h1>
-          <p>
-            This piece may have moved to another orbit or is no longer
-            available.
-          </p>
-          <button
-            type="button"
-            className="upd-primary"
-            onClick={() => navigate("/user-marketplace")}
-          >
-            <i className="bi bi-arrow-left" /> Back to marketplace
-          </button>
+          <p>This piece may have moved to another orbit or is no longer available.</p>
+          <button type="button" className="dn-btn" onClick={() => navigate("/user-marketplace")}>Back to marketplace</button>
         </div>
-      </main>
+      </div>
     );
   }
 
-  const sellerIsRemaker = item.sellerType === "remaker";
-  const gallery = [item.image].filter(Boolean);
-
-  const openSeller = () =>
-    navigate(
-      sellerIsRemaker
-        ? `/user-artist-profile/${item.sellerId}`
-        : `/user-seller-profile/${item.sellerId}`,
-    );
-  const openProduct = (id) => {
-    navigate(`/user-marketplace/product/${id}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-  const maxQty = Math.max(1, stock?.available || 1);
+  const isMaker = item.sellerType === "remaker";
+  const liked = wish.has(productId);
   const buyable = Boolean(stock?.purchasable);
+  const maxQty = Math.max(1, stock?.available || 1);
+  const sellerPath = isMaker ? `/user-marketplace/remaker/${item.sellerId}` : `/user-marketplace/seller/${item.sellerId}`;
+
   const addCart = () => {
     addToCart(item.id, qty, stock.available);
-    showCart();
-  };
-  const buyNow = () => {
-    startCheckout([{ id: item.id, qty }], "buy");
-    navigate("/user-checkout");
-  };
-  const showCart = () => {
-    setCartMessage(true);
+    setToast(true);
     window.clearTimeout(window.__reorbitCartTimer);
-    window.__reorbitCartTimer = window.setTimeout(
-      () => setCartMessage(false),
-      2600,
-    );
+    window.__reorbitCartTimer = window.setTimeout(() => setToast(false), 2600);
   };
+  const buyNow = () => { startCheckout([{ id: item.id, qty }], "buy"); navigate("/user-checkout"); };
 
   return (
-    <main className="upd-page">
-      <div className="upd-container">
-        <div className="upd-breadcrumb">
-          <button type="button" onClick={() => navigate("/user-marketplace")}>
-            Marketplace
-          </button>
-          <i className="bi bi-chevron-right" />
-          <span>{item.category}</span>
-          <i className="bi bi-chevron-right" />
-          <strong>{item.title}</strong>
-          <button
-            type="button"
-            className="upd-cartlink"
-            onClick={() => navigate("/user-cart")}
-          >
-            <ShoppingBag size={14} /> Cart
-            {cartCount > 0 && <b>{cartCount}</b>}
+    <div className="dn pd">
+      <nav className="pd-top" aria-label="Breadcrumb">
+        <button type="button" className="pd-back" onClick={goBack}>← {canGoBack ? `Back to ${prevLabel}` : "Marketplace"}</button>
+        <span className="pd-crumbs"><Link to="/user-marketplace">Marketplace</Link> / {item.category} / <b>{item.title}</b></span>
+        <button type="button" className="pd-cartlink" onClick={() => navigate("/user-cart")}><ShoppingCart size={15} /> Cart {cartCount > 0 && <b>{cartCount}</b>}</button>
+      </nav>
+
+      <section className="pd-hero">
+        <div className="pd-gallery">
+          <SafeImage src={item.image} alt={item.title} />
+          <span className={`pd-type ${isMaker ? "maker" : ""}`}>{isMaker ? <><Sparkles size={12} /> ReMaker piece</> : <><Boxes size={12} /> Community item</>}</span>
+          <button type="button" className={`pd-heart ${liked ? "on" : ""}`} aria-pressed={liked} aria-label={liked ? "Remove from wishlist" : "Save to wishlist"} onClick={() => wish.toggle(productId)}>
+            <Heart size={18} fill={liked ? "currentColor" : "none"} />
           </button>
         </div>
-        <button type="button" className="upd-back" onClick={goBack}>
-          <i className="bi bi-arrow-left" /> Back
-        </button>
 
-        <section className="upd-hero">
-          <div className="upd-gallery">
-            <div className="upd-main-image">
-              <ImageWithFallback src={gallery[0]} alt={item.title} />
-              <div className="upd-image-overlay" />
-              <div className="upd-image-badges">
-                <span>
-                  <i className="bi bi-leaf" /> {item.co2SavedKg} kg CO₂ saved
-                </span>
-                <span>{item.condition}</span>
-              </div>
-              <button
-                type="button"
-                className={`upd-like ${liked ? "active" : ""}`}
-                onClick={() => wish.toggle(productId)}
-                aria-label={liked ? "Remove from wishlist" : "Save product"}
-              >
-                <i className={liked ? "bi bi-heart-fill" : "bi bi-heart"} />
-              </button>
-            </div>
-            <div className="upd-gallery-note">
-              <i className="bi bi-shield-check" />
-              <span>Community listing</span>
-              <b>Checked by ReOrbit</b>
-            </div>
-          </div>
+        <div className="pd-info">
+          <span className="pd-eyebrow">{item.category} · {item.condition}</span>
+          <h1>{item.title}</h1>
+          <div className="pd-rate"><Stars rating={seller?.rating || item.sellerRating} /> <b>{item.sellerRating}</b> <span>seller rating · {item.views} views</span></div>
+          <div className="pd-price"><strong>{formatPrice(item.price)}</strong><span>Listed price</span></div>
+          <p className="pd-summary">{item.summary}</p>
 
-          <div className="upd-info">
-            <div className="upd-category-line">
-              <span>{item.category}</span>
-              <span>
-                <i className="bi bi-circle-fill" /> {item.city}
-              </span>
-            </div>
-            <h1>{item.title}</h1>
-            <div className="upd-rating">
-              <Stars rating={item.sellerRating} />
-              <strong>{item.sellerRating}</strong>
-              <span>seller rating</span>
-              <em /> <span>{item.condition}</span>
-            </div>
-            <div className="upd-price-block">
-              <strong>{formatPrice(item.price)}</strong>
-              <span>ReOrbit marketplace price</span>
-            </div>
-            <p className="upd-summary">{item.summary}</p>
+          <ul className="pd-facts">
+            <li><Leaf size={16} /><span><b>{item.co2SavedKg} kg CO₂</b> kept from new production</span></li>
+            <li><MapPin size={16} /><span><b>{item.city}, {item.pincode}</b> · arrange delivery after purchase</span></li>
+          </ul>
 
-            <div className="upd-impact-card">
+          {!buyable && stock?.reason && <p className="pd-notice">{stock.reason}</p>}
+          {buyable && (
+            <div className="pd-qty">
+              <span>Quantity</span>
               <div>
-                <span>
-                  <i className="bi bi-recycle" />
-                </span>
-                <div>
-                  <small>Another life</small>
-                  <strong>{item.co2SavedKg} kg</strong>
-                  <p>estimated CO₂ kept from new production</p>
-                </div>
+                <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} aria-label="Less"><Minus size={14} /></button>
+                <b>{qty}</b>
+                <button type="button" onClick={() => setQty((q) => Math.min(maxQty, q + 1))} disabled={qty >= maxQty} aria-label="More"><Plus size={14} /></button>
               </div>
-              <i className="bi bi-arrow-up-right" />
-            </div>
-
-            <div className="upd-location">
-              <span>
-                <i className="bi bi-geo-alt" />
-              </span>
-              <div>
-                <small>Item location</small>
-                <strong>
-                  {item.city}, {item.pincode}
-                </strong>
-                <p>
-                  Arrange pickup or delivery with the seller after purchase.
-                </p>
-              </div>
-            </div>
-
-            {!buyable && stock?.reason && (
-              <p className="upd-unavailable" role="status">
-                {stock.reason}
-              </p>
-            )}
-
-            {buyable && stock.available > 1 && (
-              <div className="upd-qty-row">
-                <div className="upd-qty" role="group" aria-label="Quantity">
-                  <button
-                    type="button"
-                    onClick={() => setQty((n) => Math.max(1, n - 1))}
-                    disabled={qty <= 1}
-                    aria-label="Decrease quantity"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <output aria-live="polite">{qty}</output>
-                  <button
-                    type="button"
-                    onClick={() => setQty((n) => Math.min(maxQty, n + 1))}
-                    disabled={qty >= maxQty}
-                    aria-label="Increase quantity"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-                <span>
-                  {stock.available <= 2
-                    ? `Only ${stock.available} left`
-                    : `${stock.available} available`}{" "}
-                  · Subtotal <b>{formatPrice(item.price * qty)}</b>
-                </span>
-              </div>
-            )}
-
-            <div className="upd-actions">
-              <button
-                type="button"
-                className="upd-primary"
-                onClick={buyNow}
-                disabled={!buyable}
-              >
-                <Zap size={15} /> Buy now
-              </button>
-              <button
-                type="button"
-                className="upd-secondary"
-                onClick={addCart}
-                disabled={!buyable}
-              >
-                <ShoppingBag size={15} />{" "}
-                {inCart ? "Add one more" : "Add to cart"}
-              </button>
-            </div>
-            {inCart && (
-              <button
-                type="button"
-                className="upd-incart"
-                onClick={() => navigate("/user-cart")}
-              >
-                Already in your cart · View cart →
-              </button>
-            )}
-            <p className="upd-trust">
-              <i className="bi bi-shield-check" /> Secure checkout <span />{" "}
-              <i className="bi bi-arrow-repeat" /> Circular purchase
-            </p>
-            <div className="upd-report">
-              <ReportButton
-                type="Product"
-                label="Report this listing"
-                file={fileComplaint}
-                target={{
-                  name: item.title,
-                  sub: `${item.seller} · ${item.sellerType === "remaker" ? "ReMaker" : "User"}`,
-                  image: item.image,
-                  ownerName: item.seller,
-                  ownerRole: item.sellerType === "remaker" ? "ReMaker" : "User",
-                  price: item.price,
-                  category: item.category,
-                }}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="upd-seller-card">
-          <button
-            type="button"
-            className="upd-seller-main"
-            onClick={openSeller}
-          >
-            <span className="upd-seller-avatar">
-              <ImageWithFallback
-                src={seller?.image || item.sellerImage}
-                alt={item.seller}
-              />
-              <b>{getInitials(item.seller)}</b>
-            </span>
-            <span>
-              <small>
-                {sellerIsRemaker ? "Verified ReMaker" : "Community seller"}
-              </small>
-              <strong>
-                {item.seller}{" "}
-                {sellerIsRemaker && <i className="bi bi-patch-check-fill" />}
-              </strong>
-              <em>
-                <i className="bi bi-geo-alt" /> {item.city} ·{" "}
-                {seller?.productsCount || seller?.productsSold || 0}{" "}
-                {sellerIsRemaker ? "pieces listed" : "sales"}
-              </em>
-            </span>
-          </button>
-          <div className="upd-seller-metrics">
-            <div>
-              <small>Rating</small>
-              <strong>
-                <i className="bi bi-star-fill" /> {item.sellerRating}
-              </strong>
-            </div>
-            <div>
-              <small>Reviews</small>
-              <strong>{seller?.totalReviews || reviews.length}</strong>
-            </div>
-            <div>
-              <small>Listed</small>
-              <strong>{item.listedDate}</strong>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="upd-seller-button"
-            onClick={openSeller}
-          >
-            View profile <i className="bi bi-arrow-up-right" />
-          </button>
-        </section>
-
-        <section className="upd-details">
-          <nav className="upd-tabs">
-            <button
-              type="button"
-              className={activeTab === "details" ? "active" : ""}
-              onClick={() => setActiveTab("details")}
-            >
-              Details
-            </button>
-            <button
-              type="button"
-              className={activeTab === "story" ? "active" : ""}
-              onClick={() => setActiveTab("story")}
-            >
-              Item story
-            </button>
-            <button
-              type="button"
-              className={activeTab === "reviews" ? "active" : ""}
-              onClick={() => setActiveTab("reviews")}
-            >
-              Reviews <span>{reviews.length}</span>
-            </button>
-          </nav>
-
-          {activeTab === "details" && (
-            <div className="upd-detail-layout">
-              <div>
-                <span className="upd-kicker">About this piece</span>
-                <h2>Made to stay useful.</h2>
-                <p className="upd-long-copy">{item.description}</p>
-                <div className="upd-stat-grid">
-                  <Stat
-                    icon="bi-box-seam"
-                    label="Availability"
-                    value={
-                      item.quantity > 1
-                        ? `${item.quantity} available`
-                        : "1 available"
-                    }
-                  />
-                  <Stat icon="bi-eye" label="Views" value={item.views} />
-                  <Stat icon="bi-heart" label="Saves" value={item.likes} />
-                  <Stat
-                    icon="bi-calendar3"
-                    label="Listed"
-                    value={item.listedDate}
-                  />
-                </div>
-              </div>
-              <div className="upd-spec-card">
-                <span className="upd-kicker">At a glance</span>
-                <div>
-                  <small>Category</small>
-                  <strong>{item.category}</strong>
-                </div>
-                <div>
-                  <small>Condition</small>
-                  <strong>{item.condition}</strong>
-                </div>
-                <div>
-                  <small>Location</small>
-                  <strong>{item.city}</strong>
-                </div>
-                <div>
-                  <small>Impact</small>
-                  <strong>{item.co2SavedKg} kg CO₂ saved</strong>
-                </div>
-                <div>
-                  <small>Seller</small>
-                  <strong>
-                    {sellerIsRemaker ? "Verified ReMaker" : "Community seller"}
-                  </strong>
-                </div>
-              </div>
+              <small>{stock.available <= 2 ? `Only ${stock.available} left` : `${stock.available} available`}</small>
             </div>
           )}
 
-          {activeTab === "story" && (
-            <div className="upd-story">
-              <div className="upd-story-mark">
-                <i className="bi bi-arrow-repeat" />
-              </div>
-              <div>
-                <span className="upd-kicker">The ReOrbit idea</span>
-                <h2>Keep the useful things moving.</h2>
-                <p>{item.description}</p>
-                <p>
-                  This listing keeps an existing product in use, helping extend
-                  its useful life instead of creating demand for a new
-                  replacement. The seller has shared the condition and location
-                  so the next owner can make an informed choice.
-                </p>
-                <div className="upd-story-points">
-                  <span>
-                    <i className="bi bi-check2-circle" /> Existing item
-                  </span>
-                  <span>
-                    <i className="bi bi-check2-circle" /> Community listed
-                  </span>
-                  <span>
-                    <i className="bi bi-check2-circle" /> {item.co2SavedKg} kg
-                    estimated impact
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="pd-actions">
+            <button type="button" className="dn-btn pd-buy" disabled={!buyable} onClick={buyNow}><Zap size={16} /> Buy now</button>
+            <button type="button" className="dn-btn dn-btn--ghost" disabled={!buyable} onClick={addCart}><ShoppingBag size={16} /> {inCart ? "Add one more" : "Add to cart"}</button>
+          </div>
+          <div className="pd-actions sub">
+            <MessageButton target={sellerChat(item)} label={isMaker ? "Message the ReMaker" : "Message the seller"} />
+            <ReportButton
+              type="Product"
+              label="Report this listing"
+              file={fileComplaint}
+              target={{ name: item.title, sub: `${item.seller} · ${isMaker ? "ReMaker" : "User"}`, image: item.image, ownerName: item.seller, ownerRole: isMaker ? "ReMaker" : "User", price: item.price, category: item.category }}
+            />
+          </div>
+        </div>
+      </section>
 
-          {activeTab === "reviews" && (
-            <div className="upd-review-layout">
-              <div className="upd-review-summary">
-                <strong>{item.sellerRating}</strong>
-                <Stars rating={item.sellerRating} />
-                <span>seller rating</span>
-                <p>
-                  Based on {seller?.totalReviews || reviews.length} community
-                  reviews.
-                </p>
-              </div>
-              <div className="upd-review-list">
-                {reviews.length ? (
-                  reviews.map((review) => (
-                    <article key={review.id}>
-                      <div>
-                        <strong>{review.name}</strong>
-                        <Stars rating={review.rating} />
-                      </div>
-                      <time>{review.date}</time>
-                      <p>{review.text}</p>
-                      <ReportButton
-                        type="Review"
-                        label="Report review"
-                        file={fileComplaint}
-                        target={{
-                          name: `${review.name}’s review`,
-                          sub: `On ${item.seller} · ${review.rating}★`,
-                          reviewer: review.name,
-                          onProduct: item.title,
-                          rating: review.rating,
-                          text: review.text,
-                          ownerName: item.seller,
-                          ownerRole:
-                            item.sellerType === "remaker" ? "ReMaker" : "User",
-                        }}
-                      />
-                    </article>
-                  ))
-                ) : (
-                  <div className="upd-empty">
-                    <i className="bi bi-chat-square-text" />
-                    <h3>No reviews yet</h3>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
+      <section className="pd-seller">
+        <SafeImage src={item.sellerImage} alt="" />
+        <div className="pd-seller-id">
+          <small>{isMaker ? "ReMaker" : "Community seller"}</small>
+          <strong>{item.seller} {isMaker && <BadgeCheck size={15} />}</strong>
+          <span>{item.city}</span>
+        </div>
+        <dl>
+          <div><dt>Rating</dt><dd><Star size={12} fill="currentColor" /> {item.sellerRating}</dd></div>
+          <div><dt>Reviews</dt><dd>{seller?.totalReviews || reviews.length}</dd></div>
+          <div><dt>Listed</dt><dd>{item.listedDate}</dd></div>
+        </dl>
+        <Link to={sellerPath} className="dn-btn dn-btn--ghost">View profile</Link>
+      </section>
 
-        {related.length > 0 && (
-          <section className="upd-related">
-            <div className="upd-section-head">
-              <div>
-                <span className="upd-kicker">From the same orbit</span>
-                <h2>More from {item.seller}</h2>
-              </div>
-              <button type="button" onClick={openSeller}>
-                View seller <i className="bi bi-arrow-right" />
-              </button>
-            </div>
-            <div className="upd-related-grid">
-              {related.map((product) => (
-                <button
-                  type="button"
-                  className="upd-related-card"
-                  key={product.id}
-                  onClick={() => openProduct(product.id)}
-                >
-                  <div>
-                    <ImageWithFallback
-                      src={product.image}
-                      alt={product.title}
-                    />
-                    <span>{product.condition}</span>
-                  </div>
-                  <section>
-                    <small>{product.category}</small>
-                    <h3>{product.title}</h3>
-                    <strong>{formatPrice(product.price)}</strong>
-                  </section>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+      <div className="pd-tabs" role="tablist">
+        {[["details", "Details"], ["reviews", `Reviews (${reviews.length})`]].map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
+        ))}
       </div>
 
-      {cartMessage && (
-        <div className="upd-toast">
-          <span>
-            <i className="bi bi-check2" />
-          </span>
+      {tab === "details" ? (
+        <section className="pd-details">
           <div>
-            <strong>Added to your cart</strong>
-            <small>{item.title} is ready for checkout.</small>
+            <h2>About this piece</h2>
+            <p>{item.description}</p>
+            <div className="pd-stats">
+              <div><Boxes size={16} /><small>Availability</small><b>{item.quantity > 1 ? `${item.quantity} available` : "1 available"}</b></div>
+              <div><Eye size={16} /><small>Views</small><b>{item.views}</b></div>
+              <div><Heart size={16} /><small>Saves</small><b>{item.likes}</b></div>
+            </div>
           </div>
-          <button
-            type="button"
-            className="upd-toast-link"
-            onClick={() => navigate("/user-cart")}
-          >
-            View cart
-          </button>
-          <button type="button" onClick={() => setCartMessage(false)}>
-            <i className="bi bi-x-lg" />
-          </button>
-        </div>
+          <dl className="pd-glance">
+            <h3>At a glance</h3>
+            <div><dt>Category</dt><dd>{item.category}</dd></div>
+            <div><dt>Condition</dt><dd>{item.condition}</dd></div>
+            <div><dt>Location</dt><dd>{item.city}</dd></div>
+            <div><dt>Impact</dt><dd>{item.co2SavedKg} kg CO₂ saved</dd></div>
+            <div><dt>Seller</dt><dd>{isMaker ? "ReMaker" : "Community seller"}</dd></div>
+          </dl>
+        </section>
+      ) : (
+        <section className="pd-reviews">
+          {reviews.length ? reviews.map((r) => (
+            <article key={r.id}>
+              <div><strong>{r.name}</strong><Stars rating={r.rating} /><time>{r.date}</time></div>
+              <p>{r.text}</p>
+              <ReportButton
+                type="Review"
+                label="Report review"
+                file={fileComplaint}
+                target={{ name: `${r.name}’s review`, sub: `On ${item.seller} · ${r.rating}★`, reviewer: r.name, onProduct: item.title, rating: r.rating, text: r.text, ownerName: item.seller, ownerRole: isMaker ? "ReMaker" : "User" }}
+              />
+            </article>
+          )) : <p className="pd-none">No reviews for this seller yet.</p>}
+        </section>
       )}
-    </main>
+
+      {related.length > 0 && (
+        <section className="pd-related">
+          <h2>More from {item.seller}</h2>
+          <div>
+            {related.map((p) => (
+              <button type="button" key={p.id} onClick={() => { navigate(`/user-marketplace/product/${p.id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                <SafeImage src={p.image} alt="" />
+                <span>{p.title}</span>
+                <b>{formatPrice(p.price)}</b>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {toast && <div className="pd-toast" role="status"><ShoppingBag size={15} /> Added to cart <button type="button" onClick={() => navigate("/user-cart")}>View cart</button></div>}
+    </div>
   );
 }

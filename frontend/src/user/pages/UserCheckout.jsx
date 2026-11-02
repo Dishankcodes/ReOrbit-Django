@@ -75,7 +75,7 @@ export default function UserCheckout() {
     price: 2800,
     quantity: 1,
     image:
-      "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=700&q=80",
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
   };
 
   const subtotal = useMemo(

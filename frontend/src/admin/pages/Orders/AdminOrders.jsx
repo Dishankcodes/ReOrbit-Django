@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -131,6 +132,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminOrders() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const orders = useOrders();
   const { toast, toastNode } = useToast();
@@ -561,7 +563,8 @@ export default function AdminOrders() {
           </div>
         )}
 
-        {rows.length > 0 && (
+        {loading && <SkeletonTable rows={8} cols={6} />}
+        {!loading && rows.length > 0 && (
           <div className="au-table-wrap">
             <table className="au-table ao-table">
               <thead>
@@ -681,7 +684,7 @@ export default function AdminOrders() {
           </div>
         )}
 
-        {rows.length === 0 && (
+        {!loading && rows.length === 0 && (
           <EmptyState
             icon={SearchX}
             title="No orders match your filters"

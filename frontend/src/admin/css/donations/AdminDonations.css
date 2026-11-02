@@ -149,7 +149,7 @@
   justify-content: flex-end;
   padding-top: 12px;
 }
-.dn-link {
+.adn-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -160,7 +160,7 @@
   font-weight: 700;
   cursor: pointer;
 }
-.dn-link:hover {
+.adn-link:hover {
   text-decoration: underline;
 }
 .dn-allclear {
@@ -200,22 +200,22 @@
   background: #fbe9e9;
   color: #a24545;
 }
-.dn-cond {
+.adn-cond {
   display: inline-block;
   padding: 2px 9px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
 }
-.dn-cond.good {
+.adn-cond.good {
   background: #e8f4ed;
   color: #2f7a57;
 }
-.dn-cond.medium {
+.adn-cond.medium {
   background: #fbf3df;
   color: #94701c;
 }
-.dn-cond.worst {
+.adn-cond.worst {
   background: #fbe9e9;
   color: #a24545;
 }
@@ -401,7 +401,7 @@
   vertical-align: -2px;
   margin-right: 4px;
 }
-.dn-cert .aup-card-head svg {
+.adn-cert .aup-card-head svg {
   color: #94701c;
 }
 

@@ -151,7 +151,7 @@ export default function AdminHome() {
           <div className="hero-image-container">
             <div className="hero-image-wrapper">
               <img
-                src="https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?auto=format&fit=crop&q=80&w=800"
+                src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000"
                 alt="ReOrbit administration workspace"
                 className="hero-img"
               />

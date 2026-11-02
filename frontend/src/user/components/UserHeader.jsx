@@ -73,6 +73,11 @@ const pageInformation = {
     subtitle: "Manage your account and preferences.",
   },
 
+  "/user-messages": {
+    title: "Messages",
+    subtitle: "Chat with sellers, buyers, ReMakers and ReOrbit.",
+  },
+
   "/user-notifications": {
     title: "Notifications",
     subtitle: "Stay up to date with your ReOrbit activity.",
@@ -193,6 +198,19 @@ function getMorePages(pathname) {
       };
     return { title: "Ticket Details", subtitle: "Conversation and status." };
   }
+  return null;
+}
+
+/* Titles for marketplace detail pages, chats and other nested routes. */
+function getBrowsePage(pathname) {
+  if (pathname.startsWith("/user-marketplace/product/"))
+    return { title: "Product Details", subtitle: "Look closely, then give it a new home." };
+  if (pathname.startsWith("/user-marketplace/seller/"))
+    return { title: "Seller Profile", subtitle: "Their listings, reviews and story." };
+  if (pathname.startsWith("/user-marketplace/remaker/"))
+    return { title: "ReMaker Profile", subtitle: "Studio, portfolio and pieces for sale." };
+  if (pathname.startsWith("/user-messages/"))
+    return { title: "Messages", subtitle: "Chat with sellers, buyers, ReMakers and ReOrbit." };
   return null;
 }
 
@@ -333,6 +351,7 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
   const currentPage = pageInformation[location.pathname] ||
     getDonationPage(location.pathname) ||
     getOrderPage(location.pathname) ||
+    getBrowsePage(location.pathname) ||
     getMorePages(location.pathname) || {
       title: "ReOrbit",
       subtitle: "Reuse, recreate and reimagine your everyday items.",

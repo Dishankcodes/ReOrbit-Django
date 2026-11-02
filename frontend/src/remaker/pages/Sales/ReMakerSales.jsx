@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
@@ -34,6 +35,7 @@ const TABS = [
 ];
 
 export default function ReMakerSales() {
+  const loading = useLoading(450);
   const orders = useSales();
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -75,10 +77,10 @@ export default function ReMakerSales() {
           <div className="rod-empty-art" aria-hidden="true">
             <img
               className="a"
-              src="/images/portfolio/tara-console.jpg"
+              src="https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000"
               alt=""
             />
-            <img className="b" src="/images/portfolio/arjun-lamp.jpg" alt="" />
+            <img className="b" src="https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
           </div>
           <h2>No sales yet</h2>
           <p>
@@ -165,7 +167,9 @@ export default function ReMakerSales() {
         </label>
       </div>
 
-      {visible.length === 0 ? (
+      {loading ? (
+          <SkeletonRows count={5} />
+        ) : visible.length === 0 ? (
         <div className="rod-empty small">
           <h2>No orders match</h2>
           <p>Try a different tab, or clear your search.</p>

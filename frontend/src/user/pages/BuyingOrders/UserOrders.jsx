@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -44,6 +45,7 @@ const SORTS = {
 };
 
 export default function UserOrders() {
+  const loading = useLoading(450);
   const orders = useOrders();
 
   const [tab, setTab] = useState("All");
@@ -218,7 +220,9 @@ export default function UserOrders() {
         </div>
       </section>
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <SkeletonRows count={5} />
+      ) : orders.length === 0 ? (
         <EmptyState
           icon={PackageOpen}
           title="No orders yet"

@@ -267,15 +267,9 @@ function Report({ order }) {
     if (topic === "item" || topic === "seller") {
       const seller = topic === "seller";
       fileComplaint({
-        type: seller
-          ? order.sellerType === "remaker"
-            ? "ReMaker"
-            : "User"
-          : "Product",
+        type: seller ? (order.sellerType === "remaker" ? "ReMaker" : "User") : "Product",
         name: seller ? order.sellerName : order.title,
-        sub: seller
-          ? `${order.sellerCity || ""} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}`
-          : `${order.sellerName} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}`,
+        sub: seller ? `${order.sellerCity || ""} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}` : `${order.sellerName} · ${order.sellerType === "remaker" ? "ReMaker" : "User"}`,
         image: seller ? null : order.image,
         ownerName: order.sellerName,
         ownerRole: order.sellerType === "remaker" ? "ReMaker" : "User",
@@ -422,7 +416,7 @@ function Report({ order }) {
                       className="rod-photo-add"
                       onClick={() => fileRef.current?.click()}
                     >
-                      <img src="/images/products/default-item.jpg" alt="" />
+                      <img src="https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
                       <b>Add photo</b>
                     </button>
                   )}

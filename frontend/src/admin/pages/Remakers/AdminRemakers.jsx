@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -114,6 +115,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminRemakers() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const remakers = useRemakers();
   const { toast, toastNode } = useToast();
@@ -442,7 +444,9 @@ export default function AdminRemakers() {
           </div>
         )}
 
-        {view === "table" && rows.length > 0 && (
+        {loading && <SkeletonTable rows={8} cols={6} />}
+
+        {!loading && view === "table" && rows.length > 0 && (
           <div className="au-table-wrap">
             <table className="au-table">
               <thead>
@@ -555,7 +559,7 @@ export default function AdminRemakers() {
           </div>
         )}
 
-        {rows.length === 0 && (
+        {!loading && rows.length === 0 && (
           <EmptyState
             icon={SearchX}
             title="No ReMakers match your filters"

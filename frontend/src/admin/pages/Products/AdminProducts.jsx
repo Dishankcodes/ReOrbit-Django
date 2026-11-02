@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -108,6 +109,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminProducts() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const products = useProducts();
   const { toast, toastNode } = useToast();
@@ -390,7 +392,8 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {view === "table" && rows.length > 0 && (
+        {loading && <SkeletonTable rows={8} cols={6} />}
+        {!loading && view === "table" && rows.length > 0 && (
           <div className="au-table-wrap">
             <table className="au-table ap-table">
               <thead>
@@ -502,7 +505,7 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {view === "grid" && rows.length > 0 && (
+        {!loading && view === "grid" && rows.length > 0 && (
           <div className="ap-grid">
             {rows.map((p) => (
               <article
@@ -562,7 +565,7 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {rows.length === 0 && (
+        {!loading && rows.length === 0 && (
           <EmptyState
             icon={SearchX}
             title="No listings match your filters"

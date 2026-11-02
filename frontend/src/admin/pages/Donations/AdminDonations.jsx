@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -123,6 +124,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminDonations() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const donations = useDonations();
   const { toast, toastNode } = useToast();
@@ -371,7 +373,7 @@ export default function AdminDonations() {
             ))}
           </ul>
           <footer className="dn-queue-foot">
-            <button type="button" className="dn-link" onClick={showQueue}>
+            <button type="button" className="adn-link" onClick={showQueue}>
               Review all {queue.length} pending donations{" "}
               <ArrowRight size={14} />
             </button>
@@ -576,7 +578,9 @@ export default function AdminDonations() {
           </div>
         )}
 
-        {rows.length > 0 && (
+        {loading && <SkeletonTable rows={8} cols={6} />}
+
+        {!loading && rows.length > 0 && (
           <div className="au-table-wrap">
             <table className="au-table dn-table">
               <thead>
@@ -703,7 +707,7 @@ export default function AdminDonations() {
           </div>
         )}
 
-        {rows.length === 0 && (
+        {!loading && rows.length === 0 && (
           <EmptyState
             icon={SearchX}
             title="No donations match your filters"

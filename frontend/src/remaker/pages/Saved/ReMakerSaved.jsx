@@ -84,8 +84,8 @@ export default function ReMakerSaved() {
       <section className="rk sav">
         <div className="rk-empty">
           <div className="rk-empty-art" aria-hidden="true">
-            <img src="/images/products/teak-drawer-chest.jpg" alt="" />
-            <img src="/images/products/ceramic-lamp.jpg" alt="" />
+            <img src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img src="https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
           </div>
           <h3>Nothing saved yet</h3>
           <p>

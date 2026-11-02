@@ -50,7 +50,7 @@ export function SaleNotFound() {
         <div className="rod-empty-art single" aria-hidden="true">
           <img
             className="a"
-            src="/images/portfolio/before-tara-chair.jpg"
+            src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"
             alt=""
           />
         </div>

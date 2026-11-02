@@ -14,7 +14,7 @@ const materials = [
     description:
       "Clean reclaimed wooden panels suitable for furniture, shelves, decor and small restoration projects.",
     image:
-      "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ const materials = [
     description:
       "Old chair frames available for repair, redesign and creative furniture projects.",
     image:
-      "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 3,
@@ -40,7 +40,7 @@ const materials = [
     description:
       "Reusable glass containers that can be transformed into lighting, storage and decorative pieces.",
     image:
-      "https://images.unsplash.com/photo-1606913419161-1e3f3b0b8c84?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 4,
@@ -53,7 +53,7 @@ const materials = [
     description:
       "Recovered handles, brackets, hinges and other hardware for restoration and new creations.",
     image:
-      "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/9316208/pexels-photo-9316208.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 5,
@@ -66,7 +66,7 @@ const materials = [
     description:
       "Fabric remnants suitable for cushions, bags, patchwork, soft furnishings and creative projects.",
     image:
-      "https://images.unsplash.com/photo-1528459105426-b9548367069b?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 6,
@@ -79,7 +79,7 @@ const materials = [
     description:
       "Recovered drawers that can become shelves, planters, storage units or decorative installations.",
     image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 7,
@@ -92,7 +92,7 @@ const materials = [
     description:
       "Recovered components and parts intended for repair, experimentation and creative reuse.",
     image:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
   {
     id: 8,
@@ -105,7 +105,7 @@ const materials = [
     description:
       "Recovered ceramic pieces that can be incorporated into mosaics, decor and artistic projects.",
     image:
-      "https://images.unsplash.com/photo-1493106819501-66d381c466f1?auto=format&fit=crop&w=1000&q=85",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
   },
 ];
 
@@ -1159,7 +1159,7 @@ export default function ReMakerBeforeMarketplace() {
                 <div className="rbm-hero-image-wrap">
                   <div className="rbm-hero-image">
                     <img
-                      src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1400&q=85"
+                      src="https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000"
                       alt="Creative materials and reusable objects"
                     />
                   </div>

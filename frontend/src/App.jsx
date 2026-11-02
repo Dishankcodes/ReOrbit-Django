@@ -123,6 +123,7 @@ import AdminLogin from "./admin/pages/Auth/AdminLogin";
 import AdminHome from "./admin/pages/HomePages/AdminHome";
 import AdminAbout from "./admin/pages/HomePages/AdminAbout";
 import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
+import UserMessages from "./user/pages/Messages/UserMessages";
 import AdminDashboard from "./admin/pages/Dashboard";
 
 /* Admin management pages */
@@ -292,6 +293,8 @@ export default function App() {
         <Route path="/user-badges/:badgeId" element={<UserBadgeDetail />} />
 
         <Route path="/user-notifications" element={<UserNotifications />} />
+        <Route path="/user-messages" element={<UserMessages />} />
+        <Route path="/user-messages/:id" element={<UserMessages />} />
         <Route path="/user-sell" element={<UserSell />} />
         <Route path="/user-sell/new" element={<UserSellForm />} />
         <Route path="/user-sell/sales" element={<UserSales />} />

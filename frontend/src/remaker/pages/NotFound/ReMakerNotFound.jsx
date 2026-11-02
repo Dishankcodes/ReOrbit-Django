@@ -30,8 +30,8 @@ export default function ReMakerNotFound() {
   return (
     <main className="rk nf">
       <div className="nf-art" aria-hidden="true">
-        <img src="/images/portfolio/before-tara-chair.jpg" alt="" />
-        <img src="/images/portfolio/tara-chair.jpg" alt="" />
+        <img src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+        <img src="https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
       </div>
 
       <p className="nf-code">404</p>

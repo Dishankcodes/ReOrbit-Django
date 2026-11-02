@@ -55,7 +55,7 @@ export default function UserNotifications() {
 
   return (
     <div className="dn nt">
-      <header className="nt-head">
+      <header className="unt-head">
         <div>
           <span className="dn-eyebrow">Activity</span>
           <h1>Notifications</h1>
@@ -64,7 +64,7 @@ export default function UserNotifications() {
             14 days
           </p>
         </div>
-        <div className="nt-head-actions">
+        <div className="unt-head-actions">
           <button
             type="button"
             className="dn-btn dn-btn--ghost"
@@ -83,8 +83,8 @@ export default function UserNotifications() {
         </div>
       </header>
 
-      <div className="nt-tools">
-        <div className="nt-chips" role="tablist">
+      <div className="unt-tools">
+        <div className="unt-chips" role="tablist">
           <button
             type="button"
             role="tab"
@@ -107,7 +107,7 @@ export default function UserNotifications() {
             </button>
           ))}
         </div>
-        <label className="nt-check">
+        <label className="unt-check">
           <input
             type="checkbox"
             checked={onlyUnread}
@@ -128,17 +128,17 @@ export default function UserNotifications() {
           }
         />
       ) : (
-        <div className="dn-card nt-list">
+        <div className="dn-card unt-list">
           {rows.map((n) => {
             const Icon = ICON[n.type] || Gift;
             return (
               <button
                 key={n.id}
                 type="button"
-                className={`nt-item ${n.read ? "" : "unread"}`}
+                className={`unt-item ${n.read ? "" : "unread"}`}
                 onClick={() => open(n)}
               >
-                <span className="nt-icon">
+                <span className="unt-icon">
                   <Icon size={18} />
                 </span>
                 <div>
@@ -146,7 +146,7 @@ export default function UserNotifications() {
                   <p>{n.message}</p>
                 </div>
                 <time title={formatDateTime(n.at)}>{relativeDay(n.at)}</time>
-                {!n.read && <i className="nt-dot" aria-label="Unread" />}
+                {!n.read && <i className="unt-dot" aria-label="Unread" />}
               </button>
             );
           })}

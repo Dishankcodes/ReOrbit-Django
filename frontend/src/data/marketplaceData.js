@@ -130,21 +130,21 @@ export const REMAKERS = [
       {
         id: "tara-portfolio-1",
         title: "Restored Teak Cabinet",
-        image: "/images/portfolio/tara-teak-cabinet.jpg",
+        image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A rescued teak cabinet restored while preserving its original character.",
       },
       {
         id: "tara-portfolio-2",
         title: "Vintage Chair Restoration",
-        image: "/images/portfolio/tara-chair.jpg",
+        image: "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A damaged vintage chair transformed into a functional statement piece.",
       },
       {
         id: "tara-portfolio-3",
         title: "Reclaimed Wood Console",
-        image: "/images/portfolio/tara-console.jpg",
+        image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A console created using reclaimed wood from an old structure.",
       },
@@ -172,20 +172,20 @@ export const REMAKERS = [
       {
         id: "arjun-portfolio-1",
         title: "Reclaimed Wood Shelf",
-        image: "/images/portfolio/arjun-shelf.jpg",
+        image: "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A minimal wall shelf made from recovered wood.",
       },
       {
         id: "arjun-portfolio-2",
         title: "Upcycled Lamp",
-        image: "/images/portfolio/arjun-lamp.jpg",
+        image: "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "An old industrial component transformed into a modern lamp.",
       },
       {
         id: "arjun-portfolio-3",
         title: "Recycled Metal Decor",
-        image: "/images/portfolio/arjun-metal.jpg",
+        image: "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "Decorative artwork made using recovered metal pieces.",
       },
     ],
@@ -212,19 +212,19 @@ export const REMAKERS = [
       {
         id: "priya-portfolio-1",
         title: "Recovered Textile Bag",
-        image: "/images/portfolio/priya-bag.jpg",
+        image: "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A lifestyle bag made from recovered textile material.",
       },
       {
         id: "priya-portfolio-2",
         title: "Patchwork Jacket",
-        image: "/images/portfolio/priya-jacket.jpg",
+        image: "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A unique jacket created from leftover textile pieces.",
       },
       {
         id: "priya-portfolio-3",
         title: "Textile Home Collection",
-        image: "/images/portfolio/priya-home.jpg",
+        image: "https://images.pexels.com/photos/8266834/pexels-photo-8266834.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A collection of home accessories created from discarded fabrics.",
       },
@@ -238,7 +238,7 @@ export const ITEMS = [
     title: "Teak drawer chest, 1970s",
     category: "Furniture",
     price: 4200,
-    image: "/images/products/teak-drawer-chest.jpg",
+    image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Solid teak four-drawer chest with original brass pulls. Sun-faded top panel, structurally sound.",
     description:
@@ -262,7 +262,7 @@ export const ITEMS = [
     title: "Vintage reading chair",
     category: "Furniture",
     price: 2800,
-    image: "/images/products/vintage-chair.jpg",
+    image: "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A classic wooden reading chair with a restored frame and freshly finished seat.",
     description:
@@ -286,7 +286,7 @@ export const ITEMS = [
     title: "Handmade ceramic table lamp",
     category: "Home Decor",
     price: 1650,
-    image: "/images/products/ceramic-lamp.jpg",
+    image: "https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Warm ceramic table lamp with a handmade textured base and carefully restored wiring.",
     description:
@@ -310,7 +310,7 @@ export const ITEMS = [
     title: "Solid wood side table",
     category: "Furniture",
     price: 2200,
-    image: "/images/products/wooden-table.jpg",
+    image: "https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Compact solid-wood side table with natural grain, restored legs, and a smooth finish.",
     description:
@@ -334,7 +334,7 @@ export const ITEMS = [
     title: "Refurbished desk lamp",
     category: "Electronics",
     price: 950,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/33375682/pexels-photo-33375682.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Compact desk lamp cleaned, tested, and refurbished for everyday workspace use.",
     description:
@@ -358,7 +358,7 @@ export const ITEMS = [
     title: "Upcycled cotton jacket",
     category: "Clothing",
     price: 1450,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A comfortable cotton jacket created using recovered textile material and careful stitching.",
     description:
@@ -382,7 +382,7 @@ export const ITEMS = [
     title: "Classic novel collection",
     category: "Books",
     price: 750,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/16009657/pexels-photo-16009657.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "A curated collection of classic novels looking for a new bookshelf and reader.",
     description:
@@ -406,7 +406,7 @@ export const ITEMS = [
     title: "Reclaimed wood wall decor",
     category: "Home Decor",
     price: 1250,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/7055956/pexels-photo-7055956.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Decorative wall piece made from reclaimed wood with a natural finish and minimal design.",
     description:
@@ -430,7 +430,7 @@ export const ITEMS = [
     title: "Restored teak cabinet",
     category: "Furniture",
     price: 6800,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Vintage teak cabinet carefully restored while preserving its original character.",
     description:
@@ -454,7 +454,7 @@ export const ITEMS = [
     title: "Reclaimed wood wall shelf",
     category: "Home Decor",
     price: 1850,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Minimal wall shelf made from recovered wood with a natural handcrafted finish.",
     description:
@@ -478,7 +478,7 @@ export const ITEMS = [
     title: "Upcycled industrial lamp",
     category: "Home Decor",
     price: 2450,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary:
       "Industrial-style lamp created by transforming recovered materials into a functional light.",
     description:
@@ -502,7 +502,7 @@ export const ITEMS = [
     title: "Recovered textile lifestyle bag",
     category: "Clothing",
     price: 1200,
-    image: "/images/products/default-item.jpg",
+    image: "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
     summary: "Durable lifestyle bag created from recovered textile material.",
     description:
       "A practical lifestyle bag created using recovered textiles. Each piece has its own unique material pattern.",
@@ -551,71 +551,23 @@ export const REVIEWS = {
   ],
 
   "user-aarav-patel": [
-    {
-      id: "review-11",
-      name: "Pooja",
-      rating: 5,
-      text: "Lovely lamp, well packed and exactly as shown.",
-      date: "2026-09-12",
-    },
-    {
-      id: "review-12",
-      name: "Harsh",
-      rating: 5,
-      text: "Quick replies and a smooth handover.",
-      date: "2026-08-28",
-    },
+    { id: "review-11", name: "Pooja", rating: 5, text: "Lovely lamp, well packed and exactly as shown.", date: "2026-09-12" },
+    { id: "review-12", name: "Harsh", rating: 5, text: "Quick replies and a smooth handover.", date: "2026-08-28" },
   ],
 
   "user-nisha-rao": [
-    {
-      id: "review-13",
-      name: "Kavya",
-      rating: 5,
-      text: "The side table is sturdy and the finish is lovely.",
-      date: "2026-09-06",
-    },
-    {
-      id: "review-14",
-      name: "Arnav",
-      rating: 4,
-      text: "Good seller, item matched the photos.",
-      date: "2026-08-14",
-    },
+    { id: "review-13", name: "Kavya", rating: 5, text: "The side table is sturdy and the finish is lovely.", date: "2026-09-06" },
+    { id: "review-14", name: "Arnav", rating: 4, text: "Good seller, item matched the photos.", date: "2026-08-14" },
   ],
 
   "user-kabir-verma": [
-    {
-      id: "review-15",
-      name: "Sana",
-      rating: 5,
-      text: "The refurbished lamp works perfectly. Great value.",
-      date: "2026-09-01",
-    },
-    {
-      id: "review-16",
-      name: "Tejas",
-      rating: 4,
-      text: "Honest description and careful packing.",
-      date: "2026-08-05",
-    },
+    { id: "review-15", name: "Sana", rating: 5, text: "The refurbished lamp works perfectly. Great value.", date: "2026-09-01" },
+    { id: "review-16", name: "Tejas", rating: 4, text: "Honest description and careful packing.", date: "2026-08-05" },
   ],
 
   "user-anaya-singh": [
-    {
-      id: "review-17",
-      name: "Ritika",
-      rating: 5,
-      text: "The jacket is beautifully finished. Very creative reuse of fabric.",
-      date: "2026-09-10",
-    },
-    {
-      id: "review-18",
-      name: "Dev",
-      rating: 5,
-      text: "Fast delivery and the quality is excellent.",
-      date: "2026-08-22",
-    },
+    { id: "review-17", name: "Ritika", rating: 5, text: "The jacket is beautifully finished. Very creative reuse of fabric.", date: "2026-09-10" },
+    { id: "review-18", name: "Dev", rating: 5, text: "Fast delivery and the quality is excellent.", date: "2026-08-22" },
   ],
 
   "tara-bose": [
@@ -724,10 +676,7 @@ export function getSellerFromItem(item) {
 const postedReviews = {};
 
 export function addSellerReview(sellerId, review) {
-  postedReviews[sellerId] = [
-    review,
-    ...(postedReviews[sellerId] || []).filter((r) => r.id !== review.id),
-  ];
+  postedReviews[sellerId] = [review, ...(postedReviews[sellerId] || []).filter((r) => r.id !== review.id)];
 }
 
 export function getSellerReviews(sellerId) {

@@ -28,6 +28,7 @@ function NoAccess({ moduleKey, onHome, isSuper }) {
     moduleKey === "team"
       ? "Team & Roles"
       : MODULES.find((m) => m.key === moduleKey)?.label || "this page";
+
   return (
     <div className="admin-noaccess">
       <span>
@@ -54,26 +55,65 @@ export default function AdminLayout({ children }) {
   const access = useAccess();
   const { toast, toastNode } = useToast();
   const mainRef = useRef(null);
+
   const [online, setOnline] = useState(() =>
     typeof navigator === "undefined" ? true : navigator.onLine !== false,
   );
   const [backOnline, setBackOnline] = useState(false);
 
+  /* Reset scroll whenever the admin navigates to another route.
+     Reset both the browser window and the page container, in case either
+     one is being used as the active scroll area. */
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+
+    const pageContent = document.querySelector(".admin-page-content");
+
+    if (pageContent) {
+      pageContent.scrollTop = 0;
+      pageContent.scrollLeft = 0;
+    }
+
+    // Apply the reset after the route's new content has had a chance to render.
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+
+      if (pageContent) {
+        pageContent.scrollTop = 0;
+        pageContent.scrollLeft = 0;
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname, location.search]);
+
   /* Tell people when the connection drops, and when it comes back. */
   useEffect(() => {
     let timer;
+
     const down = () => {
       setOnline(false);
       setBackOnline(false);
     };
+
     const up = () => {
       setOnline(true);
       setBackOnline(true);
       clearTimeout(timer);
       timer = setTimeout(() => setBackOnline(false), 3500);
     };
+
     window.addEventListener("offline", down);
     window.addEventListener("online", up);
+
     return () => {
       window.removeEventListener("offline", down);
       window.removeEventListener("online", up);
@@ -92,6 +132,7 @@ export default function AdminLayout({ children }) {
       setMobileSidebarOpen((current) => !current);
       return;
     }
+
     setSidebarCollapsed((current) => !current);
   };
 
@@ -103,10 +144,12 @@ export default function AdminLayout({ children }) {
   /* View-only: stop clicks that would change data. (Front-end guard only.) */
   useEffect(() => {
     if (!readOnly) return undefined;
+
     const guard = (event) => {
       const btn = event.target.closest?.("button");
       if (!btn || btn.closest("[data-safe], [role=tablist], .ad-modal-close"))
         return;
+
       const text = (
         btn.getAttribute("aria-label") ||
         btn.textContent ||
@@ -115,12 +158,14 @@ export default function AdminLayout({ children }) {
       const isMenuWrite =
         btn.getAttribute("role") === "menuitem" && !SAFE_MENU.test(text);
       const isVerb = WRITE_VERB.test(text) && !SAFE_LABEL.test(text);
+
       if (isMenuWrite || isVerb || btn.matches(WRITE_SELECTOR)) {
         event.preventDefault();
         event.stopPropagation();
         toast("View only. You don’t have edit access here.");
       }
     };
+
     document.addEventListener("click", guard, true);
     return () => document.removeEventListener("click", guard, true);
   }, [readOnly, toast]);
@@ -134,6 +179,7 @@ export default function AdminLayout({ children }) {
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={closeMobileSidebar}
       />
+
       {mobileSidebarOpen && (
         <button
           type="button"
@@ -142,11 +188,13 @@ export default function AdminLayout({ children }) {
           aria-label="Close navigation"
         />
       )}
+
       <div className="admin-layout-main">
         <AdminHeader
           onToggleSidebar={toggleSidebar}
           onCloseMobile={closeMobileSidebar}
         />
+
         {access.previewing && (
           <div className="admin-preview-bar" role="status">
             <Eye size={16} />
@@ -167,6 +215,7 @@ export default function AdminLayout({ children }) {
             </button>
           </div>
         )}
+
         {!online && (
           <div className="admin-net-bar is-offline" role="alert">
             <WifiOff size={16} />
@@ -176,6 +225,7 @@ export default function AdminLayout({ children }) {
             </span>
           </div>
         )}
+
         {online && backOnline && (
           <div className="admin-net-bar is-online" role="status">
             <span>
@@ -183,6 +233,7 @@ export default function AdminLayout({ children }) {
             </span>
           </div>
         )}
+
         <main className="admin-page-content" ref={mainRef}>
           {readOnly && (
             <div className="admin-readonly-bar" role="status">
@@ -194,6 +245,7 @@ export default function AdminLayout({ children }) {
               </span>
             </div>
           )}
+
           {blocked ? (
             <NoAccess
               moduleKey={moduleKey}
@@ -213,6 +265,7 @@ export default function AdminLayout({ children }) {
           )}
         </main>
       </div>
+
       {toastNode}
     </div>
   );

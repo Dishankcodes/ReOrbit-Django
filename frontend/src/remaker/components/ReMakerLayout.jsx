@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
 import ReMakerSidebar from "./ReMakerSidebar";
 import ReMakerHeader from "./ReMakerHeader";
@@ -13,7 +13,37 @@ import "./ReMakerLayout.css";
 export default function ReMakerLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const location = useLocation();
   const account = useRemakerAccountStatus();
+
+  // Reset scroll whenever the ReMaker navigates to another route.
+  useEffect(() => {
+    const resetScroll = () => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+
+      // Also reset the layout's scroll container, if it is scrollable.
+      const pageContent = document.querySelector(".remaker-page-content");
+
+      if (pageContent) {
+        pageContent.scrollTop = 0;
+        pageContent.scrollLeft = 0;
+      }
+    };
+
+    resetScroll();
+
+    // Run once more after the new route has rendered.
+    const frameId = window.requestAnimationFrame(resetScroll);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [location.pathname, location.search]);
 
   /* =========================================================
      SIDEBAR TOGGLE

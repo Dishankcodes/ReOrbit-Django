@@ -17,8 +17,18 @@ import {
   Leaf,
   X,
   ChevronRight,
+  MessageCircle,
+  Bell,
+  UserRound,
+  Palette,
+  ShoppingCart,
+  Ticket,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+
+import { useTotalUnread } from "../data/messagesStore";
+import { useNotifications } from "../data/notificationsStore";
+import { useCartCount } from "../data/shopStore";
 
 import "./UserSidebar.css";
 
@@ -44,13 +54,30 @@ const mainMenu = [
     icon: Heart,
   },
   {
+    label: "Cart",
+    path: "/user-cart",
+    icon: ShoppingCart,
+    badge: "cart",
+  },
+  {
     label: "Donations",
     path: "/user-donations",
     icon: Gift,
   },
+  {
+    label: "Messages",
+    path: "/user-messages",
+    icon: MessageCircle,
+    badge: "messages",
+  },
 ];
 
 const communityMenu = [
+  {
+    label: "ReMakers",
+    path: "/user-remakers",
+    icon: Palette,
+  },
   {
     label: "Following",
     path: "/user-following",
@@ -83,6 +110,11 @@ const rewardMenu = [
     icon: Star,
   },
   {
+    label: "Rewards & Vouchers",
+    path: "/user-orbit-points/vouchers",
+    icon: Ticket,
+  },
+  {
     label: "Badges",
     path: "/user-badges",
     icon: Trophy,
@@ -90,6 +122,17 @@ const rewardMenu = [
 ];
 
 const supportMenu = [
+  {
+    label: "Notifications",
+    path: "/user-notifications",
+    icon: Bell,
+    badge: "notifications",
+  },
+  {
+    label: "My Profile",
+    path: "/user-profile",
+    icon: UserRound,
+  },
   {
     label: "Settings",
     path: "/user-settings",
@@ -140,6 +183,10 @@ export default function UserSidebar({
   onCloseMobile,
 }) {
   const navigate = useNavigate();
+  const unreadMessages = useTotalUnread();
+  const unreadNotifications = useNotifications().unread;
+  const cartCount = useCartCount();
+  const counts = { messages: unreadMessages, notifications: unreadNotifications, cart: cartCount };
 
   const [user, setUser] = useState(() => getStoredUser());
 
@@ -185,22 +232,45 @@ export default function UserSidebar({
     }
   };
 
+  const { pathname } = useLocation();
+
+  /* Several menu items share a path prefix (My Listings / Add Product / Selling Orders,
+     Orbit Points / Rewards & Vouchers). Only the closest one is highlighted. */
+  const isItemActive = (item) => {
+    if (item.path === "/user-dashboard") return pathname === item.path;
+    if (item.path === "/user-sell")
+      return pathname === "/user-sell" || (pathname.startsWith("/user-sell/") && !/^\/user-sell\/(new|sales)/.test(pathname));
+    if (item.path === "/user-sell/new") return pathname === "/user-sell/new";
+    if (item.path === "/user-sell/sales") return pathname.startsWith("/user-sell/sales");
+    if (item.path === "/user-orbit-points")
+      return pathname.startsWith("/user-orbit-points") && !pathname.startsWith("/user-orbit-points/vouchers") && !pathname.startsWith("/user-orbit-points/rewards");
+    if (item.path === "/user-orbit-points/vouchers")
+      return pathname.startsWith("/user-orbit-points/vouchers") || pathname.startsWith("/user-orbit-points/rewards");
+    return pathname === item.path || pathname.startsWith(item.path + "/");
+  };
+
   const renderMenuItem = (item) => {
     const Icon = item.icon;
+    const active = isItemActive(item);
 
     return (
       <NavLink
         key={item.path}
         to={item.path}
         end={item.path === "/user-dashboard"}
-        className={({ isActive }) =>
-          `user-sidebar-link ${isActive ? "active" : ""}`
-        }
+        className={() => `user-sidebar-link ${active ? "active" : ""}`}
+        aria-current={active ? "page" : undefined}
         onClick={handleNavigation}
       >
         <Icon size={18} strokeWidth={1.8} className="user-sidebar-link-icon" />
 
         <span className="user-sidebar-link-text">{item.label}</span>
+
+        {counts[item.badge] > 0 && (
+          <span className="user-sidebar-count" aria-label={`${counts[item.badge]} unread`}>
+            {counts[item.badge] > 99 ? "99+" : counts[item.badge]}
+          </span>
+        )}
       </NavLink>
     );
   };

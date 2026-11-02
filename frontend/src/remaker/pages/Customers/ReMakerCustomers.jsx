@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
@@ -9,6 +10,7 @@ import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
 
 export default function ReMakerCustomers() {
+  const loading = useLoading(450);
   const customers = useCustomers();
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
@@ -110,7 +112,9 @@ export default function ReMakerCustomers() {
         </label>
       </div>
 
-      {list.length === 0 ? (
+      {loading ? (
+          <SkeletonRows count={5} />
+        ) : list.length === 0 ? (
         <div className="rod-empty small">
           <h2>No customers match</h2>
           <p>Try a different filter, or clear your search.</p>

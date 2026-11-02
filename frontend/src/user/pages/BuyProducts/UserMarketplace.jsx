@@ -1,205 +1,85 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ShoppingBag, Tag } from "lucide-react";
-import {
-  addToCart,
-  useCartCount,
-  useInCart,
-  useStockOf,
-} from "../../data/shopStore";
+import { Check, Heart, Leaf, MapPin, PackageSearch, Search, ShoppingBag, ShoppingCart, SlidersHorizontal, Sparkles, Star, BadgeCheck, Boxes, X } from "lucide-react";
+
+import { addToCart, useCartCount, useInCart, useStockOf } from "../../data/shopStore";
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
-import {
-  CONDITIONS,
-  IMPACT,
-  ITEMS,
-  REMAKERS,
-  formatPrice,
-} from "../../../data/marketplaceData";
+import { CONDITIONS, IMPACT, ITEMS, formatPrice } from "../../../data/marketplaceData";
 import { useCategoryNames } from "../../../shared/catalog";
-import "../../css/marketplace-css/UserMarketplace.css";
-import "../../css/marketplace-css/marketplace-icons.css";
-import "../../css/shop/marketplace-cart.css";
 import BannerSlot from "../../../shared/components/BannerSlot";
+import { SkeletonCards, useLoading } from "../../../shared/components/Skeleton";
+import SafeImage from "../../components/ui/SafeImage";
 
-const categoryIcons = {
-  Furniture: "bi-lamp",
-  Electronics: "bi-phone",
-  "Home Decor": "bi-house-heart",
-  Kitchen: "bi-cup-hot",
-  Fashion: "bi-handbag",
-  Clothing: "bi-bag-heart",
-  Books: "bi-book",
-  Sports: "bi-bicycle",
-  Lighting: "bi-lightbulb",
-  Other: "bi-grid",
-};
-const iconFor = (name) => categoryIcons[name] || "bi-tag";
+import "../../css/shared/ui-base.css";
+import "../../../shared/components/Skeleton.css";
+import "../../css/marketplace-css/UserMarketplaceV2.css";
 
-const getInitials = (name = "") =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+const SORTS = [
+  { key: "featured", label: "Featured" },
+  { key: "newest", label: "Newest first" },
+  { key: "price-low", label: "Price: low to high" },
+  { key: "price-high", label: "Price: high to low" },
+  { key: "rating", label: "Top rated sellers" },
+  { key: "co2", label: "Most CO₂ saved" },
+];
 
-function ImageWithFallback({ src, alt, className = "" }) {
-  const [failed, setFailed] = useState(false);
+const PRICE_CAPS = [
+  { value: 100000, label: "Any price" },
+  { value: 1000, label: "Up to ₹1,000" },
+  { value: 2500, label: "Up to ₹2,500" },
+  { value: 5000, label: "Up to ₹5,000" },
+  { value: 10000, label: "Up to ₹10,000" },
+];
 
-  if (failed || !src) {
-    return (
-      <div className={`um-image-fallback ${className}`}>
-        <i className="bi bi-image"></i>
-      </div>
-    );
-  }
-
-  return (
-    <img
-      className={className}
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-function Stars({ rating = 0 }) {
-  return (
-    <span className="um-stars" aria-label={`${rating} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <i
-          key={star}
-          className={
-            star <= Math.round(rating) ? "bi bi-star-fill" : "bi bi-star"
-          }
-        />
-      ))}
-    </span>
-  );
-}
-
-function ProductCard({ item, wished, onWishlist, onAdded, listView = false }) {
+function ProductCard({ item, wished, onWishlist, onAdded }) {
   const navigate = useNavigate();
   const stock = useStockOf()(item);
   const inCart = useInCart(item.id);
+  const isMaker = item.sellerType === "remaker";
 
   const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
-  const openSeller = (event) => {
-    event.stopPropagation();
-    navigate(
-      item.sellerType === "remaker"
-        ? `/user-artist-profile/${item.sellerId}`
-        : `/user-seller-profile/${item.sellerId}`,
-    );
+  const openSeller = (e) => {
+    e.stopPropagation();
+    navigate(isMaker ? `/user-marketplace/remaker/${item.sellerId}` : `/user-marketplace/seller/${item.sellerId}`);
   };
 
   return (
-    <article className={`um-product-card ${listView ? "list-card" : ""}`}>
-      <div
-        className="um-product-media"
-        role="button"
-        tabIndex={0}
-        onClick={openProduct}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openProduct();
-          }
-        }}
-      >
-        <ImageWithFallback src={item.image} alt={item.title} />
-        <div className="um-media-shade" />
-        <div className="um-media-top">
-          <span className="um-condition">{item.condition}</span>
-          <button
-            type="button"
-            className={`um-heart ${wished ? "active" : ""}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onWishlist(item.id);
-            }}
-            aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <i className={wished ? "bi bi-heart-fill" : "bi bi-heart"} />
-          </button>
-        </div>
-        <div className="um-media-bottom">
-          <span>
-            <i className="bi bi-leaf" />
-            {item.co2SavedKg} kg CO₂ saved
-          </span>
-          <span>
-            <i className="bi bi-eye" />
-            {item.views}
-          </span>
-        </div>
+    <article className="mk-card">
+      <div className="mk-media" role="button" tabIndex={0} onClick={openProduct} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProduct(); } }}>
+        <SafeImage src={item.image} alt={item.title} />
+        <span className={`mk-type ${isMaker ? "maker" : ""}`}>
+          {isMaker ? <><Sparkles size={12} /> ReMaker piece</> : <><Boxes size={12} /> Community item</>}
+        </span>
+        <button type="button" className={`mk-heart ${wished ? "on" : ""}`} aria-label={wished ? "Remove from wishlist" : "Add to wishlist"} aria-pressed={wished} onClick={(e) => { e.stopPropagation(); onWishlist(item.id); }}>
+          <Heart size={16} fill={wished ? "currentColor" : "none"} />
+        </button>
+        <span className="mk-cond">{item.condition}</span>
       </div>
 
-      <div className="um-product-body">
-        <div className="um-product-topline">
-          <span>{item.category}</span>
-          <span className="um-dot" />
-          <span>{item.city}</span>
-        </div>
-
+      <div className="mk-body">
+        <span className="mk-cat">{item.category}</span>
         <h3 onClick={openProduct}>{item.title}</h3>
-        <p className="um-product-summary">{item.summary}</p>
-
-        <button type="button" className="um-seller" onClick={openSeller}>
-          <span className="um-avatar">
-            <ImageWithFallback src={item.sellerImage} alt="" />
-            <b>{getInitials(item.seller)}</b>
-          </span>
-          <span className="um-seller-copy">
-            <strong>
-              {item.seller}
-              {item.sellerType === "remaker" && (
-                <i
-                  className="bi bi-patch-check-fill"
-                  title="Verified ReMaker"
-                />
-              )}
-            </strong>
-            <small>
-              {item.sellerType === "remaker"
-                ? "Verified ReMaker"
-                : "Community seller"}
-            </small>
-          </span>
-          <span className="um-seller-rating">
-            <i className="bi bi-star-fill" /> {item.sellerRating}
-          </span>
+        <button type="button" className="mk-seller" onClick={openSeller}>
+          by <b>{item.seller}</b>
+          {isMaker && <BadgeCheck size={13} />}
+          <span className="mk-rate"><Star size={11} fill="currentColor" /> {item.sellerRating}</span>
         </button>
 
-        <div className="um-product-footer">
+        <div className="mk-foot">
           <div>
-            <small>Listed price</small>
             <strong>{formatPrice(item.price)}</strong>
+            <small><MapPin size={11} /> {item.city}</small>
           </div>
-          <div className="um-card-actions">
-            <button
-              type="button"
-              className={`um-add ${inCart ? "in" : ""}`}
-              disabled={!stock.purchasable}
-              title={stock.reason || ""}
-              onClick={(event) => {
-                event.stopPropagation();
-                addToCart(item.id, 1, stock.available);
-                onAdded?.(item);
-              }}
-            >
-              {inCart ? <Check size={14} /> : <ShoppingBag size={14} />}
-              <span className="um-add-label">
-                {!stock.purchasable ? "Sold" : inCart ? "In cart" : "Add"}
-              </span>
-            </button>
-            <button type="button" className="um-view" onClick={openProduct}>
-              View item <i className="bi bi-arrow-up-right" />
-            </button>
-          </div>
+          <button
+            type="button"
+            className={`mk-add ${inCart ? "in" : ""}`}
+            disabled={!stock.purchasable}
+            title={stock.reason || ""}
+            onClick={(e) => { e.stopPropagation(); addToCart(item.id, 1, stock.available); onAdded?.(item); }}
+          >
+            {inCart ? <Check size={14} /> : <ShoppingBag size={14} />}
+            {!stock.purchasable ? (stock.own ? "Yours" : "Sold") : inCart ? "In cart" : "Add"}
+          </button>
         </div>
       </div>
     </article>
@@ -208,473 +88,156 @@ function ProductCard({ item, wished, onWishlist, onAdded, listView = false }) {
 
 export default function UserMarketplace() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const loading = useLoading(450);
   const categoryNames = useCategoryNames();
+  const wish = useWishlist();
+  const cartCount = useCartCount();
+
+  const [source, setSource] = useState("all");
+  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
   const [sort, setSort] = useState("featured");
-  const [view, setView] = useState("grid");
-  const [maxPrice, setMaxPrice] = useState(10000);
-  const wish = useWishlist();
-  const wishlist = wish.ids;
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const cartCount = useCartCount();
-  const [cartToast, setCartToast] = useState(null);
+  const [maxPrice, setMaxPrice] = useState(100000);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const showCartToast = (item) => {
-    setCartToast(item);
-    window.clearTimeout(window.__reorbitMarketCartTimer);
-    window.__reorbitMarketCartTimer = window.setTimeout(
-      () => setCartToast(null),
-      3200,
-    );
-  };
+  /* your own listings are not shown to you as things to buy */
+  const base = useMemo(() => ITEMS.filter((i) => i.sellerId !== "user-aarav-patel"), []);
+  const counts = useMemo(() => ({
+    all: base.length,
+    user: base.filter((i) => i.sellerType !== "remaker").length,
+    remaker: base.filter((i) => i.sellerType === "remaker").length,
+  }), [base]);
 
-  const filteredItems = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const result = ITEMS.filter((item) => {
-      // Do not show the logged-in demo user's own listings in the buying marketplace.
-      if (item.sellerId === "user-aarav-patel") return false;
-
-      const matchesSearch =
-        !query ||
-        [item.title, item.category, item.city, item.seller, item.summary].some(
-          (value) => value.toLowerCase().includes(query),
-        );
-      const matchesCategory = category === "All" || item.category === category;
-      const matchesCondition =
-        condition === "All" || item.condition === condition;
-      const matchesPrice = item.price <= Number(maxPrice);
-      return (
-        matchesSearch && matchesCategory && matchesCondition && matchesPrice
-      );
+  const results = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const out = base.filter((i) => {
+      if (source === "user" && i.sellerType === "remaker") return false;
+      if (source === "remaker" && i.sellerType !== "remaker") return false;
+      if (savedOnly && !wish.ids.includes(i.id)) return false;
+      if (category !== "All" && i.category !== category) return false;
+      if (condition !== "All" && i.condition !== condition) return false;
+      if (i.price > maxPrice) return false;
+      return !q || [i.title, i.category, i.city, i.seller, i.summary].some((v) => String(v).toLowerCase().includes(q));
     });
-
-    return result.sort((a, b) => {
+    return out.sort((a, b) => {
       if (sort === "price-low") return a.price - b.price;
       if (sort === "price-high") return b.price - a.price;
       if (sort === "rating") return b.sellerRating - a.sellerRating;
       if (sort === "co2") return b.co2SavedKg - a.co2SavedKg;
-      if (sort === "newest")
-        return new Date(b.listedDate) - new Date(a.listedDate);
+      if (sort === "newest") return new Date(b.listedDate) - new Date(a.listedDate);
       return b.likes + b.views * 0.08 - (a.likes + a.views * 0.08);
     });
-  }, [search, category, condition, maxPrice, sort]);
+  }, [base, source, search, category, condition, maxPrice, sort, savedOnly, wish.ids]);
 
-  const activeFilterCount = [
-    category !== "All",
-    condition !== "All",
-    maxPrice < 10000,
-  ].filter(Boolean).length;
+  const filtered = search || category !== "All" || condition !== "All" || maxPrice < 100000 || savedOnly || source !== "all";
+  const reset = () => { setSource("all"); setSearch(""); setCategory("All"); setCondition("All"); setMaxPrice(100000); setSort("featured"); setSavedOnly(false); };
 
-  const resetFilters = () => {
-    setSearch("");
-    setCategory("All");
-    setCondition("All");
-    setMaxPrice(10000);
-    setSort("featured");
+  const showToast = (item) => {
+    setToast(item);
+    window.clearTimeout(window.__reorbitMarketCartTimer);
+    window.__reorbitMarketCartTimer = window.setTimeout(() => setToast(null), 3200);
   };
 
-  const toggleWishlist = (id) => wish.toggle(id);
+  const SOURCES = [
+    { key: "all", label: "Everything", sub: "Every listing on ReOrbit", count: counts.all, icon: Sparkles },
+    { key: "user", label: "Community items", sub: "Pre-loved items from members", count: counts.user, icon: Boxes },
+    { key: "remaker", label: "ReMaker pieces", sub: "Finished work by makers", count: counts.remaker, icon: BadgeCheck },
+  ];
 
   return (
-    <main className="um-page">
-      <section className="um-hero">
-        <div className="um-hero-grid" />
-        <div className="um-hero-glow glow-one" />
-        <div className="um-hero-glow glow-two" />
-        <div className="um-container um-hero-inner">
-          <div className="um-hero-copy">
-            <span className="um-eyebrow">
-              <i className="bi bi-arrow-repeat" /> ReOrbit Marketplace
-            </span>
-            <h1>
-              Things deserve more than <em>one life.</em>
-            </h1>
-            <p>
-              Discover pre-loved, refurbished and thoughtfully remade pieces
-              from a community that believes good things should keep moving.
-            </p>
-            <div className="um-hero-actions">
-              <button
-                type="button"
-                className="um-primary"
-                onClick={() =>
-                  document
-                    .getElementById("um-results")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-              >
-                Explore marketplace <i className="bi bi-arrow-down" />
-              </button>
-              <button
-                type="button"
-                className="um-ghost"
-                onClick={() => navigate("/user-before-marketplace")}
-              >
-                How ReOrbit works <i className="bi bi-arrow-up-right" />
-              </button>
-            </div>
-            <div className="um-hero-stats">
-              <div>
-                <strong>{IMPACT.itemsRescued.toLocaleString("en-IN")}+</strong>
-                <span>items rescued</span>
-              </div>
-              <div>
-                <strong>{IMPACT.co2SavedTonnes}T</strong>
-                <span>CO₂ saved</span>
-              </div>
-              <div>
-                <strong>{IMPACT.remakersOnboarded}</strong>
-                <span>ReMakers</span>
-              </div>
-            </div>
-          </div>
-          <div className="um-hero-art" aria-hidden="true">
-            <div className="um-orbit-ring ring-one" />
-            <div className="um-orbit-ring ring-two" />
-            <div className="um-orbit-ring ring-three" />
-            <div className="um-orbit-card card-a">
-              <i className="bi bi-lamp" />
-              <span>Furniture</span>
-            </div>
-            <div className="um-orbit-card card-b">
-              <i className="bi bi-leaf" />
-              <span>Reused</span>
-            </div>
-            <div className="um-orbit-card card-c">
-              <i className="bi bi-stars" />
-              <span>Remade</span>
-            </div>
-            <div className="um-orbit-core">
-              <i className="bi bi-arrow-repeat" />
-              <span>REORBIT</span>
-              <small>give it another life</small>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="dn mk">
+      <BannerSlot placement="Shop top" viewer="Signed-in members" />
 
-      <div className="um-container">
-        <BannerSlot placement="Shop top" viewer="Signed-in members" />
+      <header className="mk-head">
+        <div>
+          <span className="dn-eyebrow">ReOrbit marketplace</span>
+          <h1>Things deserve more than one life.</h1>
+          <p>Pre-loved, refurbished and remade pieces from the ReOrbit community.</p>
+        </div>
+        <ul className="mk-impact" aria-label="Community impact">
+          <li><strong>{IMPACT.itemsRescued.toLocaleString("en-IN")}+</strong><span>items rescued</span></li>
+          <li><strong>{IMPACT.co2SavedTonnes}T</strong><span>CO₂ saved</span></li>
+          <li><strong>{IMPACT.remakersOnboarded}</strong><span>ReMakers</span></li>
+        </ul>
+      </header>
+
+      <div className="mk-sources" role="tablist" aria-label="Listing type">
+        {SOURCES.map(({ key, label, sub, count, icon: Icon }) => (
+          <button key={key} type="button" role="tab" aria-selected={source === key} className={`mk-source ${source === key ? "on" : ""}`} onClick={() => setSource(key)}>
+            <span className="mk-source-icon"><Icon size={18} /></span>
+            <span><strong>{label}</strong><small>{sub}</small></span>
+            <b>{count}</b>
+          </button>
+        ))}
       </div>
 
-      <div className="um-container">
-        <section className="um-discovery-bar">
-          <div className="um-search">
-            <i className="bi bi-search" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search products, categories or sellers..."
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                aria-label="Clear search"
-              >
-                <i className="bi bi-x-lg" />
-              </button>
-            )}
-          </div>
-          <button
-            type="button"
-            className={`um-filter-trigger ${activeFilterCount ? "has-count" : ""}`}
-            onClick={() => setFiltersOpen(true)}
-          >
-            <i className="bi bi-sliders2" /> Filters{" "}
-            {activeFilterCount > 0 && <b>{activeFilterCount}</b>}
-          </button>
-          <button
-            type="button"
-            className={`um-filter-trigger um-cart-trigger ${cartCount ? "has-count" : ""}`}
-            onClick={() => navigate("/user-cart")}
-          >
-            <ShoppingBag size={16} /> Cart {cartCount > 0 && <b>{cartCount}</b>}
-          </button>
-          <button
-            type="button"
-            className="um-filter-trigger um-cart-trigger"
-            onClick={() => navigate("/user-sell")}
-          >
-            <Tag size={15} /> Sell an item
-          </button>
-        </section>
+      <div className="mk-tools">
+        <label className="mk-search">
+          <Search size={16} />
+          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by item, category, seller or city" aria-label="Search the marketplace" />
+          {search && <button type="button" onClick={() => setSearch("")} aria-label="Clear search"><X size={14} /></button>}
+        </label>
+        <select value={condition} onChange={(e) => setCondition(e.target.value)} aria-label="Condition">
+          <option value="All">Any condition</option>
+          {CONDITIONS.map((c) => <option key={c}>{c}</option>)}
+        </select>
+        <select value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} aria-label="Price">
+          {PRICE_CAPS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+        </select>
+        <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+          {SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+        </select>
+        <button type="button" className={`mk-saved ${savedOnly ? "on" : ""}`} aria-pressed={savedOnly} onClick={() => setSavedOnly((v) => !v)}>
+          <Heart size={15} fill={savedOnly ? "currentColor" : "none"} /> Saved <b>{wish.ids.length}</b>
+        </button>
+      </div>
 
-        <section className="um-category-row">
-          <button
-            type="button"
-            className={category === "All" ? "active" : ""}
-            onClick={() => setCategory("All")}
-          >
-            <span>
-              <i className="bi bi-grid" />
-            </span>
-            All items
+      <div className="mk-chips" role="group" aria-label="Categories">
+        {["All", ...categoryNames].map((c) => (
+          <button key={c} type="button" className={category === c ? "on" : ""} aria-pressed={category === c} onClick={() => setCategory(c)}>
+            {c === "All" ? "All categories" : c}
           </button>
-          {categoryNames.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={category === item ? "active" : ""}
-              onClick={() => setCategory(item)}
-            >
-              <span>
-                <i className={`bi ${iconFor(item)}`} />
-              </span>
-              {item}
-            </button>
+        ))}
+      </div>
+
+      <p className="mk-count" aria-live="polite">
+        {loading ? "Loading listings…" : <><strong>{results.length}</strong> {results.length === 1 ? "listing" : "listings"}{filtered && <button type="button" onClick={reset}>Clear filters</button>}</>}
+      </p>
+
+      {loading ? (
+        <SkeletonCards count={8} min={240} />
+      ) : results.length ? (
+        <div className="mk-grid">
+          {results.map((item) => (
+            <ProductCard key={item.id} item={item} wished={wish.ids.includes(item.id)} onWishlist={wish.toggle} onAdded={showToast} />
           ))}
-        </section>
+        </div>
+      ) : (
+        <div className="mk-empty">
+          <PackageSearch size={30} />
+          <h3>{savedOnly ? "No saved pieces match" : "Nothing matches that yet"}</h3>
+          <p>Try a different search or clear the filters.</p>
+          <button type="button" className="dn-btn" onClick={reset}><SlidersHorizontal size={15} /> Clear filters</button>
+        </div>
+      )}
 
-        <section className="um-maker-strip">
-          <div className="um-maker-heading">
-            <span className="um-kicker">Meet the makers</span>
-            <h2>Craft with a second story.</h2>
-            <p>
-              Explore verified ReMakers who turn rescued materials into pieces
-              worth keeping.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate("/user-remakers")}
-              style={{
-                marginTop: 12,
-                padding: 0,
-                border: 0,
-                background: "none",
-                color: "#2a4d3a",
-                fontSize: 11,
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              View all ReMakers →
-            </button>
-          </div>
-          <div className="um-maker-list">
-            {REMAKERS.map((maker) => (
-              <button
-                type="button"
-                className="um-maker-card"
-                key={maker.id}
-                onClick={() => navigate(`/user-artist-profile/${maker.id}`)}
-              >
-                <span className="um-maker-avatar">
-                  <ImageWithFallback src={maker.image} alt={maker.name} />
-                  <b>{getInitials(maker.name)}</b>
-                </span>
-                <span className="um-maker-copy">
-                  <strong>
-                    {maker.name} <i className="bi bi-patch-check-fill" />
-                  </strong>
-                  <small>{maker.craft}</small>
-                  <span>
-                    <i className="bi bi-star-fill" /> {maker.rating} ·{" "}
-                    {maker.productsCount} pieces
-                  </span>
-                </span>
-                <i className="bi bi-arrow-up-right um-maker-arrow" />
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="um-market" id="um-results">
-          <aside className={`um-filters ${filtersOpen ? "open" : ""}`}>
-            <div className="um-filter-head">
-              <div>
-                <span className="um-kicker">Refine</span>
-                <h3>Find your piece</h3>
-              </div>
-              <button type="button" onClick={() => setFiltersOpen(false)}>
-                <i className="bi bi-x-lg" />
-              </button>
-            </div>
-            <div className="um-filter-block">
-              <label>Category</label>
-              <div className="um-options">
-                <button
-                  type="button"
-                  className={category === "All" ? "selected" : ""}
-                  onClick={() => setCategory("All")}
-                >
-                  All categories
-                </button>
-                {categoryNames.map((item) => (
-                  <button
-                    type="button"
-                    key={item}
-                    className={category === item ? "selected" : ""}
-                    onClick={() => setCategory(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="um-filter-block">
-              <label>Condition</label>
-              <div className="um-options">
-                <button
-                  type="button"
-                  className={condition === "All" ? "selected" : ""}
-                  onClick={() => setCondition("All")}
-                >
-                  Any condition
-                </button>
-                {CONDITIONS.map((item) => (
-                  <button
-                    type="button"
-                    key={item}
-                    className={condition === item ? "selected" : ""}
-                    onClick={() => setCondition(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="um-filter-block">
-              <div className="um-price-head">
-                <label>Maximum price</label>
-                <strong>{formatPrice(maxPrice)}</strong>
-              </div>
-              <input
-                type="range"
-                min="500"
-                max="10000"
-                step="250"
-                value={maxPrice}
-                onChange={(event) => setMaxPrice(Number(event.target.value))}
-              />
-              <div className="um-range">
-                <span>₹500</span>
-                <span>₹10,000+</span>
-              </div>
-            </div>
-            {activeFilterCount > 0 && (
-              <button type="button" className="um-reset" onClick={resetFilters}>
-                <i className="bi bi-arrow-counterclockwise" /> Reset filters
-              </button>
-            )}
-          </aside>
-          {filtersOpen && (
-            <button
-              type="button"
-              className="um-filter-overlay"
-              aria-label="Close filters"
-              onClick={() => setFiltersOpen(false)}
-            />
-          )}
-
-          <div className="um-results">
-            <div className="um-results-head">
-              <div>
-                <span className="um-kicker">Marketplace collection</span>
-                <h2>
-                  {filteredItems.length}{" "}
-                  <span>
-                    {filteredItems.length === 1 ? "piece" : "pieces"} ready for
-                    another orbit
-                  </span>
-                </h2>
-              </div>
-              <div className="um-toolbar">
-                <select
-                  value={sort}
-                  onChange={(event) => setSort(event.target.value)}
-                  aria-label="Sort products"
-                >
-                  <option value="featured">Featured</option>
-                  <option value="newest">Newest first</option>
-                  <option value="price-low">Price: low to high</option>
-                  <option value="price-high">Price: high to low</option>
-                  <option value="rating">Highest rated</option>
-                  <option value="co2">Most CO₂ saved</option>
-                </select>
-                <div className="um-view">
-                  <button
-                    type="button"
-                    className={view === "grid" ? "active" : ""}
-                    onClick={() => setView("grid")}
-                    aria-label="Grid view"
-                  >
-                    <i className="bi bi-grid-3x3-gap" />
-                  </button>
-                  <button
-                    type="button"
-                    className={view === "list" ? "active" : ""}
-                    onClick={() => setView("list")}
-                    aria-label="List view"
-                  >
-                    <i className="bi bi-list" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {filteredItems.length > 0 ? (
-              <div
-                className={`um-product-grid ${view === "list" ? "list-view" : ""}`}
-              >
-                {filteredItems.map((item) => (
-                  <ProductCard
-                    key={item.id}
-                    item={item}
-                    wished={wishlist.includes(item.id)}
-                    onWishlist={toggleWishlist}
-                    onAdded={showCartToast}
-                    listView={view === "list"}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="um-empty">
-                <div>
-                  <i className="bi bi-search" />
-                </div>
-                <span className="um-kicker">Nothing matched</span>
-                <h3>Let's try another orbit.</h3>
-                <p>Change the search or filters and discover something new.</p>
-                <button
-                  type="button"
-                  className="um-primary"
-                  onClick={resetFilters}
-                >
-                  Clear filters
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      {cartToast && (
-        <div className="um-wishlist-toast um-cart-toast" role="status">
+      {toast && (
+        <div className="mk-toast" role="status">
           <ShoppingBag size={15} />
-          <span>{cartToast.title} added to cart</span>
-          <button type="button" onClick={() => navigate("/user-cart")}>
-            View cart
-          </button>
+          <span>{toast.title} added to cart</span>
+          <button type="button" onClick={() => navigate("/user-cart")}>View cart</button>
         </div>
       )}
-
-      {wishlist.length > 0 && (
-        <div className="um-wishlist-toast">
-          <i className="bi bi-heart-fill" />
-          <span>
-            {wishlist.length} saved {wishlist.length === 1 ? "piece" : "pieces"}
-          </span>
-          <button type="button" onClick={() => navigate("/user-wishlist")}>
-            View
-          </button>
-          <button type="button" onClick={clearWishlist}>
-            Clear
-          </button>
+      {wish.ids.length > 0 && !toast && (
+        <div className="mk-toast alt">
+          <Leaf size={15} />
+          <span>{wish.ids.length} saved {wish.ids.length === 1 ? "piece" : "pieces"}</span>
+          <button type="button" onClick={() => navigate("/user-wishlist")}>View</button>
+          <button type="button" onClick={clearWishlist}>Clear</button>
         </div>
       )}
-    </main>
+    </div>
   );
 }

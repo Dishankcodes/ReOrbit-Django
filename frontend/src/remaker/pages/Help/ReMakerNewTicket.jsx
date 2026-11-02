@@ -265,7 +265,7 @@ export default function ReMakerNewTicket() {
                   className="hlp-photo-add"
                   onClick={() => fileRef.current?.click()}
                 >
-                  <img src="/images/products/default-item.jpg" alt="" />
+                  <img src="https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
                   <b>Add photo</b>
                 </button>
               )}

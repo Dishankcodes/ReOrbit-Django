@@ -20,8 +20,8 @@ const TITLE_MAX = 70;
 
 /* Real sample photos shown in empty upload slots */
 const SAMPLE = {
-  before: "/images/portfolio/before-tara-console.jpg",
-  after: "/images/portfolio/tara-console.jpg",
+  before: "https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  after: "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
 };
 
 function buildInitial(work) {
@@ -129,10 +129,7 @@ export default function PortfolioForm({ mode = "add", work = null }) {
 
   const categoryNames = useCategoryNames();
   const categoryOptions = useMemo(
-    () =>
-      work?.category && !categoryNames.includes(work.category)
-        ? [work.category, ...categoryNames]
-        : categoryNames,
+    () => (work?.category && !categoryNames.includes(work.category) ? [work.category, ...categoryNames] : categoryNames),
     [categoryNames, work],
   );
   const initial = useMemo(() => buildInitial(work), [work]);

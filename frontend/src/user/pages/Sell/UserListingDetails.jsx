@@ -86,7 +86,11 @@ export default function UserListingDetails() {
 
   const { status } = listing;
   const meta = LISTING_STATUS[status];
-  const editable = ["Draft", "Withdrawn", "Live"].includes(status);
+  const editable = [
+    "Draft",
+    "Withdrawn",
+    "Live",
+  ].includes(status);
   const pickup = PICKUP_OPTIONS.find((o) => o.id === listing.pickup);
 
   return (
@@ -95,9 +99,9 @@ export default function UserListingDetails() {
         items={[{ label: "Sell", to: "/user-sell" }, { label: listing.id }]}
       />
 
-      <header className="sl-head">
+      <header className="usl-head">
         <div>
-          <div className="sl-head-meta">
+          <div className="usl-head-meta">
             <span className="dn-dcard-id">{listing.id}</span>
             <ListingBadge status={status} />
           </div>
@@ -107,7 +111,7 @@ export default function UserListingDetails() {
             {listing.condition}
           </p>
         </div>
-        <div className="sl-head-actions">
+        <div className="usl-head-actions">
           {editable && (
             <Link to={`/user-sell/${listing.id}/edit`} className="dn-btn">
               <Pencil size={15} />{" "}
@@ -155,37 +159,31 @@ export default function UserListingDetails() {
         </div>
       </header>
       {listing.adminDisabled && (
-        <div className="dn-banner dn-banner--bad sl-banner" role="alert">
+        <div className="dn-banner dn-banner--bad usl-banner" role="alert">
           <AlertTriangle size={20} />
           <div>
             <strong>ReOrbit turned this listing off</strong>
-            {listing.adminDisabled.reason} Buyers can't see it until the team
-            turns it back on.{" "}
+            {listing.adminDisabled.reason} Buyers can't see it until the team turns it back on.{" "}
             <Link to="/user-help/contact" className="dn-link">
               Contact support →
             </Link>
           </div>
         </div>
       )}
-      {listing.suggestedPrice != null &&
-        ["Live", "Draft"].includes(status) &&
-        listing.suggestedPrice !== listing.price && (
-          <div className="dn-banner dn-banner--warn sl-banner">
-            <Tag size={20} />
-            <div>
-              <strong>
-                ReOrbit suggests {formatPrice(listing.suggestedPrice)}
-              </strong>
-              {listing.suggestedMessage ||
-                "Our team thinks this price will help it sell."}{" "}
-              <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
-                Change the price →
-              </Link>
-            </div>
+      {listing.suggestedPrice != null && ["Live", "Draft"].includes(status) && listing.suggestedPrice !== listing.price && (
+        <div className="dn-banner dn-banner--warn usl-banner">
+          <Tag size={20} />
+          <div>
+            <strong>ReOrbit suggests {formatPrice(listing.suggestedPrice)}</strong>
+            {listing.suggestedMessage || "Our team thinks this price will help it sell."}{" "}
+            <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
+              Change the price →
+            </Link>
           </div>
-        )}
+        </div>
+      )}
       {status === "Live" && (
-        <div className="dn-banner sl-banner">
+        <div className="dn-banner usl-banner">
           <CheckCircle2 size={20} />
           <div>
             <strong>Your listing is live</strong>Buyers can find and order it
@@ -194,7 +192,7 @@ export default function UserListingDetails() {
         </div>
       )}
       {status === "Reserved" && sale && (
-        <div className="dn-banner sl-banner">
+        <div className="dn-banner usl-banner">
           <Truck size={20} />
           <div>
             <strong>A buyer ordered this item</strong>Pack it and mark it
@@ -206,7 +204,7 @@ export default function UserListingDetails() {
         </div>
       )}
       {status === "Sold" && (
-        <div className="dn-banner sl-banner">
+        <div className="dn-banner usl-banner">
           <Wallet size={20} />
           <div>
             <strong>Sold and delivered</strong>
@@ -224,7 +222,7 @@ export default function UserListingDetails() {
         </div>
       )}
       {status === "Withdrawn" && (
-        <div className="dn-banner dn-banner--warn sl-banner">
+        <div className="dn-banner dn-banner--warn usl-banner">
           <Info size={20} />
           <div>
             <strong>Removed from the marketplace</strong>Relist it any time. It
@@ -233,14 +231,14 @@ export default function UserListingDetails() {
         </div>
       )}
 
-      <div className="sl-layout">
-        <div className="sl-main">
-          <section className="dn-card sl-gallery">
-            <div className="sl-gallery-main">
+      <div className="usl-layout">
+        <div className="usl-main">
+          <section className="dn-card usl-gallery">
+            <div className="usl-gallery-main">
               <SafeImage src={listing.images[photo]} alt={listing.title} />
             </div>
             {listing.images.length > 1 && (
-              <div className="sl-thumbs">
+              <div className="usl-thumbs">
                 {listing.images.map((src, i) => (
                   <button
                     key={`${src}-${i}`}
@@ -261,8 +259,8 @@ export default function UserListingDetails() {
               <h2>Item details</h2>
               <span className="dn-chip">{listing.category}</span>
             </div>
-            <p className="sl-desc">{listing.description}</p>
-            <dl className="sl-facts">
+            <p className="usl-desc">{listing.description}</p>
+            <dl className="usl-facts">
               <div>
                 <dt>Condition</dt>
                 <dd>{listing.condition}</dd>
@@ -301,12 +299,12 @@ export default function UserListingDetails() {
           </section>
         </div>
 
-        <aside className="sl-side">
+        <aside className="usl-side">
           <section className="dn-card dn-card-pad">
             <div className="dn-card-head">
               <h3>Performance</h3>
             </div>
-            <div className="sl-perf">
+            <div className="usl-perf">
               <div>
                 <Eye size={17} />
                 <strong>{listing.views}</strong>
@@ -346,7 +344,7 @@ export default function UserListingDetails() {
               <div className="dn-card-head">
                 <h3>Sale</h3>
               </div>
-              <p className="sl-saleline">
+              <p className="usl-saleline">
                 <b>{sale.id}</b> · {sale.buyer.name}, {sale.buyer.city}
               </p>
               <Link
@@ -358,7 +356,7 @@ export default function UserListingDetails() {
             </section>
           )}
 
-          <section className="dn-card dn-card-pad sl-help">
+          <section className="dn-card dn-card-pad usl-help">
             <Info size={20} />
             <div>
               <strong>Questions about this listing?</strong>

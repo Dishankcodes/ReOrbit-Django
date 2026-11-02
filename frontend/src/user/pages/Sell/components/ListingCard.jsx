@@ -13,71 +13,37 @@ export default function ListingCard({ listing }) {
   const editable = ["Draft", "Withdrawn", "Live"].includes(listing.status);
 
   return (
-    <article
-      className="sl-card"
-      role="link"
-      tabIndex={0}
-      onClick={open}
-      onKeyDown={(e) => e.key === "Enter" && open()}
-    >
-      <div className="sl-card-media">
+    <article className="usl-card" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === "Enter" && open()}>
+      <div className="usl-card-media">
         <SafeImage src={listing.images[0]} alt={listing.title} />
-        <span className="sl-card-badge">
-          <ListingBadge status={listing.status} />
-        </span>
+        <span className="usl-card-badge"><ListingBadge status={listing.status} /></span>
       </div>
 
-      <div className="sl-card-body">
-        <span className="dn-dcard-id">
-          {listing.id} · {listing.category}
-        </span>
+      <div className="usl-card-body">
+        <span className="dn-dcard-id">{listing.id} · {listing.category}</span>
         <h3>{listing.title}</h3>
-        <p className="sl-card-note">
-          {listing.adminDisabled
-            ? `Turned off by ReOrbit: ${listing.adminDisabled.reason}`
-            : LISTING_STATUS[listing.status].blurb}
+        <p className="usl-card-note">
+          {listing.adminDisabled ? `Turned off by ReOrbit: ${listing.adminDisabled.reason}` : LISTING_STATUS[listing.status].blurb}
         </p>
 
-        <div className="sl-card-row">
+        <div className="usl-card-row">
           <strong>{formatPrice(listing.price)}</strong>
-          <span>
-            <Eye size={13} /> {listing.views}
-          </span>
-          <span>
-            <Heart size={13} /> {listing.likes}
-          </span>
-          <span className="sl-card-date">{formatDate(listing.createdAt)}</span>
+          <span><Eye size={13} /> {listing.views}</span>
+          <span><Heart size={13} /> {listing.likes}</span>
+          <span className="usl-card-date">{formatDate(listing.createdAt)}</span>
         </div>
 
-        <div className="sl-card-actions" onClick={(e) => e.stopPropagation()}>
+        <div className="usl-card-actions" onClick={(e) => e.stopPropagation()}>
           {editable && (
-            <Link
-              to={`/user-sell/${listing.id}/edit`}
-              className="dn-btn dn-btn--soft dn-btn--sm"
-            >
-              <Pencil size={13} /> Edit
-            </Link>
+            <Link to={`/user-sell/${listing.id}/edit`} className="dn-btn dn-btn--soft dn-btn--sm"><Pencil size={13} /> Edit</Link>
           )}
           {listing.status === "Live" && listing.marketId && (
-            <Link
-              to={`/user-marketplace/product/${listing.marketId}`}
-              className="dn-btn dn-btn--ghost dn-btn--sm"
-            >
-              <ExternalLink size={13} /> View live
-            </Link>
+            <Link to={`/user-marketplace/product/${listing.marketId}`} className="dn-btn dn-btn--ghost dn-btn--sm"><ExternalLink size={13} /> View live</Link>
           )}
           {listing.status === "Reserved" && (
-            <Link to="/user-sell/sales" className="dn-btn dn-btn--sm">
-              Pack &amp; ship <ChevronRight size={13} />
-            </Link>
+            <Link to="/user-sell/sales" className="dn-btn dn-btn--sm">Pack &amp; ship <ChevronRight size={13} /></Link>
           )}
-          <button
-            type="button"
-            className="dn-btn dn-btn--ghost dn-btn--sm"
-            onClick={open}
-          >
-            Details
-          </button>
+          <button type="button" className="dn-btn dn-btn--ghost dn-btn--sm" onClick={open}>Details</button>
         </div>
       </div>
     </article>

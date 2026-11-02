@@ -14,7 +14,7 @@ const initialCreators = [
     impact: "420 kg",
     bio: "Restoring forgotten furniture into timeless pieces.",
     image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: true,
   },
   {
@@ -26,7 +26,7 @@ const initialCreators = [
     impact: "180 kg",
     bio: "Handmade ceramic pieces inspired by natural textures.",
     image:
-      "https://images.unsplash.com/photo-1528712306091-ed0763094c98?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: true,
   },
   {
@@ -38,7 +38,7 @@ const initialCreators = [
     impact: "620 kg",
     bio: "Giving discarded fabrics a fresh and useful future.",
     image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: true,
   },
   {
@@ -50,7 +50,7 @@ const initialCreators = [
     impact: "145 kg",
     bio: "Thoughtful lighting made from reclaimed materials.",
     image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: false,
   },
   {
@@ -62,7 +62,7 @@ const initialCreators = [
     impact: "510 kg",
     bio: "Creating practical pieces from overlooked materials.",
     image:
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: false,
   },
   {
@@ -74,7 +74,7 @@ const initialCreators = [
     impact: "290 kg",
     bio: "Minimal design with maximum respect for resources.",
     image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     following: false,
   },
 ];

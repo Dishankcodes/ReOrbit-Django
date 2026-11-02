@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLoading, SkeletonCards } from "../../../shared/components/Skeleton";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye,
@@ -35,6 +36,7 @@ function bucket(product, held) {
 }
 
 export default function ReMakerProducts() {
+  const loading = useLoading(450);
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -55,8 +57,7 @@ export default function ReMakerProducts() {
   }, [products, moderation]);
 
   const visible = products.filter((product) => {
-    const matchesFilter =
-      filter === "all" || bucket(product, holdOf(product)) === filter;
+    const matchesFilter = filter === "all" || bucket(product, holdOf(product)) === filter;
     const matchesQuery =
       !query ||
       product.title.toLowerCase().includes(query) ||
@@ -69,8 +70,7 @@ export default function ReMakerProducts() {
   const toggleActive = (id) =>
     setProducts((current) =>
       current.map((product) => {
-        if (product.id !== id || product.status === "Draft" || holdOf(product))
-          return product;
+        if (product.id !== id || product.status === "Draft" || holdOf(product)) return product;
 
         if (product.status === "Inactive") {
           return {
@@ -118,7 +118,9 @@ export default function ReMakerProducts() {
         </p>
       )}
 
-      {visible.length === 0 ? (
+      {loading ? (
+        <SkeletonCards count={6} min={260} />
+      ) : visible.length === 0 ? (
         <div className="rpl-empty">
           <ShoppingBag size={34} strokeWidth={1.6} />
           <h2>
