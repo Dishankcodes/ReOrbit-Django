@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { signOut } from "../../api/auth";
 
 import {
   Menu,
@@ -453,13 +454,7 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
      ========================================================= */
 
   const handleLogout = () => {
-    localStorage.removeItem("reorbit_access_token");
-
-    localStorage.removeItem("reorbit_refresh_token");
-
-    localStorage.removeItem("reorbit_account_type");
-
-    localStorage.removeItem("reorbit_remaker");
+    signOut();
 
     setProfileOpen(false);
     setNotificationsOpen(false);

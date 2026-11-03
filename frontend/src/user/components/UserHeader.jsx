@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { signOut } from "../../api/auth";
 import {
   Menu,
   Bell,
@@ -391,10 +392,7 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("reorbit_access_token");
-    localStorage.removeItem("reorbit_refresh_token");
-    localStorage.removeItem("reorbit_account_type");
-    localStorage.removeItem("reorbit_user");
+    signOut();
 
     setProfileOpen(false);
     setNotificationsOpen(false);

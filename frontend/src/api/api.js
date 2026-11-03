@@ -1,58 +1,104 @@
+import {
+  clearSession,
+  endSession,
+  getAccessToken,
+  getRefreshToken,
+  updateTokens,
+} from "./session";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
-export async function apiRequest(endpoint, options = {}) {
-  const { method = "GET", body, token, headers = {} } = options;
+const REFRESH_PATH = "/auth/token/refresh/";
 
-  const requestHeaders = {
-    Accept: "application/json",
-    ...headers,
-  };
+/* One refresh at a time: if five requests get a 401 together they share it. */
+let refreshing = null;
 
+async function refreshSession() {
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
+
+  if (!refreshing) {
+    refreshing = fetch(`${API_BASE_URL}${REFRESH_PATH}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ refresh }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const json = await res.json();
+        const tokens = json?.data;
+        if (!tokens?.access) return null;
+        updateTokens(tokens);
+        return tokens.access;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshing = null;
+      });
+  }
+  return refreshing;
+}
+
+async function parse(response) {
+  const type = response.headers.get("content-type") || "";
+  if (type.includes("application/json")) {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
+  }
+  const text = await response.text();
+  return text ? { message: text } : {};
+}
+
+function send(endpoint, { method, body, token, headers }) {
+  const requestHeaders = { Accept: "application/json", ...headers };
   if (body !== undefined && !(body instanceof FormData)) {
     requestHeaders["Content-Type"] = "application/json";
   }
+  if (token) requestHeaders.Authorization = `Bearer ${token}`;
 
-  if (token) {
-    requestHeaders["Authorization"] = `Bearer ${token}`;
-  }
-
-  const url = `${API_BASE_URL}${endpoint}`;
-
-  console.log("ReOrbit API Request:", {
-    url,
+  return fetch(`${API_BASE_URL}${endpoint}`, {
     method,
-    body,
+    headers: requestHeaders,
+    body:
+      body instanceof FormData
+        ? body
+        : body !== undefined
+          ? JSON.stringify(body)
+          : undefined,
   });
+}
+
+/*
+  apiRequest("/users/me/")
+  - Adds the signed-in token by itself. Pass `token` to use a different one,
+    or `auth: false` for public calls (login, register ...).
+  - On a 401 it refreshes the token once and repeats the request. If that fails
+    the session is cleared and "reorbit:session-ended" is fired, so RequireAuth
+    sends the person to the login page.
+  - Errors carry .status, .data, .errors (field -> messages) and .code.
+*/
+export async function apiRequest(endpoint, options = {}) {
+  const { method = "GET", body, headers = {}, auth = true } = options;
+  let token = options.token || (auth ? getAccessToken() : null);
 
   try {
-    const response = await fetch(url, {
-      method,
-      headers: requestHeaders,
-      body:
-        body instanceof FormData
-          ? body
-          : body !== undefined
-            ? JSON.stringify(body)
-            : undefined,
-    });
+    let response = await send(endpoint, { method, body, token, headers });
 
-    let data = {};
-
-    const contentType = response.headers.get("content-type");
-
-    if (contentType && contentType.includes("application/json")) {
-      data = await response.json();
-    } else {
-      const text = await response.text();
-
-      data = text ? { message: text } : {};
+    if (response.status === 401 && token && endpoint !== REFRESH_PATH) {
+      const fresh = await refreshSession();
+      if (fresh) {
+        token = fresh;
+        response = await send(endpoint, { method, body, token, headers });
+      } else {
+        endSession();
+      }
     }
 
-    console.log("ReOrbit API Response:", {
-      status: response.status,
-      data,
-    });
+    const data = await parse(response);
 
     if (!response.ok) {
       const error = new Error(
@@ -60,25 +106,22 @@ export async function apiRequest(endpoint, options = {}) {
           data?.detail ||
           `Request failed with status ${response.status}`,
       );
-
       error.status = response.status;
       error.data = data;
-
+      error.errors = data?.errors;
+      error.code = data?.code;
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error("ReOrbit API Error:", error);
-
     if (error.name === "TypeError") {
       throw new Error(
-        "Unable to connect to the ReOrbit server. Please make sure Django is running.",
+        "Unable to connect to the ReOrbit server. Please check your connection and try again.",
       );
     }
-
     throw error;
   }
 }
 
-export { API_BASE_URL };
+export { API_BASE_URL, clearSession };

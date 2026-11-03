@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { signOut } from "../../api/auth";
 
 import {
   LayoutDashboard,
@@ -260,13 +261,7 @@ export default function ReMakerSidebar({
      ==== */
 
   const handleLogout = () => {
-    localStorage.removeItem("reorbit_access_token");
-
-    localStorage.removeItem("reorbit_refresh_token");
-
-    localStorage.removeItem("reorbit_account_type");
-
-    localStorage.removeItem("reorbit_remaker");
+    signOut();
 
     navigate("/remakers-auth", {
       replace: true,

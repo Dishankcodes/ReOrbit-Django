@@ -10,6 +10,7 @@ import {
   registerReMaker,
   verifyReMakerLoginOTP,
 } from "../../../api/auth";
+import { saveSession } from "../../../api/session";
 
 export default function ReMakerAuth() {
   // Navigation steps:
@@ -269,13 +270,12 @@ export default function ReMakerAuth() {
           throw new Error("Login response is missing authentication tokens.");
         }
 
-        localStorage.setItem("reorbit_access_token", accessToken);
-
-        localStorage.setItem("reorbit_refresh_token", refreshToken);
-
-        if (remaker) {
-          localStorage.setItem("reorbit_remaker", JSON.stringify(remaker));
-        }
+        saveSession({
+          access: accessToken,
+          refresh: refreshToken,
+          type: "remaker",
+          account: remaker,
+        });
 
         window.location.href = "/remakers-home";
         return;
@@ -300,13 +300,12 @@ export default function ReMakerAuth() {
         );
       }
 
-      localStorage.setItem("reorbit_access_token", accessToken);
-
-      localStorage.setItem("reorbit_refresh_token", refreshToken);
-
-      if (remaker) {
-        localStorage.setItem("reorbit_remaker", JSON.stringify(remaker));
-      }
+      saveSession({
+          access: accessToken,
+          refresh: refreshToken,
+          type: "remaker",
+          account: remaker,
+        });
 
       setStep("confirm");
 

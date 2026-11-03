@@ -11,6 +11,7 @@ import {
   verifyForgotPasswordOTP,
   resetForgotPassword,
 } from "../../../api/auth";
+import { saveSession } from "../../../api/session";
 
 import "../../css/Auth.css";
 
@@ -47,29 +48,13 @@ export default function Auth() {
 
   // Save authenticated user data.
   const saveAuthData = (data) => {
-    const storage = rememberMe ? localStorage : sessionStorage;
-
-    storage.setItem("reorbit_access_token", data.access);
-
-    storage.setItem("reorbit_refresh_token", data.refresh);
-
-    storage.setItem("reorbit_account_type", "user");
-
-    storage.setItem("reorbit_account_id", String(data.user.user_id));
-
-    storage.setItem("reorbit_user", JSON.stringify(data.user));
-
-    const otherStorage = rememberMe ? sessionStorage : localStorage;
-
-    otherStorage.removeItem("reorbit_access_token");
-
-    otherStorage.removeItem("reorbit_refresh_token");
-
-    otherStorage.removeItem("reorbit_account_type");
-
-    otherStorage.removeItem("reorbit_account_id");
-
-    otherStorage.removeItem("reorbit_user");
+    saveSession({
+      access: data.access,
+      refresh: data.refresh,
+      type: "user",
+      account: data.user,
+      remember: rememberMe,
+    });
   };
 
   // Handle OTP countdown.

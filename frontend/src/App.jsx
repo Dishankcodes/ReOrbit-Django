@@ -7,6 +7,7 @@ import "./styles/theme.css";
 import UserLayout from "./user/components/UserLayout";
 import ReMakerLayout from "./remaker/components/ReMakerLayout";
 import AdminLayout from "./admin/components/AdminLayout";
+import RequireAuth from "./shared/components/RequireAuth";
 
 /* Public website and authentication */
 import Auth from "./user/pages/Auth/Auth";
@@ -211,6 +212,7 @@ export default function App() {
       <Route path="/discover-remakers" element={<ReMakerDiscover />} />
 
       {/* User app */}
+      <Route element={<RequireAuth role="user" />}>
       <Route element={<UserLayout />}>
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/user-marketplace" element={<UserMarketplace />} />
@@ -310,6 +312,7 @@ export default function App() {
           element={<UserTicketDetails />}
         />
       </Route>
+      </Route>
 
       {/* ReMaker public site */}
       <Route path="/remakers" element={<ReMakersHome />} />
@@ -330,6 +333,7 @@ export default function App() {
       />
 
       {/* ReMaker studio */}
+      <Route element={<RequireAuth role="remaker" />}>
       <Route element={<ReMakerLayout />}>
         <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
         <Route path="/remaker-profile" element={<ReMakerProfile />} />
@@ -419,6 +423,7 @@ export default function App() {
         <Route path="/remaker-not-found" element={<ReMakerNotFound />} />
         <Route path="/remaker-unknown-route" element={<UnknownRoute />} />
       </Route>
+      </Route>
 
       {/* Admin public pages */}
       <Route path="/admin-login" element={<AdminLogin />} />
@@ -427,6 +432,7 @@ export default function App() {
       <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
 
       {/* Admin panel */}
+      <Route element={<RequireAuth role="admin" />}>
       <Route element={<AdminLayout />}>
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-users" element={<AdminUsers />} />
@@ -501,6 +507,7 @@ export default function App() {
           path="/admin-profile"
           element={<Navigate to="/admin-settings" replace />}
         />
+      </Route>
       </Route>
 
       {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}

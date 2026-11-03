@@ -8,6 +8,7 @@
    ========================================================= */
 
 import { useEffect, useState } from "react";
+import { signOut } from "../../api/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert, Lock, LogOut, LifeBuoy } from "lucide-react";
 import "./AccountGate.css";
@@ -67,18 +68,7 @@ export default function AccountGate({ info, role, children }) {
   }, [suspended]);
 
   const logout = () => {
-    [
-      "reorbit_access_token",
-      "reorbit_refresh_token",
-      "reorbit_account_type",
-      role === "remaker" ? "reorbit_remaker" : "reorbit_user",
-    ].forEach((k) => {
-      try {
-        localStorage.removeItem(k);
-      } catch {
-        /* ignore */
-      }
-    });
+    signOut();
     navigate(role === "remaker" ? "/remakers-auth" : "/auth", {
       replace: true,
     });

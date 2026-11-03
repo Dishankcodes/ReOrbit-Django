@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { signOut } from "../../../api/auth";
 
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -780,15 +781,7 @@ function AccountSection({ show }) {
   const [typed, setTyped] = useState("");
 
   const logout = () => {
-    [
-      "reorbit_access_token",
-
-      "reorbit_refresh_token",
-
-      "reorbit_account_type",
-
-      "reorbit_user",
-    ].forEach((k) => window.localStorage.removeItem(k));
+    signOut();
 
     navigate("/auth", { replace: true });
   };
@@ -796,13 +789,7 @@ function AccountSection({ show }) {
   const remove = () => {
     deleteAccountData();
 
-    [
-      "reorbit_access_token",
-
-      "reorbit_refresh_token",
-
-      "reorbit_account_type",
-    ].forEach((k) => window.localStorage.removeItem(k));
+    signOut();
 
     navigate("/", { replace: true });
   };

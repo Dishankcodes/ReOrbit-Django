@@ -17,3 +17,6 @@ frontend/dist/
 # OS files
 .DS_Store
 Thumbs.db
+# Uploaded files (backend/uploads/)
+backend/uploads/
+backend/staticfiles/

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { signOut } from "../../api/auth";
 import {
   LayoutDashboard,
   Users,
@@ -185,10 +186,8 @@ export default function AdminSidebar({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("reorbit_access_token");
-    localStorage.removeItem("reorbit_refresh_token");
-    localStorage.removeItem("reorbit_account_type");
-    localStorage.removeItem("reorbit_admin");
+    signOut();
+
     navigate("/admin-login", { replace: true });
     if (onCloseMobile) {
       onCloseMobile();

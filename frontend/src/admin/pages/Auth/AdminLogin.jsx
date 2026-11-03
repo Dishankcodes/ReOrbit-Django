@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminLogin } from "../../../api/auth";
+import { saveSession } from "../../../api/session";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -40,17 +41,12 @@ export default function AdminLogin() {
       /*
        * Store Admin authentication information.
        */
-      localStorage.setItem("reorbit_access_token", data.access);
-      localStorage.setItem("reorbit_refresh_token", data.refresh);
-      localStorage.setItem("reorbit_account_type", "admin");
-
-      if (data.admin?.admin_id) {
-        localStorage.setItem("reorbit_account_id", String(data.admin.admin_id));
-      }
-
-      if (data.admin) {
-        localStorage.setItem("reorbit_admin", JSON.stringify(data.admin));
-      }
+      saveSession({
+        access: data.access,
+        refresh: data.refresh,
+        type: "admin",
+        account: data.admin,
+      });
 
       setSuccess(response?.message || "Admin login successful.");
 

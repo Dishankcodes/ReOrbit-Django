@@ -1,9 +1,11 @@
 import { apiRequest } from "./api";
+import { clearSession, getAccessToken, getRefreshToken } from "./session";
 
 // User registration.
 export function userRegister(payload) {
   return apiRequest("/users/auth/register/", {
     method: "POST",
+    auth: false,
     body: payload,
   });
 }
@@ -136,7 +138,7 @@ export function refreshAccessToken(refreshToken) {
   });
 }
 
-// Logout account.
+// Logout account (explicit tokens).
 export function logoutUser(accessToken, refreshToken) {
   return apiRequest("/auth/logout/", {
     method: "POST",
@@ -145,6 +147,16 @@ export function logoutUser(accessToken, refreshToken) {
       refresh: refreshToken,
     },
   });
+}
+
+// Sign out: the browser forgets the session at once, and the server is told so the
+// refresh token stops working. Safe to call without waiting.
+export function signOut() {
+  const access = getAccessToken();
+  const refresh = getRefreshToken();
+  clearSession();
+  if (!access) return Promise.resolve();
+  return logoutUser(access, refresh).catch(() => {});
 }
 
 // Admin login.

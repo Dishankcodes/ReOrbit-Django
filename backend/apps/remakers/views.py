@@ -1,522 +1,207 @@
-from django.db import transaction
+import re
 
+from django.db import transaction
+from django.utils import timezone
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
-from apps.accounts.otp import (
-    create_and_send_otp,
-    verify_otp,
-)
-from apps.accounts.tokens import create_token_pair
+from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitReMaker
+from apps.accounts.tokens import create_token_pair
+from apps.core.responses import created, fail, ok
+from apps.core.throttles import AuthThrottle, OTPSendThrottle, OTPVerifyThrottle
 
-from .models import (
-    ReMakers,
-    ReMaker_Profile,
-)
-from .serializers import (
-    ReMakerSerializer,
-    ReMakerProfileSerializer,
-)
+from .models import ReMaker_Profile, ReMakers
+from .serializers import ReMakerProfileSerializer, ReMakerSerializer
 
-# HELPER
+USERNAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.-]{2,99}$")
 
 
-def clean_email(value):
-    """
-    Normalize email address.
-    """
-
-    return (value or "").strip().lower()
-
-
-# CHECK RE-MAKER EMAIL
+def _username_error(username):
+    if not username:
+        return "Username is required."
+    if not USERNAME_RE.match(username):
+        return "Username must be 3-100 characters: letters, numbers, spaces, dots, dashes or underscores."
+    return None
 
 
 class CheckEmailView(APIView):
-    """
-    Check whether an email already belongs to a ReMaker.
-
-    POST:
-        {
-            "email": "remaker@example.com"
-        }
-
-    Response:
-
-        Existing:
-        {
-            "success": true,
-            "data": {
-                "exists": true
-            }
-        }
-
-        New:
-        {
-            "success": true,
-            "data": {
-                "exists": false
-            }
-        }
-    """
+    """POST /api/remakers/auth/check-email/  {"email"} -> {"exists": bool}"""
 
     authentication_classes = []
     permission_classes = []
+    throttle_classes = [AuthThrottle]
 
     def post(self, request):
-
         email = clean_email(request.data.get("email"))
-
         if not email:
-
-            return Response(
-                {"success": False, "message": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        exists = ReMakers.objects.filter(email__iexact=email).exists()
-
-        return Response(
-            {"success": True, "data": {"exists": exists}}, status=status.HTTP_200_OK
-        )
-
-
-# REQUEST OTP
+            return fail("Email is required.")
+        return ok({"exists": ReMakers.objects.filter(email__iexact=email).exists()})
 
 
 class RequestOTPView(APIView):
-    """
-    Request ReMaker OTP.
-
-    Registration:
-        purpose = remaker_register
-
-    Login:
-        purpose = remaker_login
-    """
+    """POST /api/remakers/auth/request-otp/  purpose = remaker_register | remaker_login"""
 
     authentication_classes = []
     permission_classes = []
+    throttle_classes = [OTPSendThrottle]
 
     def post(self, request):
-
         email = clean_email(request.data.get("email"))
-
         purpose = (request.data.get("purpose") or "").strip()
 
-        # BASIC VALIDATION
-
         if not email:
+            return fail("Email is required.")
+        if not is_valid_email(email):
+            return fail("Please enter a valid email address.", code="INVALID_EMAIL")
 
-            return Response(
-                {"success": False, "message": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # CHECK PURPOSE
-
-        valid_purposes = [
-            OTP_Verification.Purpose.REMAKER_REGISTER,
-            OTP_Verification.Purpose.REMAKER_LOGIN,
-        ]
-
-        if purpose not in valid_purposes:
-
-            return Response(
-                {"success": False, "message": "Invalid OTP purpose."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # FIND EXISTING REMAKER
+        P = OTP_Verification.Purpose
+        if purpose not in (P.REMAKER_REGISTER, P.REMAKER_LOGIN):
+            return fail("Invalid OTP purpose.")
 
         remaker = ReMakers.objects.filter(email__iexact=email).first()
 
-        # REGISTRATION OTP
-
-        if purpose == OTP_Verification.Purpose.REMAKER_REGISTER:
-
-            # Email must NOT already exist.
-
+        if purpose == P.REMAKER_REGISTER:
             if remaker:
-
-                return Response(
-                    {
-                        "success": False,
-                        "message": ("Email is already registered " "as a ReMaker."),
-                    },
-                    status=status.HTTP_409_CONFLICT,
-                )
-
-            # REGISTRATION DATA
-
+                return fail("Email is already registered as a ReMaker.", status=status.HTTP_409_CONFLICT)
             full_name = (request.data.get("full_name") or "").strip()
-
             username = (request.data.get("username") or "").strip()
-
             if not full_name:
-
-                return Response(
-                    {
-                        "success": False,
-                        "message": ("Full name is required " "for registration."),
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            if not username:
-
-                return Response(
-                    {
-                        "success": False,
-                        "message": ("Username is required " "for registration."),
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # CHECK USERNAME
-
+                return fail("Full name is required for registration.")
+            error = _username_error(username)
+            if error:
+                return fail(error)
             if ReMakers.objects.filter(username__iexact=username).exists():
-
-                return Response(
-                    {"success": False, "message": ("Username is already taken.")},
-                    status=status.HTTP_409_CONFLICT,
-                )
-        # LOGIN OTP
-
-        if purpose == OTP_Verification.Purpose.REMAKER_LOGIN:
-
+                return fail("Username is already taken.", status=status.HTTP_409_CONFLICT)
+        else:
             if not remaker:
+                return fail("No ReMaker account found with this email.", status=status.HTTP_404_NOT_FOUND)
+            if remaker.status in (ReMakers.Status.BLOCKED, ReMakers.Status.DELETED):
+                return fail(f"Account is {remaker.status.lower()}.", status=status.HTTP_403_FORBIDDEN)
 
-                return Response(
-                    {
-                        "success": False,
-                        "message": ("No ReMaker account found " "with this email."),
-                    },
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            # CHECK STATUS
-
-            if remaker.status != ReMakers.Status.ACTIVE:
-
-                return Response(
-                    {
-                        "success": False,
-                        "message": (f"Account is " f"{remaker.status.lower()}."),
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
-        # SEND SMTP OTP
-
-        result = create_and_send_otp(email, purpose)
-
-        # RESPONSE
-
-        return Response(
-            {
-                "success": True,
-                "message": result["message"],
-                "data": {"expires_in_minutes": (result["expires_in_minutes"])},
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-# REMAKER REGISTRATION
+        result, error = send_otp_or_error(email, purpose, OTP_Verification.AccountType.REMAKER)
+        if error:
+            return error
+        return ok({"expires_in_minutes": result["expires_in_minutes"]}, result["message"])
 
 
 class RegisterView(APIView):
-    """
-    Complete ReMaker registration after OTP verification.
-
-    POST:
-
-        {
-            "email": "remaker@example.com",
-            "otp": "123456",
-            "full_name": "Nivya Patel",
-            "username": "Messy Mirror"
-        }
-
-    Successful registration:
-
-        ReMaker
-             +
-        ReMaker Profile
-             +
-        JWT
-    """
+    """POST /api/remakers/auth/register/ : creates the ReMaker after the emailed code is right."""
 
     authentication_classes = []
     permission_classes = []
+    throttle_classes = [OTPVerifyThrottle]
 
     def post(self, request):
-
         email = clean_email(request.data.get("email"))
-
         otp = (request.data.get("otp") or "").strip()
-
         full_name = (request.data.get("full_name") or "").strip()
-
         username = (request.data.get("username") or "").strip()
 
-        # VALIDATION
-
         if not email:
-
-            return Response(
-                {"success": False, "message": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return fail("Email is required.")
         if not otp:
-
-            return Response(
-                {"success": False, "message": "OTP is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return fail("OTP is required.")
         if not full_name:
-
-            return Response(
-                {"success": False, "message": "Full name is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not username:
-
-            return Response(
-                {"success": False, "message": "Username is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # VERIFY REGISTRATION OTP
-
-        record, error = verify_otp(
-            email, otp, OTP_Verification.Purpose.REMAKER_REGISTER
-        )
-
+            return fail("Full name is required.")
+        error = _username_error(username)
         if error:
+            return fail(error)
 
-            return Response(
-                {"success": False, "message": error}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # DOUBLE CHECK EMAIL
-
+        # Check availability first so a taken name does not use up a correct code.
         if ReMakers.objects.filter(email__iexact=email).exists():
-
-            return Response(
-                {"success": False, "message": ("Email is already registered.")},
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        # DOUBLE CHECK USERNAME
-
+            return fail("Email is already registered.", status=status.HTTP_409_CONFLICT)
         if ReMakers.objects.filter(username__iexact=username).exists():
+            return fail("Username is already taken.", status=status.HTTP_409_CONFLICT)
 
-            return Response(
-                {"success": False, "message": ("Username is already taken.")},
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        # CREATE REMAKER + PROFILE
+        record, error = verify_otp(email, otp, OTP_Verification.Purpose.REMAKER_REGISTER)
+        if error:
+            return fail(error)
 
         with transaction.atomic():
-
             remaker = ReMakers.objects.create(
                 full_name=full_name,
                 username=username,
                 email=email,
-                auth_provider=(ReMakers.AuthProvider.EMAIL),
+                auth_provider=ReMakers.AuthProvider.EMAIL,
                 status=ReMakers.Status.ACTIVE,
+                email_verified_at=timezone.now(),
             )
-
             ReMaker_Profile.objects.create(remaker=remaker)
+            consume_otp(record)
 
-            # OTP has already been verified by
-            # verify_otp().
-            #
-            # Delete it after successful account creation.
-
-            record.delete()
-
-        # CREATE JWT
-
-        tokens = create_token_pair("remaker", remaker.remaker_id)
-
-        # RESPONSE
-
-        return Response(
+        touch_login(remaker)
+        return created(
             {
-                "success": True,
-                "message": ("ReMaker registration " "successful."),
-                "data": {"remaker": ReMakerSerializer(remaker).data, **tokens},
+                "remaker": ReMakerSerializer(remaker).data,
+                **create_token_pair("remaker", remaker.remaker_id),
             },
-            status=status.HTTP_201_CREATED,
+            "ReMaker registration successful.",
         )
 
 
-# REMAKER LOGIN - VERIFY OTP
-
-
 class LoginVerifyOTPView(APIView):
-    """
-    Verify ReMaker login OTP.
+    """POST /api/remakers/auth/login/verify-otp/
 
-    POST:
-
-        {
-            "email": "remaker@example.com",
-            "otp": "123456"
-        }
+    Suspended, Blocked and Deleted ReMakers can sign in so the app can show their
+    status and let them reach support; the permission classes limit what they can do.
     """
 
     authentication_classes = []
     permission_classes = []
+    throttle_classes = [OTPVerifyThrottle]
 
     def post(self, request):
-
         email = clean_email(request.data.get("email"))
-
         otp = (request.data.get("otp") or "").strip()
-
-        # VALIDATION
-
         if not email:
-
-            return Response(
-                {"success": False, "message": "Email is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+            return fail("Email is required.")
         if not otp:
-
-            return Response(
-                {"success": False, "message": "OTP is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # VERIFY OTP
+            return fail("OTP is required.")
 
         record, error = verify_otp(email, otp, OTP_Verification.Purpose.REMAKER_LOGIN)
-
         if error:
-
-            return Response(
-                {"success": False, "message": error}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # FIND REMAKER
+            return fail(error)
 
         remaker = ReMakers.objects.filter(email__iexact=email).first()
-
         if not remaker:
+            return fail("ReMaker account not found.", status=status.HTTP_404_NOT_FOUND)
 
-            return Response(
-                {"success": False, "message": ("ReMaker account not found.")},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # CHECK ACCOUNT STATUS
-
-        if remaker.status != ReMakers.Status.ACTIVE:
-
-            return Response(
-                {
-                    "success": False,
-                    "message": (f"Account is " f"{remaker.status.lower()}."),
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # DELETE USED OTP
-
-        record.delete()
-
-        # CREATE JWT
-
-        tokens = create_token_pair("remaker", remaker.remaker_id)
-
-        # RESPONSE
-
-        return Response(
+        consume_otp(record)
+        touch_login(remaker)
+        return ok(
             {
-                "success": True,
-                "message": "Login successful.",
-                "data": {"remaker": ReMakerSerializer(remaker).data, **tokens},
+                "remaker": ReMakerSerializer(remaker).data,
+                **create_token_pair("remaker", remaker.remaker_id),
             },
-            status=status.HTTP_200_OK,
+            "Login successful.",
         )
-
-
-# CURRENT REMAKER
 
 
 class MeView(APIView):
-    """
-    Get authenticated ReMaker.
-    """
+    """GET /api/remakers/me/ : works for every account status."""
 
-    permission_classes = [IsAuthenticated, IsReOrbitReMaker]
+    permission_classes = [IsReOrbitReMaker]
+    support_endpoint = True
 
     def get(self, request):
-
-        return Response(
-            {
-                "success": True,
-                "data": {"remaker": ReMakerSerializer(request.user.account).data},
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-# REMAKER PROFILE
+        return ok({"remaker": ReMakerSerializer(request.user.account).data})
 
 
 class ProfileView(APIView):
-    """
-    Get / update authenticated ReMaker profile.
-    """
+    """GET / PATCH /api/remakers/profile/ : counters and ratings are read-only."""
 
-    permission_classes = [IsAuthenticated, IsReOrbitReMaker]
-
-    # GET PROFILE
+    permission_classes = [IsReOrbitReMaker]
 
     def get(self, request):
-
-        profile = request.user.account.profile
-
-        return Response(
-            {
-                "success": True,
-                "data": {"profile": ReMakerProfileSerializer(profile).data},
-            },
-            status=status.HTTP_200_OK,
-        )
-
-    # UPDATE PROFILE
+        return ok({"profile": ReMakerProfileSerializer(request.user.account.profile).data})
 
     def patch(self, request):
-
-        profile = request.user.account.profile
-
-        serializer = ReMakerProfileSerializer(profile, data=request.data, partial=True)
-
-        serializer.is_valid(raise_exception=True)
-
-        serializer.save()
-
-        return Response(
-            {
-                "success": True,
-                "message": ("Profile updated successfully."),
-                "data": {"profile": serializer.data},
-            },
-            status=status.HTTP_200_OK,
+        serializer = ReMakerProfileSerializer(
+            request.user.account.profile, data=request.data, partial=True
         )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return ok({"profile": serializer.data}, "Profile updated successfully.")

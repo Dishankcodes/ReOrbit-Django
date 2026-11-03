@@ -1,258 +1,165 @@
-import random
+"""One-time codes: generate, hash, email, verify.
+
+Rules: secrets-based generator, bcrypt-hashed in the database, expires in 5
+minutes, at most 5 wrong attempts then the code is burned, 60 second resend
+cooldown, single use.
+"""
+
+import secrets
 from datetime import timedelta
 
 from django.conf import settings
-from django.contrib.auth.hashers import (
-    make_password,
-    check_password,
-)
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.accounts.models import OTP_Verification
 
-#
-# OTP CONFIGURATION
-#
-
 OTP_EXPIRY_MINUTES = 5
+MAX_ATTEMPTS = 5
 
 
-#
-# OTP GENERATION
-#
+class OTPCooldown(Exception):
+    def __init__(self, wait_seconds):
+        self.wait_seconds = wait_seconds
+        super().__init__(f"Please wait {wait_seconds} seconds before requesting another code.")
+
+
+class OTPSendError(Exception):
+    pass
+
+
+def _cooldown_seconds():
+    return getattr(settings, "OTP_RESEND_COOLDOWN_SECONDS", 60)
 
 
 def generate_otp():
-    """
-    Generate a secure 6-digit OTP.
-
-    Example:
-        483921
-    """
-
-    return f"{random.randint(100000, 999999)}"
-
-
-#
-# EMAIL DETAILS
-#
+    """Cryptographically secure 6-digit code."""
+    return f"{secrets.randbelow(1_000_000):06d}"
 
 
 def get_email_details(purpose):
-    """
-    Return the email subject and HTML template
-    according to the OTP purpose.
-    """
-
-    if purpose == OTP_Verification.Purpose.REMAKER_REGISTER:
+    P = OTP_Verification.Purpose
+    if purpose == P.REMAKER_REGISTER:
         return (
             "Verify your ReOrbit ReMaker account",
             "accounts/email_templates/otp_remaker_register.html",
         )
-
-    if purpose == OTP_Verification.Purpose.REMAKER_LOGIN:
+    if purpose == P.REMAKER_LOGIN:
         return (
             "Your ReOrbit ReMaker login code",
             "accounts/email_templates/otp_remaker_login.html",
         )
-
-    if purpose == OTP_Verification.Purpose.USER_FORGOT_PASSWORD:
+    if purpose == P.USER_FORGOT_PASSWORD:
         return (
             "Reset your ReOrbit password",
             "accounts/email_templates/otp_user_forgot_password.html",
         )
-
     raise ValueError("Invalid OTP purpose.")
 
 
-#
-# CREATE + STORE + SEND OTP
-#
+def create_and_send_otp(email, purpose, account_type):
+    """Create a code, email it, return {"message", "expires_in_minutes"}.
 
-
-def create_and_send_otp(email, purpose):
+    Raises OTPCooldown if a code was sent less than 60 seconds ago and OTPSendError
+    if the email could not be delivered.
     """
-    Generate, hash, store and send an OTP through SMTP.
-
-    OTP itself is NEVER stored in the database.
-    Only the hashed OTP is stored.
-
-    Returns:
-        {
-            "message": "OTP sent successfully.",
-            "expires_in_minutes": 5
-        }
-    """
-
-    # Normalize email
-
     email = email.strip().lower()
+    now = timezone.now()
 
-    # Invalidate previous unverified OTPs
-    # for the same email and purpose
-
-    OTP_Verification.objects.filter(
-        email=email,
-        purpose=purpose,
-        is_verified=False,
-    ).update(expires_at=timezone.now())
-
-    # Generate OTP
-
-    otp = generate_otp()
-
-    # Hash OTP
-
-    otp_hash = make_password(
-        otp,
-        hasher="bcrypt_sha256",
-    )
-
-    # Calculate expiry
-
-    expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
-
-    # Store OTP verification record
-
-    OTP_Verification.objects.create(
-        email=email,
-        otp_hash=otp_hash,
-        purpose=purpose,
-        expires_at=expires_at,
-        is_verified=False,
-    )
-
-    # Get email subject + template
-
-    subject, template_name = get_email_details(purpose)
-
-    # Email template context
-
-    context = {
-        "otp": otp,
-        "expiry_minutes": OTP_EXPIRY_MINUTES,
-    }
-
-    # Render HTML email
-
-    html_message = render_to_string(
-        template_name,
-        context,
-    )
-
-    # Plain-text fallback
-
-    text_message = (
-        f"Your ReOrbit verification code is {otp}.\n\n"
-        f"This code is valid for "
-        f"{OTP_EXPIRY_MINUTES} minutes.\n\n"
-        "If you did not request this code, "
-        "you can safely ignore this email."
-    )
-
-    # Create email
-
-    email_message = EmailMultiAlternatives(
-        subject=subject,
-        body=text_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[email],
-    )
-
-    # Attach HTML version
-
-    email_message.attach_alternative(
-        html_message,
-        "text/html",
-    )
-
-    # Send through SMTP
-
-    email_message.send(fail_silently=False)
-
-    # Response
-
-    return {
-        "message": "OTP sent successfully.",
-        "expires_in_minutes": OTP_EXPIRY_MINUTES,
-    }
-
-
-# VERIFY OTP
-
-
-def verify_otp(email, otp, purpose):
-    """
-    Verify the latest valid OTP.
-
-    Returns:
-
-        Success:
-            (otp_record, None)
-
-        Failure:
-            (None, error_message)
-    """
-
-    # Normalize values
-
-    email = email.strip().lower()
-    otp = str(otp).strip()
-
-    # Find latest unverified OTP
-
-    otp_record = (
-        OTP_Verification.objects.filter(
-            email=email,
-            purpose=purpose,
-            is_verified=False,
-        )
+    cooldown = _cooldown_seconds()
+    last = (
+        OTP_Verification.objects.filter(email=email, purpose=purpose)
         .order_by("-created_at")
         .first()
     )
+    if cooldown and last:
+        elapsed = (now - last.created_at).total_seconds()
+        if elapsed < cooldown:
+            raise OTPCooldown(int(cooldown - elapsed) + 1)
 
-    # OTP does not exist
+    # Older unused codes for this email and purpose stop working.
+    OTP_Verification.objects.filter(
+        email=email, purpose=purpose, consumed_at__isnull=True
+    ).update(consumed_at=now, expires_at=now)
 
-    if not otp_record:
-        return (
-            None,
-            "Invalid or expired OTP.",
-        )
-
-    # Check expiry
-
-    if timezone.now() >= otp_record.expires_at:
-        return (
-            None,
-            "OTP has expired. Please request a new OTP.",
-        )
-
-    # Compare entered OTP with stored hash
-
-    if not check_password(
-        otp,
-        otp_record.otp_hash,
-    ):
-        return (
-            None,
-            "Invalid OTP.",
-        )
-
-    # Mark OTP as verified
-
-    otp_record.is_verified = True
-
-    otp_record.save(
-        update_fields=[
-            "is_verified",
-        ]
+    otp = generate_otp()
+    record = OTP_Verification.objects.create(
+        email=email,
+        account_type=account_type,
+        purpose=purpose,
+        otp_hash=make_password(otp, hasher="bcrypt_sha256"),
+        expires_at=now + timedelta(minutes=OTP_EXPIRY_MINUTES),
     )
 
-    # Return verified OTP record
-
-    return (
-        otp_record,
-        None,
+    subject, template_name = get_email_details(purpose)
+    context = {"otp": otp, "expiry_minutes": OTP_EXPIRY_MINUTES}
+    text = (
+        f"Your ReOrbit verification code is {otp}.\n\n"
+        f"This code is valid for {OTP_EXPIRY_MINUTES} minutes.\n\n"
+        "If you did not request this code, you can safely ignore this email."
     )
+    try:
+        message = EmailMultiAlternatives(
+            subject=subject,
+            body=text,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        message.attach_alternative(render_to_string(template_name, context), "text/html")
+        message.send(fail_silently=False)
+    except Exception as exc:
+        record.delete()
+        raise OTPSendError("We could not send the email. Please try again.") from exc
+
+    return {"message": "OTP sent successfully.", "expires_in_minutes": OTP_EXPIRY_MINUTES}
+
+
+def verify_otp(email, otp, purpose):
+    """Check the latest code. Returns (record, None) or (None, error_message).
+
+    A correct code is marked verified (not yet consumed); call consume_otp() when
+    the action it unlocks has succeeded.
+    """
+    email = email.strip().lower()
+    otp = str(otp).strip()
+    now = timezone.now()
+
+    with transaction.atomic():
+        record = (
+            OTP_Verification.objects.select_for_update()
+            .filter(
+                email=email,
+                purpose=purpose,
+                is_verified=False,
+                consumed_at__isnull=True,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if not record:
+            return None, "Invalid or expired OTP."
+        if now >= record.expires_at:
+            return None, "OTP has expired. Please request a new OTP."
+
+        if not check_password(otp, record.otp_hash):
+            record.attempts += 1
+            if record.attempts >= MAX_ATTEMPTS:
+                record.consumed_at = now  # burned
+                record.save(update_fields=["attempts", "consumed_at"])
+                return None, "Too many wrong attempts. Please request a new OTP."
+            record.save(update_fields=["attempts"])
+            left = MAX_ATTEMPTS - record.attempts
+            return None, f"Invalid OTP. {left} attempt{'s' if left != 1 else ''} left."
+
+        record.is_verified = True
+        record.save(update_fields=["is_verified"])
+        return record, None
+
+
+def consume_otp(record):
+    """Mark a verified code as used. It can never be used again."""
+    record.consumed_at = timezone.now()
+    record.save(update_fields=["consumed_at"])
