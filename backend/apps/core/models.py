@@ -97,6 +97,11 @@ class PlatformSettings(TimeStampedModel):
 
     def save(self, *args, **kwargs):
         self.pk = 1
+        if self._state.adding:
+            # A fresh object replacing the single row keeps the original created_at.
+            existing = type(self).objects.filter(pk=1).values_list("created_at", flat=True).first()
+            if existing:
+                self.created_at = existing
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
