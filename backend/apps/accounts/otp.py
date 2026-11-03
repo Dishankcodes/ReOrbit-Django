@@ -5,6 +5,7 @@ minutes, at most 5 wrong attempts then the code is burned, 60 second resend
 cooldown, single use.
 """
 
+import logging
 import secrets
 from datetime import timedelta
 
@@ -16,6 +17,8 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.accounts.models import OTP_Verification
+
+logger = logging.getLogger(__name__)
 
 OTP_EXPIRY_MINUTES = 5
 MAX_ATTEMPTS = 5
@@ -111,6 +114,8 @@ def create_and_send_otp(email, purpose, account_type):
         message.attach_alternative(render_to_string(template_name, context), "text/html")
         message.send(fail_silently=False)
     except Exception as exc:
+        # The real reason (bad app password, wrong host...) is printed in the server terminal.
+        logger.exception("Could not send OTP email to %s: %s", email, exc)
         record.delete()
         raise OTPSendError("We could not send the email. Please try again.") from exc
 

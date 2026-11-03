@@ -130,15 +130,8 @@ DATABASES = {
 }
 
 
-# Password rules (used by register and reset-password).
+# Password rules: none (a password only has to be filled in).
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
-    },
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
@@ -218,12 +211,9 @@ SIMPLE_JWT = {
 
 
 # Email configuration.
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend"
-    if DEBUG
-    else "django.core.mail.backends.smtp.EmailBackend",
-)
+# Codes are emailed through SMTP using EMAIL_HOST_USER / EMAIL_HOST_PASSWORD from .env.
+# (Set EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend to print them instead.)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)

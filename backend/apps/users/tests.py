@@ -25,15 +25,12 @@ class UserRegisterTests(APIBase):
         self.assertTrue(User_Profile.objects.filter(user=user).exists())
         self.assertTrue(user.password.startswith(("pbkdf2_", "argon2", "bcrypt", "scrypt")))
 
-    def test_weak_password_is_rejected(self):
-        for bad in ("short1", "password123", "12345678"):
-            r = self.post(
-                "/api/users/auth/register/",
-                {"full_name": "Asha", "email": "a@example.com", "password": bad},
-            )
-            self.assertEqual(r.status_code, 400, bad)
-            self.assertEqual(r.data["code"], "WEAK_PASSWORD")
-        self.assertEqual(Users.objects.count(), 0)
+    def test_any_non_empty_password_is_accepted(self):
+        r = self.post(
+            "/api/users/auth/register/",
+            {"full_name": "Asha", "email": "a@example.com", "password": "123"},
+        )
+        self.assertEqual(r.status_code, 201)
 
     def test_validation(self):
         base = {"full_name": "Asha", "email": "a@example.com", "password": STRONG_PASSWORD}
@@ -50,6 +47,26 @@ class UserRegisterTests(APIBase):
             {"full_name": "Dup", "email": "DUP@example.com", "password": STRONG_PASSWORD},
         )
         self.assertEqual(r.status_code, 409)
+
+
+class EmailUniqueAcrossRolesTests(APIBase):
+    def test_user_cannot_register_with_a_remaker_email(self):
+        self.make_remaker(email="shared@example.com")
+        r = self.post(
+            "/api/users/auth/register/",
+            {"full_name": "A", "email": "shared@example.com", "password": "x"},
+        )
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.data["code"], "EMAIL_USED_BY_REMAKER")
+
+    def test_remaker_cannot_register_with_a_user_email(self):
+        self.make_user(email="shared@example.com")
+        r = self.post(
+            "/api/remakers/auth/request-otp/",
+            {"email": "shared@example.com", "purpose": "remaker_register", "full_name": "A", "username": "Fresh Name"},
+        )
+        self.assertEqual(r.status_code, 409)
+        self.assertEqual(r.data["code"], "EMAIL_USED_BY_USER")
 
 
 class UserLoginTests(APIBase):
@@ -111,19 +128,6 @@ class ForgotPasswordTests(APIBase):
             {"reset_token": token, "new_password": "Another-Pass-9921!"},
         )
         self.assertEqual(again.status_code, 400)
-
-    def test_weak_new_password_rejected_and_token_still_usable(self):
-        self.make_user(email="u@example.com")
-        token = self._reset_token()
-        r = self.post(
-            "/api/users/auth/forgot-password/reset/", {"reset_token": token, "new_password": "12345678"}
-        )
-        self.assertEqual(r.status_code, 400)
-        ok = self.post(
-            "/api/users/auth/forgot-password/reset/",
-            {"reset_token": token, "new_password": "Brand-New-4821!"},
-        )
-        self.assertEqual(ok.status_code, 200)
 
     def test_unknown_email_and_bad_code(self):
         r = self.post("/api/users/auth/forgot-password/request-otp/", {"email": "none@example.com"})

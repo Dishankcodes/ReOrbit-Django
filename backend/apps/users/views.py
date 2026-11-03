@@ -1,5 +1,3 @@
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import status
 from rest_framework.views import APIView
@@ -13,16 +11,10 @@ from apps.accounts.utils import issue_reset_token, read_reset_token
 from apps.core.responses import created, fail, ok
 from apps.core.throttles import AuthThrottle, OTPSendThrottle, OTPVerifyThrottle
 
+from apps.remakers.models import ReMakers
+
 from .models import User_Profile, Users
 from .serializers import UserProfileSerializer, UserSerializer
-
-
-def _password_errors(password, user=None):
-    try:
-        validate_password(password, user=user)
-    except DjangoValidationError as exc:
-        return list(exc.messages)
-    return None
 
 
 class RegisterView(APIView):
@@ -45,11 +37,14 @@ class RegisterView(APIView):
             return fail("Please enter a valid email address.", code="INVALID_EMAIL")
         if not password:
             return fail("Password is required.")
-        problems = _password_errors(password, Users(full_name=full_name, email=email))
-        if problems:
-            return fail(problems[0], errors={"password": problems}, code="WEAK_PASSWORD")
         if Users.objects.filter(email__iexact=email).exists():
             return fail("Email is already registered.", status=status.HTTP_409_CONFLICT)
+        if ReMakers.objects.filter(email__iexact=email).exists():
+            return fail(
+                "This email is already registered as a ReMaker. Use a different email.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_REMAKER",
+            )
 
         with transaction.atomic():
             user = Users(full_name=full_name, email=email)
@@ -202,10 +197,6 @@ class ForgotPasswordResetView(APIView):
             user = Users.objects.filter(user_id=user_id).first()
             if not user:
                 return fail("User account not found.", status=status.HTTP_404_NOT_FOUND)
-
-            problems = _password_errors(new_password, user)
-            if problems:
-                return fail(problems[0], errors={"new_password": problems}, code="WEAK_PASSWORD")
 
             user.set_password(new_password)
             user.save(update_fields=["password", "updated_at"])

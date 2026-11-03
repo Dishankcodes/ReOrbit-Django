@@ -37,9 +37,3 @@ class CreateAdminCommandTests(APIBase):
         self.assertEqual(admin.email, "root@example.com")
         self.assertTrue(admin.public_id.startswith("ADM-"))
         self.assertTrue(admin.has_module("settings", "edit"))
-
-    def test_rejects_weak_password(self):
-        from django.core.management.base import CommandError
-
-        with self.assertRaises(CommandError):
-            call_command("create_admin", "--name", "R", "--email", "r@example.com", "--password", "12345678")

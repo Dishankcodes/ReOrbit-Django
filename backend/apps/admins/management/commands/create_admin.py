@@ -1,5 +1,3 @@
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
@@ -26,10 +24,6 @@ class Command(BaseCommand):
         email = opts["email"].strip().lower()
         if Admins.objects.filter(email__iexact=email).exists():
             raise CommandError("Admin email already exists.")
-        try:
-            validate_password(opts["password"])
-        except ValidationError as exc:
-            raise CommandError(" ".join(exc.messages))
 
         modules = {}
         for part in filter(None, (p.strip() for p in opts["modules"].split(","))):

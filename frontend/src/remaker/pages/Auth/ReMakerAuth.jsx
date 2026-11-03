@@ -277,7 +277,7 @@ export default function ReMakerAuth() {
           account: remaker,
         });
 
-        window.location.href = "/remakers-home";
+        window.location.href = "/remaker-dashboard";
         return;
       }
 
@@ -326,7 +326,7 @@ export default function ReMakerAuth() {
     setLoading(true);
     setMessage("");
 
-    window.location.href = "/remakers-home";
+    window.location.href = "/remaker-dashboard";
   };
 
   // Resend OTP

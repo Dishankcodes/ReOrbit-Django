@@ -13,6 +13,8 @@ from apps.accounts.tokens import create_token_pair
 from apps.core.responses import created, fail, ok
 from apps.core.throttles import AuthThrottle, OTPSendThrottle, OTPVerifyThrottle
 
+from apps.users.models import Users
+
 from .models import ReMaker_Profile, ReMakers
 from .serializers import ReMakerProfileSerializer, ReMakerSerializer
 
@@ -66,6 +68,12 @@ class RequestOTPView(APIView):
         if purpose == P.REMAKER_REGISTER:
             if remaker:
                 return fail("Email is already registered as a ReMaker.", status=status.HTTP_409_CONFLICT)
+            if Users.objects.filter(email__iexact=email).exists():
+                return fail(
+                    "This email is already registered as a user. Use a different email.",
+                    status=status.HTTP_409_CONFLICT,
+                    code="EMAIL_USED_BY_USER",
+                )
             full_name = (request.data.get("full_name") or "").strip()
             username = (request.data.get("username") or "").strip()
             if not full_name:
@@ -113,6 +121,12 @@ class RegisterView(APIView):
         # Check availability first so a taken name does not use up a correct code.
         if ReMakers.objects.filter(email__iexact=email).exists():
             return fail("Email is already registered.", status=status.HTTP_409_CONFLICT)
+        if Users.objects.filter(email__iexact=email).exists():
+            return fail(
+                "This email is already registered as a user. Use a different email.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_USER",
+            )
         if ReMakers.objects.filter(username__iexact=username).exists():
             return fail("Username is already taken.", status=status.HTTP_409_CONFLICT)
 
