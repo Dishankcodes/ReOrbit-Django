@@ -214,3 +214,63 @@ class ThrottleTests(APIBase):
             ]
         self.assertIn(429, codes)
         self.assertEqual(codes[0], 404)
+
+
+@override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
+class OTPRateLimitTests(APIBase):
+    """5 attempts per minute, per email, for every code endpoint."""
+
+    def test_forgot_password_send_and_resend_limited_to_5_per_minute(self):
+        self.make_user(email="u@example.com")
+        url = "/api/users/auth/forgot-password/request-otp/"
+        codes = [self.post(url, {"email": "u@example.com"}).status_code for _ in range(6)]
+        self.assertEqual(codes[:5], [200] * 5)
+        self.assertEqual(codes[5], 429)
+        self.assertEqual(len(mail.outbox), 5)
+        last = self.post(url, {"email": "u@example.com"})
+        self.assertIn("try again in", last.data["message"])
+        self.assertEqual(last.data["code"], "RATE_LIMITED")
+
+    def test_limit_is_per_email(self):
+        self.make_user(email="a@example.com")
+        self.make_user(email="b@example.com")
+        url = "/api/users/auth/forgot-password/request-otp/"
+        for _ in range(5):
+            self.post(url, {"email": "a@example.com"})
+        self.assertEqual(self.post(url, {"email": "a@example.com"}).status_code, 429)
+        self.assertEqual(self.post(url, {"email": "b@example.com"}).status_code, 200)
+
+    def test_forgot_password_verify_limited(self):
+        self.make_user(email="u@example.com")
+        self.post("/api/users/auth/forgot-password/request-otp/", {"email": "u@example.com"})
+        right = self.last_otp()
+        wrong = "000000" if right != "000000" else "111111"
+        url = "/api/users/auth/forgot-password/verify-otp/"
+        for _ in range(5):
+            self.post(url, {"email": "u@example.com", "otp": wrong})
+        r = self.post(url, {"email": "u@example.com", "otp": right})
+        self.assertEqual(r.status_code, 429)
+
+    def test_remaker_login_and_register_codes_limited(self):
+        self.make_remaker(email="m@example.com")
+        url = "/api/remakers/auth/request-otp/"
+        body = {"email": "m@example.com", "purpose": "remaker_login"}
+        codes = [self.post(url, body).status_code for _ in range(6)]
+        self.assertEqual(codes[5], 429)
+        reg = {"email": "new@example.com", "purpose": "remaker_register", "full_name": "N", "username": "New One"}
+        codes = [self.post(url, reg).status_code for _ in range(6)]
+        self.assertEqual(codes[:5], [200] * 5)
+        self.assertEqual(codes[5], 429)
+
+    def test_remaker_verify_limited(self):
+        self.make_remaker(email="m@example.com")
+        wrong = {"email": "m@example.com", "otp": "123456"}
+        for _ in range(5):
+            self.post("/api/remakers/auth/login/verify-otp/", wrong)
+        self.assertEqual(self.post("/api/remakers/auth/login/verify-otp/", wrong).status_code, 429)
+
+    def test_configured_rates_are_5_per_minute(self):
+        from django.conf import settings
+
+        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp_send"], "5/min")
+        self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp_verify"], "5/min")

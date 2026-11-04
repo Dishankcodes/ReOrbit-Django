@@ -5,13 +5,19 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 
+from apps.accounts.google import (
+    GoogleAuthError,
+    issue_signup_token,
+    profile_from_code,
+    read_signup_token,
+)
 from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitReMaker
 from apps.accounts.tokens import create_token_pair
 from apps.core.responses import created, fail, ok
-from apps.core.throttles import AuthThrottle, OTPSendThrottle, OTPVerifyThrottle
+from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OTPVerifyThrottle
 
 from apps.users.models import Users
 
@@ -48,7 +54,7 @@ class RequestOTPView(APIView):
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPSendThrottle]
+    throttle_classes = [OTPIPThrottle, OTPSendThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -100,7 +106,7 @@ class RegisterView(APIView):
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPVerifyThrottle]
+    throttle_classes = [OTPIPThrottle, OTPVerifyThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -165,7 +171,7 @@ class LoginVerifyOTPView(APIView):
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPVerifyThrottle]
+    throttle_classes = [OTPIPThrottle, OTPVerifyThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -191,6 +197,95 @@ class LoginVerifyOTPView(APIView):
                 **create_token_pair("remaker", remaker.remaker_id),
             },
             "Login successful.",
+        )
+
+
+class GoogleAuthView(APIView):
+    """POST /api/remakers/auth/google/
+
+    Step 1: {"code"}                          -> sign in if the account exists.
+            A brand-new person gets {"needs_registration": true, "google_token", "full_name", "email"}
+            because a ReMaker must choose a username.
+    Step 2: {"google_token", "username"}      -> creates the account and signs in.
+    An email that belongs to a normal user is refused (409).
+    """
+
+    authentication_classes = []
+    permission_classes = []
+    throttle_classes = [AuthThrottle]
+
+    def post(self, request):
+        google_token = request.data.get("google_token")
+        try:
+            g = read_signup_token(google_token) if google_token else profile_from_code(request.data.get("code"))
+        except GoogleAuthError as exc:
+            return fail(exc.message, status=exc.status, code="GOOGLE_AUTH_FAILED")
+
+        remaker = (
+            ReMakers.objects.filter(google_id=g["sub"]).first()
+            or ReMakers.objects.filter(email__iexact=g["email"]).first()
+        )
+
+        if remaker is not None:
+            if remaker.google_id and remaker.google_id != g["sub"]:
+                return fail(
+                    "This email is linked to a different Google account.",
+                    status=status.HTTP_409_CONFLICT,
+                )
+            if not remaker.google_id:
+                remaker.google_id = g["sub"]
+                remaker.email_verified_at = remaker.email_verified_at or timezone.now()
+                remaker.save(update_fields=["google_id", "email_verified_at", "updated_at"])
+            touch_login(remaker)
+            return ok(
+                {"remaker": ReMakerSerializer(remaker).data, **create_token_pair("remaker", remaker.remaker_id)},
+                "Login successful.",
+            )
+
+        if Users.objects.filter(email__iexact=g["email"]).exists():
+            return fail(
+                "This email is already registered as a user. Use a different Google account.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_USER",
+            )
+
+        username = (request.data.get("username") or "").strip()
+        if not google_token or not username:
+            return ok(
+                {
+                    "needs_registration": True,
+                    "google_token": issue_signup_token(g),
+                    "email": g["email"],
+                    "full_name": g["full_name"],
+                },
+                "Choose a username to finish creating your ReMaker account.",
+            )
+
+        error = _username_error(username)
+        if error:
+            return fail(error)
+        if ReMakers.objects.filter(username__iexact=username).exists():
+            return fail("Username is already taken.", status=status.HTTP_409_CONFLICT)
+        # The name comes from Google but the person may change it on the profile step.
+        full_name = (request.data.get("full_name") or g["full_name"]).strip()[:150]
+        if not full_name:
+            return fail("Full name is required.")
+
+        with transaction.atomic():
+            remaker = ReMakers.objects.create(
+                full_name=full_name,
+                username=username,
+                email=g["email"],
+                google_id=g["sub"],
+                auth_provider=ReMakers.AuthProvider.GOOGLE,
+                email_verified_at=timezone.now(),
+            )
+            ReMaker_Profile.objects.create(remaker=remaker)
+
+        touch_login(remaker)
+        return created(
+            {"remaker": ReMakerSerializer(remaker).data, **create_token_pair("remaker", remaker.remaker_id)},
+            "ReMaker account created with Google.",
         )
 
 

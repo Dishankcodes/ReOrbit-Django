@@ -3,6 +3,7 @@ from .views import (
     RegisterView,
     LoginView,
     ForgotPasswordRequestOTPView,
+    GoogleAuthView,
     ForgotPasswordVerifyOTPView,
     ForgotPasswordResetView,
     MeView,
@@ -12,6 +13,7 @@ from .views import (
 urlpatterns = [
     path("auth/register/", RegisterView.as_view()),
     path("auth/login/", LoginView.as_view()),
+    path("auth/google/", GoogleAuthView.as_view()),
     path("auth/forgot-password/request-otp/", ForgotPasswordRequestOTPView.as_view()),
     path("auth/forgot-password/verify-otp/", ForgotPasswordVerifyOTPView.as_view()),
     path("auth/forgot-password/reset/", ForgotPasswordResetView.as_view()),

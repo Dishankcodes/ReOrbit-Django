@@ -9,12 +9,14 @@ import {
   requestReMakerLoginOTP,
   registerReMaker,
   verifyReMakerLoginOTP,
+  remakerGoogleLogin,
 } from "../../../api/auth";
+import GoogleButton from "../../../shared/components/GoogleButton";
 import { saveSession } from "../../../api/session";
 
 export default function ReMakerAuth() {
   // Navigation steps:
-  // 'login' | 'not-found' | 'register' | 'otp' | 'confirm'
+  // 'login' | 'not-found' | 'register' | 'otp' | 'confirm' | 'google-username'
   const [step, setStep] = useState("login");
 
   // null: unchecked
@@ -80,7 +82,95 @@ export default function ReMakerAuth() {
 
   // Reset Authentication
 
+  // Google sign-in. A brand-new person is asked for a username (step 2).
+  const [googleToken, setGoogleToken] = useState("");
+
+  const finishGoogle = (data) => {
+    if (!data?.access || !data?.refresh) {
+      throw new Error("Login response is missing authentication tokens.");
+    }
+    saveSession({
+      access: data.access,
+      refresh: data.refresh,
+      type: "remaker",
+      account: data.remaker,
+    });
+    window.location.href = "/remaker-dashboard";
+  };
+
+  const handleGoogleCode = async (code) => {
+    setMessage("");
+    setLoading(true);
+    try {
+      const response = await remakerGoogleLogin({ code });
+      const data = response?.data;
+      if (data?.needs_registration) {
+        setGoogleToken(data.google_token);
+        setName(data.full_name || "");
+        setEmail(data.email || "");
+        // Suggest a username from the email; the person can change it.
+        setUsername(
+          (data.email || "").split("@")[0].replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 30),
+        );
+        setStep("google-username");
+        return;
+      }
+      finishGoogle(data);
+    } catch (error) {
+      setMessage(error?.message || "Google sign-in failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleUsername = async (event) => {
+    event.preventDefault();
+    if (!name.trim()) {
+      setMessage("Please enter your name.");
+      return;
+    }
+    if (!username.trim()) {
+      setMessage("Please choose a username.");
+      return;
+    }
+    setMessage("");
+    setLoading(true);
+    try {
+      const response = await remakerGoogleLogin({
+        google_token: googleToken,
+        username: username.trim(),
+        full_name: name.trim(),
+      });
+      finishGoogle(response?.data);
+    } catch (error) {
+      setMessage(error?.message || "Could not create your account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const googleBlock = (
+    <>
+      <div className="remaker-divider">
+        <span />
+        <p>OR</p>
+        <span />
+      </div>
+
+      <GoogleButton
+        className="remaker-google"
+        onCode={handleGoogleCode}
+        onError={setMessage}
+        disabled={loading}
+      >
+        <span className="google-letter">G</span>
+        Continue with Google
+      </GoogleButton>
+    </>
+  );
+
   const resetAuth = () => {
+    setGoogleToken("");
     setStep("login");
     setEmailExists(null);
     setEmail("");
@@ -457,6 +547,8 @@ export default function ReMakerAuth() {
                   code.
                 </div>
 
+                {googleBlock}
+
                 {message && <p className="remaker-auth-message">{message}</p>}
               </div>
             )}
@@ -596,6 +688,8 @@ export default function ReMakerAuth() {
                   </button>
                 </form>
 
+                {googleBlock}
+
                 <button
                   type="button"
                   className="remaker-back-link"
@@ -604,6 +698,84 @@ export default function ReMakerAuth() {
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                   Use another email
+                </button>
+
+                {message && <p className="remaker-auth-message">{message}</p>}
+              </div>
+            )}
+
+            {/* =================================================
+                STEP: GOOGLE USERNAME (new ReMaker)
+            ================================================= */}
+            {step === "google-username" && (
+              <div className="remaker-auth-content">
+                <div className="remaker-auth-heading">
+                  <span className="remaker-auth-eyebrow">ALMOST THERE</span>
+
+                  <h1>Complete your profile.</h1>
+
+                  <p>
+                    {email ? `Signed in with Google as ${email}. ` : ""}
+                    Your name comes from Google. Change it if you like, and
+                    pick the username people will see on your ReMaker profile.
+                  </p>
+                </div>
+
+                <form
+                  className="remaker-auth-form"
+                  onSubmit={handleGoogleUsername}
+                >
+                  <div className="remaker-field">
+                    <label htmlFor="remaker-google-name">Full name</label>
+
+                    <input
+                      id="remaker-google-name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+
+                  <div className="remaker-field">
+                    <label htmlFor="remaker-google-username">Username</label>
+
+                    <input
+                      id="remaker-google-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="@yourmakername"
+                      autoComplete="username"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="remaker-submit"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating..." : "Finish and go to dashboard"}
+
+                    {!loading && (
+                      <span className="material-symbols-outlined">
+                        arrow_forward
+                      </span>
+                    )}
+                  </button>
+                </form>
+
+                <button
+                  type="button"
+                  className="remaker-back-link"
+                  onClick={resetAuth}
+                  disabled={loading}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Use another account
                 </button>
 
                 {message && <p className="remaker-auth-message">{message}</p>}

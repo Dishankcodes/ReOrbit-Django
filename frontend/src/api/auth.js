@@ -50,6 +50,24 @@ export function resetForgotPassword(resetToken, newPassword) {
   });
 }
 
+// Google sign-in. `code` is the one-time code from Google's popup.
+export function userGoogleLogin(code) {
+  return apiRequest("/users/auth/google/", {
+    method: "POST",
+    auth: false,
+    body: { code },
+  });
+}
+
+// Step 1: { code }. Step 2 (new ReMaker): { google_token, username }.
+export function remakerGoogleLogin(payload) {
+  return apiRequest("/remakers/auth/google/", {
+    method: "POST",
+    auth: false,
+    body: payload,
+  });
+}
+
 // Check whether ReMaker email already exists.
 export function checkReMakerEmail(email) {
   return apiRequest("/remakers/auth/check-email/", {

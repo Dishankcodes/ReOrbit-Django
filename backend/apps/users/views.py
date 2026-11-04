@@ -1,7 +1,10 @@
 from django.db import transaction
+from django.utils import timezone
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 
+from apps.accounts.google import GoogleAuthError, profile_from_code
 from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
@@ -9,7 +12,7 @@ from apps.accounts.permissions import IsReOrbitUser
 from apps.accounts.tokens import create_token_pair
 from apps.accounts.utils import issue_reset_token, read_reset_token
 from apps.core.responses import created, fail, ok
-from apps.core.throttles import AuthThrottle, OTPSendThrottle, OTPVerifyThrottle
+from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OTPVerifyThrottle
 
 from apps.remakers.models import ReMakers
 
@@ -102,12 +105,76 @@ class LoginView(APIView):
         )
 
 
+class GoogleAuthView(APIView):
+    """POST /api/users/auth/google/  {"code"}  ->  sign in, or create the account.
+
+    * Known Google account                -> sign in.
+    * Same email already registered here  -> link Google to it, sign in.
+      If that email was never verified, the old password is removed, because it may
+      have been set by someone who does not own the email. The owner can set a new
+      one with "Forgot password".
+    * Email belongs to a ReMaker          -> 409 (one email, one role).
+    * Otherwise                           -> create a new user.
+    """
+
+    authentication_classes = []
+    permission_classes = []
+    throttle_classes = [AuthThrottle]
+
+    def post(self, request):
+        try:
+            g = profile_from_code(request.data.get("code"))
+        except GoogleAuthError as exc:
+            return fail(exc.message, status=exc.status, code="GOOGLE_AUTH_FAILED")
+
+        new_account = False
+        with transaction.atomic():
+            user = Users.objects.filter(google_id=g["sub"]).first()
+            if user is None:
+                user = Users.objects.filter(email__iexact=g["email"]).first()
+                if user is not None:
+                    if user.google_id and user.google_id != g["sub"]:
+                        return fail(
+                            "This email is linked to a different Google account.",
+                            status=status.HTTP_409_CONFLICT,
+                        )
+                    if user.email_verified_at is None:
+                        user.password = None
+                    user.google_id = g["sub"]
+                    user.email_verified_at = user.email_verified_at or timezone.now()
+                    user.save(update_fields=["google_id", "password", "email_verified_at", "updated_at"])
+                else:
+                    if ReMakers.objects.filter(email__iexact=g["email"]).exists():
+                        return fail(
+                            "This email is already registered as a ReMaker. Use a different Google account.",
+                            status=status.HTTP_409_CONFLICT,
+                            code="EMAIL_USED_BY_REMAKER",
+                        )
+                    user = Users(
+                        full_name=g["full_name"],
+                        email=g["email"],
+                        google_id=g["sub"],
+                        auth_provider=Users.AuthProvider.GOOGLE,
+                        password=None,
+                        email_verified_at=timezone.now(),
+                    )
+                    user.save()
+                    User_Profile.objects.create(user=user)
+                    new_account = True
+
+        touch_login(user)
+        body = {"user": UserSerializer(user).data, **create_token_pair("user", user.user_id)}
+        if new_account:
+            return created(body, "Account created with Google.")
+        return ok(body, "Login successful.")
+
+
 class ForgotPasswordRequestOTPView(APIView):
     """POST /api/users/auth/forgot-password/request-otp/"""
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPSendThrottle]
+    throttle_classes = [OTPIPThrottle, OTPSendThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -135,7 +202,7 @@ class ForgotPasswordVerifyOTPView(APIView):
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPVerifyThrottle]
+    throttle_classes = [OTPIPThrottle, OTPVerifyThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -164,7 +231,7 @@ class ForgotPasswordResetView(APIView):
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [OTPVerifyThrottle]
+    throttle_classes = [OTPIPThrottle, OTPVerifyThrottle]
 
     def post(self, request):
         reset_token = request.data.get("reset_token") or ""

@@ -50,6 +50,7 @@ def api_exception_handler(exc, context):
     if isinstance(exc, exceptions.Throttled):
         body["code"] = "RATE_LIMITED"
         body["retry_after"] = exc.wait
-        body["message"] = "Too many requests. Please wait and try again."
+        wait = int(exc.wait or 60) + 1
+        body["message"] = f"Too many attempts. Please try again in {wait} seconds."
     response.data = body
     return response

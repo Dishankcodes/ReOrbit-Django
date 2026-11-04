@@ -5,6 +5,7 @@ from .views import (
     RequestOTPView,
     RegisterView,
     LoginVerifyOTPView,
+    GoogleAuthView,
     MeView,
     ProfileView,
 )
@@ -30,6 +31,11 @@ urlpatterns = [
         "auth/login/verify-otp/",
         LoginVerifyOTPView.as_view(),
         name="remaker-login-verify-otp",
+    ),
+    path(
+        "auth/google/",
+        GoogleAuthView.as_view(),
+        name="remaker-google",
     ),
     # ReMaker Account
     path(

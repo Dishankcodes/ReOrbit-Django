@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.test import override_settings
 
 from apps.core.testing import APIBase
@@ -81,6 +82,7 @@ class ReMakerAuthTests(APIBase):
         wrong = "000000" if right != "000000" else "111111"
         for _ in range(5):
             self.post("/api/remakers/auth/login/verify-otp/", {"email": "m@example.com", "otp": wrong})
+        cache.clear()  # reset the 5-per-minute rate limit so this checks the burned code itself
         r = self.post("/api/remakers/auth/login/verify-otp/", {"email": "m@example.com", "otp": right})
         self.assertEqual(r.status_code, 400)
 

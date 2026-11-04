@@ -10,7 +10,9 @@ import {
   requestForgotPasswordOTP,
   verifyForgotPasswordOTP,
   resetForgotPassword,
+  userGoogleLogin,
 } from "../../../api/auth";
+import GoogleButton from "../../../shared/components/GoogleButton";
 import { saveSession } from "../../../api/session";
 
 import "../../css/Auth.css";
@@ -136,6 +138,30 @@ export default function Auth() {
     const focusIndex = Math.min(pastedValue.length, 5);
 
     otpRefs.current[focusIndex]?.focus();
+  };
+
+  // Sign in or sign up with Google (same endpoint for both).
+  const handleGoogle = async (code) => {
+    clearMessages();
+    setLoading(true);
+
+    try {
+      const response = await userGoogleLogin(code);
+
+      saveAuthData(response.data);
+
+      setMessage(response.message || "Login successful.");
+
+      setTimeout(() => {
+        navigate("/user-dashboard");
+      }, 500);
+    } catch (err) {
+      setError(
+        err?.data?.message || err?.message || "Google sign-in failed.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Login user.
@@ -609,16 +635,16 @@ export default function Auth() {
                   <span />
                 </div>
 
-                <button
-                  type="button"
+                <GoogleButton
                   className="google-button"
-                  disabled
-                  title="Google Login will be added later."
+                  onCode={handleGoogle}
+                  onError={setError}
+                  disabled={loading}
                 >
                   <span className="google-icon">G</span>
 
                   <span>Continue with Google</span>
-                </button>
+                </GoogleButton>
               </form>
             )}
 
@@ -708,16 +734,16 @@ export default function Auth() {
                   <span />
                 </div>
 
-                <button
-                  type="button"
+                <GoogleButton
                   className="google-button"
-                  disabled
-                  title="Google Login will be added later."
+                  onCode={handleGoogle}
+                  onError={setError}
+                  disabled={loading}
                 >
                   <span className="google-icon">G</span>
 
                   <span>Continue with Google</span>
-                </button>
+                </GoogleButton>
               </form>
             )}
 

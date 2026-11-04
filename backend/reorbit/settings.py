@@ -190,13 +190,14 @@ REST_FRAMEWORK = {
         "anon": "120/min",
         "user": "600/min",
         "auth": "20/min",  # login, register, token refresh
-        "otp_send": "6/hour",  # emailing a code
-        "otp_verify": "30/hour",  # checking a code / reset token
+        "otp_send": "5/min",  # emailing a code (incl. resend), per email
+        "otp_verify": "5/min",  # checking a code / reset token, per email
+        "otp_ip": "20/min",  # backstop: one IP trying many emails
     },
 }
 
-# Seconds a person must wait before another emailed code (0 turns it off, used in tests).
-OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "60"))
+# Seconds a person must wait before another emailed code (matches the 30 s resend timer in the app; 0 turns it off, used in tests).
+OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv("OTP_RESEND_COOLDOWN_SECONDS", "30"))
 
 
 # JWT configuration.
@@ -222,6 +223,11 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL", f"ReOrbit <{EMAIL_HOST_USER or 'no-reply@reorbit.local'}>"
 )
+
+
+# Google sign-in (docs/GOOGLE_SETUP.md): OAuth "Web application" client id and secret.
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
 
 
 # Razorpay (used from Domain A phase A4; test keys first). Never commit real keys.
