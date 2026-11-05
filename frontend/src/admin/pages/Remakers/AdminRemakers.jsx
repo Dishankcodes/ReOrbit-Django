@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
+import { SkeletonTable } from "../../../shared/components/Skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -21,7 +21,11 @@ import {
   Users,
 } from "lucide-react";
 
-import { useRemakers, changeRemakerStatus } from "../../data/remakersStore";
+import {
+  useRemakers,
+  useRemakersStatus,
+  changeRemakerStatus,
+} from "../../data/realAccounts";
 import { ACTION_LIST, canApply } from "../../data/userActions";
 import { formatDate } from "../../utils/format";
 
@@ -115,7 +119,7 @@ function exportCsv(rows) {
 }
 
 export default function AdminRemakers() {
-  const loading = useLoading(450);
+  const { loading, error, reload } = useRemakersStatus();
   const navigate = useNavigate();
   const remakers = useRemakers();
   const { toast, toastNode } = useToast();
@@ -442,6 +446,19 @@ export default function AdminRemakers() {
               </article>
             ))}
           </div>
+        )}
+
+        {!loading && error && (
+          <EmptyState
+            icon={SearchX}
+            title="Could not load ReMakerss"
+            text={error}
+            action={
+              <button type="button" className="ad-btn ad-btn-primary ad-btn-sm" onClick={reload}>
+                Try again
+              </button>
+            }
+          />
         )}
 
         {loading && <SkeletonTable rows={8} cols={6} />}

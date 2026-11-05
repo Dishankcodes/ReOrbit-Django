@@ -14,7 +14,8 @@ from apps.accounts.google import (
 from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
-from apps.accounts.permissions import IsReOrbitReMaker
+from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitReMaker
+from apps.core.admin_accounts import AdminAccountDetail, AdminAccountList
 from apps.accounts.tokens import create_token_pair
 from apps.core.profile import BaseImageView, BaseProfileView
 from apps.core.responses import created, fail, ok
@@ -23,7 +24,11 @@ from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OT
 from apps.users.models import Users
 
 from .models import ReMaker_Profile, ReMakers
-from .serializers import ReMakerProfileSerializer, ReMakerSerializer
+from .serializers import (
+    AdminReMakerSerializer,
+    ReMakerProfileSerializer,
+    ReMakerSerializer,
+)
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.-]{2,99}$")
 
@@ -341,3 +346,28 @@ class ProfileCoverView(BaseImageView):
     field = "cover_image"
     max_side = 1920
     label = "Cover image"
+
+
+class AdminReMakerList(AdminAccountList):
+    """GET /api/remakers/admin/  (admin with the "remakers" module, view level)."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("remakers")]
+    queryset = ReMakers.objects.all()
+    serializer_class = AdminReMakerSerializer
+    search_fields = (
+        "username",
+        "full_name",
+        "email",
+        "public_id",
+        "profile__studio_name",
+        "profile__city",
+        "profile__phone",
+    )
+
+
+class AdminReMakerDetail(AdminAccountDetail):
+    """GET /api/remakers/admin/<public_id>/"""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("remakers")]
+    queryset = ReMakers.objects.all()
+    serializer_class = AdminReMakerSerializer

@@ -66,3 +66,9 @@ class ReMakerSerializer(serializers.ModelSerializer):
             "profile",
         ]
         read_only_fields = fields
+
+
+class AdminReMakerSerializer(ReMakerSerializer):
+    class Meta(ReMakerSerializer.Meta):
+        fields = ReMakerSerializer.Meta.fields + ["status_changed_at"]
+        read_only_fields = fields

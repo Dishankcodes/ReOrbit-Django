@@ -24,7 +24,8 @@ import {
   BadgeIndianRupee,
 } from "lucide-react";
 
-import { useRemaker, changeRemakerStatus } from "../../data/remakersStore";
+import { useRemaker, changeRemakerStatus } from "../../data/realAccounts";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { getAvailableActions } from "../../data/userActions";
 import { formatDate, formatINR } from "../../utils/format";
 
@@ -61,7 +62,7 @@ const NOTICE_TEXT = {
 export default function AdminRemakerProfile() {
   const { remakerId } = useParams();
   const navigate = useNavigate();
-  const remaker = useRemaker(remakerId);
+  const { record: remaker, loading, error, reload } = useRemaker(remakerId);
   const { toast, toastNode } = useToast();
   const [tab, setTab] = useState("overview");
   const [pending, setPending] = useState(null);
@@ -71,19 +72,29 @@ export default function AdminRemakerProfile() {
     window.scrollTo({ top: 0 });
   }, [remakerId]);
 
+  if (loading && !remaker) {
+    return (
+      <div className="aup-page">
+        <section className="aup-card">
+          <SkeletonRows count={4} />
+        </section>
+      </div>
+    );
+  }
+
   if (!remaker) {
     return (
       <div className="aup-page">
         <section className="aup-card">
           <EmptyState
             icon={UserX}
-            title="ReMaker not found"
-            text="This account does not exist or the link is wrong."
+            title={error ? "Could not load this ReMaker" : "ReMaker not found"}
+            text={error || "This account does not exist or the link is wrong."}
             action={
               <button
                 type="button"
                 className="ad-btn ad-btn-primary ad-btn-sm"
-                onClick={() => navigate("/admin-remakers")}
+                onClick={() => (error ? reload() : navigate("/admin-remakers"))}
               >
                 <ArrowLeft size={14} /> Back to ReMakers
               </button>

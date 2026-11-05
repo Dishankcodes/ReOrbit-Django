@@ -24,7 +24,8 @@ import {
   BadgeIndianRupee,
 } from "lucide-react";
 
-import { useUser, changeUserStatus } from "../../data/usersStore";
+import { useUser, changeUserStatus } from "../../data/realAccounts";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { getAvailableActions } from "../../data/userActions";
 import { formatDate, formatINR } from "../../utils/format";
 
@@ -59,7 +60,7 @@ const NOTICE_TEXT = {
 export default function AdminUserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const user = useUser(userId);
+  const { record: user, loading, error, reload } = useUser(userId);
   const { toast, toastNode } = useToast();
 
   const [tab, setTab] = useState("overview");
@@ -71,19 +72,29 @@ export default function AdminUserProfile() {
     window.scrollTo({ top: 0 });
   }, [userId]);
 
+  if (loading && !user) {
+    return (
+      <div className="aup-page">
+        <section className="aup-card">
+          <SkeletonRows count={4} />
+        </section>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="aup-page">
         <section className="aup-card">
           <EmptyState
             icon={UserX}
-            title="User not found"
-            text="This account does not exist or the link is wrong."
+            title={error ? "Could not load this user" : "User not found"}
+            text={error || "This account does not exist or the link is wrong."}
             action={
               <button
                 type="button"
                 className="ad-btn ad-btn-primary ad-btn-sm"
-                onClick={() => navigate("/admin-users")}
+                onClick={() => (error ? reload() : navigate("/admin-users"))}
               >
                 <ArrowLeft size={14} /> Back to users
               </button>

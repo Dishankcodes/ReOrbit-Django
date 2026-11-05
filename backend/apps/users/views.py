@@ -11,6 +11,8 @@ from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitUser
 from apps.accounts.tokens import create_token_pair
 from apps.accounts.utils import issue_reset_token, read_reset_token
+from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin
+from apps.core.admin_accounts import AdminAccountDetail, AdminAccountList
 from apps.core.profile import BaseImageView, BaseProfileView
 from apps.core.responses import created, fail, ok
 from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OTPVerifyThrottle
@@ -18,7 +20,7 @@ from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OT
 from apps.remakers.models import ReMakers
 
 from .models import User_Profile, Users
-from .serializers import UserProfileSerializer, UserSerializer
+from .serializers import AdminUserSerializer, UserProfileSerializer, UserSerializer
 
 
 class RegisterView(APIView):
@@ -328,3 +330,20 @@ class ChangePasswordView(APIView):
         user.set_password(new)
         user.save(update_fields=["password", "updated_at"])
         return ok(message="Password updated successfully.")
+
+
+class AdminUserList(AdminAccountList):
+    """GET /api/users/admin/  (admin with the "users" module, view level)."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("users")]
+    queryset = Users.objects.all()
+    serializer_class = AdminUserSerializer
+    search_fields = ("full_name", "email", "public_id", "profile__city", "profile__phone")
+
+
+class AdminUserDetail(AdminAccountDetail):
+    """GET /api/users/admin/<public_id>/"""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("users")]
+    queryset = Users.objects.all()
+    serializer_class = AdminUserSerializer

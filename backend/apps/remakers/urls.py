@@ -9,6 +9,8 @@ from .views import (
     MeView,
     ProfileView,
     ProfilePhotoView,
+    AdminReMakerList,
+    AdminReMakerDetail,
     ProfileCoverView,
 )
 
@@ -52,4 +54,6 @@ urlpatterns = [
     ),
     path("profile/photo/", ProfilePhotoView.as_view(), name="remaker-profile-photo"),
     path("profile/cover/", ProfileCoverView.as_view(), name="remaker-profile-cover"),
+    path("admin/", AdminReMakerList.as_view()),
+    path("admin/<str:public_id>/", AdminReMakerDetail.as_view()),
 ]

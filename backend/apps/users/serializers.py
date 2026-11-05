@@ -65,3 +65,13 @@ class UserSerializer(serializers.ModelSerializer):
             "profile",
         ]
         read_only_fields = fields
+
+
+class AdminUserSerializer(UserSerializer):
+    """What an admin sees about a user (never the password)."""
+
+    class Meta(UserSerializer.Meta):
+        fields = [f for f in UserSerializer.Meta.fields if f != "has_password"] + [
+            "status_changed_at",
+        ]
+        read_only_fields = fields
