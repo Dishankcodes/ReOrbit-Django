@@ -158,6 +158,7 @@ export function saveSession({ access, refresh, type, account, remember = true })
   write(primary, KEY.type, type);
   if (account?.public_id) write(primary, KEY.id, account.public_id);
   if (account) write(primary, ACCOUNT_KEY[type], JSON.stringify(account));
+  SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
 }
 
 /* After a token refresh: keep the session where it already lives. */
@@ -165,6 +166,7 @@ export function updateTokens({ access, refresh }) {
   const s = activeStore() || window.localStorage;
   if (access) write(s, KEY.access, access);
   if (refresh) write(s, KEY.refresh, refresh);
+  if (access && refresh) SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
 }
 
 /* Update the cached account (for example after a profile edit). */
@@ -176,7 +178,8 @@ export function updateAccount(type, account) {
   window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
 }
 
-export function clearSession() {
+export function clearSession({ broadcast = true } = {}) {
+  if (broadcast) SESSION_CHANNEL?.postMessage({ type: "logout" });
   stores().forEach((s) => {
     [KEY.access, KEY.refresh, KEY.type, KEY.id, ...Object.values(ACCOUNT_KEY)].forEach(
       (k) => remove(s, k),
