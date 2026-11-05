@@ -32,6 +32,31 @@ export const LOGIN_PATH = {
 
 export const SESSION_ENDED_EVENT = "reorbit:session-ended";
 
+// sessionStorage is isolated per tab. Broadcast rotated tokens so tabs that
+// share a login can keep using the same refresh-token family safely.
+const SESSION_CHANNEL =
+  typeof BroadcastChannel !== "undefined"
+    ? new BroadcastChannel("reorbit-auth-session")
+    : null;
+
+if (SESSION_CHANNEL) {
+  SESSION_CHANNEL.addEventListener("message", (event) => {
+    const message = event.data;
+    if (message?.type === "tokens" && message.access && message.refresh) {
+      const currentType = getAccountType();
+      const incomingType = decodeToken(message.access)?.account_type;
+      if (!currentType || currentType === incomingType) {
+        const s = activeStore() || window.sessionStorage;
+        write(s, KEY.access, message.access);
+        write(s, KEY.refresh, message.refresh);
+      }
+    } else if (message?.type === "logout") {
+      clearSession();
+      window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
+    }
+  });
+}
+
 const stores = () => {
   const list = [];
   try {
