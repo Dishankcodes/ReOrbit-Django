@@ -7,7 +7,12 @@ from rest_framework.views import APIView
 
 from apps.core.images import delete_file, process_image
 from apps.core.responses import fail, ok
-from apps.core.validators import validate_gujarat_pincode, validate_gujarat_state, validate_image
+from apps.core.validators import (
+    validate_gujarat_city,
+    validate_gujarat_pincode,
+    validate_gujarat_state,
+    validate_image,
+)
 
 PREFERENCE_MAX_KEYS = 40
 SOCIAL_KEYS = {"instagram", "facebook", "youtube", "twitter", "linkedin", "website", "pinterest"}
@@ -18,6 +23,9 @@ class GujaratOnlyMixin:
 
     def validate_pincode(self, value):
         return validate_gujarat_pincode(value)
+
+    def validate_city(self, value):
+        return validate_gujarat_city(value)
 
     def validate_state(self, value):
         return validate_gujarat_state(value)

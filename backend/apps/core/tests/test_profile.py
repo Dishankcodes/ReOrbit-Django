@@ -50,14 +50,14 @@ class ProfileTests(APIBase):
         user = self.make_user()
         r = self.patch(
             "/api/users/profile/",
-            {"full_name": "  Asha   Rao ", "bio": "Upcycler", "city": "Pune", "pincode": "380015",
+            {"full_name": "  Asha   Rao ", "bio": "Upcycler", "city": "Surat", "pincode": "380015",
              "phone": "+91 98765 43210"},
             as_=user,
         )
         self.assertEqual(r.status_code, 200, r.data)
         user.refresh_from_db()
         self.assertEqual(user.full_name, "Asha Rao")
-        self.assertEqual(user.profile.city, "Pune")
+        self.assertEqual(user.profile.city, "Surat")
         self.assertEqual(r.data["data"]["account"]["full_name"], "Asha Rao")
 
     def test_user_validation(self):
@@ -89,6 +89,20 @@ class ProfileTests(APIBase):
         self.assertEqual(r.status_code, 400)
         r = self.patch("/api/users/profile/", {"state": "gujarat"}, as_=user)
         self.assertEqual(r.data["data"]["profile"]["state"], "Gujarat")
+
+    def test_city_must_be_a_gujarat_city(self):
+        user = self.make_user()
+        for city in ("Pune", "Mumbai", "Delhi", "Surat City"):
+            r = self.patch("/api/users/profile/", {"city": city}, as_=user)
+            self.assertEqual(r.status_code, 400, city)
+            self.assertIn("city", r.data["errors"])
+        r = self.patch("/api/users/profile/", {"city": "  gondal "}, as_=user)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["data"]["profile"]["city"], "Gondal")
+        rm = self.make_remaker()
+        self.assertEqual(self.patch("/api/remakers/profile/", {"city": "Pune"}, as_=rm).status_code, 400)
+        r = self.patch("/api/users/profile/", {"city": ""}, as_=user)
+        self.assertEqual(r.status_code, 200)
 
     def test_state_is_set_to_gujarat_with_city(self):
         user = self.make_user()
@@ -318,3 +332,39 @@ class ChangePasswordTests(APIBase):
 
     def test_remaker_cannot_use(self):
         self.assertEqual(self.post("/api/users/password/change/", {"new_password": "x"}, as_=self.make_remaker()).status_code, 403)
+
+
+class AdminProfileTests(APIBase):
+    def test_admin_profile_and_name_edit(self):
+        admin = self.make_admin()
+        r = self.get("/api/admins/profile/", as_=admin)
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("modules", r.data["data"]["admin"])
+        r = self.patch("/api/admins/profile/", {"full_name": "  New   Name "}, as_=admin)
+        self.assertEqual(r.status_code, 200, r.data)
+        admin.refresh_from_db()
+        self.assertEqual(admin.full_name, "New Name")
+
+    def test_admin_cannot_change_email_or_role(self):
+        admin = self.make_admin()
+        r = self.patch("/api/admins/profile/", {"email": "x@example.com"}, as_=admin)
+        self.assertEqual(r.status_code, 400)
+        self.patch("/api/admins/profile/", {"permission_level": "Super_Admin", "full_name": "A B"}, as_=admin)
+        admin.refresh_from_db()
+        self.assertNotEqual(admin.permission_level, "Super_Admin")
+        self.assertEqual(self.patch("/api/admins/profile/", {"full_name": " "}, as_=admin).status_code, 400)
+
+    def test_admin_profile_requires_admin(self):
+        self.assertEqual(self.get("/api/admins/profile/").status_code, 401)
+        self.assertEqual(self.get("/api/admins/profile/", as_=self.make_user()).status_code, 403)
+
+    def test_admin_password_change(self):
+        from apps.core.testing import STRONG_PASSWORD
+        admin = self.make_admin()
+        url = "/api/admins/password/change/"
+        self.assertEqual(self.post(url, {"current_password": "nope", "new_password": "x1"}, as_=admin).status_code, 400)
+        self.assertEqual(self.post(url, {"current_password": STRONG_PASSWORD, "new_password": STRONG_PASSWORD}, as_=admin).status_code, 400)
+        r = self.post(url, {"current_password": STRONG_PASSWORD, "new_password": "BrandNew9"}, as_=admin)
+        self.assertEqual(r.status_code, 200, r.data)
+        r = self.post("/api/admins/auth/login/", {"email": admin.email, "password": "BrandNew9"})
+        self.assertEqual(r.status_code, 200)

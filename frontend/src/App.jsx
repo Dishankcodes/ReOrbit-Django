@@ -149,6 +149,7 @@ import AdminComplaintDetails from "./admin/pages/Complaints/AdminComplaintDetail
 import AdminRewards from "./admin/pages/Rewards/AdminRewards";
 import AdminReports from "./admin/pages/Reports/AdminReports";
 import AdminSettings from "./admin/pages/Settings/AdminSettings";
+import AdminProfile from "./admin/pages/Profile/AdminProfile";
 import AdminTeam from "./admin/pages/Team/AdminTeam";
 import AdminEarnings from "./admin/pages/Earnings/AdminEarnings";
 import AdminNotifications from "./admin/pages/Notifications/AdminNotifications";
@@ -503,10 +504,7 @@ export default function App() {
           element={<AdminSaleDetails />}
         />
         {/* Keep older admin navigation destinations working. */}
-        <Route
-          path="/admin-profile"
-          element={<Navigate to="/admin-settings" replace />}
-        />
+        <Route path="/admin-profile" element={<AdminProfile />} />
       </Route>
       </Route>
 

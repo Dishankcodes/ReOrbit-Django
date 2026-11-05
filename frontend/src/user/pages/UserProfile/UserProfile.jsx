@@ -28,6 +28,7 @@ import { useWishlist } from "../../data/wishlistStore";
 import { useDonations } from "../../data/donationsStore";
 import { useRewards } from "../../data/rewardsStore";
 
+import CitySelect from "../../../shared/components/CitySelect";
 import useMyProfile from "../../../shared/hooks/useMyProfile";
 import {
   GUJARAT,
@@ -109,7 +110,6 @@ export default function UserProfile() {
     city: profile?.city || "",
     state: GUJARAT,
     pincode: profile?.pincode || "",
-    address: profile?.address || "",
     bio: profile?.bio || "",
   });
 
@@ -479,15 +479,22 @@ export default function UserProfile() {
                   error={fieldErrors.phone}
                 />
 
-                <ProfileField
-                  label="City"
-                  name="city"
-                  value={formData.city}
-                  icon={MapPin}
-                  disabled={!isEditing}
-                  onChange={handleInputChange}
-                  error={fieldErrors.city}
-                />
+                <div className="profile-field">
+                  <label htmlFor="city">City</label>
+                  <CitySelect
+                    id="city"
+                    value={formData.city}
+                    disabled={!isEditing}
+                    invalid={Boolean(fieldErrors.city)}
+                    onChange={(city) => {
+                      setFormData((current) => ({ ...current, city }));
+                      setFieldErrors((current) => ({ ...current, city: undefined }));
+                    }}
+                  />
+                  {fieldErrors.city && (
+                    <small className="profile-field-error">{fieldErrors.city[0]}</small>
+                  )}
+                </div>
 
                 <ProfileField
                   label="State"
@@ -510,23 +517,6 @@ export default function UserProfile() {
                   error={fieldErrors.pincode}
                   helper={isEditing ? GUJARAT_PIN_HINT : undefined}
                 />
-              </div>
-
-              <div className="profile-field profile-bio-field">
-                <label htmlFor="address">Address</label>
-
-                <textarea
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  disabled={!isEditing}
-                  onChange={handleInputChange}
-                  rows="3"
-                  placeholder="House, street, area"
-                />
-                {fieldErrors.address && (
-                  <small className="profile-field-error">{fieldErrors.address[0]}</small>
-                )}
               </div>
 
               <div className="profile-field profile-bio-field">

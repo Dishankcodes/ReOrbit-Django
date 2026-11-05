@@ -1,0 +1,433 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+/* ReOrbit admin sign-in. Same palette as the admin sidebar:
+   deep green panel + soft mint accent, light content side. */
+
+.al-page {
+  --al-deep: #071f19;
+  --al-green: #08271f;
+  --al-green-2: #0a3026;
+  --al-mint: #afcfc2;
+  --al-mint-soft: #d6e8df;
+  --al-ink: #0d2a22;
+  --al-muted: #5d716a;
+  --al-line: #dbe5e0;
+  --al-bg: #f3f6f4;
+  --al-danger: #a63b2f;
+
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  background: var(--al-bg);
+  color: var(--al-ink);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.al-page *,
+.al-page *::before,
+.al-page *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- brand panel ---------- */
+
+.al-aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 48px 56px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(165deg, #08271f 0%, #0a3026 52%, #071f19 100%);
+  isolation: isolate;
+}
+
+.al-aside::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  opacity: 0.05;
+  background-image:
+    linear-gradient(#fff 1px, transparent 1px),
+    linear-gradient(90deg, #fff 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.al-orbits {
+  position: absolute;
+  right: -180px;
+  bottom: -180px;
+  width: 620px;
+  height: 620px;
+  z-index: -1;
+  color: var(--al-mint);
+  pointer-events: none;
+}
+
+.al-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.al-brand-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--al-mint);
+  background: rgba(175, 207, 194, 0.1);
+  border: 1px solid rgba(175, 207, 194, 0.22);
+}
+
+.al-brand strong {
+  display: block;
+  font-family: "Bricolage Grotesque", Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.al-brand span {
+  display: block;
+  margin-top: 3px;
+  color: var(--al-mint);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.al-pitch h2 {
+  max-width: 12em;
+  margin: 0 0 16px;
+  font-family: "Bricolage Grotesque", Georgia, serif;
+  font-size: clamp(2.1rem, 3.4vw, 3.1rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+
+.al-pitch h2 em {
+  font-style: normal;
+  color: var(--al-mint);
+}
+
+.al-pitch > p {
+  max-width: 28em;
+  margin: 0 0 30px;
+  color: rgba(226, 238, 232, 0.72);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.al-points {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.al-points li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  max-width: 30em;
+  border: 1px solid rgba(175, 207, 194, 0.14);
+  border-radius: 14px;
+  background: rgba(175, 207, 194, 0.05);
+  backdrop-filter: blur(6px);
+}
+
+.al-points .al-pt-icon {
+  flex: 0 0 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--al-mint);
+  background: rgba(175, 207, 194, 0.12);
+}
+
+.al-points b {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.al-points small {
+  display: block;
+  margin-top: 2px;
+  color: rgba(226, 238, 232, 0.6);
+  font-size: 0.76rem;
+}
+
+.al-aside-foot {
+  color: rgba(226, 238, 232, 0.5);
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+}
+
+/* ---------- form side ---------- */
+
+.al-main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.al-back {
+  position: absolute;
+  top: 28px;
+  right: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--al-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.al-back:hover {
+  color: var(--al-green-2);
+  transform: translateX(-2px);
+}
+
+.al-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.al-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--al-green-2);
+  background: var(--al-mint-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.al-card h1 {
+  margin: 0 0 8px;
+  font-family: "Bricolage Grotesque", Georgia, serif;
+  font-size: 2.15rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.al-sub {
+  margin: 0 0 28px;
+  color: var(--al-muted);
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+
+.al-form {
+  display: grid;
+  gap: 18px;
+}
+
+.al-field label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.al-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.al-input > svg:first-child {
+  position: absolute;
+  left: 15px;
+  color: #7d908a;
+  pointer-events: none;
+}
+
+.al-input input {
+  width: 100%;
+  height: 50px;
+  padding: 0 46px 0 44px;
+  border: 1.5px solid var(--al-line);
+  border-radius: 13px;
+  background: #fff;
+  color: var(--al-ink);
+  font: inherit;
+  font-size: 0.94rem;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.al-input input::placeholder {
+  color: #9aaba5;
+}
+
+.al-input input:hover {
+  border-color: #c4d3cc;
+}
+
+.al-input input:focus {
+  border-color: var(--al-green-2);
+  box-shadow: 0 0 0 4px rgba(10, 48, 38, 0.1);
+}
+
+.al-input.is-invalid input {
+  border-color: var(--al-danger);
+}
+
+.al-eye {
+  position: absolute;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #7d908a;
+  cursor: pointer;
+}
+
+.al-eye:hover {
+  color: var(--al-green-2);
+  background: #eef3f0;
+}
+
+.al-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #efc9c3;
+  border-radius: 12px;
+  background: #fdf1ef;
+  color: var(--al-danger);
+  font-size: 0.85rem;
+  font-weight: 550;
+  line-height: 1.45;
+}
+
+.al-alert svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.al-alert.is-ok {
+  border-color: #bfdccf;
+  background: #eef7f2;
+  color: #1c6b4d;
+}
+
+.al-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 52px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #0c382d, #08271f);
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -10px rgba(8, 39, 31, 0.7);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.al-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -10px rgba(8, 39, 31, 0.75);
+}
+
+.al-submit:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.al-spin {
+  animation: al-spin 0.8s linear infinite;
+}
+
+@keyframes al-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.al-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+  color: var(--al-muted);
+  font-size: 0.78rem;
+}
+
+.al-secure svg {
+  color: #2f7a5c;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 920px) {
+  .al-page {
+    grid-template-columns: 1fr;
+  }
+
+  .al-aside {
+    padding: 28px 24px 30px;
+    gap: 0;
+  }
+
+  .al-pitch,
+  .al-aside-foot,
+  .al-orbits {
+    display: none;
+  }
+
+  .al-main {
+    padding: 36px 20px 48px;
+  }
+
+  .al-back {
+    position: static;
+    margin: 0 auto 22px;
+    width: fit-content;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .al-page * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

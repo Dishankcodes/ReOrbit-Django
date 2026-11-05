@@ -30,7 +30,7 @@ import {
 } from "../../data/settingsStore";
 import { useStock } from "../../data/warehouseStore";
 import { useRules, saveRule } from "../../data/rewardsStore";
-import { formatINR, timeAgo, getInitials } from "../../utils/format";
+import { formatINR, timeAgo } from "../../utils/format";
 import useToast from "../../components/ui/useToast";
 import { useAccess } from "../../data/teamStore";
 
@@ -38,12 +38,6 @@ import "../../css/AdminUI.css";
 import "../../css/settings/AdminSettings.css";
 
 const SECTIONS = [
-  {
-    key: "profile",
-    label: "My profile",
-    hint: "Name, contact and photo",
-    icon: User,
-  },
   {
     key: "security",
     label: "Security",
@@ -189,95 +183,6 @@ const numIn = (set, k) => (e) =>
   set(k, e.target.value === "" ? "" : Number(e.target.value));
 
 /* ---------- sections ---------- */
-function ProfileSection({ s, toast }) {
-  const d = useDraft(s.profile);
-  const p = d.draft;
-  const errors = {
-    name: p.name.trim().length < 2 ? "Enter your full name." : "",
-    email: /^\S+@\S+\.\S+$/.test(p.email) ? "" : "Enter a valid email address.",
-    phone:
-      p.phone.replace(/\D/g, "").length < 10
-        ? "Enter a valid phone number."
-        : "",
-  };
-  const bad = Object.values(errors).some(Boolean);
-  return (
-    <>
-      <Card
-        title="My profile"
-        sub="Shown in the admin header and in the activity log."
-      >
-        <div className="st-profile-top">
-          <span className="st-avatar">{getInitials(p.name)}</span>
-          <div>
-            <strong>{p.name || "—"}</strong>
-            <p>{p.role}</p>
-          </div>
-          <button
-            type="button"
-            className="ad-btn ad-btn-ghost ad-btn-sm"
-            onClick={() => toast("Photo upload is a demo — nothing is stored.")}
-          >
-            Change photo
-          </button>
-        </div>
-        <div className="st-grid">
-          <Field label="Full name" error={errors.name}>
-            <input
-              value={p.name}
-              onChange={(e) => d.set("name", e.target.value)}
-              aria-invalid={!!errors.name}
-            />
-          </Field>
-          <Field label="Role">
-            <input value={p.role} disabled />
-          </Field>
-          <Field label="Email" error={errors.email}>
-            <input
-              type="email"
-              value={p.email}
-              onChange={(e) => d.set("email", e.target.value)}
-              aria-invalid={!!errors.email}
-            />
-          </Field>
-          <Field label="Phone" error={errors.phone}>
-            <input
-              value={p.phone}
-              onChange={(e) => d.set("phone", e.target.value)}
-              aria-invalid={!!errors.phone}
-            />
-          </Field>
-          <div className="st-wide">
-            <Field
-              label="Short bio"
-              hint="Optional. Only visible to other admins."
-            >
-              <textarea
-                rows={3}
-                value={p.bio}
-                onChange={(e) => d.set("bio", e.target.value)}
-              />
-            </Field>
-          </div>
-        </div>
-      </Card>
-      <SaveBar
-        dirty={d.dirty}
-        disabled={bad}
-        onDiscard={d.discard}
-        onSave={() => {
-          saveSection(
-            "profile",
-            { ...p, name: p.name.trim() },
-            "Profile updated",
-          );
-          toast("Profile saved.");
-        }}
-      />
-    </>
-  );
-}
-
 function strength(pw) {
   let n = 0;
   if (pw.length >= 8) n++;
@@ -992,7 +897,7 @@ export default function AdminSettings() {
   );
   const section = sections.some((x) => x.key === params.get("section"))
     ? params.get("section")
-    : "profile";
+    : "security";
   const readOnly = PLATFORM_ONLY.includes(section) && settingsLevel === "view";
   const s = useSettings();
   const { toast, toastNode } = useToast();
@@ -1000,7 +905,6 @@ export default function AdminSettings() {
   const body = useMemo(
     () =>
       ({
-        profile: ProfileSection,
         security: SecuritySection,
         commerce: CommerceSection,
         warehouse: WarehouseSection,
@@ -1021,7 +925,7 @@ export default function AdminSettings() {
             className={section === x.key ? "on" : ""}
             aria-current={section === x.key ? "page" : undefined}
             onClick={() =>
-              setParams(x.key === "profile" ? {} : { section: x.key })
+              setParams(x.key === "security" ? {} : { section: x.key })
             }
           >
             <x.icon size={18} />

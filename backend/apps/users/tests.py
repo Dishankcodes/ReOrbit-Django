@@ -159,9 +159,9 @@ class ForgotPasswordTests(APIBase):
 class UserProfileTests(APIBase):
     def test_get_and_update(self):
         user = self.make_user()
-        r = self.patch("/api/users/profile/", {"city": "Pune", "bio": "Hi", "pincode": "380015"}, as_=user)
+        r = self.patch("/api/users/profile/", {"city": "Surat", "bio": "Hi", "pincode": "380015"}, as_=user)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.data["data"]["profile"]["city"], "Pune")
+        self.assertEqual(r.data["data"]["profile"]["city"], "Surat")
 
     def test_counters_cannot_be_written_by_the_browser(self):
         user = self.make_user()

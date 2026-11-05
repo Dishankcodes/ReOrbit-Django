@@ -59,3 +59,12 @@ export function pincodeProblem(value) {
   if (!/^\d{6}$/.test(text)) return "Pincode must be 6 digits.";
   return isGujaratPincode(text) ? "" : "ReOrbit is available inside Gujarat only. Enter a Gujarat pincode.";
 }
+
+/* ---------- admin (name only; no photo, the Admins table has none) ---------- */
+export const fetchAdminProfile = () => apiRequest("/admins/profile/").then((r) => r.data.admin);
+
+export const saveAdminProfile = (payload) =>
+  apiRequest("/admins/profile/", { method: "PATCH", body: payload }).then((r) => r.data.admin);
+
+export const changeAdminPassword = (payload) =>
+  apiRequest("/admins/password/change/", { method: "POST", body: payload });

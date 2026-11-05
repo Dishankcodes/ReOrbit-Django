@@ -1,7 +1,29 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  PackageCheck,
+  ShieldCheck,
+  Users,
+  Warehouse,
+} from "lucide-react";
 import { adminLogin } from "../../../api/auth";
 import { saveSession } from "../../../api/session";
+import "../../css/AdminLogin.css";
+
+const POINTS = [
+  { icon: Users, title: "Users and ReMakers", text: "Every account, in one place." },
+  { icon: PackageCheck, title: "Listings and orders", text: "Follow each item from upload to doorstep." },
+  { icon: Warehouse, title: "Pickups and warehouse", text: "Keep the circular loop moving." },
+];
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -31,16 +53,9 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await adminLogin({
-        email: email.trim(),
-        password,
-      });
-
+      const response = await adminLogin({ email: email.trim(), password });
       const data = response?.data || response;
 
-      /*
-       * Store Admin authentication information.
-       */
       saveSession({
         access: data.access,
         refresh: data.refresh,
@@ -48,619 +63,153 @@ export default function AdminLogin() {
         account: data.admin,
       });
 
-      setSuccess(response?.message || "Admin login successful.");
-
-      /*
-       * We'll connect the actual Admin Dashboard
-       * route when its UI is implemented.
-       */
-      setTimeout(() => {
-        navigate("/admin-dashboard");
-      }, 500);
+      setSuccess("Signed in. Opening your dashboard…");
+      setTimeout(() => navigate("/admin-dashboard"), 400);
     } catch (err) {
       setError(
-        err?.data?.message ||
-          err?.data?.detail ||
-          err?.message ||
-          "Unable to login.",
+        err?.data?.message || err?.data?.detail || err?.message || "Unable to sign in.",
       );
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="admin-login-page">
-      <style>{`
-        /* 
-           REORBIT ADMIN LOGIN
-           MASTER ADMIN THEME — ADMIN ABOUT SYSTEM
-         */
-
-        .admin-login-page {
-          --login-bg: #061b16;
-          --login-bg-deep: #04130f;
-          --login-surface: #0a241d;
-          --login-surface-2: #0d2d24;
-          --login-surface-3: #12382e;
-
-          --login-accent: #afcfc2;
-          --login-accent-light: #c3ded3;
-          --login-accent-dark: #7fa99a;
-
-          --login-text: #f2f5f2;
-          --login-soft: #c5cfca;
-          --login-muted: #899992;
-
-          --login-border: rgba(175, 207, 194, 0.15);
-          --login-border-strong: rgba(175, 207, 194, 0.28);
-
-          position: relative;
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 80px 20px 45px;
-          overflow: hidden;
-          isolation: isolate;
-          background:
-            radial-gradient(
-              circle at 82% 18%,
-              rgba(127, 169, 154, 0.13),
-              transparent 30%
-            ),
-            linear-gradient(115deg, #061b16 0%, #071f19 52%, #09271f 100%);
-          color: var(--login-text);
-          font-family: "Plus Jakarta Sans", sans-serif;
-          box-sizing: border-box;
-        }
-
-        .admin-login-page *,
-        .admin-login-page *::before,
-        .admin-login-page *::after {
-          box-sizing: border-box;
-        }
-
-        .admin-login-page::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: -2;
-          opacity: 0.045;
-          pointer-events: none;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
-          background-size: 55px 55px;
-        }
-
-        .admin-login-page::after {
-          content: "";
-          position: absolute;
-          width: 620px;
-          height: 620px;
-          right: -260px;
-          bottom: -330px;
-          z-index: -1;
-          border-radius: 50%;
-          pointer-events: none;
-          background: radial-gradient(
-            circle,
-            rgba(175,207,194,0.09),
-            transparent 68%
-          );
-        }
-
-        /* 
-           BACK BUTTON
-         */
-
-        .admin-login-back {
-          position: fixed;
-          top: 28px;
-          left: 32px;
-          z-index: 20;
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 9px 14px;
-          border: 1px solid var(--login-border-strong);
-          border-radius: 999px;
-          background: rgba(175,207,194,0.05);
-          color: var(--login-soft);
-          font-size: 0.66rem;
-          font-weight: 750;
-          letter-spacing: 0.02em;
-          text-decoration: none;
-          backdrop-filter: blur(10px);
-          transition:
-            color 0.2s ease,
-            border-color 0.2s ease,
-            background 0.2s ease,
-            transform 0.2s ease;
-        }
-
-        .admin-login-back:hover {
-          color: var(--login-accent);
-          border-color: var(--login-border-strong);
-          background: rgba(175,207,194,0.08);
-          transform: translateX(-3px);
-        }
-
-        /* 
-           LOGIN WRAPPER
-         */
-
-        .admin-login-wrapper {
-          position: relative;
-          z-index: 3;
-          width: 100%;
-          max-width: 470px;
-          margin: 0 auto;
-        }
-
-        /* 
-           BRAND
-         */
-
-        .admin-login-brand {
-          text-align: center;
-          margin-bottom: 28px;
-        }
-
-        .admin-login-logo {
-          position: relative;
-          width: 58px;
-          height: 58px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 15px;
-          border: 1px solid var(--login-border-strong);
-          border-radius: 17px;
-          background: rgba(175,207,194,0.08);
-          color: var(--login-accent);
-          font-size: 25px;
-          box-shadow: 0 18px 45px rgba(0,0,0,0.2);
-        }
-
-        .admin-login-logo::after {
-          content: "";
-          position: absolute;
-          inset: -7px;
-          border: 1px solid rgba(175,207,194,0.08);
-          border-radius: 22px;
-        }
-
-        .admin-login-brand h1 {
-          margin: 0;
-          color: var(--login-text);
-          font-family: "Bricolage Grotesque", sans-serif;
-          font-size: 2rem;
-          font-weight: 500;
-          line-height: 0.98;
-          letter-spacing: -0.045em;
-        }
-
-        .admin-login-brand p {
-          margin: 9px 0 0;
-          color: var(--login-muted);
-          font-size: 0.63rem;
-          line-height: 1.6;
-          letter-spacing: 0.03em;
-        }
-
-        /* 
-           LOGIN CARD
-         */
-
-        .admin-login-card {
-          position: relative;
-          width: 100%;
-          padding: 34px;
-          overflow: hidden;
-          border: 1px solid var(--login-border-strong);
-          border-radius: 24px;
-          background:
-            linear-gradient(
-              145deg,
-              rgba(255,255,255,0.045),
-              rgba(255,255,255,0.012)
-            ),
-            var(--login-surface);
-          box-shadow: 0 35px 80px rgba(0,0,0,0.28);
-        }
-
-        .admin-login-card::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          opacity: 0.3;
-          pointer-events: none;
-          background-image:
-            linear-gradient(rgba(175,207,194,0.035) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(175,207,194,0.035) 1px, transparent 1px);
-          background-size: 35px 35px;
-        }
-
-        .admin-login-card > * {
-          position: relative;
-          z-index: 2;
-        }
-
-        .admin-login-card-header {
-          margin-bottom: 26px;
-        }
-
-        .admin-login-card-header span {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 11px;
-          color: var(--login-accent);
-          font-size: 0.59rem;
-          font-weight: 850;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-
-        .admin-login-card-header span::before {
-          content: "";
-          width: 22px;
-          height: 1px;
-          background: currentColor;
-        }
-
-        .admin-login-card-header h2 {
-          margin: 0;
-          color: var(--login-text);
-          font-family: "Bricolage Grotesque", sans-serif;
-          font-size: 2rem;
-          font-weight: 500;
-          line-height: 0.98;
-          letter-spacing: -0.045em;
-        }
-
-        .admin-login-card-header p {
-          margin: 9px 0 0;
-          color: var(--login-muted);
-          font-size: 0.68rem;
-          line-height: 1.65;
-        }
-
-        /* 
-           FORM
-         */
-
-        .admin-login-form {
-          display: flex;
-          flex-direction: column;
-          gap: 17px;
-        }
-
-        .admin-login-field {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .admin-login-field label {
-          color: var(--login-soft);
-          font-size: 0.61rem;
-          font-weight: 750;
-          letter-spacing: 0.02em;
-        }
-
-        .admin-login-field input {
-          width: 100%;
-          height: 48px;
-          padding: 0 14px;
-          outline: none;
-          border: 1px solid var(--login-border);
-          border-radius: 12px;
-          background: rgba(255,255,255,0.025);
-          color: var(--login-text);
-          font-family: "Plus Jakarta Sans", sans-serif;
-          font-size: 0.69rem;
-          transition:
-            border-color 0.2s ease,
-            box-shadow 0.2s ease,
-            background 0.2s ease;
-        }
-
-        .admin-login-field input::placeholder {
-          color: #65766f;
-        }
-
-        .admin-login-field input:hover {
-          border-color: var(--login-border-strong);
-        }
-
-        .admin-login-field input:focus {
-          background: rgba(175,207,194,0.035);
-          border-color: var(--login-accent-dark);
-          box-shadow: 0 0 0 3px rgba(175,207,194,0.08);
-        }
-
-        /* 
-           PASSWORD
-         */
-
-        .admin-password-wrapper {
-          position: relative;
-        }
-
-        .admin-password-wrapper input {
-          padding-right: 68px;
-        }
-
-        .admin-password-toggle {
-          position: absolute;
-          right: 9px;
-          top: 50%;
-          transform: translateY(-50%);
-          min-height: 30px;
-          padding: 0 9px;
-          border: 1px solid var(--login-border);
-          border-radius: 999px;
-          background: rgba(175,207,194,0.045);
-          color: var(--login-muted);
-          font-family: "Plus Jakarta Sans", sans-serif;
-          font-size: 0.55rem;
-          font-weight: 750;
-          cursor: pointer;
-          transition:
-            color 0.2s ease,
-            border-color 0.2s ease,
-            background 0.2s ease;
-        }
-
-        .admin-password-toggle:hover {
-          color: var(--login-accent);
-          border-color: var(--login-border-strong);
-          background: rgba(175,207,194,0.08);
-        }
-
-        /* 
-           LOGIN BUTTON
-         */
-
-        .admin-login-button {
-          width: 100%;
-          height: 48px;
-          margin-top: 5px;
-          border: 1px solid var(--login-accent);
-          border-radius: 999px;
-          background: var(--login-accent);
-          color: var(--login-bg-deep);
-          font-family: "Plus Jakarta Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 800;
-          cursor: pointer;
-          transition:
-            transform 0.2s ease,
-            background 0.2s ease,
-            border-color 0.2s ease;
-        }
-
-        .admin-login-button:hover {
-          background: var(--login-accent-light);
-          border-color: var(--login-accent-light);
-          transform: translateY(-2px);
-        }
-
-        .admin-login-button:active {
-          transform: translateY(0);
-        }
-
-        /* 
-           SECURITY NOTE
-         */
-
-        .admin-login-security {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 7px;
-          margin-top: 18px;
-          color: var(--login-muted);
-          font-size: 0.53rem;
-        }
-
-        .admin-login-security span {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 17px;
-          height: 17px;
-          border: 1px solid var(--login-border);
-          border-radius: 50%;
-          background: rgba(175,207,194,0.05);
-          color: var(--login-accent);
-          font-size: 0.55rem;
-        }
-
-        /* 
-           FOOTER
-         */
-
-        .admin-login-footer {
-          text-align: center;
-          margin-top: 22px;
-          color: rgba(137,153,146,0.7);
-          font-size: 0.5rem;
-          font-weight: 650;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        /* 
-           FOCUS
-         */
-
-        .admin-login-page a:focus-visible,
-        .admin-login-page button:focus-visible,
-        .admin-login-page input:focus-visible {
-          outline: 2px solid var(--login-accent);
-          outline-offset: 3px;
-        }
-
-        /* 
-           TABLET
-         */
-
-        @media (max-width: 600px) {
-          .admin-login-page {
-            padding: 80px 16px 30px;
-          }
-
-          .admin-login-back {
-            top: 20px;
-            left: 18px;
-          }
-
-          .admin-login-card {
-            padding: 28px 22px;
-            border-radius: 20px;
-          }
-
-          .admin-login-brand h1 {
-            font-size: 1.8rem;
-          }
-        }
-
-        /* 
-           SMALL MOBILE
-         */
-
-        @media (max-width: 400px) {
-          .admin-login-page {
-            padding-left: 12px;
-            padding-right: 12px;
-          }
-
-          .admin-login-card {
-            padding: 25px 18px;
-          }
-
-          .admin-login-brand h1 {
-            font-size: 1.65rem;
-          }
-
-          .admin-login-card-header h2 {
-            font-size: 1.75rem;
-          }
-        }
-
-        /* 
-           REDUCED MOTION
-         */
-
-        @media (prefers-reduced-motion: reduce) {
-          .admin-login-page *,
-          .admin-login-page *::before,
-          .admin-login-page *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
-      `}</style>
-
-      {/* BACK BUTTON */}
-
-      <a href="/admin-home" className="admin-login-back">
-        ← Back to Admin
-      </a>
-
-      {/* LOGIN CONTENT */}
-
-      <div className="admin-login-wrapper">
-        {/* BRAND */}
-
-        <div className="admin-login-brand">
-          <div className="admin-login-logo">♻</div>
-
-          <h1>ReOrbit</h1>
-
-          <p>Administration & Management Portal</p>
+    <div className="al-page">
+      {/* BRAND PANEL */}
+      <aside className="al-aside">
+        <svg className="al-orbits" viewBox="0 0 620 620" fill="none" aria-hidden="true">
+          <circle cx="310" cy="310" r="120" stroke="currentColor" strokeOpacity="0.16" />
+          <circle cx="310" cy="310" r="195" stroke="currentColor" strokeOpacity="0.12" />
+          <circle cx="310" cy="310" r="270" stroke="currentColor" strokeOpacity="0.09" />
+          <circle cx="310" cy="310" r="300" stroke="currentColor" strokeOpacity="0.06" />
+          <circle cx="430" cy="310" r="6" fill="currentColor" fillOpacity="0.55" />
+          <circle cx="146" cy="175" r="5" fill="currentColor" fillOpacity="0.4" />
+          <circle cx="395" cy="545" r="7" fill="currentColor" fillOpacity="0.3" />
+        </svg>
+
+        <div className="al-brand">
+          <div className="al-brand-icon">
+            <ShieldCheck size={22} />
+          </div>
+          <div>
+            <strong>ReOrbit</strong>
+            <span>Administration</span>
+          </div>
         </div>
 
-        {/* LOGIN CARD */}
+        <div className="al-pitch">
+          <h2>
+            Run the circular marketplace, <em>end to end.</em>
+          </h2>
+          <p>
+            Manage members, listings, orders and pickups for ReOrbit from one calm,
+            organised workspace.
+          </p>
 
-        <div className="admin-login-card">
-          <div className="admin-login-card-header">
-            <span>ADMIN ACCESS</span>
+          <ul className="al-points">
+            {POINTS.map(({ icon: Icon, title, text }) => (
+              <li key={title}>
+                <span className="al-pt-icon">
+                  <Icon size={18} />
+                </span>
+                <span>
+                  <b>{title}</b>
+                  <small>{text}</small>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-            <h2>Welcome back.</h2>
+        <div className="al-aside-foot">ReOrbit Management System · Gujarat</div>
+      </aside>
 
-            <p>Sign in to manage the ReOrbit ecosystem.</p>
-          </div>
+      {/* SIGN-IN */}
+      <main className="al-main">
+        <a href="/admin-home" className="al-back">
+          <ArrowLeft size={15} /> Back to Admin
+        </a>
 
-          <form className="admin-login-form" onSubmit={handleSubmit}>
-            {error && <div className="admin-login-error">{error}</div>}
+        <div className="al-card">
+          <span className="al-eyebrow">
+            <ShieldCheck size={13} /> Admin access
+          </span>
+          <h1>Welcome back.</h1>
+          <p className="al-sub">Sign in to manage the ReOrbit platform.</p>
 
-            {/* EMAIL */}
+          <form className="al-form" onSubmit={handleSubmit} noValidate>
+            {error && (
+              <div className="al-alert" role="alert">
+                <AlertCircle size={17} />
+                <span>{error}</span>
+              </div>
+            )}
+            {success && (
+              <div className="al-alert is-ok" role="status">
+                <CheckCircle2 size={17} />
+                <span>{success}</span>
+              </div>
+            )}
 
-            <div className="admin-login-field">
+            <div className="al-field">
               <label htmlFor="admin-email">Email address</label>
-
-              <input
-                id="admin-email"
-                type="email"
-                placeholder="admin@reorbit.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
+              <div className="al-input">
+                <Mail size={17} />
+                <input
+                  id="admin-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="admin@reorbit.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  autoFocus
+                />
+              </div>
             </div>
 
-            {/* PASSWORD */}
-
-            <div className="admin-login-field">
+            <div className="al-field">
               <label htmlFor="admin-password">Password</label>
-
-              <div className="admin-password-wrapper">
+              <div className="al-input">
+                <Lock size={17} />
                 <input
                   id="admin-password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
+                  disabled={loading}
                 />
-
                 <button
                   type="button"
-                  className="admin-password-toggle"
-                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="al-eye"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
             </div>
 
-            {/* LOGIN BUTTON */}
-
-            <button
-              type="submit"
-              className="admin-login-button"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Login to Admin Panel"}
+            <button type="submit" className="al-submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="al-spin" /> Signing in…
+                </>
+              ) : (
+                <>
+                  Sign in to Admin Panel <ArrowRight size={17} />
+                </>
+              )}
             </button>
           </form>
 
-          <div className="admin-login-security">
-            <span>✓</span>
-            Secure administrator access
+          <div className="al-secure">
+            <ShieldCheck size={15} /> Secure administrator access
           </div>
         </div>
-
-        <div className="admin-login-footer">ReOrbit Management System</div>
-      </div>
+      </main>
     </div>
   );
 }

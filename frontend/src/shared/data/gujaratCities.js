@@ -1,0 +1,35 @@
+/* Cities ReOrbit serves (all inside Gujarat). Keep in sync with
+   backend/apps/core/gujarat.py. */
+export const GUJARAT_CITIES = [
+  ["Ahmedabad", "Ahmedabad"],
+  ["Surat", "Surat"],
+  ["Vadodara", "Vadodara"],
+  ["Rajkot", "Rajkot"],
+  ["Bhavnagar", "Bhavnagar"],
+  ["Jamnagar", "Jamnagar"],
+  ["Gandhinagar", "Gandhinagar"],
+  ["Junagadh", "Junagadh"],
+  ["Anand", "Anand"],
+  ["Navsari", "Navsari"],
+  ["Morbi", "Morbi"],
+  ["Gandhidham", "Kutch"],
+  ["Nadiad", "Kheda"],
+  ["Bharuch", "Bharuch"],
+  ["Palanpur", "Banaskantha"],
+  ["Patan", "Patan"],
+  ["Porbandar", "Porbandar"],
+  ["Mehsana", "Mehsana"],
+  ["Bhuj", "Kutch"],
+  ["Veraval", "Gir Somnath"],
+  ["Vapi", "Valsad"],
+  ["Valsad", "Valsad"],
+  ["Godhra", "Panchmahal"],
+  ["Surendranagar", "Surendranagar"],
+  ["Amreli", "Amreli"],
+  ["Gondal", "Rajkot"],
+  ["Botad", "Botad"],
+  ["Kalol", "Gandhinagar"],
+  ["Himmatnagar", "Sabarkantha"],
+].map(([name, district]) => ({ name, district }));
+
+export const GUJARAT_CITY_NAMES = GUJARAT_CITIES.map((c) => c.name);

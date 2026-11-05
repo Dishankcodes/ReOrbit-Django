@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 
+import CitySelect from "../../shared/components/CitySelect";
 import useMyProfile from "../../shared/hooks/useMyProfile";
 import { GUJARAT, GUJARAT_PIN_HINT, mediaUrl, pincodeProblem } from "../../api/profile";
 
@@ -54,7 +55,6 @@ function toDraft(account, profile) {
     email: account?.email || "",
     authProvider: account?.auth_provider || "email",
     phone: profile?.phone || "",
-    address: profile?.address || "",
     city: profile?.city || "",
     state: GUJARAT,
     pincode: profile?.pincode || "",
@@ -74,7 +74,6 @@ const toPayload = (d) => ({
   studio_name: d.studioName.trim(),
   speciality: d.speciality.trim(),
   phone: d.phone.trim(),
-  address: d.address.trim(),
   city: d.city.trim(),
   state: GUJARAT,
   pincode: d.pincode.trim(),
@@ -92,7 +91,6 @@ const SERVER_FIELD = {
   studio_name: "studioName",
   speciality: "speciality",
   phone: "phone",
-  address: "address",
   city: "city",
   state: "state",
   pincode: "pincode",
@@ -170,7 +168,7 @@ export default function ReMakerProfile() {
     pincode: draft.pincode.trim()
       ? pincodeProblem(draft.pincode)
       : "Enter your 6-digit pincode.",
-    city: draft.city.trim() ? "" : "Enter your city.",
+    city: draft.city.trim() ? "" : "Select your city.",
   };
 
   const hasErrors = Object.values(errors).some(Boolean);
@@ -708,7 +706,7 @@ export default function ReMakerProfile() {
 
           {/* CONTACT */}
           <section className="rpp-card">
-            <h3>Contact and address</h3>
+            <h3>Contact</h3>
 
             {editing ? (
               <div className="rpp-form single">
@@ -718,12 +716,14 @@ export default function ReMakerProfile() {
                     maxLength: 13,
                   })}
                 </Field>
-                <Field id="rpp-address" label="Address">
-                  {textInput("rpp-address", "address")}
-                </Field>
                 <div className="rpp-form-pair">
                   <Field id="rpp-city" label="City" error={err("city")}>
-                    {textInput("rpp-city", "city")}
+                    <CitySelect
+                      id="rpp-city"
+                      value={draft.city}
+                      invalid={Boolean(err("city"))}
+                      onChange={(city) => setField("city", city)}
+                    />
                   </Field>
                   <Field id="rpp-state" label="State">
                     {textInput("rpp-state", "state", { value: GUJARAT, readOnly: true, disabled: true })}
@@ -746,7 +746,7 @@ export default function ReMakerProfile() {
                 <li>
                   <MapPin size={16} />
                   <span>
-                    {[data.address, data.city, data.state]
+                    {[data.city, data.state]
                       .filter(Boolean)
                       .join(", ")}
                     <small>{data.pincode}</small>

@@ -62,3 +62,14 @@ def validate_gujarat_state(value):
     if str(value).strip().lower() != "gujarat":
         raise ValidationError(GUJARAT_ONLY_MESSAGE)
     return "Gujarat"
+
+
+def validate_gujarat_city(value):
+    from apps.core.gujarat import canonical_city
+
+    if value in (None, ""):
+        return value
+    city = canonical_city(value)
+    if not city:
+        raise ValidationError("Choose one of the Gujarat cities from the list.")
+    return city
