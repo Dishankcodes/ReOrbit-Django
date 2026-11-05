@@ -1,22 +1,44 @@
-# Python
-backend/venv/
-backend/__pycache__/
-*.py[cod]
-*.sqlite3
 
-# Environment files
-backend/.env
 
-# React
-frontend/node_modules/
-frontend/dist/
+# ENVIRONMENT VARIABLES / SECRETS
 
-# VS Code
+.env
+.env.*
+**/.env
+**/.env.*
+
+!.env.example
+!**/.env.example
+
+# Credentials and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+secrets/
+
+
+# IDE / EDITORS
+
 .vscode/
+.idea/
+*.swp
+*.swo
 
-# OS files
+
+# OPERATING SYSTEM
+
 .DS_Store
 Thumbs.db
-# Uploaded files (backend/uploads/)
-backend/uploads/
-backend/staticfiles/
+Desktop.ini
+
+
+# LOGS / TEMPORARY FILES
+
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig

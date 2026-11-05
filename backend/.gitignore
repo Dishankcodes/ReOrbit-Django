@@ -1,10 +1,41 @@
-.venv/
-venv/
+
+# Python cache
 __pycache__/
 *.py[cod]
-.env
-*.sqlite3
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# Django generated files
 staticfiles/
+
+# User uploaded media - never commit
+uploads/
 media/
-.vscode/
-.idea/
+
+# Local databases
+*.sqlite3
+*.db
+
+# Testing and coverage
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python tool caches
+.mypy_cache/
+.ruff_cache/
