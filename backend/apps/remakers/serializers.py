@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from apps.core.profile import validate_social_links
+from apps.core.profile import GujaratOnlyMixin, validate_social_links
 
 from .models import ReMaker_Profile, ReMakers
 
 
-class ReMakerProfileSerializer(serializers.ModelSerializer):
+class ReMakerProfileSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
     class Meta:
         model = ReMaker_Profile
         fields = [

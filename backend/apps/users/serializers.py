@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from apps.core.profile import validate_flag_dict
+from apps.core.profile import GujaratOnlyMixin, validate_flag_dict
 
 from .models import User_Profile, Users
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
     class Meta:
         model = User_Profile
         fields = [

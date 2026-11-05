@@ -29,7 +29,13 @@ import { useDonations } from "../../data/donationsStore";
 import { useRewards } from "../../data/rewardsStore";
 
 import useMyProfile from "../../../shared/hooks/useMyProfile";
-import { changeUserPassword, mediaUrl } from "../../../api/profile";
+import {
+  GUJARAT,
+  GUJARAT_PIN_HINT,
+  changeUserPassword,
+  mediaUrl,
+  pincodeProblem,
+} from "../../../api/profile";
 
 import "../../css/UserProfile-css/UserProfile.css";
 
@@ -101,7 +107,7 @@ export default function UserProfile() {
     email: account?.email || "",
     phone: profile?.phone || "",
     city: profile?.city || "",
-    state: profile?.state || "",
+    state: GUJARAT,
     pincode: profile?.pincode || "",
     address: profile?.address || "",
     bio: profile?.bio || "",
@@ -164,7 +170,16 @@ export default function UserProfile() {
 
   const handleSaveProfile = async (event) => {
     event.preventDefault();
-    const result = await me.save(formData);
+    const pinError = pincodeProblem(formData.pincode);
+    if (pinError) {
+      setFieldErrors({ pincode: [pinError] });
+      notify("Please correct the highlighted fields.", true);
+      return;
+    }
+    const { email, state, ...editable } = formData; // email is never sent; state is always Gujarat
+    void email;
+    void state;
+    const result = await me.save(editable);
     if (result.ok) {
       setFieldErrors({});
       setIsEditing(false);
@@ -477,11 +492,12 @@ export default function UserProfile() {
                 <ProfileField
                   label="State"
                   name="state"
-                  value={formData.state}
+                  value={GUJARAT}
                   icon={MapPin}
-                  disabled={!isEditing}
+                  disabled
                   onChange={handleInputChange}
                   error={fieldErrors.state}
+                  helper="ReOrbit is available in Gujarat only."
                 />
 
                 <ProfileField
@@ -492,6 +508,7 @@ export default function UserProfile() {
                   disabled={!isEditing}
                   onChange={handleInputChange}
                   error={fieldErrors.pincode}
+                  helper={isEditing ? GUJARAT_PIN_HINT : undefined}
                 />
               </div>
 

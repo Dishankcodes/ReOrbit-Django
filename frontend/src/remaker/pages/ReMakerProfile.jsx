@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import useMyProfile from "../../shared/hooks/useMyProfile";
-import { mediaUrl } from "../../api/profile";
+import { GUJARAT, GUJARAT_PIN_HINT, mediaUrl, pincodeProblem } from "../../api/profile";
 
 import "../css/ReMakerProfile.css";
 
@@ -56,7 +56,7 @@ function toDraft(account, profile) {
     phone: profile?.phone || "",
     address: profile?.address || "",
     city: profile?.city || "",
-    state: profile?.state || "",
+    state: GUJARAT,
     pincode: profile?.pincode || "",
     bio: profile?.bio || "",
     skills: splitList(profile?.skills, ","),
@@ -76,7 +76,7 @@ const toPayload = (d) => ({
   phone: d.phone.trim(),
   address: d.address.trim(),
   city: d.city.trim(),
-  state: d.state.trim(),
+  state: GUJARAT,
   pincode: d.pincode.trim(),
   bio: d.bio.trim(),
   skills: d.skills.join(", "),
@@ -167,11 +167,10 @@ export default function ReMakerProfile() {
     phone: /^\+?[0-9][0-9 -]{9,17}$/.test(draft.phone.trim())
       ? ""
       : "Enter a valid phone number.",
-    pincode: /^[0-9]{6}$/.test(draft.pincode.trim())
-      ? ""
-      : "Pincode must be 6 digits.",
+    pincode: draft.pincode.trim()
+      ? pincodeProblem(draft.pincode)
+      : "Enter your 6-digit pincode.",
     city: draft.city.trim() ? "" : "Enter your city.",
-    state: draft.state.trim() ? "" : "Enter your state.",
   };
 
   const hasErrors = Object.values(errors).some(Boolean);
@@ -726,11 +725,12 @@ export default function ReMakerProfile() {
                   <Field id="rpp-city" label="City" error={err("city")}>
                     {textInput("rpp-city", "city")}
                   </Field>
-                  <Field id="rpp-state" label="State" error={err("state")}>
-                    {textInput("rpp-state", "state")}
+                  <Field id="rpp-state" label="State">
+                    {textInput("rpp-state", "state", { value: GUJARAT, readOnly: true, disabled: true })}
                   </Field>
                 </div>
                 <Field id="rpp-pin" label="Pincode" error={err("pincode")}>
+                  <span className="rpp-hint">{GUJARAT_PIN_HINT}</span>
                   {textInput("rpp-pin", "pincode", {
                     inputMode: "numeric",
                     maxLength: 6,

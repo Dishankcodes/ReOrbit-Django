@@ -50,7 +50,7 @@ class ProfileTests(APIBase):
         user = self.make_user()
         r = self.patch(
             "/api/users/profile/",
-            {"full_name": "  Asha   Rao ", "bio": "Upcycler", "city": "Pune", "pincode": "411001",
+            {"full_name": "  Asha   Rao ", "bio": "Upcycler", "city": "Pune", "pincode": "380015",
              "phone": "+91 98765 43210"},
             as_=user,
         )
@@ -74,18 +74,72 @@ class ProfileTests(APIBase):
             self.assertEqual(r.status_code, 400, payload)
             self.assertIn("errors", r.data)
 
+    def test_gujarat_only(self):
+        user = self.make_user()
+        for pin in ("411001", "110001", "560001", "359999", "396590", "396215", "396230"):
+            r = self.patch("/api/users/profile/", {"pincode": pin}, as_=user)
+            if pin == "396590":
+                self.assertEqual(r.status_code, 200, pin)  # last Gujarat pincode
+            else:
+                self.assertEqual(r.status_code, 400, pin)
+                self.assertIn("Gujarat", r.data["errors"]["pincode"][0])
+        for pin in ("360001", "380015", "395007", "390001", "361001"):
+            self.assertEqual(self.patch("/api/users/profile/", {"pincode": pin}, as_=user).status_code, 200, pin)
+        r = self.patch("/api/users/profile/", {"state": "Maharashtra"}, as_=user)
+        self.assertEqual(r.status_code, 400)
+        r = self.patch("/api/users/profile/", {"state": "gujarat"}, as_=user)
+        self.assertEqual(r.data["data"]["profile"]["state"], "Gujarat")
+
+    def test_state_is_set_to_gujarat_with_city(self):
+        user = self.make_user()
+        r = self.patch("/api/users/profile/", {"city": "Surat", "pincode": "395007"}, as_=user)
+        self.assertEqual(r.data["data"]["profile"]["state"], "Gujarat")
+
+    def test_remaker_gujarat_only(self):
+        rm = self.make_remaker()
+        self.assertEqual(self.patch("/api/remakers/profile/", {"pincode": "411001"}, as_=rm).status_code, 400)
+        self.assertEqual(self.patch("/api/remakers/profile/", {"state": "Goa"}, as_=rm).status_code, 400)
+        r = self.patch("/api/remakers/profile/", {"pincode": "380015", "city": "Ahmedabad"}, as_=rm)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["data"]["profile"]["state"], "Gujarat")
+
+    def test_saved_address_gujarat_only(self):
+        from apps.core.serializers import SavedAddressSerializer
+        base = dict(recipient_name="A", phone="9876543210", address_line1="1 Road", city="Surat", state="Gujarat")
+        self.assertFalse(SavedAddressSerializer(data=dict(base, pincode="411001")).is_valid())
+        self.assertFalse(SavedAddressSerializer(data=dict(base, pincode="395007", state="Goa")).is_valid())
+        self.assertTrue(SavedAddressSerializer(data=dict(base, pincode="395007")).is_valid())
+
+    def test_email_cannot_be_changed(self):
+        user = self.make_user()
+        r = self.patch("/api/users/profile/", {"email": "other@example.com", "bio": "x"}, as_=user)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("email", r.data["errors"])
+        user.refresh_from_db()
+        self.assertEqual(user.email, "user@example.com")
+        user.profile.refresh_from_db()
+        self.assertEqual(user.profile.bio, "")  # nothing was saved
+        # sending the same email back is fine
+        r = self.patch("/api/users/profile/", {"email": "USER@example.com", "bio": "x"}, as_=user)
+        self.assertEqual(r.status_code, 200)
+
+    def test_remaker_email_cannot_be_changed(self):
+        rm = self.make_remaker()
+        r = self.patch("/api/remakers/profile/", {"email": "new@example.com"}, as_=rm)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("email", r.data["errors"])
+
     def test_user_cannot_set_counters_or_email(self):
         user = self.make_user()
         r = self.patch(
             "/api/users/profile/",
-            {"orbit_points": 9999, "total_sales": 50, "email": "new@example.com", "status": "blocked"},
+            {"orbit_points": 9999, "total_sales": 50, "status": "blocked"},
             as_=user,
         )
         self.assertEqual(r.status_code, 200)
         user.refresh_from_db()
         self.assertEqual(user.profile.orbit_points, 0)
         self.assertEqual(user.profile.total_sales, 0)
-        self.assertEqual(user.email, "user@example.com")
         self.assertEqual(user.status, Users.Status.ACTIVE)
 
     def test_user_preferences_saved(self):

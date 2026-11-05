@@ -18,7 +18,6 @@ import {
   Smartphone,
   Trash2,
   TriangleAlert,
-  User as UserIcon,
   UserX,
   Lock,
   Download,
@@ -27,7 +26,6 @@ import {
 import {
   SESSIONS,
   deleteAccountData,
-  saveProfile,
   setPref,
   useSettings,
 } from "../../data/settingsStore";
@@ -51,16 +49,6 @@ import "../../css/shared/ui-base.css";
 import "../../css/settings/UserSettings.css";
 
 const SECTIONS = [
-  {
-    id: "profile",
-
-    label: "Profile",
-
-    icon: UserIcon,
-
-    text: "Name, contact and bio",
-  },
-
   {
     id: "addresses",
 
@@ -115,142 +103,6 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
 
       <span className="ust-switch" aria-hidden="true" />
     </label>
-  );
-}
-
-/* ---------------- profile ---------------- */
-
-function ProfileSection({ settings, show }) {
-  const [f, setF] = useState(settings.profile);
-
-  const [touched, setTouched] = useState(false);
-
-  const err = {
-    full_name: f.full_name.trim().length < 3,
-
-    email: !/^\S+@\S+\.\S+$/.test(f.email.trim()),
-
-    phone: !/^\+?[\d\s-]{10,14}$/.test(f.phone.trim()),
-  };
-
-  const dirty = JSON.stringify(f) !== JSON.stringify(settings.profile);
-
-  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
-
-  const submit = (e) => {
-    e.preventDefault();
-
-    setTouched(true);
-
-    if (Object.values(err).some(Boolean)) return;
-
-    saveProfile({
-      ...f,
-
-      full_name: f.full_name.trim(),
-
-      email: f.email.trim(),
-
-      phone: f.phone.trim(),
-
-      city: f.city.trim(),
-
-      bio: f.bio.trim(),
-    });
-
-    show("Profile saved.");
-  };
-
-  const field = (k, label, props = {}, msg) => (
-    <label className="dn-field">
-      <span className="dn-label">{label}</span>
-
-      <input
-        className={`dn-input ${touched && err[k] ? "is-error" : ""}`}
-        value={f[k]}
-        onChange={(e) => set(k, e.target.value)}
-        {...props}
-      />
-
-      {touched && err[k] && <span className="dn-error">{msg}</span>}
-    </label>
-  );
-
-  return (
-    <form className="dn-card ust-card" onSubmit={submit} noValidate>
-      <div className="dn-card-head">
-        <div>
-          <h2>Profile</h2>
-
-          <small>
-            This is what other people see on your listings and reviews.
-          </small>
-        </div>
-      </div>
-
-      <div className="ust-grid">
-        {field("full_name", "Full name", {}, "Enter your full name.")}
-
-        {field(
-          "email",
-
-          "Email",
-
-          { type: "email" },
-
-          "Enter a valid email address.",
-        )}
-
-        {field(
-          "phone",
-
-          "Phone",
-
-          { inputMode: "tel" },
-
-          "Enter a valid phone number.",
-        )}
-
-        {field("city", "City")}
-
-        <label className="dn-field ust-wide">
-          <span className="dn-label">
-            Bio <span className="dn-hint">(optional)</span>
-          </span>
-
-          <textarea
-            className="dn-textarea"
-            style={{ minHeight: 88 }}
-            maxLength={160}
-            value={f.bio}
-            onChange={(e) => set("bio", e.target.value)}
-          />
-
-          <span className="dn-hint" style={{ textAlign: "right" }}>
-            {f.bio.length}/160
-          </span>
-        </label>
-      </div>
-
-      <div className="ust-actions">
-        <button
-          type="button"
-          className="dn-btn dn-btn--ghost"
-          disabled={!dirty}
-          onClick={() => {
-            setF(settings.profile);
-
-            setTouched(false);
-          }}
-        >
-          Reset
-        </button>
-
-        <button type="submit" className="dn-btn" disabled={!dirty}>
-          <Check size={15} /> Save changes
-        </button>
-      </div>
-    </form>
   );
 }
 
@@ -918,7 +770,7 @@ export default function UserSettings() {
 
   const section = SECTIONS.some((s) => s.id === params.get("section"))
     ? params.get("section")
-    : "profile";
+    : "addresses";
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -942,13 +794,8 @@ export default function UserSettings() {
         return <AccountSection show={show} />;
 
       default:
-        return (
-          <ProfileSection
-            key={settings.profile.full_name}
-            settings={settings}
-            show={show}
-          />
-        );
+        return <AddressSection show={show} />;
+
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

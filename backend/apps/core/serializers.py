@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Category, SavedAddress
+from .profile import GujaratOnlyMixin
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -10,7 +11,7 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ["public_id"]
 
 
-class SavedAddressSerializer(serializers.ModelSerializer):
+class SavedAddressSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
     class Meta:
         model = SavedAddress
         fields = [

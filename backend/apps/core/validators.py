@@ -26,3 +26,39 @@ def validate_image(file):
         file.seek(0)
     if fmt not in ALLOWED_IMAGE_FORMATS:
         raise ValidationError("Only JPEG, PNG or WebP images are allowed.")
+
+
+# ReOrbit serves Gujarat only. Gujarat pincodes run 360001-396590; 396210-396240
+# is Daman / Dadra & Nagar Haveli (not Gujarat).
+GUJARAT_PINCODE_RANGE = (360001, 396590)
+NON_GUJARAT_PINCODE_RANGE = (396210, 396240)
+GUJARAT_ONLY_MESSAGE = "ReOrbit is available inside Gujarat only. Enter a Gujarat pincode."
+
+
+def is_gujarat_pincode(value):
+    value = str(value or "").strip()
+    if not value.isdigit() or len(value) != 6:
+        return False
+    number = int(value)
+    low, high = GUJARAT_PINCODE_RANGE
+    bad_low, bad_high = NON_GUJARAT_PINCODE_RANGE
+    return low <= number <= high and not (bad_low <= number <= bad_high)
+
+
+def validate_gujarat_pincode(value):
+    """Empty is allowed (the field is optional); anything filled in must be Gujarat."""
+    if value in (None, ""):
+        return value
+    if not str(value).strip().isdigit() or len(str(value).strip()) != 6:
+        raise ValidationError("Enter a valid 6-digit pincode.")
+    if not is_gujarat_pincode(value):
+        raise ValidationError(GUJARAT_ONLY_MESSAGE)
+    return str(value).strip()
+
+
+def validate_gujarat_state(value):
+    if value in (None, ""):
+        return value
+    if str(value).strip().lower() != "gujarat":
+        raise ValidationError(GUJARAT_ONLY_MESSAGE)
+    return "Gujarat"

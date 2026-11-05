@@ -40,3 +40,22 @@ export function imageProblem(file) {
   if (file.size > IMAGE_MAX_BYTES) return "Image must be 5 MB or smaller.";
   return "";
 }
+
+/* ReOrbit works inside Gujarat only: pincodes 360001-396590
+   (396210-396240 is Daman / Dadra & Nagar Haveli). */
+export const GUJARAT = "Gujarat";
+export const GUJARAT_PIN_HINT = "Gujarat pincodes only (360001 to 396590).";
+
+export function isGujaratPincode(value) {
+  const text = String(value || "").trim();
+  if (!/^\d{6}$/.test(text)) return false;
+  const n = Number(text);
+  return n >= 360001 && n <= 396590 && !(n >= 396210 && n <= 396240);
+}
+
+export function pincodeProblem(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (!/^\d{6}$/.test(text)) return "Pincode must be 6 digits.";
+  return isGujaratPincode(text) ? "" : "ReOrbit is available inside Gujarat only. Enter a Gujarat pincode.";
+}

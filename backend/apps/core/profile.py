@@ -7,10 +7,26 @@ from rest_framework.views import APIView
 
 from apps.core.images import delete_file, process_image
 from apps.core.responses import fail, ok
-from apps.core.validators import validate_image
+from apps.core.validators import validate_gujarat_pincode, validate_gujarat_state, validate_image
 
 PREFERENCE_MAX_KEYS = 40
 SOCIAL_KEYS = {"instagram", "facebook", "youtube", "twitter", "linkedin", "website", "pinterest"}
+
+
+class GujaratOnlyMixin:
+    """Pincode and state of a profile / address must be inside Gujarat."""
+
+    def validate_pincode(self, value):
+        return validate_gujarat_pincode(value)
+
+    def validate_state(self, value):
+        return validate_gujarat_state(value)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get("pincode") or attrs.get("city"):
+            attrs["state"] = "Gujarat"
+        return attrs
 
 
 class ImageUploadSerializer(serializers.Serializer):
@@ -72,6 +88,9 @@ class BaseProfileView(APIView):
     def clean_account(self, request, data):
         """Return (changes, errors) for the account row."""
         changes, errors = {}, {}
+        sent_email = data.get("email")
+        if sent_email is not None and str(sent_email).strip().lower() != request.user.account.email:
+            errors["email"] = ["Email cannot be changed."]
         if "full_name" in data:
             name = " ".join(str(data.get("full_name") or "").split())
             if not name:
