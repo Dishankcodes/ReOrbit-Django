@@ -8,6 +8,8 @@ from .views import (
     GoogleAuthView,
     MeView,
     ProfileView,
+    ProfilePhotoView,
+    ProfileCoverView,
 )
 
 urlpatterns = [
@@ -48,4 +50,6 @@ urlpatterns = [
         ProfileView.as_view(),
         name="remaker-profile",
     ),
+    path("profile/photo/", ProfilePhotoView.as_view(), name="remaker-profile-photo"),
+    path("profile/cover/", ProfileCoverView.as_view(), name="remaker-profile-cover"),
 ]

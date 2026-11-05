@@ -1178,3 +1178,46 @@
     font-size: 20px;
   }
 }
+
+/* PHOTO UPLOAD + FORM ERRORS */
+
+.profile-message.is-error {
+  border-color: #efc7c1;
+  background: #fdf0ee;
+  color: #a33a2c;
+}
+
+.profile-message .profile-small-edit {
+  margin-left: auto;
+}
+
+.profile-camera-button:disabled,
+.profile-photo-remove:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.profile-photo-remove {
+  position: absolute;
+  left: 0;
+  bottom: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 3px solid #2a4d3a;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #a33a2c;
+  cursor: pointer;
+}
+
+.profile-field-error {
+  display: block;
+  margin-top: 5px;
+  color: #a33a2c;
+  font-size: 11px;
+  font-weight: 600;
+}

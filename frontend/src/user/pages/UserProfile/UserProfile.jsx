@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   User,
   Mail,
@@ -20,6 +20,7 @@ import {
   X,
   CheckCircle2,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 
 import { useOrders } from "../../data/ordersStore";
@@ -27,18 +28,10 @@ import { useWishlist } from "../../data/wishlistStore";
 import { useDonations } from "../../data/donationsStore";
 import { useRewards } from "../../data/rewardsStore";
 
-import "../../css/UserProfile-css/UserProfile.css";
+import useMyProfile from "../../../shared/hooks/useMyProfile";
+import { changeUserPassword, mediaUrl } from "../../../api/profile";
 
-const defaultProfile = {
-  full_name: "Dishank Prajapati",
-  email: "dishank@example.com",
-  phone: "+91 98765 43210",
-  date_of_birth: "15 August 2004",
-  gender: "Male",
-  location: "Ahmedabad, Gujarat",
-  bio: "Passionate about sustainable living, creative products and giving things a second life.",
-  avatar: "",
-};
+import "../../css/UserProfile-css/UserProfile.css";
 
 const profileStats = [
   {
@@ -100,123 +93,153 @@ export default function UserProfile() {
     { ...profileStats[2], value: String(myDonations.length) },
     { ...profileStats[3], value: rewards.balance.toLocaleString("en-IN") },
   ];
-  const [profile, setProfile] = useState(defaultProfile);
-  const [formData, setFormData] = useState(defaultProfile);
+  const me = useMyProfile("user");
+  const fileInput = useRef(null);
 
+  const toForm = (account, profile) => ({
+    full_name: account?.full_name || "",
+    email: account?.email || "",
+    phone: profile?.phone || "",
+    city: profile?.city || "",
+    state: profile?.state || "",
+    pincode: profile?.pincode || "",
+    address: profile?.address || "",
+    bio: profile?.bio || "",
+  });
+
+  const profile = {
+    full_name: me.account?.full_name || "",
+    email: me.account?.email || "",
+    avatar: mediaUrl(me.profile?.profile_image),
+  };
+
+  const [formData, setFormData] = useState(toForm(null, null));
+  const [fieldErrors, setFieldErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-
   const [saveMessage, setSaveMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
 
+  /* fill the form once the server answers (and after every save) */
   useEffect(() => {
-    const storedUser = localStorage.getItem("reorbit_user");
+    if (me.account && !isEditing) setFormData(toForm(me.account, me.profile));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.account, me.profile]);
 
-    if (!storedUser) {
-      return;
-    }
-
-    try {
-      const parsedUser = JSON.parse(storedUser);
-
-      const updatedProfile = {
-        ...defaultProfile,
-        ...parsedUser,
-      };
-
-      setProfile(updatedProfile);
-      setFormData(updatedProfile);
-    } catch (error) {
-      console.error("Unable to load user profile.", error);
-    }
-  }, []);
+  const notify = (text, isError = false) => {
+    setSaveMessage(text);
+    setMessageIsError(isError);
+    if (!isError) setTimeout(() => setSaveMessage(""), 3500);
+  };
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setFormData((current) => ({ ...current, [name]: value }));
+    setFieldErrors((current) => ({ ...current, [name]: undefined }));
   };
 
   const handlePasswordChange = (event) => {
     const { name, value } = event.target;
-
-    setPasswordData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setPasswordData((current) => ({ ...current, [name]: value }));
   };
 
   const handleEdit = () => {
-    setFormData(profile);
+    setFormData(toForm(me.account, me.profile));
+    setFieldErrors({});
     setSaveMessage("");
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setFormData(profile);
+    setFormData(toForm(me.account, me.profile));
+    setFieldErrors({});
     setSaveMessage("");
     setIsEditing(false);
   };
 
-  const handleSaveProfile = (event) => {
+  const handleSaveProfile = async (event) => {
     event.preventDefault();
-
-    const updatedProfile = {
-      ...profile,
-      ...formData,
-    };
-
-    setProfile(updatedProfile);
-    setFormData(updatedProfile);
-
-    localStorage.setItem("reorbit_user", JSON.stringify(updatedProfile));
-
-    setIsEditing(false);
-    setSaveMessage("Profile updated successfully.");
-
-    setTimeout(() => {
-      setSaveMessage("");
-    }, 3500);
+    const result = await me.save(formData);
+    if (result.ok) {
+      setFieldErrors({});
+      setIsEditing(false);
+      notify(result.message);
+    } else {
+      setFieldErrors(result.errors || {});
+      notify(result.message, true);
+    }
   };
 
-  const handlePasswordSubmit = (event) => {
-    event.preventDefault();
+  const handlePhotoPicked = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const result = await me.setImage("photo", file);
+    notify(result.message, !result.ok);
+  };
 
-    if (
-      !passwordData.currentPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
-    ) {
-      setSaveMessage("Please complete all password fields.");
+  const handlePhotoRemove = async () => {
+    const result = await me.clearImage("photo");
+    notify(result.message, !result.ok);
+  };
+
+  const handlePasswordSubmit = async (event) => {
+    event.preventDefault();
+    const needsCurrent = me.account?.has_password;
+
+    if ((needsCurrent && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword) {
+      notify("Please complete all password fields.", true);
       return;
     }
-
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setSaveMessage("New password and confirm password do not match.");
+      notify("New password and confirm password do not match.", true);
       return;
     }
-
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-
-    setShowPasswordForm(false);
-    setSaveMessage("Password updated successfully.");
-
-    setTimeout(() => {
-      setSaveMessage("");
-    }, 3500);
+    try {
+      await changeUserPassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      });
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setShowPasswordForm(false);
+      me.reload();
+      notify("Password updated successfully.");
+    } catch (error) {
+      notify(error.message || "Could not update the password.", true);
+    }
   };
+
+  if (me.loading && !me.account) {
+    return (
+      <div className="user-profile-page">
+        <div className="user-profile-wrapper">
+          <div className="profile-message">
+            <span>Loading your profile…</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (me.error && !me.account) {
+    return (
+      <div className="user-profile-page">
+        <div className="user-profile-wrapper">
+          <div className="profile-message is-error">
+            <span>{me.error}</span>
+            <button type="button" className="profile-small-edit" onClick={me.reload}>
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="user-profile-page">
@@ -270,8 +293,8 @@ export default function UserProfile() {
 
         {/* SUCCESS / ERROR MESSAGE */}
         {saveMessage && (
-          <div className="profile-message">
-            <CheckCircle2 size={18} />
+          <div className={`profile-message ${messageIsError ? "is-error" : ""}`}>
+            {messageIsError ? <X size={18} /> : <CheckCircle2 size={18} />}
             <span>{saveMessage}</span>
           </div>
         )}
@@ -293,23 +316,47 @@ export default function UserProfile() {
                 )}
               </div>
 
+              <input
+                ref={fileInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handlePhotoPicked}
+              />
+
               <button
                 type="button"
                 className="profile-camera-button"
                 title="Change profile picture"
+                disabled={me.busy}
+                onClick={() => fileInput.current?.click()}
               >
                 <Camera size={16} />
               </button>
+
+              {profile.avatar && (
+                <button
+                  type="button"
+                  className="profile-photo-remove"
+                  title="Remove profile picture"
+                  disabled={me.busy}
+                  onClick={handlePhotoRemove}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
 
             <div className="profile-hero-info">
               <div className="profile-name-row">
                 <h2>{profile.full_name}</h2>
 
-                <span className="verified-badge">
-                  <ShieldCheck size={14} />
-                  Verified
-                </span>
+                {me.account?.email_verified_at && (
+                  <span className="verified-badge">
+                    <ShieldCheck size={14} />
+                    Verified
+                  </span>
+                )}
               </div>
 
               <p className="profile-email">
@@ -394,6 +441,7 @@ export default function UserProfile() {
                   icon={User}
                   disabled={!isEditing}
                   onChange={handleInputChange}
+                  error={fieldErrors.full_name}
                 />
 
                 <ProfileField
@@ -413,48 +461,55 @@ export default function UserProfile() {
                   icon={Phone}
                   disabled={!isEditing}
                   onChange={handleInputChange}
+                  error={fieldErrors.phone}
                 />
 
                 <ProfileField
-                  label="Date of Birth"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
-                  icon={Calendar}
-                  disabled={!isEditing}
-                  onChange={handleInputChange}
-                />
-
-                <div className="profile-field">
-                  <label htmlFor="gender">Gender</label>
-
-                  <div className="profile-input-wrapper">
-                    <User size={17} />
-
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={formData.gender}
-                      disabled={!isEditing}
-                      onChange={handleInputChange}
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                      <option value="Prefer not to say">
-                        Prefer not to say
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <ProfileField
-                  label="Location"
-                  name="location"
-                  value={formData.location}
+                  label="City"
+                  name="city"
+                  value={formData.city}
                   icon={MapPin}
                   disabled={!isEditing}
                   onChange={handleInputChange}
+                  error={fieldErrors.city}
                 />
+
+                <ProfileField
+                  label="State"
+                  name="state"
+                  value={formData.state}
+                  icon={MapPin}
+                  disabled={!isEditing}
+                  onChange={handleInputChange}
+                  error={fieldErrors.state}
+                />
+
+                <ProfileField
+                  label="Pincode"
+                  name="pincode"
+                  value={formData.pincode}
+                  icon={MapPin}
+                  disabled={!isEditing}
+                  onChange={handleInputChange}
+                  error={fieldErrors.pincode}
+                />
+              </div>
+
+              <div className="profile-field profile-bio-field">
+                <label htmlFor="address">Address</label>
+
+                <textarea
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  disabled={!isEditing}
+                  onChange={handleInputChange}
+                  rows="3"
+                  placeholder="House, street, area"
+                />
+                {fieldErrors.address && (
+                  <small className="profile-field-error">{fieldErrors.address[0]}</small>
+                )}
               </div>
 
               <div className="profile-field profile-bio-field">
@@ -467,8 +522,12 @@ export default function UserProfile() {
                   disabled={!isEditing}
                   onChange={handleInputChange}
                   rows="4"
+                  maxLength={250}
                   placeholder="Tell us a little about yourself..."
                 />
+                {fieldErrors.bio && (
+                  <small className="profile-field-error">{fieldErrors.bio[0]}</small>
+                )}
               </div>
 
               {isEditing && (
@@ -523,7 +582,7 @@ export default function UserProfile() {
 
                 <div>
                   <strong>Password</strong>
-                  <span>Last updated recently</span>
+                  <span>{me.account?.has_password ? "Protected with a password" : "No password yet (Google sign-in)"}</span>
                 </div>
               </div>
 
@@ -538,6 +597,7 @@ export default function UserProfile() {
 
             {showPasswordForm && (
               <form className="password-form" onSubmit={handlePasswordSubmit}>
+                {me.account?.has_password && (
                 <div className="password-form-field">
                   <label htmlFor="currentPassword">Current Password</label>
 
@@ -550,6 +610,7 @@ export default function UserProfile() {
                     placeholder="Enter current password"
                   />
                 </div>
+                )}
 
                 <div className="password-form-field">
                   <label htmlFor="newPassword">New Password</label>
@@ -595,7 +656,7 @@ export default function UserProfile() {
                 </div>
               </div>
 
-              <span className="verified-text">Verified</span>
+              <span className="verified-text">{me.account?.email_verified_at ? "Verified" : "Not verified"}</span>
             </div>
           </section>
         </div>
@@ -707,6 +768,7 @@ function ProfileField({
   disabled,
   onChange,
   helper,
+  error,
 }) {
   return (
     <div className="profile-field">
@@ -724,6 +786,7 @@ function ProfileField({
         />
       </div>
 
+      {error && <small className="profile-field-error">{error[0]}</small>}
       {helper && <small className="profile-field-helper">{helper}</small>}
     </div>
   );

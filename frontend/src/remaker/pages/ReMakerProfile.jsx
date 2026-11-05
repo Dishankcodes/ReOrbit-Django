@@ -6,7 +6,6 @@ import {
   Camera,
   Check,
   CircleAlert,
-  Droplets,
   Leaf,
   Mail,
   MapPin,
@@ -20,62 +19,89 @@ import {
   X,
 } from "lucide-react";
 
+import useMyProfile from "../../shared/hooks/useMyProfile";
+import { mediaUrl } from "../../api/profile";
+
 import "../css/ReMakerProfile.css";
 
 /* ---------------------------------------------------------
-   Starting values. Name and email come from the logged-in
-   ReMaker when available, the rest is placeholder UI data.
+   The profile lives on the server (ReMakers + ReMaker_Profile).
+   skills are saved as "a, b, c" and certifications one per line,
+   so the page turns them into lists and back.
    --------------------------------------------------------- */
 
-function readStoredReMaker() {
-  try {
-    return JSON.parse(localStorage.getItem("reorbit_remaker") || "null") || {};
-  } catch {
-    return {};
-  }
-}
+const SOCIALS = [
+  ["instagram", "Instagram"],
+  ["website", "Website"],
+  ["youtube", "YouTube"],
+  ["facebook", "Facebook"],
+  ["twitter", "X / Twitter"],
+  ["linkedin", "LinkedIn"],
+];
 
-function buildInitial() {
-  const stored = readStoredReMaker();
+const splitList = (text, separator) =>
+  (text || "")
+    .split(separator)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
+function toDraft(account, profile) {
   return {
-    fullName: stored.full_name || stored.fullName || stored.name || "Nivya",
-    artName: stored.username || "Messy Mirror",
-    email: stored.email || "hello@messymirror.in",
-    authProvider: stored.auth_provider || "email",
-    phone: "98765 43210",
-    address: "14, Craft Lane, Near Old Market",
-    city: "Ahmedabad",
-    state: "Gujarat",
-    pincode: "380015",
-    bio: "I turn broken mirrors, old window frames and tired furniture into pieces people want to keep. Every product starts as someone else's discard, and I try to leave a little of its first life visible.",
-    skills: [
-      "Furniture restoration",
-      "Mirror framing",
-      "Wood finishing",
-      "Metal work",
-    ],
-    experience:
-      "6 years restoring and upcycling furniture. Started in a small garage workshop, now working with local carpenters on larger commissions.",
-    certifications: [
-      "Certified Furniture Restorer, NID Short Course",
-      "Sustainable Design Practices, 2024",
-    ],
-    avatar: "",
+    fullName: account?.full_name || "",
+    username: account?.username || "",
+    studioName: profile?.studio_name || "",
+    speciality: profile?.speciality || "",
+    email: account?.email || "",
+    authProvider: account?.auth_provider || "email",
+    phone: profile?.phone || "",
+    address: profile?.address || "",
+    city: profile?.city || "",
+    state: profile?.state || "",
+    pincode: profile?.pincode || "",
+    bio: profile?.bio || "",
+    skills: splitList(profile?.skills, ","),
+    experience: profile?.experience || "",
+    certifications: splitList(profile?.certification, "\n"),
+    social: { ...(profile?.social_links || {}) },
+    avatar: mediaUrl(profile?.profile_image),
+    cover: mediaUrl(profile?.cover_image),
   };
 }
 
-const STATS = [
-  { icon: Recycle, value: "38", label: "Products listed" },
-  { icon: Star, value: "4.9", label: "Average rating" },
-  { icon: Users, value: "2,846", label: "Followers" },
-];
+const toPayload = (d) => ({
+  full_name: d.fullName.trim(),
+  username: d.username.trim(),
+  studio_name: d.studioName.trim(),
+  speciality: d.speciality.trim(),
+  phone: d.phone.trim(),
+  address: d.address.trim(),
+  city: d.city.trim(),
+  state: d.state.trim(),
+  pincode: d.pincode.trim(),
+  bio: d.bio.trim(),
+  skills: d.skills.join(", "),
+  experience: d.experience.trim(),
+  certification: d.certifications.join("\n"),
+  social_links: d.social,
+});
 
-const IMPACT = [
-  { icon: Leaf, value: "412 kg", label: "Waste kept out of landfill" },
-  { icon: Droplets, value: "1,860 L", label: "Water saved vs. new" },
-  { icon: Recycle, value: "126", label: "Pieces given a second life" },
-];
+/* server field name -> the key this page uses */
+const SERVER_FIELD = {
+  full_name: "fullName",
+  username: "username",
+  studio_name: "studioName",
+  speciality: "speciality",
+  phone: "phone",
+  address: "address",
+  city: "city",
+  state: "state",
+  pincode: "pincode",
+  bio: "bio",
+  experience: "experience",
+  skills: "skills",
+  certification: "certifications",
+  social_links: "social",
+};
 
 function initialsOf(name) {
   const words = (name || "").trim().split(/\s+/).filter(Boolean);
@@ -98,26 +124,36 @@ function Field({ id, label, children, error, span }) {
 }
 
 export default function ReMakerProfile() {
-  const initial = useMemo(() => buildInitial(), []);
+  const me = useMyProfile("remaker");
+  const saved = useMemo(() => toDraft(me.account, me.profile), [me.account, me.profile]);
 
-  const [saved, setSaved] = useState(initial);
-  const [draft, setDraft] = useState(initial);
+  const [draft, setDraft] = useState(saved);
   const [editing, setEditing] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
   const [skillDraft, setSkillDraft] = useState("");
   const [certDraft, setCertDraft] = useState("");
   const [avatarError, setAvatarError] = useState("");
   const [toast, setToast] = useState("");
 
   const fileRef = useRef(null);
+  const coverRef = useRef(null);
   const toastTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
-  const data = editing ? draft : saved;
+  const showToast = (text) => {
+    setToast(text);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(""), 2600);
+  };
 
-  const setField = (field, value) =>
+  const data = editing ? { ...draft, avatar: saved.avatar, cover: saved.cover } : saved;
+
+  const setField = (field, value) => {
     setDraft((current) => ({ ...current, [field]: value }));
+    setServerErrors((current) => ({ ...current, [field]: undefined }));
+  };
 
   /* ---------------------------------------------------------
      Validation
@@ -125,12 +161,12 @@ export default function ReMakerProfile() {
 
   const errors = {
     fullName: draft.fullName.trim() ? "" : "Enter your full name.",
-    artName: draft.artName.trim()
+    username: draft.username.trim()
       ? ""
-      : "Add the name buyers will know you by.",
-    phone: /^[0-9 ]{10,13}$/.test(draft.phone.trim())
+      : "Add the username buyers will know you by.",
+    phone: /^\+?[0-9][0-9 -]{9,17}$/.test(draft.phone.trim())
       ? ""
-      : "Enter a valid 10-digit phone number.",
+      : "Enter a valid phone number.",
     pincode: /^[0-9]{6}$/.test(draft.pincode.trim())
       ? ""
       : "Pincode must be 6 digits.",
@@ -139,7 +175,8 @@ export default function ReMakerProfile() {
   };
 
   const hasErrors = Object.values(errors).some(Boolean);
-  const err = (key) => (attempted && errors[key] ? errors[key] : "");
+  const err = (key) =>
+    serverErrors[key] || (attempted && errors[key] ? errors[key] : "");
 
   /* ---------------------------------------------------------
      Actions
@@ -148,28 +185,22 @@ export default function ReMakerProfile() {
   const startEdit = () => {
     setDraft(saved);
     setAttempted(false);
+    setServerErrors({});
     setAvatarError("");
     setEditing(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelEdit = () => {
-    if (
-      draft.avatar &&
-      draft.avatar !== saved.avatar &&
-      draft.avatar.startsWith("blob:")
-    ) {
-      URL.revokeObjectURL(draft.avatar);
-    }
-
     setDraft(saved);
     setEditing(false);
     setAttempted(false);
+    setServerErrors({});
     setSkillDraft("");
     setCertDraft("");
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     setAttempted(true);
 
     if (hasErrors) {
@@ -181,31 +212,47 @@ export default function ReMakerProfile() {
       return;
     }
 
-    setSaved(draft);
+    const result = await me.save(toPayload(draft));
+
+    if (!result.ok) {
+      const mapped = {};
+      Object.entries(result.errors || {}).forEach(([field, messages]) => {
+        mapped[SERVER_FIELD[field] || field] = Array.isArray(messages)
+          ? messages[0]
+          : String(messages);
+      });
+      setServerErrors(mapped);
+      setAvatarError(Object.keys(mapped).length ? "" : result.message);
+      requestAnimationFrame(() =>
+        document
+          .querySelector('.rpp [aria-invalid="true"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      );
+      return;
+    }
+
     setEditing(false);
-    setToast("Profile saved.");
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(""), 2600);
+    setServerErrors({});
+    showToast("Profile saved.");
   };
 
-  const handleAvatar = (event) => {
+  /* pictures are uploaded straight away and saved on the server */
+  const pickImage = async (kind, event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setAvatarError("Choose an image file (JPG, PNG or WebP).");
-      return;
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-      setAvatarError("Photo must be under 3 MB.");
-      return;
-    }
-
     setAvatarError("");
-    setField("avatar", URL.createObjectURL(file));
+    const result = await me.setImage(kind, file);
+    if (result.ok) showToast(result.message);
+    else setAvatarError(result.message);
+  };
+
+  const dropImage = async (kind) => {
+    setAvatarError("");
+    const result = await me.clearImage(kind);
+    if (result.ok) showToast(result.message);
+    else setAvatarError(result.message);
   };
 
   const addTag = (field, value, clear, max) => {
@@ -251,13 +298,61 @@ export default function ReMakerProfile() {
   );
 
   const location = [data.city, data.state].filter(Boolean).join(", ");
+  const title = data.studioName || data.username;
+  const p = me.profile || {};
+
+  const stats = [
+    { icon: Recycle, value: String(p.total_uploads ?? 0), label: "Products listed" },
+    {
+      icon: Star,
+      value: p.rating_count ? Number(p.rating_average).toFixed(1) : "–",
+      label: p.rating_count ? `Average rating (${p.rating_count})` : "No ratings yet",
+    },
+    { icon: Users, value: String(p.total_sales ?? 0), label: "Sales" },
+  ];
+
+  const impact = [
+    {
+      icon: Leaf,
+      value: `${Number(p.environmental_impact ?? 0).toLocaleString("en-IN")} kg`,
+      label: "Waste kept out of landfill",
+    },
+    {
+      icon: Recycle,
+      value: String(p.total_sales ?? 0),
+      label: "Pieces given a second life",
+    },
+  ];
+
+  if (me.loading && !me.account) {
+    return (
+      <section className="rpp">
+        <p className="rpp-empty">Loading your profile…</p>
+      </section>
+    );
+  }
+
+  if (me.error && !me.account) {
+    return (
+      <section className="rpp">
+        <p className="rpp-error inline">
+          <CircleAlert size={13} />
+          {me.error}
+        </p>
+        <button type="button" className="rpp-btn primary" onClick={me.reload}>
+          Try again
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="rpp">
       {/* ======================= HERO ======================= */}
       <header className="rpp-hero">
-        <div className="rpp-cover" aria-hidden="true">
-          <svg viewBox="0 0 1200 220" preserveAspectRatio="xMaxYMid slice">
+        <div className="rpp-cover">
+          {data.cover && <img className="rpp-cover-img" src={data.cover} alt="" />}
+          {!data.cover && <svg aria-hidden="true" viewBox="0 0 1200 220" preserveAspectRatio="xMaxYMid slice">
             <g fill="none" stroke="currentColor" strokeWidth="1.2">
               <circle cx="1010" cy="110" r="70" />
               <circle cx="1010" cy="110" r="125" />
@@ -268,16 +363,47 @@ export default function ReMakerProfile() {
             <circle cx="1080" cy="64" r="7" fill="#c1c8c4" />
             <circle cx="890" cy="152" r="5" fill="#c1c8c4" opacity="0.7" />
             <circle cx="1200" cy="190" r="9" fill="#c1c8c4" opacity="0.5" />
-          </svg>
+          </svg>}
+          {editing && (
+            <div className="rpp-cover-actions">
+              <button
+                type="button"
+                className="rpp-cover-btn"
+                disabled={me.busy}
+                onClick={() => coverRef.current?.click()}
+              >
+                <Camera size={14} />
+                {data.cover ? "Change cover" : "Add cover"}
+              </button>
+              {data.cover && (
+                <button
+                  type="button"
+                  className="rpp-cover-btn"
+                  disabled={me.busy}
+                  onClick={() => dropImage("cover")}
+                >
+                  <X size={14} />
+                  Remove
+                </button>
+              )}
+              <input
+                ref={coverRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={(event) => pickImage("cover", event)}
+              />
+            </div>
+          )}
         </div>
 
         <div className="rpp-hero-body">
           <div className="rpp-avatar-wrap">
             <div className="rpp-avatar">
               {data.avatar ? (
-                <img src={data.avatar} alt={`${data.artName} profile`} />
+                <img src={data.avatar} alt={`${title} profile`} />
               ) : (
-                <span>{initialsOf(data.artName)}</span>
+                <span>{initialsOf(title)}</span>
               )}
             </div>
 
@@ -286,17 +412,29 @@ export default function ReMakerProfile() {
                 <button
                   type="button"
                   className="rpp-avatar-btn"
+                  disabled={me.busy}
                   onClick={() => fileRef.current?.click()}
                   aria-label="Change profile photo"
                 >
                   <Camera size={15} />
                 </button>
+                {data.avatar && (
+                  <button
+                    type="button"
+                    className="rpp-avatar-btn remove"
+                    disabled={me.busy}
+                    onClick={() => dropImage("photo")}
+                    aria-label="Remove profile photo"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   hidden
-                  onChange={handleAvatar}
+                  onChange={(event) => pickImage("photo", event)}
                 />
               </>
             )}
@@ -304,11 +442,13 @@ export default function ReMakerProfile() {
 
           <div className="rpp-identity">
             <div className="rpp-name-row">
-              <h2>{data.artName}</h2>
-              <span className="rpp-verified">
-                <BadgeCheck size={14} />
-                Verified ReMaker
-              </span>
+              <h2>{title}</h2>
+              {me.account?.email_verified_at && (
+                <span className="rpp-verified">
+                  <BadgeCheck size={14} />
+                  Verified ReMaker
+                </span>
+              )}
             </div>
 
             <p className="rpp-sub">
@@ -343,7 +483,7 @@ export default function ReMakerProfile() {
         </div>
 
         <dl className="rpp-stats">
-          {STATS.map((stat) => {
+          {stats.map((stat) => {
             const Icon = stat.icon;
 
             return (
@@ -366,13 +506,19 @@ export default function ReMakerProfile() {
 
             {editing ? (
               <div className="rpp-form">
-                <Field id="rpp-art" label="Studio name" error={err("artName")}>
-                  {textInput("rpp-art", "artName", { maxLength: 40 })}
+                <Field id="rpp-user" label="Username" error={err("username")}>
+                  {textInput("rpp-user", "username", { maxLength: 100 })}
+                </Field>
+                <Field id="rpp-studio" label="Studio name" error={err("studioName")}>
+                  {textInput("rpp-studio", "studioName", { maxLength: 120 })}
                 </Field>
                 <Field id="rpp-full" label="Full name" error={err("fullName")}>
                   {textInput("rpp-full", "fullName", { maxLength: 60 })}
                 </Field>
-                <Field id="rpp-bio" label="Bio" span>
+                <Field id="rpp-spec" label="Speciality" error={err("speciality")}>
+                  {textInput("rpp-spec", "speciality", { maxLength: 150 })}
+                </Field>
+                <Field id="rpp-bio" label="Bio" span error={err("bio")}>
                   <textarea
                     id="rpp-bio"
                     rows={5}
@@ -385,7 +531,10 @@ export default function ReMakerProfile() {
                 </Field>
               </div>
             ) : (
-              <p className="rpp-bio">{data.bio}</p>
+              <>
+                {data.speciality && <p className="rpp-sub">{data.speciality}</p>}
+                <p className="rpp-bio">{data.bio || "No bio added yet."}</p>
+              </>
             )}
           </section>
 
@@ -458,14 +607,15 @@ export default function ReMakerProfile() {
                 </label>
                 <textarea
                   id="rpp-exp"
-                  rows={4}
-                  maxLength={400}
+                  rows={3}
+                  maxLength={100}
                   value={draft.experience}
                   onChange={(event) =>
                     setField("experience", event.target.value)
                   }
-                  placeholder="Years of experience, workshops, notable projects."
+                  placeholder="Years of experience, in a line (100 characters)."
                 />
+                {err("experience") && <span className="rpp-error">{err("experience")}</span>}
               </div>
             ) : (
               <p className="rpp-bio">
@@ -539,7 +689,7 @@ export default function ReMakerProfile() {
             <p className="rpp-card-note">What your work has saved so far.</p>
 
             <ul>
-              {IMPACT.map((item) => {
+              {impact.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -570,7 +720,7 @@ export default function ReMakerProfile() {
                   })}
                 </Field>
                 <Field id="rpp-address" label="Address">
-                  {textInput("rpp-address", "address", { maxLength: 120 })}
+                  {textInput("rpp-address", "address")}
                 </Field>
                 <div className="rpp-form-pair">
                   <Field id="rpp-city" label="City" error={err("city")}>
@@ -591,7 +741,7 @@ export default function ReMakerProfile() {
               <ul className="rpp-contact">
                 <li>
                   <Phone size={16} />
-                  <span>{data.phone}</span>
+                  <span>{data.phone || "No phone added yet."}</span>
                 </li>
                 <li>
                   <MapPin size={16} />
@@ -603,6 +753,51 @@ export default function ReMakerProfile() {
                   </span>
                 </li>
               </ul>
+            )}
+          </section>
+
+          {/* SOCIAL */}
+          <section className="rpp-card">
+            <h3>Social links</h3>
+
+            {editing ? (
+              <div className="rpp-form single">
+                {SOCIALS.map(([key, label]) => (
+                  <Field
+                    key={key}
+                    id={`rpp-soc-${key}`}
+                    label={label}
+                    error={undefined}
+                  >
+                    <input
+                      id={`rpp-soc-${key}`}
+                      type="url"
+                      inputMode="url"
+                      maxLength={300}
+                      placeholder="https://"
+                      value={draft.social[key] || ""}
+                      onChange={(event) =>
+                        setField("social", { ...draft.social, [key]: event.target.value })
+                      }
+                    />
+                  </Field>
+                ))}
+                {serverErrors.social && <span className="rpp-error">{serverErrors.social}</span>}
+              </div>
+            ) : SOCIALS.some(([key]) => data.social[key]) ? (
+              <ul className="rpp-contact">
+                {SOCIALS.filter(([key]) => data.social[key]).map(([key, label]) => (
+                  <li key={key}>
+                    <span>
+                      <a href={data.social[key]} target="_blank" rel="noreferrer noopener">
+                        {label}
+                      </a>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="rpp-empty">No links added yet.</p>
             )}
           </section>
 

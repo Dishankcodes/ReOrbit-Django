@@ -143,9 +143,12 @@ export function updateTokens({ access, refresh }) {
 }
 
 /* Update the cached account (for example after a profile edit). */
+export const ACCOUNT_UPDATED_EVENT = "reorbit:account-updated";
+
 export function updateAccount(type, account) {
   const s = activeStore();
   if (s && ACCOUNT_KEY[type]) write(s, ACCOUNT_KEY[type], JSON.stringify(account));
+  window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
 }
 
 export function clearSession() {

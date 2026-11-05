@@ -514,3 +514,18 @@
     transition: none;
   }
 }
+
+/* profile photo inside the round avatar */
+.remaker-header-avatar,
+.remaker-profile-dropdown-avatar {
+  overflow: hidden;
+}
+
+.remaker-header-avatar img,
+.remaker-profile-dropdown-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}

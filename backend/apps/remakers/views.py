@@ -16,6 +16,7 @@ from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitReMaker
 from apps.accounts.tokens import create_token_pair
+from apps.core.profile import BaseImageView, BaseProfileView
 from apps.core.responses import created, fail, ok
 from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OTPVerifyThrottle
 
@@ -296,21 +297,47 @@ class MeView(APIView):
     support_endpoint = True
 
     def get(self, request):
-        return ok({"remaker": ReMakerSerializer(request.user.account).data})
+        return ok({"remaker": ReMakerSerializer(request.user.account, context={"request": request}).data})
 
 
-class ProfileView(APIView):
-    """GET / PATCH /api/remakers/profile/ : counters and ratings are read-only."""
+class ProfileView(BaseProfileView):
+    """GET / PATCH /api/remakers/profile/ : name, username + studio profile. Counters, ratings and images are read-only here."""
 
     permission_classes = [IsReOrbitReMaker]
+    profile_serializer = ReMakerProfileSerializer
+    account_serializer = ReMakerSerializer
 
-    def get(self, request):
-        return ok({"profile": ReMakerProfileSerializer(request.user.account.profile).data})
+    def clean_account(self, request, data):
+        changes, errors = super().clean_account(request, data)
+        if "username" in data:
+            username = (data.get("username") or "").strip()
+            error = _username_error(username)
+            if not error and ReMakers.objects.filter(username__iexact=username).exclude(
+                pk=request.user.account.pk
+            ).exists():
+                error = "This username is already taken."
+            if error:
+                errors["username"] = [error]
+            else:
+                changes["username"] = username
+        return changes, errors
 
-    def patch(self, request):
-        serializer = ReMakerProfileSerializer(
-            request.user.account.profile, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return ok({"profile": serializer.data}, "Profile updated successfully.")
+
+class ProfilePhotoView(BaseImageView):
+    """POST / DELETE /api/remakers/profile/photo/ : the profile picture."""
+
+    permission_classes = [IsReOrbitReMaker]
+    profile_serializer = ReMakerProfileSerializer
+    field = "profile_image"
+    max_side = 1024
+    label = "Profile photo"
+
+
+class ProfileCoverView(BaseImageView):
+    """POST / DELETE /api/remakers/profile/cover/ : the studio cover picture."""
+
+    permission_classes = [IsReOrbitReMaker]
+    profile_serializer = ReMakerProfileSerializer
+    field = "cover_image"
+    max_side = 1920
+    label = "Cover image"

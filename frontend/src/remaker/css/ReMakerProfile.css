@@ -39,13 +39,14 @@
 }
 
 .rpp-cover {
+  position: relative;
   height: 150px;
   background: var(--rp-maroon);
   color: rgba(193, 200, 196, 0.28);
   overflow: hidden;
 }
 
-.rpp-cover svg {
+.rpp-cover > svg {
   width: 100%;
   height: 100%;
   display: block;
@@ -785,4 +786,49 @@
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* COVER IMAGE + PHOTO CONTROLS */
+
+.rpp-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rpp-cover-actions {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.rpp-cover-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--rp-maroon);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rpp-cover-btn:disabled,
+.rpp-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.rpp-avatar-btn.remove {
+  right: auto;
+  left: 2px;
+  background: #fff;
+  color: #a33a2c;
+  border-color: var(--rp-maroon);
 }

@@ -11,6 +11,7 @@ from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitUser
 from apps.accounts.tokens import create_token_pair
 from apps.accounts.utils import issue_reset_token, read_reset_token
+from apps.core.profile import BaseImageView, BaseProfileView
 from apps.core.responses import created, fail, ok
 from apps.core.throttles import AuthThrottle, OTPIPThrottle, OTPSendThrottle, OTPVerifyThrottle
 
@@ -279,21 +280,51 @@ class MeView(APIView):
     support_endpoint = True
 
     def get(self, request):
-        return ok({"user": UserSerializer(request.user.account).data})
+        return ok({"user": UserSerializer(request.user.account, context={"request": request}).data})
 
 
-class ProfileView(APIView):
-    """GET / PATCH /api/users/profile/ : counters are read-only."""
+class ProfileView(BaseProfileView):
+    """GET / PATCH /api/users/profile/ : name + profile fields. Counters and images are read-only here."""
 
     permission_classes = [IsReOrbitUser]
+    profile_serializer = UserProfileSerializer
+    account_serializer = UserSerializer
 
-    def get(self, request):
-        return ok({"profile": UserProfileSerializer(request.user.account.profile).data})
 
-    def patch(self, request):
-        serializer = UserProfileSerializer(
-            request.user.account.profile, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return ok({"profile": serializer.data}, "Profile updated successfully.")
+class ProfilePhotoView(BaseImageView):
+    """POST / DELETE /api/users/profile/photo/ : the profile picture."""
+
+    permission_classes = [IsReOrbitUser]
+    profile_serializer = UserProfileSerializer
+    field = "profile_image"
+    max_side = 1024
+    label = "Profile photo"
+
+
+class ChangePasswordView(APIView):
+    """POST /api/users/password/change/  {"current_password", "new_password"}
+
+    Google-only accounts have no password yet, so they can set one without the current one.
+    """
+
+    permission_classes = [IsReOrbitUser]
+    throttle_classes = [AuthThrottle]
+
+    def post(self, request):
+        user = request.user.account
+        current = request.data.get("current_password") or ""
+        new = request.data.get("new_password") or ""
+        if user.password and not user.check_password(current):
+            return fail(
+                "Current password is incorrect.", errors={"current_password": ["Incorrect password."]}
+            )
+        if not new:
+            return fail("New password is required.", errors={"new_password": ["This field is required."]})
+        if user.password and current == new:
+            return fail(
+                "Choose a password different from the current one.",
+                errors={"new_password": ["Must differ from the current password."]},
+            )
+        user.set_password(new)
+        user.save(update_fields=["password", "updated_at"])
+        return ok(message="Password updated successfully.")

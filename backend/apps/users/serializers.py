@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.core.profile import validate_flag_dict
+
 from .models import User_Profile, Users
 
 
@@ -29,11 +31,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "total_sales",
             "total_purchases",
             "orbit_points",
+            "profile_image",  # changed only through /profile/photo/
         ]
+
+    def validate_notification_preferences(self, value):
+        return validate_flag_dict(value, "notification_preferences")
+
+    def validate_privacy_preferences(self, value):
+        return validate_flag_dict(value, "privacy_preferences")
 
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
+    has_password = serializers.SerializerMethodField()
+
+    def get_has_password(self, obj):
+        return bool(obj.password)
 
     class Meta:
         model = Users
@@ -48,6 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login_at",
             "created_at",
             "updated_at",
+            "has_password",
             "profile",
         ]
         read_only_fields = fields

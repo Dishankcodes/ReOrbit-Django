@@ -12,6 +12,8 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 
 import "./UserHeader.css";
+import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
+import { mediaUrl } from "../../api/profile";
 
 const pageInformation = {
   "/user-dashboard": {
@@ -259,17 +261,7 @@ const notifications = [
 ];
 
 function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem("reorbit_user");
-
-    if (!storedUser) {
-      return {};
-    }
-
-    return JSON.parse(storedUser);
-  } catch {
-    return {};
-  }
+  return getAccount("user") || {};
 }
 
 function getUserName(user) {
@@ -313,9 +305,11 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
     };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
     };
   }, []);
 
@@ -508,7 +502,7 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
             }}
             aria-label="Open profile menu"
           >
-            <div className="user-header-avatar">{initials}</div>
+            <div className="user-header-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
 
             <div className="user-header-user-info">
               <strong>{userName}</strong>
@@ -525,7 +519,7 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
           {profileOpen && (
             <div className="user-dropdown user-profile-dropdown">
               <div className="user-profile-dropdown-user">
-                <div className="user-profile-dropdown-avatar">{initials}</div>
+                <div className="user-profile-dropdown-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
 
                 <div>
                   <strong>{userName}</strong>

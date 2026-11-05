@@ -27,6 +27,8 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 
 import "./ReMakerSidebar.css";
+import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
+import { mediaUrl } from "../../api/profile";
 
 /* ====
    MARKETPLACE MENU
@@ -156,17 +158,7 @@ const toolsMenu = [
    ==== */
 
 function getStoredReMaker() {
-  try {
-    const storedReMaker = localStorage.getItem("reorbit_remaker");
-
-    if (!storedReMaker) {
-      return {};
-    }
-
-    return JSON.parse(storedReMaker);
-  } catch {
-    return {};
-  }
+  return getAccount("remaker") || {};
 }
 
 /* ====
@@ -225,9 +217,11 @@ export default function ReMakerSidebar({
     };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
     };
   }, []);
 
@@ -412,7 +406,7 @@ export default function ReMakerSidebar({
         className="remaker-sidebar-profile"
         onClick={handleProfileClick}
       >
-        <div className="remaker-sidebar-avatar">{initials}</div>
+        <div className="remaker-sidebar-avatar">{mediaUrl(remaker?.profile?.profile_image) ? <img src={mediaUrl(remaker?.profile?.profile_image)} alt="" /> : initials}</div>
 
         <div className="remaker-sidebar-profile-info">
           <strong>{remakerName}</strong>

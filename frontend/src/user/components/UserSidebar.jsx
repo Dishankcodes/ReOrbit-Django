@@ -32,6 +32,8 @@ import { useNotifications } from "../data/notificationsStore";
 import { useCartCount } from "../data/shopStore";
 
 import "./UserSidebar.css";
+import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
+import { mediaUrl } from "../../api/profile";
 
 const mainMenu = [
   {
@@ -147,17 +149,7 @@ const supportMenu = [
 ];
 
 function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem("reorbit_user");
-
-    if (!storedUser) {
-      return {};
-    }
-
-    return JSON.parse(storedUser);
-  } catch {
-    return {};
-  }
+  return getAccount("user") || {};
 }
 
 function getUserName(user) {
@@ -197,9 +189,11 @@ export default function UserSidebar({
     };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
     };
   }, []);
 
@@ -366,7 +360,7 @@ export default function UserSidebar({
         className="user-sidebar-profile"
         onClick={handleProfileClick}
       >
-        <div className="user-sidebar-avatar">{initials}</div>
+        <div className="user-sidebar-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
 
         <div className="user-sidebar-profile-info">
           <strong>{userName}</strong>

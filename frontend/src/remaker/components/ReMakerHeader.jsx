@@ -22,6 +22,8 @@ import {
 } from "../data/notificationsStore";
 
 import "./ReMakerHeader.css";
+import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
+import { mediaUrl } from "../../api/profile";
 
 /* =========================================================
    PAGE INFORMATION
@@ -285,17 +287,7 @@ function getPageInformation(pathname) {
    ========================================================= */
 
 function getStoredReMaker() {
-  try {
-    const storedReMaker = localStorage.getItem("reorbit_remaker");
-
-    if (!storedReMaker) {
-      return {};
-    }
-
-    return JSON.parse(storedReMaker);
-  } catch {
-    return {};
-  }
+  return getAccount("remaker") || {};
 }
 
 /* =========================================================
@@ -371,9 +363,11 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
     };
 
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(ACCOUNT_UPDATED_EVENT, handleStorageChange);
     };
   }, []);
 
@@ -618,7 +612,7 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
             }}
             aria-label="Open ReMaker profile menu"
           >
-            <div className="remaker-header-avatar">{initials}</div>
+            <div className="remaker-header-avatar">{mediaUrl(remaker?.profile?.profile_image) ? <img src={mediaUrl(remaker?.profile?.profile_image)} alt="" /> : initials}</div>
 
             <div className="remaker-header-user-info">
               <strong>{remakerName}</strong>
@@ -637,9 +631,7 @@ export default function ReMakerHeader({ onToggleSidebar, onCloseMobile }) {
           {profileOpen && (
             <div className="remaker-dropdown remaker-profile-dropdown">
               <div className="remaker-profile-dropdown-user">
-                <div className="remaker-profile-dropdown-avatar">
-                  {initials}
-                </div>
+                <div className="remaker-profile-dropdown-avatar">{mediaUrl(remaker?.profile?.profile_image) ? <img src={mediaUrl(remaker?.profile?.profile_image)} alt="" /> : initials}</div>
 
                 <div>
                   <strong>{remakerName}</strong>

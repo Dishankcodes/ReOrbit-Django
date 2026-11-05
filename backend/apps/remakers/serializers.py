@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.core.profile import validate_social_links
+
 from .models import ReMaker_Profile, ReMakers
 
 
@@ -36,7 +38,12 @@ class ReMakerProfileSerializer(serializers.ModelSerializer):
             "total_purchases",
             "rating_average",
             "rating_count",
+            "profile_image",  # changed only through /profile/photo/
+            "cover_image",  # changed only through /profile/cover/
         ]
+
+    def validate_social_links(self, value):
+        return validate_social_links(value)
 
 
 class ReMakerSerializer(serializers.ModelSerializer):
