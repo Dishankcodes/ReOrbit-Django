@@ -51,7 +51,7 @@ if (SESSION_CHANNEL) {
         write(s, KEY.refresh, message.refresh);
       }
     } else if (message?.type === "logout") {
-      clearSession();
+      clearSession({ broadcast: false });
       window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
     }
   });
