@@ -5,18 +5,21 @@ import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Image as ImageIcon, Loade
 import {
   PICKUP_OPTIONS,
   SELL_CONDITIONS,
-  SELLER,
   saveListing,
   listingLimitStatus,
+  useSellCategories,
   useListing,
 } from "../../data/listingsStore";
+import { getAccount } from "../../../api/session";
+import { pincodeProblem } from "../../../api/profile";
+import CitySelect from "../../../shared/components/CitySelect";
+import "../../../shared/components/CitySelect.css";
 import { formatPrice } from "../../../data/marketplaceData";
-import { checkPincode } from "../../data/donationsStore";
 import Crumbs from "../../components/ui/Crumbs";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import EmptyState from "../../components/ui/EmptyState";
 import EarningsPreview, { earningsFor } from "./components/EarningsPreview";
-import { useCategoryNames } from "../../../shared/catalog";
+
 
 import "../../css/shared/ui-base.css";
 import "../../css/sell/sell-base.css";
@@ -28,15 +31,18 @@ const STEPS = [
   { label: "Review", icon: ClipboardCheck },
 ];
 
-const blank = {
+const makeBlank = () => {
+  const savedProfile = getAccount("user")?.profile || {};
+  return {
   title: "", category: "", description: "", condition: "", quantity: 1, price: "",
-  images: [], city: SELLER.city, pincode: SELLER.pincode, pickup: "self", agree: false,
+  images: [], city: savedProfile.city || "", pincode: savedProfile.pincode || "", pickup: "self", agree: false,
+  };
 };
 
 const toForm = (l) => ({
   title: l.title, category: l.category, description: l.description, condition: l.condition,
   quantity: l.quantity, price: String(l.price),
-  images: l.images.map((url, i) => ({ id: `img-${i}`, url, name: `Photo ${i + 1}` })),
+  images: (l.imageRows || []).map((r, i) => ({ id: `img-${r.id}`, serverId: r.id, url: r.url, name: `Photo ${i + 1}` })),
   city: l.city, pincode: l.pincode, pickup: l.pickup, agree: false,
 });
 
@@ -44,7 +50,8 @@ export default function UserSellForm() {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const existing = useListing(listingId || "");
-  const categoryNames = useCategoryNames();
+  const sellCategories = useSellCategories();
+  const categoryNames = useMemo(() => sellCategories.map((c) => c.name), [sellCategories]);
   const categoryOptions = useMemo(
     () => (existing?.category && !categoryNames.includes(existing.category) ? [existing.category, ...categoryNames] : categoryNames),
     [categoryNames, existing],
@@ -52,7 +59,7 @@ export default function UserSellForm() {
   const editing = Boolean(listingId);
   const topRef = useRef(null);
 
-  const [form, setForm] = useState(() => (existing ? toForm(existing) : blank));
+  const [form, setForm] = useState(() => (existing ? toForm(existing) : makeBlank()));
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -70,7 +77,6 @@ export default function UserSellForm() {
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
   };
 
-  const pin = checkPincode(form.pincode);
   const price = Number(form.price);
   const earn = useMemo(() => earningsFor(price, form.pickup, form.quantity), [price, form.pickup, form.quantity]);
 
@@ -102,8 +108,8 @@ export default function UserSellForm() {
     }
     if (index === 1) {
       if (form.images.length < 1) e.images = "Add at least one photo.";
-      if (!pin.valid) e.pincode = "Enter a valid 6-digit pincode.";
-      else if (!pin.serviceable) e.pincode = "We don't serve this pincode yet.";
+      const pinProblem = pincodeProblem(form.pincode);
+      if (pinProblem) e.pincode = pinProblem;
       if (form.city.trim().length < 2) e.city = "Enter your city.";
     }
     if (index === 2 && !form.agree) e.agree = "Please confirm before submitting.";
@@ -113,7 +119,7 @@ export default function UserSellForm() {
 
   const next = () => { if (validate(step)) setStep((s) => Math.min(2, s + 1)); };
 
-  const payload = () => ({ ...form, images: form.images.map((i) => i.url), price });
+  const payload = () => ({ ...form, price });
 
   const [limitMsg, setLimitMsg] = useState("");
 
@@ -131,10 +137,26 @@ export default function UserSellForm() {
     }
     setLimitMsg("");
     setBusy(true);
-    window.setTimeout(() => {
-      const saved = saveListing(payload(), { submit: !asDraft, id: editing ? listingId : null });
-      navigate(`/user-sell/${saved.id}`, { replace: true, state: { just: asDraft ? "draft" : editing ? "updated" : "submitted" } });
-    }, 700);
+    saveListing(payload(), { submit: !asDraft, id: editing ? listingId : null })
+      .then((saved) => {
+        navigate(`/user-sell/${saved.id}`, { replace: true, state: { just: asDraft ? "draft" : editing ? "updated" : "submitted" } });
+      })
+      .catch((err) => {
+        setBusy(false);
+        if (err.code === "DAILY_LIMIT") {
+          setLimitMsg(err.message);
+        } else {
+          const f = err.errors || {};
+          const map = { listing_price: "price" };
+          const next = {};
+          Object.entries(f).forEach(([k, v]) => { next[map[k] || k] = Array.isArray(v) ? v[0] : v; });
+          if (Object.keys(next).length) {
+            setErrors(next);
+            setStep(next.images || next.pincode || next.city || next.pickup_preference ? 1 : 0);
+          } else setLimitMsg(err.message || "Could not save the listing. Try again.");
+        }
+        topRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
   };
 
   const field = (key, label, el, hint) => (
@@ -220,8 +242,12 @@ export default function UserSellForm() {
               <PhotoUploader images={form.images} onChange={(v) => set("images", v)} error={errors.images} />
 
               <div className="usl-two">
-                {field("city", "City", <input className={`dn-input ${errors.city ? "is-error" : ""}`} value={form.city} onChange={(e) => set("city", e.target.value)} />)}
-                {field("pincode", "Pincode", <input className={`dn-input ${errors.pincode ? "is-error" : ""}`} inputMode="numeric" maxLength={6} value={form.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, ""))} />, pin.valid && pin.serviceable ? `We serve ${pin.city}.` : "Where the item will be collected from.")}
+                <div className="dn-field">
+                  <span className="dn-label">City <em>*</em></span>
+                  <CitySelect id="city" value={form.city} onChange={(v) => set("city", v)} invalid={!!errors.city} placeholder="Choose your city" />
+                  {errors.city && <span className="dn-error">{errors.city}</span>}
+                </div>
+                {field("pincode", "Pincode", <input className={`dn-input ${errors.pincode ? "is-error" : ""}`} inputMode="numeric" maxLength={6} value={form.pincode} onChange={(e) => set("pincode", e.target.value.replace(/\D/g, ""))} />, "Where the item will be collected from. Gujarat only.")}
               </div>
 
               <div className="dn-field">

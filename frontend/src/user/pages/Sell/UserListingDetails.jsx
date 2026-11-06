@@ -131,8 +131,9 @@ export default function UserListingDetails() {
               type="button"
               className="dn-btn dn-btn--ghost"
               onClick={() => {
-                relistListing(listing.id);
-                show("Listing is live on the marketplace again.");
+                relistListing(listing.id)
+                  .then(() => show("Listing is live on the marketplace again."))
+                  .catch((e) => show(e.message || "Could not relist."));
               }}
             >
               <RotateCcw size={15} /> Relist
@@ -381,9 +382,10 @@ export default function UserListingDetails() {
           cancelLabel="Keep it live"
           onClose={() => setConfirm(null)}
           onConfirm={() => {
-            withdrawListing(listing.id);
             setConfirm(null);
-            show("Listing withdrawn.");
+            withdrawListing(listing.id)
+              .then(() => show("Listing withdrawn."))
+              .catch((e) => show(e.message || "Could not withdraw."));
           }}
         >
           <p>
@@ -400,8 +402,9 @@ export default function UserListingDetails() {
           cancelLabel="Keep it"
           onClose={() => setConfirm(null)}
           onConfirm={() => {
-            deleteListing(listing.id);
-            navigate("/user-sell", { replace: true });
+            deleteListing(listing.id)
+              .then(() => navigate("/user-sell", { replace: true }))
+              .catch((e) => { setConfirm(null); show(e.message || "Could not delete."); });
           }}
         >
           <p>This permanently removes {listing.id}. It can't be undone.</p>

@@ -6,15 +6,13 @@
    Sellers keep the full price: no commission and no pickup fee.
    Live listings are added to the marketplace, and sales come
    in as orders the seller has to pack and ship.
-   Backend later: Items, Item_Images, Orders (seller side).
+   Listings are real (/api/listings/me/). Sales are still demo data until the
+   orders domain is wired.
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
-import { ITEMS } from "../../data/marketplaceData";
-import { addUserItem, updateUserItem, onUsersChange } from "../../admin/data/usersStore";
-import { getSettings } from "../../admin/data/settingsStore";
-import { refreshMarketListings } from "../../remaker/data/remakerMarketplaceData";
-import { getMyUserAccount } from "../../shared/identity";
+import { useEffect } from "react";
+import * as api from "../../api/listings";
 
 const DAY = 86400000;
 const ago = (d, h = 0) => new Date(Date.now() - d * DAY - h * 3600000).toISOString();
@@ -33,6 +31,7 @@ export const SELL_CONDITIONS = [
   { id: "Excellent", help: "Like new. No visible wear." },
   { id: "Very Good", help: "Light signs of use, fully working." },
   { id: "Good", help: "Clearly used but sound and usable." },
+  { id: "Fair", help: "Well used, with visible wear. Price it fairly." },
 ];
 export const PICKUP_OPTIONS = [
   { id: "self", label: "I'll hand it over to the courier", help: "You pack it and the buyer's courier collects from your door. No extra fee." },
@@ -45,93 +44,13 @@ export const LISTING_STATUS = {
   Reserved: { label: "Reserved", tone: "blue", blurb: "A buyer has ordered it. Pack and ship it." },
   Sold: { label: "Sold", tone: "violet", blurb: "Delivered to the buyer." },
   Withdrawn: { label: "Withdrawn", tone: "grey", blurb: "You took it off the marketplace." },
+  Donated: { label: "Donated", tone: "violet", blurb: "Given away through ReOrbit donations." },
+  Warehouse: { label: "In warehouse", tone: "blue", blurb: "Held at the ReOrbit warehouse." },
 };
 
 export const SALE_STEPS = ["Confirmed", "Packed", "Shipped", "Delivered"];
 
 const ev = (id, label, detail, at, tone = "neutral") => ({ id, label, detail, at, tone });
-
-/* ---------- seed ---------- */
-
-const baseListing = (over) => ({
-  quantity: 1,
-  city: SELLER.city,
-  pincode: SELLER.pincode,
-  pickup: "self",
-  views: 0,
-  likes: 0,
-  marketId: null,
-  adminItemId: null,
-  suggestedPrice: null,
-  suggestedMessage: "",
-  ...over,
-});
-
-const seedListings = () => [
-  baseListing({
-    id: "LST-3001", marketId: "ceramic-table-lamp", title: "Handmade ceramic table lamp", category: "Home & Living",
-    description: "A handmade ceramic table lamp with a warm glaze, bought for my studio and barely used.",
-    condition: "Excellent", price: 1650, images: ["https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Live",
-    createdAt: ago(40), views: 212, likes: 38,
-    events: [
-      ev("e1", "Listing published", "Now visible on the marketplace", ago(39), "good"),
-    ],
-  }),
-  baseListing({
-    id: "LST-3002", title: "Walnut bookshelf, 4 shelves", category: "Furniture",
-    description: "Solid walnut bookshelf with four adjustable shelves. A few light scratches on the side panel.",
-    condition: "Very Good", price: 3800, images: ["https://images.pexels.com/photos/19109111/pexels-photo-19109111.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Live",
-    createdAt: ago(1, 4), pickup: "platform",
-    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(1, 4), "good")],
-  }),
-  baseListing({
-    id: "LST-3003", title: "Brass floor lamp", category: "Home & Living",
-    description: "Vintage brass floor lamp, needs a new bulb holder.",
-    condition: "Good", price: 2200, images: ["https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Live",
-    createdAt: ago(9),
-    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(9), "good")],
-  }),
-  baseListing({
-    id: "LST-3004", title: "Cane stool set (2)", category: "Furniture",
-    description: "Two matching cane stools in great shape. Used lightly in a reading corner.",
-    condition: "Very Good", price: 2400, quantity: 1, images: ["https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Sold",
-    createdAt: ago(30), views: 164, likes: 21,
-    events: [
-      ev("e1", "Listing published", "Now visible on the marketplace", ago(29), "good"),
-      ev("e3", "Sold", "Order SL-5102 delivered", ago(14), "good"),
-    ],
-  }),
-  baseListing({
-    id: "LST-3005", marketId: "design-books-stack", title: "Stack of design books (12)", category: "Books",
-    description: "Twelve design and architecture books, clean pages, no highlighting.",
-    condition: "Very Good", price: 900, images: ["https://images.pexels.com/photos/33283/pexels-photo-33283.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Reserved",
-    createdAt: ago(12), views: 96, likes: 14,
-    events: [
-      ev("e1", "Listing published", "Now visible on the marketplace", ago(11), "good"),
-      ev("e3", "Order received", "Order SL-5104 is waiting to be packed", ago(1), "info"),
-    ],
-  }),
-  baseListing({
-    id: "LST-3007", adminItemId: "ITM-3007", title: "Mid-century teak side table", category: "Furniture",
-    description: "Teak side table with tapered legs and a small drawer. Light wear on the top, sturdy and wobble-free.",
-    condition: "Very Good", price: 4200, images: ["https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Live",
-    createdAt: ago(0, 6), pickup: "platform",
-    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(0, 6), "good")],
-  }),
-  baseListing({
-    id: "LST-3008", adminItemId: "ITM-3008", title: "Office chair, mesh back", category: "Furniture",
-    description: "Ergonomic mesh-back office chair with adjustable arms. Gas lift works but the seat is a bit worn.",
-    condition: "Good", price: 1800, images: ["https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"], status: "Live",
-    createdAt: ago(3),
-    events: [ev("e1", "Listing published", "Now visible on the marketplace", ago(3), "good")],
-  }),
-  baseListing({
-    id: "LST-3006", title: "Vintage brass wall mirror", category: "Decor",
-    description: "Round brass-framed mirror, 60 cm wide.",
-    condition: "Good", price: 1400, images: [], status: "Draft", createdAt: ago(2),
-    events: [ev("e1", "Draft saved", "Not submitted yet", ago(2), "neutral")],
-  }),
-];
 
 const seedSales = () => [
   {
@@ -154,240 +73,167 @@ const seedSales = () => [
   },
 ];
 
-/* Live seed listings are shown on the marketplace too. */
-function publish(listing) {
-  if (listing.marketId && ITEMS.some((i) => i.id === listing.marketId)) return;
-  const id = listing.marketId || `${listing.id.toLowerCase()}-${listing.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}`;
-  listing.marketId = id;
-  ITEMS.unshift({
-    id,
-    title: listing.title,
-    category: listing.category,
-    price: listing.price,
-    image: listing.images[0] || "https://images.pexels.com/photos/19109111/pexels-photo-19109111.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    summary: listing.description.slice(0, 110),
-    description: listing.description,
-    city: listing.city,
-    pincode: listing.pincode,
-    co2SavedKg: Math.max(4, Math.round(listing.price / 60)),
-    sellerRating: SELLER.rating,
-    condition: listing.condition,
-    seller: SELLER.name,
-    sellerId: SELLER.id,
-    sellerType: "user",
-    sellerImage: SELLER.image,
-    quantity: listing.quantity,
+/* ---------- mapping the API <-> the shapes the screens use ---------- */
+
+const STATUS_IN = { Listed: "Live" };
+const PICKUP_IN = { Seller_Handover: "self", Platform_Pickup: "platform" };
+const PICKUP_OUT = { self: "Seller_Handover", platform: "Platform_Pickup" };
+
+function fromApi(a) {
+  const status = STATUS_IN[a.item_status] || a.item_status;
+  const events = [
+    ev("created", status === "Draft" ? "Draft saved" : "Listing created", a.item_status === "Draft" ? "Not published yet" : "Your listing was saved", a.created_at, "neutral"),
+  ];
+  if (!["Draft"].includes(a.item_status)) {
+    const text = { Live: ["Listing published", "Visible on the marketplace", "good"], Withdrawn: ["Withdrawn", "You removed it from the marketplace", "bad"], Reserved: ["Reserved", "A buyer has ordered it", "info"], Sold: ["Sold", "Delivered to the buyer", "good"] }[status];
+    if (text) events.push(ev("state", text[0], text[1], a.updated_at, text[2]));
+  }
+  const disabled = a.moderation_status === "Disabled";
+  if (disabled) events.push(ev("mod", "Turned off by ReOrbit", a.moderation_note || "No reason was given.", a.moderated_at || a.updated_at, "bad"));
+  return {
+    id: a.id,
+    title: a.title,
+    category: a.category?.name || "",
+    description: a.description || "",
+    condition: a.condition || "",
+    price: a.listing_price == null ? 0 : Number(a.listing_price),
+    quantity: a.quantity,
+    images: (a.images || []).map((i) => i.url),
+    imageRows: a.images || [],
+    city: a.city,
+    pincode: a.pincode,
+    pickup: PICKUP_IN[a.pickup_preference] || "self",
+    status,
+    createdAt: a.created_at,
     views: 0,
     likes: 0,
-    listedDate: new Date().toISOString().slice(0, 10),
-  });
-  refreshMarketListings();
-}
-function unpublish(listing) {
-  const i = ITEMS.findIndex((x) => x.id === listing.marketId);
-  if (i >= 0 && listing.id !== "LST-3001") { ITEMS.splice(i, 1); refreshMarketListings(); }
+    marketId: status === "Live" && !disabled ? a.id : null,
+    adminDisabled: disabled ? { reason: a.moderation_note || "No reason was given.", at: a.moderated_at } : null,
+    flagged: a.moderation_status === "Flagged",
+    suggestedPrice: null,
+    suggestedMessage: "",
+    events,
+  };
 }
 
 /* ---------- store ---------- */
 
-let listings = seedListings();
+let listings = [];
 let sales = seedSales();
-let seq = 3008;
-let saleSeq = 5104;
+let limit = { cap: 5, used: 0 };
+let categories = [];
+let loaded = false;
+let loadError = "";
 const listeners = new Set();
 const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
 const emit = () => listeners.forEach((l) => l());
-let snap = { listings, sales };
+let snap = { listings, sales, loaded, loadError, categories };
 const getSnapshot = () => snap;
-const commit = () => { snap = { listings, sales }; emit(); };
+const commit = () => { snap = { listings, sales, loaded, loadError, categories }; emit(); };
 
-listings.filter((l) => l.status === "Live" || l.status === "Reserved").forEach(publish);
+const apply = (data) => {
+  if (data.limit) limit = data.limit;
+  if (data.listing) {
+    const row = fromApi(data.listing);
+    listings = listings.some((l) => l.id === row.id) ? listings.map((l) => (l.id === row.id ? row : l)) : [row, ...listings];
+    commit();
+    return row;
+  }
+  commit();
+  return null;
+};
 
-/* ---------- link to the admin's Products list ---------- */
-/* Every listing a member publishes also shows up in Admin > Products. The team
-   can switch it off (with a reason) or suggest a price. Nothing waits for approval. */
+let inFlight = null;
+export function loadListings({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+  inFlight = api.fetchMyListings()
+    .then((data) => {
+      listings = data.listings.map(fromApi);
+      limit = data.limit;
+      loaded = true;
+      loadError = "";
+    })
+    .catch((e) => { loadError = e.message || "Could not load your listings."; })
+    .finally(() => { inFlight = null; commit(); });
+  return inFlight;
+}
 
-const CONDITION_TO_ADMIN = { Excellent: "Good", "Very Good": "Good", Good: "Medium" };
-const adminItemOf = (l, extra = {}) => ({
-  item_id: l.adminItemId,
-  title: l.title,
-  category: l.category,
-  image: l.images[0] || "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  condition: CONDITION_TO_ADMIN[l.condition] || "Medium",
-  quantity: l.quantity,
-  estimated_price: l.price,
-  pickup_preference: l.pickup === "platform" ? "Managed by platform" : "Self Pickup",
-  item_status: "Listed",
-  created_at: new Date().toISOString(),
-  ...extra,
+/* sell-form categories, from the server (Admin > Content manages them) */
+let categoriesLoaded = false;
+export function useSellCategories() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    if (categoriesLoaded) return;
+    categoriesLoaded = true;
+    api.fetchCategories().then((c) => { categories = c; commit(); }).catch(() => { categoriesLoaded = false; });
+  }, []);
+  return s.categories;
+}
+
+/* How many listings this member has published today, and the daily cap from Admin > Settings. */
+export function listingLimitStatus() {
+  return { cap: limit.cap, used: limit.used, reached: limit.used >= limit.cap };
+}
+
+const bodyOf = (form) => ({
+  title: form.title,
+  category: categories.find((c) => c.name === form.category)?.id,
+  description: form.description,
+  condition: form.condition,
+  quantity: Number(form.quantity) || 1,
+  listing_price: form.price === "" || form.price == null ? null : Number(form.price),
+  pickup_preference: PICKUP_OUT[form.pickup],
+  city: form.city,
+  pincode: form.pincode,
 });
 
-/* Shows a listing in the admin's Products list (new, or after the member edits it). */
-function shareWithAdmin(l, extra) {
-  const user = getMyUserAccount();
-  if (!user || !l.adminItemId) return;
-  if (user.items.some((i) => i.item_id === l.adminItemId)) {
-    const item = adminItemOf(l, extra);
-    updateUserItem(user.user_id, l.adminItemId, {
-      title: item.title, category: item.category, image: item.image, condition: item.condition, quantity: item.quantity,
-      estimated_price: item.estimated_price, pickup_preference: item.pickup_preference,
-    });
-  } else {
-    addUserItem(user.user_id, adminItemOf(l, extra));
+/* Make the server's photos match the form: remove, upload new, then set the order.
+   form.images: [{ id, url, file?, serverId? }] in the order the seller chose. */
+async function syncImages(listingId, formImages, current) {
+  const keep = new Set(formImages.filter((i) => i.serverId).map((i) => i.serverId));
+  for (const row of current) if (!keep.has(row.id)) await api.deleteListingImage(listingId, row.id);
+  const fresh = formImages.filter((i) => i.file);
+  let rows = (current || []).filter((r) => keep.has(r.id));
+  if (fresh.length) {
+    const res = await api.uploadListingImages(listingId, fresh.map((i) => i.file));
+    rows = res.listing.images;
+    const added = rows.slice(rows.length - fresh.length);
+    fresh.forEach((f, n) => { f.serverId = added[n].id; });
   }
+  const order = formImages.map((i) => i.serverId).filter(Boolean);
+  if (order.length > 1 && order.some((id, n) => rows[n]?.id !== id)) await api.reorderListingImages(listingId, order);
 }
 
-/* The team switched a listing off or on, or suggested a price. Bring the listing up to date. */
-function syncFromAdmin() {
-  const user = getMyUserAccount();
-  if (!user) return;
-  let changed = false;
-  listings = listings.map((l) => {
-    if (!l.adminItemId) return l;
-    const it = user.items.find((i) => i.item_id === l.adminItemId);
-    if (!it) return l;
-    let next = l;
-    /* The team switched the listing off (or back on) from Admin > Products. */
-    const dis = it.is_disabled ? { reason: it.disabled_reason || "No reason was given.", at: it.disabled_at } : null;
-    if (!!dis !== !!next.adminDisabled) {
-      if (dis) unpublish(next);
-      else if (next.status === "Live") publish(next);
-      next = {
-        ...next,
-        adminDisabled: dis,
-        events: [...next.events, dis
-          ? { id: evId(next), label: "Turned off by ReOrbit", detail: dis.reason, at: now(), tone: "bad" }
-          : { id: evId(next), label: "Turned back on", detail: "Visible to buyers again", at: now(), tone: "good" }],
-      };
-    }
-    const sp = it.suggested_price ?? null;
-    if (sp !== (next.suggestedPrice ?? null)) {
-      next = { ...next, suggestedPrice: sp, suggestedMessage: it.suggested_price_message || "" };
-    }
-    if (next !== l) changed = true;
-    return next;
-  });
-  if (changed) commit();
-}
-
-/* Adds the demo listings to the admin's Products list. */
-export function ensureSeedListings() {
-  const user = getMyUserAccount();
-  if (!user) return;
-  listings.filter((l) => l.adminItemId && l.status !== "Draft").forEach((l) => {
-    if (user.items.some((i) => i.item_id === l.adminItemId)) return;
-    addUserItem(user.user_id, adminItemOf(l, { created_at: l.createdAt }));
-  });
-}
-
-const patchListing = (id, fn) => {
-  listings = listings.map((l) => (l.id === id ? fn(l) : l));
-  commit();
-};
-const now = () => new Date().toISOString();
-const evId = (l) => `e${l.events.length + 1}-${Date.now()}`;
-
-/* How many listings this member has published today, and the daily cap set in Admin > Settings. */
-export function listingLimitStatus() {
-  const cap = Math.max(1, Number(getSettings().commerce.maxListingsPerDay) || 5);
-  const today = new Date().toDateString();
-  const used = listings.filter((l) => l.events.some((e) => e.label === "Listing published" && new Date(e.at).toDateString() === today)).length;
-  return { cap, used, reached: used >= cap };
-}
-
-export function saveListing(form, { submit = true, id = null } = {}) {
-  const data = {
-    title: form.title.trim(),
-    category: form.category,
-    description: form.description.trim(),
-    condition: form.condition,
-    price: Number(form.price),
-    quantity: Number(form.quantity) || 1,
-    images: form.images,
-    city: form.city,
-    pincode: form.pincode,
-    pickup: form.pickup,
-  };
-
+/* Saves the form. submit=false keeps/creates a draft; submit=true also publishes.
+   Throws an Error with .errors / .code from the server when something is wrong. */
+export async function saveListing(form, { submit = true, id = null } = {}) {
+  let data;
+  const before = id ? listings.find((l) => l.id === id) : null;
   if (id) {
-    const before = listings.find((l) => l.id === id);
-    const keepsStatus = ["Reserved", "Sold", "Live"].includes(before.status);
-    /* Publishing a draft or a withdrawn listing puts it live straight away. */
-    const publishing = submit && ["Draft", "Withdrawn"].includes(before.status);
-    const status = !submit ? before.status : keepsStatus ? before.status : "Live";
-    const label = !submit ? "Listing updated" : publishing ? "Listing published" : "Listing updated";
-    const detail = !submit ? "Your changes were saved" : "Your listing is available on the marketplace";
-
-    patchListing(id, (l) => ({
-      ...l,
-      ...data,
-      status,
-      adminItemId: submit ? l.adminItemId || `ITM-${l.id.replace(/\D/g, "")}` : l.adminItemId,
-      events: [...l.events, { id: evId(l), label, detail, at: now(), tone: submit ? "good" : "neutral" }],
-    }));
-    const updated = listings.find((l) => l.id === id);
-    if (submit) shareWithAdmin(updated);
-    if (updated.marketId) {
-      const m = ITEMS.find((i) => i.id === updated.marketId);
-      if (m) Object.assign(m, { title: data.title, category: data.category, price: data.price, description: data.description, summary: data.description.slice(0, 110), condition: data.condition, image: data.images[0] || m.image, quantity: data.quantity });
-    } else if (submit && updated.status === "Live") {
-      publish(updated);
-    }
-    commit();
-    return updated;
+    data = await api.updateListing(id, bodyOf(form));
+  } else {
+    data = await api.createListing(bodyOf(form));
+    id = data.listing.id;
+    apply(data);
   }
-
-  seq += 1;
-  const listingId = `LST-${seq}`;
-  const listing = {
-    id: listingId,
-    ...data,
-    status: submit ? "Live" : "Draft",
-    createdAt: now(),
-    views: 0,
-    likes: 0,
-    marketId: null,
-    adminItemId: submit ? `ITM-${seq}` : null,
-    suggestedPrice: null,
-    suggestedMessage: "",
-    events: [{ id: "e1", label: submit ? "Listing published" : "Draft saved", detail: submit ? "Now visible on the marketplace" : "Not published yet", at: now(), tone: submit ? "good" : "neutral" }],
-  };
-  listings = [listing, ...listings];
-  commit();
-  if (submit) {
-    shareWithAdmin(listing);
-    publish(listing);
+  await syncImages(id, form.images, before?.imageRows || data.listing.images || []);
+  if (submit && !["Listed", "Reserved", "Sold"].includes(data.listing.item_status)) {
+    data = await api.publishListing(id);
+  } else {
+    data = await api.updateListing(id, {});
   }
-  return listing;
+  return apply(data);
 }
 
-export function withdrawListing(id) {
-  const l = listings.find((x) => x.id === id);
-  if (!l) return;
-  unpublish(l);
-  patchListing(id, (x) => ({
-    ...x,
-    status: "Withdrawn",
-    events: [...x.events, { id: evId(x), label: "Withdrawn", detail: "You removed it from the marketplace", at: now(), tone: "bad" }],
-  }));
-}
-
-export function relistListing(id) {
-  patchListing(id, (x) => ({
-    ...x,
-    status: "Live",
-    events: [...x.events, { id: evId(x), label: "Relisted", detail: "Available on the marketplace again", at: now(), tone: "good" }],
-  }));
-  const listing = listings.find((x) => x.id === id);
-  if (listing) publish(listing);
-}
-
-export function deleteListing(id) {
+export async function withdrawListing(id) { return apply(await api.withdrawListing(id)); }
+export async function relistListing(id) { return apply(await api.publishListing(id)); }
+export async function deleteListing(id) {
+  await api.deleteListing(id);
   listings = listings.filter((l) => l.id !== id);
   commit();
 }
 
-/* seller moves a sale along: Confirmed -> Packed -> Shipped -> Delivered */
+/* seller moves a sale along: Confirmed -> Packed -> Shipped -> Delivered (demo until orders are wired) */
 export function advanceSale(id) {
   const sale = sales.find((s) => s.id === id);
   if (!sale) return;
@@ -395,25 +241,18 @@ export function advanceSale(id) {
   if (idx < 0 || idx >= SALE_STEPS.length - 1) return;
   const next = SALE_STEPS[idx + 1];
   const detail = { Packed: "You packed the order", Shipped: "Delhivery · DLV" + id.replace(/\D/g, "") + "7", Delivered: "Handed over to the buyer" }[next];
-
   sales = sales.map((s) =>
     s.id === id
       ? {
           ...s,
           status: next,
           courier: next === "Shipped" ? { name: "Delhivery", awb: `DLV${id.replace(/\D/g, "")}7` } : s.courier,
-          payout: next === "Delivered" ? { status: "Processing", at: now() } : s.payout,
-          events: [...s.events, { id: `e${s.events.length + 1}-${Date.now()}`, label: next, detail, at: now(), tone: next === "Delivered" ? "good" : "info" }],
+          payout: next === "Delivered" ? { status: "Processing", at: new Date().toISOString() } : s.payout,
+          events: [...s.events, { id: `e${s.events.length + 1}-${Date.now()}`, label: next, detail, at: new Date().toISOString(), tone: next === "Delivered" ? "good" : "info" }],
         }
       : s,
   );
-  if (next === "Delivered") {
-    patchListing(sale.listingId, (l) => ({
-      ...l,
-      status: "Sold",
-      events: [...l.events, { id: evId(l), label: "Sold", detail: `Order ${id} delivered`, at: now(), tone: "good" }],
-    }));
-  } else commit();
+  commit();
 }
 
 /* ---------- hooks + derived ---------- */
@@ -426,7 +265,13 @@ export const netOf = (sale) => {
 
 export function useListings() {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => { if (!loaded) loadListings(); }, []);
   return s.listings;
+}
+/* true until the first load finishes; error text if it failed */
+export function useListingsStatus() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return { loaded: s.loaded, error: s.loadError, retry: () => loadListings({ force: true }) };
 }
 export function useListing(id) {
   const list = useListings();
@@ -457,9 +302,3 @@ export function summarizeSelling(listings, sales) {
     views: listings.reduce((n, l) => n + (l.views || 0), 0),
   };
 }
-
-
-/* ---------- start-up ---------- */
-ensureSeedListings();
-syncFromAdmin();
-onUsersChange(syncFromAdmin);

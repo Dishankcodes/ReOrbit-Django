@@ -3,7 +3,7 @@ import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, X, Package, Wallet, Truck, Tag, CheckCircle2, ReceiptText, SearchX, ArrowRight } from "lucide-react";
 
-import { summarizeSelling, useListings, useSales } from "../../data/listingsStore";
+import { summarizeSelling, useListings, useListingsStatus, useSales } from "../../data/listingsStore";
 import { formatPrice } from "../../../data/marketplaceData";
 import EmptyState from "../../components/ui/EmptyState";
 import ListingCard from "./components/ListingCard";
@@ -27,6 +27,7 @@ const SORTS = {
 
 export default function UserSell() {
   const loading = useLoading(450);
+  const status = useListingsStatus();
   const navigate = useNavigate();
   const listings = useListings();
   const sales = useSales();
@@ -59,6 +60,11 @@ export default function UserSell() {
 
   return (
     <div className="dn sl">
+      {status.error && !status.loaded && (
+        <div className="dn-error" role="alert" style={{ margin: "0 0 14px", padding: "12px 14px", border: "1px solid currentColor", borderRadius: 12 }}>
+          {status.error} <button type="button" className="dn-link" onClick={status.retry}>Try again</button>
+        </div>
+      )}
       <section className="usl-hero">
         <div>
           <span className="dn-eyebrow">Sell on ReOrbit</span>
