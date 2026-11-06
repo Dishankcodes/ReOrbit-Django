@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("admins", "0003_admins_note_admins_phone_admins_role_key"),
+        ("admins", "0002_admins_created_by_admins_last_login_at_and_more"),
         ("core", "0001_initial"),
         ("users", "0002_user_profile_bio_and_more"),
     ]
