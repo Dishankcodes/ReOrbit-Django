@@ -77,6 +77,10 @@ class PlatformSettings(TimeStampedModel):
     cod_enabled = models.BooleanField(default=True)
     cod_limit = models.PositiveIntegerField(default=20000)
     max_listings_per_day = models.PositiveIntegerField(default=5)
+    # Seller payouts (see apps/payments/wallet.py)
+    payout_hold_days = models.PositiveIntegerField(default=7, help_text="Days after delivery before an earning can be paid out")
+    payout_min_amount = models.PositiveIntegerField(default=100, help_text="Smallest payout, in rupees")
+    payout_auto = models.BooleanField(default=False, help_text="Create payouts automatically for available balances")
     support_email = models.EmailField(blank=True)
     updated_by = models.ForeignKey(
         "admins.Admins",
@@ -291,3 +295,31 @@ class AuditLog(models.Model):
             models.Index(fields=["entity_type", "entity_id"], name="audit_entity_idx"),
             models.Index(fields=["actor_type", "actor_public_id"], name="audit_actor_idx"),
         ]
+
+
+class SellableBase(PublicIdModel, TimeStampedModel):
+    """Fields shared by ReMaker products and ReOrbit's own (admin) products.
+
+    Stock can never go below zero. A LISTED row whose stock reaches 0 becomes
+    SOLD_OUT, and a SOLD_OUT row that is restocked goes back to LISTED.
+    """
+
+    class Status(models.TextChoices):
+        DRAFT = "Draft", "Draft"
+        LISTED = "Listed", "Listed"
+        SOLD_OUT = "Sold_Out", "Sold out"
+        INACTIVE = "Inactive", "Inactive"
+
+    category = models.ForeignKey(
+        "core.Category", on_delete=models.PROTECT, related_name="%(class)s_set"
+    )
+    title = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    stock = models.PositiveIntegerField(default=0)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.DRAFT
+    )
+
+    class Meta:
+        abstract = True

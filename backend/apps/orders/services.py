@@ -572,6 +572,10 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
                 detail = "Cash collected"
         o.save(update_fields=fields)
         event(o, LABEL[to], detail, actor_kind)
+        if to == "Delivered":
+            from apps.payments import wallet  # local import: wallet imports core, not orders
+
+            wallet.credit_delivered_order(o)  # the seller earns the item subtotal (held for the return window)
         if actor_kind == "admin":
             audit(actor, f"order.{action}", "order", o.public_id, before={"status": before}, after={"status": to}, ip=ip)
         _notify_buyer(o, f"Order {to.lower()}", f"{o.public_id} is {to.lower()}." + (f" {detail}" if to == "Shipped" else ""))
