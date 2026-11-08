@@ -1,0 +1,29 @@
+/* Admin > Earnings > Payouts */
+.pyo-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.pyo-card { background: var(--ad-panel, #fff); border: 1px solid var(--ad-line, #e4e7e5); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; }
+.pyo-card small { color: var(--ad-muted, #5c6b64); font-weight: 600; }
+.pyo-card strong { font-size: 22px; }
+.pyo-card span { font-size: 12px; color: var(--ad-muted, #5c6b64); }
+.pyo-rules { margin-bottom: 16px; padding: 16px; }
+.pyo-rules h3 { margin: 0 0 12px; }
+.pyo-rules-grid { display: grid; grid-template-columns: minmax(0,200px) minmax(0,200px) 1fr; gap: 14px; align-items: end; }
+.pyo-switch { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.pyo-switch input { margin-top: 4px; width: 18px; height: 18px; }
+.pyo-switch span { display: grid; gap: 2px; }
+.pyo-switch small { color: var(--ad-muted, #5c6b64); }
+.pyo-rules-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.pyo-rules-actions small { color: var(--ad-muted, #5c6b64); }
+.pyo-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef0ee; }
+.pyo-badge.Pending { background: #fdeccd; color: #8a5a00; }
+.pyo-badge.Paid { background: #dff3e8; color: #0b6b3a; }
+.pyo-badge.Rejected { background: #f9dcdc; color: #9a1f1f; }
+.pyo-note { font-size: 12px; margin: 4px 0 0; color: var(--ad-muted, #5c6b64); }
+.pyo-lead { margin: 4px 0 12px; color: var(--ad-muted, #5c6b64); }
+.pyo-dest { display: grid; gap: 6px; margin: 0 0 14px; padding: 12px; background: #f4f6f5; border-radius: 10px; }
+.pyo-dest div { display: flex; justify-content: space-between; gap: 12px; }
+.pyo-dest dt { color: var(--ad-muted, #5c6b64); }
+.pyo-dest dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; user-select: all; }
+@media (max-width: 900px) { .pyo-cards { grid-template-columns: repeat(2, 1fr); } .pyo-rules-grid { grid-template-columns: 1fr 1fr; } .pyo-switch { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .pyo-cards, .pyo-rules-grid { grid-template-columns: 1fr; } }
+.pyo-rules-grid .apr-field { min-width: 0; }
+.pyo-rules-grid .apr-field input { width: 100%; box-sizing: border-box; }

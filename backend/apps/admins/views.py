@@ -23,8 +23,13 @@ class LoginView(APIView):
             return fail("Invalid email or password.", status=401)
         if admin.status != Admins.Status.ACTIVE:
             return fail("Admin account is blocked.", status=403)
-        admin.last_login_at = timezone.now()
-        admin.save(update_fields=["last_login_at"])
+        now = timezone.now()
+        admin.last_login_at = now
+        fields = ["last_login_at"]
+        if admin.activated_at is None:  # first sign-in accepts the invite
+            admin.activated_at = now
+            fields.append("activated_at")
+        admin.save(update_fields=fields)
         return ok(
             {
                 "admin": AdminSerializer(admin).data,

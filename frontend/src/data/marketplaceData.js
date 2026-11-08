@@ -701,3 +701,36 @@ export function getRemakerProducts(remakerId) {
       item.sellerType === SELLER_TYPES.REMAKER && item.sellerId === remakerId,
   );
 }
+
+/* ---------- live listings from the server (/api/marketplace/) ----------
+   The marketplace screens, cart and wishlist all read ITEMS, so live rows are
+   swapped into that same array in place (marked live: true). Demo rows stay. */
+export function setLiveItems(cards) {
+  for (let i = ITEMS.length - 1; i >= 0; i -= 1) if (ITEMS[i].live) ITEMS.splice(i, 1);
+  ITEMS.unshift(
+    ...cards.map((c) => ({
+      id: c.id,
+      live: true,
+      title: c.title,
+      category: c.category.name,
+      price: Number(c.price) || 0,
+      image: c.cover || "",
+      summary: c.summary || "",
+      description: c.summary || "",
+      city: c.city || "Gujarat",
+      pincode: "",
+      co2SavedKg: 0,
+      sellerRating: 0,
+      condition: c.condition || (c.seller.type === "user" ? "Good" : "New"),
+      seller: c.seller.name,
+      sellerId: "",
+      sellerType: c.seller.type,
+      sellerImage: "",
+      quantity: c.stock,
+      soldOut: c.sold_out,
+      views: 0,
+      likes: 0,
+      listedDate: c.created_at,
+    })),
+  );
+}

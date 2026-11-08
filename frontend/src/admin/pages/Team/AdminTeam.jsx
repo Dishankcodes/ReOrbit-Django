@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   UserPlus,
@@ -21,6 +21,9 @@ import {
   Crown,
   Check,
   Minus,
+  Copy,
+  CheckCircle2,
+  KeyRound,
 } from "lucide-react";
 
 import {
@@ -30,6 +33,7 @@ import {
   GROUPS,
   ROLE_PRESETS,
   summarize,
+  loadTeam,
   setMemberStatus,
   removeMember,
   resendInvite,
@@ -38,6 +42,8 @@ import {
 import { formatDate, timeAgo } from "../../utils/format";
 import UserAvatar from "../../components/ui/UserAvatar";
 import StatusBadge from "../../components/ui/StatusBadge";
+import ErrorState from "../../components/ui/ErrorState";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import RowActionMenu from "../../components/ui/RowActionMenu";
 import useToast from "../../components/ui/useToast";
 import MemberModal from "./MemberModal";
@@ -123,19 +129,91 @@ function Confirm({
   );
 }
 
+function Credentials({ member, password, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `Email: ${member.email}\nTemporary password: ${password}`,
+      );
+    } catch {
+      /* ignore */
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  return (
+    <div
+      className="ad-modal-backdrop"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="ad-modal tm-modal tm-done"
+        role="dialog"
+        aria-modal="true"
+        aria-label="New temporary password"
+      >
+        <div className="ad-modal-icon tone-positive">
+          <CheckCircle2 size={22} />
+        </div>
+        <h3>New password for {member.name}</h3>
+        <p className="ad-modal-text">
+          Their old password no longer works. Share these details with them. No
+          email is sent, and this password is shown only once.
+        </p>
+        <dl className="tm-cred">
+          <div>
+            <dt>Email</dt>
+            <dd>{member.email}</dd>
+          </div>
+          <div>
+            <dt>
+              <KeyRound size={13} /> Temporary password
+            </dt>
+            <dd className="mono">{password}</dd>
+          </div>
+        </dl>
+        <div className="ad-modal-actions">
+          <button type="button" className="ad-btn ad-btn-ghost" onClick={copy}>
+            <Copy size={15} />
+            {copied ? "Copied" : "Copy details"}
+          </button>
+          <button type="button" className="ad-btn ad-btn-primary" onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminTeam() {
   const [params, setParams] = useSearchParams();
   const tab = TABS.some((t) => t.key === params.get("tab"))
     ? params.get("tab")
     : "members";
   const navigate = useNavigate();
-  const { members, log } = useTeam();
+  const { members, log, loaded, error } = useTeam();
   const access = useAccess();
   const { toast, toastNode } = useToast();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("All");
   const [modal, setModal] = useState(null); // { member?, startRole? }
   const [confirm, setConfirm] = useState(null);
+  const [creds, setCreds] = useState(null); // { member, password }
+
+  useEffect(() => {
+    loadTeam({ force: true });
+  }, []);
+
+  const run = async (job, okMessage) => {
+    try {
+      await job();
+      if (okMessage) toast(okMessage);
+    } catch (e) {
+      toast(e.message || "Something went wrong.");
+    }
+  };
 
   const subs = members.filter((m) => m.role !== "super");
   const kpi = {
@@ -184,29 +262,27 @@ export default function AdminTeam() {
           },
         ]
       : []),
-    ...(m.status === "Invited"
-      ? [
-          {
-            key: "resend",
-            label: "Resend invite",
-            icon: Send,
-            onClick: () => {
-              resendInvite(m.id);
-              toast(`Invite resent to ${m.email}.`);
-            },
-          },
-        ]
-      : []),
+    {
+      key: "resend",
+      label: m.status === "Invited" ? "Resend invite" : "Reset password",
+      icon: m.status === "Invited" ? Send : KeyRound,
+      onClick: () =>
+        run(async () => {
+          const password = await resendInvite(m.id);
+          setCreds({ member: m, password });
+        }),
+    },
     "separator",
     m.status === "Suspended"
       ? {
           key: "act",
           label: "Re-activate",
           icon: RotateCcw,
-          onClick: () => {
-            setMemberStatus(m.id, "Active");
-            toast(`${m.name} can sign in again.`);
-          },
+          onClick: () =>
+            run(
+              () => setMemberStatus(m.id, "Active"),
+              `${m.name} can sign in again.`,
+            ),
         }
       : {
           key: "sus",
@@ -306,7 +382,18 @@ export default function AdminTeam() {
         ))}
       </nav>
 
-      {tab === "members" && (
+      {!loaded && !error && members.length <= 1 && (
+        <section className="tm-card">
+          <SkeletonRows count={4} />
+        </section>
+      )}
+      {error && !loaded && (
+        <section className="tm-card">
+          <ErrorState text={error} onRetry={() => loadTeam({ force: true })} />
+        </section>
+      )}
+
+      {tab === "members" && (loaded || members.length > 1) && (
         <section className="tm-card">
           <div className="tm-toolbar">
             <label className="tm-search">
@@ -354,7 +441,7 @@ export default function AdminTeam() {
                     <div>
                       <strong>
                         {m.name}
-                        {m.role === "super" && (
+                        {m.id === access.real?.id && (
                           <em>
                             <Crown size={11} /> You
                           </em>
@@ -576,6 +663,13 @@ export default function AdminTeam() {
           onDone={toast}
         />
       )}
+      {creds && (
+        <Credentials
+          member={creds.member}
+          password={creds.password}
+          onClose={() => setCreds(null)}
+        />
+      )}
       {confirm && (
         <Confirm
           title={
@@ -592,14 +686,13 @@ export default function AdminTeam() {
           tone={confirm.kind === "remove" ? "danger" : "warning"}
           onClose={() => setConfirm(null)}
           onConfirm={() => {
-            if (confirm.kind === "remove") {
-              removeMember(confirm.m.id);
-              toast(`${confirm.m.name} was removed.`);
-            } else {
-              setMemberStatus(confirm.m.id, "Suspended");
-              toast(`${confirm.m.name} was suspended.`);
-            }
+            const { kind, m } = confirm;
             setConfirm(null);
+            if (kind === "remove") {
+              run(() => removeMember(m.id), `${m.name} was removed.`);
+            } else {
+              run(() => setMemberStatus(m.id, "Suspended"), `${m.name} was suspended.`);
+            }
           }}
         />
       )}

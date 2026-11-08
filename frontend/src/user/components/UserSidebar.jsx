@@ -6,6 +6,7 @@ import {
   Package,
   PackagePlus,
   ClipboardList,
+  Wallet,
   PackageSearch,
   Heart,
   Gift,
@@ -103,6 +104,11 @@ const sellingMenu = [
     label: "Selling Orders",
     path: "/user-sell/sales",
     icon: ClipboardList,
+  },
+  {
+    label: "Wallet & Payouts",
+    path: "/user-wallet",
+    icon: Wallet,
   },
 ];
 

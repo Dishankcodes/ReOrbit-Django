@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import {
   CalendarDays,
@@ -40,6 +41,9 @@ import {
 import "../../css/AdminUI.css";
 import "../../css/reports/AdminReports.css";
 import "../../css/earnings/AdminEarnings.css";
+import "../../css/products/ProductsReal.css";
+import useToast from "../../components/ui/useToast";
+import PayoutsLive from "./PayoutsLive";
 
 const C_FEE = "var(--rp-c1)";
 const C_SALE = "var(--rp-c3)";
@@ -223,7 +227,7 @@ function Waterfall({ steps }) {
   );
 }
 
-export default function AdminEarnings() {
+function EarningsOverview() {
   const [rangeKey, setRangeKey] = useState("90d");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
@@ -634,6 +638,32 @@ export default function AdminEarnings() {
           />
         )}
       </section>
+    </div>
+  );
+}
+
+
+/* Real money: seller payouts (default). "Platform overview" is the earlier demo view. */
+const TABS = [
+  { key: "payouts", label: "Seller payouts" },
+  { key: "overview", label: "Platform overview" },
+];
+
+export default function AdminEarnings() {
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "payouts";
+  const { toast, toastNode } = useToast();
+  return (
+    <div className="au-page">
+      <div className="apr-tabs" role="tablist" aria-label="Earnings">
+        {TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
+            onClick={() => setParams(t.key === "payouts" ? {} : { tab: t.key })}>{t.label}</button>
+        ))}
+      </div>
+      {tab === "payouts" && <PayoutsLive toast={toast} />}
+      {tab === "overview" && <EarningsOverview />}
+      {toastNode}
     </div>
   );
 }

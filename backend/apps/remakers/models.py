@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.functions import Lower
 
 from apps.core.ids import PublicIdModel
+from apps.core.models import SellableBase
 from apps.core.validators import validate_image, validate_phone, validate_pincode
 
 
@@ -109,3 +110,46 @@ class ReMaker_Profile(models.Model):
 
     class Meta:
         db_table = "remaker_profile"
+
+
+class RemakerProduct(SellableBase):
+    """A finished product a ReMaker sells (design: ReMaker_Products)."""
+
+    public_id_prefix = "RPR"
+
+    remaker = models.ForeignKey(
+        ReMakers, on_delete=models.PROTECT, related_name="products"
+    )
+    # Provenance only: the ReOrbit item this was made from (NULL = made from scratch).
+    source_item = models.ForeignKey(
+        "listings.Item",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="remaker_products",
+    )
+    materials = models.TextField(blank=True)
+    dimensions = models.CharField(max_length=150, blank=True)
+    customization_available = models.BooleanField(default=False)
+    deactivated_by = models.ForeignKey(
+        "admins.Admins",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    deactivation_reason = models.TextField(blank=True)
+    deactivated_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "remaker_products"
+        ordering = ["-created_at", "-pk"]
+        indexes = [
+            models.Index(fields=["status", "created_at"], name="rprod_status_created_idx"),
+            models.Index(fields=["remaker", "status"], name="rprod_remaker_status_idx"),
+            models.Index(fields=["category"], name="rprod_category_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.public_id} {self.title}"

@@ -1,15 +1,30 @@
-/* Team, roles and permissions (in-memory, resets on refresh).
+/* Team, roles and permissions, backed by /api/admins/team/.
 
-   - The signed-in admin is the Super admin. Only a super admin can add
-     sub-admins and decide what each one may see or change.
+   - Only a Super Admin can add admins and decide what each may see or change.
    - Every module has one of three levels per person: none, view, edit.
-   - "Preview as" lets the super admin use the whole panel exactly as a
-     sub-admin would see it, which is the quickest way to check access.
+   - "Preview as" lets the Super Admin use the panel exactly as a sub-admin
+     would see it. It is a view only; the server enforces the real access.
+   - Speed: the signed-in admin's own access comes from the account saved at
+     sign-in, so menus and pages render at once. The team list is cached for
+     the tab and refreshed quietly in the background.
 
-   NOTE: this is front-end only. A real backend must enforce the same
-   rules on every API call; hiding buttons is not security. */
+   The backend checks every request; hiding buttons here is only convenience. */
 import { useMemo, useSyncExternalStore } from "react";
-import { getSettings, useSettings } from "./settingsStore";
+import {
+  ACCOUNT_UPDATED_EVENT,
+  getAccount,
+  updateAccount,
+} from "../../api/session";
+import {
+  createTeamMember,
+  fetchMe,
+  fetchTeam,
+  fetchTeamActivity,
+  removeTeamMember,
+  resetTeamMemberPassword,
+  setTeamMemberStatus,
+  updateTeamMember,
+} from "../../api/team";
 
 /* ---------- modules that can be granted ---------- */
 export const MODULES = [
@@ -238,121 +253,55 @@ export const presetOf = (key) =>
   ROLE_PRESETS[ROLE_PRESETS.length - 1];
 export const ALL_EDIT = all("edit");
 
-/* ---------- seed data ---------- */
-const iso = (s) => new Date(s).toISOString();
-function seedMembers() {
-  const s = getSettings().profile;
-  return [
-    {
-      id: "ADM-1",
-      name: s.name,
-      email: s.email,
-      phone: s.phone,
-      role: "super",
-      roleLabel: "Super admin",
-      status: "Active",
-      permissions: all("edit"),
-      createdAt: iso("2025-01-05T09:00:00"),
-      createdBy: null,
-      lastActive: iso("2026-10-20T12:55:00"),
-      note: "Owner of this ReOrbit admin account.",
-    },
-    {
-      id: "ADM-2",
-      name: "Kavya Menon",
-      email: "kavya.menon@reorbit.in",
-      phone: "+91 98250 11122",
-      role: "warehouse",
-      roleLabel: "Warehouse staff",
-      status: "Active",
-      permissions: presetOf("warehouse").permissions,
-      createdAt: iso("2026-08-12T10:15:00"),
-      createdBy: "ADM-1",
-      lastActive: iso("2026-10-20T11:05:00"),
-      note: "Morning shift at the Ahmedabad warehouse.",
-    },
-    {
-      id: "ADM-3",
-      name: "Rahul Desai",
-      email: "rahul.desai@reorbit.in",
-      phone: "+91 98790 33445",
-      role: "support",
-      roleLabel: "Support agent",
-      status: "Active",
-      permissions: presetOf("support").permissions,
-      createdAt: iso("2026-08-28T14:40:00"),
-      createdBy: "ADM-1",
-      lastActive: iso("2026-10-19T17:30:00"),
-      note: "",
-    },
-    {
-      id: "ADM-4",
-      name: "Sneha Kulkarni",
-      email: "sneha.kulkarni@reorbit.in",
-      phone: "+91 98240 55667",
-      role: "finance",
-      roleLabel: "Finance",
-      status: "Active",
-      permissions: presetOf("finance").permissions,
-      createdAt: iso("2026-09-09T09:30:00"),
-      createdBy: "ADM-1",
-      lastActive: iso("2026-10-18T10:10:00"),
-      note: "Handles refunds and monthly reports.",
-    },
-    {
-      id: "ADM-5",
-      name: "Arjun Pillai",
-      email: "arjun.pillai@reorbit.in",
-      phone: "+91 98111 77889",
-      role: "catalog",
-      roleLabel: "Catalog manager",
-      status: "Invited",
-      permissions: presetOf("catalog").permissions,
-      createdAt: iso("2026-10-17T16:00:00"),
-      createdBy: "ADM-1",
-      lastActive: null,
-      note: "Invite sent, not accepted yet.",
-    },
-    {
-      id: "ADM-6",
-      name: "Meghna Shah",
-      email: "meghna.shah@reorbit.in",
-      phone: "+91 98980 99001",
-      role: "viewer",
-      roleLabel: "Viewer / auditor",
-      status: "Suspended",
-      permissions: presetOf("viewer").permissions,
-      createdAt: iso("2026-07-02T11:20:00"),
-      createdBy: "ADM-1",
-      lastActive: iso("2026-09-30T15:45:00"),
-      note: "Audit finished. Access paused.",
-    },
-  ];
+/* ---------- shape of a member in the UI ---------- */
+const labelOf = (key) => (ROLE_PRESETS.find((r) => r.key === key) || ROLE_PRESETS.at(-1)).label;
+
+function fromApi(a) {
+  if (!a) return null;
+  const isSuper = a.permission_level === "Super_Admin";
+  const role = isSuper ? "super" : a.role_key || "custom";
+  const status =
+    a.status === "Blocked" ? "Suspended" : a.invited && !isSuper ? "Invited" : "Active";
+  return {
+    id: a.public_id,
+    name: a.full_name,
+    email: a.email,
+    phone: a.phone || "",
+    role,
+    roleLabel: isSuper ? "Super admin" : labelOf(role),
+    status,
+    permissions: { ...a.modules },
+    createdAt: a.created_at,
+    createdBy: a.created_by || null,
+    lastActive: a.last_login_at || null,
+    note: a.note || "",
+  };
 }
 
+const CACHE_KEY = "reorbit_admin_team";
+const readCache = () => {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(CACHE_KEY) || "null");
+  } catch {
+    return null;
+  }
+};
+const writeCache = (members, log) => {
+  try {
+    window.sessionStorage.setItem(CACHE_KEY, JSON.stringify({ members, log }));
+  } catch {
+    /* storage blocked: the page still works */
+  }
+};
+
+const cached = readCache();
 let state = {
-  members: seedMembers(),
+  me: fromApi(getAccount("admin")),
+  members: cached?.members || [],
+  log: cached?.log || [],
+  loaded: !!cached,
+  error: "",
   previewId: null,
-  log: [
-    {
-      id: "l3",
-      at: iso("2026-10-17T16:00:00"),
-      who: "Nikhil Rao",
-      what: "Invited Arjun Pillai as Catalog manager",
-    },
-    {
-      id: "l2",
-      at: iso("2026-10-01T09:20:00"),
-      who: "Nikhil Rao",
-      what: "Suspended Meghna Shah",
-    },
-    {
-      id: "l1",
-      at: iso("2026-09-09T09:30:00"),
-      who: "Nikhil Rao",
-      what: "Added Sneha Kulkarni as Finance",
-    },
-  ],
 };
 const listeners = new Set();
 const subscribe = (l) => {
@@ -365,35 +314,55 @@ const set = (patch) => {
   state = { ...state, ...patch };
   emit();
 };
-const superName = () => getSettings().profile.name || "Super admin";
-const log = (what) => ({
-  id: `l${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
-  at: new Date().toISOString(),
-  who: superName(),
-  what,
-});
+
+/* keep "me" in step with the saved account (sign-in, profile edit, access refresh) */
+if (typeof window !== "undefined") {
+  window.addEventListener(ACCOUNT_UPDATED_EVENT, () =>
+    set({ me: fromApi(getAccount("admin")) }),
+  );
+}
 
 export const useTeamState = () => useSyncExternalStore(subscribe, snap, snap);
 
+/* members: the whole team for a Super Admin, otherwise just the signed-in admin */
 export function useTeam() {
   const st = useTeamState();
-  const { profile } = useSettings();
-  return useMemo(
-    () => ({
-      ...st,
-      members: st.members.map((m) =>
-        m.id === "ADM-1"
-          ? {
-              ...m,
-              name: profile.name,
-              email: profile.email,
-              phone: profile.phone,
-            }
-          : m,
-      ),
-    }),
-    [st, profile],
-  );
+  return useMemo(() => {
+    const members = st.members.length ? st.members : st.me ? [st.me] : [];
+    return { ...st, members };
+  }, [st]);
+}
+
+/* ---------- loading ---------- */
+let teamInFlight = null;
+export function loadTeam({ force = false } = {}) {
+  if (teamInFlight && !force) return teamInFlight;
+  teamInFlight = (async () => {
+    try {
+      const [rows, log] = await Promise.all([fetchTeam(), fetchTeamActivity()]);
+      const members = rows.map(fromApi);
+      set({ members, log, loaded: true, error: "" });
+      writeCache(members, log);
+    } catch (e) {
+      set({ error: e.message || "Could not load the team.", loaded: state.loaded });
+    } finally {
+      teamInFlight = null;
+    }
+  })();
+  return teamInFlight;
+}
+
+/* Re-read the signed-in admin so changes the Super Admin made to their
+   access show up without signing in again. */
+let meChecked = false;
+export function refreshMyAccess() {
+  if (meChecked) return;
+  meChecked = true;
+  fetchMe()
+    .then((admin) => updateAccount("admin", { ...(getAccount("admin") || {}), ...admin }))
+    .catch(() => {
+      meChecked = false;
+    });
 }
 
 /* ---------- permission helpers ---------- */
@@ -418,13 +387,12 @@ const levelIn = (member, key) => {
 
 /* What the signed-in admin can do. While previewing, this follows the previewed member. */
 export function useAccess() {
-  const { members, previewId } = useTeam();
+  const { me: real, members, previewId } = useTeam();
   return useMemo(() => {
-    const real = members.find((m) => m.role === "super");
     const previewing = previewId
-      ? members.find((m) => m.id === previewId)
+      ? members.find((m) => m.id === previewId) || null
       : null;
-    const me = previewing || real;
+    const me = previewing || real || { name: "Admin", role: "custom", roleLabel: "", permissions: {} };
     const isSuper = me.role === "super";
     const level = (key) =>
       key === "team"
@@ -443,7 +411,7 @@ export function useAccess() {
       can: (key, need = "view") => RANK[level(key)] >= RANK[need],
       canSee: (key) => RANK[level(key)] > 0,
     };
-  }, [members, previewId]);
+  }, [real, members, previewId]);
 }
 
 export const levelRank = (l) => RANK[l] || 0;
@@ -454,11 +422,7 @@ export function summarize(perms) {
   return { edit, view, total: edit + view, all: mods.length };
 }
 
-/* ---------- actions (super admin only in the UI) ---------- */
-let seq = 7;
-const tempPassword = () =>
-  `Reo-${Math.random().toString(36).slice(2, 6)}${Math.floor(1000 + Math.random() * 9000)}`;
-
+/* ---------- actions (Super Admin only; the server refuses anyone else) ---------- */
 export function emailTaken(email, exceptId) {
   return state.members.some(
     (m) =>
@@ -466,82 +430,65 @@ export function emailTaken(email, exceptId) {
   );
 }
 
-/* values: { name, email, phone, role, permissions, note } */
-export function createMember(values) {
-  const preset = presetOf(values.role);
-  const member = {
-    id: `ADM-${seq++}`,
-    name: values.name.trim(),
-    email: values.email.trim(),
-    phone: values.phone.trim(),
-    role: values.role,
-    roleLabel: preset.label,
-    status: "Invited",
-    permissions: { ...values.permissions, dashboard: "view" },
-    createdAt: new Date().toISOString(),
-    createdBy: "ADM-1",
-    lastActive: null,
-    note: values.note.trim(),
-  };
-  set({
-    members: [...state.members, member],
-    log: [
-      log(`Invited ${member.name} as ${member.roleLabel}`),
-      ...state.log,
-    ].slice(0, 40),
-  });
-  return { member, password: tempPassword() };
+const payloadOf = (values) => ({
+  full_name: values.name.trim(),
+  email: values.email.trim(),
+  phone: values.phone.trim(),
+  note: (values.note || "").trim(),
+  role_key: values.role,
+  modules: { ...values.permissions, dashboard: "view" },
+});
+
+const replace = (member) => {
+  const members = state.members.some((m) => m.id === member.id)
+    ? state.members.map((m) => (m.id === member.id ? member : m))
+    : [...state.members, member];
+  set({ members });
+  writeCache(members, state.log);
+};
+const refreshLog = () =>
+  fetchTeamActivity()
+    .then((log) => {
+      set({ log });
+      writeCache(state.members, log);
+    })
+    .catch(() => {});
+
+/* values: { name, email, phone, role, permissions, note }
+   -> { member, password }. Throws an Error with `.errors` (field messages) on failure. */
+export async function createMember(values) {
+  const data = await createTeamMember(payloadOf(values));
+  const member = fromApi(data.member);
+  replace(member);
+  refreshLog();
+  return { member, password: data.temporary_password };
 }
-export function updateMember(id, values) {
-  const preset = presetOf(values.role);
-  let name = "";
-  set({
-    members: state.members.map((m) => {
-      if (m.id !== id) return m;
-      name = values.name.trim();
-      return {
-        ...m,
-        name,
-        email: values.email.trim(),
-        phone: values.phone.trim(),
-        role: values.role,
-        roleLabel: preset.label,
-        permissions: { ...values.permissions, dashboard: "view" },
-        note: values.note.trim(),
-      };
-    }),
-    log: [log(`Changed access for ${name || id}`), ...state.log].slice(0, 40),
-  });
+export async function updateMember(id, values) {
+  const member = fromApi(await updateTeamMember(id, payloadOf(values)));
+  replace(member);
+  refreshLog();
+  return member;
 }
-export function setMemberStatus(id, status) {
-  const m = state.members.find((x) => x.id === id);
-  if (!m || m.role === "super") return;
-  set({
-    members: state.members.map((x) => (x.id === id ? { ...x, status } : x)),
-    previewId:
-      state.previewId === id && status !== "Active" ? null : state.previewId,
-    log: [
-      log(`${status === "Suspended" ? "Suspended" : "Re-activated"} ${m.name}`),
-      ...state.log,
-    ].slice(0, 40),
-  });
+export async function setMemberStatus(id, status) {
+  const member = fromApi(
+    await setTeamMemberStatus(id, status === "Suspended" ? "Blocked" : "Active"),
+  );
+  replace(member);
+  if (state.previewId === id && status !== "Active") set({ previewId: null });
+  refreshLog();
+  return member;
 }
-export function resendInvite(id) {
-  const m = state.members.find((x) => x.id === id);
-  if (!m) return null;
-  set({
-    log: [log(`Resent the invite to ${m.name}`), ...state.log].slice(0, 40),
-  });
-  return tempPassword();
+export async function resendInvite(id) {
+  const password = await resetTeamMemberPassword(id);
+  refreshLog();
+  return password;
 }
-export function removeMember(id) {
-  const m = state.members.find((x) => x.id === id);
-  if (!m || m.role === "super") return;
-  set({
-    members: state.members.filter((x) => x.id !== id),
-    previewId: state.previewId === id ? null : state.previewId,
-    log: [log(`Removed ${m.name}`), ...state.log].slice(0, 40),
-  });
+export async function removeMember(id) {
+  await removeTeamMember(id);
+  const members = state.members.filter((x) => x.id !== id);
+  set({ members, previewId: state.previewId === id ? null : state.previewId });
+  writeCache(members, state.log);
+  refreshLog();
 }
 export const setPreview = (id) => set({ previewId: id });
 export const getTeamState = () => state;

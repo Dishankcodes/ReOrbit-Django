@@ -56,6 +56,11 @@ const pageInformation = {
     subtitle: "Discover and follow the makers behind second-life pieces.",
   },
 
+  "/user-wallet": {
+    title: "Wallet & Payouts",
+    subtitle: "What you've earned from sales, and getting it paid out.",
+  },
+
   "/user-following": {
     title: "Following",
     subtitle: "Creators and ReMakers you're following.",

@@ -18,9 +18,20 @@ import {
   After every change the cached account is refreshed, so the header and the
   sidebar show the new name and picture straight away.
 */
+/* The account saved after the last visit (with its profile) is shown straight
+   away, and the server copy refreshes it quietly: no loading screen on repeat visits. */
+function cachedState(type) {
+  const saved = getAccount(type);
+  if (saved?.profile) {
+    const { profile, ...account } = saved;
+    return { account, profile };
+  }
+  return { account: null, profile: null };
+}
+
 export default function useMyProfile(type) {
-  const [state, setState] = useState({ account: null, profile: null });
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState(() => cachedState(type));
+  const [loading, setLoading] = useState(() => !cachedState(type).account);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const alive = useRef(true);
@@ -42,7 +53,6 @@ export default function useMyProfile(type) {
   );
 
   const load = useCallback(async () => {
-    setLoading(true);
     setError("");
     try {
       const data = await fetchProfile(type);

@@ -54,6 +54,9 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
   const [touched, setTouched] = useState(false);
   const [done, setDone] = useState(null); // { member, password }
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -101,18 +104,35 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
   const pickRole = (key) =>
     setV({ ...v, role: key, permissions: { ...presetOf(key).permissions } });
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTouched(true);
-    if (Object.keys(errors).length) return;
-    if (editing) {
-      updateMember(member.id, v);
-      onDone(`Access updated for ${v.name.trim()}.`);
-      onClose();
-      return;
+    if (Object.keys(errors).length || saving) return;
+    setSaving(true);
+    setServerErrors({});
+    setFormError("");
+    try {
+      if (editing) {
+        await updateMember(member.id, v);
+        onDone(`Access updated for ${v.name.trim()}.`);
+        onClose();
+      } else {
+        setDone(await createMember(v));
+      }
+    } catch (err) {
+      const f = err.errors || {};
+      setServerErrors({
+        name: f.full_name?.[0],
+        email: f.email?.[0],
+        phone: f.phone?.[0],
+        permissions: f.modules?.[0],
+      });
+      setFormError(Object.keys(f).length ? "" : err.message || "Could not save.");
+    } finally {
+      setSaving(false);
     }
-    setDone(createMember(v));
   };
+  const err = { ...serverErrors, ...(touched ? errors : {}) };
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(
@@ -147,7 +167,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           <p className="ad-modal-text">
             They’ll be a <b>{done.member.roleLabel}</b> with access to{" "}
             {summarize(done.member.permissions).total} modules. Share these
-            sign-in details with them. In this demo no email is actually sent.
+            sign-in details with them. No email is sent, and this password is shown only once.
           </p>
           <dl className="tm-cred">
             <div>
@@ -162,8 +182,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
             </div>
           </dl>
           <p className="tm-hint">
-            They’ll be asked to choose a new password the first time they sign
-            in.
+            They can change the password from their profile after signing in.
           </p>
           <div className="ad-modal-actions">
             <button
@@ -221,37 +240,37 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
         </p>
 
         <div className="tm-grid">
-          <label className={`tm-field ${touched && errors.name ? "bad" : ""}`}>
+          <label className={`tm-field ${err.name ? "bad" : ""}`}>
             <span>Full name</span>
             <input
               value={v.name}
               onChange={(e) => setV({ ...v, name: e.target.value })}
               placeholder="e.g. Priya Sharma"
               autoFocus
-              aria-invalid={touched && !!errors.name}
+              aria-invalid={!!err.name}
             />
-            {touched && errors.name && <small>{errors.name}</small>}
+            {err.name && <small>{err.name}</small>}
           </label>
-          <label className={`tm-field ${touched && errors.email ? "bad" : ""}`}>
+          <label className={`tm-field ${err.email ? "bad" : ""}`}>
             <span>Work email</span>
             <input
               type="email"
               value={v.email}
               onChange={(e) => setV({ ...v, email: e.target.value })}
               placeholder="name@reorbit.in"
-              aria-invalid={touched && !!errors.email}
+              aria-invalid={!!err.email}
             />
-            {touched && errors.email && <small>{errors.email}</small>}
+            {err.email && <small>{err.email}</small>}
           </label>
-          <label className={`tm-field ${touched && errors.phone ? "bad" : ""}`}>
+          <label className={`tm-field ${err.phone ? "bad" : ""}`}>
             <span>Phone</span>
             <input
               value={v.phone}
               onChange={(e) => setV({ ...v, phone: e.target.value })}
               placeholder="+91 98xxx xxxxx"
-              aria-invalid={touched && !!errors.phone}
+              aria-invalid={!!err.phone}
             />
-            {touched && errors.phone && <small>{errors.phone}</small>}
+            {err.phone && <small>{err.phone}</small>}
           </label>
           <label className="tm-field">
             <span>
@@ -304,8 +323,8 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
             </button>
           </div>
         </div>
-        {touched && errors.permissions && (
-          <p className="ad-modal-error">{errors.permissions}</p>
+        {err.permissions && (
+          <p className="ad-modal-error">{err.permissions}</p>
         )}
         <div className="tm-matrix">
           {GROUPS.map((g) => (
@@ -352,6 +371,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           by the super admin.
         </p>
 
+        {formError && <p className="ad-modal-error">{formError}</p>}
         <div className="ad-modal-actions">
           <button
             type="button"
@@ -360,7 +380,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           >
             Cancel
           </button>
-          <button type="submit" className="ad-btn ad-btn-primary">
+          <button type="submit" className="ad-btn ad-btn-primary" disabled={saving}>
             {editing ? (
               <>
                 <Save size={15} />

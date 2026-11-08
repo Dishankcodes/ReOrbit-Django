@@ -51,11 +51,16 @@ function Field({ label, hint, error, children }) {
 export default function AdminProfile() {
   const { toast, toastNode } = useToast();
 
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+  /* Paint at once from the account saved at sign-in; the server copy refreshes
+     it quietly in the background, so there is no loading screen. */
+  const [admin, setAdmin] = useState(() => {
+    const saved = getAccount("admin");
+    return saved?.full_name ? saved : null;
+  });
+  const [loading, setLoading] = useState(() => !getAccount("admin")?.full_name);
   const [loadError, setLoadError] = useState("");
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => getAccount("admin")?.full_name || "");
   const [nameError, setNameError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -64,18 +69,18 @@ export default function AdminProfile() {
   const [pwBusy, setPwBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
     setLoadError("");
     try {
       const data = await fetchAdminProfile();
       setAdmin(data);
-      setName(data.full_name);
+      setName((current) => (current === (admin?.full_name ?? "") ? data.full_name : current));
       updateAccount("admin", { ...(getAccount("admin") || {}), ...data });
     } catch (e) {
       setLoadError(e.message || "Could not load your profile.");
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

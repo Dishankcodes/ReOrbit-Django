@@ -68,6 +68,7 @@ const UserSell = page("user", () => import("./user/pages/Sell/UserSell"));
 const UserSellForm = page("user", () => import("./user/pages/Sell/UserSellForm"));
 const UserListingDetails = page("user", () => import("./user/pages/Sell/UserListingDetails"));
 const UserSales = page("user", () => import("./user/pages/Sell/UserSales"));
+const UserWallet = page("user", () => import("./user/pages/Sell/UserWallet"));
 const UserNotifications = page("user", () => import("./user/pages/Notifications/UserNotifications"));
 /* ReMaker public pages */
 const ReMakerAuth = page("remaker", () => import("./remaker/pages/Auth/ReMakerAuth"));
@@ -302,6 +303,7 @@ export default function App() {
         <Route path="/user-sell" element={<UserSell />} />
         <Route path="/user-sell/new" element={<UserSellForm />} />
         <Route path="/user-sell/sales" element={<UserSales />} />
+        <Route path="/user-wallet" element={<UserWallet />} />
         <Route path="/user-sell/sales/:saleId" element={<Navigate to="/user-sell/sales" replace />} />
         <Route path="/user-sell/:listingId/edit" element={<UserSellForm />} />
         <Route path="/user-sell/:listingId" element={<UserListingDetails />} />

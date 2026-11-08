@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useLoading, SkeletonCards } from "../../../shared/components/Skeleton";
+import { SkeletonCards } from "../../../shared/components/Skeleton";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye,
@@ -12,11 +12,10 @@ import {
 
 import {
   PRODUCT_STATUS,
-  REMAKER_PRODUCTS,
   formatPrice,
 } from "../../data/remakerProducts";
 
-import { useRemakerModeration } from "../../../shared/moderation";
+import { useMyProducts, setProductActive } from "../../data/productsStore";
 
 import "../../css/ReMakerProducts.css";
 
@@ -36,13 +35,13 @@ function bucket(product, held) {
 }
 
 export default function ReMakerProducts() {
-  const loading = useLoading(450);
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
-  const [products, setProducts] = useState(REMAKER_PRODUCTS);
-  const moderation = useRemakerModeration();
-  const holdOf = (product) => moderation[product.adminId]?.hold || null;
+  const { products, loaded, error, retry } = useMyProducts();
+  const loading = !loaded && !error;
+  const [saveError, setSaveError] = useState("");
+  const holdOf = (product) => product.hold || null;
   const [filter, setFilter] = useState("all");
 
   const query = (params.get("search") || "").trim().toLowerCase();
@@ -54,7 +53,7 @@ export default function ReMakerProducts() {
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, moderation]);
+  }, [products]);
 
   const visible = products.filter((product) => {
     const matchesFilter = filter === "all" || bucket(product, holdOf(product)) === filter;
@@ -66,25 +65,24 @@ export default function ReMakerProducts() {
     return matchesFilter && matchesQuery;
   });
 
-  /* Active <-> Inactive only. Products are never deleted. */
-  const toggleActive = (id) =>
-    setProducts((current) =>
-      current.map((product) => {
-        if (product.id !== id || product.status === "Draft" || holdOf(product)) return product;
-
-        if (product.status === "Inactive") {
-          return {
-            ...product,
-            status: product.stock === 0 ? "Sold_Out" : "Listed",
-          };
-        }
-
-        return { ...product, status: "Inactive" };
-      }),
+  /* Active <-> Inactive only. Products are paused, not deleted. */
+  const toggleActive = (id) => {
+    const product = products.find((p) => p.id === id);
+    if (!product || product.status === "Draft" || holdOf(product)) return;
+    setSaveError("");
+    setProductActive(id, product.status === "Inactive").catch((e) =>
+      setSaveError(e.message || "Could not change this product."),
     );
+  };
 
   return (
     <section className="rpl">
+      {(error || saveError) && (
+        <p className="rpl-hold" role="alert" style={{ margin: "0 0 14px" }}>
+          {saveError || error}{" "}
+          {!saveError && <button type="button" onClick={retry}>Try again</button>}
+        </p>
+      )}
       <div className="rpl-toolbar">
         <div className="rpl-tabs" role="tablist" aria-label="Filter products">
           {FILTERS.map((item) => (
@@ -140,7 +138,7 @@ export default function ReMakerProducts() {
         <div className="rpl-grid">
           {visible.map((product) => {
             const hold = holdOf(product);
-            const suggested = moderation[product.adminId]?.suggested;
+            const suggested = null;
             const status = hold
               ? { label: "Deactivated by ReOrbit", tone: "inactive" }
               : PRODUCT_STATUS[product.status];

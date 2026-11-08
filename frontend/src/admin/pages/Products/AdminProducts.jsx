@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useLoading, SkeletonTable } from "../../../shared/components/Skeleton";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   Download,
@@ -35,6 +35,8 @@ import Pagination from "../../components/ui/Pagination";
 import EmptyState from "../../components/ui/EmptyState";
 import ConfirmActionModal from "../../components/ui/ConfirmActionModal";
 import useToast from "../../components/ui/useToast";
+import RemakerProductsLive from "./RemakerProductsLive";
+import StoreProducts from "./StoreProducts";
 import ProductActionMenu from "./components/ProductActionMenu";
 import OwnerCell from "./components/OwnerCell";
 import ProductStatus from "./components/ProductStatus";
@@ -108,7 +110,7 @@ function exportCsv(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function AdminProducts() {
+function ProductsOverview() {
   const loading = useLoading(450);
   const navigate = useNavigate();
   const products = useProducts();
@@ -607,6 +609,34 @@ export default function AdminProducts() {
         onConfirm={confirmAction}
         onClose={() => setPending(null)}
       />
+      {toastNode}
+    </div>
+  );
+}
+
+const TABS = [
+  { key: "remakers", label: "ReMaker products" },
+  { key: "store", label: "ReOrbit Store" },
+  { key: "overview", label: "Marketplace overview" },
+];
+
+/* Real data: ReMaker moderation and ReOrbit's own store.
+   "Marketplace overview" is the earlier demo view and stays until user listings are wired here. */
+export default function AdminProducts() {
+  const [params, setParams] = useSearchParams();
+  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "remakers";
+  const { toast, toastNode } = useToast();
+  return (
+    <div className="au-page">
+      <div className="apr-tabs" role="tablist" aria-label="Products">
+        {TABS.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
+            onClick={() => setParams(t.key === "remakers" ? {} : { tab: t.key })}>{t.label}</button>
+        ))}
+      </div>
+      {tab === "remakers" && <RemakerProductsLive toast={toast} />}
+      {tab === "store" && <StoreProducts toast={toast} />}
+      {tab === "overview" && <ProductsOverview />}
       {toastNode}
     </div>
   );
