@@ -7,13 +7,15 @@ import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import { CONDITIONS, IMPACT, ITEMS, formatPrice } from "../../../data/marketplaceData";
 import { useCategoryNames } from "../../../shared/catalog";
 import BannerSlot from "../../../shared/components/BannerSlot";
-import { SkeletonCards, useLoading } from "../../../shared/components/Skeleton";
+import { SkeletonCards } from "../../../shared/components/Skeleton";
+import { useLiveMarketplace } from "../../data/liveMarketplace";
 import SafeImage from "../../components/ui/SafeImage";
 
 import "../../css/shared/ui-base.css";
 import "../../../shared/components/Skeleton.css";
 import "../../css/marketplace-css/UserMarketplaceV2.css";
 
+import Spinner from "../../../shared/components/Spinner";
 const SORTS = [
   { key: "featured", label: "Featured" },
   { key: "newest", label: "Newest first" },
@@ -40,6 +42,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
   const openSeller = (e) => {
     e.stopPropagation();
+    if (item.live) return; // seller pages for live sellers come with the profiles module
     navigate(isMaker ? `/user-marketplace/remaker/${item.sellerId}` : `/user-marketplace/seller/${item.sellerId}`);
   };
 
@@ -48,7 +51,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
       <div className="mk-media" role="button" tabIndex={0} onClick={openProduct} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProduct(); } }}>
         <SafeImage src={item.image} alt={item.title} />
         <span className={`mk-type ${isMaker ? "maker" : ""}`}>
-          {isMaker ? <><Sparkles size={12} /> ReMaker piece</> : <><Boxes size={12} /> Community item</>}
+          {isMaker ? <><Sparkles size={12} /> ReMaker piece</> : item.sellerType === "admin" ? <><ShoppingBag size={12} /> ReOrbit store</> : <><Boxes size={12} /> Community item</>}
         </span>
         <button type="button" className={`mk-heart ${wished ? "on" : ""}`} aria-label={wished ? "Remove from wishlist" : "Add to wishlist"} aria-pressed={wished} onClick={(e) => { e.stopPropagation(); onWishlist(item.id); }}>
           <Heart size={16} fill={wished ? "currentColor" : "none"} />
@@ -88,7 +91,6 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
 
 export default function UserMarketplace() {
   const navigate = useNavigate();
-  const loading = useLoading(450);
   const categoryNames = useCategoryNames();
   const wish = useWishlist();
   const cartCount = useCartCount();
@@ -103,18 +105,21 @@ export default function UserMarketplace() {
   const [toast, setToast] = useState(null);
 
   /* your own listings are not shown to you as things to buy */
-  const base = useMemo(() => ITEMS.filter((i) => i.sellerId !== "user-aarav-patel"), []);
+  const live = useLiveMarketplace();
+  const loading = !live.ready; /* real: live listings are still arriving */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const base = useMemo(() => ITEMS.filter((i) => i.sellerId !== "user-aarav-patel"), [live.version]);
   const counts = useMemo(() => ({
     all: base.length,
-    user: base.filter((i) => i.sellerType !== "remaker").length,
+    user: base.filter((i) => i.sellerType === "user").length,
     remaker: base.filter((i) => i.sellerType === "remaker").length,
+    admin: base.filter((i) => i.sellerType === "admin").length,
   }), [base]);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
     const out = base.filter((i) => {
-      if (source === "user" && i.sellerType === "remaker") return false;
-      if (source === "remaker" && i.sellerType !== "remaker") return false;
+      if (source !== "all" && i.sellerType !== source) return false;
       if (savedOnly && !wish.ids.includes(i.id)) return false;
       if (category !== "All" && i.category !== category) return false;
       if (condition !== "All" && i.condition !== condition) return false;
@@ -144,6 +149,7 @@ export default function UserMarketplace() {
     { key: "all", label: "Everything", sub: "Every listing on ReOrbit", count: counts.all, icon: Sparkles },
     { key: "user", label: "Community items", sub: "Pre-loved items from members", count: counts.user, icon: Boxes },
     { key: "remaker", label: "ReMaker pieces", sub: "Finished work by makers", count: counts.remaker, icon: BadgeCheck },
+    ...(counts.admin ? [{ key: "admin", label: "ReOrbit store", sub: "Sold by ReOrbit itself", count: counts.admin, icon: ShoppingBag }] : []),
   ];
 
   return (
@@ -203,7 +209,7 @@ export default function UserMarketplace() {
       </div>
 
       <p className="mk-count" aria-live="polite">
-        {loading ? "Loading listings…" : <><strong>{results.length}</strong> {results.length === 1 ? "listing" : "listings"}{filtered && <button type="button" onClick={reset}>Clear filters</button>}</>}
+        {loading ? <Spinner label="Loading listings…" /> : <><strong>{results.length}</strong> {results.length === 1 ? "listing" : "listings"}{filtered && <button type="button" onClick={reset}>Clear filters</button>}</>}
       </p>
 
       {loading ? (

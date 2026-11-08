@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { publicProduct, usePublic } from "../../../api/publicData";
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
 
-  const products = [
+  const sampleProducts = [
     {
       title: "Restored Wooden Chair",
       category: "ReOrbit Refurbished",
@@ -74,6 +75,11 @@ export default function Marketplace() {
         "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
     },
   ];
+
+  /* real listings from every seller; the sample cards only show while there are none */
+  const { data: live } = usePublic("/marketplace/?page_size=48");
+  const real = (live?.results || []).filter((c) => c.cover).map(publicProduct);
+  const products = real.length ? real : sampleProducts;
 
   const filteredProducts = products.filter((product) => {
     const matchesTab = activeTab === "all" || product.type === activeTab;
@@ -1085,7 +1091,7 @@ export default function Marketplace() {
               {filteredProducts.map((product) => (
                 <article
                   className="marketplace-product-card"
-                  key={product.title}
+                  key={product.id || product.title}
                 >
                   <div className="marketplace-product-image">
                     <img src={product.image} alt={product.title} />

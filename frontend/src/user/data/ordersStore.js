@@ -1,24 +1,13 @@
 /* =========================================================
-   User › Buying orders data layer (UI only, in-memory).
-   Orders point at real marketplace items so the seller /
-   ReMaker links open the right profile. Backend later:
-   replace with Orders + Transactions API calls.
+   User › Buying orders. Real orders from the server, shaped
+   like the old demo orders so every order screen keeps working.
+   One server order = one seller's parcel; it can hold several
+   products (order.lines).
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
-import {
-  addSellerReview,
-  getItemById,
-  getSellerFromItem,
-} from "../../data/marketplaceData";
-import { deliveryFor, platformFeeOf } from "../../shared/commerce";
-
-const DAY = 86400000;
-const HOUR = 3600000;
-
-const ago = (days, hours = 0) =>
-  new Date(Date.now() - days * DAY - hours * HOUR).toISOString();
-const ahead = (days) => new Date(Date.now() + days * DAY).toISOString();
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { addSellerReview, getItemById } from "../../data/marketplaceData";
+import { buyerOrdersApi } from "../../api/orders";
 
 export const STAGES = [
   {
@@ -77,20 +66,12 @@ export const STATUS_TONE = {
 };
 
 export const PAYMENT_LABEL = {
+  RAZORPAY: "Online (Razorpay)",
   UPI: "UPI",
   CARD: "Card",
   NET_BANKING: "Net banking",
   WALLET: "Wallet",
   COD: "Cash on delivery",
-};
-
-export const ADDRESS = {
-  name: "Aarav Patel",
-  line: "B-402, Shreeji Heights, Satellite Road",
-  city: "Ahmedabad",
-  state: "Gujarat",
-  pincode: "380015",
-  phone: "+91 98765 43210",
 };
 
 export const CANCEL_REASONS = [
@@ -101,241 +82,142 @@ export const CANCEL_REASONS = [
   "Other",
 ];
 
-/* helper: build the tracking events up to the current stage */
-function events(base, stage, courier) {
-  const offsets = [0, 0.15, 0.6, 1.1, 2.2, 2.6]; // days after placing
-  const detail = [
-    "Payment received. Order created.",
-    "The seller confirmed availability.",
-    "Packed with care for safe transit.",
-    courier ? `Picked up by ${courier.name}.` : "Picked up by the courier.",
-    "Out for delivery. Keep your phone handy.",
-    "Delivered to the address on the order.",
-  ];
-  return STAGES.slice(0, stage + 1).map((item, index) => ({
-    id: item.key,
-    label: item.label,
-    detail: detail[index],
-    at: new Date(new Date(base).getTime() + offsets[index] * DAY).toISOString(),
+
+/* ---------- server order -> screen order ---------- */
+const STAGE_OF = { Pending_Payment: 0, Confirmed: 1, Packed: 2, Shipped: 3, Delivered: 5, Cancelled: 0 };
+
+function adapt(o, reviews) {
+  const lines = o.items || [];
+  const first = lines[0] || {};
+  const qty = lines.reduce((n, l) => n + l.qty, 0) || 1;
+  const more = lines.length - 1;
+  const cancelled = o.status === "Cancelled";
+  const events = (o.events || []).map((e, i) => ({
+    id: /cancel/i.test(e.label) ? "cancel" : `${e.label}-${i}`,
+    label: e.label,
+    detail: e.detail || "",
+    at: e.at,
   }));
-}
-
-const COURIER = { name: "Delhivery", awb: "DLV", phone: "+91 98111 22334" };
-
-function make(id, itemId, qty, days, stage, extra = {}) {
-  const item = getItemById(itemId);
-  const placedAt = ago(days);
-  const shipping = deliveryFor({
-    sellerType: item.sellerType === "remaker" ? "remaker" : "user",
-    pickup: "platform",
-    subtotal: item.price * qty,
-  });
-  const platformFee =
-    item.sellerType === "platform" ? 0 : platformFeeOf(item.price * qty);
-  const order = {
-    id,
-    itemId,
+  return {
+    id: o.id,
+    apiStatus: o.status,
+    itemId: first.id,
+    lines,
     qty,
-    price: item.price,
-    shipping,
-    platformFee,
-    discount: extra.discount || 0,
-    placedAt,
-    stage,
-    cancelled: false,
-    payment: extra.payment || "UPI",
-    courier:
-      stage >= 3 ? { ...COURIER, awb: `DLV${id.replace(/\D/g, "")}9` } : null,
-    eta: stage >= 5 ? null : ahead(extra.etaDays ?? 3),
-    review: extra.review || null,
-    ...extra.over,
-  };
-  order.events = extra.events || events(placedAt, stage, order.courier);
-  return order;
-}
-
-const seed = () => [
-  make("RO-10531", "restored-teak-cabinet", 1, 1, 1, {
-    etaDays: 5,
-    payment: "CARD",
-  }),
-  make("RO-10499", "recovered-textile-bag", 1, 3, 2, { etaDays: 4 }),
-  make("RO-10377", "solid-wood-side-table", 1, 4, 4, {
-    etaDays: 0,
-    payment: "UPI",
-  }),
-  make("RO-10291", "vintage-reading-chair", 1, 6, 3, {
-    etaDays: 2,
-    payment: "COD",
-  }),
-  make("RO-10482", "teak-drawer-chest", 1, 22, 5, {
-    review: {
-      rating: 5,
-      text: "Beautiful piece, exactly as described and packed very well.",
+    price: Math.round(o.subtotal / qty),
+    subtotal: o.subtotal,
+    shipping: o.delivery_fee,
+    platformFee: o.platform_fee,
+    discount: 0,
+    total: o.total,
+    placedAt: o.created_at,
+    stage: STAGE_OF[o.status] ?? 0,
+    cancelled,
+    cancelReason: o.cancel_reason || "",
+    payment: o.payment.method,
+    paymentStatus: o.payment.status,
+    paymentId: o.payment.id,
+    awaitingPayment: o.status === "Pending_Payment",
+    canCancel: !!o.can_cancel,
+    courier: o.courier ? { name: o.courier.name, awb: o.courier.tracking_no, phone: "" } : null,
+    eta: null,
+    deliveredAt: o.delivered_at || null,
+    review: reviews[o.id] || null,
+    reference: o.payment.id,
+    note: o.note || "",
+    events,
+    eventsLoaded: !!o.events,
+    refund:
+      o.payment.status === "Refunded"
+        ? { amount: o.total, status: "Refunded", at: o.cancelled_at }
+        : o.payment.status === "Refund_Failed"
+          ? { amount: o.total, status: "Processing", at: o.cancelled_at }
+          : null,
+    address: {
+      name: o.address?.name, line: [o.address?.line1, o.address?.line2].filter(Boolean).join(", "),
+      city: o.address?.city, state: o.address?.state, pincode: o.address?.pincode, phone: o.address?.phone,
     },
-  }),
-  make("RO-10388", "reclaimed-wood-shelf", 2, 35, 5, { discount: 150 }),
-  make("RO-10302", "classic-novel-collection", 1, 48, 5, { payment: "WALLET" }),
-  (() => {
-    const o = make("RO-10244", "refurbished-desk-lamp", 1, 60, 1, {
-      payment: "NET_BANKING",
-    });
-    o.cancelled = true;
-    o.cancelReason = "Found a better option";
-    o.events = [
-      ...o.events,
-      {
-        id: "cancel",
-        label: "Order cancelled",
-        detail:
-          "Cancelled by you. Refund started to the original payment method.",
-        at: ago(59, 4),
-      },
-    ];
-    o.eta = null;
-    o.refund = { amount: 1000, status: "Refunded", at: ago(57) };
-    return o;
-  })(),
-];
+    seller: o.seller,
+    item: {
+      id: first.id, title: more > 0 ? `${first.title} + ${more} more` : first.title || "Order",
+      image: first.cover || "", category: "", summary: "", condition: "", label: "",
+    },
+  };
+}
 
 /* ---------- store ---------- */
-
-let orders = seed();
-let orderSeq = 10600;
-orders.forEach((o) => o.review && publish(o, { ...o.review, at: ago(20) }));
+let raw = [];            /* server orders, newest first */
+let reviews = {};
+let status = { loaded: false, loading: false, error: "", at: 0 };
 const listeners = new Set();
-const subscribe = (l) => {
-  listeners.add(l);
-  return () => listeners.delete(l);
-};
-const getSnapshot = () => orders;
-const commit = (next) => {
-  orders = next;
-  listeners.forEach((l) => l());
-};
+const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const emit = () => listeners.forEach((l) => l());
+let version = 0;
+const getVersion = () => version;
+const bump = () => { version += 1; emit(); };
 
-/* Orders created at checkout: one order per listing so sellers can ship
-   separately. specs: [{ itemId, qty, price, shipping, payment, address,
-   reference, note }] -> returns the new order ids. */
-export function placeOrders(specs) {
-  const created = specs.map((spec) => {
-    orderSeq += 1;
-    const id = `RO-${orderSeq}`;
-    const item = getItemById(spec.itemId);
-    const base = Date.now() - 90 * 1000;
-    const at = (ms) => new Date(base + ms).toISOString();
-    const paid = spec.payment !== "COD";
-    const methodName = PAYMENT_LABEL[spec.payment] || spec.payment;
+const FRESH_MS = 30000;
 
-    return {
-      id,
-      itemId: spec.itemId,
-      qty: spec.qty,
-      price: spec.price,
-      shipping: spec.shipping,
-      platformFee: spec.platformFee || 0,
-      discount: spec.discount || 0,
-      placedAt: at(0),
-      stage: 1,
-      cancelled: false,
-      payment: spec.payment,
-      paymentStatus: paid ? "Paid" : "Pending",
-      reference: spec.reference || null,
-      address: spec.address,
-      note: spec.note || "",
-      courier: null,
-      eta: new Date(Date.now() + 5 * DAY).toISOString(),
-      review: null,
-      events: [
-        {
-          id: "placed",
-          label: "Order placed",
-          detail: `Ordered “${item.title}”.`,
-          at: at(0),
-        },
-        paid
-          ? {
-              id: "payment",
-              label: "Payment received",
-              detail: `${methodName}${spec.reference ? ` · ${spec.reference}` : ""}`,
-              at: at(20000),
-            }
-          : {
-              id: "payment",
-              label: "Pay on delivery",
-              detail: "The amount will be collected on delivery.",
-              at: at(20000),
-            },
-        {
-          id: "confirmed",
-          label: "Seller confirmed",
-          detail: `${item.seller} will get it ready.`,
-          at: at(60000),
-        },
-      ],
-    };
-  });
-
-  commit([...created, ...orders]);
-  return created.map((order) => order.id);
+export async function loadOrders(force = false) {
+  if (status.loading) return;
+  if (!force && status.loaded && Date.now() - status.at < FRESH_MS) return;
+  status = { ...status, loading: true, error: "" };
+  bump();
+  try {
+    let page = await buyerOrdersApi.list("?page_size=100");
+    let rows = page.results;
+    for (let p = 2; p <= Math.min(page.total_pages, 5); p += 1) {
+      rows = rows.concat((await buyerOrdersApi.list(`?page_size=100&page=${p}`)).results);
+    }
+    /* keep the tracking events we already fetched for an order */
+    const had = new Map(raw.map((o) => [o.id, o]));
+    raw = rows.map((o) => (had.get(o.id)?.events && !o.events ? { ...o, events: had.get(o.id).events } : o));
+    status = { loaded: true, loading: false, error: "", at: Date.now() };
+  } catch (e) {
+    status = { ...status, loading: false, error: e.message || "Could not load your orders." };
+  }
+  bump();
 }
 
-export function cancelOrder(id, reason) {
-  commit(
-    orders.map((o) =>
-      o.id === id
-        ? {
-            ...o,
-            cancelled: true,
-            cancelReason: reason,
-            eta: null,
-            events: [
-              ...o.events,
-              {
-                id: "cancel",
-                label: "Order cancelled",
-                detail: `${reason}. Refund started to the original payment method.`,
-                at: new Date().toISOString(),
-              },
-            ],
-            refund: {
-              amount:
-                o.price * o.qty +
-                o.shipping +
-                (o.platformFee || 0) -
-                o.discount,
-              status: "Processing",
-              at: new Date().toISOString(),
-            },
-          }
-        : o,
-    ),
-  );
+export function addPlacedOrders(apiOrders) {
+  const ids = new Set(apiOrders.map((o) => o.id));
+  raw = [...apiOrders, ...raw.filter((o) => !ids.has(o.id))];
+  bump();
 }
 
-/* the review also shows on the seller / ReMaker profile */
-function publish(order, review) {
-  const item = getItemById(order.itemId);
-  addSellerReview(item.sellerId, {
-    id: `order-${order.id}`,
-    name: "Aarav",
-    rating: review.rating,
-    text: review.text || "Rated this order without a written review.",
-    date: String(review.at || new Date().toISOString()).slice(0, 10),
-  });
+function replaceOrder(o) {
+  raw = raw.some((x) => x.id === o.id) ? raw.map((x) => (x.id === o.id ? o : x)) : [o, ...raw];
+  bump();
 }
 
+export async function refreshOrder(id) {
+  replaceOrder(await buyerOrdersApi.get(id));
+}
+
+export async function cancelOrder(id, reason) {
+  replaceOrder(await buyerOrdersApi.cancel(id, reason));
+}
+
+export const clearOrders = () => { raw = []; reviews = {}; status = { loaded: false, loading: false, error: "", at: 0 }; bump(); };
+
+/* the review also shows on the seller / ReMaker profile (demo profiles only) */
 export function reviewOrder(id, review) {
-  const target = orders.find((o) => o.id === id);
-  if (target) publish(target, review);
-  commit(orders.map((o) => (o.id === id ? { ...o, review } : o)));
+  reviews = { ...reviews, [id]: review };
+  const o = raw.find((x) => x.id === id);
+  const item = o && getItemById(o.items?.[0]?.id);
+  if (item?.sellerId) {
+    addSellerReview(item.sellerId, {
+      id: `order-${id}`, name: "Aarav", rating: review.rating,
+      text: review.text || "Rated this order without a written review.",
+      date: String(review.at || new Date().toISOString()).slice(0, 10),
+    });
+  }
+  bump();
 }
 
 /* ---------- derived ---------- */
-
-export const canCancel = (o) => !o.cancelled && o.stage <= 2;
-export const orderTotal = (o) =>
-  o.price * o.qty + o.shipping + (o.platformFee || 0) - o.discount;
+export const canCancel = (o) => !!o.canCancel;
+export const orderTotal = (o) => o.total;
 export const isActive = (o) => !o.cancelled && o.stage < 5;
 
 /* ReMaker sellers have their own profile route */
@@ -344,33 +226,37 @@ export const sellerPath = (item) =>
     ? `/user-marketplace/remaker/${item.sellerId}`
     : `/user-marketplace/seller/${item.sellerId}`;
 
-function decorate(order) {
-  const item = getItemById(order.itemId);
-  const seller = getSellerFromItem(item);
+function decorate(o) {
+  const order = adapt(o, reviews);
+  const seller = o.seller?.type === "platform" ? { name: "ReOrbit" } : { name: o.seller?.name || "Seller", username: o.seller?.username };
   return {
     ...order,
-    item,
     seller,
-    sellerIsRemaker: item.sellerType === "remaker",
-    sellerPath: sellerPath(item),
+    sellerIsRemaker: o.seller?.type === "remaker",
+    sellerPath: o.seller?.type === "remaker" && o.seller.id ? `/user-marketplace/remaker/${o.seller.id}` : null,
     status: statusOf(order),
-    total: orderTotal(order),
-    address: order.address || ADDRESS,
   };
 }
 
+/* Orders list. Loads once, then at most every 30 s while screens are open. */
 export function useOrders() {
-  const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return useMemo(
-    () =>
-      list
-        .map(decorate)
-        .sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt)),
-    [list],
-  );
+  useSyncExternalStore(subscribe, getVersion, getVersion);
+  useEffect(() => { loadOrders(); }, []);
+  return useMemo(() => raw.map(decorate), [version]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
+export function useOrdersStatus() {
+  useSyncExternalStore(subscribe, getVersion, getVersion);
+  return status;
+}
+
+/* One order, with its tracking history fetched on demand. */
 export function useOrder(id) {
   const list = useOrders();
-  return useMemo(() => list.find((o) => o.id === id) || null, [list, id]);
+  const found = useMemo(() => list.find((o) => o.id === id) || null, [list, id]);
+  const needsEvents = !found || !found.eventsLoaded;
+  useEffect(() => {
+    if (id && needsEvents) refreshOrder(id).catch(() => {});
+  }, [id, needsEvents]);
+  return found;
 }

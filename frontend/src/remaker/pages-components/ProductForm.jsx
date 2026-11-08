@@ -21,8 +21,7 @@ import {
   formatPrice,
 } from "../data/remakerProducts";
 
-import { useCategoryNames } from "../../shared/catalog";
-import { useRemakerModeration } from "../../shared/moderation";
+import { useProductCategories, saveProduct } from "../data/productsStore";
 
 import "../css/ReMakerProductForm.css";
 
@@ -30,7 +29,7 @@ const MAX_PHOTOS = 4;
 const MIN_PHOTOS = 3;
 const MAX_MB = 5;
 const TITLE_MAX = 80;
-const DESC_MIN = 40;
+const DESC_MIN = 10;
 const DESC_MAX = 600;
 
 /* ---------------------------------------------------------
@@ -41,7 +40,7 @@ function buildInitial(product) {
   const photos = Array(MAX_PHOTOS).fill(null);
 
   (product?.images || []).slice(0, MAX_PHOTOS).forEach((url, index) => {
-    photos[index] = { id: `existing-${index}`, url, file: null };
+    photos[index] = { id: `existing-${index}`, url, file: null, serverId: product.imageRows?.[index]?.id };
   });
 
   return {
@@ -71,10 +70,12 @@ export default function ProductForm({ mode = "add", product = null }) {
   const navigate = useNavigate();
   const isEdit = mode === "edit";
 
-  const categoryNames = useCategoryNames();
-  const moderation = useRemakerModeration()[product?.adminId] || {};
-  const hold = moderation.hold;
-  const suggested = moderation.suggested;
+  const serverCategories = useProductCategories();
+  const categoryNames = useMemo(() => serverCategories.map((c) => c.name), [serverCategories]);
+  const [saving, setSaving] = useState(false);
+  const createdId = useRef(null); /* draft id created by a save that later failed */
+  const hold = product?.hold || null; // set when ReOrbit switched the product off
+  const suggested = null;
 
   const initial = useMemo(() => {
     const base = buildInitial(product);
@@ -339,9 +340,26 @@ export default function ProductForm({ mode = "add", product = null }) {
     });
   };
 
-  const handleSaveDraft = () => {
-    flash("success", "Draft saved.", true);
+  /* one place for every save: talks to the server, then flashes and goes back */
+  const persist = async (options, okText) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await saveProduct(values, {
+        id: product?.id || createdId.current,
+        onCreated: (newId) => { createdId.current = newId; },
+        ...options,
+      });
+      flash("success", okText, true);
+    } catch (err) {
+      const f = err.errors ? Object.values(err.errors)[0] : null;
+      flash("error", (Array.isArray(f) ? f[0] : f) || err.message || "Could not save the product.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleSaveDraft = () => persist({ publish: false }, "Draft saved.");
 
   const handlePublish = () => {
     setAttempted(true);
@@ -352,7 +370,7 @@ export default function ProductForm({ mode = "add", product = null }) {
       return;
     }
 
-    flash("success", isEdit ? "Changes saved." : "Product published.", true);
+    persist({ publish: true }, isEdit ? "Changes saved." : "Product published.");
   };
 
   const handleSaveEdit = () => {
@@ -366,7 +384,11 @@ export default function ProductForm({ mode = "add", product = null }) {
       return;
     }
 
-    flash("success", "Changes saved.", true);
+    const wasDraft = product?.status === "Draft";
+    persist(
+      wasDraft ? { publish: values.active } : { active: values.active },
+      "Changes saved.",
+    );
   };
 
   const handleDiscard = () => {
@@ -997,7 +1019,7 @@ export default function ProductForm({ mode = "add", product = null }) {
                   type="button"
                   className="rpf-btn primary"
                   onClick={handleSaveEdit}
-                  disabled={!dirty}
+                  disabled={!dirty || saving}
                 >
                   Save changes
                 </button>
@@ -1005,7 +1027,7 @@ export default function ProductForm({ mode = "add", product = null }) {
                   type="button"
                   className="rpf-btn ghost"
                   onClick={handleDiscard}
-                  disabled={!dirty}
+                  disabled={!dirty || saving}
                 >
                   Discard changes
                 </button>

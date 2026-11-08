@@ -26,6 +26,7 @@ import {
   deleteListing,
   relistListing,
   useListing,
+  useListingsStatus,
   useSales,
   withdrawListing,
 } from "../../data/listingsStore";
@@ -44,6 +45,7 @@ import "../../css/shared/ui-base.css";
 import "../../css/sell/sell-base.css";
 import "../../css/sell/UserListingDetails.css";
 
+import { PageLoader } from "../../../shared/components/Spinner";
 const JUST = {
   submitted: "Your listing is live. Buyers can find it on the marketplace now.",
   updated: "Listing updated.",
@@ -55,6 +57,7 @@ export default function UserListingDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const listing = useListing(listingId);
+  const listingsStatus = useListingsStatus();
   const sale = useSales().find((s) => s.listingId === listingId);
   const { toast, show } = useToast();
 
@@ -69,6 +72,10 @@ export default function UserListingDetails() {
       setAnnounced(true);
     }
   }, [location.state, announced, show]);
+
+  if (!listing && !listingsStatus.loaded && !listingsStatus.error) {
+    return <div className="dn"><PageLoader label="Loading your listing…" /></div>;
+  }
 
   if (!listing) {
     return (

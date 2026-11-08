@@ -14,7 +14,9 @@ import {
   Truck,
 } from "lucide-react";
 
-import { PAYMENT_LABEL, useOrders } from "../../data/ordersStore";
+import { PAYMENT_LABEL, useOrders, useOrdersStatus } from "../../data/ordersStore";
+import { PageLoader } from "../../../shared/components/Spinner";
+import "../../../shared/components/Spinner.css";
 import { formatPrice } from "../../../data/marketplaceData";
 import { formatDate } from "../../utils/format";
 import EmptyState from "../../components/ui/EmptyState";
@@ -35,6 +37,16 @@ export default function UserOrderSuccess() {
 
   const wanted = ids.split(",");
   const orders = all.filter((o) => wanted.includes(o.id));
+  const { loading, loaded } = useOrdersStatus();
+
+  if (!orders.length && (loading || !loaded)) {
+    return (
+      <div className="dn sp">
+        <ShopNav />
+        <PageLoader label="Loading your order…" />
+      </div>
+    );
+  }
 
   if (!orders.length) {
     return (
@@ -53,7 +65,7 @@ export default function UserOrderSuccess() {
 
   const first = orders[0];
   const total = orders.reduce((n, o) => n + o.total, 0);
-  const subtotal = orders.reduce((n, o) => n + o.price * o.qty, 0);
+  const subtotal = orders.reduce((n, o) => n + o.subtotal, 0);
   const delivery = orders.reduce((n, o) => n + o.shipping, 0);
   const platformFee = orders.reduce((n, o) => n + (o.platformFee || 0), 0);
   const discount = orders.reduce((n, o) => n + (o.discount || 0), 0);
@@ -71,7 +83,9 @@ export default function UserOrderSuccess() {
         <p>
           {cod
             ? "Your order is confirmed. Pay when it arrives."
-            : `Payment of ${formatPrice(total)} received. Your order is confirmed.`}
+            : first.awaitingPayment
+              ? "We're waiting for your payment to be confirmed. This page updates in My orders."
+              : `Payment of ${formatPrice(total)} received. Your order is confirmed.`}
         </p>
         <div className="ushp-ids">
           {orders.map((o) => (
@@ -85,7 +99,7 @@ export default function UserOrderSuccess() {
           <div className="dn-card-head">
             <div>
               <h2>What you ordered</h2>
-              <small>One order for each piece.</small>
+              <small>One order for each seller.</small>
             </div>
           </div>
 
@@ -106,7 +120,7 @@ export default function UserOrderSuccess() {
           <ol className="ushp-next">
             <li className="done"><span><Check size={14} /></span><div><strong>Order confirmed</strong><p>The seller has been told to get it ready.</p></div></li>
             <li><span><PackageCheck size={14} /></span><div><strong>Packed and handed over</strong><p>Follow every step from the tracking page.</p></div></li>
-            <li><span><Truck size={14} /></span><div><strong>Delivered by {formatDate(first.eta)}</strong><p>Rate the seller once it arrives.</p></div></li>
+            <li><span><Truck size={14} /></span><div><strong>Delivered to you</strong><p>Rate the seller once it arrives.</p></div></li>
           </ol>
 
           {co2 > 0 && (
@@ -123,7 +137,7 @@ export default function UserOrderSuccess() {
             <div><dt>Delivery</dt><dd>{delivery ? formatPrice(delivery) : "Free"}</dd></div>
             {platformFee > 0 && <div><dt>Platform fee</dt><dd>{formatPrice(platformFee)}</dd></div>}
             {discount > 0 && <div className="save"><dt>Coupon</dt><dd>− {formatPrice(discount)}</dd></div>}
-            <div className="total"><dt>{cod ? "To pay on delivery" : "Paid"}</dt><dd>{formatPrice(total)}</dd></div>
+            <div className="total"><dt>{cod ? "To pay on delivery" : first.awaitingPayment ? "Payable" : "Paid"}</dt><dd>{formatPrice(total)}</dd></div>
           </dl>
 
           <div className="ushp-block">

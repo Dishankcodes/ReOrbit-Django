@@ -10,7 +10,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { useOrders } from "./ordersStore";
 import { useDonations } from "./donationsStore";
-import { useListings, useSales } from "./listingsStore";
+import { useListings } from "./listingsStore";
 import { useTickets } from "./supportStore";
 import { useRewards } from "./rewardsStore";
 import { useSettings } from "./settingsStore";
@@ -65,7 +65,6 @@ export function useNotifications() {
   const orders = useOrders();
   const donations = useDonations();
   const listings = useListings();
-  const sales = useSales();
   const tickets = useTickets();
   const { ledger } = useRewards();
   const settings = useSettings();
@@ -75,19 +74,31 @@ export function useNotifications() {
     const since = Date.now() - WINDOW_DAYS * DAY;
     const out = [];
 
+    const lastOf = (list) => (Array.isArray(list) && list.length ? list[list.length - 1] : null);
+    const ORDER_TEXT = {
+      Pending_Payment: "Waiting for payment", Confirmed: "Order confirmed", Packed: "Order packed",
+      Shipped: "Order shipped", Delivered: "Order delivered", Cancelled: "Order cancelled",
+    };
+
     orders.forEach((o) => {
-      const e = o.events[o.events.length - 1];
+      /* the list from the server carries no event history; the status says the same thing */
+      const e = lastOf(o.events) || {
+        id: o.apiStatus || "status",
+        label: ORDER_TEXT[o.apiStatus] || "Order update",
+        at: o.deliveredAt || o.placedAt,
+      };
       out.push({
         id: `order-${o.id}-${e.id}`,
         type: "order",
         title: e.label,
-        message: `${o.item.title} · ${o.id}`,
+        message: `${o.lines?.[0]?.title || "Your order"}${o.lines?.length > 1 ? ` +${o.lines.length - 1} more` : ""} · ${o.id}`,
         at: e.at,
         to: `/user-orders/${o.id}`,
       });
     });
     donations.forEach((d) => {
-      const e = d.events[d.events.length - 1];
+      const e = lastOf(d.events);
+      if (!e) return;
       out.push({
         id: `don-${d.id}-${e.id}`,
         type: "donation",
@@ -99,7 +110,8 @@ export function useNotifications() {
     });
     listings.forEach((l) => {
       if (!["Live", "Rejected", "Pending"].includes(l.status)) return;
-      const e = l.events[l.events.length - 1];
+      const e = lastOf(l.events);
+      if (!e) return;
       out.push({
         id: `lst-${l.id}-${e.id}`,
         type: "sell",
@@ -109,22 +121,9 @@ export function useNotifications() {
         to: `/user-sell/${l.id}`,
       });
     });
-    sales
-      .filter((s) => ["Confirmed", "Packed"].includes(s.status))
-      .forEach((s) => {
-        out.push({
-          id: `sale-${s.id}-${s.status}`,
-          type: "sell",
-          title:
-            s.status === "Confirmed" ? "New order to pack" : "Ready to ship",
-          message: `${s.title} · ${s.id}`,
-          at: s.events[s.events.length - 1].at,
-          to: `/user-sell/sales/${s.id}`,
-        });
-      });
     tickets.forEach((t) => {
-      const last = t.messages[t.messages.length - 1];
-      if (last.from !== "team") return;
+      const last = lastOf(t.messages);
+      if (!last || last.from !== "team") return;
       out.push({
         id: `tkt-${t.id}-${last.id}`,
         type: "support",
@@ -177,7 +176,6 @@ export function useNotifications() {
     orders,
     donations,
     listings,
-    sales,
     tickets,
     ledger,
     settings,

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -13,7 +13,7 @@ import {
   PackageOpen,
 } from "lucide-react";
 
-import { isActive, useOrders } from "../../data/ordersStore";
+import { isActive, loadOrders, useOrders, useOrdersStatus } from "../../data/ordersStore";
 import EmptyState from "../../components/ui/EmptyState";
 import OrderCard, { inr } from "./components/OrderCard";
 
@@ -45,8 +45,9 @@ const SORTS = {
 };
 
 export default function UserOrders() {
-  const loading = useLoading(450);
   const orders = useOrders();
+  const st = useOrdersStatus();
+  const loading = !st.loaded && !st.error; /* real loading state: a spinner-style skeleton until the server answers */
 
   const [tab, setTab] = useState("All");
   const [query, setQuery] = useState("");
@@ -220,6 +221,11 @@ export default function UserOrders() {
         </div>
       </section>
 
+      {st.error && !st.loaded && (
+        <div className="dn-banner dn-banner--warn" role="alert">
+          <div>{st.error} <button type="button" className="dn-link" onClick={() => loadOrders(true)}>Try again</button></div>
+        </div>
+      )}
       {loading ? (
         <SkeletonRows count={5} />
       ) : orders.length === 0 ? (

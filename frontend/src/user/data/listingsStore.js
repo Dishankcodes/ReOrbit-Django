@@ -197,6 +197,7 @@ async function syncImages(listingId, formImages, current) {
   if (fresh.length) {
     const res = await api.uploadListingImages(listingId, fresh.map((i) => i.file));
     rows = res.listing.images;
+    apply(res); /* keep the store's photo list in step so a retry sees what is already uploaded */
     const added = rows.slice(rows.length - fresh.length);
     fresh.forEach((f, n) => { f.serverId = added[n].id; });
   }
@@ -206,7 +207,7 @@ async function syncImages(listingId, formImages, current) {
 
 /* Saves the form. submit=false keeps/creates a draft; submit=true also publishes.
    Throws an Error with .errors / .code from the server when something is wrong. */
-export async function saveListing(form, { submit = true, id = null } = {}) {
+export async function saveListing(form, { submit = true, id = null, onCreated } = {}) {
   let data;
   const before = id ? listings.find((l) => l.id === id) : null;
   if (id) {
@@ -215,6 +216,9 @@ export async function saveListing(form, { submit = true, id = null } = {}) {
     data = await api.createListing(bodyOf(form));
     id = data.listing.id;
     apply(data);
+    /* The draft now exists on the server. Tell the caller its id straight away so a retry
+       continues this draft instead of creating a second one. */
+    if (onCreated) onCreated(id);
   }
   await syncImages(id, form.images, before?.imageRows || data.listing.images || []);
   if (submit && !["Listed", "Reserved", "Sold"].includes(data.listing.item_status)) {

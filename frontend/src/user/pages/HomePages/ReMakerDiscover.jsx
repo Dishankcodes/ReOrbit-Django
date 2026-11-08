@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { initialsImage, usePublic } from "../../../api/publicData";
 
 export default function ReMakerDiscover() {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const categories = [
+  const sampleCategories = [
     "All",
     "Furniture",
     "Home & Decor",
@@ -13,7 +14,7 @@ export default function ReMakerDiscover() {
     "Electronics",
   ];
 
-  const remakers = [
+  const sampleRemakers = [
     {
       name: "Aarav Studio",
       specialty: "Furniture & Wood",
@@ -89,6 +90,18 @@ export default function ReMakerDiscover() {
       quote: "A broken device can still contain a lot of useful life.",
     },
   ];
+
+  /* real ReMakers when there are any; the sample studios only show on an empty platform */
+  const { data: live } = usePublic("/remakers/?page_size=48");
+  const real = (live?.results || []).map((r) => ({
+    name: r.name, specialty: r.specialty || "ReMaker", location: r.city || "Gujarat",
+    category: r.category || "", image: r.image || initialsImage(r.name), creations: r.creations,
+    description: r.bio || "Gives reclaimed material a second life.", id: r.id,
+  }));
+  const remakers = real.length ? real : sampleRemakers;
+  const categories = real.length
+    ? ["All", ...Array.from(new Set(real.map((r) => r.category).filter(Boolean)))]
+    : sampleCategories;
 
   const filteredRemakers =
     activeCategory === "All"
@@ -1298,7 +1311,7 @@ export default function ReMakerDiscover() {
 
             <div className="remaker-directory-grid">
               {filteredRemakers.map((maker) => (
-                <article className="remaker-card" key={maker.name}>
+                <article className="remaker-card" key={maker.id || maker.name}>
                   <div className="remaker-card-image">
                     <img src={maker.image} alt={maker.name} />
 

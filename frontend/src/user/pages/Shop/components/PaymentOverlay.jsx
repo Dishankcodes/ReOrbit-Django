@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 
-const STEPS = ["Contacting your bank", "Verifying the payment", "Placing your order"];
+const STEPS = ["Holding your items", "Opening secure payment", "Confirming your order"];
 
 /* Full-screen "processing / failed" layer while the fake payment runs. */
 export default function PaymentOverlay({ state, error, amount, onRetry, onChangeMethod }) {
@@ -14,7 +14,7 @@ export default function PaymentOverlay({ state, error, amount, onRetry, onChange
     return () => clearInterval(timer);
   }, [state]);
 
-  if (!state) return null;
+  if (!state || state === "paying") return null; /* Razorpay's own window is on screen */
 
   return (
     <div className="ushp-overlay" role="alertdialog" aria-modal="true" aria-labelledby="ushp-pay-title" aria-live="assertive">
@@ -22,7 +22,7 @@ export default function PaymentOverlay({ state, error, amount, onRetry, onChange
         {state === "processing" ? (
           <>
             <span className="ushp-spinner" aria-hidden="true" />
-            <h3 id="ushp-pay-title">Processing payment</h3>
+            <h3 id="ushp-pay-title">Placing your order</h3>
             <p className="ushp-overlay-amt">₹{amount.toLocaleString("en-IN")}</p>
             <ol className="ushp-pay-steps">
               {STEPS.map((step, n) => (
@@ -36,9 +36,9 @@ export default function PaymentOverlay({ state, error, amount, onRetry, onChange
         ) : (
           <>
             <span className="ushp-fail-ico"><XCircle size={34} /></span>
-            <h3 id="ushp-pay-title">Payment failed</h3>
+            <h3 id="ushp-pay-title">We couldn't complete this</h3>
             <p>{error}</p>
-            <p className="ushp-overlay-note">No money was taken and your cart is safe.</p>
+            <p className="ushp-overlay-note">Your cart is safe. Money is only taken after a successful payment, and any wrongly taken payment is refunded automatically.</p>
             <div className="ushp-overlay-actions">
               <button type="button" className="dn-btn dn-btn--ghost" onClick={onChangeMethod}>Change method</button>
               <button type="button" className="dn-btn" onClick={onRetry}>Try again</button>

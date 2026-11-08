@@ -15,8 +15,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { clearCart, removeFromCart, setCartQty, startCheckout, useCart } from "../../data/shopStore";
-import { feeLabel, useCommerce } from "../../../shared/commerce";
+import { clearCart, removeFromCart, setCartQty, startCheckout, useCart, useCartCount } from "../../data/shopStore";
+import { isLiveId, useServerQuote } from "../../data/checkoutStore";
+import { useLiveMarketplace } from "../../data/liveMarketplace";
+import Spinner, { PageLoader } from "../../../shared/components/Spinner";
+import "../../../shared/components/Spinner.css";
+import { feeLabel } from "../../../shared/commerce";
 import { sellerPath } from "../../data/ordersStore";
 import { formatPrice } from "../../../data/marketplaceData";
 import EmptyState from "../../components/ui/EmptyState";
@@ -30,14 +34,31 @@ import "../../css/shop/UserCart.css";
 
 export default function UserCart() {
   const navigate = useNavigate();
+  const { ready } = useLiveMarketplace(); /* real products join the catalogue once this has loaded */
   const cart = useCart();
-  const commerce = useCommerce();
+  const stored = useCartCount();
   const { toast, show } = useToast();
 
+  /* Only real products can be bought; the sample pieces in the demo catalogue cannot. */
+  const buyable = cart.lines.filter((l) => isLiveId(l.id));
+  const q = useServerQuote(buyable);
+  const problems = q.quote?.problems || {};
+  const canCheckout = buyable.length > 0 && !!q.quote && Object.keys(problems).length === 0 && !q.loading;
+
   const checkout = () => {
-    startCheckout(cart.lines.map((l) => ({ id: l.id, qty: l.qty })), "cart");
+    if (!canCheckout) return;
+    startCheckout(buyable.map((l) => ({ id: l.id, qty: l.qty })), "cart");
     navigate("/user-checkout");
   };
+
+  if (!ready && stored > 0) {
+    return (
+      <div className="dn sp">
+        <ShopNav />
+        <PageLoader label="Loading your cart…" />
+      </div>
+    );
+  }
 
   if (cart.all.length === 0) {
     return (
@@ -54,10 +75,7 @@ export default function UserCart() {
     );
   }
 
-  const free = cart.lines.filter((l) => l.fee === 0).length;
-  /* Only ReMaker products can earn free delivery; the gap is for the closest one. */
-  const gaps = cart.lines.filter((l) => l.item.sellerType === "remaker" && l.fee > 0).map((l) => commerce.freeDeliveryFrom - l.lineSubtotal);
-  const toFree = gaps.length ? Math.max(0, Math.min(...gaps)) : 0;
+  const quote = q.quote;
 
   return (
     <div className="dn sp">
@@ -80,10 +98,12 @@ export default function UserCart() {
         <section className="ushp-lines" aria-label="Cart items">
           {cart.all.map((l) => {
             const { item } = l;
-            const priced = cart.lines.find((x) => x.id === l.id);
+            const sample = !isLiveId(l.id);
+            const problem = problems[l.id];
+            const off = l.unavailable || sample || !!problem;
             const remaker = item.sellerType === "remaker";
             return (
-              <article key={l.id} className={`dn-card ushp-line ${l.unavailable ? "is-off" : ""}`}>
+              <article key={l.id} className={`dn-card ushp-line ${off ? "is-off" : ""}`}>
                 <Link to={`/user-marketplace/product/${item.id}`} className="ushp-line-img">
                   <SafeImage src={item.image} alt={item.title} />
                 </Link>
@@ -98,8 +118,8 @@ export default function UserCart() {
                     {remaker ? "Made by" : "Sold by"} {item.seller}
                   </Link>
 
-                  {l.unavailable ? (
-                    <p className="ushp-warn"><AlertTriangle size={14} /> {item.reason} Remove it to continue.</p>
+                  {off ? (
+                    <p className="ushp-warn"><AlertTriangle size={14} /> {sample ? "This is a sample piece and can't be bought yet." : problem || item.reason} Remove it to continue.</p>
                   ) : (
                     <div className="ushp-line-ctrl">
                       <div className="ushp-qty" role="group" aria-label={`Quantity of ${item.title}`}>
@@ -115,14 +135,13 @@ export default function UserCart() {
                   )}
                 </div>
 
-                {!l.unavailable && priced && (
+                {!off && (
                   <div className="ushp-line-price">
-                    <strong>{formatPrice(priced.lineSubtotal)}</strong>
+                    <strong>{formatPrice(item.price * l.qty)}</strong>
                     <span>{formatPrice(item.price)} each</span>
-                    <em>{priced.fee ? `+ ${formatPrice(priced.fee)} delivery` : "Free delivery"}</em>
                   </div>
                 )}
-                {l.unavailable && (
+                {off && (
                   <button type="button" className="ushp-textbtn danger ushp-line-remove" onClick={() => removeFromCart(item.id)}>
                     <Trash2 size={14} /> Remove
                   </button>
@@ -135,31 +154,27 @@ export default function UserCart() {
         <aside className="dn-card ushp-summary" aria-label="Order summary">
           <h3>Order summary</h3>
 
-          {toFree > 0 && cart.lines.length > 0 && (
-            <p className="ushp-freebar">
-              <Truck size={14} /> Add {formatPrice(toFree)} more to a ReMaker piece for free delivery.
-            </p>
+          {q.error && (
+            <p className="dn-error" role="alert">{q.error} <button type="button" className="dn-link" onClick={q.retry}>Try again</button></p>
           )}
-
-          <dl>
-            <div><dt>Subtotal ({cart.count} {cart.count === 1 ? "item" : "items"})</dt><dd>{formatPrice(cart.subtotal)}</dd></div>
-            <div><dt>Delivery</dt><dd>{cart.delivery ? formatPrice(cart.delivery) : "Free"}</dd></div>
-            {cart.platformFee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(cart.platformFee)}</dd></div>}
-            <div className="total"><dt>Total</dt><dd>{formatPrice(cart.total)}</dd></div>
+          <dl aria-busy={q.loading}>
+            <div><dt>Subtotal ({buyable.reduce((n, l) => n + l.qty, 0)} items)</dt><dd>{quote ? formatPrice(quote.subtotal) : <Spinner />}</dd></div>
+            <div><dt>Delivery</dt><dd>{quote ? (quote.delivery_fee ? formatPrice(quote.delivery_fee) : "Free") : <Spinner />}</dd></div>
+            {quote && quote.platform_fee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platform_fee)}</dd></div>}
+            <div className="total"><dt>Total</dt><dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd></div>
           </dl>
-
-          {cart.co2 > 0 && (
-            <p className="ushp-impact"><Leaf size={15} /> This order keeps about <b>{cart.co2} kg</b> of CO₂ out of new production.</p>
+          {quote && quote.groups.length > 1 && (
+            <p className="ushp-note">Pieces from {quote.groups.length} sellers ship as {quote.groups.length} separate orders; delivery and fees are worked out per seller.</p>
           )}
 
-          <button type="button" className="dn-btn dn-btn--block ushp-big" onClick={checkout} disabled={cart.lines.length === 0}>
-            Proceed to checkout <ArrowRight size={16} />
+          <button type="button" className="dn-btn dn-btn--block ushp-big" onClick={checkout} disabled={!canCheckout}>
+            {q.loading ? <Spinner label="Checking prices…" /> : <>Proceed to checkout <ArrowRight size={16} /></>}
           </button>
           <Link to="/user-marketplace" className="dn-link ushp-center">Continue shopping</Link>
 
           <ul className="ushp-mini">
             <li><ShieldCheck size={14} /> Secure checkout</li>
-            <li><Truck size={14} /> {free ? `${free} with free delivery` : "Delivery to your address"}</li>
+            <li><Truck size={14} /> Delivery to your address</li>
           </ul>
         </aside>
       </div>

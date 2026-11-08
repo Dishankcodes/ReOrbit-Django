@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useRef, useState } from "react";
+import { DelayedLoader } from "../../shared/components/Spinner";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Eye, Lock, ShieldOff, WifiOff, X } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
@@ -8,6 +9,7 @@ import {
   moduleForPath,
   MODULES,
   setPreview,
+  refreshMyAccess,
 } from "../data/teamStore";
 import useToast from "./ui/useToast";
 import AdminErrorBoundary from "./AdminErrorBoundary";
@@ -55,6 +57,10 @@ export default function AdminLayout({ children }) {
   const access = useAccess();
   const { toast, toastNode } = useToast();
   const mainRef = useRef(null);
+
+  useEffect(() => {
+    refreshMyAccess();
+  }, []);
 
   const [online, setOnline] = useState(() =>
     typeof navigator === "undefined" ? true : navigator.onLine !== false,
@@ -259,7 +265,9 @@ export default function AdminLayout({ children }) {
                   <PageSkeleton variant={variantForPath(location.pathname)} />
                 }
               >
-                {children ?? <Outlet />}
+                <Suspense fallback={<DelayedLoader minHeight={320} />}>
+                  <div className="ro-route">{children ?? <Outlet />}</div>
+                </Suspense>
               </Suspense>
             </AdminErrorBoundary>
           )}

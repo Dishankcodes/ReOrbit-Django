@@ -5,6 +5,7 @@ import { BadgeCheck, Boxes, Eye, Heart, Leaf, MapPin, Minus, Plus, ShoppingBag, 
 import { useGoBack } from "../../../shared/backNav";
 import { addToCart, startCheckout, useCartCount, useInCart, useShopItem } from "../../data/shopStore";
 import { useWishlist } from "../../data/wishlistStore";
+import { useLiveMarketplace } from "../../data/liveMarketplace";
 import { getItemById, getProductsBySeller, getSellerFromItem, getSellerReviews, formatPrice } from "../../../data/marketplaceData";
 import ReportButton from "../../../shared/components/ReportButton";
 import { useUserComplaintFiler } from "../../../shared/complaints";
@@ -14,6 +15,7 @@ import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
 import "../../css/shared/ui-base.css";
 import "../../css/marketplace-css/UserProductDetailsV2.css";
 
+import { PageLoader } from "../../../shared/components/Spinner";
 const Stars = ({ rating = 0 }) => (
   <span className="pd-stars" aria-label={`${rating} out of 5 stars`}>
     {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={13} fill={s <= Math.round(rating) ? "currentColor" : "none"} />)}
@@ -25,9 +27,10 @@ export default function UserProductDetails() {
   const params = useParams();
   const productId = params.productId ?? params.id;
   const navigate = useNavigate();
+  const live = useLiveMarketplace(); // makes sure live listings are loaded when this page is opened directly
   const item = getItemById(productId);
   const wish = useWishlist();
-  const stock = useShopItem(productId);
+  const stock = useShopItem(productId, live.version);
   const cartCount = useCartCount();
   const inCart = useInCart(productId);
   const fileComplaint = useUserComplaintFiler();
@@ -40,6 +43,8 @@ export default function UserProductDetails() {
   const seller = useMemo(() => getSellerFromItem(item), [item]);
   const reviews = useMemo(() => (item ? getSellerReviews(item.sellerId) : []), [item]);
   const related = useMemo(() => (item ? getProductsBySeller(item.sellerId).filter((p) => p.id !== item.id).slice(0, 4) : []), [item]);
+
+  if (!item && !live.ready) return <div className="dn pd"><PageLoader label="Loading product…" /></div>;
 
   if (!item) {
     return (
@@ -55,6 +60,11 @@ export default function UserProductDetails() {
   }
 
   const isMaker = item.sellerType === "remaker";
+  const isStore = item.sellerType === "admin";
+  const sellerLabel = isMaker ? "ReMaker" : isStore ? "ReOrbit store" : "Community seller";
+  const listedOn = String(item.listedDate).includes("T")
+    ? new Date(item.listedDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    : item.listedDate;
   const liked = wish.has(productId);
   const buyable = Boolean(stock?.purchasable);
   const maxQty = Math.max(1, stock?.available || 1);
@@ -79,7 +89,7 @@ export default function UserProductDetails() {
       <section className="pd-hero">
         <div className="pd-gallery">
           <SafeImage src={item.image} alt={item.title} />
-          <span className={`pd-type ${isMaker ? "maker" : ""}`}>{isMaker ? <><Sparkles size={12} /> ReMaker piece</> : <><Boxes size={12} /> Community item</>}</span>
+          <span className={`pd-type ${isMaker ? "maker" : ""}`}>{isMaker ? <><Sparkles size={12} /> ReMaker piece</> : isStore ? <><BadgeCheck size={12} /> ReOrbit store</> : <><Boxes size={12} /> Community item</>}</span>
           <button type="button" className={`pd-heart ${liked ? "on" : ""}`} aria-pressed={liked} aria-label={liked ? "Remove from wishlist" : "Save to wishlist"} onClick={() => wish.toggle(productId)}>
             <Heart size={18} fill={liked ? "currentColor" : "none"} />
           </button>
@@ -88,13 +98,15 @@ export default function UserProductDetails() {
         <div className="pd-info">
           <span className="pd-eyebrow">{item.category} · {item.condition}</span>
           <h1>{item.title}</h1>
-          <div className="pd-rate"><Stars rating={seller?.rating || item.sellerRating} /> <b>{item.sellerRating}</b> <span>seller rating · {item.views} views</span></div>
+          {!item.live && (
+            <div className="pd-rate"><Stars rating={seller?.rating || item.sellerRating} /> <b>{item.sellerRating}</b> <span>seller rating · {item.views} views</span></div>
+          )}
           <div className="pd-price"><strong>{formatPrice(item.price)}</strong><span>Listed price</span></div>
           <p className="pd-summary">{item.summary}</p>
 
           <ul className="pd-facts">
-            <li><Leaf size={16} /><span><b>{item.co2SavedKg} kg CO₂</b> kept from new production</span></li>
-            <li><MapPin size={16} /><span><b>{item.city}, {item.pincode}</b> · arrange delivery after purchase</span></li>
+            {item.co2SavedKg > 0 && <li><Leaf size={16} /><span><b>{item.co2SavedKg} kg CO₂</b> kept from new production</span></li>}
+            <li><MapPin size={16} /><span><b>{item.pincode ? `${item.city}, ${item.pincode}` : item.city}</b> · arrange delivery after purchase</span></li>
           </ul>
 
           {!buyable && stock?.reason && <p className="pd-notice">{stock.reason}</p>}
@@ -129,16 +141,16 @@ export default function UserProductDetails() {
       <section className="pd-seller">
         <SafeImage src={item.sellerImage} alt="" />
         <div className="pd-seller-id">
-          <small>{isMaker ? "ReMaker" : "Community seller"}</small>
+          <small>{sellerLabel}</small>
           <strong>{item.seller} {isMaker && <BadgeCheck size={15} />}</strong>
           <span>{item.city}</span>
         </div>
         <dl>
           <div><dt>Rating</dt><dd><Star size={12} fill="currentColor" /> {item.sellerRating}</dd></div>
           <div><dt>Reviews</dt><dd>{seller?.totalReviews || reviews.length}</dd></div>
-          <div><dt>Listed</dt><dd>{item.listedDate}</dd></div>
+          <div><dt>Listed</dt><dd>{listedOn}</dd></div>
         </dl>
-        <Link to={sellerPath} className="dn-btn dn-btn--ghost">View profile</Link>
+        {!item.live && <Link to={sellerPath} className="dn-btn dn-btn--ghost">View profile</Link>}
       </section>
 
       <div className="pd-tabs" role="tablist">
@@ -154,7 +166,7 @@ export default function UserProductDetails() {
             <p>{item.description}</p>
             <div className="pd-stats">
               <div><Boxes size={16} /><small>Availability</small><b>{item.quantity > 1 ? `${item.quantity} available` : "1 available"}</b></div>
-              <div><Eye size={16} /><small>Views</small><b>{item.views}</b></div>
+              {!item.live && <div><Eye size={16} /><small>Views</small><b>{item.views}</b></div>}
               <div><Heart size={16} /><small>Saves</small><b>{item.likes}</b></div>
             </div>
           </div>
@@ -163,8 +175,8 @@ export default function UserProductDetails() {
             <div><dt>Category</dt><dd>{item.category}</dd></div>
             <div><dt>Condition</dt><dd>{item.condition}</dd></div>
             <div><dt>Location</dt><dd>{item.city}</dd></div>
-            <div><dt>Impact</dt><dd>{item.co2SavedKg} kg CO₂ saved</dd></div>
-            <div><dt>Seller</dt><dd>{isMaker ? "ReMaker" : "Community seller"}</dd></div>
+            {item.co2SavedKg > 0 && <div><dt>Impact</dt><dd>{item.co2SavedKg} kg CO₂ saved</dd></div>}
+            <div><dt>Seller</dt><dd>{sellerLabel}</dd></div>
           </dl>
         </section>
       ) : (

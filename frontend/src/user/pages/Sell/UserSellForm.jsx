@@ -49,6 +49,8 @@ const toForm = (l) => ({
 export default function UserSellForm() {
   const navigate = useNavigate();
   const { listingId } = useParams();
+  /* id of a draft this form already created, so a retry after a failed upload/publish reuses it */
+  const createdId = useRef(null);
   const existing = useListing(listingId || "");
   const sellCategories = useSellCategories();
   const categoryNames = useMemo(() => sellCategories.map((c) => c.name), [sellCategories]);
@@ -100,7 +102,7 @@ export default function UserSellForm() {
     if (index === 0) {
       if (!form.category) e.category = "Choose a category.";
       if (form.title.trim().length < 4) e.title = "Give your item a clear name (at least 4 characters).";
-      if (form.description.trim().length < 20) e.description = "Describe the item in at least 20 characters. Mention size, age and any flaws.";
+      if (form.description.trim().length < 10) e.description = "Describe the item in at least 10 characters. Mention size, age and any flaws.";
       if (!form.condition) e.condition = "Select the condition.";
       if (!(price >= 50)) e.price = "Enter a price of at least ₹50.";
       else if (price > 200000) e.price = "The maximum listing price is ₹2,00,000.";
@@ -125,7 +127,13 @@ export default function UserSellForm() {
 
   const submit = (asDraft = false) => {
     if (!asDraft && !validate(2)) return;
-    if (asDraft && form.title.trim().length < 3) { setErrors({ title: "Add a name before saving a draft." }); setStep(0); return; }
+    if (asDraft) {
+      /* same rule as the server: a draft needs a name and a category */
+      const e = {};
+      if (form.title.trim().length < 3) e.title = "Add a name before saving a draft.";
+      if (!form.category) e.category = "Choose a category before saving a draft.";
+      if (Object.keys(e).length) { setErrors(e); setStep(0); return; }
+    }
     const publishesNow = !asDraft && (!editing || ["Draft", "Withdrawn"].includes(existing?.status));
     if (publishesNow) {
       const lim = listingLimitStatus();
@@ -137,7 +145,7 @@ export default function UserSellForm() {
     }
     setLimitMsg("");
     setBusy(true);
-    saveListing(payload(), { submit: !asDraft, id: editing ? listingId : null })
+    saveListing(payload(), { submit: !asDraft, id: editing ? listingId : createdId.current, onCreated: (newId) => { createdId.current = newId; } })
       .then((saved) => {
         navigate(`/user-sell/${saved.id}`, { replace: true, state: { just: asDraft ? "draft" : editing ? "updated" : "submitted" } });
       })

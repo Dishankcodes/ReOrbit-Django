@@ -21,7 +21,9 @@ import {
   Leaf,
 } from "lucide-react";
 
-import { PAYMENT_LABEL, cancelOrder, canCancel, reviewOrder, useOrder } from "../../data/ordersStore";
+import { PAYMENT_LABEL, cancelOrder, canCancel, reviewOrder, useOrder, useOrdersStatus } from "../../data/ordersStore";
+import { PageLoader } from "../../../shared/components/Spinner";
+import "../../../shared/components/Spinner.css";
 import { formatDate, formatDateTime, relativeDay } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import EmptyState from "../../components/ui/EmptyState";
@@ -46,7 +48,13 @@ export default function UserOrderDetails() {
   const { toast, show } = useToast();
 
   const [cancelling, setCancelling] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const st = useOrdersStatus();
+
+  if (!order && (st.loading || !st.loaded)) {
+    return <div className="dn"><PageLoader label="Loading your order…" /></div>;
+  }
 
   if (!order) {
     return (
@@ -64,8 +72,8 @@ export default function UserOrderDetails() {
 
   const delivered = order.stage >= 5 && !order.cancelled;
   const shippedPhase = order.stage >= 3 && !order.cancelled && !delivered;
-  const latest = order.events[order.events.length - 1];
-  const co2 = Math.round((order.item.co2SavedKg || 0) * order.qty);
+  const latest = order.events[order.events.length - 1] || { at: order.placedAt, label: order.status, detail: "" };
+  
 
   return (
     <div className="dn ob ob-details">
@@ -146,7 +154,7 @@ export default function UserOrderDetails() {
           <Info size={20} />
           <div>
             <strong>{order.status === "Processing" ? "The seller is packing your item" : "Order confirmed"}</strong>
-            Expected delivery {relativeDay(order.eta).toLowerCase()} ({formatDate(order.eta)}). You can cancel for free until it ships.
+            {order.eta ? `Expected delivery ${relativeDay(order.eta).toLowerCase()} (${formatDate(order.eta)}). ` : ""}You can cancel for free until it ships.
           </div>
         </div>
       )}
@@ -155,7 +163,7 @@ export default function UserOrderDetails() {
           <CheckCircle2 size={20} />
           <div>
             <strong>Delivered on {formatDate(latest.at)}</strong>
-            This purchase saved about {co2} kg of CO₂. Thank you for choosing second-life products.
+            Thank you for choosing second-life products.
           </div>
         </div>
       )}
@@ -165,23 +173,22 @@ export default function UserOrderDetails() {
         <div className="ob-main">
           <section className="dn-card dn-card-pad">
             <div className="dn-card-head">
-              <h2>Item</h2>
+              <h2>{order.lines.length > 1 ? "Items" : "Item"}</h2>
               <Link to={`/user-marketplace/product/${order.itemId}`} className="dn-link">View product →</Link>
             </div>
-            <div className="ob-item">
-              <SafeImage src={order.item.image} alt={order.item.title} />
-              <div>
-                <span className="dn-chip">{order.item.category}</span>
-                <h3>{order.item.title}</h3>
-                <p>{order.item.summary}</p>
-                <ul>
-                  <li>Condition: <b>{order.item.condition}</b></li>
-                  <li>Qty: <b>{order.qty}</b></li>
-                  <li><Leaf size={13} /> <b>{co2} kg</b> CO₂ saved</li>
-                </ul>
+            {order.lines.map((ln) => (
+              <div className="ob-item" key={ln.id}>
+                <SafeImage src={ln.cover} alt={ln.title} />
+                <div>
+                  <h3>{ln.title}</h3>
+                  <ul>
+                    <li>Qty: <b>{ln.qty}</b></li>
+                    <li>{inr(ln.unit_price)} each</li>
+                  </ul>
+                </div>
+                <strong className="ob-item-price">{inr(ln.line_total)}</strong>
               </div>
-              <strong className="ob-item-price">{inr(order.price)}</strong>
-            </div>
+            ))}
           </section>
 
           <section className="dn-card dn-card-pad">
@@ -231,7 +238,7 @@ export default function UserOrderDetails() {
               <Receipt size={18} />
             </div>
             <dl className="ob-price">
-              <div><dt>Item ({order.qty} × {inr(order.price)})</dt><dd>{inr(order.price * order.qty)}</dd></div>
+              <div><dt>{order.lines.length > 1 ? `Items (${order.qty})` : `Item (${order.qty} × ${inr(order.price)})`}</dt><dd>{inr(order.subtotal)}</dd></div>
               <div><dt>Delivery</dt><dd>{order.shipping ? inr(order.shipping) : "Free"}</dd></div>
               {order.platformFee > 0 && <div><dt>Platform fee</dt><dd>{inr(order.platformFee)}</dd></div>}
               {order.discount > 0 && <div className="is-save"><dt>Discount</dt><dd>− {inr(order.discount)}</dd></div>}
@@ -285,10 +292,19 @@ export default function UserOrderDetails() {
         <CancelOrderModal
           order={order}
           onClose={() => setCancelling(false)}
-          onConfirm={(reason) => {
-            cancelOrder(order.id, reason);
-            setCancelling(false);
-            show("Order cancelled. Your refund has started.");
+          busy={cancelBusy}
+          onConfirm={async (reason) => {
+            if (cancelBusy) return;
+            setCancelBusy(true);
+            try {
+              await cancelOrder(order.id, reason);
+              show(order.payment === "COD" ? "Order cancelled." : "Order cancelled. Your refund has started.");
+            } catch (e) {
+              show(e.message || "Could not cancel this order.");
+            } finally {
+              setCancelBusy(false);
+              setCancelling(false);
+            }
           }}
         />
       )}

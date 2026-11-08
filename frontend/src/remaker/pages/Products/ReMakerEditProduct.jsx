@@ -3,15 +3,20 @@ import { Link, useParams } from "react-router-dom";
 import { PackageSearch } from "lucide-react";
 
 import ProductForm from "../../pages-components/ProductForm";
-import { getProductById } from "../../data/remakerProducts";
+import { useMyProduct } from "../../data/productsStore";
 
 import "../../css/ReMakerProductForm.css";
 
+import { PageLoader } from "../../../shared/components/Spinner";
 export default function ReMakerEditProduct() {
   /* works with both /:productId/edit and /:id/edit */
   const params = useParams();
   const productId = params.productId ?? params.id;
-  const product = getProductById(productId);
+  const { product, error } = useMyProduct(productId);
+
+  if (!product && !error) {
+    return <section className="rpf"><div className="rpf-card rpf-missing"><PageLoader label="Loading product…" minHeight={160} /></div></section>;
+  }
 
   if (!product) {
     return (

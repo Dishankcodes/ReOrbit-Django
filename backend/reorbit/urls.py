@@ -12,6 +12,8 @@ urlpatterns = [
     path("api/admins/", include("apps.admins.urls")),
     # Domain A: marketplace money flow
     path("api/listings/", include("apps.listings.urls")),
+    path("api/marketplace/", include("apps.listings.marketplace_urls")),
+    path("api/public/", include("apps.listings.public_urls")),
     path("api/portfolio/", include("apps.portfolio.urls")),
     path("api/social/", include("apps.social.urls")),
     path("api/orders/", include("apps.orders.urls")),

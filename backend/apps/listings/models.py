@@ -85,7 +85,7 @@ class Item(PublicIdModel, TimeStampedModel):
             models.Index(fields=["category"], name="items_category_idx"),
         ]
         constraints = [
-            models.CheckConstraint(condition=Q(quantity__gte=1), name="item_quantity_gte_1"),
+            models.CheckConstraint(condition=Q(quantity__gte=0), name="item_quantity_gte_0"),
         ]
 
     def __str__(self):
@@ -108,8 +108,15 @@ class MediaImage(models.Model):
         COVER = "Cover", "Cover"
         GALLERY = "Gallery", "Gallery"
 
+    # Exactly one parent is set (see the check constraint below).
     item = models.ForeignKey(
         Item, on_delete=models.CASCADE, related_name="images", null=True, blank=True
+    )
+    remaker_product = models.ForeignKey(
+        "remakers.RemakerProduct", on_delete=models.CASCADE, related_name="images", null=True, blank=True
+    )
+    admin_item = models.ForeignKey(
+        "admins.AdminItem", on_delete=models.CASCADE, related_name="images", null=True, blank=True
     )
     image = models.ImageField(upload_to="listings/", validators=[validate_image])
     image_type = models.CharField(max_length=30, choices=Kind.choices, default=Kind.GALLERY)
@@ -122,4 +129,18 @@ class MediaImage(models.Model):
     class Meta:
         db_table = "media_images"
         ordering = ["display_order", "pk"]
-        indexes = [models.Index(fields=["item", "display_order"], name="media_item_order_idx")]
+        indexes = [
+            models.Index(fields=["item", "display_order"], name="media_item_order_idx"),
+            models.Index(fields=["remaker_product", "display_order"], name="media_rprod_order_idx"),
+            models.Index(fields=["admin_item", "display_order"], name="media_aitem_order_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(item__isnull=False, remaker_product__isnull=True, admin_item__isnull=True)
+                    | Q(item__isnull=True, remaker_product__isnull=False, admin_item__isnull=True)
+                    | Q(item__isnull=True, remaker_product__isnull=True, admin_item__isnull=False)
+                ),
+                name="media_exactly_one_parent",
+            )
+        ]

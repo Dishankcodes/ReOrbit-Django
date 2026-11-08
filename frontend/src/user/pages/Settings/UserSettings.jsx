@@ -31,18 +31,19 @@ import {
 } from "../../data/settingsStore";
 
 import {
-  removeAddress,
-  saveAddress,
-  setDefaultAddress,
-  updateAddress,
-  useAddresses,
-} from "../../data/shopStore";
+  createAddress,
+  deleteAddress,
+  editAddress,
+  makeDefaultAddress,
+  useServerAddresses,
+} from "../../data/checkoutStore";
 
 import ConfirmModal from "../../components/ui/ConfirmModal";
 
 import useToast from "../../components/ui/useToast";
 
 import AddressForm from "../Shop/components/AddressForm";
+import { PageLoader } from "../../../shared/components/Spinner";
 
 import "../../css/shared/ui-base.css";
 
@@ -109,9 +110,27 @@ function Toggle({ checked, onChange, label, hint, disabled }) {
 /* ---------------- addresses ---------------- */
 
 function AddressSection({ show }) {
-  const { addresses, defaultId } = useAddresses();
+  const { addresses, defaultId, loading, error, reload } = useServerAddresses();
 
   const [mode, setMode] = useState(null); // null | "new" | address id
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  /* one place for every address change: spinner, server messages, toast */
+  const run = async (task, done) => {
+    setSaving(true);
+    setFieldErrors({});
+    try {
+      await task();
+      setMode(null);
+      if (done) show(done);
+    } catch (e) {
+      setFieldErrors(e.errors || {});
+      if (!e.errors) show(e.message || "Something went wrong. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const [removing, setRemoving] = useState(null);
 
@@ -137,20 +156,22 @@ function AddressSection({ show }) {
         )}
       </div>
 
+      {loading && addresses.length === 0 && <PageLoader label="Loading your addresses…" minHeight={120} />}
+      {error && addresses.length === 0 && (
+        <p className="dn-error" role="alert">
+          {error} <button type="button" className="dn-link" onClick={reload}>Try again</button>
+        </p>
+      )}
       <div className="ust-addrs">
         {addresses.map((a) =>
           mode === a.id ? (
             <AddressForm
               key={a.id}
               initial={a}
+              saving={saving}
+              serverErrors={fieldErrors}
               onCancel={() => setMode(null)}
-              onSave={(v) => {
-                updateAddress(a.id, v);
-
-                setMode(null);
-
-                show("Address updated.");
-              }}
+              onSave={(v) => run(() => editAddress(a.id, v), "Address updated.")}
             />
           ) : (
             <article key={a.id} className="ust-addr">
@@ -187,11 +208,8 @@ function AddressSection({ show }) {
                   <button
                     type="button"
                     className="dn-btn dn-btn--soft dn-btn--sm"
-                    onClick={() => {
-                      setDefaultAddress(a.id);
-
-                      show("Default address changed.");
-                    }}
+                    disabled={saving}
+                    onClick={() => run(() => makeDefaultAddress(a.id), "Default address changed.")}
                   >
                     Make default
                   </button>
@@ -214,14 +232,10 @@ function AddressSection({ show }) {
 
       {mode === "new" && (
         <AddressForm
+          saving={saving}
+          serverErrors={fieldErrors}
           onCancel={() => setMode(null)}
-          onSave={(v) => {
-            saveAddress(v);
-
-            setMode(null);
-
-            show("Address added.");
-          }}
+          onSave={(v) => run(() => createAddress(v), "Address added.")}
         />
       )}
 
@@ -233,11 +247,9 @@ function AddressSection({ show }) {
           cancelLabel="Keep it"
           onClose={() => setRemoving(null)}
           onConfirm={() => {
-            removeAddress(removing.id);
-
+            const target = removing;
             setRemoving(null);
-
-            show("Address removed.");
+            run(() => deleteAddress(target.id), "Address removed.");
           }}
         >
           <p>

@@ -272,6 +272,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CORS / CSRF
 
 
+from corsheaders.defaults import default_headers  # noqa: E402
+
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
     (
@@ -281,6 +283,10 @@ CORS_ALLOWED_ORIGINS = env_list(
         "http://127.0.0.1:5173"
     ),
 )
+
+# The checkout sends an Idempotency-Key header (stops a double tap creating two orders).
+# Browsers only allow it cross-origin if it is listed here.
+CORS_ALLOW_HEADERS = (*default_headers, "idempotency-key")
 
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",

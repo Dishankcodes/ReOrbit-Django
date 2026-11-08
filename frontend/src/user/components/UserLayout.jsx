@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { DelayedLoader } from "../../shared/components/Spinner";
 import { Outlet, useLocation } from "react-router-dom";
 
 import UserSidebar from "./UserSidebar";
@@ -74,7 +75,9 @@ export default function UserLayout() {
 
         <main className="user-page-content">
           <AccountGate info={account} role="user">
-            <Outlet />
+            <Suspense fallback={<DelayedLoader minHeight={320} />}>
+              <div className="ro-route">{<Outlet />}</div>
+            </Suspense>
           </AccountGate>
         </main>
       </div>

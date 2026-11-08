@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import "./Skeleton.css";
 
 /* =========================================================
@@ -8,14 +8,11 @@ import "./Skeleton.css";
    isLoading flag from the same hook and nothing else changes.
    ========================================================= */
 
-export function useLoading(ms = 450) {
-  const [loading, setLoading] = useState(ms > 0);
-  useEffect(() => {
-    if (ms <= 0) return undefined;
-    const t = window.setTimeout(() => setLoading(false), ms);
-    return () => window.clearTimeout(t);
-  }, [ms]);
-  return loading;
+/* Used to hold a skeleton on screen for a fixed 450 ms. That delay was only a stand-in for
+   a request, and it slowed every page switch. Screens that load real data now show their own
+   spinner while the request runs (see Spinner.jsx), so this never waits any more. */
+export function useLoading() {
+  return false;
 }
 
 export function Skel({ w = "100%", h = 14, r = 8, style }) {

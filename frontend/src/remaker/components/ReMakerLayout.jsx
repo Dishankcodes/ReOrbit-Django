@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { DelayedLoader } from "../../shared/components/Spinner";
 import { Outlet, useLocation } from "react-router-dom";
 
 import ReMakerSidebar from "./ReMakerSidebar";
@@ -96,7 +97,9 @@ export default function ReMakerLayout() {
 
         <main className="remaker-page-content">
           <AccountGate info={account} role="remaker">
-            <Outlet />
+            <Suspense fallback={<DelayedLoader minHeight={320} />}>
+              <div className="ro-route">{<Outlet />}</div>
+            </Suspense>
           </AccountGate>
         </main>
       </div>

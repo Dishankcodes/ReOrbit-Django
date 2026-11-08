@@ -16,7 +16,7 @@ import {
   Home,
 } from "lucide-react";
 
-import { STAGES, useOrder } from "../../data/ordersStore";
+import { STAGES, useOrder, useOrdersStatus } from "../../data/ordersStore";
 import { formatDate, formatLongDate, relativeDay } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import EmptyState from "../../components/ui/EmptyState";
@@ -32,6 +32,7 @@ import "../../css/shared/ui-base.css";
 import "../../css/orders/orders-base.css";
 import "../../css/orders/UserOrderTrack.css";
 
+import { PageLoader } from "../../../shared/components/Spinner";
 const ROUTE_PROGRESS = [0, 6, 18, 46, 88, 100];
 
 /* a stable fake distance per seller city, just for the demo route card */
@@ -42,7 +43,12 @@ const distanceFor = (city = "") =>
 export default function UserOrderTrack() {
   const { orderId } = useParams();
   const order = useOrder(orderId);
+  const ordersStatus = useOrdersStatus();
   const { toast, show } = useToast();
+
+  if (!order && !ordersStatus.loaded && !ordersStatus.error) {
+    return <div className="dn"><PageLoader label="Loading your order…" /></div>;
+  }
 
   if (!order) {
     return (
@@ -70,7 +76,7 @@ export default function UserOrderTrack() {
     ((parseInt(order.id.replace(/\D/g, ""), 10) * 7) % 9000) + 1000,
   );
   const next = !cancelled && !delivered ? STAGES[order.stage + 1] : null;
-  const lastEvent = order.events[order.events.length - 1];
+  const lastEvent = order.events[order.events.length - 1] || { at: order.deliveredAt || order.placedAt };
 
   const copyAwb = async () => {
     try {
@@ -93,10 +99,14 @@ export default function UserOrderTrack() {
     title = `Delivered on ${formatDate(lastEvent.at)}`;
     sub = "Your order reached you. We hope you love it.";
   } else {
-    const day = relativeDay(order.eta);
-    title =
-      day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
-    sub = `Expected by ${formatLongDate(order.eta)}`;
+    if (order.eta) {
+      const day = relativeDay(order.eta);
+      title = day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
+      sub = `Expected by ${formatLongDate(order.eta)}`;
+    } else {
+      title = order.awaitingPayment ? "Waiting for payment" : order.stage >= 3 ? "On its way" : "Being prepared";
+      sub = order.courier ? `With ${order.courier.name}` : "The seller is getting your order ready.";
+    }
   }
 
   return (
@@ -235,7 +245,7 @@ export default function UserOrderTrack() {
                 >
                   <Copy size={14} /> Copy number
                 </button>
-                {onTheWay && (
+                {onTheWay && order.courier.phone && (
                   <a
                     href={`tel:${order.courier.phone.replace(/\s/g, "")}`}
                     className="dn-btn dn-btn--ghost dn-btn--sm"

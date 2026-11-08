@@ -2,9 +2,10 @@ import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import BannerSlot from "../../../shared/components/BannerSlot";
+import { inr, initialsImage, usePublic } from "../../../api/publicData";
 import "../../css/Home.css";
 
-const products = [
+const SAMPLE_PRODUCTS = [
   {
     title: "Teak drawer chest, 1970s",
     description:
@@ -39,7 +40,7 @@ const products = [
   },
 ];
 
-const categories = [
+const SAMPLE_CATEGORIES = [
   ["chair", "Furniture", "3 live"],
   ["styler", "Textiles", "1 live"],
   ["cable", "Electronics", "1 live"],
@@ -48,7 +49,7 @@ const categories = [
   ["menu_book", "Books & Paper", "1 live"],
 ];
 
-const remakers = [
+const SAMPLE_REMAKERS = [
   {
     name: "Tara Bose",
     specialty: "Textile Patchwork",
@@ -96,6 +97,48 @@ const testimonials = [
   },
 ];
 
+
+const CATEGORY_ICON = [
+  [/furnit|chair|table/i, "chair"], [/textile|cloth|fabric/i, "styler"], [/electron|appliance/i, "cable"],
+  [/glass|ceramic|pottery/i, "local_cafe"], [/wood|metal|tool/i, "carpenter"], [/book|paper|stationer/i, "menu_book"],
+  [/decor|home|living|lamp|light/i, "home"], [/art|craft/i, "palette"], [/toy|kid/i, "toys"],
+];
+const iconFor = (name) => (CATEGORY_ICON.find(([re]) => re.test(name)) || [0, "category"])[1];
+
+/* Real data when the platform has it, the sample content otherwise (a fresh database
+   must not leave the home page empty). */
+function useHomeData() {
+  const { data } = usePublic("/home/");
+  const real = data || null;
+  const cards = (real?.products || []).filter((p) => p.cover);
+  const products = cards.length >= 3
+    ? cards.slice(0, 3).map((p) => ({
+        title: p.title, description: p.summary || "", price: inr(p.price),
+        location: p.city || "Gujarat", impact: "", category: p.category.name, image: p.cover,
+      }))
+    : SAMPLE_PRODUCTS;
+  const categories = real?.categories?.length
+    ? real.categories.map((c) => [iconFor(c.name), c.name, `${c.live} live`])
+    : SAMPLE_CATEGORIES;
+  const remakers = real?.remakers?.length
+    ? real.remakers.map((r) => ({
+        name: r.name, specialty: r.specialty || "ReMaker",
+        text: r.bio || "Gives reclaimed material a second life.",
+        rescued: `${r.creations} ${r.creations === 1 ? "piece" : "pieces"} live`,
+        location: r.city || "Gujarat", image: r.image || initialsImage(r.name),
+      }))
+    : SAMPLE_REMAKERS;
+  const st = real?.stats;
+  const hasStats = !!st && (st.remakers > 0 || st.items_rescued > 0 || st.members > 0);
+  const hero = hasStats
+    ? [["Items Rescued", String(st.items_rescued)], ["Tonnes CO₂e Saved", String(st.co2_tonnes)], ["ReMakers Onboarded", String(st.remakers)]]
+    : [["Items Rescued", "1,284"], ["Tonnes CO₂e Saved", "47.6"], ["ReMakers Onboarded", "36"]];
+  const final = hasStats
+    ? [st.members.toLocaleString("en-IN"), st.live_products.toLocaleString("en-IN"), st.remakers.toLocaleString("en-IN")]
+    : ["12,000+", "3,500+", "98%"];
+  return { products, categories, remakers, hero, final };
+}
+
 function Icon({ children, className = "" }) {
   return (
     <span className={`material-symbols-outlined ${className}`}>{children}</span>
@@ -118,10 +161,12 @@ function ProductCard({ product, className }) {
             <Icon>location_on</Icon>
             {product.location}
           </span>
-          <span className="co2">
-            <Icon>eco</Icon>
-            {product.impact}
-          </span>
+          {product.impact && (
+            <span className="co2">
+              <Icon>eco</Icon>
+              {product.impact}
+            </span>
+          )}
         </div>
       </div>
     </article>
@@ -140,6 +185,7 @@ const viewerKind = () => {
 
 export default function Home() {
   const viewer = viewerKind();
+  const { products, categories, remakers, hero, final } = useHomeData();
   return (
     <div className="home">
       <Navbar />
@@ -186,18 +232,12 @@ export default function Home() {
             </p>
 
             <div className="hero-stats">
-              <div>
-                <span>Items Rescued</span>
-                <strong>1,284</strong>
-              </div>
-              <div>
-                <span>Tonnes CO₂e Saved</span>
-                <strong>47.6</strong>
-              </div>
-              <div>
-                <span>ReMakers Onboarded</span>
-                <strong>36</strong>
-              </div>
+              {hero.map(([label, value]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -470,11 +510,11 @@ export default function Home() {
               </div>
 
               <div className="final-stats">
-                <strong>12,000+</strong>
+                <strong>{final[0]}</strong>
                 <i />
-                <strong>3,500+</strong>
+                <strong>{final[1]}</strong>
                 <i />
-                <strong>98%</strong>
+                <strong>{final[2]}</strong>
               </div>
             </div>
           </div>

@@ -1,16 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "../../../shared/backNav";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  TicketPercent,
-  X,
   Banknote,
   Check,
   ClipboardCheck,
   CreditCard,
   Info,
-  Landmark,
   Leaf,
   Lock,
   MapPin,
@@ -18,26 +15,28 @@ import {
   Plus,
   ShieldCheck,
   ShoppingBag,
-  Smartphone,
   Trash2,
-  Wallet,
 } from "lucide-react";
 
+import { removeFromCart, useCheckoutLines } from "../../data/shopStore";
 import {
-  PAYMENT_METHODS,
-  WALLET_BALANCE,
-  payAndPlace,
-  removeAddress,
-  saveAddress,
-  setDefaultAddress,
-  useAddresses,
-  useCheckoutLines,
-} from "../../data/shopStore";
-import { codBlockReason, feeLabel, useCommerce } from "../../../shared/commerce";
+  createAddress,
+  deleteAddress,
+  isLiveId,
+  makeDefaultAddress,
+  useServerAddresses,
+  useServerQuote,
+} from "../../data/checkoutStore";
+import { addPlacedOrders, loadOrders } from "../../data/ordersStore";
+import { loadLiveMarketplace, useLiveMarketplace } from "../../data/liveMarketplace";
+import { checkoutApi, payOnline } from "../../../api/orders";
+import { getAccount } from "../../../api/session";
+import { feeLabel } from "../../../shared/commerce";
 import { formatPrice } from "../../../data/marketplaceData";
-import { checkCoupon, useRewards } from "../../data/rewardsStore";
 import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
+import Spinner, { PageLoader } from "../../../shared/components/Spinner";
+import "../../../shared/components/Spinner.css";
 import AddressForm from "./components/AddressForm";
 import PaymentOverlay from "./components/PaymentOverlay";
 import ShopNav from "./components/ShopNav";
@@ -51,95 +50,74 @@ const STEPS = [
   { key: "payment", label: "Payment", icon: CreditCard },
   { key: "review", label: "Review", icon: ClipboardCheck },
 ];
-const ICON = { UPI: Smartphone, CARD: CreditCard, NET_BANKING: Landmark, WALLET: Wallet, COD: Banknote };
-const BANKS = ["State Bank of India", "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra Bank", "Bank of Baroda", "Punjab National Bank"];
-const UPI_RE = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
 
-function validateCard(c) {
-  const e = {};
-  const digits = c.number.replace(/\s/g, "");
-  if (digits.length !== 16 || !/^\d+$/.test(digits)) e.number = "Enter the 16-digit card number.";
-  if (c.name.trim().length < 3) e.name = "Enter the name on the card.";
-  const m = /^(\d{2})\s*\/\s*(\d{2})$/.exec(c.expiry.trim());
-  if (!m || Number(m[1]) < 1 || Number(m[1]) > 12 || Number(m[2]) < 26 || (Number(m[2]) === 26 && Number(m[1]) < 10)) e.expiry = "Enter a valid expiry (MM/YY).";
-  if (!/^\d{3}$/.test(c.cvv)) e.cvv = "CVV is 3 digits.";
-  return e;
-}
-
-const fmtCard = (v) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-const fmtExp = (v) => {
-  const d = v.replace(/\D/g, "").slice(0, 4);
-  return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
-};
+const newAttemptId = () =>
+  (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random()}`).slice(0, 60);
 
 export default function UserCheckout() {
   const navigate = useNavigate();
-  const quote = useCheckoutLines();
-  const { addresses, defaultId } = useAddresses();
+  const { ready } = useLiveMarketplace();
+  const all = useCheckoutLines();
+  const buyable = useMemo(() => all.lines.filter((l) => isLiveId(l.id)), [all.lines]);
+  const skipped = all.lines.length - buyable.length;
+  const { addresses, defaultId, loading: addrLoading, error: addrError, reload: reloadAddr } = useServerAddresses();
+  const q = useServerQuote(buyable);
+  const quote = q.quote;
 
   const [step, setStep] = useState("address");
-  const [addrId, setAddrId] = useState(defaultId);
+  const [addrId, setAddrId] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [savingAddr, setSavingAddr] = useState(false);
+  const [addrErrors, setAddrErrors] = useState({});
+  const [addrMsg, setAddrMsg] = useState("");
   const [note, setNote] = useState("");
-  const [method, setMethod] = useState("UPI");
-  const [upi, setUpi] = useState("");
-  const [card, setCard] = useState({ number: "", name: "", expiry: "", cvv: "" });
-  const [bank, setBank] = useState("");
-  const [touched, setTouched] = useState(false);
+  const [method, setMethod] = useState("");
+  const [cfg, setCfg] = useState(null); /* { enabled } : is online payment set up? */
   const [pay, setPay] = useState({ state: null, error: "" });
-  const [couponInput, setCouponInput] = useState("");
-  const [couponCode, setCouponCode] = useState("");
-  const [couponError, setCouponError] = useState("");
-  const { ctx } = useRewards();
+  const attempt = useRef(null);
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [step]);
+  useEffect(() => {
+    let alive = true;
+    checkoutApi.config().then((c) => alive && setCfg(c)).catch(() => alive && setCfg({ enabled: false }));
+    return () => { alive = false; };
+  }, []);
 
-  const address = addresses.find((a) => a.id === addrId) || addresses[0];
+  const address = addresses.find((a) => a.id === addrId) || addresses.find((a) => a.id === defaultId) || addresses[0];
+  useEffect(() => { if (!addrId && defaultId) setAddrId(defaultId); }, [defaultId, addrId]);
 
-  /* the applied coupon is re-checked whenever the basket changes */
-  const coupon = useMemo(() => {
-    if (!couponCode) return null;
-    const res = checkCoupon(couponCode, {
-      subtotal: quote.subtotal,
-      ctx: { ...ctx, hasRemaker: quote.lines.some((l) => l.item.sellerType === "remaker") },
-    });
-    return res.ok ? res : null;
-  }, [couponCode, quote.subtotal, quote.lines, ctx]);
-  const discount = coupon ? coupon.amount : 0;
-  const finalTotal = quote.total - discount;
+  const codOk = !!quote && quote.cod_allowed;
+  const onlineOk = !!cfg && cfg.enabled;
+  /* pick a sensible default once we know what is available */
+  useEffect(() => {
+    if (method || !cfg || !quote) return;
+    setMethod(onlineOk ? "RAZORPAY" : codOk ? "COD" : "");
+  }, [method, cfg, quote, onlineOk, codOk]);
+  /* the chosen method can stop being allowed when the basket changes */
+  useEffect(() => {
+    if (method === "COD" && quote && !quote.cod_allowed) setMethod(onlineOk ? "RAZORPAY" : "");
+  }, [method, quote, onlineOk]);
 
-  const applyCoupon = () => {
-    const res = checkCoupon(couponInput, {
-      subtotal: quote.subtotal,
-      ctx: { ...ctx, hasRemaker: quote.lines.some((l) => l.item.sellerType === "remaker") },
-    });
-    if (res.ok) { setCouponCode(res.code); setCouponError(""); setCouponInput(""); }
-    else setCouponError(res.error);
-  };
-  const removeCoupon = () => { setCouponCode(""); setCouponError(""); };
+  const problems = quote?.problems || {};
+  const hasProblems = Object.keys(problems).length > 0;
 
-  const walletShort = method === "WALLET" && finalTotal > WALLET_BALANCE;
-  useCommerce();
-  const codReason = codBlockReason(finalTotal);
-  const codOk = !codReason;
+  if (!ready && all.lines.length === 0) {
+    return (
+      <div className="dn sp">
+        <ShopNav />
+        <PageLoader label="Getting your checkout ready…" />
+      </div>
+    );
+  }
 
-  const payErrors = useMemo(() => {
-    if (method === "UPI") return UPI_RE.test(upi.trim()) ? {} : { upi: "Enter a valid UPI ID, like name@okbank." };
-    if (method === "CARD") return validateCard(card);
-    if (method === "NET_BANKING") return bank ? {} : { bank: "Choose your bank." };
-    if (method === "WALLET") return walletShort ? { wallet: "Your wallet balance is too low." } : {};
-    return {};
-  }, [method, upi, card, bank, walletShort]);
-  const payOk = Object.keys(payErrors).length === 0;
-
-  if (quote.lines.length === 0 && !pay.state) {
+  if (buyable.length === 0 && !pay.state) {
     return (
       <div className="dn sp">
         <ShopNav />
         <EmptyState
           icon={ShoppingBag}
           title="Nothing to check out"
-          text="Your cart is empty, or the pieces in it are no longer available."
+          text={skipped ? "The pieces in your cart are samples and can't be bought yet." : "Your cart is empty, or the pieces in it are no longer available."}
           actionLabel="Browse marketplace"
           to="/user-marketplace"
         />
@@ -148,29 +126,78 @@ export default function UserCheckout() {
   }
 
   const idx = STEPS.findIndex((s) => s.key === step);
-  const continuePay = () => { setTouched(true); if (payOk) setStep("review"); };
+  const methodLabel = method === "COD" ? "Pay on delivery" : "Pay online";
+  const methodDetail = method === "COD" ? "Pay when it arrives" : "UPI, cards and net banking, secured by Razorpay";
 
-  const place = async () => {
-    setPay({ state: "processing", error: "" });
-    const res = await payAndPlace({
-      lines: quote.lines.map((l) => ({ id: l.id, item: l.item, qty: l.qty })),
-      address,
-      method,
-      note,
-      coupon,
-      detail: { upi: upi.trim(), card: card.number },
-    });
-    if (res.ok) navigate(`/user-checkout/success/${res.orderIds.join(",")}`, { replace: true });
-    else setPay({ state: "failed", error: res.error });
+  const saveNewAddress = async (values) => {
+    setSavingAddr(true);
+    setAddrErrors({});
+    setAddrMsg("");
+    try {
+      const id = await createAddress(values);
+      setAddrId(id);
+      setAdding(false);
+    } catch (e) {
+      setAddrErrors(e.errors || {});
+      if (!e.errors) setAddrMsg(e.message || "Could not save the address.");
+    } finally {
+      setSavingAddr(false);
+    }
   };
 
-  const methodLabel = PAYMENT_METHODS.find((m) => m.key === method)?.label;
-  const methodDetail =
-    method === "UPI" ? upi.trim()
-    : method === "CARD" ? `Card ending ${card.number.replace(/\s/g, "").slice(-4)}`
-    : method === "NET_BANKING" ? bank
-    : method === "WALLET" ? "ReOrbit Wallet"
-    : "Pay when it arrives";
+  const guard = async (task) => {
+    setAddrMsg("");
+    try { await task(); } catch (e) { setAddrMsg(e.message || "Something went wrong. Please try again."); }
+  };
+
+  const fail = (message) => setPay({ state: "failed", error: message });
+
+  const finish = async (orders, paidOnline) => {
+    if (paidOnline) await loadOrders(true);
+    else addPlacedOrders(orders);
+    buyable.forEach((l) => removeFromCart(l.id));
+    loadLiveMarketplace(true); /* stock changed */
+    navigate(`/user-checkout/success/${orders.map((o) => o.id).join(",")}`, { replace: true });
+  };
+
+  const place = async () => {
+    if (pay.state === "processing" || pay.state === "paying") return; /* no double submit */
+    if (!address || !method || !quote || hasProblems) return;
+    setPay({ state: "processing", error: "" });
+    attempt.current = attempt.current || newAttemptId(); /* same id on a repeat tap = same order */
+
+    let res;
+    try {
+      res = await checkoutApi.place(
+        { items: buyable.map((l) => ({ id: l.id, qty: l.qty })), address_id: address.id, method, note: note.trim() },
+        attempt.current,
+      );
+    } catch (e) {
+      attempt.current = null;
+      if (e.code === "UNAVAILABLE") { loadLiveMarketplace(true); q.retry(); }
+      return fail(e.message || "We could not place your order. Please try again.");
+    }
+
+    if (res.payment.method === "COD") {
+      attempt.current = null;
+      return finish(res.orders, false);
+    }
+
+    setPay({ state: "paying", error: "" });
+    try {
+      const done = await payOnline(res.payment, { name: address.name, email: getAccount()?.email, phone: address.phone });
+      attempt.current = null;
+      if (done.payment.status !== "Paid") return fail("The payment could not be completed. If money was deducted it will be refunded automatically.");
+      return finish(res.orders, true);
+    } catch (e) {
+      attempt.current = null;
+      if (e.dismissed) {
+        checkoutApi.cancelPayment(res.payment.id).catch(() => {});
+        return fail("You closed the payment window, so nothing was charged. Your items are released.");
+      }
+      return fail(e.message || "We could not confirm your payment. If money was deducted your order will show in My orders shortly, otherwise it is refunded automatically.");
+    }
+  };
 
   return (
     <div className="dn sp">
@@ -217,10 +244,19 @@ export default function UserCheckout() {
                 )}
               </div>
 
+              {addrLoading && addresses.length === 0 && <PageLoader label="Loading your addresses…" minHeight={120} />}
+              {addrError && addresses.length === 0 && (
+                <p className="dn-error" role="alert">{addrError} <button type="button" className="dn-link" onClick={reloadAddr}>Try again</button></p>
+              )}
+              {!addrLoading && !addrError && addresses.length === 0 && !adding && (
+                <p className="ushp-note">You have no saved address yet. Add one to continue.</p>
+              )}
+              {addrMsg && <p className="dn-error" role="alert">{addrMsg}</p>}
+
               <div className="ushp-addrs" role="radiogroup" aria-label="Delivery address">
                 {addresses.map((a) => (
-                  <label key={a.id} className={`ushp-addr ${addrId === a.id ? "on" : ""}`}>
-                    <input type="radio" name="addr" checked={addrId === a.id} onChange={() => setAddrId(a.id)} />
+                  <label key={a.id} className={`ushp-addr ${address?.id === a.id ? "on" : ""}`}>
+                    <input type="radio" name="addr" checked={address?.id === a.id} onChange={() => setAddrId(a.id)} />
                     <span className="ushp-radio" aria-hidden="true" />
                     <div>
                       <div className="ushp-addr-top">
@@ -232,7 +268,7 @@ export default function UserCheckout() {
                       <small>{a.phone}</small>
                       <div className="ushp-addr-actions">
                         {defaultId !== a.id && (
-                          <button type="button" className="dn-link" onClick={(e) => { e.preventDefault(); setDefaultAddress(a.id); }}>Make default</button>
+                          <button type="button" className="dn-link" onClick={(e) => { e.preventDefault(); guard(() => makeDefaultAddress(a.id)); }}>Make default</button>
                         )}
                         {addresses.length > 1 && (
                           <button
@@ -240,8 +276,10 @@ export default function UserCheckout() {
                             className="ushp-textbtn danger"
                             onClick={(e) => {
                               e.preventDefault();
-                              removeAddress(a.id);
-                              if (addrId === a.id) setAddrId(addresses.find((x) => x.id !== a.id).id);
+                              guard(async () => {
+                                await deleteAddress(a.id);
+                                if (addrId === a.id) setAddrId(null);
+                              });
                             }}
                           >
                             <Trash2 size={13} /> Remove
@@ -255,8 +293,10 @@ export default function UserCheckout() {
 
               {adding && (
                 <AddressForm
-                  onCancel={() => setAdding(false)}
-                  onSave={(a) => { const id = saveAddress(a); setAddrId(id); setAdding(false); }}
+                  saving={savingAddr}
+                  serverErrors={addrErrors}
+                  onCancel={() => { setAdding(false); setAddrErrors({}); }}
+                  onSave={saveNewAddress}
                 />
               )}
 
@@ -273,7 +313,7 @@ export default function UserCheckout() {
               </label>
 
               <div className="ushp-actions">
-                <button type="button" className="dn-btn" onClick={() => setStep("payment")} disabled={adding}>
+                <button type="button" className="dn-btn" onClick={() => setStep("payment")} disabled={adding || !address}>
                   Continue to payment
                 </button>
               </div>
@@ -291,100 +331,55 @@ export default function UserCheckout() {
                 <span className="dn-chip"><Lock size={13} /> Secure</span>
               </div>
 
-              <div className="ushp-methods" role="radiogroup" aria-label="Payment method">
-                {PAYMENT_METHODS.filter((m) => m.key !== "COD" || codOk).map((m) => {
-                  const Icon = ICON[m.key];
-                  const on = method === m.key;
-                  return (
-                    <div key={m.key} className={`ushp-method ${on ? "on" : ""}`}>
+              {(!cfg || !quote) && <PageLoader label="Checking payment options…" minHeight={120} />}
+
+              {cfg && quote && (
+                <div className="ushp-methods" role="radiogroup" aria-label="Payment method">
+                  <div className={`ushp-method ${method === "RAZORPAY" ? "on" : ""}`}>
+                    <label>
+                      <input type="radio" name="pm" checked={method === "RAZORPAY"} disabled={!onlineOk} onChange={() => setMethod("RAZORPAY")} />
+                      <span className="ushp-radio" aria-hidden="true" />
+                      <span className="ushp-method-ico"><CreditCard size={18} /></span>
+                      <div>
+                        <strong>Pay online</strong>
+                        <small>{onlineOk ? "UPI, cards, net banking and wallets" : "Not available right now"}</small>
+                      </div>
+                    </label>
+                    {method === "RAZORPAY" && (
+                      <div className="ushp-method-body">
+                        <p className="ushp-note">A secure Razorpay window opens to take the payment. Your items are held for 30 minutes while you pay.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {codOk && (
+                    <div className={`ushp-method ${method === "COD" ? "on" : ""}`}>
                       <label>
-                        <input type="radio" name="pm" checked={on} onChange={() => { setMethod(m.key); setTouched(false); }} />
+                        <input type="radio" name="pm" checked={method === "COD"} onChange={() => setMethod("COD")} />
                         <span className="ushp-radio" aria-hidden="true" />
-                        <span className="ushp-method-ico"><Icon size={18} /></span>
-                        <div><strong>{m.label}</strong><small>{m.hint}</small></div>
+                        <span className="ushp-method-ico"><Banknote size={18} /></span>
+                        <div><strong>Pay on delivery</strong><small>Cash or UPI to the delivery partner</small></div>
                       </label>
-
-                      {on && m.key === "UPI" && (
+                      {method === "COD" && (
                         <div className="ushp-method-body">
-                          <label className="dn-field">
-                            <span className="dn-label">UPI ID</span>
-                            <input className={`dn-input ${touched && payErrors.upi ? "is-error" : ""}`} value={upi} onChange={(e) => setUpi(e.target.value)} placeholder="name@okbank" autoComplete="off" />
-                            {touched && payErrors.upi && <span className="dn-error">{payErrors.upi}</span>}
-                          </label>
-                        </div>
-                      )}
-
-                      {on && m.key === "CARD" && (
-                        <div className="ushp-method-body ushp-form-grid">
-                          <label className="dn-field ushp-wide">
-                            <span className="dn-label">Card number</span>
-                            <input className={`dn-input ${touched && payErrors.number ? "is-error" : ""}`} inputMode="numeric" value={card.number} onChange={(e) => setCard({ ...card, number: fmtCard(e.target.value) })} placeholder="1234 5678 9012 3456" autoComplete="off" />
-                            {touched && payErrors.number && <span className="dn-error">{payErrors.number}</span>}
-                          </label>
-                          <label className="dn-field ushp-wide">
-                            <span className="dn-label">Name on card</span>
-                            <input className={`dn-input ${touched && payErrors.name ? "is-error" : ""}`} value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} placeholder="As printed on the card" />
-                            {touched && payErrors.name && <span className="dn-error">{payErrors.name}</span>}
-                          </label>
-                          <label className="dn-field">
-                            <span className="dn-label">Expiry</span>
-                            <input className={`dn-input ${touched && payErrors.expiry ? "is-error" : ""}`} inputMode="numeric" value={card.expiry} onChange={(e) => setCard({ ...card, expiry: fmtExp(e.target.value) })} placeholder="MM/YY" />
-                            {touched && payErrors.expiry && <span className="dn-error">{payErrors.expiry}</span>}
-                          </label>
-                          <label className="dn-field">
-                            <span className="dn-label">CVV</span>
-                            <input className={`dn-input ${touched && payErrors.cvv ? "is-error" : ""}`} inputMode="numeric" type="password" maxLength={3} value={card.cvv} onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, "") })} placeholder="•••" />
-                            {touched && payErrors.cvv && <span className="dn-error">{payErrors.cvv}</span>}
-                          </label>
-                        </div>
-                      )}
-
-                      {on && m.key === "NET_BANKING" && (
-                        <div className="ushp-method-body">
-                          <label className="dn-field">
-                            <span className="dn-label">Select your bank</span>
-                            <select className="dn-select" value={bank} onChange={(e) => setBank(e.target.value)}>
-                              <option value="">Choose a bank</option>
-                              {BANKS.map((b) => <option key={b}>{b}</option>)}
-                            </select>
-                            {touched && payErrors.bank && <span className="dn-error">{payErrors.bank}</span>}
-                          </label>
-                        </div>
-                      )}
-
-                      {on && m.key === "WALLET" && (
-                        <div className="ushp-method-body">
-                          <p className={`ushp-note ${walletShort ? "bad" : ""}`}>
-                            Balance <b>{formatPrice(WALLET_BALANCE)}</b> · This order <b>{formatPrice(finalTotal)}</b>
-                            {walletShort && <span> · Not enough balance</span>}
-                          </p>
-                        </div>
-                      )}
-
-                      {on && m.key === "COD" && (
-                        <div className="ushp-method-body">
-                          <p className="ushp-note">Pay {formatPrice(finalTotal)} to the delivery partner. The order stays “payment pending” until it arrives.</p>
+                          <p className="ushp-note">Pay {formatPrice(quote.total)} to the delivery partner. The order stays “payment pending” until it arrives.</p>
                         </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-
-              {!codOk && (
-                <p className="ushp-note" style={{ marginTop: 12 }}>
-                  {codReason}
-                </p>
+                  )}
+                </div>
               )}
 
-              <p className="ushp-demo">
-                <Info size={14} />
-                <span>Demo only. A card ending in <b>0000</b> or a UPI ID containing <b>fail</b> is declined, so you can try the failed-payment screen.</span>
-              </p>
+              {cfg && quote && !codOk && quote.cod_reason && (
+                <p className="ushp-note" style={{ marginTop: 12 }}>{quote.cod_reason}</p>
+              )}
+              {cfg && quote && !onlineOk && !codOk && (
+                <p className="dn-error" role="alert">No payment method is available right now. Please try again later.</p>
+              )}
 
               <div className="ushp-actions split">
                 <button type="button" className="dn-btn dn-btn--ghost" onClick={() => setStep("address")}>Back</button>
-                <button type="button" className="dn-btn" onClick={continuePay} disabled={walletShort}>Review order</button>
+                <button type="button" className="dn-btn" onClick={() => setStep("review")} disabled={!method || !quote}>Review order</button>
               </div>
             </section>
           )}
@@ -421,76 +416,57 @@ export default function UserCheckout() {
                 </div>
               </div>
 
+              {skipped > 0 && (
+                <p className="ushp-note">{skipped} sample {skipped === 1 ? "piece" : "pieces"} in your cart can't be bought yet and {skipped === 1 ? "is" : "are"} left out.</p>
+              )}
+              {hasProblems && (
+                <p className="dn-error" role="alert">Some pieces are no longer available: {Object.values(problems)[0]} Go back to your cart to remove them.</p>
+              )}
               <ul className="ushp-review-items">
-                {quote.lines.map((l) => (
+                {buyable.map((l) => (
                   <li key={l.id}>
                     <SafeImage src={l.item.image} alt={l.item.title} />
                     <div>
                       <strong>{l.item.title}</strong>
                       <span>{l.item.sellerType === "remaker" ? "Made by" : "Sold by"} {l.item.seller} · Qty {l.qty}</span>
                     </div>
-                    <b>{formatPrice(l.lineSubtotal)}</b>
+                    <b>{formatPrice(l.item.price * l.qty)}</b>
                   </li>
                 ))}
               </ul>
 
-              <p className="ushp-terms"><ShieldCheck size={14} /> One order is created for each piece, so the sellers can ship separately.</p>
+              <p className="ushp-terms"><ShieldCheck size={14} /> One order is created for each seller, so they can ship separately.</p>
 
               <div className="ushp-actions split">
                 <button type="button" className="dn-btn dn-btn--ghost" onClick={() => setStep("payment")}>Back</button>
-                <button type="button" className="dn-btn ushp-big" onClick={place}>
-                  <Lock size={15} /> {method === "COD" ? "Place order" : `Pay ${formatPrice(finalTotal)}`}
+                <button type="button" className="dn-btn ushp-big" onClick={place} disabled={!quote || hasProblems || !address || pay.state === "processing" || pay.state === "paying"}>
+                  {pay.state === "processing" ? <Spinner label="Placing…" /> : <><Lock size={15} /> {method === "COD" ? "Place order" : `Pay ${formatPrice(quote?.total || 0)}`}</>}
                 </button>
               </div>
             </section>
           )}
         </div>
 
-        <aside className="dn-card ushp-summary" aria-label="Order summary">
+        <aside className="dn-card ushp-summary" aria-label="Order summary" aria-busy={q.loading}>
           <h3>Order summary</h3>
           <ul className="ushp-sum-items">
-            {quote.lines.map((l) => (
+            {buyable.map((l) => (
               <li key={l.id}>
                 <div className="ushp-sum-img"><SafeImage src={l.item.image} alt="" /><i>{l.qty}</i></div>
                 <div><strong>{l.item.title}</strong><span>{l.item.seller}</span></div>
-                <b>{formatPrice(l.lineSubtotal)}</b>
+                <b>{formatPrice(l.item.price * l.qty)}</b>
               </li>
             ))}
           </ul>
+          {q.error && <p className="dn-error" role="alert">{q.error} <button type="button" className="dn-link" onClick={q.retry}>Try again</button></p>}
           <dl>
-            <div><dt>Subtotal</dt><dd>{formatPrice(quote.subtotal)}</dd></div>
-            <div><dt>Delivery</dt><dd>{quote.delivery ? formatPrice(quote.delivery) : "Free"}</dd></div>
-            {quote.platformFee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platformFee)}</dd></div>}
-            {coupon && <div className="save"><dt>Coupon ({coupon.code})</dt><dd>− {formatPrice(discount)}</dd></div>}
-            <div className="total"><dt>Total</dt><dd>{formatPrice(finalTotal)}</dd></div>
+            <div><dt>Subtotal</dt><dd>{quote ? formatPrice(quote.subtotal) : <Spinner />}</dd></div>
+            <div><dt>Delivery</dt><dd>{quote ? (quote.delivery_fee ? formatPrice(quote.delivery_fee) : "Free") : <Spinner />}</dd></div>
+            {quote && quote.platform_fee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platform_fee)}</dd></div>}
+            <div className="total"><dt>Total</dt><dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd></div>
           </dl>
-
-          <div className="ushp-coupon">
-            {coupon ? (
-              <p className="ushp-coupon-on">
-                <TicketPercent size={15} /> <span><b>{coupon.title}</b> applied</span>
-                <button type="button" onClick={removeCoupon} aria-label="Remove coupon"><X size={14} /></button>
-              </p>
-            ) : (
-              <>
-                <label className="ushp-coupon-row">
-                  <TicketPercent size={16} />
-                  <input
-                    value={couponInput}
-                    onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(""); }}
-                    onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
-                    placeholder="Coupon code"
-                    aria-label="Coupon code"
-                  />
-                  <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()}>Apply</button>
-                </label>
-                {couponError && <span className="dn-error">{couponError}</span>}
-              </>
-            )}
-          </div>
-
-          {quote.co2 > 0 && (
-            <p className="ushp-impact"><Leaf size={15} /> Saves about <b>{quote.co2} kg</b> of CO₂.</p>
+          {quote && quote.groups.length > 1 && (
+            <p className="ushp-note">{quote.groups.length} sellers, so {quote.groups.length} separate orders. Delivery and fees are worked out for each.</p>
           )}
         </aside>
       </div>
@@ -498,7 +474,7 @@ export default function UserCheckout() {
       <PaymentOverlay
         state={pay.state}
         error={pay.error}
-        amount={finalTotal}
+        amount={quote?.total || 0}
         onRetry={place}
         onChangeMethod={() => { setPay({ state: null, error: "" }); setStep("payment"); }}
       />

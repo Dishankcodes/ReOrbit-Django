@@ -1,0 +1,8 @@
+.ro-topbar {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 3000; pointer-events: none;
+  background: var(--dn-p, #2a4d3a); box-shadow: 0 0 8px var(--dn-p, #2a4d3a);
+  animation: ro-topbar-go 6s cubic-bezier(.1, .6, .2, 1) forwards;
+}
+.ro-topbar.done { animation: none; width: 100%; opacity: 0; transition: width .2s ease-out, opacity .25s ease .1s; }
+@keyframes ro-topbar-go { 0% { width: 0; } 20% { width: 55%; } 100% { width: 92%; } }
+@media (prefers-reduced-motion: reduce) { .ro-topbar { animation-duration: 0s; width: 60%; } }

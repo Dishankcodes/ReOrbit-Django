@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, X, Package, Wallet, Truck, Tag, CheckCircle2, ReceiptText, SearchX, ArrowRight } from "lucide-react";
 
@@ -26,8 +26,8 @@ const SORTS = {
 };
 
 export default function UserSell() {
-  const loading = useLoading(450);
   const status = useListingsStatus();
+  const loading = !status.loaded && !status.error; /* real: waiting for your listings */
   const navigate = useNavigate();
   const listings = useListings();
   const sales = useSales();

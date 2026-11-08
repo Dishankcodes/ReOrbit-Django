@@ -1,7 +1,10 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useNavTracker } from "./shared/backNav";
 import "./styles/theme.css";
+import { DelayedLoader } from "./shared/components/Spinner";
+import RouteEffects from "./shared/components/RouteEffects";
+import { page } from "./shared/lazyPage";
 
 /* Shared layouts */
 import UserLayout from "./user/components/UserLayout";
@@ -10,164 +13,160 @@ import AdminLayout from "./admin/components/AdminLayout";
 import RequireAuth from "./shared/components/RequireAuth";
 
 /* Public website and authentication */
-import Auth from "./user/pages/Auth/Auth";
-import Home from "./user/pages/HomePages/Home";
-import About from "./user/pages/HomePages/About";
-import FAQ from "./user/pages/HomePages/FAQ";
-import Contact from "./user/pages/HomePages/Contact";
-import HowItWorks from "./user/pages/HomePages/HowItWorks";
-import Privacy from "./user/pages/HomePages/Privacy";
-import Terms from "./user/pages/HomePages/Terms";
-import ReMakerDiscover from "./user/pages/HomePages/ReMakerDiscover";
-import UserBeforeMarketplace from "./user/pages/HomePages/UserBeforeMarketplace";
+const Auth = page("user", () => import("./user/pages/Auth/Auth"));
+const Home = page("user", () => import("./user/pages/HomePages/Home"));
+const About = page("user", () => import("./user/pages/HomePages/About"));
+const FAQ = page("user", () => import("./user/pages/HomePages/FAQ"));
+const Contact = page("user", () => import("./user/pages/HomePages/Contact"));
+const HowItWorks = page("user", () => import("./user/pages/HomePages/HowItWorks"));
+const Privacy = page("user", () => import("./user/pages/HomePages/Privacy"));
+const Terms = page("user", () => import("./user/pages/HomePages/Terms"));
+const ReMakerDiscover = page("user", () => import("./user/pages/HomePages/ReMakerDiscover"));
+const UserBeforeMarketplace = page("user", () => import("./user/pages/HomePages/UserBeforeMarketplace"));
 
 /* User dashboard and marketplace */
-import UserDashboard from "./user/pages/UserDashboard";
-import UserCheckoutLegacy from "./user/pages/UserCheckout";
-import UserMarketplace from "./user/pages/BuyProducts/UserMarketplace";
-import UserProductDetails from "./user/pages/BuyProducts/UserProductDetails";
-import UserSellerProfile from "./user/pages/BuyProducts/UserSellerProfile";
-import UserArtistProfile from "./user/pages/BuyProducts/UserArtistProfile";
-import UserOrders from "./user/pages/BuyingOrders/UserOrders";
-import UserOrderDetails from "./user/pages/BuyingOrders/UserOrderDetails";
-import UserOrderTrack from "./user/pages/BuyingOrders/UserOrderTrack";
-import UserWishlist from "./user/pages/Wishlist/UserWishlist";
-import UserCart from "./user/pages/Shop/UserCart";
-import UserShopCheckout from "./user/pages/Shop/UserCheckout";
-import UserOrderSuccess from "./user/pages/Shop/UserOrderSuccess";
+const UserDashboard = page("user", () => import("./user/pages/UserDashboard"));
+const UserCheckoutLegacy = page("user", () => import("./user/pages/UserCheckout"));
+const UserMarketplace = page("user", () => import("./user/pages/BuyProducts/UserMarketplace"));
+const UserProductDetails = page("user", () => import("./user/pages/BuyProducts/UserProductDetails"));
+const UserSellerProfile = page("user", () => import("./user/pages/BuyProducts/UserSellerProfile"));
+const UserArtistProfile = page("user", () => import("./user/pages/BuyProducts/UserArtistProfile"));
+const UserOrders = page("user", () => import("./user/pages/BuyingOrders/UserOrders"));
+const UserOrderDetails = page("user", () => import("./user/pages/BuyingOrders/UserOrderDetails"));
+const UserOrderTrack = page("user", () => import("./user/pages/BuyingOrders/UserOrderTrack"));
+const UserWishlist = page("user", () => import("./user/pages/Wishlist/UserWishlist"));
+const UserCart = page("user", () => import("./user/pages/Shop/UserCart"));
+const UserShopCheckout = page("user", () => import("./user/pages/Shop/UserCheckout"));
+const UserOrderSuccess = page("user", () => import("./user/pages/Shop/UserOrderSuccess"));
 
 /* User donations */
-import UserDonations from "./user/pages/Donations/UserDonations";
-import UserDonationNew from "./user/pages/Donations/UserDonationNew";
-import UserDonationSuccess from "./user/pages/Donations/UserDonationSuccess";
-import UserDonationHistory from "./user/pages/Donations/UserDonationHistory";
-import UserDonationDetails from "./user/pages/Donations/UserDonationDetails";
-import UserDonationPickup from "./user/pages/Donations/UserDonationPickup";
-import UserDonationCertificate from "./user/pages/Donations/UserDonationCertificate";
+const UserDonations = page("user", () => import("./user/pages/Donations/UserDonations"));
+const UserDonationNew = page("user", () => import("./user/pages/Donations/UserDonationNew"));
+const UserDonationSuccess = page("user", () => import("./user/pages/Donations/UserDonationSuccess"));
+const UserDonationHistory = page("user", () => import("./user/pages/Donations/UserDonationHistory"));
+const UserDonationDetails = page("user", () => import("./user/pages/Donations/UserDonationDetails"));
+const UserDonationPickup = page("user", () => import("./user/pages/Donations/UserDonationPickup"));
+const UserDonationCertificate = page("user", () => import("./user/pages/Donations/UserDonationCertificate"));
 
 /* User community, profile, rewards, help and selling */
-import UserFollowing from "./user/pages/Following/UserFollowing";
-import UserRemakers from "./user/pages/Remakers/UserRemakers";
-import UserProfile from "./user/pages/UserProfile/UserProfile";
-import UserSettings from "./user/pages/Settings/UserSettings";
-import UserBadges from "./user/pages/Rewards/UserBadges";
-import UserBadgeDetail from "./user/pages/Rewards/UserBadgeDetail";
-import UserOrbitPoints from "./user/pages/Rewards/UserOrbitPoints";
-import UserPointsHistory from "./user/pages/Rewards/UserPointsHistory";
-import UserWaysToEarn from "./user/pages/Rewards/UserWaysToEarn";
-import UserVouchers from "./user/pages/Rewards/UserVouchers";
-import UserRewardDetail from "./user/pages/Rewards/UserRewardDetail";
-import UserHelp from "./user/pages/Help/UserHelp";
-import UserContactSupport from "./user/pages/Help/UserContactSupport";
-import UserTickets from "./user/pages/Help/UserTickets";
-import UserTicketDetails from "./user/pages/Help/UserTicketDetails";
-import UserSell from "./user/pages/Sell/UserSell";
-import UserSellForm from "./user/pages/Sell/UserSellForm";
-import UserListingDetails from "./user/pages/Sell/UserListingDetails";
-import UserSales from "./user/pages/Sell/UserSales";
-import UserSaleDetails from "./user/pages/Sell/UserSaleDetails";
-import UserNotifications from "./user/pages/Notifications/UserNotifications";
+const UserFollowing = page("user", () => import("./user/pages/Following/UserFollowing"));
+const UserRemakers = page("user", () => import("./user/pages/Remakers/UserRemakers"));
+const UserProfile = page("user", () => import("./user/pages/UserProfile/UserProfile"));
+const UserSettings = page("user", () => import("./user/pages/Settings/UserSettings"));
+const UserBadges = page("user", () => import("./user/pages/Rewards/UserBadges"));
+const UserBadgeDetail = page("user", () => import("./user/pages/Rewards/UserBadgeDetail"));
+const UserOrbitPoints = page("user", () => import("./user/pages/Rewards/UserOrbitPoints"));
+const UserPointsHistory = page("user", () => import("./user/pages/Rewards/UserPointsHistory"));
+const UserWaysToEarn = page("user", () => import("./user/pages/Rewards/UserWaysToEarn"));
+const UserVouchers = page("user", () => import("./user/pages/Rewards/UserVouchers"));
+const UserRewardDetail = page("user", () => import("./user/pages/Rewards/UserRewardDetail"));
+const UserHelp = page("user", () => import("./user/pages/Help/UserHelp"));
+const UserContactSupport = page("user", () => import("./user/pages/Help/UserContactSupport"));
+const UserTickets = page("user", () => import("./user/pages/Help/UserTickets"));
+const UserTicketDetails = page("user", () => import("./user/pages/Help/UserTicketDetails"));
+const UserSell = page("user", () => import("./user/pages/Sell/UserSell"));
+const UserSellForm = page("user", () => import("./user/pages/Sell/UserSellForm"));
+const UserListingDetails = page("user", () => import("./user/pages/Sell/UserListingDetails"));
+const UserSales = page("user", () => import("./user/pages/Sell/UserSales"));
+const UserNotifications = page("user", () => import("./user/pages/Notifications/UserNotifications"));
 /* ReMaker public pages */
-import ReMakerAuth from "./remaker/pages/Auth/ReMakerAuth";
-import ReMakersHome from "./remaker/pages/HomePages/ReMakersHome";
-import ReMakerAbout from "./remaker/pages/HomePages/About";
-import ReMakerFAQ from "./remaker/pages/HomePages/FAQ";
-import ReMakerHowItWorks from "./remaker/pages/HomePages/HowItWorks";
-import ReMakerContact from "./remaker/pages/HomePages/Contact";
-import ReMakerBeforeMarketplace from "./remaker/pages/HomePages/ReMakerBeforeMarketplace";
+const ReMakerAuth = page("remaker", () => import("./remaker/pages/Auth/ReMakerAuth"));
+const ReMakersHome = page("remaker", () => import("./remaker/pages/HomePages/ReMakersHome"));
+const ReMakerAbout = page("remaker", () => import("./remaker/pages/HomePages/About"));
+const ReMakerFAQ = page("remaker", () => import("./remaker/pages/HomePages/FAQ"));
+const ReMakerHowItWorks = page("remaker", () => import("./remaker/pages/HomePages/HowItWorks"));
+const ReMakerContact = page("remaker", () => import("./remaker/pages/HomePages/Contact"));
+const ReMakerBeforeMarketplace = page("remaker", () => import("./remaker/pages/HomePages/ReMakerBeforeMarketplace"));
 
 /* ReMaker studio */
-import ReMakerDashboard from "./remaker/pages/ReMakerDashboard";
-import ReMakerProfile from "./remaker/pages/ReMakerProfile";
-import ReMakerMarketplace from "./remaker/pages/Marketplace/ReMakerMarketplace";
-import ReMakerProductDetails from "./remaker/pages/Marketplace/ReMakerProductDetails";
-import ReMakerSellerProfile from "./remaker/pages/Marketplace/ReMakerSellerProfile";
-import ReMakerOrders from "./remaker/pages/Orders/ReMakerOrders";
-import ReMakerOrderDetails from "./remaker/pages/Orders/ReMakerOrderDetails";
-import ReMakerOrderTrack from "./remaker/pages/Orders/ReMakerOrderTrack";
-import ReMakerOrderReport from "./remaker/pages/Orders/ReMakerOrderReport";
-import ReMakerSales from "./remaker/pages/Sales/ReMakerSales";
-import ReMakerSaleDetails from "./remaker/pages/Sales/ReMakerSaleDetails";
-import ReMakerCustomers from "./remaker/pages/Customers/ReMakerCustomers";
-import ReMakerCustomerProfile from "./remaker/pages/Customers/ReMakerCustomerProfile";
-import ReMakerEarnings from "./remaker/pages/Earnings/ReMakerEarnings";
-import ReMakerTransactions from "./remaker/pages/Earnings/ReMakerTransactions";
-import ReMakerPayouts from "./remaker/pages/Earnings/ReMakerPayouts";
-import ReMakerAnalytics from "./remaker/pages/Analytics/ReMakerAnalytics";
-import ReMakerReviews from "./remaker/pages/Reviews/ReMakerReviews";
-import ReMakerFollowers from "./remaker/pages/Followers/ReMakerFollowers";
-import ReMakerNotifications from "./remaker/pages/Notifications/ReMakerNotifications";
-import ReMakerSettings from "./remaker/pages/Settings/ReMakerSettings";
-import ReMakerPortfolio from "./remaker/pages/Portfolio/ReMakerPortfolio";
-import ReMakerPortfolioAdd from "./remaker/pages/Portfolio/ReMakerPortfolioAdd";
-import ReMakerPortfolioEdit from "./remaker/pages/Portfolio/ReMakerPortfolioEdit";
-import ReMakerPortfolioView from "./remaker/pages/Portfolio/ReMakerPortfolioView";
-import ReMakerAddProduct from "./remaker/pages/Products/ReMakerAddProduct";
-import ReMakerEditProduct from "./remaker/pages/Products/ReMakerEditProduct";
-import ReMakerProducts from "./remaker/pages/Products/ReMakerProducts";
-import ReMakerProductsMarketplace from "./remaker/pages/Products/ReMakerMarketplace";
-import ReMakerHelp from "./remaker/pages/Help/ReMakerHelp";
-import ReMakerNewTicket from "./remaker/pages/Help/ReMakerNewTicket";
-import ReMakerTicket from "./remaker/pages/Help/ReMakerTicket";
-import ReMakerJobs from "./remaker/pages/Jobs/ReMakerJobs";
-import ReMakerJobDetails from "./remaker/pages/Jobs/ReMakerJobDetails";
-import ReMakerMessages from "./remaker/pages/Messages/ReMakerMessages";
-import ReMakerSaved from "./remaker/pages/Saved/ReMakerSaved";
-import ReMakerNotFound from "./remaker/pages/NotFound/ReMakerNotFound";
-import UnknownRoute from "./remaker/pages/NotFound/UnknownRoute";
+const ReMakerDashboard = page("remaker", () => import("./remaker/pages/ReMakerDashboard"));
+const ReMakerProfile = page("remaker", () => import("./remaker/pages/ReMakerProfile"));
+const ReMakerMarketplace = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerMarketplace"));
+const ReMakerProductDetails = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerProductDetails"));
+const ReMakerSellerProfile = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerSellerProfile"));
+const ReMakerOrders = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrders"));
+const ReMakerOrderDetails = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderDetails"));
+const ReMakerOrderTrack = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderTrack"));
+const ReMakerOrderReport = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderReport"));
+const ReMakerSales = page("remaker", () => import("./remaker/pages/Sales/ReMakerSales"));
+const ReMakerCustomers = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomers"));
+const ReMakerCustomerProfile = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomerProfile"));
+const ReMakerEarnings = page("remaker", () => import("./remaker/pages/Earnings/ReMakerEarnings"));
+const ReMakerTransactions = page("remaker", () => import("./remaker/pages/Earnings/ReMakerTransactions"));
+const ReMakerPayouts = page("remaker", () => import("./remaker/pages/Earnings/ReMakerPayouts"));
+const ReMakerAnalytics = page("remaker", () => import("./remaker/pages/Analytics/ReMakerAnalytics"));
+const ReMakerReviews = page("remaker", () => import("./remaker/pages/Reviews/ReMakerReviews"));
+const ReMakerFollowers = page("remaker", () => import("./remaker/pages/Followers/ReMakerFollowers"));
+const ReMakerNotifications = page("remaker", () => import("./remaker/pages/Notifications/ReMakerNotifications"));
+const ReMakerSettings = page("remaker", () => import("./remaker/pages/Settings/ReMakerSettings"));
+const ReMakerPortfolio = page("remaker", () => import("./remaker/pages/Portfolio/ReMakerPortfolio"));
+const ReMakerPortfolioAdd = page("remaker", () => import("./remaker/pages/Portfolio/ReMakerPortfolioAdd"));
+const ReMakerPortfolioEdit = page("remaker", () => import("./remaker/pages/Portfolio/ReMakerPortfolioEdit"));
+const ReMakerPortfolioView = page("remaker", () => import("./remaker/pages/Portfolio/ReMakerPortfolioView"));
+const ReMakerAddProduct = page("remaker", () => import("./remaker/pages/Products/ReMakerAddProduct"));
+const ReMakerEditProduct = page("remaker", () => import("./remaker/pages/Products/ReMakerEditProduct"));
+const ReMakerProducts = page("remaker", () => import("./remaker/pages/Products/ReMakerProducts"));
+const ReMakerProductsMarketplace = page("remaker", () => import("./remaker/pages/Products/ReMakerMarketplace"));
+const ReMakerHelp = page("remaker", () => import("./remaker/pages/Help/ReMakerHelp"));
+const ReMakerNewTicket = page("remaker", () => import("./remaker/pages/Help/ReMakerNewTicket"));
+const ReMakerTicket = page("remaker", () => import("./remaker/pages/Help/ReMakerTicket"));
+const ReMakerJobs = page("remaker", () => import("./remaker/pages/Jobs/ReMakerJobs"));
+const ReMakerJobDetails = page("remaker", () => import("./remaker/pages/Jobs/ReMakerJobDetails"));
+const ReMakerMessages = page("remaker", () => import("./remaker/pages/Messages/ReMakerMessages"));
+const ReMakerSaved = page("remaker", () => import("./remaker/pages/Saved/ReMakerSaved"));
+const ReMakerNotFound = page("remaker", () => import("./remaker/pages/NotFound/ReMakerNotFound"));
+const UnknownRoute = page("remaker", () => import("./remaker/pages/NotFound/UnknownRoute"));
 
 /* Admin public pages and dashboard */
-import AdminNotFound from "./admin/pages/States/AdminNotFound";
-import AdminStates from "./admin/pages/States/AdminStates";
+const AdminNotFound = page("admin", () => import("./admin/pages/States/AdminNotFound"));
+const AdminStates = page("admin", () => import("./admin/pages/States/AdminStates"));
 
-import AdminLogin from "./admin/pages/Auth/AdminLogin";
-import AdminHome from "./admin/pages/HomePages/AdminHome";
-import AdminAbout from "./admin/pages/HomePages/AdminAbout";
-import AdminHowItWorks from "./admin/pages/HomePages/AdminHowItWorks";
-import UserMessages from "./user/pages/Messages/UserMessages";
-import AdminDashboard from "./admin/pages/Dashboard";
+const AdminLogin = page("admin", () => import("./admin/pages/Auth/AdminLogin"));
+const AdminHome = page("admin", () => import("./admin/pages/HomePages/AdminHome"));
+const AdminAbout = page("admin", () => import("./admin/pages/HomePages/AdminAbout"));
+const AdminHowItWorks = page("admin", () => import("./admin/pages/HomePages/AdminHowItWorks"));
+const UserMessages = page("user", () => import("./user/pages/Messages/UserMessages"));
+const AdminDashboard = page("admin", () => import("./admin/pages/Dashboard"));
 
 /* Admin management pages */
-import AdminUsers from "./admin/pages/Users/AdminUsers";
-import AdminUserProfile from "./admin/pages/Users/AdminUserProfile";
-import AdminRemakers from "./admin/pages/Remakers/AdminRemakers";
-import AdminRemakerProfile from "./admin/pages/Remakers/AdminRemakerProfile";
-import AdminProducts from "./admin/pages/Products/AdminProducts";
-import AdminProductDetails from "./admin/pages/Products/AdminProductDetails";
-import AdminOrders from "./admin/pages/Orders/AdminOrders";
-import AdminOrderDetails from "./admin/pages/Orders/AdminOrderDetails";
-import AdminWarehouse from "./admin/pages/Warehouse/AdminWarehouse";
-import AdminWarehouseItem from "./admin/pages/Warehouse/AdminWarehouseItem";
-import AdminDonations from "./admin/pages/Donations/AdminDonations";
-import AdminDonationDetails from "./admin/pages/Donations/AdminDonationDetails";
-import AdminPickups from "./admin/pages/Pickups/AdminPickups";
-import AdminPickupDetails from "./admin/pages/Pickups/AdminPickupDetails";
-import AdminPickupTeams from "./admin/pages/Pickups/AdminPickupTeams";
-import AdminComplaints from "./admin/pages/Complaints/AdminComplaints";
-import AdminSupport from "./admin/pages/Support/AdminSupport";
-import AdminComplaintDetails from "./admin/pages/Complaints/AdminComplaintDetails";
-import AdminRewards from "./admin/pages/Rewards/AdminRewards";
-import AdminReports from "./admin/pages/Reports/AdminReports";
-import AdminSettings from "./admin/pages/Settings/AdminSettings";
-import AdminProfile from "./admin/pages/Profile/AdminProfile";
-import AdminTeam from "./admin/pages/Team/AdminTeam";
-import AdminEarnings from "./admin/pages/Earnings/AdminEarnings";
-import AdminNotifications from "./admin/pages/Notifications/AdminNotifications";
-import AdminContent from "./admin/pages/Content/AdminContent";
-import AdminHelp from "./admin/pages/Help/AdminHelp";
-import AdminShop from "./admin/pages/Shop/AdminShop";
-import AdminShopProduct from "./admin/pages/Shop/AdminShopProduct";
-import AdminShopSeller from "./admin/pages/Shop/AdminShopSeller";
-import AdminShopCart from "./admin/pages/Shop/AdminShopCart";
-import AdminShopCheckout from "./admin/pages/Shop/AdminShopCheckout";
-import AdminShopSuccess from "./admin/pages/Shop/AdminShopSuccess";
-import AdminShopOrders from "./admin/pages/Shop/AdminShopOrders";
-import AdminShopOrderDetails from "./admin/pages/Shop/AdminShopOrderDetails";
-import AdminSell from "./admin/pages/Sell/AdminSell";
-import AdminSellForm from "./admin/pages/Sell/AdminSellForm";
-import AdminSellListing from "./admin/pages/Sell/AdminSellListing";
-import AdminSales from "./admin/pages/Sell/AdminSales";
-import AdminSaleDetails from "./admin/pages/Sell/AdminSaleDetails";
+const AdminUsers = page("admin", () => import("./admin/pages/Users/AdminUsers"));
+const AdminUserProfile = page("admin", () => import("./admin/pages/Users/AdminUserProfile"));
+const AdminRemakers = page("admin", () => import("./admin/pages/Remakers/AdminRemakers"));
+const AdminRemakerProfile = page("admin", () => import("./admin/pages/Remakers/AdminRemakerProfile"));
+const AdminProducts = page("admin", () => import("./admin/pages/Products/AdminProducts"));
+const AdminProductDetails = page("admin", () => import("./admin/pages/Products/AdminProductDetails"));
+const AdminOrders = page("admin", () => import("./admin/pages/Orders/AdminOrders"));
+const AdminWarehouse = page("admin", () => import("./admin/pages/Warehouse/AdminWarehouse"));
+const AdminWarehouseItem = page("admin", () => import("./admin/pages/Warehouse/AdminWarehouseItem"));
+const AdminDonations = page("admin", () => import("./admin/pages/Donations/AdminDonations"));
+const AdminDonationDetails = page("admin", () => import("./admin/pages/Donations/AdminDonationDetails"));
+const AdminPickups = page("admin", () => import("./admin/pages/Pickups/AdminPickups"));
+const AdminPickupDetails = page("admin", () => import("./admin/pages/Pickups/AdminPickupDetails"));
+const AdminPickupTeams = page("admin", () => import("./admin/pages/Pickups/AdminPickupTeams"));
+const AdminComplaints = page("admin", () => import("./admin/pages/Complaints/AdminComplaints"));
+const AdminSupport = page("admin", () => import("./admin/pages/Support/AdminSupport"));
+const AdminComplaintDetails = page("admin", () => import("./admin/pages/Complaints/AdminComplaintDetails"));
+const AdminRewards = page("admin", () => import("./admin/pages/Rewards/AdminRewards"));
+const AdminReports = page("admin", () => import("./admin/pages/Reports/AdminReports"));
+const AdminSettings = page("admin", () => import("./admin/pages/Settings/AdminSettings"));
+const AdminProfile = page("admin", () => import("./admin/pages/Profile/AdminProfile"));
+const AdminTeam = page("admin", () => import("./admin/pages/Team/AdminTeam"));
+const AdminEarnings = page("admin", () => import("./admin/pages/Earnings/AdminEarnings"));
+const AdminNotifications = page("admin", () => import("./admin/pages/Notifications/AdminNotifications"));
+const AdminContent = page("admin", () => import("./admin/pages/Content/AdminContent"));
+const AdminHelp = page("admin", () => import("./admin/pages/Help/AdminHelp"));
+const AdminShop = page("admin", () => import("./admin/pages/Shop/AdminShop"));
+const AdminShopProduct = page("admin", () => import("./admin/pages/Shop/AdminShopProduct"));
+const AdminShopSeller = page("admin", () => import("./admin/pages/Shop/AdminShopSeller"));
+const AdminShopCart = page("admin", () => import("./admin/pages/Shop/AdminShopCart"));
+const AdminShopCheckout = page("admin", () => import("./admin/pages/Shop/AdminShopCheckout"));
+const AdminShopSuccess = page("admin", () => import("./admin/pages/Shop/AdminShopSuccess"));
+const AdminShopOrders = page("admin", () => import("./admin/pages/Shop/AdminShopOrders"));
+const AdminShopOrderDetails = page("admin", () => import("./admin/pages/Shop/AdminShopOrderDetails"));
+const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
+const AdminSellForm = page("admin", () => import("./admin/pages/Sell/AdminSellForm"));
+const AdminSellListing = page("admin", () => import("./admin/pages/Sell/AdminSellListing"));
+const AdminSales = page("admin", () => import("./admin/pages/Sell/AdminSales"));
 
 function RouteFallback() {
   const { pathname } = useLocation();
@@ -190,6 +189,8 @@ function RouteFallback() {
 export default function App() {
   useNavTracker();
   return (
+    <Suspense fallback={<DelayedLoader minHeight={360} />}>
+    <RouteEffects />
     <Routes>
       {/* Public website */}
       <Route path="/" element={<Home />} />
@@ -301,7 +302,7 @@ export default function App() {
         <Route path="/user-sell" element={<UserSell />} />
         <Route path="/user-sell/new" element={<UserSellForm />} />
         <Route path="/user-sell/sales" element={<UserSales />} />
-        <Route path="/user-sell/sales/:saleId" element={<UserSaleDetails />} />
+        <Route path="/user-sell/sales/:saleId" element={<Navigate to="/user-sell/sales" replace />} />
         <Route path="/user-sell/:listingId/edit" element={<UserSellForm />} />
         <Route path="/user-sell/:listingId" element={<UserListingDetails />} />
 
@@ -363,7 +364,7 @@ export default function App() {
         />
 
         <Route path="/remaker-sales" element={<ReMakerSales />} />
-        <Route path="/remaker-sales/:saleId" element={<ReMakerSaleDetails />} />
+        <Route path="/remaker-sales/:saleId" element={<Navigate to="/remaker-sales" replace />} />
         <Route path="/remaker-customers" element={<ReMakerCustomers />} />
         <Route
           path="/remaker-customers/:customerId"
@@ -449,7 +450,7 @@ export default function App() {
           element={<AdminProductDetails />}
         />
         <Route path="/admin-orders" element={<AdminOrders />} />
-        <Route path="/admin-orders/:orderId" element={<AdminOrderDetails />} />
+        <Route path="/admin-orders/:orderId" element={<Navigate to="/admin-orders" replace />} />
         <Route path="/admin-warehouse" element={<AdminWarehouse />} />
         <Route
           path="/admin-warehouse/:inventoryId"
@@ -499,10 +500,7 @@ export default function App() {
         <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
         <Route path="/admin-sell/listing/:id" element={<AdminSellListing />} />
         <Route path="/admin-sell/sales" element={<AdminSales />} />
-        <Route
-          path="/admin-sell/sales/:orderId"
-          element={<AdminSaleDetails />}
-        />
+        <Route path="/admin-sell/sales/:orderId" element={<Navigate to="/admin-sell/sales" replace />} />
         {/* Keep older admin navigation destinations working. */}
         <Route path="/admin-profile" element={<AdminProfile />} />
       </Route>
@@ -511,5 +509,6 @@ export default function App() {
       {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}
       <Route path="*" element={<RouteFallback />} />
     </Routes>
+    </Suspense>
   );
 }
