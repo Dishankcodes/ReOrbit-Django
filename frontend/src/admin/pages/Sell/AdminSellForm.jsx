@@ -21,7 +21,7 @@ import {
   saveListing,
 } from "../../data/sellStore";
 import { SELL_CONDITIONS, SELL_SOURCES } from "../../data/adminSell";
-import { useActiveCategoryNames } from "../../data/contentStore";
+import { useCategoryNames } from "../../../shared/catalog";
 import { formatINR } from "../../utils/format";
 import SellNav from "./components/SellNav";
 import PhotoUploader, {
@@ -97,7 +97,7 @@ export default function AdminSellForm() {
   const editing = useSellListing(id);
   const stock = useListableStock();
 
-  const categoryNames = useActiveCategoryNames();
+  const categoryNames = useCategoryNames();
   const [form, setForm] = useState(EMPTY);
   const [step, setStep] = useState("basics");
   const [touched, setTouched] = useState({});

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   useCategories,
+  useCategoriesStatus,
   createCategory,
   updateCategory,
   setCategoryActive,
@@ -29,6 +30,23 @@ import { CategoryIcon } from "./contentBits";
 
 export default function CategoriesTab({ canEdit, by, toast }) {
   const cats = useCategories();
+  const status = useCategoriesStatus();
+  const [busy, setBusy] = useState(false);
+  // run a change, then show the server's own message if it is refused
+  const run = async (fn, okText) => {
+    if (busy) return false;
+    setBusy(true);
+    try {
+      await fn();
+      if (okText) toast(okText);
+      return true;
+    } catch (e) {
+      toast(e.errors?.name?.[0] || e.message || "That did not work. Please try again.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(null); // {} create | { category } edit
   const [deleting, setDeleting] = useState(null);
@@ -47,15 +65,11 @@ export default function CategoriesTab({ canEdit, by, toast }) {
   );
   const visible = cats.filter((c) => c.active).length;
 
-  const save = (values) => {
-    if (form.category) {
-      updateCategory(form.category.id, values, by);
-      toast(`${form.category.name} was updated.`);
-    } else {
-      createCategory(values, by);
-      toast(`${values.name.trim()} was added.`);
-    }
-    setForm(null);
+  const save = async (values) => {
+    const done = form.category
+      ? await run(() => updateCategory(form.category.id, values), `${form.category.name} was updated.`)
+      : await run(() => createCategory(values), `${values.name.trim()} was added.`);
+    if (done) setForm(null);
   };
   const menu = (c) => [
     ...(canEdit
@@ -74,19 +88,15 @@ export default function CategoriesTab({ canEdit, by, toast }) {
                       label: "Hide from members",
                       icon: EyeOff,
                       onClick: () =>
-                        c.live > 0 || c.usage.live > 0
+                        c.usage.live > 0
                           ? setHiding(c)
-                          : (setCategoryActive(c.id, false, by),
-                            toast(`${c.name} is hidden.`)),
+                          : run(() => setCategoryActive(c.id, false), `${c.name} is hidden.`),
                     }
                   : {
                       key: "show",
                       label: "Show to members",
                       icon: Eye,
-                      onClick: () => {
-                        setCategoryActive(c.id, true, by);
-                        toast(`${c.name} is visible again.`);
-                      },
+                      onClick: () => run(() => setCategoryActive(c.id, true), `${c.name} is visible again.`),
                     },
               ]
             : []),
@@ -159,7 +169,7 @@ export default function CategoriesTab({ canEdit, by, toast }) {
                       type="button"
                       aria-label={`Move ${c.name} up`}
                       disabled={i === 0}
-                      onClick={() => moveCategory(c.id, -1)}
+                      onClick={() => run(() => moveCategory(c.id, -1))}
                     >
                       <ChevronUp size={14} />
                     </button>
@@ -169,7 +179,7 @@ export default function CategoriesTab({ canEdit, by, toast }) {
                       disabled={
                         c.locked || i >= cats.length - 1 || cats[i + 1]?.locked
                       }
-                      onClick={() => moveCategory(c.id, 1)}
+                      onClick={() => run(() => moveCategory(c.id, 1))}
                     >
                       <ChevronDown size={14} />
                     </button>
@@ -218,7 +228,7 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         ) : (
           <EmptyState
             icon={cats.length ? SearchX : Tags}
-            title={cats.length ? "No category matches" : "No categories yet"}
+            title={cats.length ? "No category matches" : status === "loading" || status === "idle" ? "Loading categories" : status === "error" ? "Could not load categories" : "No categories yet"}
             text={
               cats.length
                 ? "Try a different search."
@@ -255,10 +265,8 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         title={`Delete ${deleting?.name}?`}
         text="Nothing uses this category, so it can be removed safely. This cannot be undone."
         confirmLabel="Delete category"
-        onConfirm={() => {
-          removeCategory(deleting.id, by);
-          toast(`${deleting.name} was deleted.`);
-          setDeleting(null);
+        onConfirm={async () => {
+          if (await run(() => removeCategory(deleting.id), `${deleting.name} was deleted.`)) setDeleting(null);
         }}
         onClose={() => setDeleting(null)}
       />
@@ -269,10 +277,8 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         title={`Hide ${hiding?.name}?`}
         confirmLabel="Hide category"
         text={`${hiding?.usage.live} live listing${hiding?.usage.live === 1 ? "" : "s"} stay on the marketplace. Members just cannot choose this category for new items.`}
-        onConfirm={() => {
-          setCategoryActive(hiding.id, false, by);
-          toast(`${hiding.name} is hidden.`);
-          setHiding(null);
+        onConfirm={async () => {
+          if (await run(() => setCategoryActive(hiding.id, false), `${hiding.name} is hidden.`)) setHiding(null);
         }}
         onClose={() => setHiding(null)}
       />

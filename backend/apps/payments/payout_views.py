@@ -2,7 +2,7 @@
 
 Seller (member or ReMaker)
   GET  wallet/             balances + rules + saved account (masked) + latest payout
-  GET  wallet/entries/     ledger, paged   (?kind=Earning|Payout|Release)
+  GET  wallet/entries/     ledger, paged   (?kind=Earning|Payout|Release|Reversal)
   GET  account/  PUT account/     payout details (masked on the way out)
   GET  payouts/            my payouts, paged
   POST payouts/request/    {amount?}  default = everything available
@@ -89,7 +89,7 @@ class EntriesView(_SellerView):
             return _err(e)
         qs = WalletEntry.objects.filter(**owner).select_related("order", "payout")
         k = request.query_params.get("kind")
-        if k in ("Earning", "Payout", "Release"):
+        if k in ("Earning", "Payout", "Release", "Reversal"):
             qs = qs.filter(kind=k)
         pager = StandardPagination()
         page = pager.paginate_queryset(qs, request)
@@ -214,8 +214,8 @@ class AdminRules(_AdminView):
         errors, d = {}, request.data
         if "payout_hold_days" in d:
             v = _int(d["payout_hold_days"])
-            if v is None or not 0 <= v <= 60:
-                errors["payout_hold_days"] = ["Enter 0 to 60 days."]
+            if v is None or not 7 <= v <= 60:
+                errors["payout_hold_days"] = ["Enter 7 to 60 days (the return window is 7 days)."]
             else:
                 s.payout_hold_days = v
         if "payout_min_amount" in d:
@@ -249,13 +249,91 @@ def _int(v):
 class AdminSummary(_AdminView):
     def get(self, request):
         now = timezone.now()
+        held = wallet.held_q(now)
         a = WalletEntry.objects.aggregate(
-            pending=Sum("amount", filter=Q(kind="Earning", available_at__gt=now)),
-            available=Sum("amount", filter=Q(available_at__lte=now)),
+            pending=Sum("amount", filter=Q(kind__in=("Earning", "Reversal")) & (Q(available_at__isnull=True) | Q(available_at__gt=now) | held)),
+            available=Sum("amount", filter=Q(available_at__lte=now) & ~held),
         )
+        from apps.orders.models import Order
+
+        cod = (Order.objects.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True)
+               .exclude(payment_status="Paid").aggregate(n=Count("pk"), amount=Sum("total")))
+        from .models import Refund
+
+        refunds_open = Refund.objects.exclude(status="Done").count()
         p = Payout.objects.aggregate(
             awaiting=Sum("amount", filter=Q(status="Pending")),
             paid=Sum("amount", filter=Q(status="Paid")),
         )
         return ok({"pending": a["pending"] or 0, "available": a["available"] or 0,
-                   "awaiting_payment": p["awaiting"] or 0, "paid_total": p["paid"] or 0, "rules": _rules(PlatformSettings.load())})
+                   "awaiting_payment": p["awaiting"] or 0, "paid_total": p["paid"] or 0,
+                   "cod_to_collect": cod["amount"] or 0, "cod_orders": cod["n"] or 0, "refunds_open": refunds_open, "rules": _rules(PlatformSettings.load())})
+
+
+# ------------------------------------------------------------------ refunds (admin)
+def refund_row(r):
+    o = r.order
+    return {
+        "id": r.public_id, "amount": r.amount, "reason": r.reason, "reason_label": r.get_reason_display(),
+        "status": r.status, "method": r.method, "note": r.note, "reference": r.reference,
+        "attempts": r.attempts, "last_error": r.last_error, "created_at": r.created_at, "processed_at": r.processed_at,
+        "payment": r.payment.public_id, "order": o.public_id if o else "",
+        "buyer": {"type": r.payment.buyer_type, "name": r.payment.buyer.full_name, "email": r.payment.buyer.email},
+    }
+
+
+class AdminRefunds(APIView):
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("orders", "view")]
+
+    def get(self, request):
+        from .models import Refund
+
+        qs = Refund.objects.select_related("payment", "order", "payment__buyer_user", "payment__buyer_remaker", "payment__buyer_admin")
+        st = request.query_params.get("status")
+        if st in ("Pending", "Sending", "Done", "Failed"):
+            qs = qs.filter(status=st)
+        t = (request.query_params.get("q") or "").strip()
+        if t:
+            qs = qs.filter(Q(public_id__icontains=t) | Q(order__public_id__icontains=t) | Q(payment__public_id__icontains=t)
+                           | Q(reference__icontains=t))
+        pager = StandardPagination()
+        page = pager.paginate_queryset(qs, request)
+        resp = pager.get_paginated_response([refund_row(r) for r in page])
+        resp.data["data"]["counts"] = {r["status"]: r["n"] for r in Refund.objects.order_by().values("status").annotate(n=Count("pk"))}
+        return resp
+
+
+class AdminRefundRetry(APIView):
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("finance", "edit")]
+
+    def post(self, request, public_id):
+        from . import refunds
+        from .models import Refund
+
+        r = get_object_or_404(Refund, public_id=public_id)
+        if r.payment.buyer_type == "admin" and r.payment.buyer_admin_id == request.user.account.pk:
+            return fail("You can't handle your own refund.", status=403, code="OWN_ORDER")
+        try:
+            r = refunds.retry(r.pk, request.user.account, ip=request.META.get("REMOTE_ADDR"))
+        except refunds.RefundError as e:
+            return fail(e.message, status=e.status, code=e.code)
+        msg = "Refund sent." if r.status == "Done" else "The refund still could not be sent. Check Razorpay and try again."
+        return ok({"refund": refund_row(Refund.objects.select_related("payment", "order").get(pk=r.pk))}, message=msg)
+
+
+class AdminRefundPaid(APIView):
+    """Cash-on-delivery refunds are sent by ReOrbit by hand; record the bank/UPI reference."""
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("finance", "edit")]
+
+    def post(self, request, public_id):
+        from . import refunds
+        from .models import Refund
+
+        r = get_object_or_404(Refund, public_id=public_id)
+        if r.payment.buyer_type == "admin" and r.payment.buyer_admin_id == request.user.account.pk:
+            return fail("You can't handle your own refund.", status=403, code="OWN_ORDER")
+        try:
+            r = refunds.mark_manual(r.pk, request.user.account, request.data.get("reference"), ip=request.META.get("REMOTE_ADDR"))
+        except refunds.RefundError as e:
+            return fail(e.message, status=e.status, code=e.code)
+        return ok({"refund": refund_row(Refund.objects.select_related("payment", "order").get(pk=r.pk))}, message="Marked as sent.")

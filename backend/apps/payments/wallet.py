@@ -2,9 +2,12 @@
 
 How the money flows (read this first)
   1. A buyer pays ReOrbit (Razorpay) or pays cash on delivery. ReOrbit holds it.
-  2. When an order is DELIVERED the seller earns the item subtotal. The buyer already paid
-     the platform fee and delivery on top, so nothing more is cut from the seller. The
-     earning is PENDING for `payout_hold_days` (the return/dispute window), then AVAILABLE.
+  2. When an order is DELIVERED the seller earns the item subtotal plus the delivery fee (the
+     seller ships). The buyer's platform fee is ReOrbit's only cut and is never taken from the
+     seller. The earning is PENDING for `payout_hold_days` (the return window), then AVAILABLE.
+     Cash on delivery: the courier hands the cash to ReOrbit, and the hold only starts when an
+     admin confirms it arrived. While a return is open the earning stays frozen; if the return is
+     refunded the earning is taken back out (a Reversal entry).
   3. The seller (or the automatic run, if switched on) creates a payout for the available
      balance. That takes the money out of the wallet at once (so it cannot be paid twice).
   4. An admin sends the bank/UPI transfer outside the app and marks the payout PAID with the
@@ -80,13 +83,20 @@ def _notify_admins(title, body, ref_id=""):
 # --------------------------------------------------------------------------- #
 # balances and earnings
 # --------------------------------------------------------------------------- #
+def held_q(now):
+    """Entries whose order has a return that is open (or was just rejected and can still be escalated)."""
+    return (Q(order__return_request__status__in=("Requested", "Approved", "Escalated"))
+            | Q(order__return_request__status="Rejected", order__return_request__escalate_until__gt=now))
+
+
 def balances(owner):
     """One query. available already has requested payouts taken out."""
     now = timezone.now()
+    held = held_q(now)
     a = WalletEntry.objects.filter(**owner).aggregate(
-        pending=Sum("amount", filter=Q(kind="Earning", available_at__gt=now)),
-        available=Sum("amount", filter=Q(available_at__lte=now)),
-        lifetime=Sum("amount", filter=Q(kind="Earning")),
+        pending=Sum("amount", filter=Q(kind__in=("Earning", "Reversal")) & (Q(available_at__isnull=True) | Q(available_at__gt=now) | held)),
+        available=Sum("amount", filter=Q(available_at__lte=now) & ~held),
+        lifetime=Sum("amount", filter=Q(kind__in=("Earning", "Reversal"))),
         in_review=Sum("amount", filter=Q(kind="Payout", payout__status="Pending")),
         paid=Sum("amount", filter=Q(kind="Payout", payout__status="Paid")),
     )
@@ -100,8 +110,11 @@ def balances(owner):
 
 
 def credit_delivered_order(order):
-    """Called inside the delivery transaction. Safe to call twice (one earning per order)."""
-    if order.seller_type == "platform" or order.subtotal <= 0:
+    """Called inside the delivery transaction. Safe to call twice (one earning per order).
+    The seller earns the subtotal plus the delivery fee. A cash-on-delivery order has no
+    clearing date until ReOrbit has the cash (release_cod)."""
+    amount = order.subtotal + order.delivery_fee
+    if order.seller_type == "platform" or amount <= 0:
         return None
     owner = {"seller_user": order.seller_user} if order.seller_type == "user" else {"seller_remaker": order.seller_remaker}
     s = PlatformSettings.load()
@@ -110,16 +123,54 @@ def credit_delivered_order(order):
         with transaction.atomic():
             entry, created = WalletEntry.objects.get_or_create(
                 order=order, kind=WalletEntry.Kind.EARNING,
-                defaults={**owner, "amount": order.subtotal, "available_at": now + timedelta(days=s.payout_hold_days),
+                defaults={**owner, "amount": amount,
+                          "available_at": None if order.payment_status == "COD_Collected" else now + timedelta(days=s.payout_hold_days),
                           "note": f"{order.public_id} delivered"},
             )
     except IntegrityError:
         return None
     if created:
-        when = "now" if s.payout_hold_days == 0 else f"in {s.payout_hold_days} day(s)"
-        _notify(owner, "Earning added", f"₹{order.subtotal:,} from {order.public_id} is in your wallet and can be paid out {when}.",
-                ref_type="order", ref_id=order.public_id)
+        if order.payment_status == "COD_Collected":
+            _notify(owner, "Earning added", f"₹{amount:,} from {order.public_id} is in your wallet. It starts clearing once "
+                    "ReOrbit receives the cash from the courier.", ref_type="order", ref_id=order.public_id)
+        else:
+            when = "now" if s.payout_hold_days == 0 else f"in {s.payout_hold_days} day(s)"
+            _notify(owner, "Earning added", f"₹{amount:,} from {order.public_id} is in your wallet and can be paid out {when}.",
+                    ref_type="order", ref_id=order.public_id)
     return entry
+
+
+def release_cod(order):
+    """An admin confirmed ReOrbit received the cash for this order: the clearing days start now."""
+    s = PlatformSettings.load()
+    entry = WalletEntry.objects.filter(order=order, kind=WalletEntry.Kind.EARNING, available_at__isnull=True).first()
+    if entry is None:
+        return None
+    when = timezone.now() + timedelta(days=s.payout_hold_days)
+    # a refund taken before the cash arrived clears together with the earning it reduces
+    WalletEntry.objects.filter(order=order, kind__in=(WalletEntry.Kind.EARNING, WalletEntry.Kind.REVERSAL),
+                               available_at__isnull=True).update(available_at=when)
+    entry.refresh_from_db()
+    owner = {"seller_user": entry.seller_user} if entry.seller_user_id else {"seller_remaker": entry.seller_remaker}
+    _notify(owner, "Cash received by ReOrbit", f"{order.public_id}: ₹{entry.amount:,} will be available in {s.payout_hold_days} day(s).",
+            ref_type="order", ref_id=order.public_id)
+    return entry
+
+
+def reverse_earning(order, amount, note=""):
+    """A refund took money back from the seller. Adds a negative ledger line (never edits the earning).
+    Safe to call twice for the same order."""
+    entry = WalletEntry.objects.filter(order=order, kind=WalletEntry.Kind.EARNING).first()
+    if entry is None or amount <= 0:
+        return None
+    if WalletEntry.objects.filter(order=order, kind=WalletEntry.Kind.REVERSAL).exists():
+        return None
+    owner = {"seller_user": entry.seller_user} if entry.seller_user_id else {"seller_remaker": entry.seller_remaker}
+    row = WalletEntry.objects.create(**owner, order=order, kind=WalletEntry.Kind.REVERSAL, amount=-min(amount, entry.amount),
+                                     available_at=entry.available_at, note=(note or f"{order.public_id} refunded")[:200])
+    _notify(owner, "Earning taken back", f"₹{-row.amount:,} for {order.public_id} was refunded to the buyer.",
+            ref_type="order", ref_id=order.public_id)
+    return row
 
 
 # --------------------------------------------------------------------------- #
@@ -281,6 +332,7 @@ def run_auto(limit=500):
         has_account = PayoutAccount.objects.filter(**{f"{field}__isnull": False}).values(field)
         waiting = Payout.objects.filter(status=Payout.Status.PENDING, **{f"{field}__isnull": False}).values(field)
         base = (WalletEntry.objects.filter(**{f"{field}__isnull": False}, available_at__lte=now)
+                .exclude(held_q(now))
                 .exclude(**{f"{field}__in": waiting})
                 .order_by().values(field).annotate(total=Sum("amount"))
                 .filter(total__gte=max(s.payout_min_amount, 1)))

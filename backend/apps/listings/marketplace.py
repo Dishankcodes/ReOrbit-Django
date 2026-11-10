@@ -111,7 +111,7 @@ def detail(kind, o, request):
     return data
 
 
-@method_decorator(cache_control(public=True, max_age=300), name="get")
+@method_decorator(cache_control(public=True, max_age=60), name="get")
 class CategoriesView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]

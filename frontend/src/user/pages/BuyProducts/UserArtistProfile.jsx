@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
 import { getRemakerById, getRemakerProducts, getSellerReviews } from "../../../data/marketplaceData";

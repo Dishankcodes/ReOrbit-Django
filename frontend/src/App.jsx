@@ -82,13 +82,6 @@ const ReMakerBeforeMarketplace = page("remaker", () => import("./remaker/pages/H
 /* ReMaker studio */
 const ReMakerDashboard = page("remaker", () => import("./remaker/pages/ReMakerDashboard"));
 const ReMakerProfile = page("remaker", () => import("./remaker/pages/ReMakerProfile"));
-const ReMakerMarketplace = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerMarketplace"));
-const ReMakerProductDetails = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerProductDetails"));
-const ReMakerSellerProfile = page("remaker", () => import("./remaker/pages/Marketplace/ReMakerSellerProfile"));
-const ReMakerOrders = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrders"));
-const ReMakerOrderDetails = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderDetails"));
-const ReMakerOrderTrack = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderTrack"));
-const ReMakerOrderReport = page("remaker", () => import("./remaker/pages/Orders/ReMakerOrderReport"));
 const ReMakerSales = page("remaker", () => import("./remaker/pages/Sales/ReMakerSales"));
 const ReMakerCustomers = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomers"));
 const ReMakerCustomerProfile = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomerProfile"));
@@ -156,14 +149,6 @@ const AdminEarnings = page("admin", () => import("./admin/pages/Earnings/AdminEa
 const AdminNotifications = page("admin", () => import("./admin/pages/Notifications/AdminNotifications"));
 const AdminContent = page("admin", () => import("./admin/pages/Content/AdminContent"));
 const AdminHelp = page("admin", () => import("./admin/pages/Help/AdminHelp"));
-const AdminShop = page("admin", () => import("./admin/pages/Shop/AdminShop"));
-const AdminShopProduct = page("admin", () => import("./admin/pages/Shop/AdminShopProduct"));
-const AdminShopSeller = page("admin", () => import("./admin/pages/Shop/AdminShopSeller"));
-const AdminShopCart = page("admin", () => import("./admin/pages/Shop/AdminShopCart"));
-const AdminShopCheckout = page("admin", () => import("./admin/pages/Shop/AdminShopCheckout"));
-const AdminShopSuccess = page("admin", () => import("./admin/pages/Shop/AdminShopSuccess"));
-const AdminShopOrders = page("admin", () => import("./admin/pages/Shop/AdminShopOrders"));
-const AdminShopOrderDetails = page("admin", () => import("./admin/pages/Shop/AdminShopOrderDetails"));
 const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
 const AdminSellForm = page("admin", () => import("./admin/pages/Sell/AdminSellForm"));
 const AdminSellListing = page("admin", () => import("./admin/pages/Sell/AdminSellListing"));
@@ -341,29 +326,17 @@ export default function App() {
       <Route element={<ReMakerLayout />}>
         <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
         <Route path="/remaker-profile" element={<ReMakerProfile />} />
-        <Route path="/remaker-marketplace" element={<ReMakerMarketplace />} />
-        <Route
-          path="/remaker-marketplace/product/:id"
-          element={<ReMakerProductDetails />}
-        />
-        <Route
-          path="/remaker-marketplace/seller/:id"
-          element={<ReMakerSellerProfile />}
-        />
-
-        <Route path="/remaker-orders" element={<ReMakerOrders />} />
-        <Route
-          path="/remaker-orders/:orderId"
-          element={<ReMakerOrderDetails />}
-        />
-        <Route
-          path="/remaker-orders/:orderId/track"
-          element={<ReMakerOrderTrack />}
-        />
-        <Route
-          path="/remaker-orders/:orderId/report"
-          element={<ReMakerOrderReport />}
-        />
+        {/* ReMakers buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
+        <Route path="/remaker-marketplace" element={<UserMarketplace />} />
+        <Route path="/remaker-marketplace/product/:productId" element={<UserProductDetails />} />
+        <Route path="/remaker-marketplace/seller/:sellerId" element={<UserSellerProfile />} />
+        <Route path="/remaker-marketplace/remaker/:artistId" element={<UserArtistProfile />} />
+        <Route path="/remaker-cart" element={<UserCart />} />
+        <Route path="/remaker-checkout" element={<UserShopCheckout />} />
+        <Route path="/remaker-checkout/success/:ids" element={<UserOrderSuccess />} />
+        <Route path="/remaker-orders" element={<UserOrders />} />
+        <Route path="/remaker-orders/:orderId" element={<UserOrderDetails />} />
+        <Route path="/remaker-orders/:orderId/track" element={<UserOrderTrack />} />
 
         <Route path="/remaker-sales" element={<ReMakerSales />} />
         <Route path="/remaker-sales/:saleId" element={<Navigate to="/remaker-sales" replace />} />
@@ -485,17 +458,17 @@ export default function App() {
         <Route path="/admin-help" element={<AdminHelp />} />
         <Route path="/admin-states" element={<AdminStates />} />
 
-        <Route path="/admin-shop" element={<AdminShop />} />
-        <Route path="/admin-shop/product/:id" element={<AdminShopProduct />} />
-        <Route path="/admin-shop/seller/:id" element={<AdminShopSeller />} />
-        <Route path="/admin-shop/cart" element={<AdminShopCart />} />
-        <Route path="/admin-shop/checkout" element={<AdminShopCheckout />} />
-        <Route path="/admin-shop/success/:ids" element={<AdminShopSuccess />} />
-        <Route path="/admin-shop/orders" element={<AdminShopOrders />} />
-        <Route
-          path="/admin-shop/orders/:orderId"
-          element={<AdminShopOrderDetails />}
-        />
+        {/* admins buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
+        <Route path="/admin-shop" element={<UserMarketplace />} />
+        <Route path="/admin-shop/product/:productId" element={<UserProductDetails />} />
+        <Route path="/admin-shop/seller/:sellerId" element={<UserSellerProfile />} />
+        <Route path="/admin-shop/remaker/:artistId" element={<UserArtistProfile />} />
+        <Route path="/admin-shop/cart" element={<UserCart />} />
+        <Route path="/admin-shop/checkout" element={<UserShopCheckout />} />
+        <Route path="/admin-shop/checkout/success/:ids" element={<UserOrderSuccess />} />
+        <Route path="/admin-shop/orders" element={<UserOrders />} />
+        <Route path="/admin-shop/orders/:orderId" element={<UserOrderDetails />} />
+        <Route path="/admin-shop/orders/:orderId/track" element={<UserOrderTrack />} />
 
         <Route path="/admin-sell" element={<AdminSell />} />
         <Route path="/admin-sell/new" element={<AdminSellForm />} />

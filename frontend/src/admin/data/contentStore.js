@@ -18,11 +18,9 @@
    Backend later: Categories, Banners, Faqs and Policy_Versions tables.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
-import { useProducts } from "./productsStore";
-import { useDonations } from "./donationsStore";
-import { useStock } from "./warehouseStore";
-import { useSellListings } from "./sellStore";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { adminCategoryApi } from "../../api/adminCategories";
+import { refreshCategories } from "../../shared/catalog";
 import { DEMO_TODAY } from "../utils/format";
 
 const iso = (v) => new Date(v).toISOString();
@@ -35,7 +33,6 @@ export const TODAY_KEY = dayKey(DEMO_TODAY);
    --------------------------------------------------------- */
 export const CATEGORY_ICON_KEYS = ["Armchair", "Home", "CookingPot", "Shirt", "Smartphone", "BookOpen", "Dumbbell", "Lamp", "Gem", "Baby", "Bike", "Music", "Camera", "Watch", "Flower2", "Hammer", "Gamepad2", "Backpack", "Package"];
 
-const cat = (n, name, icon, blurb, extra = {}) => ({ id: `CAT-${n}`, name, icon, blurb, active: true, locked: false, createdAt: iso("2025-01-10T09:00:00"), ...extra });
 
 export const BANNER_PLACEMENTS = [
   { key: "Home hero", blurb: "The big slider at the top of the Home page.", max: 4, ratio: "16 : 6" },
@@ -151,18 +148,8 @@ Use the report button on any listing, review or profile. Every report is read by
    --------------------------------------------------------- */
 let state = {
   seq: { cat: 11, bn: 8, fq: 15 },
-  categories: [
-    cat(1, "Furniture", "Armchair", "Chairs, tables, shelves, wardrobes and beds."),
-    cat(2, "Home Decor", "Home", "Lamps, mirrors, frames, planters and wall pieces."),
-    cat(3, "Kitchen", "CookingPot", "Cookware, crockery, storage and small appliances."),
-    cat(4, "Fashion", "Gem", "Bags, jewellery, accessories and reworked pieces."),
-    cat(5, "Clothing", "Shirt", "Pre-loved clothes in good condition."),
-    cat(6, "Electronics", "Smartphone", "Working phones, audio, gadgets and appliances."),
-    cat(7, "Books", "BookOpen", "Novels, textbooks, comics and magazines."),
-    cat(8, "Sports", "Dumbbell", "Fitness gear, bikes and outdoor equipment."),
-    cat(9, "Lighting", "Lamp", "Lamps, shades, fixtures and fairy lights."),
-    cat(10, "Other", "Package", "Anything that does not fit elsewhere. Always available.", { locked: true }),
-  ],
+  categories: [], // loaded from the backend (see loadCategories)
+  catStatus: "idle", // idle | loading | ready | error
   banners: [
     bn(1, { title: "Diwali Green Sale", subtitle: "15% off upcycled products. Use code DIWALI15.", cta: "Shop the sale", link: "/shop", placement: "Home hero", image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000", start: "2026-10-15", end: "2026-11-05", views: 12840, clicks: 612, createdAt: iso("2026-10-10T10:00:00") }),
     bn(2, { title: "Give a chair, earn Orbit Points", subtitle: "Free pickup from your door. Donate in two minutes.", cta: "Donate now", link: "/donate", placement: "Home hero", image: "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000", start: "2026-09-01", end: "", views: 31200, clicks: 1540, createdAt: iso("2026-08-28T10:00:00") }),
@@ -189,17 +176,17 @@ let state = {
     fq(14, "Account", "How do I delete my account?", "Go to Settings, then Account, and choose Delete account. Paid orders are kept as the law requires.", { helpful: 12, notHelpful: 2, published: false }),
   ],
   policies: [
-    { key: "terms", title: "Terms of use", icon: "Scale", summary: "The rules for using ReOrbit.", version: "2.1", status: "Published", updatedAt: iso("2026-09-12T10:00:00"), updatedBy: "Nikhil Rao", draft: null,
-      body: TERMS, versions: [ver("2.1", "2026-09-12T10:00:00", "Nikhil Rao", "Added the platform fee section", TERMS), ver("2.0", "2026-03-02T10:00:00", "Nikhil Rao", "Rewritten in plain language", TERMS.replace(/Orders placed by members[\s\S]*?\n\n## 4/, "Fees are shown at checkout.\n\n## 4")), ver("1.0", "2025-01-10T10:00:00", "Nikhil Rao", "First version", "## Using ReOrbit\nBy using ReOrbit you agree to these terms.")] },
-    { key: "privacy", title: "Privacy policy", icon: "Lock", summary: "What we collect and why.", version: "1.4", status: "Published", updatedAt: iso("2026-07-05T10:00:00"), updatedBy: "Nikhil Rao", draft: null,
-      body: PRIVACY, versions: [ver("1.4", "2026-07-05T10:00:00", "Nikhil Rao", "Clarified who sees addresses", PRIVACY), ver("1.0", "2025-01-10T10:00:00", "Nikhil Rao", "First version", "## What we collect\nYour name, email and the items you list.")] },
-    { key: "refunds", title: "Returns and refunds", icon: "RotateCcw", summary: "When and how we give money back.", version: "1.2", status: "Published", updatedAt: iso("2026-08-20T10:00:00"), updatedBy: "Sneha Kulkarni", draft: { body: REFUNDS.replace("within 7 days", "within 10 days"), note: "Extend the return window to 10 days for Diwali", at: iso("2026-10-18T15:00:00"), by: "Sneha Kulkarni" },
-      body: REFUNDS, versions: [ver("1.2", "2026-08-20T10:00:00", "Sneha Kulkarni", "Added platform fee refund", REFUNDS), ver("1.0", "2025-01-10T10:00:00", "Nikhil Rao", "First version", "## Returns\nTell us if an item is not as described.")] },
-    { key: "shipping", title: "Shipping and delivery", icon: "Truck", summary: "How orders reach you.", version: "1.1", status: "Published", updatedAt: iso("2026-06-10T10:00:00"), updatedBy: "Nikhil Rao", draft: null,
-      body: SHIPPING, versions: [ver("1.1", "2026-06-10T10:00:00", "Nikhil Rao", "Added cash on delivery", SHIPPING), ver("1.0", "2025-01-10T10:00:00", "Nikhil Rao", "First version", "## Delivery\nOrders are delivered in 3 to 7 working days.")] },
-    { key: "donation", title: "Donation guidelines", icon: "Gift", summary: "What we accept and how pickups work.", version: "1.0", status: "Published", updatedAt: iso("2025-01-10T10:00:00"), updatedBy: "Nikhil Rao", draft: null,
-      body: DONATION, versions: [ver("1.0", "2025-01-10T10:00:00", "Nikhil Rao", "First version", DONATION)] },
-    { key: "community", title: "Community guidelines", icon: "UsersRound", summary: "How we expect everyone to behave.", version: "1.0", status: "Draft", updatedAt: iso("2026-10-14T10:00:00"), updatedBy: "Nikhil Rao", draft: null,
+    { key: "terms", title: "Terms of use", icon: "Scale", summary: "The rules for using ReOrbit.", version: "2.1", status: "Published", updatedAt: iso("2026-09-12T10:00:00"), updatedBy: "ReOrbit team", draft: null,
+      body: TERMS, versions: [ver("2.1", "2026-09-12T10:00:00", "ReOrbit team", "Added the platform fee section", TERMS), ver("2.0", "2026-03-02T10:00:00", "ReOrbit team", "Rewritten in plain language", TERMS.replace(/Orders placed by members[\s\S]*?\n\n## 4/, "Fees are shown at checkout.\n\n## 4")), ver("1.0", "2025-01-10T10:00:00", "ReOrbit team", "First version", "## Using ReOrbit\nBy using ReOrbit you agree to these terms.")] },
+    { key: "privacy", title: "Privacy policy", icon: "Lock", summary: "What we collect and why.", version: "1.4", status: "Published", updatedAt: iso("2026-07-05T10:00:00"), updatedBy: "ReOrbit team", draft: null,
+      body: PRIVACY, versions: [ver("1.4", "2026-07-05T10:00:00", "ReOrbit team", "Clarified who sees addresses", PRIVACY), ver("1.0", "2025-01-10T10:00:00", "ReOrbit team", "First version", "## What we collect\nYour name, email and the items you list.")] },
+    { key: "refunds", title: "Returns and refunds", icon: "RotateCcw", summary: "When and how we give money back.", version: "1.2", status: "Published", updatedAt: iso("2026-08-20T10:00:00"), updatedBy: "ReOrbit team", draft: { body: REFUNDS.replace("within 7 days", "within 10 days"), note: "Extend the return window to 10 days for Diwali", at: iso("2026-10-18T15:00:00"), by: "ReOrbit team" },
+      body: REFUNDS, versions: [ver("1.2", "2026-08-20T10:00:00", "ReOrbit team", "Added platform fee refund", REFUNDS), ver("1.0", "2025-01-10T10:00:00", "ReOrbit team", "First version", "## Returns\nTell us if an item is not as described.")] },
+    { key: "shipping", title: "Shipping and delivery", icon: "Truck", summary: "How orders reach you.", version: "1.1", status: "Published", updatedAt: iso("2026-06-10T10:00:00"), updatedBy: "ReOrbit team", draft: null,
+      body: SHIPPING, versions: [ver("1.1", "2026-06-10T10:00:00", "ReOrbit team", "Added cash on delivery", SHIPPING), ver("1.0", "2025-01-10T10:00:00", "ReOrbit team", "First version", "## Delivery\nOrders are delivered in 3 to 7 working days.")] },
+    { key: "donation", title: "Donation guidelines", icon: "Gift", summary: "What we accept and how pickups work.", version: "1.0", status: "Published", updatedAt: iso("2025-01-10T10:00:00"), updatedBy: "ReOrbit team", draft: null,
+      body: DONATION, versions: [ver("1.0", "2025-01-10T10:00:00", "ReOrbit team", "First version", DONATION)] },
+    { key: "community", title: "Community guidelines", icon: "UsersRound", summary: "How we expect everyone to behave.", version: "1.0", status: "Draft", updatedAt: iso("2026-10-14T10:00:00"), updatedBy: "ReOrbit team", draft: null,
       body: COMMUNITY, versions: [], neverPublished: true },
   ],
   log: [],
@@ -216,74 +203,65 @@ const logAdd = (by, text) => set({ log: [{ id: `L${Date.now()}${Math.random().to
 export const useContentLog = () => useRaw().log;
 
 /* ---------------------------------------------------------
-   Categories
+   Categories (real data: Admin > Content talks to /api/core/admin/categories/)
    --------------------------------------------------------- */
-export function useCategoryUsage() {
-  const products = useProducts();
-  const donations = useDonations();
-  const stock = useStock();
-  const listings = useSellListings();
-  return useMemo(() => {
-    const m = {};
-    const bump = (name, key) => { if (!name) return; m[name] = m[name] || { live: 0, products: 0, donations: 0, stock: 0, listings: 0 }; m[name][key] += 1; };
-    products.forEach((p) => { bump(p.category, "products"); if (p.state === "live") bump(p.category, "live"); });
-    donations.forEach((d) => bump(d.category, "donations"));
-    stock.forEach((s) => bump(s.category, "stock"));
-    listings.forEach((l) => bump(l.category, "listings"));
-    return m;
-  }, [products, donations, stock, listings]);
+export async function loadCategories(force = false) {
+  if (!force && (state.catStatus === "loading" || state.catStatus === "ready")) return;
+  set({ catStatus: "loading" });
+  try {
+    set({ categories: await adminCategoryApi.list(), catStatus: "ready" });
+  } catch (e) {
+    set({ catStatus: "error" });
+  }
 }
+const putCategory = (row) => set({ categories: state.categories.map((c) => (c.id === row.id ? row : c)) });
 
 export function useCategories() {
   const { categories } = useRaw();
-  const usage = useCategoryUsage();
-  return useMemo(() => categories.map((c, i) => {
-    const u = usage[c.name] || { live: 0, products: 0, donations: 0, stock: 0, listings: 0 };
-    const total = u.products + u.donations + u.stock + u.listings;
-    return { ...c, position: i, usage: u, total, inUse: total > 0 };
-  }), [categories, usage]);
+  useEffect(() => { loadCategories(); }, []);
+  return useMemo(() => categories.map((c, i) => ({ ...c, position: i })), [categories]);
 }
-
-/* Names members and admins can pick from (inactive ones are hidden). */
-export function useActiveCategoryNames() {
-  const { categories } = useRaw();
-  return useMemo(() => categories.filter((c) => c.active).map((c) => c.name), [categories]);
-}
+export const useCategoriesStatus = () => useRaw().catStatus;
 
 export const categoryNameTaken = (name, exceptId) => state.categories.some((c) => c.id !== exceptId && c.name.trim().toLowerCase() === name.trim().toLowerCase());
 
-export function createCategory(values, by) {
-  const id = `CAT-${state.seq.cat}`;
-  const other = state.categories.find((c) => c.locked);
-  const next = { id, name: values.name.trim(), icon: values.icon, blurb: (values.blurb || "").trim(), active: true, locked: false, createdAt: stamp() };
-  const list = state.categories.filter((c) => !c.locked);
-  set({ seq: { ...state.seq, cat: state.seq.cat + 1 }, categories: [...list, next, ...(other ? [other] : [])] });
-  logAdd(by, `Added the category “${next.name}”`);
-  return id;
+/* These return a promise and throw the server's message when something is refused. */
+export async function createCategory(values) {
+  await adminCategoryApi.create(values);
+  await loadCategories(true); // the server keeps "Other" last, so take its order
+  refreshCategories();
 }
-export function updateCategory(id, values, by) {
+export async function updateCategory(id, values) {
+  const body = { description: (values.blurb || "").trim(), icon: values.icon };
   const cur = state.categories.find((c) => c.id === id);
-  if (!cur) return;
-  set({ categories: state.categories.map((c) => (c.id !== id ? c : { ...c, name: values.name !== undefined ? values.name.trim() : c.name, icon: values.icon ?? c.icon, blurb: (values.blurb ?? c.blurb).trim() })) });
-  logAdd(by, `Updated the category “${values.name?.trim() || cur.name}”`);
+  if (values.name !== undefined && values.name.trim() !== cur?.name) body.name = values.name.trim();
+  putCategory(await adminCategoryApi.update(id, body));
+  refreshCategories();
 }
-export function setCategoryActive(id, active, by) {
-  const cur = state.categories.find((c) => c.id === id);
-  set({ categories: state.categories.map((c) => (c.id === id ? { ...c, active } : c)) });
-  if (cur) logAdd(by, `${active ? "Showed" : "Hid"} the category “${cur.name}”`);
+export async function setCategoryActive(id, active) {
+  putCategory(await adminCategoryApi.update(id, { active }));
+  refreshCategories();
 }
-export function moveCategory(id, dir) {
-  const list = [...state.categories];
+export async function moveCategory(id, dir) {
+  const before = state.categories;
+  const list = [...before];
   const i = list.findIndex((c) => c.id === id);
   const j = i + dir;
   if (i < 0 || j < 0 || j >= list.length || list[j].locked || list[i].locked) return;
   [list[i], list[j]] = [list[j], list[i]];
-  set({ categories: list });
+  set({ categories: list }); // show the move at once
+  try {
+    set({ categories: await adminCategoryApi.move(id, dir) });
+    refreshCategories();
+  } catch (e) {
+    set({ categories: before });
+    throw e;
+  }
 }
-export function removeCategory(id, by) {
-  const cur = state.categories.find((c) => c.id === id);
+export async function removeCategory(id) {
+  await adminCategoryApi.remove(id);
   set({ categories: state.categories.filter((c) => c.id !== id) });
-  if (cur) logAdd(by, `Deleted the category “${cur.name}”`);
+  refreshCategories();
 }
 
 /* ---------------------------------------------------------

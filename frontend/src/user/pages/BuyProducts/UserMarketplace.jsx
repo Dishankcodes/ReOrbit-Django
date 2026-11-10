@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "../../../shared/portalRouter";
 import { Check, Heart, Leaf, MapPin, PackageSearch, Search, ShoppingBag, ShoppingCart, SlidersHorizontal, Sparkles, Star, BadgeCheck, Boxes, X } from "lucide-react";
 
 import { addToCart, useCartCount, useInCart, useStockOf } from "../../data/shopStore";

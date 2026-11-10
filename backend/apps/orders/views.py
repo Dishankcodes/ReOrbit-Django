@@ -5,11 +5,15 @@ Buyer (user account)
   POST quote/                    {items:[{id,qty}]}  -> server prices
   POST checkout/                 {items, address_id, method: RAZORPAY|COD, note}  (header Idempotency-Key)
   GET  me/                       my orders      GET me/<id>/      POST me/<id>/cancel/
+  POST me/<id>/return/           (multipart) reason, details, photos     POST me/<id>/return/<escalate|withdraw>/
+  GET  options/                  courier list, return and failed-delivery reasons
 Seller (user or ReMaker account)
   GET  sales/                    orders to fulfil   GET sales/<id>/
-  POST sales/<id>/<pack|ship|deliver|cancel>/
+  POST sales/<id>/<pack|ship|deliver|cancel|update|fail|retry|returned>/
+  POST sales/<id>/<return-approve|return-reject|return-received>/
 Admin (module "orders")
-  GET  admin/        GET admin/<id>/        POST admin/<id>/<pack|ship|deliver|cancel>/
+  GET  admin/        GET admin/<id>/        POST admin/<id>/<any seller action>/
+  POST admin/<id>/cod-received/  cash from the courier arrived     POST admin/<id>/return-decide/
 """
 
 from django.db import transaction
@@ -27,7 +31,7 @@ from apps.core.validators import validate_gujarat_pincode, validate_phone
 from apps.payments import gateway
 from apps.payments.models import Payment
 
-from . import services
+from . import returns, services
 from .models import Order
 from .serializers import address_data, order_data
 
@@ -43,7 +47,9 @@ def _checkout_fail(e):
 
 
 def _order_qs():
-    return Order.objects.select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin").prefetch_related("lines")
+    return (Order.objects
+            .select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin", "return_request")
+            .prefetch_related("lines", "refunds", "return_request__photos"))
 
 
 # ------------------------------------------------------------------ addresses
@@ -231,12 +237,66 @@ class MyOrderCancel(APIView):
         return ok({"order": order_data(o, request, events=True)}, message="Order cancelled.")
 
 
+class MyOrderReturn(APIView):
+    """POST: ask for a return (multipart: reason, details, photos)."""
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def post(self, request, public_id):
+        o = get_object_or_404(Order, public_id=public_id, buyer_key=buyers.key_of(request.user.account))
+        try:
+            returns.request_return(o.pk, request.user.account, str(request.data.get("reason") or ""),
+                                   request.data.get("details"), request.FILES.getlist("photos"))
+        except services.CheckoutError as e:
+            return _checkout_fail(e)
+        o = _order_qs().prefetch_related("events").get(pk=o.pk)
+        return created({"order": order_data(o, request, events=True)}, message="Return requested.")
+
+
+class MyOrderReturnAction(APIView):
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def post(self, request, public_id, action):
+        if action not in ("escalate", "withdraw"):
+            return fail("Unknown action.", status=404)
+        key = buyers.key_of(request.user.account)
+        o = get_object_or_404(Order, public_id=public_id, buyer_key=key)
+        rr = getattr(o, "return_request", None)
+        if rr is None:
+            return fail("There is no return for this order.", status=404)
+        try:
+            (returns.escalate if action == "escalate" else returns.withdraw)(rr.pk, key)
+        except services.CheckoutError as e:
+            return _checkout_fail(e)
+        o = _order_qs().prefetch_related("events").get(pk=o.pk)
+        return ok({"order": order_data(o, request, events=True)}, message="Return updated.")
+
+
+class OptionsView(APIView):
+    """Lists the screens need: couriers, why a return or a failed delivery happens."""
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def get(self, request):
+        return ok({
+            "couriers": list(services.COURIERS),
+            "return_days": returns.RETURN_DAYS, "escalate_days": returns.ESCALATE_DAYS, "max_photos": returns.MAX_PHOTOS,
+            "return_reasons": [{"code": k, "label": v[0], "fault": v[1]} for k, v in returns.REASONS.items()],
+            "fail_reasons": [{"code": k, "label": v[0], "fault": v[1]} for k, v in services.FAIL_REASONS.items()],
+        })
+
+
 # ------------------------------------------------------------------ seller + admin
-ACTIONS = ("pack", "ship", "deliver", "cancel")
+ACTIONS = ("pack", "ship", "deliver", "cancel", "update", "fail", "retry", "returned",
+           "return-approve", "return-reject", "return-received")
+ADMIN_ONLY = ("cod-received", "return-decide")
 
 
 def _counts(qs):
-    return {r["status"]: r["n"] for r in qs.order_by().values("status").annotate(n=Count("pk"))}
+    c = {r["status"]: r["n"] for r in qs.order_by().values("status").annotate(n=Count("pk"))}
+    # "needs you" counters for the tabs: returns waiting on someone, cash not yet received from the courier
+    c["returns_open"] = qs.filter(return_request__status__in=("Requested", "Approved", "Escalated")).count()
+    c["cod_pending"] = (qs.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True)
+                        .exclude(payment_status="Paid").count())
+    return c
 
 
 def _filters(request, qs, admin=False):
@@ -251,6 +311,12 @@ def _filters(request, qs, admin=False):
                      | Q(buyer_remaker__email__icontains=t) | Q(buyer_remaker__full_name__icontains=t)
                      | Q(buyer_admin__email__icontains=t) | Q(buyer_admin__full_name__icontains=t))
         qs = qs.filter(cond).distinct()
+    if request.query_params.get("returns") == "open":
+        qs = qs.filter(return_request__status__in=("Requested", "Approved", "Escalated"))
+    if request.query_params.get("returns") == "any":
+        qs = qs.filter(return_request__isnull=False)
+    if request.query_params.get("cod") == "pending":
+        qs = qs.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True).exclude(payment_status="Paid")
     if admin and request.query_params.get("seller_type") in ("user", "remaker", "platform"):
         qs = qs.filter(seller_type=request.query_params["seller_type"])
     return qs
@@ -294,9 +360,34 @@ class SalesDetail(APIView):
 def _act(request, order, action, actor_kind):
     d = request.data
     try:
+        who, me, ip = actor_kind, request.user.account, _ip(request)
+        if who == "admin":
+            if order.buyer_type == "admin" and order.buyer_admin_id == me.pk:
+                raise services.CheckoutError("You can't handle an order you placed yourself.", code="OWN_ORDER", status=403)
+            if action in ("cod-received", "return-received", "return-decide") and not me.has_module("finance", "edit"):
+                raise services.CheckoutError("This needs the Payout details (finance) permission.", code="FORBIDDEN", status=403)
+        rr = getattr(order, "return_request", None)
         if action == "cancel":
-            services.cancel_order(order.pk, by=actor_kind, actor=request.user.account,
-                                  reason=str(d.get("reason") or ""), ip=_ip(request))
+            services.cancel_order(order.pk, by=actor_kind, actor=me, reason=str(d.get("reason") or ""), ip=ip)
+        elif action == "update":
+            services.post_update(order.pk, d.get("text"), actor_kind=who, actor=me, ip=ip)
+        elif action == "fail":
+            services.mark_failed(order.pk, str(d.get("reason") or ""), d.get("note"), actor_kind=who, actor=me, ip=ip)
+        elif action == "retry":
+            services.reattempt(order.pk, actor_kind=who, actor=me, ip=ip)
+        elif action == "returned":
+            services.return_to_origin(order.pk, actor_kind=who, actor=me, ip=ip)
+        elif action == "cod-received":
+            services.confirm_cod_cash(order.pk, me, str(d.get("reference") or ""), ip=ip)
+        elif action.startswith("return-"):
+            if rr is None:
+                raise services.CheckoutError("There is no return for this order.", code="NOT_FOUND", status=404)
+            if action == "return-received":
+                returns.mark_received(rr.pk, actor_kind=who, actor=me, ip=ip)
+            elif action == "return-decide":
+                returns.admin_decide(rr.pk, bool(d.get("approve")), str(d.get("fault") or ""), d.get("note"), me, ip=ip)
+            else:
+                returns.seller_decide(rr.pk, action == "return-approve", d.get("note"), actor_kind=who, actor=me, ip=ip)
         else:
             services.advance_order(order.pk, action, actor_kind=actor_kind, actor=request.user.account,
                                    courier_name=str(d.get("courier_name") or ""),
@@ -316,7 +407,7 @@ class SalesAction(APIView):
         base = SalesList.scope(request)
         if base is None:
             return fail("Only members and ReMakers have sales.", status=403)
-        o = get_object_or_404(Order, public_id=public_id, pk__in=base.filter(confirmed_at__isnull=False).values("pk"))
+        o = get_object_or_404(_order_qs(), public_id=public_id, pk__in=base.filter(confirmed_at__isnull=False).values("pk"))
         return _act(request, o, action, "seller")
 
 
@@ -343,7 +434,7 @@ class AdminAction(APIView):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("orders")]
 
     def post(self, request, public_id, action):
-        if action not in ACTIONS:
+        if action not in ACTIONS + ADMIN_ONLY:
             return fail("Unknown action.", status=404)
-        o = get_object_or_404(Order, public_id=public_id)
+        o = get_object_or_404(_order_qs(), public_id=public_id)
         return _act(request, o, action, "admin")

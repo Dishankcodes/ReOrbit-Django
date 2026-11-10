@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "../../../shared/portalRouter";
 import {
   Ban,
   CalendarDays,
@@ -21,6 +21,7 @@ import {
   Leaf,
 } from "lucide-react";
 
+import ReturnPanel from "../../../shared/components/ReturnPanel";
 import { PAYMENT_LABEL, cancelOrder, canCancel, reviewOrder, useOrder, useOrdersStatus } from "../../data/ordersStore";
 import { PageLoader } from "../../../shared/components/Spinner";
 import "../../../shared/components/Spinner.css";
@@ -71,7 +72,7 @@ export default function UserOrderDetails() {
   }
 
   const delivered = order.stage >= 5 && !order.cancelled;
-  const shippedPhase = order.stage >= 3 && !order.cancelled && !delivered;
+  const shippedPhase = order.stage >= 3 && !order.cancelled && !delivered && order.apiStatus === "Shipped";
   const latest = order.events[order.events.length - 1] || { at: order.placedAt, label: order.status, detail: "" };
   
 
@@ -140,6 +141,7 @@ export default function UserOrderDetails() {
           </div>
         </div>
       )}
+      <ReturnPanel order={order} />
       {shippedPhase && (
         <div className="dn-banner ob-banner">
           <Truck size={20} />

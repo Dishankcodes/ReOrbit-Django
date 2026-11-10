@@ -33,15 +33,21 @@ class WalletBase(APIBase):
         self.post("/api/orders/addresses/", ADDR, as_=self.buyer)
         self.addr = self.get("/api/orders/addresses/", as_=self.buyer).data["data"]["addresses"][0]["id"]
 
-    def deliver(self, qty=1):
+    _n = 0
+
+    def deliver(self, qty=1, confirm=True):
         r = self.client.post("/api/orders/checkout/", {"items": [{"id": self.table.public_id, "qty": qty}], "address_id": self.addr,
                              "method": "COD"}, format="json", **self._headers(self.buyer))
         self.assertEqual(r.status_code, 201, r.data)
         oid = r.data["data"]["orders"][0]["id"]
         S = f"/api/orders/sales/{oid}/"
         self.post(S + "pack/", {}, as_=self.maker)
-        self.post(S + "ship/", {"courier_name": "DTDC", "tracking_no": "D123"}, as_=self.maker)
+        WalletBase._n += 1
+        r = self.post(S + "ship/", {"courier_name": "DTDC", "tracking_no": f"D{WalletBase._n:08d}"}, as_=self.maker)
+        self.assertEqual(r.status_code, 200, r.data)
         self.assertEqual(self.post(S + "deliver/", {}, as_=self.maker).status_code, 200)
+        if confirm:  # the courier handed the cash to ReOrbit and an admin confirmed it
+            self.assertEqual(self.post(f"/api/orders/admin/{oid}/cod-received/", {"reference": "REM1"}, as_=self.boss).status_code, 200)
         return oid
 
     def age(self, days=8):
@@ -185,8 +191,8 @@ class PayoutTests(WalletBase):
     def test_rules_endpoint_and_auto_run(self):
         self.ready(2)
         self.assertEqual(self.post("/api/payments/admin/payouts/run-auto/", {}, as_=self.boss).data["code"], "AUTO_OFF")
-        r = self.client.patch("/api/payments/admin/rules/", {"payout_auto": True, "payout_min_amount": 500, "payout_hold_days": 3}, format="json", **self._headers(self.boss))
-        self.assertEqual(r.data["data"], {"payout_hold_days": 3, "payout_min_amount": 500, "payout_auto": True})
+        r = self.client.patch("/api/payments/admin/rules/", {"payout_auto": True, "payout_min_amount": 500, "payout_hold_days": 10}, format="json", **self._headers(self.boss))
+        self.assertEqual(r.data["data"], {"payout_hold_days": 10, "payout_min_amount": 500, "payout_auto": True})
         self.assertEqual(self.client.patch("/api/payments/admin/rules/", {"payout_hold_days": 99}, format="json", **self._headers(self.boss)).status_code, 400)
         call_command("run_payouts")
         p = Payout.objects.get()

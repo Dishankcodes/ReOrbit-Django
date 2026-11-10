@@ -30,9 +30,12 @@ def get(obj):
     return getattr(obj, f"buyer_{obj.buyer_type}")
 
 
-def info(obj):
+def info(obj, email=True):
     b = get(obj)
-    return {"type": obj.buyer_type, "id": b.public_id, "name": b.full_name, "email": b.email}
+    d = {"type": obj.buyer_type, "id": b.public_id, "name": b.full_name}
+    if email:  # sellers get the name only; admins also see the email
+        d["email"] = b.email
+    return d
 
 
 def order_url(obj):

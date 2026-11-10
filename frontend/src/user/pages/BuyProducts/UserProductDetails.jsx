@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
 import { BadgeCheck, Boxes, Eye, Heart, Leaf, MapPin, Minus, Plus, ShoppingBag, ShoppingCart, Star, Zap, PackageX, Sparkles } from "lucide-react";
 
 import { useGoBack } from "../../../shared/backNav";

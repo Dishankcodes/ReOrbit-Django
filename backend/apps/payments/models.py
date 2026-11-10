@@ -190,12 +190,15 @@ class WalletEntry(TimeStampedModel):
         EARNING = "Earning", "Sale earning"
         PAYOUT = "Payout", "Payout requested"
         RELEASE = "Release", "Payout returned to wallet"
+        REVERSAL = "Reversal", "Earning taken back (refund)"
 
     seller_user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.PROTECT, related_name="wallet_entries")
     seller_remaker = models.ForeignKey("remakers.ReMakers", null=True, blank=True, on_delete=models.PROTECT, related_name="wallet_entries")
     kind = models.CharField(max_length=8, choices=Kind.choices)
     amount = models.IntegerField(help_text="Rupees. Positive adds to the wallet, negative takes out.")
-    available_at = models.DateTimeField(help_text="When this amount can be paid out")
+    available_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When this amount can be paid out. Empty = not clearing yet (cash on delivery not received by ReOrbit)")
     order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.PROTECT, related_name="wallet_entries")
     payout = models.ForeignKey(Payout, null=True, blank=True, on_delete=models.PROTECT, related_name="entries")
     note = models.CharField(max_length=200, blank=True)
@@ -211,3 +214,50 @@ class WalletEntry(TimeStampedModel):
             _one_seller_check("wallet_one_seller"),
             models.UniqueConstraint(fields=["order", "kind"], condition=Q(kind="Earning"), name="wallet_one_earning_per_order"),
         ]
+
+
+# --------------------------------------------------------------------------- #
+# Refunds. Every refund is a row, so nothing depends on a log line or an email.
+# --------------------------------------------------------------------------- #
+class Refund(PublicIdModel, TimeStampedModel):
+    public_id_prefix = "RFD"
+
+    class Reason(models.TextChoices):
+        CANCELLED = "cancelled", "Order cancelled"
+        LATE_PAYMENT = "late_payment", "Paid after the stock was released"
+        RETURN = "return", "Return accepted"
+        DELIVERY_FAILED = "delivery_failed", "Delivery failed"
+        ADMIN = "admin", "Goodwill / dispute"
+
+    class Status(models.TextChoices):
+        PENDING = "Pending", "Waiting to be sent"
+        SENDING = "Sending", "Being sent"
+        DONE = "Done", "Refunded"
+        FAILED = "Failed", "Needs attention"
+
+    class Method(models.TextChoices):
+        RAZORPAY = "RAZORPAY", "Back to the original payment (Razorpay)"
+        MANUAL = "MANUAL", "Sent by ReOrbit (cash on delivery order)"
+
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT, related_name="refunds")
+    order = models.ForeignKey("orders.Order", null=True, blank=True, on_delete=models.PROTECT, related_name="refunds")
+    amount = models.PositiveIntegerField(help_text="Whole rupees")
+    reason = models.CharField(max_length=16, choices=Reason.choices)
+    note = models.CharField(max_length=255, blank=True)
+    method = models.CharField(max_length=8, choices=Method.choices)
+    status = models.CharField(max_length=8, choices=Status.choices, default=Status.PENDING)
+    razorpay_refund_id = models.CharField(max_length=64, blank=True)
+    reference = models.CharField(max_length=60, blank=True, help_text="Bank/UPI reference for manual refunds")
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.CharField(max_length=255, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    processed_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    class Meta:
+        db_table = "refunds"
+        ordering = ["-created_at", "-pk"]
+        indexes = [models.Index(fields=["status", "-created_at"], name="refund_status_idx")]
+        constraints = [models.CheckConstraint(condition=Q(amount__gte=1), name="refund_amount_gte_1")]
+
+    def __str__(self):
+        return f"{self.public_id} ₹{self.amount} {self.status}"

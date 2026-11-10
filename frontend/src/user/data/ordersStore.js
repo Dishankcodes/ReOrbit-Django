@@ -51,6 +51,8 @@ export const STAGES = [
 /* the tab / badge status for a stage */
 export function statusOf(order) {
   if (order.cancelled) return "Cancelled";
+  if (order.apiStatus === "Delivery_Failed") return "Not delivered";
+  if (order.apiStatus === "Returned_To_Origin") return "Returned";
   if (order.stage >= 5) return "Delivered";
   if (order.stage >= 3) return "Shipped";
   if (order.stage === 2) return "Processing";
@@ -63,6 +65,8 @@ export const STATUS_TONE = {
   Shipped: "violet",
   Delivered: "green",
   Cancelled: "red",
+  "Not delivered": "red",
+  Returned: "red",
 };
 
 export const PAYMENT_LABEL = {
@@ -84,7 +88,17 @@ export const CANCEL_REASONS = [
 
 
 /* ---------- server order -> screen order ---------- */
-const STAGE_OF = { Pending_Payment: 0, Confirmed: 1, Packed: 2, Shipped: 3, Delivered: 5, Cancelled: 0 };
+const STAGE_OF = { Pending_Payment: 0, Confirmed: 1, Packed: 2, Shipped: 3, Delivery_Failed: 3, Returned_To_Origin: 0, Delivered: 5, Cancelled: 0 };
+
+/* what the buyer sees about money coming back: from the refund records */
+function refundOf(o) {
+  const rows = o.refunds || [];
+  if (!rows.length) return null;
+  const total = rows.reduce((n, r) => n + r.amount, 0);
+  const done = rows.every((r) => r.status === "Done");
+  const last = rows.map((r) => r.processed_at || r.created_at).sort().pop();
+  return { amount: total, status: done ? "Refunded" : "Processing", at: last };
+}
 
 function adapt(o, reviews) {
   const lines = o.items || [];
@@ -127,12 +141,13 @@ function adapt(o, reviews) {
     note: o.note || "",
     events,
     eventsLoaded: !!o.events,
-    refund:
-      o.payment.status === "Refunded"
-        ? { amount: o.total, status: "Refunded", at: o.cancelled_at }
-        : o.payment.status === "Refund_Failed"
-          ? { amount: o.total, status: "Processing", at: o.cancelled_at }
-          : null,
+    refund: refundOf(o),
+    refunds: o.refunds || [],
+    failed: o.failed || null,
+    returnReq: o.return || null,
+    canReturn: !!o.can_return,
+    returnUntil: o.return_until || null,
+    codCollected: o.payment.status === "COD_Collected",
     address: {
       name: o.address?.name, line: [o.address?.line1, o.address?.line2].filter(Boolean).join(", "),
       city: o.address?.city, state: o.address?.state, pincode: o.address?.pincode, phone: o.address?.phone,
@@ -198,6 +213,14 @@ export async function cancelOrder(id, reason) {
   replaceOrder(await buyerOrdersApi.cancel(id, reason));
 }
 
+export async function requestReturn(id, form) {
+  replaceOrder(await buyerOrdersApi.requestReturn(id, form));
+}
+
+export async function returnAction(id, action) {
+  replaceOrder(await buyerOrdersApi.returnAction(id, action));
+}
+
 export const clearOrders = () => { raw = []; reviews = {}; status = { loaded: false, loading: false, error: "", at: 0 }; bump(); };
 
 /* the review also shows on the seller / ReMaker profile (demo profiles only) */
@@ -218,7 +241,7 @@ export function reviewOrder(id, review) {
 /* ---------- derived ---------- */
 export const canCancel = (o) => !!o.canCancel;
 export const orderTotal = (o) => o.total;
-export const isActive = (o) => !o.cancelled && o.stage < 5;
+export const isActive = (o) => !o.cancelled && o.stage < 5 && o.apiStatus !== "Returned_To_Origin";
 
 /* ReMaker sellers have their own profile route */
 export const sellerPath = (item) =>

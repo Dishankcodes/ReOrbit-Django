@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "../../../../shared/portalRouter";
 import { Store, ShoppingBag, ReceiptText } from "lucide-react";
 import { useCartCount } from "../../../data/shopStore";
 import { isActive, useOrders } from "../../../data/ordersStore";

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { SkeletonRows } from "../../../shared/components/Skeleton";
-import { Link } from "react-router-dom";
+import { Link } from "../../../shared/portalRouter";
 import {
   Search,
   X,

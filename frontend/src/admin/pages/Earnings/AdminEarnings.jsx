@@ -44,6 +44,7 @@ import "../../css/earnings/AdminEarnings.css";
 import "../../css/products/ProductsReal.css";
 import useToast from "../../components/ui/useToast";
 import PayoutsLive from "./PayoutsLive";
+import RefundsLive from "./RefundsLive";
 
 const C_FEE = "var(--rp-c1)";
 const C_SALE = "var(--rp-c3)";
@@ -646,6 +647,7 @@ function EarningsOverview() {
 /* Real money: seller payouts (default). "Platform overview" is the earlier demo view. */
 const TABS = [
   { key: "payouts", label: "Seller payouts" },
+  { key: "refunds", label: "Refunds" },
   { key: "overview", label: "Platform overview" },
 ];
 
@@ -662,6 +664,7 @@ export default function AdminEarnings() {
         ))}
       </div>
       {tab === "payouts" && <PayoutsLive toast={toast} />}
+      {tab === "refunds" && <RefundsLive toast={toast} />}
       {tab === "overview" && <EarningsOverview />}
       {toastNode}
     </div>

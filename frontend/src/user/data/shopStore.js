@@ -8,13 +8,15 @@
    Backend later: replace with Cart / Checkout / Payment APIs.
    ========================================================= */
 
+import { portalOf } from "../../api/session";
 import { useLiveMarketplace } from "./liveMarketplace";
 import { useMemo, useSyncExternalStore } from "react";
 import { ITEMS, getItemById } from "../../data/marketplaceData";
 import { deliveryFor, platformFeeOf, getCommerce } from "../../shared/commerce";
 
 const OWN_SELLER_ID = "user-aarav-patel"; // the logged-in demo user
-const CART_KEY = "reorbit_user_cart";
+/* one cart per portal, so a member, a ReMaker and an admin signed in on the same browser never share one */
+const CART_KEY = `reorbit_${portalOf(typeof window !== "undefined" ? window.location.pathname : "/")}_cart`;
 
 /* Delivery, the platform fee and the cash-on-delivery limit come from
    Admin > Settings > Commerce (see shared/commerce.js). */

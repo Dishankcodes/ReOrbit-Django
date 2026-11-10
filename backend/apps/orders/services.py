@@ -14,6 +14,7 @@ Rules this file keeps:
 """
 
 import logging
+import re
 from collections import OrderedDict
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -28,7 +29,7 @@ from apps.core.pricing import cod_block_reason, delivery_charge, platform_fee
 from apps.core.services import audit, notify
 from apps.listings.models import Item, MediaImage
 from apps.listings.sellables import settle_status
-from apps.payments import gateway
+from apps.payments import gateway, refunds
 from apps.payments.models import Payment
 from apps.remakers.models import RemakerProduct, ReMakers
 from apps.users.models import Users
@@ -57,7 +58,7 @@ def rupees(value):
 
 
 def event(order, label, detail="", actor="system"):
-    return OrderEvent.objects.create(order=order, label=label, detail=detail, actor=actor)
+    return OrderEvent.objects.create(order=order, label=label[:60], detail=str(detail or "")[:255], actor=actor)
 
 
 def parse_lines(raw):
@@ -538,23 +539,14 @@ def confirm_paid(payment_pk, razorpay_payment_id):
             p.status, p.razorpay_payment_id, p.paid_at = Payment.Status.REFUNDED, razorpay_payment_id, now
             p.failure_reason = "Paid after the hold expired and the items were gone. Refunded."
             p.save(update_fields=["status", "razorpay_payment_id", "paid_at", "failure_reason", "updated_at"])
-            for o in p.orders.all():
-                o.payment_status = Order.PayStatus.REFUND_FAILED  # until the refund call succeeds
-                o.save(update_fields=["payment_status", "updated_at"])
+            late_refund = refunds.create(p, p.amount, "late_payment", note="Paid after the stock was released", send=False)
             refund_needed = True
         else:
             p.status, p.razorpay_payment_id, p.paid_at = Payment.Status.PAID, razorpay_payment_id, now
             p.save(update_fields=["status", "razorpay_payment_id", "paid_at", "updated_at"])
             _finalize_paid(p, now)
     if refund_needed:
-        try:
-            gateway.refund(razorpay_payment_id, p.amount)
-            p.orders.update(payment_status=Order.PayStatus.REFUNDED)
-        except gateway.GatewayError:
-            log.error("REFUND NEEDED for %s", p.public_id)
-            for a in _admins_for_orders():
-                notify(a, "Refund needs attention", f"{p.public_id}: ₹{p.amount:,} was paid after the stock was released. Refund it in Razorpay.",
-                       module="orders", severity=Notification.Severity.CRITICAL, ref_type="payment", ref_id=p.public_id)
+        refunds.process(late_refund.pk)  # on failure it stays a visible "needs attention" refund an admin can retry
     return p
 
 
@@ -563,6 +555,54 @@ def confirm_paid(payment_pk, razorpay_payment_id):
 # --------------------------------------------------------------------------- #
 FLOW = {"pack": ("Confirmed", "Packed"), "ship": ("Packed", "Shipped"), "deliver": ("Shipped", "Delivered")}
 LABEL = {"Packed": "Packed", "Shipped": "Shipped", "Delivered": "Delivered"}
+
+# The seller (or ReOrbit, for its own store) books the courier and pays for shipping; the
+# delivery fee the buyer paid goes to the seller's earning. A tracking number must look like
+# the courier's own format, and one number can only be used on one order.
+COURIERS = {
+    "Delhivery": r"^\d{10,14}$",
+    "India Post": r"^[A-Z]{2}\d{9}[A-Z]{2}$",
+    "Blue Dart": r"^\d{11}$",
+    "DTDC": r"^([A-Z]\d{8}|\d{9,12})$",
+    "Ecom Express": r"^\d{9,12}$",
+    "Xpressbees": r"^\d{12,16}$",
+    "Shadowfax": r"^[A-Z0-9]{8,20}$",
+}
+_GENERIC_TRACKING = re.compile(r"^[A-Za-z0-9\-/]{5,30}$")
+
+
+def check_tracking(courier_name, tracking_no, exclude_pk=None):
+    """Returns (courier, tracking) cleaned, or raises CheckoutError with field messages."""
+    courier = " ".join(str(courier_name or "").split())[:40]
+    tracking = re.sub(r"\s+", "", str(tracking_no or "")).upper()
+    errs = {}
+    if len(courier) < 2:
+        errs["courier_name"] = ["Choose the courier."]
+    known = next((k for k in COURIERS if k.lower() == courier.lower()), None)
+    if known:
+        courier = known
+    if not tracking:
+        errs["tracking_no"] = ["Enter the tracking number."]
+    elif known and not re.match(COURIERS[known], tracking):
+        errs["tracking_no"] = [f"This does not look like a {known} tracking number."]
+    elif not _GENERIC_TRACKING.match(tracking) or len(set(tracking)) < 3:
+        errs["tracking_no"] = ["Enter the tracking number exactly as the courier gave it."]
+    elif Order.objects.filter(courier_name__iexact=courier, tracking_no=tracking).exclude(pk=exclude_pk).exists():
+        errs["tracking_no"] = ["This tracking number is already used on another order."]
+    if errs:
+        raise CheckoutError("Check the courier details.", errs)
+    return courier, tracking
+
+
+# why a delivery failed, and whose fault that is (decides the refund)
+FAIL_REASONS = {
+    "buyer_unreachable": ("Buyer could not be reached", "buyer"),
+    "buyer_refused": ("Buyer refused the parcel", "buyer"),
+    "wrong_address": ("Address was wrong or incomplete", "buyer"),
+    "lost_in_transit": ("Parcel lost in transit", "seller"),
+    "damaged_in_transit": ("Parcel damaged in transit", "seller"),
+    "seller_error": ("Seller sent the wrong parcel", "seller"),
+}
 
 
 def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", tracking_no="", ip=None):
@@ -577,13 +617,7 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             raise CheckoutError(f"This order is {o.get_status_display().lower()}, so it can't be marked {to.lower()}.",
                                 code="BAD_STATE", status=409)
         if action == "ship":
-            errs = {}
-            if len(courier_name) < 2:
-                errs["courier_name"] = ["Enter the courier name."]
-            if len(tracking_no) < 3:
-                errs["tracking_no"] = ["Enter the tracking number."]
-            if errs:
-                raise CheckoutError("Courier details are needed to ship.", errs)
+            courier_name, tracking_no = check_tracking(courier_name, tracking_no, exclude_pk=o.pk)
         before = o.status
         o.status = to
         fields = ["status", "updated_at"]
@@ -596,9 +630,10 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             o.delivered_at = timezone.now()
             fields.append("delivered_at")
             if o.payment_status == Order.PayStatus.COD_DUE:
-                o.payment_status = Order.PayStatus.PAID
+                # the courier has the cash; ReOrbit counts it as paid once an admin confirms it arrived
+                o.payment_status = Order.PayStatus.COD_COLLECTED
                 fields.append("payment_status")
-                detail = "Cash collected"
+                detail = "Cash collected by the courier"
         o.save(update_fields=fields)
         event(o, LABEL[to], detail, actor_kind)
         if to == "Delivered":
@@ -616,7 +651,7 @@ def cancel_order(order_pk, *, by, actor, reason="", ip=None):
     reason = " ".join(reason.split())
     if by in ("seller", "admin") and len(reason) < 3:
         raise CheckoutError("Give a reason for cancelling.", {"reason": ["Give a reason for cancelling."]})
-    refund_args = None
+    refund = None
     with transaction.atomic():
         o = Order.objects.select_for_update(of=("self",)).select_related("payment").get(pk=order_pk)
         if o.status not in (Order.Status.CONFIRMED, Order.Status.PACKED):
@@ -626,7 +661,7 @@ def cancel_order(order_pk, *, by, actor, reason="", ip=None):
         paid_online = o.payment_status == Order.PayStatus.PAID and o.payment.method == Payment.Method.RAZORPAY
         o.status, o.cancelled_at, o.cancelled_by = Order.Status.CANCELLED, timezone.now(), by
         o.cancel_reason = (reason or "Cancelled by the buyer.")[:255]
-        o.payment_status = Order.PayStatus.REFUND_FAILED if paid_online else Order.PayStatus.VOID  # until refund succeeds
+        o.payment_status = Order.PayStatus.REFUND_PENDING if paid_online else Order.PayStatus.VOID
         o.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "payment_status", "updated_at"])
         event(o, "Cancelled", o.cancel_reason, by)
         if by == "admin":
@@ -636,16 +671,129 @@ def cancel_order(order_pk, *, by, actor, reason="", ip=None):
         if by != "seller":
             _notify_seller(o, "Order cancelled", f"{o.public_id} was cancelled.")
         if paid_online:
-            refund_args = (o.payment.razorpay_payment_id, o.total)
-    if refund_args:
-        try:
-            gateway.refund(*refund_args)
-            Order.objects.filter(pk=o.pk).update(payment_status=Order.PayStatus.REFUNDED)
-            o.payment_status = Order.PayStatus.REFUNDED
-            event(o, "Refund sent", f"₹{o.total:,} returned to the buyer", "system")
-        except gateway.GatewayError:
-            log.error("REFUND FAILED for order %s", o.public_id)
-            for a in _admins_for_orders():
-                notify(a, "Refund needs attention", f"{o.public_id}: ₹{o.total:,} could not be refunded automatically.",
-                       module="orders", severity=Notification.Severity.CRITICAL, ref_type="order", ref_id=o.public_id)
+            refund = make_refund(o.payment, o.total, "cancelled", order=o, note=o.cancel_reason, send=False)
+    if refund:
+        refunds.process(refund.pk)  # a failure stays a visible refund that an admin can retry
+        o.refresh_from_db()
+    return o
+
+
+# --------------------------------------------------------------------------- #
+# delivery updates, failed deliveries, cash on delivery
+# --------------------------------------------------------------------------- #
+def make_refund(*args, **kwargs):
+    """refunds.create, with its errors shown to the user instead of crashing the request."""
+    try:
+        return refunds.create(*args, **kwargs)
+    except refunds.RefundError as e:
+        raise CheckoutError(e.message, code=e.code, status=e.status)
+
+
+def _who(actor_kind):
+    return "seller" if actor_kind == "seller" else actor_kind
+
+
+def post_update(order_pk, text, *, actor_kind, actor, ip=None):
+    """The seller tells the buyer something about the parcel ("Out for delivery")."""
+    text = " ".join(str(text or "").split())
+    if len(text) < 3:
+        raise CheckoutError("Write a short update for the buyer.", {"text": ["Write a short update for the buyer."]})
+    text = text[:120]
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).get(pk=order_pk)
+        if o.status != Order.Status.SHIPPED:
+            raise CheckoutError("Updates can be sent while the parcel is on its way.", code="BAD_STATE", status=409)
+        event(o, "Update", text, actor_kind)
+        _notify_buyer(o, "Delivery update", f"{o.public_id}: {text}")
+    return o
+
+
+def mark_failed(order_pk, reason_code, note="", *, actor_kind, actor, ip=None):
+    """The courier could not deliver. The parcel is on its way back to the seller."""
+    if reason_code not in FAIL_REASONS:
+        raise CheckoutError("Choose why the delivery failed.", {"reason": ["Choose why the delivery failed."]})
+    label, fault = FAIL_REASONS[reason_code]
+    note = " ".join(str(note or "").split())[:255]
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).get(pk=order_pk)
+        if o.status != Order.Status.SHIPPED:
+            raise CheckoutError("Only a parcel that is on its way can be marked as not delivered.", code="BAD_STATE", status=409)
+        o.status, o.failed_at, o.fail_reason, o.fail_note, o.fail_fault = (
+            Order.Status.DELIVERY_FAILED, timezone.now(), reason_code, note, fault)
+        o.save(update_fields=["status", "failed_at", "fail_reason", "fail_note", "fail_fault", "updated_at"])
+        event(o, "Delivery failed", label + (f" · {note}" if note else ""), actor_kind)
+        if actor_kind == "admin":
+            audit(actor, "order.fail", "order", o.public_id, after={"reason": reason_code}, ip=ip)
+        _notify_buyer(o, "Delivery attempt failed", f"{o.public_id}: {label}. The seller will try again or the parcel goes back to them.")
+        if actor_kind != "seller":
+            _notify_seller(o, "Delivery failed", f"{o.public_id}: {label}.")
+    return o
+
+
+def reattempt(order_pk, *, actor_kind, actor, ip=None):
+    """Try the delivery again (same parcel, same tracking)."""
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).get(pk=order_pk)
+        if o.status != Order.Status.DELIVERY_FAILED:
+            raise CheckoutError("This order is not waiting for another delivery attempt.", code="BAD_STATE", status=409)
+        o.status, o.failed_at, o.fail_reason, o.fail_note, o.fail_fault = Order.Status.SHIPPED, None, "", "", ""
+        o.save(update_fields=["status", "failed_at", "fail_reason", "fail_note", "fail_fault", "updated_at"])
+        event(o, "Delivery retried", "", actor_kind)
+        _notify_buyer(o, "Delivery attempted again", f"{o.public_id} is out for another delivery attempt.")
+    return o
+
+
+def return_to_origin(order_pk, *, actor_kind, actor, ip=None):
+    """The parcel is back with the seller. Stock goes back. A prepaid buyer is refunded: in full when the
+    seller or courier was at fault, otherwise minus the delivery fee. Cash on delivery needs no refund
+    (nothing was collected). The seller earns nothing for this order."""
+    refund = None
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).select_related("payment").get(pk=order_pk)
+        if o.status != Order.Status.DELIVERY_FAILED:
+            raise CheckoutError("Only an order with a failed delivery can be marked as returned.", code="BAD_STATE", status=409)
+        _restock(o)
+        o.status = Order.Status.RETURNED_TO_ORIGIN
+        paid_online = o.payment_status == Order.PayStatus.PAID and o.payment.method == Payment.Method.RAZORPAY
+        amount = o.total if o.fail_fault == "seller" else max(o.total - o.delivery_fee, 0)
+        o.payment_status = Order.PayStatus.REFUND_PENDING if paid_online and amount else Order.PayStatus.VOID
+        o.save(update_fields=["status", "payment_status", "updated_at"])
+        event(o, "Returned to seller", "Parcel is back with the seller", actor_kind)
+        if actor_kind == "admin":
+            audit(actor, "order.return_to_origin", "order", o.public_id, ip=ip)
+        if paid_online and amount:
+            refund = make_refund(o.payment, amount, "delivery_failed", order=o,
+                                    note="Delivery failed" + ("" if o.fail_fault == "seller" else " (delivery fee kept)"), send=False)
+            _notify_buyer(o, "Order returned to the seller", f"{o.public_id} could not be delivered. ₹{amount:,} is being refunded.")
+        else:
+            _notify_buyer(o, "Order returned to the seller", f"{o.public_id} could not be delivered. Nothing was charged." if o.payment.method == Payment.Method.COD
+                          else f"{o.public_id} could not be delivered.")
+        if actor_kind != "seller":
+            _notify_seller(o, "Parcel returned", f"{o.public_id} is back with you and the stock was restored.")
+    if refund:
+        refunds.process(refund.pk)
+        o.refresh_from_db()
+    return o
+
+
+def confirm_cod_cash(order_pk, admin, reference="", ip=None):
+    """Admin: the courier handed ReOrbit the cash for this order. Counts it as paid and starts the
+    seller's clearing days."""
+    reference = " ".join(str(reference or "").split())[:60]
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).select_related("payment").get(pk=order_pk)
+        waiting = (o.payment.method == Payment.Method.COD and o.status == Order.Status.DELIVERED
+                   and o.cod_received_at is None and o.payment_status != Order.PayStatus.PAID)
+        if not waiting:
+            raise CheckoutError("This order is not waiting for cash from the courier.", code="BAD_STATE", status=409)
+        # a refund may already be under way (a return before the cash arrived): keep its status
+        if o.payment_status == Order.PayStatus.COD_COLLECTED:
+            o.payment_status = Order.PayStatus.PAID
+        o.cod_received_at, o.cod_received_by, o.cod_reference = timezone.now(), admin, reference
+        o.save(update_fields=["payment_status", "cod_received_at", "cod_received_by", "cod_reference", "updated_at"])
+        event(o, "Cash received", f"₹{o.total:,} received by ReOrbit" + (f" (ref {reference})" if reference else ""), "admin")
+        audit(admin, "order.cod_received", "order", o.public_id, after={"amount": o.total, "reference": reference}, ip=ip)
+        from apps.payments import wallet
+
+        wallet.release_cod(o)
     return o

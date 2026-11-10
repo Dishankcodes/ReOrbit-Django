@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "../../../shared/portalRouter";
 import { BadgeCheck, CalendarDays, Heart, MapPin, PackageSearch, Package, Star, UserCheck, UserPlus, Users, Recycle, Award } from "lucide-react";
 
 import { useGoBack } from "../../../shared/backNav";

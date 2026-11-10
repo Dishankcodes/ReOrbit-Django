@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
 import { getProductsBySeller, getSellerReviews, getUserById } from "../../../data/marketplaceData";
@@ -7,7 +7,7 @@ import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useFollowing } from "../../data/followStore";
 import { personChat } from "../../components/ui/MessageButton";
 import ProfileShell from "./ProfileShell";
-import { Link } from "react-router-dom";
+import { Link } from "../../../shared/portalRouter";
 
 export default function UserSellerProfile() {
   const { sellerId } = useParams();

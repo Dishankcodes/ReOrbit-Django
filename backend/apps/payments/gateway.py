@@ -86,13 +86,35 @@ def entity_problem(entity, payment):
     return ""
 
 
-def refund(razorpay_payment_id, amount_rupees):
+def refund(razorpay_payment_id, amount_rupees, receipt=""):
+    """Partial or full refund to the original payment. `receipt` is our refund id, so a retry
+    can first look for an earlier attempt that did go through (find_refund)."""
+    body = {"amount": int(amount_rupees) * 100}
+    if receipt:
+        body["receipt"] = receipt
+        body["notes"] = {"reorbit_refund": receipt}
     try:
-        return _client().payment.refund(razorpay_payment_id, {"amount": int(amount_rupees) * 100})
+        return _client().payment.refund(razorpay_payment_id, body)
     except GatewayError:
         raise
     except Exception as exc:
         raise GatewayError("Refund could not be sent.") from exc
+
+
+def find_refund(razorpay_payment_id, receipt):
+    """An earlier refund of this payment that carries our receipt, or None."""
+    try:
+        rows = _client().payment.fetch_multiple_refund(razorpay_payment_id, {"count": 100}).get("items", [])
+    except GatewayError:
+        raise
+    except Exception as exc:
+        raise GatewayError("Could not check earlier refunds.") from exc
+    for r in rows:
+        if r.get("status") == "failed":
+            continue  # a refund Razorpay rejected does not count as sent
+        if receipt and (r.get("receipt") == receipt or (r.get("notes") or {}).get("reorbit_refund") == receipt):
+            return r
+    return None
 
 
 def _hmac(secret, message):

@@ -7,79 +7,11 @@ export default function Marketplace() {
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
 
-  const sampleProducts = [
-    {
-      title: "Restored Wooden Chair",
-      category: "ReOrbit Refurbished",
-      type: "refurbished",
-      price: "₹2,800",
-      location: "Ahmedabad",
-      condition: "Refurbished",
-      material: "Rescued wood",
-      image:
-        "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-    {
-      title: "Handmade Ceramic Lamp",
-      category: "ReMaker Creation",
-      type: "remaker",
-      price: "₹1,650",
-      location: "Ahmedabad",
-      condition: "Handmade",
-      material: "Reclaimed materials",
-      image:
-        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-    {
-      title: "Reclaimed Wood Console",
-      category: "ReMaker Creation",
-      type: "remaker",
-      price: "₹4,200",
-      location: "Bengaluru",
-      condition: "Upcycled",
-      material: "Rescued timber",
-      image:
-        "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-    {
-      title: "Vintage Study Table",
-      category: "Community Listing",
-      type: "user",
-      price: "₹2,200",
-      location: "Mumbai",
-      condition: "Good",
-      material: "Wood",
-      image:
-        "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-    {
-      title: "Upcycled Side Table",
-      category: "ReMaker Creation",
-      type: "remaker",
-      price: "₹2,200",
-      location: "Mumbai",
-      condition: "Upcycled",
-      material: "Recovered wood",
-      image:
-        "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-    {
-      title: "Refurbished Lounge Chair",
-      category: "ReOrbit Refurbished",
-      type: "refurbished",
-      price: "₹3,600",
-      location: "Jaipur",
-      condition: "Refurbished",
-      material: "Recovered frame",
-      image:
-        "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    },
-  ];
 
-  /* real listings from every seller; the sample cards only show while there are none */
+  /* real listings from every seller */
   const { data: live } = usePublic("/marketplace/?page_size=48");
   const real = (live?.results || []).filter((c) => c.cover).map(publicProduct);
-  const products = real.length ? real : sampleProducts;
+  const products = real;
 
   const filteredProducts = products.filter((product) => {
     const matchesTab = activeTab === "all" || product.type === activeTab;
@@ -1087,6 +1019,11 @@ export default function Marketplace() {
 
             {/* PRODUCT GRID */}
 
+            {filteredProducts.length === 0 && (
+              <p style={{ textAlign: "center", padding: "32px 0", opacity: 0.7 }}>
+                {products.length === 0 ? "No pieces are listed right now. Check back soon." : "Nothing matches that search."}
+              </p>
+            )}
             <div className="marketplace-grid">
               {filteredProducts.map((product) => (
                 <article

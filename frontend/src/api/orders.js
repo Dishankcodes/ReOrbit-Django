@@ -31,6 +31,27 @@ export const buyerOrdersApi = {
   list: (params = "") => apiRequest(`/orders/me/${params}`).then((r) => r.data),
   get: (id) => apiRequest(`/orders/me/${id}/`).then((r) => r.data.order),
   cancel: (id, reason) => post(`/orders/me/${id}/cancel/`, { reason }).then((r) => r.data.order),
+  /* returns: `form` is a FormData with reason, details and photos */
+  requestReturn: (id, form) => apiRequest(`/orders/me/${id}/return/`, { method: "POST", body: form }).then((r) => r.data.order),
+  returnAction: (id, action) => post(`/orders/me/${id}/return/${action}/`).then((r) => r.data.order),
+};
+
+/* Couriers and the reasons used by returns and failed deliveries. Rarely changes: fetched once. */
+let optionsPromise;
+export const orderOptionsApi = {
+  get: () => {
+    if (!optionsPromise) {
+      optionsPromise = apiRequest("/orders/options/").then((r) => r.data).catch((e) => { optionsPromise = null; throw e; });
+    }
+    return optionsPromise;
+  },
+};
+
+/* Admin: refunds that went wrong or have to be sent by hand */
+export const adminRefundApi = {
+  list: (params = "") => apiRequest(`/payments/admin/refunds/${params}`).then((r) => r.data),
+  retry: (id) => post(`/payments/admin/refunds/${id}/retry/`).then((r) => r.data),
+  markPaid: (id, reference) => post(`/payments/admin/refunds/${id}/mark-paid/`, { reference }).then((r) => r.data.refund),
 };
 
 /* Seller side. `base` is "/orders/sales" (member or ReMaker) or "/orders/admin" (admin). */

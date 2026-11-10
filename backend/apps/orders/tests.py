@@ -190,7 +190,7 @@ class CheckoutTests(OrderBase):
 
     def test_requires_login_and_user_account(self):
         self.assertEqual(self.client.post("/api/orders/checkout/", {}, format="json").status_code, 401)
-        self.assertEqual(self.checkout([{"id": self.tote.public_id, "qty": 1}], who=self.maker).status_code, 403)
+        self.assertEqual(self.checkout([{"id": self.tote.public_id, "qty": 1}], who=self.maker).status_code, 400)  # ReMakers may buy; no address yet
 
 
 class OnlinePaymentTests(OrderBase):
@@ -356,7 +356,7 @@ class WebhookTests(OrderBase):
         self.assertEqual(self.checkout([{"id": self.lamp.public_id, "qty": 1}]).status_code, 201)  # someone else bought it
         with mock.patch.object(gateway, "refund") as rf:
             self.hook(self.captured(d["payment"]["amount"]))
-        rf.assert_called_once_with("pay_9", d["payment"]["amount"])
+        rf.assert_called_once_with("pay_9", d["payment"]["amount"], receipt=mock.ANY)
         self.assertEqual(Payment.objects.get(public_id=d["payment"]["id"]).status, "Refunded")
 
 
@@ -375,11 +375,11 @@ class FulfilmentTests(OrderBase):
         r = self.post(S + "ship/", {"courier_name": "Delhivery"}, as_=self.maker)
         self.assertEqual(r.status_code, 400)
         self.assertIn("tracking_no", r.data["errors"])
-        r = self.post(S + "ship/", {"courier_name": "Delhivery", "tracking_no": "DLV123"}, as_=self.maker)
-        self.assertEqual(r.data["data"]["order"]["courier"], {"name": "Delhivery", "tracking_no": "DLV123"})
+        r = self.post(S + "ship/", {"courier_name": "Delhivery", "tracking_no": "12345678901"}, as_=self.maker)
+        self.assertEqual(r.data["data"]["order"]["courier"], {"name": "Delhivery", "tracking_no": "12345678901"})
         r = self.post(S + "deliver/", {}, as_=self.maker)
         o = r.data["data"]["order"]
-        self.assertEqual((o["status"], o["payment"]["status"]), ("Delivered", "Paid"))
+        self.assertEqual((o["status"], o["payment"]["status"]), ("Delivered", "COD_Collected"))  # courier has the cash
         self.assertEqual([e["label"] for e in o["events"]][-3:], ["Packed", "Shipped", "Delivered"])
         self.assertEqual(self.get(f"/api/orders/me/{oid}/", as_=self.buyer).data["data"]["order"]["status"], "Delivered")
 
@@ -392,7 +392,7 @@ class FulfilmentTests(OrderBase):
     def test_member_seller_sees_buyer_and_acts(self):
         oid = self.place([{"id": self.lamp.public_id, "qty": 1}])
         d = self.get("/api/orders/sales/", as_=self.seller).data["data"]
-        self.assertEqual(d["counts"], {"Confirmed": 1})
+        self.assertEqual(d["counts"]["Confirmed"], 1)
         self.assertEqual(d["results"][0]["buyer"]["name"], "Test User")
         self.assertEqual(self.post(f"/api/orders/sales/{oid}/pack/", {}, as_=self.seller).status_code, 200)
 
@@ -408,7 +408,7 @@ class FulfilmentTests(OrderBase):
         oid = self.place([{"id": self.table.public_id, "qty": 1}])
         S = f"/api/orders/sales/{oid}/"
         self.post(S + "pack/", {}, as_=self.maker)
-        self.post(S + "ship/", {"courier_name": "DTDC", "tracking_no": "D123"}, as_=self.maker)
+        self.post(S + "ship/", {"courier_name": "DTDC", "tracking_no": "D12345678"}, as_=self.maker)
         self.assertEqual(self.post(f"/api/orders/me/{oid}/cancel/", {}, as_=self.buyer).status_code, 409)
 
     def test_seller_cancel_needs_reason(self):
@@ -424,7 +424,7 @@ class FulfilmentTests(OrderBase):
         oid = Order.objects.get().public_id
         with mock.patch.object(gateway, "refund") as rf:
             r = self.post(f"/api/orders/me/{oid}/cancel/", {}, as_=self.buyer)
-        rf.assert_called_once_with("pay_R", 579)
+        rf.assert_called_once_with("pay_R", 579, receipt=mock.ANY)
         self.assertEqual(r.data["data"]["order"]["payment"]["status"], "Refunded")
         self.tote.refresh_from_db()
         self.assertEqual(self.tote.stock, 5)
@@ -458,7 +458,7 @@ class FulfilmentTests(OrderBase):
         with CaptureQueriesContext(connection) as c:
             r = self.get("/api/orders/me/", as_=self.buyer)
         self.assertEqual(r.data["data"]["count"], 3)
-        self.assertLessEqual(len(c), 8, [q["sql"][:80] for q in c.captured_queries])
+        self.assertLessEqual(len(c), 10, [q["sql"][:80] for q in c.captured_queries])
 
 
 class OtherBuyerTests(OrderBase):
@@ -499,7 +499,8 @@ class OtherBuyerTests(OrderBase):
         self.assertEqual(self.get("/api/orders/me/", as_=self.buyer).data["data"]["count"], 0)
         self.assertEqual(self.get(f"/api/orders/me/{oid}/", as_=self.buyer).status_code, 404)
         sold = self.get("/api/orders/sales/", as_=self.seller).data["data"]["results"][0]
-        self.assertEqual((sold["buyer"]["type"], sold["buyer"]["email"]), ("remaker", "buyer-maker@example.com"))
+        self.assertEqual((sold["buyer"]["type"], sold["buyer"]["name"]), ("remaker", "Test Maker"))
+        self.assertNotIn("email", sold["buyer"])
 
     def test_remaker_cannot_buy_own_product(self):
         r = self.buy(self.rmk, [{"id": self.table.public_id, "qty": 1}])

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BackLink } from "../../../shared/backNav";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "../../../shared/portalRouter";
 import {
   ArrowLeft,
   Banknote,
