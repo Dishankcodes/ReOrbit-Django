@@ -23,6 +23,7 @@ ADMIN_MODULES = (
     "notifications",
     "content",
     "earnings",
+    "finance",  # see full payout bank/UPI details and mark payouts paid
     "reports",
     "settings",
 )

@@ -1,3 +1,4 @@
+import NumberInput from "../../../shared/components/NumberInput";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, ClipboardCheck, Image as ImageIcon, Loader2, MapPin, Package, Info } from "lucide-react";
@@ -240,7 +241,7 @@ export default function UserSellForm() {
 
               <div className="usl-two">
                 {field("price", "Price (₹)", <input className={`dn-input ${errors.price ? "is-error" : ""}`} inputMode="numeric" value={form.price} onChange={(e) => set("price", e.target.value.replace(/\D/g, "").slice(0, 7))} placeholder="e.g. 2500" />, "Set a fair price. Pre-loved items usually sell at 30–60% of the new price.")}
-                {field("quantity", "Quantity", <input className="dn-input" type="number" min={1} max={20} value={form.quantity} onChange={(e) => set("quantity", Math.min(20, Math.max(1, Number(e.target.value) || 1)))} />)}
+                {field("quantity", "Quantity", <NumberInput className="dn-input" min={1} max={20} value={form.quantity} onChange={(n) => set("quantity", n)} />)}
               </div>
             </div>
           )}

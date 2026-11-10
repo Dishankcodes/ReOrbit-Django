@@ -14,6 +14,7 @@ urlpatterns = [
     path("payouts/request/", w.RequestPayoutView.as_view()),
     path("admin/payouts/", w.AdminPayouts.as_view()),
     path("admin/payouts/run-auto/", w.AdminRunAuto.as_view()),
+    path("admin/payouts/<str:public_id>/details/", w.AdminPayoutDetails.as_view()),
     path("admin/payouts/<str:public_id>/pay/", w.AdminPay.as_view()),
     path("admin/payouts/<str:public_id>/reject/", w.AdminReject.as_view()),
     path("admin/rules/", w.AdminRules.as_view()),

@@ -1,3 +1,4 @@
+import { adminActor } from "./actor";
 /* =========================================================
    DUMMY DATA — Admin › Users
    UI only. No backend. Shapes follow the database notes:
@@ -892,7 +893,7 @@ function buildUsers() {
         id: `${userId}-h1`,
         action: person.status,
         reason: reasons[person.status],
-        by: person.status === "Deleted" ? "User request" : "Admin · Nikhil Rao",
+        by: person.status === "Deleted" ? "User request" : adminActor(),
         at: addDays("2026-10-18T10:00:00", -between(random, 8, 70)),
       });
     }

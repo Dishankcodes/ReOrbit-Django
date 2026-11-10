@@ -22,6 +22,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from apps.core.crypto import encrypt_json
 from apps.core.models import Notification, PlatformSettings
 from apps.core.services import audit, notify
 
@@ -161,9 +162,17 @@ def clean_account(data):
 
 def save_account(owner, data):
     v = clean_account(data)
+    number, upi = v.pop("account_number"), v.pop("upi_id")
     with transaction.atomic():
         _lock_owner(owner)  # two first-time saves at once queue here instead of colliding
-        acct, created = PayoutAccount.objects.update_or_create(**owner, defaults=v)
+        acct = PayoutAccount.objects.filter(**owner).first()
+        created = acct is None
+        if created:
+            acct = PayoutAccount(**owner)
+        for k, val in v.items():
+            setattr(acct, k, val)
+        acct.set_secrets(number, upi)  # encrypted at rest; only a masked hint stays readable
+        acct.save()
     _notify(owner, "Payout details saved" if created else "Payout details changed",
             "If you did not do this, contact support right away.", ref_type="payout_account", ref_id="")
     return acct
@@ -205,7 +214,10 @@ def request_payout(owner, amount=None, source="seller"):
         if amount > available:
             raise WalletError(f"Only ₹{available:,} is available to pay out right now.",
                               {"amount": [f"Only ₹{available:,} is available."]}, code="INSUFFICIENT")
-        payout = Payout.objects.create(**owner, amount=amount, source=source, account=account.snapshot())
+        # The readable snapshot is masked. The full details are kept once, encrypted, only while
+        # the payout waits to be paid, and wiped as soon as it is paid or rejected.
+        payout = Payout.objects.create(**owner, amount=amount, source=source, account=account.masked(),
+                                       account_enc=encrypt_json(account.full()))
         WalletEntry.objects.create(**owner, kind=WalletEntry.Kind.PAYOUT, amount=-amount, available_at=timezone.now(),
                                    payout=payout, note=f"Payout {payout.public_id}")
     _notify(owner, "Payout requested" if source == "seller" else "Payout created",
@@ -225,7 +237,8 @@ def mark_paid(payout_pk, admin, reference, ip=None):
         if p.status != Payout.Status.PENDING:
             raise WalletError(f"This payout is already {p.status.lower()}.", code="BAD_STATE", status=409)
         p.status, p.reference, p.paid_at, p.processed_by = Payout.Status.PAID, reference[:60], timezone.now(), admin
-        p.save(update_fields=["status", "reference", "paid_at", "processed_by", "updated_at"])
+        p.account_enc = ""  # settled: the full bank details are no longer needed
+        p.save(update_fields=["status", "reference", "paid_at", "processed_by", "account_enc", "updated_at"])
         audit(admin, "payout.paid", "payout", p.public_id, after={"amount": p.amount, "reference": reference[:60]}, ip=ip)
     owner = _owner_of_payout(p)
     _notify(owner, "Payout sent", f"₹{p.amount:,} was sent. Reference: {p.reference}.", ref_type="payout", ref_id=p.public_id)
@@ -241,7 +254,8 @@ def reject(payout_pk, admin, reason, ip=None):
         if p.status != Payout.Status.PENDING:
             raise WalletError(f"This payout is already {p.status.lower()}.", code="BAD_STATE", status=409)
         p.status, p.reject_reason, p.processed_by = Payout.Status.REJECTED, reason[:255], admin
-        p.save(update_fields=["status", "reject_reason", "processed_by", "updated_at"])
+        p.account_enc = ""
+        p.save(update_fields=["status", "reject_reason", "processed_by", "account_enc", "updated_at"])
         owner = _owner_of_payout(p)
         WalletEntry.objects.create(**owner, kind=WalletEntry.Kind.RELEASE, amount=p.amount, available_at=timezone.now(),
                                    payout=p, note=f"Payout {p.public_id} returned")
@@ -287,3 +301,18 @@ def _owner_row(field, pk):
     from apps.users.models import Users
 
     return (Users if field == "seller_user" else ReMakers).objects.get(pk=pk)
+
+
+def reveal_details(payout_pk, admin, ip=None):
+    """Full bank/UPI details for a payout that is still waiting to be paid. Every reveal is audited."""
+    from apps.core.crypto import CryptoError, decrypt_json
+
+    p = Payout.objects.get(pk=payout_pk)
+    if p.status != Payout.Status.PENDING or not p.account_enc:
+        raise WalletError("These details are removed once a payout is settled.", code="GONE", status=410)
+    try:
+        details = decrypt_json(p.account_enc)
+    except CryptoError:
+        raise WalletError("The saved details could not be read. Ask the seller to save them again.", code="UNREADABLE", status=500)
+    audit(admin, "payout.reveal_details", "payout", p.public_id, after={"seller_type": "user" if p.seller_user_id else "remaker"}, ip=ip)
+    return details

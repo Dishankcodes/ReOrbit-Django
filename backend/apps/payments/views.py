@@ -13,7 +13,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsReOrbitUser
+from apps.accounts.permissions import IsReOrbitAuthenticated
+from apps.core import buyers
 from apps.core.responses import fail, ok
 from apps.orders import services
 from apps.orders.models import Order
@@ -35,20 +36,23 @@ class ConfigView(APIView):
 
 
 class VerifyView(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request):
         d = request.data
         rz_order = str(d.get("razorpay_order_id") or "")
         rz_pay = str(d.get("razorpay_payment_id") or "")
         sig = str(d.get("razorpay_signature") or "")
-        p = Payment.objects.filter(razorpay_order_id=rz_order, buyer=request.user.account).first() if rz_order else None
+        p = Payment.objects.filter(razorpay_order_id=rz_order, buyer_key=buyers.key_of(request.user.account)).first() if rz_order else None
         if p is None:
             return fail("We could not find this payment.", status=404)
         if not gateway.verify_checkout_signature(rz_order, rz_pay, sig):
             return fail("Payment could not be verified. If money was deducted it will be refunded automatically.",
                         code="BAD_SIGNATURE")
-        p = services.confirm_paid(p.pk, rz_pay)
+        try:
+            p = services.verified_confirm(p, rz_pay)
+        except services.CheckoutError as e:
+            return fail(e.message, code=e.code, status=e.status)
         orders = Order.objects.filter(payment=p).values_list("public_id", "status")
         return ok({"payment": {"id": p.public_id, "status": p.status},
                    "orders": [{"id": i, "status": s} for i, s in orders]},
@@ -56,10 +60,10 @@ class VerifyView(APIView):
 
 
 class CancelView(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request, public_id):
-        p = get_object_or_404(Payment, public_id=public_id, buyer=request.user.account)
+        p = get_object_or_404(Payment, public_id=public_id, buyer_key=buyers.key_of(request.user.account))
         p = services.release_payment(p.pk, Payment.Status.CANCELLED, "You closed the payment window.", actor="buyer")
         return ok({"payment": {"id": p.public_id, "status": p.status}})
 
@@ -101,7 +105,9 @@ class WebhookView(APIView):
             p = Payment.objects.filter(razorpay_order_id=rz_order).first() if rz_order else None
             if p is None:
                 return
-            if int(ent.get("amount") or order_ent.get("amount_paid") or 0) != p.amount * 100:
-                log.error("Webhook amount mismatch for %s", p.public_id)
-                return
-            services.confirm_paid(p.pk, rz_pay)
+            if etype == "order.paid" and not ent:
+                return  # no payment record in this event; payment.captured will carry it
+            try:
+                services.verified_confirm(p, rz_pay, entity=ent)  # the webhook body is signed, so its record can be trusted
+            except services.CheckoutError:
+                return  # logged inside; a mismatch is never confirmed

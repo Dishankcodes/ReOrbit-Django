@@ -149,6 +149,13 @@ class SavedAddress(PublicIdModel, TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="saved_addresses",
     )
+    admin = models.ForeignKey(
+        "admins.Admins",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="saved_addresses",
+    )
     label = models.CharField(max_length=30, default="Home")
     recipient_name = models.CharField(max_length=120)
     phone = models.CharField(max_length=20, validators=[validate_phone])
@@ -166,8 +173,9 @@ class SavedAddress(PublicIdModel, TimeStampedModel):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    (Q(user__isnull=False) & Q(remaker__isnull=True))
-                    | (Q(user__isnull=True) & Q(remaker__isnull=False))
+                    (Q(user__isnull=False) & Q(remaker__isnull=True) & Q(admin__isnull=True))
+                    | (Q(user__isnull=True) & Q(remaker__isnull=False) & Q(admin__isnull=True))
+                    | (Q(user__isnull=True) & Q(remaker__isnull=True) & Q(admin__isnull=False))
                 ),
                 name="saved_address_exactly_one_owner",
             ),
@@ -180,6 +188,11 @@ class SavedAddress(PublicIdModel, TimeStampedModel):
                 fields=["remaker"],
                 condition=Q(is_default=True, remaker__isnull=False),
                 name="saved_address_one_default_per_remaker",
+            ),
+            models.UniqueConstraint(
+                fields=["admin"],
+                condition=Q(is_default=True, admin__isnull=False),
+                name="saved_address_one_default_per_admin",
             ),
         ]
 

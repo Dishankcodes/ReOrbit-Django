@@ -18,6 +18,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitAuthenticated, IsReOrbitUser
+from apps.core import buyers
 from apps.core.gujarat import canonical_city
 from apps.core.models import SavedAddress
 from apps.core.pagination import StandardPagination
@@ -42,7 +43,7 @@ def _checkout_fail(e):
 
 
 def _order_qs():
-    return Order.objects.select_related("payment", "seller_user", "seller_remaker", "buyer").prefetch_related("lines")
+    return Order.objects.select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin").prefetch_related("lines")
 
 
 # ------------------------------------------------------------------ addresses
@@ -87,33 +88,34 @@ def _clean_address(data, existing=None):
 
 
 class AddressList(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request):
-        rows = SavedAddress.objects.filter(user=request.user.account)
+        rows = SavedAddress.objects.filter(**buyers.owner(request.user.account))
         return ok({"addresses": [address_data(a) for a in rows]})
 
     def post(self, request):
         user = request.user.account
-        if SavedAddress.objects.filter(user=user).count() >= MAX_ADDRESSES:
+        own = buyers.owner(user)
+        if SavedAddress.objects.filter(**own).count() >= MAX_ADDRESSES:
             return fail(f"You can save up to {MAX_ADDRESSES} addresses.")
         v, errors = _clean_address(request.data)
         if errors:
             return fail("Please fix the highlighted fields.", errors=errors)
         with transaction.atomic():
-            first = not SavedAddress.objects.select_for_update().filter(user=user).exists()
+            first = not SavedAddress.objects.select_for_update().filter(**own).exists()
             make_default = first or bool(request.data.get("is_default"))
             if make_default:
-                SavedAddress.objects.filter(user=user, is_default=True).update(is_default=False)
-            a = SavedAddress.objects.create(user=user, is_default=make_default, **v)
+                SavedAddress.objects.filter(is_default=True, **own).update(is_default=False)
+            a = SavedAddress.objects.create(is_default=make_default, **own, **v)
         return created({"address": address_data(a)})
 
 
 class AddressDetail(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def _get(self, request, public_id):
-        return get_object_or_404(SavedAddress, public_id=public_id, user=request.user.account)
+        return get_object_or_404(SavedAddress, public_id=public_id, **buyers.owner(request.user.account))
 
     def patch(self, request, public_id):
         a = self._get(request, public_id)
@@ -130,7 +132,7 @@ class AddressDetail(APIView):
         was_default, user = a.is_default, request.user.account
         a.delete()
         if was_default:
-            nxt = SavedAddress.objects.filter(user=user).first()
+            nxt = SavedAddress.objects.filter(**buyers.owner(user)).first()
             if nxt:
                 nxt.is_default = True
                 nxt.save(update_fields=["is_default", "updated_at"])
@@ -138,13 +140,14 @@ class AddressDetail(APIView):
 
 
 class AddressDefault(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request, public_id):
         user = request.user.account
-        a = get_object_or_404(SavedAddress, public_id=public_id, user=user)
+        own = buyers.owner(user)
+        a = get_object_or_404(SavedAddress, public_id=public_id, **own)
         with transaction.atomic():
-            SavedAddress.objects.filter(user=user, is_default=True).exclude(pk=a.pk).update(is_default=False)
+            SavedAddress.objects.filter(is_default=True, **own).exclude(pk=a.pk).update(is_default=False)
             a.is_default = True
             a.save(update_fields=["is_default", "updated_at"])
         return ok({"address": address_data(a)})
@@ -152,7 +155,7 @@ class AddressDefault(APIView):
 
 # ------------------------------------------------------------------ checkout
 class QuoteView(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request):
         try:
@@ -162,7 +165,7 @@ class QuoteView(APIView):
 
 
 class CheckoutView(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request):
         key = (request.headers.get("Idempotency-Key") or str(request.data.get("request_id") or ""))[:64] or None
@@ -190,12 +193,12 @@ def _paged(request, qs, **kw):
 
 
 class MyOrders(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request):
         buyer = request.user.account
         services.expire_stale(buyer)
-        qs = _order_qs().filter(buyer=buyer).filter(
+        qs = _order_qs().filter(buyer_key=buyers.key_of(buyer)).filter(
             Q(confirmed_at__isnull=False) | Q(status=Order.Status.PENDING_PAYMENT)
         )
         st = request.query_params.get("status")
@@ -208,18 +211,18 @@ class MyOrders(APIView):
 
 
 class MyOrderDetail(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request, public_id):
-        o = get_object_or_404(_order_qs().prefetch_related("events"), public_id=public_id, buyer=request.user.account)
+        o = get_object_or_404(_order_qs().prefetch_related("events"), public_id=public_id, buyer_key=buyers.key_of(request.user.account))
         return ok({"order": order_data(o, request, events=True)})
 
 
 class MyOrderCancel(APIView):
-    permission_classes = [IsReOrbitUser]
+    permission_classes = [IsReOrbitAuthenticated]
 
     def post(self, request, public_id):
-        o = get_object_or_404(Order, public_id=public_id, buyer=request.user.account)
+        o = get_object_or_404(Order, public_id=public_id, buyer_key=buyers.key_of(request.user.account))
         try:
             services.cancel_order(o.pk, by="buyer", actor=request.user.account, reason=str(request.data.get("reason") or ""))
         except services.CheckoutError as e:
@@ -244,7 +247,9 @@ def _filters(request, qs, admin=False):
     if t:
         cond = Q(public_id__icontains=t) | Q(lines__title__icontains=t)
         if admin:
-            cond |= Q(buyer__email__icontains=t) | Q(buyer__full_name__icontains=t)
+            cond |= (Q(buyer_user__email__icontains=t) | Q(buyer_user__full_name__icontains=t)
+                     | Q(buyer_remaker__email__icontains=t) | Q(buyer_remaker__full_name__icontains=t)
+                     | Q(buyer_admin__email__icontains=t) | Q(buyer_admin__full_name__icontains=t))
         qs = qs.filter(cond).distinct()
     if admin and request.query_params.get("seller_type") in ("user", "remaker", "platform"):
         qs = qs.filter(seller_type=request.query_params["seller_type"])

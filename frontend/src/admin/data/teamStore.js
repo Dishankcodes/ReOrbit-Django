@@ -142,6 +142,13 @@ export const MODULES = [
     hint: "Platform fees, sales income and cash flow",
   },
   {
+    key: "finance",
+    label: "Payout details",
+    group: "Management",
+    path: "/admin-earnings",
+    hint: "See full bank / UPI details when paying sellers (audited)",
+  },
+  {
     key: "reports",
     label: "Reports",
     group: "Management",
@@ -229,7 +236,8 @@ export const ROLE_PRESETS = [
       shop: "view",
       sell: "view",
       rewards: "edit",
-      earnings: "view",
+      earnings: "edit",
+      finance: "edit",
       reports: "view",
       settings: "view",
       notifications: "view",

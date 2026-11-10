@@ -51,6 +51,15 @@ if not SECRET_KEY:
         )
 
 
+# Encrypts bank/UPI details in the database (see apps/core/crypto.py). Required unless DEBUG.
+FIELD_ENCRYPTION_KEY = os.getenv("FIELD_ENCRYPTION_KEY", "").strip()
+if not FIELD_ENCRYPTION_KEY and not DEBUG:
+    raise ImproperlyConfigured(
+        "FIELD_ENCRYPTION_KEY is not configured. Generate one with: "
+        "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+    )
+
+
 ALLOWED_HOSTS = env_list(
     "ALLOWED_HOSTS",
     "127.0.0.1,localhost"

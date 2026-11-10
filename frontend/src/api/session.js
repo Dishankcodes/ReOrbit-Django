@@ -11,7 +11,7 @@
    truth: it checks the token on every request.
    ========================================================= */
 
-const KEY = {
+const BASE = {
   access: "reorbit_access_token",
   refresh: "reorbit_refresh_token",
   type: "reorbit_account_type",
@@ -32,8 +32,36 @@ export const LOGIN_PATH = {
 
 export const SESSION_ENDED_EVENT = "reorbit:session-ended";
 
-// sessionStorage is isolated per tab. Broadcast rotated tokens so tabs that
-// share a login can keep using the same refresh-token family safely.
+/* ---------------------------------------------------------
+   One session slot PER PORTAL.
+   The user, ReMaker and admin sides can be open in different
+   tabs of the same browser at the same time. Each side keeps
+   its own tokens (reorbit_access_token.user, .remaker, .admin),
+   so signing in to one side never touches another side's tab.
+   A tab's side comes from its address: /admin... = admin,
+   /remaker... = ReMaker, everything else = user.
+   --------------------------------------------------------- */
+export const portalOf = (pathname) => {
+  const p = String(pathname || "");
+  if (p.startsWith("/admin")) return "admin";
+  if (p.startsWith("/remaker")) return "remaker";
+  return "user";
+};
+
+const currentPortal = () =>
+  typeof window === "undefined" ? "user" : portalOf(window.location.pathname);
+
+const keyFor = (name, type) => `${BASE[name]}.${type}`;
+const slotKeys = (type) => [
+  keyFor("access", type),
+  keyFor("refresh", type),
+  keyFor("type", type),
+  keyFor("id", type),
+  ACCOUNT_KEY[type],
+];
+
+// sessionStorage is isolated per tab. Broadcast rotated tokens so tabs of the
+// SAME side that share a login keep using the same refresh-token family.
 const SESSION_CHANNEL =
   typeof BroadcastChannel !== "undefined"
     ? new BroadcastChannel("reorbit-auth-session")
@@ -43,14 +71,14 @@ if (SESSION_CHANNEL) {
   SESSION_CHANNEL.addEventListener("message", (event) => {
     const message = event.data;
     if (message?.type === "tokens" && message.access && message.refresh) {
-      const currentType = getAccountType();
       const incomingType = decodeToken(message.access)?.account_type;
-      if (!currentType || currentType === incomingType) {
-        const s = activeStore() || window.sessionStorage;
-        write(s, KEY.access, message.access);
-        write(s, KEY.refresh, message.refresh);
+      // only the tab(s) of the same side take new tokens
+      if (incomingType && incomingType === currentPortal()) {
+        const s = activeStore(incomingType) || window.sessionStorage;
+        write(s, keyFor("access", incomingType), message.access);
+        write(s, keyFor("refresh", incomingType), message.refresh);
       }
-    } else if (message?.type === "logout") {
+    } else if (message?.type === "logout" && message.account === currentPortal()) {
       clearSession({ broadcast: false });
       window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
     }
@@ -96,43 +124,64 @@ const remove = (store, key) => {
   }
 };
 
-/* The storage that currently holds the session (or null). */
-const activeStore = () =>
-  stores().find((s) => read(s, KEY.access) || read(s, KEY.refresh)) || null;
+/* The storage that currently holds this side's session (or null). */
+const activeStore = (type = currentPortal()) =>
+  stores().find((s) => read(s, keyFor("access", type)) || read(s, keyFor("refresh", type))) || null;
 
-export const getAccessToken = () => {
-  const s = activeStore();
-  return s ? read(s, KEY.access) : null;
+/* One-time move of the old single-slot session into its side's slot. */
+(function migrateLegacy() {
+  stores().forEach((s) => {
+    const access = read(s, BASE.access);
+    const refresh = read(s, BASE.refresh);
+    if (!access && !refresh) return;
+    const claim = decodeToken(access || refresh || "");
+    const type = claim?.account_type;
+    if (ACCOUNT_KEY[type]) {
+      if (access) write(s, keyFor("access", type), access);
+      if (refresh) write(s, keyFor("refresh", type), refresh);
+      const id = read(s, BASE.id);
+      if (id) write(s, keyFor("id", type), id);
+      write(s, keyFor("type", type), type);
+    }
+    [BASE.access, BASE.refresh, BASE.type, BASE.id].forEach((k) => remove(s, k));
+  });
+})();
+
+export const getAccessToken = (type = currentPortal()) => {
+  const s = activeStore(type);
+  return s ? read(s, keyFor("access", type)) : null;
 };
 
-export const getRefreshToken = () => {
-  const s = activeStore();
-  return s ? read(s, KEY.refresh) : null;
+export const getRefreshToken = (type = currentPortal()) => {
+  const s = activeStore(type);
+  return s ? read(s, keyFor("refresh", type)) : null;
 };
 
 /* Reads the payload of a JWT. No signature check: the server does that. */
-export const decodeToken = (token) => {
+export function decodeToken(token) {
   try {
     const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     return JSON.parse(atob(part.padEnd(Math.ceil(part.length / 4) * 4, "=")));
   } catch {
     return null;
   }
-};
+}
 
-/* "user" | "remaker" | "admin" | null, taken from the token itself. */
+/* "user" | "remaker" | "admin" | null: whose session this tab holds (its own side). */
 export const getAccountType = () => {
-  const claim = decodeToken(getAccessToken() || getRefreshToken() || "");
+  const type = currentPortal();
+  const claim = decodeToken(getAccessToken(type) || getRefreshToken(type) || "");
   return claim?.account_type || null;
 };
 
 export const isSignedIn = (type) => {
-  if (!getAccessToken() && !getRefreshToken()) return false;
+  const side = type || currentPortal();
+  if (!getAccessToken(side) && !getRefreshToken(side)) return false;
   return type ? getAccountType() === type : true;
 };
 
-export const getAccount = (type = getAccountType()) => {
-  const s = activeStore();
+export const getAccount = (type = currentPortal()) => {
+  const s = activeStore(type);
   if (!s || !ACCOUNT_KEY[type]) return null;
   try {
     return JSON.parse(read(s, ACCOUNT_KEY[type]) || "null");
@@ -142,30 +191,30 @@ export const getAccount = (type = getAccountType()) => {
 };
 
 /* Save a new session after login or registration.
-   type: "user" | "remaker" | "admin", account: the object the API returned. */
+   type: "user" | "remaker" | "admin", account: the object the API returned.
+   Only that side's slot changes; the other sides stay signed in. */
 export function saveSession({ access, refresh, type, account, remember = true }) {
   const [primary, other] = remember
     ? [window.localStorage, window.sessionStorage]
     : [window.sessionStorage, window.localStorage];
 
-  // Never leave an old session behind in the other storage.
-  [KEY.access, KEY.refresh, KEY.type, KEY.id, ...Object.values(ACCOUNT_KEY)].forEach(
-    (k) => remove(other, k),
-  );
+  // Never leave an old copy of THIS side's session in the other storage.
+  slotKeys(type).forEach((k) => remove(other, k));
 
-  write(primary, KEY.access, access);
-  write(primary, KEY.refresh, refresh);
-  write(primary, KEY.type, type);
-  if (account?.public_id) write(primary, KEY.id, account.public_id);
+  write(primary, keyFor("access", type), access);
+  write(primary, keyFor("refresh", type), refresh);
+  write(primary, keyFor("type", type), type);
+  if (account?.public_id) write(primary, keyFor("id", type), account.public_id);
   if (account) write(primary, ACCOUNT_KEY[type], JSON.stringify(account));
   SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
 }
 
 /* After a token refresh: keep the session where it already lives. */
 export function updateTokens({ access, refresh }) {
-  const s = activeStore() || window.localStorage;
-  if (access) write(s, KEY.access, access);
-  if (refresh) write(s, KEY.refresh, refresh);
+  const type = currentPortal();
+  const s = activeStore(type) || window.localStorage;
+  if (access) write(s, keyFor("access", type), access);
+  if (refresh) write(s, keyFor("refresh", type), refresh);
   if (access && refresh) SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
 }
 
@@ -173,18 +222,16 @@ export function updateTokens({ access, refresh }) {
 export const ACCOUNT_UPDATED_EVENT = "reorbit:account-updated";
 
 export function updateAccount(type, account) {
-  const s = activeStore();
+  const s = activeStore(type);
   if (s && ACCOUNT_KEY[type]) write(s, ACCOUNT_KEY[type], JSON.stringify(account));
   window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
 }
 
+/* Sign out of THIS side only. */
 export function clearSession({ broadcast = true } = {}) {
-  if (broadcast) SESSION_CHANNEL?.postMessage({ type: "logout" });
-  stores().forEach((s) => {
-    [KEY.access, KEY.refresh, KEY.type, KEY.id, ...Object.values(ACCOUNT_KEY)].forEach(
-      (k) => remove(s, k),
-    );
-  });
+  const type = currentPortal();
+  if (broadcast) SESSION_CHANNEL?.postMessage({ type: "logout", account: type });
+  stores().forEach((s) => slotKeys(type).forEach((k) => remove(s, k)));
 }
 
 /* The session is over (refresh failed or the account was removed). */

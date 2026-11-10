@@ -19,6 +19,7 @@ export const adminPayoutApi = {
     apiRequest(`/payments/admin/payouts/${id}/pay/`, { method: "POST", body: { reference } }).then((r) => r.data.payout),
   reject: (id, reason) =>
     apiRequest(`/payments/admin/payouts/${id}/reject/`, { method: "POST", body: { reason } }).then((r) => r.data.payout),
+  details: (id) => apiRequest(`/payments/admin/payouts/${id}/details/`).then((r) => r.data.account),
   runAuto: () => apiRequest("/payments/admin/payouts/run-auto/", { method: "POST", body: {} }).then((r) => r.data),
   rules: () => apiRequest("/payments/admin/rules/").then((r) => r.data),
   saveRules: (body) => apiRequest("/payments/admin/rules/", { method: "PATCH", body }).then((r) => r.data),

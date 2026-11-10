@@ -32,6 +32,18 @@ def sign(order_id, payment_id):
 class OrderBase(APIBase):
     def setUp(self):
         super().setUp()
+        self.rz_override = {}
+
+        def fake_fetch(payment_id):
+            p = Payment.objects.filter(razorpay_payment_id=None).exclude(razorpay_order_id=None).order_by("-pk").first()
+            entity = {"id": payment_id, "order_id": p.razorpay_order_id if p else "", "amount": (p.amount * 100) if p else 0,
+                      "currency": "INR", "status": "captured"}
+            entity.update(self.rz_override)
+            return entity
+
+        patcher = mock.patch.object(gateway, "fetch_payment", side_effect=fake_fetch)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         s = PlatformSettings.load()
         s.platform_fee_pct, s.item_delivery, s.product_delivery, s.free_delivery_from = 3, 149, 79, 1500
         s.cod_enabled, s.cod_limit = True, 20000
@@ -213,6 +225,36 @@ class OnlinePaymentTests(OrderBase):
         self.assertEqual(set(Order.objects.values_list("status", "payment_status")), {("Confirmed", "Paid")})
         self.assertEqual(self.get("/api/orders/sales/", as_=self.seller).data["data"]["count"], 1)
 
+    def _verify(self, pay="pay_1"):
+        return self.post("/api/payments/verify/", {"razorpay_order_id": "order_ABC", "razorpay_payment_id": pay,
+                                                   "razorpay_signature": sign("order_ABC", pay)}, as_=self.buyer)
+
+    def test_verify_refuses_when_razorpay_record_does_not_match(self):
+        self.start()
+        for override in ({"order_id": "order_OTHER"}, {"amount": 100}, {"currency": "USD"}, {"status": "failed"},
+                         {"status": "created"}, {"id": "pay_someone_else"}):
+            self.rz_override = override
+            r = self._verify()
+            self.assertEqual(r.status_code, 400, override)
+            self.assertEqual(r.data["code"], "PAYMENT_MISMATCH", override)
+            self.assertEqual(Payment.objects.get().status, "Created", override)
+        self.rz_override = {}
+        self.assertEqual(self._verify().status_code, 200)
+
+    def test_authorized_payment_is_captured_first(self):
+        self.start()
+        self.rz_override = {"status": "authorized"}
+        with mock.patch.object(gateway, "capture_payment", return_value={"id": "pay_1", "order_id": "order_ABC",
+                               "amount": Payment.objects.get().amount * 100, "currency": "INR", "status": "captured"}) as cap:
+            self.assertEqual(self._verify().status_code, 200)
+        cap.assert_called_once()
+
+    def test_gateway_down_during_verify_keeps_hold(self):
+        self.start()
+        with mock.patch.object(gateway, "fetch_payment", side_effect=gateway.GatewayError("down")):
+            self.assertEqual(self._verify().status_code, 503)
+        self.assertEqual(Payment.objects.get().status, "Created")
+
     def test_other_buyer_cannot_verify(self):
         self.start()
         other = self.make_user("o2@example.com")
@@ -272,7 +314,7 @@ class WebhookTests(OrderBase):
                                 HTTP_X_RAZORPAY_SIGNATURE=sig, HTTP_X_RAZORPAY_EVENT_ID=event_id)
 
     def captured(self, amount, order="order_ABC", pay="pay_9"):
-        return {"event": "payment.captured", "payload": {"payment": {"entity": {"id": pay, "order_id": order, "amount": amount * 100}}}}
+        return {"event": "payment.captured", "payload": {"payment": {"entity": {"id": pay, "order_id": order, "amount": amount * 100, "currency": "INR", "status": "captured"}}}}
 
     def test_bad_signature_rejected(self):
         self.start()
@@ -284,6 +326,13 @@ class WebhookTests(OrderBase):
         self.assertEqual(self.hook(self.captured(amt)).status_code, 200)
         self.assertEqual(Payment.objects.get().status, "Paid")
         self.assertEqual(self.hook(self.captured(amt)).data["message"], "Already processed.")
+
+    def test_uncaptured_webhook_ignored(self):
+        d, _ = self.start()
+        body = self.captured(d["payment"]["amount"])
+        body["payload"]["payment"]["entity"]["status"] = "authorized"
+        self.hook(body)
+        self.assertEqual(Payment.objects.get().status, "Created")
 
     def test_wrong_amount_ignored(self):
         self.start()
@@ -410,3 +459,75 @@ class FulfilmentTests(OrderBase):
             r = self.get("/api/orders/me/", as_=self.buyer)
         self.assertEqual(r.data["data"]["count"], 3)
         self.assertLessEqual(len(c), 8, [q["sql"][:80] for q in c.captured_queries])
+
+
+class OtherBuyerTests(OrderBase):
+    """ReMakers and admins can buy too: own addresses, own orders, same money rules."""
+
+    def setUp(self):
+        super().setUp()
+        self.rmk = self.make_remaker("buyer-maker@example.com", username="Maker Two")
+        self.adm = self.make_admin("shopper@example.com", modules={"orders": "view"})
+        self.addr_for = {}
+        for who in (self.rmk, self.adm):
+            r = self.post("/api/orders/addresses/", GOOD_ADDR, as_=who)
+            self.assertEqual(r.status_code, 201, r.data)
+            self.addr_for[who] = r.data["data"]["address"]["id"]
+
+    def buy(self, who, items, method="COD", key=None):
+        body = {"items": items, "address_id": self.addr_for[who], "method": method}
+        kw = {"HTTP_IDEMPOTENCY_KEY": key} if key else {}
+        return self.client.post("/api/orders/checkout/", body, format="json", **kw, **self._headers(who))
+
+    def test_addresses_are_private_to_each_account(self):
+        self.assertEqual(len(self.get("/api/orders/addresses/", as_=self.rmk).data["data"]["addresses"]), 1)
+        self.assertEqual(len(self.get("/api/orders/addresses/", as_=self.adm).data["data"]["addresses"]), 1)
+        r = self.buy(self.rmk, [{"id": self.tote.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 201)
+        # a member cannot use the ReMaker's address id
+        r = self.client.post("/api/orders/checkout/", {"items": [{"id": self.tote.public_id, "qty": 1}],
+                             "address_id": self.addr_for[self.rmk], "method": "COD"}, format="json",
+                             **self._headers(self.buyer))
+        self.assertEqual(r.status_code, 400)
+
+    def test_remaker_buys_and_sees_only_own_orders(self):
+        r = self.buy(self.rmk, [{"id": self.lamp.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 201, r.data)
+        oid = r.data["data"]["orders"][0]["id"]
+        mine = self.get("/api/orders/me/", as_=self.rmk).data["data"]
+        self.assertEqual((mine["count"], mine["results"][0]["id"]), (1, oid))
+        self.assertEqual(self.get("/api/orders/me/", as_=self.buyer).data["data"]["count"], 0)
+        self.assertEqual(self.get(f"/api/orders/me/{oid}/", as_=self.buyer).status_code, 404)
+        sold = self.get("/api/orders/sales/", as_=self.seller).data["data"]["results"][0]
+        self.assertEqual((sold["buyer"]["type"], sold["buyer"]["email"]), ("remaker", "buyer-maker@example.com"))
+
+    def test_remaker_cannot_buy_own_product(self):
+        r = self.buy(self.rmk, [{"id": self.table.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 201)  # someone else's product is fine
+        self.addr_for[self.maker] = self.post("/api/orders/addresses/", GOOD_ADDR, as_=self.maker).data["data"]["address"]["id"]
+        r = self.buy(self.maker, [{"id": self.table.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("own product", str(r.data))
+
+    def test_admin_buys_and_orders_show_in_admin_list_with_buyer_type(self):
+        r = self.buy(self.adm, [{"id": self.table.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 201, r.data)
+        rows = self.get("/api/orders/admin/?q=shopper@", as_=self.boss).data["data"]["results"]
+        self.assertEqual([x["buyer"]["type"] for x in rows], ["admin"])
+        self.assertEqual(self.get("/api/orders/me/", as_=self.adm).data["data"]["count"], 1)
+
+    def test_online_payment_for_remaker_buyer(self):
+        with mock.patch.object(gateway, "create_order", return_value={"id": "order_ABC"}):
+            r = self.buy(self.rmk, [{"id": self.lamp.public_id, "qty": 1}], method="RAZORPAY", key="k1")
+        self.assertEqual(r.status_code, 201, r.data)
+        again = self.buy(self.rmk, [{"id": self.lamp.public_id, "qty": 1}], method="RAZORPAY", key="k1")
+        self.assertEqual(again.status_code, 201)  # idempotent replay, same payment
+        self.assertEqual(Payment.objects.count(), 1)
+        # the member cannot confirm somebody else's payment
+        bad = self.post("/api/payments/verify/", {"razorpay_order_id": "order_ABC", "razorpay_payment_id": "pay_1",
+                        "razorpay_signature": sign("order_ABC", "pay_1")}, as_=self.buyer)
+        self.assertEqual(bad.status_code, 404)
+        ok_ = self.post("/api/payments/verify/", {"razorpay_order_id": "order_ABC", "razorpay_payment_id": "pay_1",
+                        "razorpay_signature": sign("order_ABC", "pay_1")}, as_=self.rmk)
+        self.assertEqual(ok_.status_code, 200, ok_.data)
+        self.assertEqual(Payment.objects.get().buyer_type, "remaker")

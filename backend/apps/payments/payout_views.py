@@ -43,11 +43,9 @@ def payout_data(p, *, full=False, seller=False):
         "id": p.public_id, "amount": p.amount, "status": p.status, "source": p.source,
         "reference": p.reference, "paid_at": p.paid_at, "reject_reason": p.reject_reason, "created_at": p.created_at,
     }
+    # `account` is the masked snapshot. The full details never travel in a payout record;
+    # an admin with the finance permission fetches them from the audited details endpoint.
     snap = dict(p.account or {})
-    if not full:  # sellers and lists never get the full account number
-        from .models import PayoutAccount
-        masked = PayoutAccount(**{k: snap.get(k, "") for k in ("method", "holder_name", "bank_name", "account_number", "ifsc", "upi_id")}).masked()
-        snap = masked
     d["account"] = snap
     if seller:
         s = p.seller_user or p.seller_remaker
@@ -158,7 +156,24 @@ class AdminPayouts(_AdminView):
         return resp
 
 
+class AdminPayoutDetails(APIView):
+    """Full bank/UPI details to make the transfer. Finance permission only; each view is audited."""
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("finance", "view")]
+
+    def get(self, request, public_id):
+        p = get_object_or_404(Payout, public_id=public_id)
+        try:
+            details = wallet.reveal_details(p.pk, request.user.account, ip=request.META.get("REMOTE_ADDR"))
+        except wallet.WalletError as e:
+            return _err(e)
+        resp = ok({"payout": p.public_id, "account": details})
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+
 class AdminPay(_AdminView):
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("finance", "edit")]
+
     def post(self, request, public_id):
         p = get_object_or_404(Payout, public_id=public_id)
         try:

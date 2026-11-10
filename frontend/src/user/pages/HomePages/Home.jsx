@@ -1,44 +1,10 @@
+import { isSignedIn } from "../../../api/session";
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import BannerSlot from "../../../shared/components/BannerSlot";
 import { inr, initialsImage, usePublic } from "../../../api/publicData";
 import "../../css/Home.css";
-
-const SAMPLE_PRODUCTS = [
-  {
-    title: "Teak drawer chest, 1970s",
-    description:
-      "Solid teak four-drawer chest with original brass pulls. Sun-faded top panel, structurally sound.",
-    price: "₹4,200",
-    location: "Bengaluru",
-    impact: "62 kg CO₂e",
-    category: "Furniture",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDYkmp1RxtipFncf82ttZPoo5AMeUWQXZ4x0d2qyVgIeytNXEc7dUDHHlFi2zPjMUXntoI8gmfQ_JB0-Umo1xYN9iQbyAzeY71ZSk6lgx1Qu7bjNHTCaMDdb_EOsaaEsG1STtFSlxwXQRqyJcuptatzT7imrfrmC_5BReQI6Fjutm--WFqedKKR6mowGjKqK_aS4Ug1LS5NVtfkmg5Nr3dr2kIdCDkhK2So0FMu31ZFkzveSwKo7RogOQ",
-  },
-  {
-    title: "Vintage reading chair",
-    description:
-      "A classic wooden reading chair with a restored frame and freshly finished seat.",
-    price: "₹2,800",
-    location: "Pune",
-    impact: "38 kg CO₂e",
-    category: "Furniture",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD8fsEWMuDS6tP3H8YHowI8FXZi5ipEgQwoPBzzWvj__K_wdHNiTJ20KtKkR00kVzVlHmmyweiwTyzO9dhTAle81e_cnY8dsdB_h_qCd5_wh_5xhOXyTCZEhTC6frgmFAzEDIGHLyq1u5UqJieIK00SGnu8dpIW70YCJXSXZ6mCvF20YQVS5gQo-D48xDCd0e3H3Bsu8_q_wD8LAIz3dqPi2CoHlkkpJAts4SrA11s-aEkUa3Z8i2LjwQg",
-  },
-  {
-    title: "Handmade ceramic table lamp",
-    description: "Warm ceramic table lamp with carefully restored wiring.",
-    price: "₹1,650",
-    location: "Ahmedabad",
-    impact: "12 kg CO₂e",
-    category: "Home & Living",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDKJuCnBWzoLkZZmurTZHo67Oi3tHOzLCimM74JvTF3kXI7O_Gmlc8EuoARQAj_ahgGA0UaysFOc2XnymQUO5b6gKKPviIO_tRXwO-uj1L-FBQbMzKnNd7D5J899qhIyOaIAjubZzSxuSdWwM1EfXNCDDCTaBpP6ccQChhHrrQbU9LkhO1idIKTXkxxn_lZ9SgIErKjpo6SPXFz6ar6-tkQ152sUhYPsbJYHtYFK4WEbTt9pRqF_2sKcQ",
-  },
-];
 
 const SAMPLE_CATEGORIES = [
   ["chair", "Furniture", "3 live"],
@@ -49,35 +15,6 @@ const SAMPLE_CATEGORIES = [
   ["menu_book", "Books & Paper", "1 live"],
 ];
 
-const SAMPLE_REMAKERS = [
-  {
-    name: "Tara Bose",
-    specialty: "Textile Patchwork",
-    text: "Turns mill-end handloom into quilts and bags, documenting each fabric's first life.",
-    rescued: "210 items rescued",
-    location: "Kolkata",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAHwbz1PnwE_6JW1W0uKU224ArcZOjwSzdOnsZNj3z5R_BixH5tMt4acIcd2zHK9_bhGyh98g-rMKSAKwTARrz8mnWiiyrrPQnSd_mZB2ZTQI_Q3BJdVwmp5iMoB2Ruh6UdMTHX2wPVVXOq6Lm-_cpGv5WKaZbM3A3B88WXE39AyX23UAL7y0XErgaxrezTWCNcuylDsZ9E0DOJsPQWwXL_CpxPVX61fgTbAlyQWM_0KMzzGZQtnl0Npg",
-  },
-  {
-    name: "Arjun Mehta",
-    specialty: "Upcycled Home Decor",
-    text: "Brings overlooked objects to purpose with careful restoration and thoughtful design.",
-    rescued: "84 items rescued",
-    location: "Ahmedabad",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD7LsSiRtiZL9r8Yx22SeED3xQGraV841GlsLxZrQ9W2nYSXTZqwLvpypEhOg-OegetkpwO-F_5GDVDNXpIQAIzWHjVuo7HNhMtcpsRQ-zd1mKPjSXn3vPIdkrPpGU0-HG6RAfq5L1S9S5FrxVIEZ7dRrLCBkrntHHMJcE38VKzDMdEzCQ-0i0fsEH23LpxIHk-ZklWG7BBYyieBKt9hZmtYa8Y93Kz8xpdsUbOoey5OwCvGP0Y3S3KeQ",
-  },
-  {
-    name: "Priya Shah",
-    specialty: "Textile & Repair",
-    text: "Transforms forgotten cushions, bags and garments into useful objects with new character.",
-    rescued: "96 items rescued",
-    location: "Mumbai",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDJCDIX6X_halhLLL9pkwFMebb4lP-Z_HOhCjzK__ywInzsnbgndfzJ8R6HccEJa_eZsq2SWkumAh48lm0LD93bxorK4CIz6S5obTdPDMTQrWoTJ7WwNIplBn0CpV68Rs4tG909fOy1zATck7Vy8jyfoFAz6bf1r5fP5XQ7lLXEPCGXiC-9PF5GzNJctCM9SKHVm5Zy3Hskn4WkjjlF-b4obRzge3H5IY8Ig9PIcx7ZUpAOhHSOO_5pVA",
-  },
-];
 
 const testimonials = [
   {
@@ -105,18 +42,16 @@ const CATEGORY_ICON = [
 ];
 const iconFor = (name) => (CATEGORY_ICON.find(([re]) => re.test(name)) || [0, "category"])[1];
 
-/* Real data when the platform has it, the sample content otherwise (a fresh database
-   must not leave the home page empty). */
+/* Real data only. Nothing invented is shown: with no products or ReMakers yet, those
+   blocks are simply left out, and the counts read zero. */
 function useHomeData() {
   const { data } = usePublic("/home/");
   const real = data || null;
   const cards = (real?.products || []).filter((p) => p.cover);
-  const products = cards.length >= 3
-    ? cards.slice(0, 3).map((p) => ({
-        title: p.title, description: p.summary || "", price: inr(p.price),
-        location: p.city || "Gujarat", impact: "", category: p.category.name, image: p.cover,
-      }))
-    : SAMPLE_PRODUCTS;
+  const products = cards.slice(0, 3).map((p) => ({
+    title: p.title, description: p.summary || "", price: inr(p.price),
+    location: p.city || "Gujarat", impact: "", category: p.category.name, image: p.cover,
+  }));
   const categories = real?.categories?.length
     ? real.categories.map((c) => [iconFor(c.name), c.name, `${c.live} live`])
     : SAMPLE_CATEGORIES;
@@ -127,15 +62,10 @@ function useHomeData() {
         rescued: `${r.creations} ${r.creations === 1 ? "piece" : "pieces"} live`,
         location: r.city || "Gujarat", image: r.image || initialsImage(r.name),
       }))
-    : SAMPLE_REMAKERS;
-  const st = real?.stats;
-  const hasStats = !!st && (st.remakers > 0 || st.items_rescued > 0 || st.members > 0);
-  const hero = hasStats
-    ? [["Items Rescued", String(st.items_rescued)], ["Tonnes CO₂e Saved", String(st.co2_tonnes)], ["ReMakers Onboarded", String(st.remakers)]]
-    : [["Items Rescued", "1,284"], ["Tonnes CO₂e Saved", "47.6"], ["ReMakers Onboarded", "36"]];
-  const final = hasStats
-    ? [st.members.toLocaleString("en-IN"), st.live_products.toLocaleString("en-IN"), st.remakers.toLocaleString("en-IN")]
-    : ["12,000+", "3,500+", "98%"];
+    : [];
+  const st = real?.stats || { items_rescued: 0, co2_tonnes: 0, remakers: 0, members: 0, live_products: 0 };
+  const hero = [["Items Rescued", String(st.items_rescued)], ["Tonnes CO₂e Saved", String(st.co2_tonnes)], ["ReMakers Onboarded", String(st.remakers)]];
+  const final = [st.members.toLocaleString("en-IN"), st.live_products.toLocaleString("en-IN"), st.remakers.toLocaleString("en-IN")];
   return { products, categories, remakers, hero, final };
 }
 
@@ -175,7 +105,7 @@ function ProductCard({ product, className }) {
 
 const viewerKind = () => {
   try {
-    return localStorage.getItem("reorbit_access_token")
+    return isSignedIn("user")
       ? "Signed-in members"
       : "Visitors only";
   } catch {
@@ -241,11 +171,13 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-visual">
-            <ProductCard product={products[0]} className="hero-card-one" />
-            <ProductCard product={products[1]} className="hero-card-two" />
-            <ProductCard product={products[2]} className="hero-card-three" />
-          </div>
+          {products.length > 0 && (
+            <div className="hero-visual">
+              {products.map((product, i) => (
+                <ProductCard key={product.title + i} product={product} className={["hero-card-one", "hero-card-two", "hero-card-three"][i]} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* BANNERS from Admin > Content */}
@@ -408,7 +340,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* REMAKER STUDIO */}
+        {/* REMAKER STUDIO (real ReMakers only) */}
+        {remakers.length > 0 && (
         <section className="remaker-studio">
           <div className="container">
             <div className="studio-heading">
@@ -459,6 +392,7 @@ export default function Home() {
             </div>
           </div>
         </section>
+        )}
 
         {/* TESTIMONIALS */}
         <section className="stories container">

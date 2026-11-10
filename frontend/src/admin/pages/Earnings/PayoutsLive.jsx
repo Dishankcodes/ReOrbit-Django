@@ -99,8 +99,21 @@ function Rules({ rules, canEdit, onSaved, toast }) {
   );
 }
 
-function PayModal({ payout, mode, onClose, onDone }) {
+function PayModal({ payout, mode, canReveal, onClose, onDone }) {
   const [text, setText] = useState("");
+  const [full, setFull] = useState(null);
+  const [revealing, setRevealing] = useState(false);
+  const [revealError, setRevealError] = useState("");
+  const reveal = async () => {
+    setRevealing(true);
+    setRevealError("");
+    try {
+      setFull(await adminPayoutApi.details(payout.id));
+    } catch (e) {
+      setRevealError(e.status === 403 ? "You don't have permission to view payment details." : e.status === 410 ? "These details are no longer stored." : e.message || "Could not load details.");
+    }
+    setRevealing(false);
+  };
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const paying = mode === "pay";
@@ -123,7 +136,14 @@ function PayModal({ payout, mode, onClose, onDone }) {
         {paying && (
           <>
             <p className="pyo-lead">Send the transfer from your bank, then enter the reference below.</p>
-            <dl className="pyo-dest">{where(payout.account).map(([k, v]) => v && <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+            <dl className="pyo-dest">{where(full || payout.account).map(([k, v]) => v && <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+            {!full && canReveal && (
+              <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={reveal} disabled={revealing}>
+                {revealing ? <Spinner label="Loading…" /> : "Reveal payment details"}
+              </button>
+            )}
+            {!full && !canReveal && <p className="pyo-note">Full details need the Payout details permission.</p>}
+            {revealError && <p className="apr-note">{revealError}</p>}
           </>
         )}
         {!paying && <p className="pyo-lead">The money goes back to the seller's wallet.</p>}
@@ -144,7 +164,8 @@ function PayModal({ payout, mode, onClose, onDone }) {
 
 export default function PayoutsLive({ toast }) {
   const { can } = useAccess();
-  const canEdit = can("earnings", "edit");
+  const canEdit = can("earnings", "edit") && can("finance", "edit");
+  const canReveal = can("finance", "view");
   const [summary, setSummary] = useState(null);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -236,7 +257,7 @@ export default function PayoutsLive({ toast }) {
           </>
         )}
       </section>
-      {pending && <PayModal payout={pending.payout} mode={pending.mode} onClose={() => setPending(null)} onDone={done} />}
+      {pending && <PayModal payout={pending.payout} mode={pending.mode} canReveal={canReveal} onClose={() => setPending(null)} onDone={done} />}
     </>
   );
 }

@@ -4,6 +4,8 @@ from django.core.files.storage import default_storage
 
 from .models import Order
 
+from apps.core import buyers
+
 
 def media_url(request, name):
     if not name:
@@ -50,8 +52,7 @@ def order_data(o, request, *, events=False, buyer=False):
         "can_cancel": o.status in (Order.Status.CONFIRMED, Order.Status.PACKED),
     }
     if buyer:
-        b = o.buyer
-        data["buyer"] = {"id": b.public_id, "name": b.full_name, "email": b.email}
+        data["buyer"] = buyers.info(o)
     if events:
         data["events"] = [
             {"label": e.label, "detail": e.detail, "actor": e.actor, "at": e.created_at} for e in o.events.all()

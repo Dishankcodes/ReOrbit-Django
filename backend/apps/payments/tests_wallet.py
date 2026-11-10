@@ -26,7 +26,8 @@ class WalletBase(APIBase):
         cat = Category.objects.create(name="Furniture", slug="furniture", applies_to="Both")
         self.buyer = self.make_user("buyer@example.com")
         self.maker = self.make_remaker()
-        self.boss = self.make_admin("boss@example.com", modules={"earnings": "edit", "orders": "edit"})
+        self.boss = self.make_admin("boss@example.com", modules={"earnings": "edit", "orders": "edit", "finance": "edit"})
+        self.clerk = self.make_admin("clerk@example.com", modules={"earnings": "edit"})  # no finance permission
         self.table = RemakerProduct.objects.create(remaker=self.maker, category=cat, title="Teak table",
                                                    description="Made from an old teak door.", price=2400, stock=9, status="Listed")
         self.post("/api/orders/addresses/", ADDR, as_=self.buyer)
@@ -116,10 +117,29 @@ class PayoutTests(WalletBase):
         self.assertEqual(r.data["data"]["payout"]["account"]["account_number"], "••••••••9012")
         q = self.get("/api/payments/admin/payouts/?status=Pending", as_=self.boss).data["data"]
         self.assertEqual(q["counts"], {"Pending": 1})
-        self.assertEqual(q["results"][0]["account"]["account_number"], "123456789012")  # admin needs it to pay
+        self.assertEqual(q["results"][0]["account"]["account_number"], "••••••••9012")  # lists are masked for admins too
+        # --- stored encrypted, snapshot holds no full number
+        from apps.payments.models import Payout, PayoutAccount
+        acct = PayoutAccount.objects.get()
+        self.assertNotIn("123456789012", acct.account_number_enc)
+        self.assertEqual(acct.account_last4, "9012")
+        row = Payout.objects.get(public_id=pid)
+        self.assertNotIn("123456789012", str(row.account))
+        self.assertNotIn("123456789012", row.account_enc)
+        # --- full details only with the finance permission, and every look is audited
+        D = f"/api/payments/admin/payouts/{pid}/details/"
+        self.assertEqual(self.get(D, as_=self.clerk).status_code, 403)
+        self.assertEqual(self.post(f"/api/payments/admin/payouts/{pid}/pay/", {"reference": "UTR1"}, as_=self.clerk).status_code, 403)
+        full = self.get(D, as_=self.boss)
+        self.assertEqual(full.data["data"]["account"]["account_number"], "123456789012")
+        self.assertEqual(full.data["data"]["account"]["ifsc"], "SBIN0001234")
+        from apps.core.models import AuditLog
+        self.assertEqual(AuditLog.objects.filter(action="payout.reveal_details", entity_id=pid).count(), 1)
         self.assertEqual(self.post(f"/api/payments/admin/payouts/{pid}/pay/", {}, as_=self.boss).status_code, 400)  # reference needed
         paid = self.post(f"/api/payments/admin/payouts/{pid}/pay/", {"reference": "UTR998877"}, as_=self.boss)
         self.assertEqual(paid.data["data"]["payout"]["status"], "Paid")
+        self.assertEqual(Payout.objects.get(public_id=pid).account_enc, "")  # wiped once settled
+        self.assertEqual(self.get(D, as_=self.boss).status_code, 410)
         self.assertEqual(self.post(f"/api/payments/admin/payouts/{pid}/pay/", {"reference": "UTR1"}, as_=self.boss).status_code, 409)
         b = self.get("/api/payments/wallet/", as_=self.maker).data["data"]["balances"]
         self.assertEqual((b["available"], b["in_review"], b["paid_out"]), (0, 0, 4800))

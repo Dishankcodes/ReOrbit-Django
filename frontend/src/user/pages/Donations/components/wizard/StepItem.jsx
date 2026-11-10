@@ -1,3 +1,4 @@
+import NumberInput from "../../../../../shared/components/NumberInput";
 import React from "react";
 import { Minus, Plus, ShieldAlert } from "lucide-react";
 import {
@@ -111,18 +112,12 @@ export default function StepItem({ form, set, errors }) {
             >
               <Minus size={16} />
             </button>
-            <input
-              type="number"
+            <NumberInput
               min={1}
               max={99}
               value={form.quantity}
               aria-label="Quantity"
-              onChange={(event) =>
-                set(
-                  "quantity",
-                  Math.min(99, Math.max(1, Number(event.target.value) || 1)),
-                )
-              }
+              onChange={(n) => set("quantity", n)}
             />
             <button
               type="button"

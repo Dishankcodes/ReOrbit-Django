@@ -46,6 +46,46 @@ def create_order(amount_rupees, receipt, notes=None):
         raise GatewayError("Could not reach the payment provider. Please try again.") from exc
 
 
+def fetch_payment(razorpay_payment_id):
+    """Ask Razorpay what really happened to this payment (never trust the browser)."""
+    try:
+        return _client().payment.fetch(razorpay_payment_id)
+    except GatewayError:
+        raise
+    except Exception as exc:
+        raise GatewayError("Could not check the payment with the provider. Please try again.") from exc
+
+
+def capture_payment(razorpay_payment_id, amount_rupees):
+    """Capture an authorized payment (only needed when the account is not on auto-capture)."""
+    try:
+        return _client().payment.capture(razorpay_payment_id, int(amount_rupees) * 100, {"currency": "INR"})
+    except GatewayError:
+        raise
+    except Exception as exc:
+        raise GatewayError("The payment could not be captured.") from exc
+
+
+def entity_problem(entity, payment):
+    """Compare Razorpay's payment record with what we stored. Returns "" when it all matches,
+    otherwise a short reason. `payment` is our payments.Payment row."""
+    if not isinstance(entity, dict):
+        return "no payment record"
+    if not payment.razorpay_order_id or entity.get("order_id") != payment.razorpay_order_id:
+        return "payment belongs to a different Razorpay order"
+    if entity.get("currency") != "INR" or payment.currency != "INR":
+        return "currency is not INR"
+    try:
+        paid = int(entity.get("amount"))
+    except (TypeError, ValueError):
+        return "amount missing"
+    if paid != int(payment.amount) * 100:
+        return "amount does not match the checkout"
+    if entity.get("status") != "captured":
+        return f"payment is {entity.get('status') or 'unknown'}, not captured"
+    return ""
+
+
 def refund(razorpay_payment_id, amount_rupees):
     try:
         return _client().payment.refund(razorpay_payment_id, {"amount": int(amount_rupees) * 100})

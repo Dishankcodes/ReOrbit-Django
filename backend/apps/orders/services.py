@@ -22,6 +22,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.admins.models import Admins, AdminItem
+from apps.core import buyers as buyer_kit
 from apps.core.models import Notification, PlatformSettings, SavedAddress
 from apps.core.pricing import cod_block_reason, delivery_charge, platform_fee
 from apps.core.services import audit, notify
@@ -109,7 +110,7 @@ def _unavailable(obj, kind, qty, buyer, sellers):
     """Return a plain-words reason this cannot be bought, or ""."""
     if kind == "item":
         seller = sellers.get(("user", obj.user_id))
-        if obj.user_id == buyer.pk:
+        if buyer_kit.type_of(buyer) == "user" and obj.user_id == buyer.pk:
             return "This is your own listing, so you can't buy it."
         if obj.item_status != Item.Status.LISTED or obj.moderation_status == Item.Moderation.DISABLED:
             return "This piece is no longer available."
@@ -122,6 +123,8 @@ def _unavailable(obj, kind, qty, buyer, sellers):
         return ""
     if kind == "remaker_product":
         seller = sellers.get(("remaker", obj.remaker_id))
+        if buyer_kit.type_of(buyer) == "remaker" and obj.remaker_id == buyer.pk:
+            return "This is your own product, so you can't buy it."
         if obj.status not in ("Listed",) or seller is None or seller.status != ReMakers.Status.ACTIVE:
             return "This product is no longer available."
     else:
@@ -210,7 +213,7 @@ def _notify_seller(order, title, body):
 def _notify_buyer(order, title, body):
     try:
         with transaction.atomic():
-            notify(order.buyer, title, body, module="orders", target_url=f"/user-orders/{order.public_id}",
+            notify(order.buyer, title, body, module="orders", target_url=buyer_kit.order_url(order),
                    ref_type="order", ref_id=order.public_id)
     except Exception:
         log.exception("order notification failed")
@@ -314,7 +317,7 @@ def _replay(prior):
 def _existing_for_key(buyer, key):
     if not key:
         return None
-    return Payment.objects.filter(buyer=buyer, idempotency_key=key).first()
+    return Payment.objects.filter(buyer_key=buyer_kit.key_of(buyer), idempotency_key=key).first()
 
 
 def create_checkout(buyer, data, key=None):
@@ -327,7 +330,7 @@ def create_checkout(buyer, data, key=None):
     method = str(data.get("method") or "").upper()
     if method not in (Payment.Method.RAZORPAY, Payment.Method.COD):
         raise CheckoutError("Choose how you want to pay.", {"method": ["Choose how you want to pay."]})
-    address = SavedAddress.objects.filter(public_id=str(data.get("address_id") or ""), user=buyer).first()
+    address = SavedAddress.objects.filter(public_id=str(data.get("address_id") or ""), **buyer_kit.owner(buyer)).first()
     if address is None:
         raise CheckoutError("Choose a delivery address.", {"address_id": ["Choose a delivery address."]})
     merged = parse_lines(data.get("items"))
@@ -339,7 +342,7 @@ def create_checkout(buyer, data, key=None):
     # One open payment per buyer: starting again lets go of an earlier unpaid hold, so a
     # buyer is never blocked by their own abandoned checkout (a late payment is still safe,
     # see confirm_paid). Done only after the request itself is known to be well-formed.
-    for pk in list(Payment.objects.filter(buyer=buyer, status=Payment.Status.CREATED).values_list("pk", flat=True)):
+    for pk in list(Payment.objects.filter(buyer_key=buyer_kit.key_of(buyer), status=Payment.Status.CREATED).values_list("pk", flat=True)):
         release_payment(pk, Payment.Status.CANCELLED, "Replaced by a newer checkout.", "system")
 
     s = PlatformSettings.load()
@@ -362,7 +365,7 @@ def create_checkout(buyer, data, key=None):
                 if reason:
                     raise CheckoutError(reason, {"method": [reason]}, code="COD_BLOCKED")
             payment = Payment.objects.create(
-                buyer=buyer, method=method, amount=grand, idempotency_key=key or None,
+                **buyer_kit.fields(buyer), method=method, amount=grand, idempotency_key=key or None,
                 status=Payment.Status.COD if cod else Payment.Status.CREATED,
                 expires_at=None if cod else now + timedelta(minutes=HOLD_MINUTES),
             )
@@ -370,7 +373,7 @@ def create_checkout(buyer, data, key=None):
             for g in plan["groups"]:
                 kind_t = g["seller"]["type"]
                 order = Order.objects.create(
-                    buyer=buyer, payment=payment, seller_type=kind_t,
+                    **buyer_kit.fields(buyer), payment=payment, seller_type=kind_t,
                     seller_user=g["lines"][0]["obj"].user if kind_t == "user" else None,
                     seller_remaker=g["lines"][0]["obj"].remaker if kind_t == "remaker" else None,
                     status=Order.Status.CONFIRMED if cod else Order.Status.PENDING_PAYMENT,
@@ -440,7 +443,7 @@ def expire_stale(buyer=None, limit=200):
     """Release holds whose time ran out. Cheap: uses the (status, expires_at) index."""
     qs = Payment.objects.filter(status=Payment.Status.CREATED, expires_at__lt=timezone.now())
     if buyer is not None:
-        qs = qs.filter(buyer=buyer)
+        qs = qs.filter(buyer_key=buyer_kit.key_of(buyer))
     count = 0
     for pk in list(qs.values_list("pk", flat=True)[:limit]):
         release_payment(pk, Payment.Status.EXPIRED, "Payment was not completed in time.")
@@ -495,8 +498,34 @@ def _hold_again(payment):
     return True
 
 
+def verified_confirm(payment, razorpay_payment_id, entity=None):
+    """Confirm a payment only after Razorpay itself says it is right: the payment belongs to
+    this checkout's Razorpay order, the amount matches what we stored, the currency is INR and
+    the status is captured. `entity` is Razorpay's payment record (from a signed webhook, or
+    fetched from their API). Raises CheckoutError when anything is off, so nothing is confirmed."""
+    if payment.status in (Payment.Status.PAID, Payment.Status.REFUNDED):
+        return payment
+    if entity is None:
+        try:
+            entity = gateway.fetch_payment(razorpay_payment_id)
+            if isinstance(entity, dict) and entity.get("status") == "authorized" and entity.get("order_id") == payment.razorpay_order_id:
+                entity = gateway.capture_payment(razorpay_payment_id, payment.amount)
+        except gateway.GatewayError as exc:
+            raise CheckoutError(str(exc), code="GATEWAY_ERROR", status=503)
+    if isinstance(entity, dict) and entity.get("id") not in (None, razorpay_payment_id):
+        problem = "payment id does not match"
+    else:
+        problem = gateway.entity_problem(entity, payment)
+    if problem:
+        log.error("Payment %s not confirmed: %s", payment.public_id, problem)
+        raise CheckoutError("We could not verify this payment. If money was deducted it will be refunded.",
+                            code="PAYMENT_MISMATCH")
+    return confirm_paid(payment.pk, razorpay_payment_id)
+
+
 def confirm_paid(payment_pk, razorpay_payment_id):
-    """Mark a payment paid and confirm its orders. Safe to call many times."""
+    """Mark a payment paid and confirm its orders. Safe to call many times.
+    Callers must have verified the payment first (see verified_confirm)."""
     refund_needed = False
     with transaction.atomic():
         p = Payment.objects.select_for_update().get(pk=payment_pk)

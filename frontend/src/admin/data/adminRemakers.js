@@ -1,3 +1,4 @@
+import { adminActor } from "./actor";
 /* =========================================================
    DUMMY DATA — Admin › ReMakers
    UI only. No backend. Shapes follow the database notes:
@@ -675,7 +676,7 @@ function buildRefurbishments(random, rid, count, joined) {
       before_image: "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
       after_image: status === "Completed" ? product.image : null,
       notes: pick(random, NOTES),
-      assigned_by: "Admin · Nikhil Rao",
+      assigned_by: adminActor(),
     };
   }).sort((a, b) => new Date(b.assigned_date) - new Date(a.assigned_date));
 }
@@ -916,7 +917,7 @@ function buildRemakers() {
         by:
           person.status === "Deleted"
             ? "ReMaker request"
-            : "Admin · Nikhil Rao",
+            : adminActor(),
         at: addDays(NOW, -between(random, 8, 70)),
       });
     }

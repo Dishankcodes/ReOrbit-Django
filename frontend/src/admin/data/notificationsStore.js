@@ -1,3 +1,4 @@
+import { adminActor } from "./actor";
 /* =========================================================
    Admin › Notifications (UI only, in-memory).
    One inbox for the whole admin side. Most notifications are
@@ -57,7 +58,7 @@ let state = {
       type: "offer",
       link: "/",
       at: ago(30),
-      by: "Admin · Nikhil Rao",
+      by: adminActor(),
     },
     {
       id: "AN-1002",
@@ -68,7 +69,7 @@ let state = {
       type: "maintenance",
       link: "",
       at: ago(24 * 6),
-      by: "Admin · Nikhil Rao",
+      by: adminActor(),
     },
     {
       id: "AN-1001",

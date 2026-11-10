@@ -16,7 +16,7 @@ const a = storedAdmin();
 
 let state = {
   profile: {
-    name: a.full_name || a.fullName || a.name || "Nikhil Rao",
+    name: a.full_name || a.fullName || a.name || "Admin",
     email: a.email || "admin@reorbit.in",
     phone: a.phone || "+91 79000 54321",
     role: "Super admin",

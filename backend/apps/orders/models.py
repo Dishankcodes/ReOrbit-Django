@@ -31,7 +31,11 @@ class Order(PublicIdModel, TimeStampedModel):
         REFUND_FAILED = "Refund_Failed", "Refund needs attention"
         VOID = "Void", "Not charged"
 
-    buyer = models.ForeignKey("users.Users", on_delete=models.PROTECT, related_name="orders")
+    buyer_type = models.CharField(max_length=8, default="user")  # user | remaker | admin
+    buyer_key = models.CharField(max_length=24, default="", db_index=False)  # "user:5"
+    buyer_user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.PROTECT, related_name="orders")
+    buyer_remaker = models.ForeignKey("remakers.ReMakers", null=True, blank=True, on_delete=models.PROTECT, related_name="orders")
+    buyer_admin = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.PROTECT, related_name="orders")
     payment = models.ForeignKey("payments.Payment", on_delete=models.PROTECT, related_name="orders")
     seller_type = models.CharField(max_length=10, choices=SellerType.choices)
     seller_user = models.ForeignKey(
@@ -66,7 +70,7 @@ class Order(PublicIdModel, TimeStampedModel):
         db_table = "orders"
         ordering = ["-created_at", "-pk"]
         indexes = [
-            models.Index(fields=["buyer", "-created_at"], name="ord_buyer_created_idx"),
+            models.Index(fields=["buyer_key", "-created_at"], name="ord_buyer_created_idx"),
             models.Index(fields=["seller_user", "status"], name="ord_suser_status_idx"),
             models.Index(fields=["seller_remaker", "status"], name="ord_sremaker_status_idx"),
             models.Index(fields=["status", "seller_type"], name="ord_status_type_idx"),
@@ -80,7 +84,19 @@ class Order(PublicIdModel, TimeStampedModel):
                 ),
                 name="order_seller_matches_type",
             ),
+            models.CheckConstraint(
+                condition=(
+                    Q(buyer_type="user", buyer_user__isnull=False, buyer_remaker__isnull=True, buyer_admin__isnull=True)
+                    | Q(buyer_type="remaker", buyer_remaker__isnull=False, buyer_user__isnull=True, buyer_admin__isnull=True)
+                    | Q(buyer_type="admin", buyer_admin__isnull=False, buyer_user__isnull=True, buyer_remaker__isnull=True)
+                ),
+                name="order_exactly_one_buyer",
+            ),
         ]
+
+    @property
+    def buyer(self):
+        return getattr(self, f"buyer_{self.buyer_type}")
 
     def __str__(self):
         return f"{self.public_id} {self.status}"

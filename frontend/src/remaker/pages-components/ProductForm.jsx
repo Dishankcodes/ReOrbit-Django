@@ -1,3 +1,4 @@
+import NumberInput from "../../shared/components/NumberInput";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -309,11 +310,6 @@ export default function ProductForm({ mode = "add", product = null }) {
 
   const handlePrice = (event) =>
     setField("price", event.target.value.replace(/[^0-9]/g, "").slice(0, 7));
-
-  const handleStock = (event) => {
-    const digits = event.target.value.replace(/[^0-9]/g, "").slice(0, 3);
-    setField("stock", digits === "" ? 0 : Number(digits));
-  };
 
   /* ---------------------------------------------------------
      Save
@@ -760,12 +756,12 @@ export default function ProductForm({ mode = "add", product = null }) {
                   >
                     <Minus size={15} />
                   </button>
-                  <input
+                  <NumberInput
                     id="rpf-stock"
-                    type="text"
-                    inputMode="numeric"
-                    value={values.stock}
-                    onChange={handleStock}
+                    min={0}
+                    max={999}
+                    value={Number(values.stock) || 0}
+                    onChange={(n) => setField("stock", n)}
                   />
                   <button
                     type="button"
