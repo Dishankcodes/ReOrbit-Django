@@ -394,6 +394,13 @@ DEFAULT_FROM_EMAIL = os.getenv(
 )
 
 
+# Mailjet transactional email API (HTTPS; avoids outbound SMTP restrictions).
+MAILJET_API_KEY = os.getenv("MAILJET_API_KEY", "").strip()
+MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY", "").strip()
+MAILJET_SENDER_EMAIL = os.getenv("MAILJET_SENDER_EMAIL", "").strip()
+MAILJET_API_URL = "https://api.mailjet.com/v3.1/send"
+
+
 
 # GOOGLE SIGN-IN
 
