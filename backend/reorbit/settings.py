@@ -377,15 +377,10 @@ EMAIL_BACKEND = os.getenv(
 )
 
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
-
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
-
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
-
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
 
 DEFAULT_FROM_EMAIL = os.getenv(
@@ -406,27 +401,17 @@ MAILJET_API_URL = "https://api.mailjet.com/v3.1/send"
 
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
 
-
-
 # RAZORPAY
-
-
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
-
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
-
 RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
-
 
 
 # PRODUCTION SECURITY
 
-
 if not DEBUG:
-
     SESSION_COOKIE_SECURE = env_bool(
         "SESSION_COOKIE_SECURE", True
     )
