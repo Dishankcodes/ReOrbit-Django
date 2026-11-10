@@ -124,7 +124,7 @@ export default function AdminRemakers() {
   const remakers = useRemakers();
   const { toast, toastNode } = useToast();
 
-  const [view, setView] = useState("cards");
+  const [view, setView] = useState("table");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
   const [skill, setSkill] = useState("all");
