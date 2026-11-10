@@ -20,7 +20,6 @@ import {
   timeAgo,
 } from "../data/notificationsStore";
 import { useAccess } from "../data/teamStore";
-import { useSettings } from "../data/settingsStore";
 
 import "./AdminHeader.css";
 
@@ -228,14 +227,11 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
   }, [location.pathname]);
 
   const access = useAccess();
-  const { profile } = useSettings();
   const person = access.me;
-  const adminName = access.previewing
-    ? person.name
-    : profile?.name || getAdminName(admin);
-  const adminEmail = access.previewing
-    ? person.email
-    : profile?.email || getAdminEmail(admin);
+  // The signed-in account is refreshed from GET /api/admins/me/ by AdminLayout.
+  // Never use the settings store here: its legacy defaults contain demo identity data.
+  const adminName = person?.name || getAdminName(admin);
+  const adminEmail = person?.email || getAdminEmail(admin);
   const roleLabel = access.isSuper ? "Super admin" : person.roleLabel;
   const initials = getInitials(adminName);
 

@@ -229,8 +229,7 @@ export default function AdminDashboard() {
   })();
 
   const access = useAccess();
-  const settings = useSettings();
-  const firstName = (settings.profile?.name || adminName)
+  const firstName = (access.me?.name || adminName)
     .trim()
     .split(/\s+/)[0];
 

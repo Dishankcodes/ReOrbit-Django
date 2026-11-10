@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
-import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
 import { useTickets as useUserTickets } from "../../user/data/supportStore";
 import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
@@ -163,10 +162,8 @@ export default function AdminSidebar({
   const openTickets = [...userTickets, ...remakerTickets].filter(
     (t) => t.status === "Open",
   ).length;
-  const { profile } = useSettings();
-  const adminName = access.previewing
-    ? access.me.name
-    : profile?.name || getAdminName(admin);
+  // Use the authenticated account supplied by GET /api/admins/me/.
+  const adminName = access.me?.name || getAdminName(admin);
   const roleLabel = access.isSuper ? "Super admin" : access.me.roleLabel;
   const initials = getInitials(adminName);
   const visible = (list) =>
