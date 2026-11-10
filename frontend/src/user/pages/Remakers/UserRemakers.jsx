@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Search, SearchX, Sparkles, UserMinus, UserCheck, Users, Recycle, X } from "lucide-react";
 
-import { REMAKERS } from "../../../data/marketplaceData";
+import { fetchPublicRemakers } from "../../../api/remakers";
 import { useFollowing } from "../../data/followStore";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import EmptyState from "../../components/ui/EmptyState";
@@ -22,6 +22,9 @@ const SORTS = {
 export default function UserRemakers() {
   const { isFollowing, toggle, count } = useFollowing();
   const { toast, show } = useToast();
+  const [remakers, setRemakers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -29,19 +32,54 @@ export default function UserRemakers() {
   const [sort, setSort] = useState("rated");
   const [unfollowing, setUnfollowing] = useState(null);
 
-  const crafts = useMemo(() => [...new Set(REMAKERS.map((m) => m.craft))], []);
-  const followingCount = REMAKERS.filter((m) => isFollowing(m.id)).length;
+  const loadRemakers = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const rows = await fetchPublicRemakers();
+      setRemakers(rows);
+    } catch (e) {
+      setError(e.message || "Could not load ReMakers. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    fetchPublicRemakers()
+      .then((rows) => {
+        if (active) setRemakers(rows);
+      })
+      .catch((e) => {
+        if (active) setError(e.message || "Could not load ReMakers. Please try again.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  const crafts = useMemo(
+    () => [...new Set(remakers.map((maker) => maker.craft).filter(Boolean))].sort(),
+    [remakers],
+  );
+  const followingCount = remakers.filter((maker) => isFollowing(maker.id)).length;
 
   const results = useMemo(() => {
     const text = query.trim().toLowerCase();
-    return REMAKERS.filter((m) => (tab === "following" ? isFollowing(m.id) : true))
-      .filter((m) => craft === "all" || m.craft === craft)
-      .filter((m) =>
-        text ? [m.name, m.username, m.craft, m.city, m.bio].some((f) => f.toLowerCase().includes(text)) : true,
+    return remakers
+      .filter((maker) => (tab === "following" ? isFollowing(maker.id) : true))
+      .filter((maker) => craft === "all" || maker.craft === craft)
+      .filter((maker) =>
+        text
+          ? [maker.name, maker.username, maker.craft, maker.city, maker.bio]
+              .some((value) => String(value || "").toLowerCase().includes(text))
+          : true,
       )
       .sort(SORTS[sort].fn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, craft, query, sort, count]);
+  }, [remakers, tab, craft, query, sort, count]);
 
   const onToggle = (maker) => {
     if (isFollowing(maker.id)) {
@@ -59,8 +97,7 @@ export default function UserRemakers() {
   };
 
   const reset = () => { setTab("all"); setCraft("all"); setQuery(""); };
-
-  const totalRescued = REMAKERS.reduce((sum, m) => sum + m.itemsRescued, 0);
+  const totalRescued = remakers.reduce((sum, maker) => sum + maker.itemsRescued, 0);
 
   return (
     <div className="dn urm-page">
@@ -69,12 +106,12 @@ export default function UserRemakers() {
           <span className="dn-eyebrow">Meet the makers</span>
           <h1>Every ReMaker, one place.</h1>
           <p>
-            Verified artists who turn rescued furniture, textiles and decor into pieces worth keeping. Follow your
+            Discover active ReMakers who turn rescued materials into pieces worth keeping. Follow your
             favourites to see their latest work first.
           </p>
         </div>
         <ul className="urm-hero-stats">
-          <li><Users size={18} /><b>{REMAKERS.length}</b><span>ReMakers</span></li>
+          <li><Users size={18} /><b>{remakers.length}</b><span>ReMakers</span></li>
           <li><UserCheck size={18} /><b>{followingCount}</b><span>You follow</span></li>
           <li><Recycle size={18} /><b>{totalRescued}</b><span>Items rescued</span></li>
         </ul>
@@ -83,7 +120,7 @@ export default function UserRemakers() {
       <section className="dn-card urm-tools">
         <div className="urm-tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "all"} className={tab === "all" ? "is-active" : ""} onClick={() => setTab("all")}>
-            All ReMakers <em>{REMAKERS.length}</em>
+            All ReMakers <em>{remakers.length}</em>
           </button>
           <button type="button" role="tab" aria-selected={tab === "following"} className={tab === "following" ? "is-active" : ""} onClick={() => setTab("following")}>
             Following <em>{followingCount}</em>
@@ -104,7 +141,7 @@ export default function UserRemakers() {
           </label>
           <select className="dn-select" value={craft} aria-label="Filter by craft" onChange={(event) => setCraft(event.target.value)}>
             <option value="all">All crafts</option>
-            {crafts.map((item) => <option key={item}>{item}</option>)}
+            {crafts.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <select className="dn-select" value={sort} aria-label="Sort ReMakers" onChange={(event) => setSort(event.target.value)}>
             {Object.entries(SORTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
@@ -112,7 +149,16 @@ export default function UserRemakers() {
         </div>
       </section>
 
-      {results.length === 0 ? (
+      {loading ? (
+        <p className="urm-count" role="status">Loading ReMakers…</p>
+      ) : error ? (
+        <EmptyState
+          icon={SearchX}
+          title="Could not load ReMakers"
+          text={error}
+          action={<button type="button" className="dn-btn" onClick={loadRemakers}>Try again</button>}
+        />
+      ) : results.length === 0 ? (
         tab === "following" && !query && craft === "all" ? (
           <EmptyState
             icon={Sparkles}
@@ -124,10 +170,10 @@ export default function UserRemakers() {
         ) : (
           <EmptyState
             icon={SearchX}
-            title="No ReMakers match"
-            text="Try a different search or clear your filters."
-            actionLabel="Clear filters"
-            onAction={reset}
+            title={remakers.length ? "No ReMakers match" : "No active ReMakers yet"}
+            text={remakers.length ? "Try a different search or clear your filters." : "New active ReMakers will appear here after they register."}
+            actionLabel={remakers.length ? "Clear filters" : undefined}
+            onAction={remakers.length ? reset : undefined}
           />
         )
       ) : (

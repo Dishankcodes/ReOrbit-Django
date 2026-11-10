@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import product_views as pv
+from .public_views import PublicReMakerDetail, PublicReMakerList
 from .views import (
     CheckEmailView,
     RequestOTPView,
@@ -17,42 +18,17 @@ from .views import (
 
 urlpatterns = [
     # ReMaker Authentication
-    path(
-        "auth/check-email/",
-        CheckEmailView.as_view(),
-        name="remaker-check-email",
-    ),
-    path(
-        "auth/request-otp/",
-        RequestOTPView.as_view(),
-        name="remaker-request-otp",
-    ),
-    path(
-        "auth/register/",
-        RegisterView.as_view(),
-        name="remaker-register",
-    ),
-    path(
-        "auth/login/verify-otp/",
-        LoginVerifyOTPView.as_view(),
-        name="remaker-login-verify-otp",
-    ),
-    path(
-        "auth/google/",
-        GoogleAuthView.as_view(),
-        name="remaker-google",
-    ),
+    path("auth/check-email/", CheckEmailView.as_view(), name="remaker-check-email"),
+    path("auth/request-otp/", RequestOTPView.as_view(), name="remaker-request-otp"),
+    path("auth/register/", RegisterView.as_view(), name="remaker-register"),
+    path("auth/login/verify-otp/", LoginVerifyOTPView.as_view(), name="remaker-login-verify-otp"),
+    path("auth/google/", GoogleAuthView.as_view(), name="remaker-google"),
+    # Public directory and profiles (active accounts only; no private contact data)
+    path("public/", PublicReMakerList.as_view(), name="remaker-public-list"),
+    path("public/<str:public_id>/", PublicReMakerDetail.as_view(), name="remaker-public-detail"),
     # ReMaker Account
-    path(
-        "me/",
-        MeView.as_view(),
-        name="remaker-me",
-    ),
-    path(
-        "profile/",
-        ProfileView.as_view(),
-        name="remaker-profile",
-    ),
+    path("me/", MeView.as_view(), name="remaker-me"),
+    path("profile/", ProfileView.as_view(), name="remaker-profile"),
     path("profile/photo/", ProfilePhotoView.as_view(), name="remaker-profile-photo"),
     path("profile/cover/", ProfileCoverView.as_view(), name="remaker-profile-cover"),
     path("admin/", AdminReMakerList.as_view()),

@@ -1,24 +1,18 @@
-/* =========================================================
-   User › Following (UI only). One shared list of followed
-   ReMaker ids, saved in localStorage so the follow button on a
-   profile and on the "All ReMakers" page always agree.
-   Backend later: replace with follow / unfollow API calls.
-   ========================================================= */
+/* User-side ReMaker follows. Until the follow API is implemented, IDs are stored locally. */
 
 import { useMemo, useSyncExternalStore } from "react";
 import { saveFollowingIds } from "./userUiState";
 
 const KEY = "reorbit_user_following";
-const DEFAULT_FOLLOWING = ["priya-shah"];
 
 function load() {
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw === null) return DEFAULT_FOLLOWING;
+    if (raw === null) return [];
     const value = JSON.parse(raw);
-    return Array.isArray(value) ? value : DEFAULT_FOLLOWING;
+    return Array.isArray(value) ? value : [];
   } catch {
-    return DEFAULT_FOLLOWING;
+    return [];
   }
 }
 
@@ -51,5 +45,4 @@ export function useFollowing() {
   );
 }
 
-/* followers shown on a profile include the user's own follow */
 export const followerCount = (base, following) => base + (following ? 1 : 0);
