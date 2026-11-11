@@ -44,6 +44,12 @@ def _extra(data, values, errors, has):
             errors["dimensions"] = ["Dimensions must be 150 characters or fewer."]
         else:
             values["dimensions"] = d
+    if "pickup_preference" in data:
+        pickup = str(data.get("pickup_preference") or "")
+        if pickup not in RemakerProduct.Pickup.values:
+            errors["pickup_preference"] = ["Choose a delivery method."]
+        else:
+            values["pickup_preference"] = pickup
     if "customization_available" in data:
         values["customization_available"] = bool(data.get("customization_available"))
 
