@@ -74,7 +74,7 @@ function errorsFor(step, f) {
       e.description = "Describe the product in at least 30 characters.";
   }
   if (step === "photos" && f.images.length < MIN_PHOTOS)
-    e.images = `Add at least ${MIN_PHOTOS} photos (you have ${f.images.length}).`;
+    e.images = "Add at least one photo.";
   if (step === "pricing") {
     if (!(Number(f.price) > 0)) e.price = "Enter the selling price.";
     if (f.mrp !== "" && Number(f.mrp) < Number(f.price))
@@ -463,7 +463,7 @@ export default function AdminSellForm() {
                 <div>
                   <h3>Add photos</h3>
                   <p>
-                    {MIN_PHOTOS} to {MAX_PHOTOS} clear photos sell faster. The
+                    One photo is enough; up to {MAX_PHOTOS} clear photos sell faster. The
                     first one is the cover.
                   </p>
                 </div>

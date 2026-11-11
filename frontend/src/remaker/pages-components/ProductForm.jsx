@@ -18,16 +18,17 @@ import {
 
 import {
   MATERIAL_SUGGESTIONS,
-  ORIGIN_ITEMS,
   formatPrice,
 } from "../data/remakerProducts";
 
 import { useProductCategories, saveProduct } from "../data/productsStore";
+import { useOrders as useLiveOrders } from "../../user/data/ordersStore";
+import { formatDate } from "../data/ordersStore";
 
 import "../css/ReMakerProductForm.css";
 
 const MAX_PHOTOS = 4;
-const MIN_PHOTOS = 3;
+const MIN_PHOTOS = 1;
 const MAX_MB = 5;
 const TITLE_MAX = 80;
 const DESC_MIN = 10;
@@ -119,7 +120,7 @@ export default function ProductForm({ mode = "add", product = null }) {
   const errors = {
     photos:
       photoCount < MIN_PHOTOS
-        ? `Add at least ${MIN_PHOTOS} photos so buyers can see every angle.`
+        ? "Add at least one photo."
         : "",
     title:
       values.title.trim().length < 5
@@ -136,7 +137,7 @@ export default function ProductForm({ mode = "add", product = null }) {
   const checklist = [
     {
       key: "photos",
-      label: `Add ${MIN_PHOTOS} to ${MAX_PHOTOS} photos`,
+      label: "Add a photo (up to " + MAX_PHOTOS + ")",
       note: `${photoCount}/${MAX_PHOTOS}`,
     },
     { key: "title", label: "Name your product" },
@@ -399,6 +400,15 @@ export default function ProductForm({ mode = "add", product = null }) {
 
   const cover = photos[0] || photos.find(Boolean);
   const soldOut = Number(values.stock) === 0;
+  /* things this ReMaker really bought on ReOrbit (delivered orders) */
+  const myOrders = useLiveOrders();
+  const ORIGIN_ITEMS = useMemo(
+    () =>
+      myOrders
+        .filter((o) => o.status === "Delivered")
+        .flatMap((o) => (o.items || []).map((i) => ({ id: i.id, title: i.title, bought: formatDate(o.created_at) }))),
+    [myOrders],
+  );
   const originItem = ORIGIN_ITEMS.find(
     (item) => item.id === values.originItemId,
   );
@@ -485,7 +495,7 @@ export default function ProductForm({ mode = "add", product = null }) {
               <div>
                 <h2>Photos</h2>
                 <p>
-                  Add {MIN_PHOTOS} to {MAX_PHOTOS} clear photos. The first one
+                  Add at least one photo, up to {MAX_PHOTOS}. The first one
                   is the cover buyers see in the marketplace.
                 </p>
               </div>
@@ -828,7 +838,7 @@ export default function ProductForm({ mode = "add", product = null }) {
                         setField("originItemId", event.target.value)
                       }
                     >
-                      <option value="">Choose an item</option>
+                      <option value="">{ORIGIN_ITEMS.length ? "Choose an item" : "You have not bought anything on ReOrbit yet"}</option>
                       {ORIGIN_ITEMS.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.title} (bought {item.bought})

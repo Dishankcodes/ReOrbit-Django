@@ -9,7 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-export const MIN_PHOTOS = 3;
+export const MIN_PHOTOS = 1;
 export const MAX_PHOTOS = 4;
 const MAX_MB = 3;
 
@@ -21,7 +21,7 @@ const readFile = (file) =>
     r.readAsDataURL(file);
   });
 
-/* 3 to 4 product photos: pick or drop, set the cover, reorder, remove. */
+/* 1 to 4 product photos (one is required): pick or drop, set the cover, reorder, remove. */
 export default function PhotoUploader({ images, onChange }) {
   const input = useRef(null);
   const [over, setOver] = useState(false);
@@ -150,7 +150,7 @@ export default function PhotoUploader({ images, onChange }) {
       />
       <div className="sl-photo-meta">
         <span className={count >= MIN_PHOTOS ? "ok" : ""}>
-          {count} of {MAX_PHOTOS} photos · at least {MIN_PHOTOS} needed
+          {count} of {MAX_PHOTOS} photos · {count >= MIN_PHOTOS ? "more are optional" : "add at least 1"}
         </span>
         <div className="sl-photo-dots" aria-hidden="true">
           {Array.from({ length: MAX_PHOTOS }, (_, i) => (
