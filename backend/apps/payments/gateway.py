@@ -7,8 +7,29 @@ Signature checks use only the standard library, so they work (and are tested) of
 
 import hashlib
 import hmac
+import logging
 
 from django.conf import settings
+
+
+logger = logging.getLogger(__name__)
+
+
+def _log_gateway_failure(operation, exc):
+    """Log safe provider diagnostics without exposing exception text or credentials."""
+    status_code = getattr(exc, "status_code", None) or getattr(exc, "http_status_code", None)
+    provider_code = getattr(exc, "code", None) or getattr(exc, "error_code", None)
+    if not isinstance(status_code, (int, str)):
+        status_code = "unknown"
+    if not isinstance(provider_code, (int, str)):
+        provider_code = "unknown"
+    logger.error(
+        "Razorpay %s failed: exception_type=%s http_status=%s provider_code=%s",
+        operation,
+        type(exc).__name__,
+        str(status_code)[:32],
+        str(provider_code)[:64],
+    )
 
 
 class GatewayError(Exception):
@@ -43,6 +64,7 @@ def create_order(amount_rupees, receipt, notes=None):
     except GatewayError:
         raise
     except Exception as exc:  # network, bad keys, SDK errors
+        _log_gateway_failure("order creation", exc)
         raise GatewayError("Could not reach the payment provider. Please try again.") from exc
 
 
@@ -53,6 +75,7 @@ def fetch_payment(razorpay_payment_id):
     except GatewayError:
         raise
     except Exception as exc:
+        _log_gateway_failure("payment fetch", exc)
         raise GatewayError("Could not check the payment with the provider. Please try again.") from exc
 
 
@@ -63,6 +86,7 @@ def capture_payment(razorpay_payment_id, amount_rupees):
     except GatewayError:
         raise
     except Exception as exc:
+        _log_gateway_failure("payment capture", exc)
         raise GatewayError("The payment could not be captured.") from exc
 
 
@@ -98,6 +122,7 @@ def refund(razorpay_payment_id, amount_rupees, receipt=""):
     except GatewayError:
         raise
     except Exception as exc:
+        _log_gateway_failure("refund", exc)
         raise GatewayError("Refund could not be sent.") from exc
 
 
@@ -108,6 +133,7 @@ def find_refund(razorpay_payment_id, receipt):
     except GatewayError:
         raise
     except Exception as exc:
+        _log_gateway_failure("refund lookup", exc)
         raise GatewayError("Could not check earlier refunds.") from exc
     for r in rows:
         if r.get("status") == "failed":
