@@ -67,6 +67,21 @@ class RemakerProductTests(ProductBase):
         self.assertEqual(r.data["data"]["product"]["status"], "Listed")
         self.assertIsNotNone(r.data["data"]["product"]["cover"])
 
+    def test_pickup_preference_round_trips(self):
+        r = self.draft(pickup_preference="Platform_Pickup")
+        self.assertEqual(r.status_code, 201, r.data)
+        product = r.data["data"]["product"]
+        self.assertEqual(product["pickup_preference"], "Platform_Pickup")
+
+        pid = product["id"]
+        r = self.patch(f"{self.B}{pid}/", {"pickup_preference": "Seller_Handover"}, as_=self.maker)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["product"]["pickup_preference"], "Seller_Handover")
+
+        r = self.patch(f"{self.B}{pid}/", {"pickup_preference": "Unknown"}, as_=self.maker)
+        self.assertEqual(r.status_code, 400, r.data)
+        self.assertIn("pickup_preference", r.data["errors"])
+
     def test_validation(self):
         self.assertEqual(self.draft(title="a").status_code, 400)
         self.assertEqual(self.draft(category=self.item_only.public_id).status_code, 400)  # items-only category

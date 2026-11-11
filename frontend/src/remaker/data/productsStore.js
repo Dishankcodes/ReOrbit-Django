@@ -4,6 +4,11 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { fetchProductCategories, listAll, remakerProductApi as api, syncPhotos } from "../../api/products";
 
+export const PICKUP_OPTIONS = [
+  { id: "self", label: "I\u0027ll hand it over to the courier", help: "You pack it and the buyer\u0027s courier collects from your door. No extra fee." },
+  { id: "platform", label: "Managed by ReOrbit", help: "We collect, check and deliver it for you. It\u0027s free for you, and the buyer pays for delivery." },
+];
+
 function fromApi(p) {
   return {
     id: p.id,
@@ -11,6 +16,7 @@ function fromApi(p) {
     category: p.category?.name || "",
     categoryId: p.category?.id || "",
     description: p.description || "",
+    pickup: p.pickup_preference === "Platform_Pickup" ? "platform" : "self",
     price: Number(p.price) || 0,
     stock: p.stock,
     status: p.status,
@@ -79,6 +85,7 @@ const bodyOf = (v) => ({
   title: v.title,
   category: state.categories.find((c) => c.name === v.category)?.id,
   description: v.description,
+  pickup_preference: v.pickup === "platform" ? "Platform_Pickup" : "Seller_Handover",
   price: v.price === "" ? null : Number(v.price),
   stock: Number(v.stock) || 0,
   materials: (v.materials || []).join(", "),

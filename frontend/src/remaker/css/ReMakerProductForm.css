@@ -1199,3 +1199,76 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
+/* DELIVERY METHOD */
+
+.rpf-pickups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rpf-pickups button {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--rp-border);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--rp-text);
+  text-align: left;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.rpf-pickups button:hover {
+  border-color: var(--rp-sage);
+  background: #fcfdfb;
+}
+
+.rpf-pickups button.selected {
+  border-color: var(--rp-maroon);
+  background: #fbf7f5;
+  box-shadow: 0 0 0 2px rgba(39, 8, 9, 0.07);
+}
+
+.rpf-pickup-radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1.5px solid #aaa19d;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.rpf-pickups button.selected .rpf-pickup-radio {
+  border: 5px solid var(--rp-maroon);
+}
+
+.rpf-pickup-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rpf-pickup-copy strong {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.rpf-pickup-copy small {
+  color: var(--rp-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.rpf-pickups button:focus-visible {
+  outline: 2px solid var(--rp-maroon);
+  outline-offset: 3px;
+}

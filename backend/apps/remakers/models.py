@@ -115,7 +115,14 @@ class ReMaker_Profile(models.Model):
 class RemakerProduct(SellableBase):
     """A finished product a ReMaker sells (design: ReMaker_Products)."""
 
+    class Pickup(models.TextChoices):
+        SELLER_HANDOVER = "Seller_Handover", "Seller hands over to courier"
+        PLATFORM_PICKUP = "Platform_Pickup", "Managed by ReOrbit"
+
     public_id_prefix = "RPR"
+    pickup_preference = models.CharField(
+        max_length=20, choices=Pickup.choices, default=Pickup.SELLER_HANDOVER
+    )
 
     remaker = models.ForeignKey(
         ReMakers, on_delete=models.PROTECT, related_name="products"
