@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Images,
   ShoppingBag,
+  PlusCircle,
   Package,
   IndianRupee,
   Users,
@@ -68,6 +69,11 @@ const studioMenu = [
     label: "Products",
     path: "/remaker-products",
     icon: ShoppingBag,
+  },
+  {
+    label: "Add Product",
+    path: "/remaker-products/new",
+    icon: PlusCircle,
   },
 
   {
