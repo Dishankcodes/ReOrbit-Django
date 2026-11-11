@@ -51,3 +51,9 @@
   .usl-fab { display: inline-flex !important; }
 }
 @media (max-width: 560px) { .usl-filters { grid-template-columns: 1fr; } }
+
+/* Keep the empty-listings primary action readable against its green background. */
+.sl .dn-empty > .dn-btn {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
