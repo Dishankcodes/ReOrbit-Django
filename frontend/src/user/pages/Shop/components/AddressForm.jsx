@@ -2,18 +2,22 @@ import React, { useState } from "react";
 import CitySelect from "../../../../shared/components/CitySelect";
 import "../../../../shared/components/CitySelect.css";
 import { pincodeProblem } from "../../../../api/profile";
+import { getAccount } from "../../../../api/session";
 
-const EMPTY = { label: "Home", name: "", phone: "", line: "", city: "", state: "Gujarat", pincode: "" };
+const account = getAccount() || {};
+const profileName = account.full_name || account.fullName || account.name || [account.first_name, account.last_name].filter(Boolean).join(" ");
+const digitsOnly = (value) => String(value || "").replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "").slice(0, 10);
+const EMPTY = { label: "Home", name: profileName || "", phone: "", line: "", city: "", state: "Gujarat", pincode: "" };
 
 /* Add a new delivery address (inline, validated). */
 export default function AddressForm({ onSave, onCancel, initial = null, saving = false, serverErrors = {} }) {
-  const [f, setF] = useState(initial ? { ...EMPTY, ...initial } : EMPTY);
+  const [f, setF] = useState(() => initial ? { ...EMPTY, ...initial, phone: digitsOnly(initial.phone) } : EMPTY);
   const [touched, setTouched] = useState(false);
   const set = (key, value) => setF((x) => ({ ...x, [key]: value }));
 
   const err = {
     name: f.name.trim().length < 3,
-    phone: !/^\+?[\d\s-]{10,14}$/.test(f.phone.trim()),
+    phone: !/^\d{10}$/.test(digitsOnly(f.phone)),
     line: f.line.trim().length < 6,
     city: !f.city,
     pincode: !!pincodeProblem(f.pincode.trim()),
@@ -25,7 +29,7 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
     event.preventDefault();
     setTouched(true);
     if (bad || saving) return;
-    onSave({ ...f, state: "Gujarat", name: f.name.trim(), line: f.line.trim(), city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(), phone: f.phone.trim() });
+    onSave({ ...f, state: "Gujarat", name: f.name.trim(), line: f.line.trim(), city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(), phone: `+91${digitsOnly(f.phone)}` });
   };
 
   const field = (key, label, msg, props = {}, wide = false) => (
@@ -49,7 +53,15 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
       <h4>{initial ? "Edit address" : "New delivery address"}</h4>
       <div className="ushp-form-grid">
         {field("name", "Full name", "Enter the receiver's name.")}
-        {field("phone", "Phone", "Enter a valid phone number.", { inputMode: "tel", placeholder: "+91 98765 43210" })}
+        <label className="dn-field">
+          <span className="dn-label">Phone</span>
+          <div className="dn-phone-input">
+            <span aria-label="Country code">+91</span>
+            <input className={`dn-input ${touched && err.phone ? "is-error" : ""}`} value={f.phone} onChange={(event) => set("phone", digitsOnly(event.target.value))} inputMode="numeric" type="tel" maxLength={10} placeholder="98765 43210" aria-label="10-digit phone number" />
+          </div>
+          {touched && err.phone && <span className="dn-error">Enter a 10-digit phone number.</span>}
+          {!(touched && err.phone) && serverMsg("phone") && <span className="dn-error">{serverMsg("phone")}</span>}
+        </label>
         {field("line", "Address", "Add the flat, building and street.", { placeholder: "Flat, building, street, area" }, true)}
         <label className="dn-field">
           <span className="dn-label">City</span>

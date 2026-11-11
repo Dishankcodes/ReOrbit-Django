@@ -19,7 +19,6 @@ export default function UserAddresses() {
     <div className="dn st">
       <header className="ust-head">
         <span className="dn-eyebrow">Account</span>
-        <h1>My addresses</h1>
         <p className="dn-muted">
           Save the places you receive orders and hand over donations. Your default address is filled in for you.
         </p>
