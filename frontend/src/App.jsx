@@ -53,6 +53,7 @@ const UserFollowing = page("user", () => import("./user/pages/Following/UserFoll
 const UserRemakers = page("user", () => import("./user/pages/Remakers/UserRemakers"));
 const UserProfile = page("user", () => import("./user/pages/UserProfile/UserProfile"));
 const UserSettings = page("user", () => import("./user/pages/Settings/UserSettings"));
+const UserAddresses = page("user", () => import("./user/pages/Addresses/UserAddresses"));
 const UserBadges = page("user", () => import("./user/pages/Rewards/UserBadges"));
 const UserBadgeDetail = page("user", () => import("./user/pages/Rewards/UserBadgeDetail"));
 const UserOrbitPoints = page("user", () => import("./user/pages/Rewards/UserOrbitPoints"));
@@ -100,7 +101,6 @@ const ReMakerPortfolioView = page("remaker", () => import("./remaker/pages/Portf
 const ReMakerAddProduct = page("remaker", () => import("./remaker/pages/Products/ReMakerAddProduct"));
 const ReMakerEditProduct = page("remaker", () => import("./remaker/pages/Products/ReMakerEditProduct"));
 const ReMakerProducts = page("remaker", () => import("./remaker/pages/Products/ReMakerProducts"));
-const ReMakerProductsMarketplace = page("remaker", () => import("./remaker/pages/Products/ReMakerMarketplace"));
 const ReMakerHelp = page("remaker", () => import("./remaker/pages/Help/ReMakerHelp"));
 const ReMakerNewTicket = page("remaker", () => import("./remaker/pages/Help/ReMakerNewTicket"));
 const ReMakerTicket = page("remaker", () => import("./remaker/pages/Help/ReMakerTicket"));
@@ -268,6 +268,7 @@ export default function App() {
 
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/user-settings" element={<UserSettings />} />
+        <Route path="/user-addresses" element={<UserAddresses />} />
         <Route path="/user-orbit-points" element={<UserOrbitPoints />} />
         <Route
           path="/user-orbit-points/history"
@@ -360,6 +361,7 @@ export default function App() {
           element={<ReMakerNotifications />}
         />
         <Route path="/remaker-settings" element={<ReMakerSettings />} />
+        <Route path="/remaker-addresses" element={<UserAddresses />} />
 
         <Route path="/remaker-portfolio" element={<ReMakerPortfolio />} />
         <Route
@@ -379,7 +381,7 @@ export default function App() {
         <Route path="/remaker-products/new" element={<ReMakerAddProduct />} />
         <Route
           path="/remaker-products/marketplace"
-          element={<ReMakerProductsMarketplace />}
+          element={<Navigate to="/remaker-marketplace" replace />}
         />
         <Route
           path="/remaker-products/:id/edit"
@@ -451,6 +453,7 @@ export default function App() {
         <Route path="/admin-rewards" element={<AdminRewards />} />
         <Route path="/admin-reports" element={<AdminReports />} />
         <Route path="/admin-settings" element={<AdminSettings />} />
+        <Route path="/admin-addresses" element={<UserAddresses />} />
         <Route path="/admin-team" element={<AdminTeam />} />
         <Route path="/admin-earnings" element={<AdminEarnings />} />
         <Route path="/admin-notifications" element={<AdminNotifications />} />

@@ -58,7 +58,7 @@ export default function StepReview({ form, address, onEdit, errors, set }) {
                 <MapPin size={14} /> Address
               </dt>
               <dd>
-                {address.line}, {address.city} – {address.pincode}
+                {address?.line}, {address?.city} – {address?.pincode}
               </dd>
             </div>
             <div>

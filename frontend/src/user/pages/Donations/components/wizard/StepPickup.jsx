@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   BadgeCheck,
   CheckCircle2,
@@ -6,11 +7,30 @@ import {
   Plus,
   TriangleAlert,
 } from "lucide-react";
-import { SAVED_ADDRESSES, checkPincode } from "../../../../data/donationsStore";
+import { checkPincode } from "../../../../data/donationsStore";
+import { createAddress } from "../../../../data/checkoutStore";
+import AddressForm from "../../../Shop/components/AddressForm";
 import DateSlotPicker from "../DateSlotPicker";
 
-export default function StepPickup({ form, set, errors }) {
-  const pin = checkPincode(form.pincode);
+export default function StepPickup({ form, set, errors, addresses, addressId, loading, error }) {
+  const [adding, setAdding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  /* a new address goes into the address book and is picked straight away */
+  const saveNew = async (values) => {
+    setSaving(true);
+    setFieldErrors({});
+    try {
+      const id = await createAddress(values);
+      set("addressId", id);
+      setAdding(false);
+    } catch (e) {
+      setFieldErrors(e.errors || {});
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="dn-form">
@@ -28,9 +48,21 @@ export default function StepPickup({ form, set, errors }) {
         <span className="dn-label">
           Pickup address <em>*</em>
         </span>
+
+        {loading && addresses.length === 0 && (
+          <p className="dn-hint">Loading your saved addresses…</p>
+        )}
+        {error && addresses.length === 0 && (
+          <p className="dn-error" role="alert">{error}</p>
+        )}
+        {!loading && !error && addresses.length === 0 && !adding && (
+          <p className="dn-hint">You have no saved address yet. Add one to continue.</p>
+        )}
+
         <div className="dn-addrs" role="radiogroup" aria-label="Pickup address">
-          {SAVED_ADDRESSES.map((address) => {
-            const active = !form.useNewAddress && form.addressId === address.id;
+          {addresses.map((address) => {
+            const active = addressId === address.id;
+            const covered = checkPincode(address.pincode).serviceable;
             return (
               <button
                 type="button"
@@ -38,91 +70,60 @@ export default function StepPickup({ form, set, errors }) {
                 role="radio"
                 aria-checked={active}
                 className={`dn-addr ${active ? "is-active" : ""}`}
-                onClick={() => {
-                  set("useNewAddress", false);
-                  set("addressId", address.id);
-                }}
+                onClick={() => set("addressId", address.id)}
               >
                 <span className="dn-addr-icon">
                   <MapPin size={17} />
                 </span>
                 <div>
-                  <strong>{address.label}</strong>
+                  <strong>
+                    {address.label}
+                    {address.isDefault ? " · Default" : ""}
+                  </strong>
                   <p>{address.line}</p>
                   <small>
                     {address.city}, {address.state} – {address.pincode}
                   </small>
+                  {!covered && (
+                    <small className="dn-error">
+                      <TriangleAlert size={12} /> We don't pick up here yet.
+                    </small>
+                  )}
                 </div>
                 {active && <CheckCircle2 size={19} className="dn-addr-check" />}
               </button>
             );
           })}
 
-          <button
-            type="button"
-            role="radio"
-            aria-checked={form.useNewAddress}
-            className={`dn-addr dn-addr--new ${form.useNewAddress ? "is-active" : ""}`}
-            onClick={() => set("useNewAddress", true)}
-          >
-            <span className="dn-addr-icon">
-              <Plus size={17} />
-            </span>
-            <div>
-              <strong>Use a different address</strong>
-              <p>Pickup from another place</p>
-            </div>
-            {form.useNewAddress && (
-              <CheckCircle2 size={19} className="dn-addr-check" />
-            )}
-          </button>
+          {!adding && (
+            <button
+              type="button"
+              className="dn-addr dn-addr--new"
+              onClick={() => setAdding(true)}
+            >
+              <span className="dn-addr-icon">
+                <Plus size={17} />
+              </span>
+              <div>
+                <strong>Add a new address</strong>
+                <p>It is saved to your addresses for next time</p>
+              </div>
+            </button>
+          )}
         </div>
 
-        {form.useNewAddress && (
-          <div className="dn-newaddr">
-            <label className="dn-field">
-              <span className="dn-label">
-                Address <em>*</em>
-              </span>
-              <input
-                className={`dn-input ${errors.line ? "is-error" : ""}`}
-                value={form.line}
-                placeholder="House / flat no., building, street, area"
-                onChange={(event) => set("line", event.target.value)}
-              />
-              {errors.line && <span className="dn-error">{errors.line}</span>}
-            </label>
-            <label className="dn-field">
-              <span className="dn-label">
-                Pincode <em>*</em>
-              </span>
-              <input
-                className={`dn-input ${errors.pincode ? "is-error" : ""}`}
-                value={form.pincode}
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="6-digit pincode"
-                onChange={(event) =>
-                  set("pincode", event.target.value.replace(/\D/g, ""))
-                }
-              />
-              {pin.valid && pin.serviceable && (
-                <span className="dn-ok">
-                  <CheckCircle2 size={14} /> We pick up in {pin.city}
-                </span>
-              )}
-              {pin.valid && !pin.serviceable && (
-                <span className="dn-error">
-                  <TriangleAlert size={14} /> Sorry, we don't pick up from this
-                  pincode yet.
-                </span>
-              )}
-              {errors.pincode && !pin.valid && (
-                <span className="dn-error">{errors.pincode}</span>
-              )}
-            </label>
-          </div>
+        {adding && (
+          <AddressForm
+            saving={saving}
+            serverErrors={fieldErrors}
+            onCancel={() => setAdding(false)}
+            onSave={saveNew}
+          />
         )}
+
+        <span className="dn-hint">
+          <Link to="/user-addresses">Manage your addresses</Link>
+        </span>
       </div>
 
       {/* contact */}

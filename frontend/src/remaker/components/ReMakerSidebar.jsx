@@ -11,6 +11,7 @@ import {
   Star,
   BarChart3,
   Bell,
+  MapPin,
   Settings,
   CircleHelp,
   LogOut,
@@ -140,6 +141,11 @@ const toolsMenu = [
     label: "Notifications",
     path: "/remaker-notifications",
     icon: Bell,
+  },
+  {
+    label: "Addresses",
+    path: "/remaker-addresses",
+    icon: MapPin,
   },
   {
     label: "Settings",

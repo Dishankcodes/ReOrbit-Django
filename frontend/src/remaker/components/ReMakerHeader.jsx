@@ -115,6 +115,11 @@ const pageInformation = {
     subtitle: "Stay updated with your ReMaker activity.",
   },
 
+  "/remaker-addresses": {
+    title: "Addresses",
+    subtitle: "Where your orders and donation pickups go.",
+  },
+
   "/remaker-settings": {
     title: "Settings",
     subtitle: "Manage your studio and account preferences.",

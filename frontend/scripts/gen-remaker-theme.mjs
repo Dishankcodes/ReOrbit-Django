@@ -8,7 +8,7 @@ import path from "node:path";
 import postcss from "postcss";
 
 const SRC = "src/user/css";
-const DIRS = ["shared", "marketplace-css", "shop", "orders"];
+const DIRS = ["shared", "marketplace-css", "shop", "orders", "settings"];
 const OUT = "src/remaker/css/remaker-buying-theme.css";
 const SCOPE = ".remaker-page-content";
 

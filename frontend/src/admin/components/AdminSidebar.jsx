@@ -14,6 +14,7 @@ import {
   Star,
   Bell,
   BarChart3,
+  MapPin,
   Settings,
   LogOut,
   ShieldCheck,
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
+import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
 import { useTickets as useUserTickets } from "../../user/data/supportStore";
 import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
@@ -106,6 +108,7 @@ const managementMenu = [
 ];
 
 const supportMenu = [
+  { label: "Addresses", path: "/admin-addresses", icon: MapPin },
   { label: "Settings", path: "/admin-settings", icon: Settings },
   { label: "Help & Support", path: "/admin-help", icon: CircleHelp },
 ];
@@ -162,8 +165,10 @@ export default function AdminSidebar({
   const openTickets = [...userTickets, ...remakerTickets].filter(
     (t) => t.status === "Open",
   ).length;
-  // Use the authenticated account supplied by GET /api/admins/me/.
-  const adminName = access.me?.name || getAdminName(admin);
+  const { profile } = useSettings();
+  const adminName = access.previewing
+    ? access.me.name
+    : profile?.name || getAdminName(admin);
   const roleLabel = access.isSuper ? "Super admin" : access.me.roleLabel;
   const initials = getInitials(adminName);
   const visible = (list) =>

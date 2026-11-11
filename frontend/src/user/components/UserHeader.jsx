@@ -76,6 +76,11 @@ const pageInformation = {
     subtitle: "Milestones you've earned on ReOrbit.",
   },
 
+  "/user-addresses": {
+    title: "Addresses",
+    subtitle: "Where your orders and donation pickups go.",
+  },
+
   "/user-settings": {
     title: "Settings",
     subtitle: "Manage your account and preferences.",

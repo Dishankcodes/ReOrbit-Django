@@ -13,13 +13,12 @@ import {
 
 import {
   useDonationCategories,
-  DONOR,
-  SAVED_ADDRESSES,
   checkPincode,
   createDonation,
   estimateWeight,
   useDonation,
 } from "../../data/donationsStore";
+import { useServerAddresses } from "../../data/checkoutStore";
 import Crumbs from "../../components/ui/Crumbs";
 import StepItem from "./components/wizard/StepItem";
 import StepPickup from "./components/wizard/StepPickup";
@@ -42,12 +41,9 @@ const emptyForm = {
   condition: "",
   quantity: 1,
   images: [],
-  addressId: SAVED_ADDRESSES[0].id,
-  useNewAddress: false,
-  line: "",
-  pincode: "",
-  contactName: DONOR.name,
-  phone: DONOR.phone,
+  addressId: "",
+  contactName: "",
+  phone: "",
   date: "",
   slot: "",
   note: "",
@@ -80,7 +76,10 @@ export default function UserDonationNew() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  const contactEdited = useRef(false);
+
   const set = (key, value) => {
+    if (key === "contactName" || key === "phone") contactEdited.current = true;
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) =>
       current[key] ? { ...current, [key]: undefined } : current,
@@ -91,22 +90,20 @@ export default function UserDonationNew() {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
 
-  const address = useMemo(() => {
-    if (form.useNewAddress) {
-      const pin = checkPincode(form.pincode);
-      return {
-        label: "New address",
-        line: form.line.trim(),
-        city: pin.city || "—",
-        state: "Gujarat",
-        pincode: form.pincode,
-      };
-    }
-    return (
-      SAVED_ADDRESSES.find((item) => item.id === form.addressId) ||
-      SAVED_ADDRESSES[0]
-    );
-  }, [form.useNewAddress, form.line, form.pincode, form.addressId]);
+  /* the saved address book: the chosen one, else the default, fills the pickup by itself */
+  const book = useServerAddresses();
+  const address = useMemo(
+    () =>
+      book.addresses.find((item) => item.id === (form.addressId || book.defaultId)) ||
+      null,
+    [book.addresses, book.defaultId, form.addressId],
+  );
+
+  /* the contact is the person at that address, until the donor types their own */
+  useEffect(() => {
+    if (!address || contactEdited.current) return;
+    setForm((current) => ({ ...current, contactName: address.name || "", phone: address.phone || "" }));
+  }, [address]);
 
   /* ---------- validation ---------- */
 
@@ -125,18 +122,9 @@ export default function UserDonationNew() {
     }
 
     if (index === 1) {
-      if (form.useNewAddress) {
-        if (form.line.trim().length < 6)
-          next.line = "Enter the full pickup address.";
-        const pin = checkPincode(form.pincode);
-        if (!pin.valid) next.pincode = "Enter a valid 6-digit pincode.";
-        else if (!pin.serviceable)
-          next.pincode = "We don't pick up from this pincode yet.";
-      } else {
-        const pin = checkPincode(address.pincode);
-        if (!pin.serviceable)
-          next.addressId = "We don't pick up from this address yet.";
-      }
+      if (!address) next.addressId = "Choose or add a pickup address.";
+      else if (!checkPincode(address.pincode).serviceable)
+        next.addressId = "We don't pick up from this address yet.";
       if (form.contactName.trim().length < 2)
         next.contactName = "Enter a contact name.";
       if (form.phone.replace(/\D/g, "").slice(-10).length < 10)
@@ -267,7 +255,15 @@ export default function UserDonationNew() {
 
           {step === 0 && <StepItem form={form} set={set} errors={errors} />}
           {step === 1 && (
-            <StepPickup form={form} set={set} errors={{ ...errors }} />
+            <StepPickup
+              form={form}
+              set={set}
+              errors={{ ...errors }}
+              addresses={book.addresses}
+              addressId={address?.id || ""}
+              loading={book.loading}
+              error={book.error}
+            />
           )}
           {step === 2 && (
             <StepReview

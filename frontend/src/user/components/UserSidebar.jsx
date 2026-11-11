@@ -13,6 +13,7 @@ import {
   Users,
   Star,
   Trophy,
+  MapPin,
   Settings,
   CircleHelp,
   LogOut,
@@ -141,6 +142,11 @@ const supportMenu = [
     label: "My Profile",
     path: "/user-profile",
     icon: UserRound,
+  },
+  {
+    label: "Addresses",
+    path: "/user-addresses",
+    icon: MapPin,
   },
   {
     label: "Settings",
