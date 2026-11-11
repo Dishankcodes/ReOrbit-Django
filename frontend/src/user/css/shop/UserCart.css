@@ -33,3 +33,9 @@
   .ushp-line-img { width: 96px; height: 96px; }
   .ushp-line-price { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; text-align: left; }
 }
+
+/* Keep the empty-cart primary action readable against its green background. */
+.sp .dn-empty > .dn-btn {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}

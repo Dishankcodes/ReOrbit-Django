@@ -340,3 +340,9 @@
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+
+/* Keep the empty-orders primary action readable against its green background. */
+.ob-history .dn-empty > .dn-btn {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
