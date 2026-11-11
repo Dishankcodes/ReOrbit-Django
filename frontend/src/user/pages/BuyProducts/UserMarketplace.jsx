@@ -42,7 +42,6 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
   const openSeller = (e) => {
     e.stopPropagation();
-    if (item.live) return; // seller pages for live sellers come with the profiles module
     navigate(isMaker ? `/user-marketplace/remaker/${item.sellerId}` : `/user-marketplace/seller/${item.sellerId}`);
   };
 
