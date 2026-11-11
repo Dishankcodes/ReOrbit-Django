@@ -10,6 +10,7 @@ import AnnouncementSync from "../../shared/components/AnnouncementSync";
 import { syncAnnouncements } from "../data/notificationsStore";
 
 import "./ReMakerLayout.css";
+import "../css/remaker-buying-theme.css";
 
 export default function ReMakerLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
