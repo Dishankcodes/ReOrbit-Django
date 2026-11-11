@@ -21,7 +21,7 @@ import {
   formatPrice,
 } from "../data/remakerProducts";
 
-import { useProductCategories, saveProduct } from "../data/productsStore";
+import { useProductCategories, saveProduct, PICKUP_OPTIONS } from "../data/productsStore";
 import { useOrders as useLiveOrders } from "../../user/data/ordersStore";
 import { formatDate } from "../data/ordersStore";
 
@@ -49,6 +49,7 @@ function buildInitial(product) {
     title: product?.title || "",
     category: product?.category || "",
     description: product?.description || "",
+    pickup: product?.pickup || "self",
     price: product?.price ? String(product.price) : "",
     stock: product ? product.stock : 1,
     materials: product?.materials || [],
@@ -787,6 +788,35 @@ export default function ProductForm({ mode = "add", product = null }) {
                     : "Units you can ship right now."}
                 </span>
               </div>
+            </div>
+          </section>
+
+          {/* DELIVERY METHOD */}
+          <section className="rpf-card">
+            <header className="rpf-card-head">
+              <div>
+                <h2>How will it reach the buyer? <em>*</em></h2>
+                <p>Choose who will collect and manage delivery after a buyer places an order.</p>
+              </div>
+            </header>
+
+            <div className="rpf-pickups" role="radiogroup" aria-label="Delivery method">
+              {PICKUP_OPTIONS.map((option) => (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={values.pickup === option.id}
+                  className={values.pickup === option.id ? "selected" : ""}
+                  key={option.id}
+                  onClick={() => setField("pickup", option.id)}
+                >
+                  <span className="rpf-pickup-radio" aria-hidden="true" />
+                  <span className="rpf-pickup-copy">
+                    <strong>{option.label}</strong>
+                    <small>{option.help}</small>
+                  </span>
+                </button>
+              ))}
             </div>
           </section>
 
