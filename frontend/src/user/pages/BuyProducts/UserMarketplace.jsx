@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { getAccount } from "../../../api/session";
 import { useNavigate } from "../../../shared/portalRouter";
 import { Check, Heart, Leaf, MapPin, PackageSearch, Search, ShoppingBag, ShoppingCart, SlidersHorizontal, Sparkles, Star, BadgeCheck, Boxes, X } from "lucide-react";
 
@@ -103,11 +104,15 @@ export default function UserMarketplace() {
   const [savedOnly, setSavedOnly] = useState(false);
   const [toast, setToast] = useState(null);
 
-  /* your own listings are not shown to you as things to buy */
+  /* Hide listings owned by the account signed in to this portal. */
   const live = useLiveMarketplace();
-  const loading = !live.ready; /* real: live listings are still arriving */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const base = useMemo(() => ITEMS.filter((i) => i.sellerId !== "user-aarav-patel"), [live.version]);
+  const loading = !live.ready;
+  const account = getAccount() || {};
+  const ownSellerId = account.public_id || account.id || null;
+  const base = useMemo(
+    () => ITEMS.filter((item) => !ownSellerId || String(item.sellerId) !== String(ownSellerId)),
+    [live.version, ownSellerId],
+  );
   const counts = useMemo(() => ({
     all: base.length,
     user: base.filter((i) => i.sellerType === "user").length,
