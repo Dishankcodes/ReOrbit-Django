@@ -809,7 +809,7 @@ export default function ProductForm({ mode = "add", product = null }) {
             >
               {[
                 { value: "item", label: "A ReOrbit item" },
-                { value: "own", label: "My own materials" },
+                { value: "own", label: "Other" },
               ].map((option) => (
                 <button
                   type="button"

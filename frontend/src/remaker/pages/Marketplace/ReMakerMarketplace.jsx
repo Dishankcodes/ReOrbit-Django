@@ -349,7 +349,14 @@ export default function ReMakerMarketplace() {
                   </h3>
 
                   <p className="rmk-seller">
-                    {listing.seller}
+                    <Link
+                      to={listing.source === "remaker"
+                        ? `/remaker-marketplace/remaker/${encodeURIComponent(String(listing.sellerId ?? ""))}`
+                        : `/remaker-marketplace/seller/${encodeURIComponent(String(listing.sellerId ?? ""))}`}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {listing.seller}
+                    </Link>
                     {listing.source === "remaker" && (
                       <BadgeCheck size={14} aria-label="Verified ReMaker" />
                     )}

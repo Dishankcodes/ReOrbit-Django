@@ -436,7 +436,7 @@ export function setLiveItems(cards) {
       sellerRating: 0,
       condition: c.condition || (c.seller.type === "user" ? "Good" : "New"),
       seller: c.seller.name,
-      sellerId: "",
+      sellerId: c.seller.id || "",
       sellerType: c.seller.type,
       sellerImage: "",
       quantity: c.stock,
