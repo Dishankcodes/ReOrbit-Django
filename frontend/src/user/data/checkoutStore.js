@@ -60,9 +60,10 @@ export const clearAddresses = () => setAddr({ list: [], loaded: false, loading: 
 
 /* ------------------------------ quote ------------------------------ */
 /* Prices come from the server. Asked again only when the basket changes. */
-export function useServerQuote(lines) {
+export function useServerQuote(lines, voucherCode = "") {
   const real = lines.filter((l) => isLiveId(l.id));
   const key = real.map((l) => `${l.id}x${l.qty}`).join(",");
+  const code = voucherCode || "";
   const [state, setState] = useState({ quote: null, loading: real.length > 0, error: "" });
   const seq = useRef(0);
 
@@ -72,12 +73,12 @@ export function useServerQuote(lines) {
     setState((s) => ({ ...s, loading: true, error: "" }));
     const t = setTimeout(() => {
       checkoutApi
-        .quote(key.split(",").map((p) => { const [id, qty] = p.split("x"); return { id, qty: Number(qty) }; }))
+        .quote(key.split(",").map((p) => { const [id, qty] = p.split("x"); return { id, qty: Number(qty) }; }), code)
         .then((quote) => mine === seq.current && setState({ quote, loading: false, error: "" }))
         .catch((e) => mine === seq.current && setState({ quote: null, loading: false, error: e.message || "Could not price your cart." }));
     }, 120);
     return () => clearTimeout(t);
-  }, [key]);
+  }, [key, code]);
 
   useEffect(() => run(), [run]);
   return { ...state, retry: run };

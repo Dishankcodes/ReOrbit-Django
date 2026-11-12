@@ -1,8 +1,18 @@
 import React from "react";
 import { SearchX } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
+import { PageLoader } from "../../../../shared/components/Spinner";
+import { useDonationsStatus } from "../../../data/donationsStore";
 
 export default function DonationNotFound() {
+  const { loading, error } = useDonationsStatus();
+  if (loading) return <PageLoader />;
+  if (error)
+    return (
+      <div className="dn">
+        <EmptyState icon={SearchX} title="Could not load your donations" text={error} actionLabel="Go to donation history" to="/user-donations/history" />
+      </div>
+    );
   return (
     <div className="dn">
       <EmptyState

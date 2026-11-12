@@ -14,7 +14,8 @@ export const addressApi = {
 };
 
 export const checkoutApi = {
-  quote: (items) => post("/orders/quote/", { items }).then((r) => r.data),
+  quote: (items, voucherCode) =>
+    post("/orders/quote/", voucherCode ? { items, voucher_code: voucherCode } : { items }).then((r) => r.data),
   /* `requestId` makes a double click or a retry safe: the server returns the same checkout. */
   place: (body, requestId) =>
     apiRequest("/orders/checkout/", {

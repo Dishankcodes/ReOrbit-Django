@@ -108,10 +108,15 @@ export default function AdminPickupDetails() {
 
   const actions = getPickupActions(p);
   const heroActions = actions.slice(0, 3);
-  const confirmAction = (payload) => {
-    runPickupAction(p, pending.key, payload);
-    toast(`Pickup ${p.id} ${pending.toast}.`);
+  const confirmAction = async (payload) => {
+    const { key, toast: done } = pending;
     setPending(null);
+    try {
+      await runPickupAction(p, key, payload);
+      toast(`Pickup ${p.id} ${done}.`);
+    } catch (e) {
+      toast(e.message || "Could not update the pickup.");
+    }
   };
   const fullAddress = `${p.address}, ${p.city}, ${p.state} ${p.pincode}`;
   const isDonation = p.type === "Donation";

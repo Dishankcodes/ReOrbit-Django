@@ -403,8 +403,8 @@ export default function UserDonations() {
           <Star size={26} />
           <h3>Earn {REWARD_RULES.base} Orbit Points</h3>
           <p>
-            Plus {REWARD_RULES.perItem} for every item, credited when your
-            donation is completed and your certificate is issued.
+            Plus {REWARD_RULES.perItem} for every item, and a marketplace
+            voucher, once your item reaches our warehouse.
           </p>
           <Link to="/user-orbit-points" className="dn-link">
             View Orbit Points <ChevronRight size={15} />

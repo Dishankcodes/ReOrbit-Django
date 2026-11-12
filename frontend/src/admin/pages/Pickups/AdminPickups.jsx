@@ -149,12 +149,14 @@ export default function AdminPickups() {
     const eligible = ids.filter((id) => { const p = pickups.find((x) => x.id === id); return p && canApplyPickupAction(p, action.key); });
     if (eligible.length) setPending({ action, ids: eligible });
   };
-  const confirmAction = (payload) => {
+  const confirmAction = async (payload) => {
     const { action, ids } = pending;
-    ids.forEach((id) => { const p = pickups.find((x) => x.id === id); if (p) runPickupAction(p, action.key, payload); });
-    toast(ids.length === 1 ? `Pickup ${ids[0]} ${action.toast}.` : `${ids.length} pickups ${action.toast}.`);
     setPending(null);
     clearSelection();
+    const results = await Promise.allSettled(ids.map((id) => { const p = pickups.find((x) => x.id === id); return p ? runPickupAction(p, action.key, payload) : null; }));
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length) toast(`${failed[0].reason?.message || "Could not update the pickup."}${ids.length > 1 ? ` (${ids.length - failed.length} of ${ids.length} done)` : ""}`);
+    else toast(ids.length === 1 ? `Pickup ${ids[0]} ${action.toast}.` : `${ids.length} pickups ${action.toast}.`);
   };
 
   const menuItems = (p) => [

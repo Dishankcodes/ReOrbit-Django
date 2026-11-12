@@ -10,8 +10,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import { getAccount } from "../../../api/session";
 import {
-  DONOR,
   estimatePoints,
   REWARD_RULES,
   useDonation,
@@ -117,7 +117,7 @@ export default function UserDonationCertificate() {
           <p className="dn-cert-line">
             This certificate is proudly presented to
           </p>
-          <h2 className="dn-cert-name">{DONOR.name}</h2>
+          <h2 className="dn-cert-name">{getAccount("user")?.full_name || "ReOrbit donor"}</h2>
 
           <p className="dn-cert-body">
             for donating{" "}

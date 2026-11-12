@@ -9,7 +9,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { useOrders } from "./ordersStore";
-import { estimatePoints, useDonations } from "./donationsStore";
+import { useDonations } from "./donationsStore";
 import { useListings } from "./listingsStore";
 import { useFollowing } from "./followStore";
 import { useWishlist } from "./wishlistStore";
@@ -261,15 +261,15 @@ export function useRewards() {
           }),
         );
     donations
-      .filter((d) => d.status === "Completed" && estimatePoints(d.quantity) > 0)
+      .filter((d) => ["Received", "Completed"].includes(d.status) && (d.reward?.points || 0) > 0)
       .forEach((d) =>
         earn.push({
           id: `don-${d.id}`,
           kind: "donation",
-          title: "Donation completed",
+          title: "Donation received",
           detail: `${d.title} · ${d.quantity} ${d.quantity === 1 ? "item" : "items"}`,
-          points: estimatePoints(d.quantity),
-          at: d.events[d.events.length - 1].at,
+          points: d.reward.points,
+          at: (d.events.find((e) => e.label === "Received at the warehouse") || d.events[d.events.length - 1]).at,
           to: `/user-donations/${d.id}`,
         }),
       );

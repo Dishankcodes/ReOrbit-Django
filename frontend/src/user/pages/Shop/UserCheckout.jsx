@@ -30,7 +30,9 @@ import {
 import { addPlacedOrders, loadOrders } from "../../data/ordersStore";
 import { loadLiveMarketplace, useLiveMarketplace } from "../../data/liveMarketplace";
 import { checkoutApi, payOnline } from "../../../api/orders";
-import { getAccount } from "../../../api/session";
+import { getAccount, getAccountType } from "../../../api/session";
+import VoucherBox from "./components/VoucherBox";
+import { loadVouchers } from "../../data/donationsStore";
 import { feeLabel } from "../../../shared/commerce";
 import { formatPrice } from "../../../data/marketplaceData";
 import EmptyState from "../../components/ui/EmptyState";
@@ -61,8 +63,11 @@ export default function UserCheckout() {
   const buyable = useMemo(() => all.lines.filter((l) => isLiveId(l.id)), [all.lines]);
   const skipped = all.lines.length - buyable.length;
   const { addresses, defaultId, loading: addrLoading, error: addrError, reload: reloadAddr } = useServerAddresses();
-  const q = useServerQuote(buyable);
+  const [voucherCode, setVoucherCode] = useState("");
+  const q = useServerQuote(buyable, voucherCode);
   const quote = q.quote;
+  const isMember = getAccountType() === "user"; /* donation vouchers are for members */
+  const voucherApplied = isMember && quote?.voucher ? quote.voucher : null;
 
   const [step, setStep] = useState("address");
   const [addrId, setAddrId] = useState(null);
@@ -157,6 +162,7 @@ export default function UserCheckout() {
     else addPlacedOrders(orders);
     buyable.forEach((l) => removeFromCart(l.id));
     loadLiveMarketplace(true); /* stock changed */
+    loadVouchers(true); /* a voucher may have been spent */
     navigate(`/user-checkout/success/${orders.map((o) => o.id).join(",")}`, { replace: true });
   };
 
@@ -169,12 +175,14 @@ export default function UserCheckout() {
     let res;
     try {
       res = await checkoutApi.place(
-        { items: buyable.map((l) => ({ id: l.id, qty: l.qty })), address_id: address.id, method, note: note.trim() },
+        { items: buyable.map((l) => ({ id: l.id, qty: l.qty })), address_id: address.id, method, note: note.trim(),
+          ...(voucherApplied ? { voucher_code: voucherApplied.code } : {}) },
         attempt.current,
       );
     } catch (e) {
       attempt.current = null;
       if (e.code === "UNAVAILABLE") { loadLiveMarketplace(true); q.retry(); }
+      if (/^VOUCHER/.test(e.code || "")) setVoucherCode(""); /* used, expired or no longer enough */
       return fail(e.message || "We could not place your order. Please try again.");
     }
 
@@ -459,8 +467,19 @@ export default function UserCheckout() {
             ))}
           </ul>
           {q.error && <p className="dn-error" role="alert">{q.error} <button type="button" className="dn-link" onClick={q.retry}>Try again</button></p>}
+          {isMember && (
+            <VoucherBox
+              code={voucherCode}
+              applied={voucherApplied}
+              error={quote?.voucher_error}
+              busy={q.loading}
+              onApply={(c) => setVoucherCode(c)}
+              onClear={() => setVoucherCode("")}
+            />
+          )}
           <dl>
             <div><dt>Subtotal</dt><dd>{quote ? formatPrice(quote.subtotal) : <Spinner />}</dd></div>
+            {quote && quote.discount > 0 && <div><dt>Voucher</dt><dd>− {formatPrice(quote.discount)}</dd></div>}
             <div><dt>Delivery</dt><dd>{quote ? (quote.delivery_fee ? formatPrice(quote.delivery_fee) : "Free") : <Spinner />}</dd></div>
             {quote && quote.platform_fee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platform_fee)}</dd></div>}
             <div className="total"><dt>Total</dt><dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd></div>

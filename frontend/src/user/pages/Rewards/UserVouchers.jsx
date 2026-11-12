@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Copy, Ticket, TicketPercent, CheckCircle2 } from "lucide-react";
 
 import { useRewards } from "../../data/rewardsStore";
+import { useVouchers } from "../../data/donationsStore";
 import { useVoucherList } from "../../../shared/rewardRules";
 import { formatDate } from "../../utils/format";
 import EmptyState from "../../components/ui/EmptyState";
@@ -16,7 +17,8 @@ import "../../css/rewards/rewards-base.css";
 export default function UserVouchers() {
   const { balance, levelIndex, redeemed } = useRewards();
   const vouchers = useVoucherList();
-  const [tab, setTab] = useState("store");
+  const donated = useVouchers();
+  const [tab, setTab] = useState("donation");
   const { toast, show } = useToast();
 
   const store = vouchers.filter((v) => v.kind === "points");
@@ -26,7 +28,7 @@ export default function UserVouchers() {
     try { await navigator.clipboard.writeText(code); show("Code copied."); } catch { show("Couldn't copy. Select the code and copy it."); }
   };
 
-  const tabs = [["store", "Rewards store", store.length], ["mine", "My vouchers", mine.length], ["codes", "Coupon codes", codes.length]];
+  const tabs = [["donation", "From donations", donated.vouchers.length], ["store", "Rewards store", store.length], ["mine", "My vouchers", mine.length], ["codes", "Coupon codes", codes.length]];
 
   return (
     <div className="dn rw">
@@ -43,6 +45,34 @@ export default function UserVouchers() {
       <div className="urw-chips solo" role="tablist">
         {tabs.map(([id, label, n]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(id)}>{label} <em>{n}</em></button>)}
       </div>
+
+      {tab === "donation" && (
+        donated.vouchers.length === 0 ? (
+          <EmptyState icon={Ticket} title="No donation vouchers yet" text="Donate an item. When it reaches our warehouse you get a voucher to use in the marketplace." actionLabel="Donate an item" to="/user-donations/new" />
+        ) : (
+          <div className="urw-mine">
+            {donated.vouchers.map((v) => (
+              <article key={v.id} className={`dn-card urw-mine-card ${v.status !== "Active" ? "is-used" : ""}`}>
+                <span className="urw-mine-ico"><Ticket size={22} /></span>
+                <div>
+                  <h3>{v.title}</h3>
+                  <small>
+                    Earned from {v.source.id} · cart of ₹{v.min_order.toLocaleString("en-IN")} or more ·{" "}
+                    {v.status === "Active" ? `valid till ${formatDate(v.expires_at)}` : v.status === "Used" ? `used ${formatDate(v.used_at)}` : "expired"}
+                  </small>
+                </div>
+                <code>{v.code}</code>
+                {v.status !== "Active" ? <span className="dn-badge dn-badge--grey">{v.status}</span> : (
+                  <div className="urw-mine-actions">
+                    <button type="button" className="dn-btn dn-btn--soft dn-btn--sm" onClick={() => copy(v.code)}><Copy size={13} /> Copy</button>
+                    <Link to="/user-marketplace" className="dn-btn dn-btn--sm">Shop now</Link>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )
+      )}
 
       {tab === "store" && <div className="urw-vouchers">{store.map((v) => <RewardCard key={v.id} voucher={v} balance={balance} levelIndex={levelIndex} />)}</div>}
 

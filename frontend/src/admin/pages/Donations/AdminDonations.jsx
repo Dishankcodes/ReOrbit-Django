@@ -59,6 +59,7 @@ const STATUS_CARDS = [
   { key: "Received", label: "Received", icon: PackageCheck, tone: "info" },
   { key: "Completed", label: "Completed", icon: CircleCheck, tone: "good" },
   { key: "Rejected", label: "Rejected", icon: XCircle, tone: "bad" },
+  { key: "Cancelled", label: "Cancelled by donor", icon: XCircle, tone: "bad" },
 ];
 
 const SORTS = {
@@ -155,6 +156,7 @@ export default function AdminDonations() {
       Received: 0,
       Completed: 0,
       Rejected: 0,
+      Cancelled: 0,
     };
     donations.forEach((d) => {
       c[d.status] += 1;
@@ -260,16 +262,22 @@ export default function AdminDonations() {
     });
     if (eligible.length) setPending({ action, ids: eligible });
   };
-  const confirmAction = (payload) => {
+  const confirmAction = async (payload) => {
     const { action, ids } = pending;
-    ids.forEach((id) => runDonationAction(id, action.key, payload));
-    toast(
-      ids.length === 1
-        ? `Donation ${ids[0]} ${action.toast}.`
-        : `${ids.length} donations ${action.toast}.`,
-    );
     setPending(null);
     clearSelection();
+    const results = await Promise.allSettled(ids.map((id) => runDonationAction(id, action.key, payload)));
+    const failed = results.filter((r) => r.status === "rejected");
+    const done = ids.length - failed.length;
+    if (failed.length) {
+      toast(`${failed[0].reason?.message || "Could not update the donation."}${ids.length > 1 ? ` (${done} of ${ids.length} done)` : ""}`);
+    } else {
+      toast(
+        ids.length === 1
+          ? `Donation ${ids[0]} ${action.toast}.`
+          : `${ids.length} donations ${action.toast}.`,
+      );
+    }
   };
 
   const menuItems = (d) => [

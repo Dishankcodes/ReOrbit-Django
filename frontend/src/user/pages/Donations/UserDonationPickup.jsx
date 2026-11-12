@@ -93,7 +93,7 @@ export default function UserDonationPickup() {
     setEditing(true);
   };
 
-  const saveReschedule = () => {
+  const saveReschedule = async () => {
     if (!date || !slot) {
       setError("Choose a new date and time slot.");
       return;
@@ -108,9 +108,13 @@ export default function UserDonationPickup() {
       );
       return;
     }
-    reschedulePickup(donation.id, { date, slot, reason });
-    setEditing(false);
-    show("Pickup rescheduled. We've told the pickup team.");
+    try {
+      await reschedulePickup(donation.id, { date, slot, reason });
+      setEditing(false);
+      show("Pickup rescheduled. We've told the pickup team.");
+    } catch (e) {
+      setError(e.errors?.date?.[0] || e.errors?.slot?.[0] || e.message || "Could not change the pickup.");
+    }
   };
 
   const toggle = (index) =>
@@ -335,9 +339,13 @@ export default function UserDonationPickup() {
                   className="dn-btn dn-btn--soft dn-btn--sm"
                   style={{ marginTop: 12 }}
                   disabled={note === (pickup.note || "")}
-                  onClick={() => {
-                    updatePickupNote(donation.id, note.trim());
-                    show("Note saved for the pickup team.");
+                  onClick={async () => {
+                    try {
+                      await updatePickupNote(donation.id, note.trim());
+                      show("Note saved for the pickup team.");
+                    } catch (e) {
+                      show(e.message || "Could not save the note.");
+                    }
                   }}
                 >
                   Save note

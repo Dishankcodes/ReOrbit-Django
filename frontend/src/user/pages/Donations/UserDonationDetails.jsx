@@ -61,15 +61,21 @@ export default function UserDonationDetails() {
   const { pickup, status } = donation;
   const Icon = categoryIcon(donation.category);
   const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
-  const points = estimatePoints(donation.quantity);
+  const rewarded = ["Received", "Completed"].includes(status);
+  const points = rewarded ? donation.reward.points : estimatePoints(donation.quantity);
+  const voucher = donation.reward.voucher;
   const completed = status === "Completed";
   const closed = status === "Rejected" || status === "Cancelled";
   const hasPickup = Boolean(pickup.date) && !closed;
 
-  const confirmCancel = () => {
-    cancelDonation(donation.id, reason);
+  const confirmCancel = async () => {
+    try {
+      await cancelDonation(donation.id, reason);
+      show("Donation cancelled.");
+    } catch (e) {
+      show(e.message || "Could not cancel this donation.");
+    }
     setCancelling(false);
-    show("Donation cancelled.");
   };
 
   return (
@@ -170,12 +176,17 @@ export default function UserDonationDetails() {
           </div>
         </div>
       )}
-      {completed && (
+      {rewarded && voucher && (
         <div className="dn-banner dn-det-banner">
           <Award size={20} />
           <div>
-            <strong>Delivered to {donation.ngo?.name}</strong>
-            Thank you! Your certificate is ready and {points} Orbit Points have been credited.
+            <strong>
+              {completed ? `Delivered to ${donation.ngo?.name}. ` : "Received at our warehouse. "}
+              You earned a ₹{voucher.amount} voucher
+            </strong>
+            Use code <b>{voucher.code}</b> at checkout in the marketplace (it asks for a cart of ₹{voucher.amount * 2} or more)
+            {" "}and {points} Orbit Points are in your account.
+            {completed && " Your certificate is ready."}
           </div>
         </div>
       )}
@@ -312,16 +323,16 @@ export default function UserDonationDetails() {
           <section className="dn-card dn-card-pad">
             <div className="dn-card-head">
               <h3>Impact</h3>
-              {!completed && !closed && <span className="dn-chip">Estimated</span>}
+              {!rewarded && !closed && <span className="dn-chip">Estimated</span>}
             </div>
             <div className="dn-det-impact">
-              <div><Star size={17} /><strong>{closed ? 0 : points}</strong><span>{completed ? "Points credited" : "Orbit Points"}</span></div>
+              <div><Star size={17} /><strong>{closed ? 0 : points}</strong><span>{rewarded ? "Points credited" : "Orbit Points"}</span></div>
               <div><Scale size={17} /><strong>{closed ? "0 kg" : kg(donation.weightKg)}</strong><span>Waste diverted</span></div>
               <div><Wind size={17} /><strong>{closed ? "0 kg" : `${co2} kg`}</strong><span>CO₂ saved</span></div>
             </div>
-            {!completed && !closed && (
+            {!rewarded && !closed && (
               <p className="dn-hint" style={{ marginTop: 12 }}>
-                Points are credited when the donation is completed and the certificate is issued.
+                Your voucher and points are issued when the item reaches our warehouse.
               </p>
             )}
           </section>

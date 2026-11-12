@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { formatLongDate } from "../../../../utils/format";
 import { ConditionBadge } from "../DonationBadges";
-import { estimatePoints } from "../../../../data/donationsStore";
+import { estimatePoints, estimateVoucher } from "../../../../data/donationsStore";
 
 export default function StepReview({ form, address, onEdit, errors, set }) {
   return (
@@ -90,10 +90,10 @@ export default function StepReview({ form, address, onEdit, errors, set }) {
           <Star size={18} />
           <div>
             <strong>
-              You'll earn {estimatePoints(form.quantity)} Orbit Points
+              You'll earn about ₹{estimateVoucher(form.category, form.quantity, form.condition)} in marketplace vouchers and {estimatePoints(form.quantity)} Orbit Points
             </strong>
-            Credited once your donation is completed and the certificate is
-            issued.
+            Issued once your item reaches our warehouse. The voucher works on
+            any marketplace order.
           </div>
         </div>
       </div>

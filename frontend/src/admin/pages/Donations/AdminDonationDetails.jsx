@@ -71,10 +71,15 @@ export default function AdminDonationDetails() {
 
   const actions = getDonationActions(d);
   const heroActions = actions.slice(0, 3);
-  const confirmAction = (payload) => {
-    runDonationAction(d.id, pending.key, payload);
-    toast(`Donation ${d.id} ${pending.toast}.`);
+  const confirmAction = async (payload) => {
+    const { key, toast: done } = pending;
     setPending(null);
+    try {
+      await runDonationAction(d.id, key, payload);
+      toast(`Donation ${d.id} ${done}.`);
+    } catch (e) {
+      toast(e.message || "Could not update the donation.");
+    }
   };
   const address = `${d.donor.address}, ${d.donor.city}, ${d.donor.state} ${d.donor.pincode}`;
 
@@ -191,6 +196,16 @@ export default function AdminDonationDetails() {
               <p className="ap-muted">{d.status === "Rejected" ? "No pickup, because the donation was rejected." : "No pickup yet. It is scheduled when you accept the donation."}</p>
             )}
           </section>
+
+          {["Received", "Completed"].includes(d.status) && d.reward?.voucher_code && (
+            <section className="aup-card">
+              <header className="aup-card-head"><div><h3>Donor reward</h3><p>Issued when the item reached the warehouse.</p></div><Award size={20} /></header>
+              <dl className="ao-txn" style={{ margin: 0 }}>
+                <div><dt>Voucher</dt><dd className="aup-mono">{d.reward.voucher_code} · ₹{d.reward.voucher_amount}</dd></div>
+                <div><dt>Orbit Points</dt><dd>{d.reward.points}</dd></div>
+              </dl>
+            </section>
+          )}
 
           {d.status === "Completed" && (
             <section className="aup-card adn-cert">

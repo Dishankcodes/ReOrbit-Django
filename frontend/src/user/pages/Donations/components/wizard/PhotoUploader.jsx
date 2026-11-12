@@ -28,6 +28,7 @@ export default function PhotoUploader({ images, onChange, error }) {
           id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
           url: URL.createObjectURL(file),
           name: file.name,
+          file,
         });
       } else {
         message = `You can add up to ${MAX_PHOTOS} photos.`;

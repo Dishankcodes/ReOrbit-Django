@@ -65,6 +65,7 @@ const STATUS_FROM_DONATION = {
   Received: "Completed",
   Completed: "Completed",
   Rejected: "Cancelled",
+  Cancelled: "Cancelled",
 };
 
 function fromDonation(d) {
@@ -237,8 +238,7 @@ export function runPickupAction(pickup, key, payload = {}) {
       reopen: "reopen",
       cancel: pickup.status === "Requested" ? "reject" : "cancelPickup",
     };
-    runDonationAction(pickup.ref_id, map[key], payload);
-    return;
+    return runDonationAction(pickup.ref_id, map[key], payload);
   }
   const at = new Date().toISOString();
   const cur = overlay[pickup.id] || { events: [] };

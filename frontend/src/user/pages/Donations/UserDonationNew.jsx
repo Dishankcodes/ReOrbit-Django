@@ -15,7 +15,6 @@ import {
   useDonationCategories,
   checkPincode,
   createDonation,
-  estimateWeight,
   useDonation,
 } from "../../data/donationsStore";
 import { useServerAddresses } from "../../data/checkoutStore";
@@ -156,20 +155,18 @@ export default function UserDonationNew() {
     }
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate(2)) return;
     setSubmitting(true);
-
-    window.setTimeout(() => {
-      const donation = createDonation({
+    try {
+      const donation = await createDonation({
         title: form.title,
         category: form.category,
         description: form.description,
         condition: form.condition,
         quantity: form.quantity,
-        weightKg: estimateWeight(form.category, form.quantity),
-        images: form.images.map((image) => image.url),
-        address,
+        files: form.images.map((image) => image.file).filter(Boolean),
+        addressId: address.id,
         contactName: form.contactName.trim(),
         phone: form.phone.trim(),
         date: form.date,
@@ -177,7 +174,32 @@ export default function UserDonationNew() {
         note: form.note.trim(),
       });
       navigate(`/user-donations/success/${donation.id}`, { replace: true });
-    }, 900);
+    } catch (e) {
+      /* send the donor back to the step that has the problem */
+      const f = e.errors || {};
+      const first = (k) => (Array.isArray(f[k]) ? f[k][0] : f[k]);
+      const next = {};
+      if (f.title || f.description || f.category || f.condition || f.quantity || f.images) {
+        if (first("title")) next.title = first("title");
+        if (first("description")) next.description = first("description");
+        if (first("category")) next.category = first("category");
+        if (first("condition")) next.condition = first("condition");
+        if (first("quantity")) next.quantity = first("quantity");
+        if (first("images")) next.images = first("images");
+        setStep(0);
+      } else if (f.address_id || f.date || f.slot || f.contact_name || f.phone) {
+        if (first("address_id")) next.addressId = first("address_id");
+        if (first("date") || first("slot")) next.schedule = first("date") || first("slot");
+        if (first("contact_name")) next.contactName = first("contact_name");
+        if (first("phone")) next.phone = first("phone");
+        setStep(1);
+      } else {
+        next.addressId = e.message || "We couldn't submit your donation. Please try again.";
+        setStep(1);
+      }
+      setErrors(next);
+      setSubmitting(false);
+    }
   };
 
   return (

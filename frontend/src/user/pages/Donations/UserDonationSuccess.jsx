@@ -41,8 +41,8 @@ const NEXT = [
   },
   {
     icon: Award,
-    title: "You get a certificate",
-    text: "Once delivered to an NGO, your certificate and points are issued.",
+    title: "You earn a voucher",
+    text: "When it reaches our warehouse you get a marketplace voucher and Orbit Points. A certificate follows once an NGO receives it.",
   },
 ];
 
@@ -157,7 +157,7 @@ export default function UserDonationSuccess() {
           </article>
 
           <article className="dn-card dn-card-pad dn-success-impact">
-            <h3>Your impact once completed</h3>
+            <h3>Your impact once we receive it</h3>
             <div>
               <span>
                 <Star size={16} />{" "}
