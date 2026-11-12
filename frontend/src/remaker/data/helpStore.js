@@ -216,7 +216,7 @@ function seed() {
     },
     {
       id: "TK-4402",
-      subject: "Warehouse job photos will not upload",
+      subject: "Product photos will not upload",
       category: "Something is not working",
       priority: "Urgent",
       relatedOrder: "",
@@ -229,7 +229,7 @@ function seed() {
           id: "m7",
           from: "me",
           name: "You",
-          text: "Uploading the after photo for my job keeps failing on my phone.",
+          text: "Uploading a product photo keeps failing on my phone.",
           at: ago(900),
         },
         {

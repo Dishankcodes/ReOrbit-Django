@@ -233,8 +233,6 @@ export default function UserDonationNew() {
 
       <header className="dn-new-head">
         <div>
-          <span className="dn-eyebrow">New donation</span>
-          <h1>Donate an item</h1>
           <p className="dn-muted">
             {repeat
               ? `Starting from "${repeat.title}". Update the details and submit again.`

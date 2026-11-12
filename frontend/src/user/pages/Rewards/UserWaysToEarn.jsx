@@ -27,8 +27,6 @@ export default function UserWaysToEarn() {
       <PointsNav />
       <header className="urw-head">
         <div>
-          <span className="dn-eyebrow">Orbit Points</span>
-          <h1>Ways to earn</h1>
           <p className="dn-muted">
             Every sustainable action adds up. Points never expire.
           </p>

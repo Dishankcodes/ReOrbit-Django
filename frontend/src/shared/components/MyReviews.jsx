@@ -703,7 +703,6 @@ export default function MyReviews({
     <div className="rv" style={{ "--rv-accent": accent }}>
       <header className="rv-head">
         <div>
-          <h1>My reviews</h1>
           <p>
             Share how your orders and the sellers turned out. It helps others
             buy with confidence.

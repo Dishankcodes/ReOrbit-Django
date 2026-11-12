@@ -151,7 +151,6 @@ export default function ReMakerSaved() {
     <section className="rk sav">
       <header className="rk-top">
         <div>
-          <h2>Saved items</h2>
           <p>
             Pieces you saved from the marketplace. {saved.length}{" "}
             {saved.length === 1 ? "item" : "items"}, worth{" "}

@@ -66,8 +66,6 @@ export default function UserBadges() {
       <PointsNav />
       <header className="urw-head">
         <div>
-          <span className="dn-eyebrow">Achievements</span>
-          <h1>Badges</h1>
           <p className="dn-muted">
             {earnedBadges} of {badges.length} earned. Badges unlock
             automatically as you make a difference.

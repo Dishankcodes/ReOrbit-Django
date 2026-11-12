@@ -226,8 +226,6 @@ export default function UserWishlist() {
     <div className="dn wl">
       <header className="wl-head">
         <div>
-          <span className="dn-eyebrow">Saved for later</span>
-          <h1>Your wishlist</h1>
           <p className="dn-muted">
             {saved.length} {saved.length === 1 ? "piece" : "pieces"} ·{" "}
             {buyable.length} available worth {formatPrice(worth)}

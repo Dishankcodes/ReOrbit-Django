@@ -282,8 +282,6 @@ export default function UserCheckout() {
 
       <header className="ushp-head">
         <div>
-          <span className="dn-eyebrow">Secure checkout</span>
-          <h1>Checkout</h1>
           <p className="dn-muted">Three quick steps to place your order.</p>
         </div>
         <BackLink

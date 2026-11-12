@@ -30,6 +30,23 @@ function mapPublicRemaker(row) {
   };
 }
 
+/* The public directory (all active ReMakers), read page by page */
+export async function fetchPublicRemakers() {
+  const rows = [];
+  let page = 1;
+  let pages = 1;
+  do {
+    const response = await apiRequest(
+      `/remakers/public/?page=${page}&page_size=100`,
+      { auth: false },
+    );
+    rows.push(...(response.data?.results || []));
+    pages = response.data?.total_pages || 1;
+    page += 1;
+  } while (page <= pages && page <= 10);
+  return rows.map(mapPublicRemaker);
+}
+
 export async function fetchPublicRemaker(publicId) {
   /* A portfolio that fails to load must not hide the whole profile */
   const [response, portfolio] = await Promise.all([

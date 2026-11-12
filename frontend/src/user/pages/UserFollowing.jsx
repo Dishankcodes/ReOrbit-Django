@@ -103,20 +103,6 @@ export default function UserFollowing() {
     <section className="user-following-page">
       <div className="following-header">
         <div>
-          <span
-            style={{
-              color: "#668170",
-              fontSize: 8,
-              fontWeight: 800,
-              letterSpacing: ".15em",
-              textTransform: "uppercase",
-            }}
-          >
-            Your community
-          </span>
-
-          <h1>Following</h1>
-
           <p>
             Stay connected with creators who are giving materials and products a
             new purpose.

@@ -38,8 +38,6 @@ export default function UserTickets() {
       <HelpNav />
       <header className="uhp-head row">
         <div>
-          <span className="dn-eyebrow">Support</span>
-          <h1>My tickets</h1>
           <p className="dn-muted">
             Follow every request you've sent to our team.
           </p>

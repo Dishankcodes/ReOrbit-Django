@@ -68,7 +68,6 @@ export default function ReMakerSettings() {
     <section className="set">
       <header className="set-top">
         <div>
-          <h2>Settings</h2>
           <p>
             Manage your account, studio and how ReOrbit keeps in touch with you.
           </p>

@@ -62,8 +62,6 @@ export default function UserPointsHistory() {
       <PointsNav />
       <header className="urw-head">
         <div>
-          <span className="dn-eyebrow">Orbit Points</span>
-          <h1>Points history</h1>
           <p className="dn-muted">
             Every point you've earned or spent. Balance{" "}
             {balance.toLocaleString("en-IN")} · lifetime{" "}

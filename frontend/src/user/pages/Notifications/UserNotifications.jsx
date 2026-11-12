@@ -57,8 +57,6 @@ export default function UserNotifications() {
     <div className="dn nt">
       <header className="unt-head">
         <div>
-          <span className="dn-eyebrow">Activity</span>
-          <h1>Notifications</h1>
           <p className="dn-muted">
             {unread > 0 ? `${unread} unread · ` : "You're all caught up · "}last
             14 days

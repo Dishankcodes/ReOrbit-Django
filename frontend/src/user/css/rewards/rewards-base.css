@@ -1092,3 +1092,13 @@
     padding: 24px 18px;
   }
 }
+
+/* The green "Redeem rewards" button in the points hero keeps white text in every link state. */
+.urw-hero-actions a.dn-btn:not(.dn-btn--ghost),
+.urw-hero-actions a.dn-btn:not(.dn-btn--ghost):visited,
+.urw-hero-actions a.dn-btn:not(.dn-btn--ghost):hover,
+.urw-hero-actions a.dn-btn:not(.dn-btn--ghost):focus,
+.urw-hero-actions a.dn-btn:not(.dn-btn--ghost):active {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}

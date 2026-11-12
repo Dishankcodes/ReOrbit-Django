@@ -11,6 +11,9 @@ import SafeImage from "../../../components/ui/SafeImage";
 import { Stars } from "../../../components/ui/Stars";
 import { followerCount } from "../../../data/followStore";
 
+/* the card is also used on the Following page, which must not depend on the Remakers page for its styles */
+import "../../../css/remakers/UserRemakers.css";
+
 export const remakerPath = (id) => `/user-marketplace/remaker/${id}`;
 
 export default function RemakerCard({ maker, following, onToggle }) {

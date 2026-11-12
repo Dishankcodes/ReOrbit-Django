@@ -16,7 +16,7 @@ export default function ConversationList({
   return (
     <aside className="msg-list">
       <div className="msg-list-head">
-        <h2>Messages</h2>
+        <h2 style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }}>Messages</h2>
         <label className="msg-search">
           <span className="sr-only">Search conversations</span>
           <input

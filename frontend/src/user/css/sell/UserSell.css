@@ -274,3 +274,16 @@
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
 }
+
+/* The green "Sell an item" buttons on the Sell page keep white text in every link state. */
+.usl-hero-actions a.dn-btn:not(.dn-btn--ghost),
+.usl-hero-actions a.dn-btn:not(.dn-btn--ghost):visited,
+.usl-hero-actions a.dn-btn:not(.dn-btn--ghost):hover,
+.usl-hero-actions a.dn-btn:not(.dn-btn--ghost):focus,
+.usl-hero-actions a.dn-btn:not(.dn-btn--ghost):active,
+.usl-fab.dn-btn,
+.usl-fab.dn-btn:hover,
+.usl-fab.dn-btn:focus {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}

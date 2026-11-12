@@ -131,8 +131,6 @@ export default function UserDonationHistory() {
 
       <header className="dn-hist-head">
         <div>
-          <span className="dn-eyebrow">Your giving</span>
-          <h1>Donation history</h1>
           <p className="dn-muted">
             Every donation you've made, with its status, pickup and certificate.
           </p>

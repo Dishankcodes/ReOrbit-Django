@@ -8,7 +8,6 @@ export default function AdminOrders() {
   return (
     <div className="au-page">
       <header style={{ marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 22 }}>Orders</h1>
         <p style={{ margin: "4px 0 0", opacity: 0.7 }}>
           Follow every order. Move ReOrbit store orders forward, or step in when
           a seller can&apos;t.

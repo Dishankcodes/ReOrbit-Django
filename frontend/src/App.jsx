@@ -324,14 +324,6 @@ const ReMakerTicket = page(
   "remaker",
   () => import("./remaker/pages/Help/ReMakerTicket"),
 );
-const ReMakerJobs = page(
-  "remaker",
-  () => import("./remaker/pages/Jobs/ReMakerJobs"),
-);
-const ReMakerJobDetails = page(
-  "remaker",
-  () => import("./remaker/pages/Jobs/ReMakerJobDetails"),
-);
 const ReMakerMessages = page(
   "remaker",
   () => import("./remaker/pages/Messages/ReMakerMessages"),
@@ -784,11 +776,6 @@ export default function App() {
             <Route
               path="/remaker-help/tickets/:ticketId"
               element={<ReMakerTicket />}
-            />
-            <Route path="/remaker-jobs" element={<ReMakerJobs />} />
-            <Route
-              path="/remaker-jobs/:jobId"
-              element={<ReMakerJobDetails />}
             />
             <Route path="/remaker-messages" element={<ReMakerMessages />} />
             <Route path="/remaker-messages/:id" element={<ReMakerMessages />} />

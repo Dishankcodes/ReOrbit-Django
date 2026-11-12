@@ -155,7 +155,6 @@ export default function ReMakerNotifications() {
       {/* ================= HEADER ================= */}
       <header className="ntf-top">
         <div>
-          <h2>Notifications</h2>
           <p>
             {unread > 0
               ? `You have ${unread} unread ${unread === 1 ? "notification" : "notifications"}.`

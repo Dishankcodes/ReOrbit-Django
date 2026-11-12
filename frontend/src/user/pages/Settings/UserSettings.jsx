@@ -644,10 +644,6 @@ export default function UserSettings() {
   return (
     <div className="dn st">
       <header className="ust-head">
-        <span className="dn-eyebrow">Account</span>
-
-        <h1>Settings</h1>
-
         <p className="dn-muted">
           Manage your notifications, privacy and security.
         </p>
