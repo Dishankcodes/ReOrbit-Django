@@ -57,7 +57,7 @@ export default function UserSales() {
         {cards.map((c) => { const Icon = c.icon; return <article key={c.label}><span><Icon size={18} /></span><div><strong>{c.value}</strong><small>{c.label}</small></div></article>; })}
       </section>
 
-      <SellerOrders api={salesApi} role="user" accent="#2a4d3a" onToast={show} />
+      <SellerOrders api={salesApi} role="user" accent="#2a4d3a" detailPath={(id) => `/user-sell/sales/${id}`} />
       {toast}
     </div>
   );

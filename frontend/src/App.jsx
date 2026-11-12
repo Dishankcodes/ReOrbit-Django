@@ -69,6 +69,7 @@ const UserSell = page("user", () => import("./user/pages/Sell/UserSell"));
 const UserSellForm = page("user", () => import("./user/pages/Sell/UserSellForm"));
 const UserListingDetails = page("user", () => import("./user/pages/Sell/UserListingDetails"));
 const UserSales = page("user", () => import("./user/pages/Sell/UserSales"));
+const UserSaleDetails = page("user", () => import("./user/pages/Sell/UserSaleDetails"));
 const UserWallet = page("user", () => import("./user/pages/Sell/UserWallet"));
 const UserNotifications = page("user", () => import("./user/pages/Notifications/UserNotifications"));
 /* ReMaker public pages */
@@ -84,6 +85,7 @@ const ReMakerBeforeMarketplace = page("remaker", () => import("./remaker/pages/H
 const ReMakerDashboard = page("remaker", () => import("./remaker/pages/ReMakerDashboard"));
 const ReMakerProfile = page("remaker", () => import("./remaker/pages/ReMakerProfile"));
 const ReMakerSales = page("remaker", () => import("./remaker/pages/Sales/ReMakerSales"));
+const ReMakerSaleDetails = page("remaker", () => import("./remaker/pages/Sales/ReMakerSaleDetails"));
 const ReMakerCustomers = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomers"));
 const ReMakerCustomerProfile = page("remaker", () => import("./remaker/pages/Customers/ReMakerCustomerProfile"));
 const ReMakerEarnings = page("remaker", () => import("./remaker/pages/Earnings/ReMakerEarnings"));
@@ -130,6 +132,7 @@ const AdminRemakerProfile = page("admin", () => import("./admin/pages/Remakers/A
 const AdminProducts = page("admin", () => import("./admin/pages/Products/AdminProducts"));
 const AdminProductDetails = page("admin", () => import("./admin/pages/Products/AdminProductDetails"));
 const AdminOrders = page("admin", () => import("./admin/pages/Orders/AdminOrders"));
+const AdminOrderDetails = page("admin", () => import("./admin/pages/Orders/AdminOrderDetails"));
 const AdminWarehouse = page("admin", () => import("./admin/pages/Warehouse/AdminWarehouse"));
 const AdminWarehouseItem = page("admin", () => import("./admin/pages/Warehouse/AdminWarehouseItem"));
 const AdminDonations = page("admin", () => import("./admin/pages/Donations/AdminDonations"));
@@ -290,7 +293,7 @@ export default function App() {
         <Route path="/user-sell/new" element={<UserSellForm />} />
         <Route path="/user-sell/sales" element={<UserSales />} />
         <Route path="/user-wallet" element={<UserWallet />} />
-        <Route path="/user-sell/sales/:saleId" element={<Navigate to="/user-sell/sales" replace />} />
+        <Route path="/user-sell/sales/:orderId" element={<UserSaleDetails />} />
         <Route path="/user-sell/:listingId/edit" element={<UserSellForm />} />
         <Route path="/user-sell/:listingId" element={<UserListingDetails />} />
 
@@ -340,7 +343,7 @@ export default function App() {
         <Route path="/remaker-orders/:orderId/track" element={<UserOrderTrack />} />
 
         <Route path="/remaker-sales" element={<ReMakerSales />} />
-        <Route path="/remaker-sales/:saleId" element={<Navigate to="/remaker-sales" replace />} />
+        <Route path="/remaker-sales/:orderId" element={<ReMakerSaleDetails />} />
         <Route path="/remaker-customers" element={<ReMakerCustomers />} />
         <Route
           path="/remaker-customers/:customerId"
@@ -427,7 +430,7 @@ export default function App() {
           element={<AdminProductDetails />}
         />
         <Route path="/admin-orders" element={<AdminOrders />} />
-        <Route path="/admin-orders/:orderId" element={<Navigate to="/admin-orders" replace />} />
+        <Route path="/admin-orders/:orderId" element={<AdminOrderDetails />} />
         <Route path="/admin-warehouse" element={<AdminWarehouse />} />
         <Route
           path="/admin-warehouse/:inventoryId"
@@ -478,7 +481,7 @@ export default function App() {
         <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
         <Route path="/admin-sell/listing/:id" element={<AdminSellListing />} />
         <Route path="/admin-sell/sales" element={<AdminSales />} />
-        <Route path="/admin-sell/sales/:orderId" element={<Navigate to="/admin-sell/sales" replace />} />
+        <Route path="/admin-sell/sales/:orderId" element={<AdminOrderDetails />} />
         {/* Keep older admin navigation destinations working. */}
         <Route path="/admin-profile" element={<AdminProfile />} />
       </Route>

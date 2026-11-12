@@ -57,3 +57,8 @@
 .so-return small { color: var(--so-muted); }
 .so-photos { display: flex; gap: 6px; flex-wrap: wrap; }
 .so-photos img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; }
+
+.so-click { transition: box-shadow .15s, border-color .15s; }
+.so-click:hover { border-color: var(--so-accent); box-shadow: 0 6px 18px rgba(0,0,0,.05); }
+.so-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none; }
+.so-more-items { color: var(--so-muted); font-size: 13px; display: block !important; }

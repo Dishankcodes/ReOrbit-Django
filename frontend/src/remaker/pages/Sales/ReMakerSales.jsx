@@ -17,7 +17,7 @@ export default function ReMakerSales() {
         </div>
         <Link to="/remaker-earnings" className="rod-btn ghost">View earnings</Link>
       </div>
-      <SellerOrders api={salesApi} role="remaker" accent="#7a5230" />
+      <SellerOrders api={salesApi} role="remaker" accent="#421517" detailPath={(id) => `/remaker-sales/${id}`} />
     </section>
   );
 }

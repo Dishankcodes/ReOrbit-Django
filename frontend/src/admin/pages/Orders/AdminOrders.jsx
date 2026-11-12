@@ -13,7 +13,7 @@ export default function AdminOrders() {
           Follow every order. Move ReOrbit store orders forward, or step in when a seller can&apos;t.
         </p>
       </header>
-      <SellerOrders api={adminOrdersApi} role="admin" accent="#2a4d3a" />
+      <SellerOrders api={adminOrdersApi} role="admin" accent="#2a4d3a" detailPath={(id) => `/admin-orders/${id}`} />
     </div>
   );
 }
