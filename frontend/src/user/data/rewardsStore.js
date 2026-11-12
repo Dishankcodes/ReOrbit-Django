@@ -24,6 +24,13 @@ const DAY = 86400000;
 const dayISO = (offset) =>
   new Date(new Date().setHours(0, 0, 0, 0) + offset * DAY).toISOString();
 
+/* API order lists may omit tracking events until an individual order is opened. */
+const eventsOf = (record) =>
+  Array.isArray(record?.events) ? record.events : [];
+const lastEventOf = (record) => eventsOf(record).at(-1) || null;
+const activityAt = (record, fallback = null) =>
+  lastEventOf(record)?.at || fallback || null;
+
 export const LEVELS = [
   { key: "seedling", name: "Seedling", min: 0, perk: "Welcome to ReOrbit" },
   {
@@ -217,12 +224,12 @@ export function useRewards() {
       .filter((o) => o.status === "Delivered")
       .sort(
         (a, b) =>
-          new Date(a.events[a.events.length - 1].at) -
-          new Date(b.events[b.events.length - 1].at),
+          new Date(activityAt(a, a.deliveredAt || a.placedAt) || 0) -
+          new Date(activityAt(b, b.deliveredAt || b.placedAt) || 0),
       );
 
     delivered.forEach((o, i) => {
-      const at = o.events[o.events.length - 1].at;
+      const at = activityAt(o, o.deliveredAt || o.placedAt);
       const pts =
         Math.floor((o.price * o.qty) / 100) * pointsOf(rules, "purchase");
       if (pts > 0)
@@ -256,7 +263,7 @@ export function useRewards() {
             title: "Review posted",
             detail: o.item.title,
             points: pointsOf(rules, "review"),
-            at: o.review.at || o.events[o.events.length - 1].at,
+            at: o.review.at || activityAt(o, o.deliveredAt || o.placedAt),
             to: `/user-orders/${o.id}`,
           }),
         );
@@ -273,10 +280,9 @@ export function useRewards() {
           title: "Donation received",
           detail: `${d.title} · ${d.quantity} ${d.quantity === 1 ? "item" : "items"}`,
           points: d.reward.points,
-          at: (
-            d.events.find((e) => e.label === "Received at the warehouse") ||
-            d.events[d.events.length - 1]
-          ).at,
+          at:
+            eventsOf(d).find((e) => e.label === "Received at the warehouse")
+              ?.at || activityAt(d, d.receivedAt || d.createdAt),
           to: `/user-donations/${d.id}`,
         }),
       );
@@ -355,7 +361,9 @@ export function useRewards() {
     const soldCount = listings.filter((l) => l.status === "Sold").length;
     const lastAt = (arr) => (arr.length ? arr[arr.length - 1] : null);
     const nth = (arr, n) => (arr.length >= n ? arr[n - 1] : null);
-    const deliveredAt = delivered.map((o) => o.events[o.events.length - 1].at);
+    const deliveredAt = delivered.map((o) =>
+      activityAt(o, o.deliveredAt || o.placedAt),
+    );
 
     const mk = (id, icon, title, text, value, target, at, hint) => ({
       id,
@@ -406,7 +414,11 @@ export function useRewards() {
         "Complete 3 donations.",
         completedDonations.length,
         3,
-        lastAt(completedDonations.map((d) => d.events[d.events.length - 1].at)),
+        lastAt(
+          completedDonations.map((d) =>
+            activityAt(d, d.completedAt || d.createdAt),
+          ),
+        ),
         { label: "Donate an item", to: "/user-donations/new" },
       ),
       mk(
