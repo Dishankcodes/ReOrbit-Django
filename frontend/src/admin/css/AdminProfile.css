@@ -28,7 +28,9 @@
   height: 240px;
   border-radius: 50%;
   border: 1px solid rgba(175, 207, 194, 0.18);
-  box-shadow: 0 0 0 38px rgba(175, 207, 194, 0.05), 0 0 0 78px rgba(175, 207, 194, 0.035);
+  box-shadow:
+    0 0 0 38px rgba(175, 207, 194, 0.05),
+    0 0 0 78px rgba(175, 207, 194, 0.035);
   pointer-events: none;
 }
 

@@ -94,13 +94,21 @@ export default function ReMakerDiscover() {
   /* real ReMakers when there are any; the sample studios only show on an empty platform */
   const { data: live } = usePublic("/remakers/?page_size=48");
   const real = (live?.results || []).map((r) => ({
-    name: r.name, specialty: r.specialty || "ReMaker", location: r.city || "Gujarat",
-    category: r.category || "", image: r.image || initialsImage(r.name), creations: r.creations,
-    description: r.bio || "Gives reclaimed material a second life.", id: r.id,
+    name: r.name,
+    specialty: r.specialty || "ReMaker",
+    location: r.city || "Gujarat",
+    category: r.category || "",
+    image: r.image || initialsImage(r.name),
+    creations: r.creations,
+    description: r.bio || "Gives reclaimed material a second life.",
+    id: r.id,
   }));
   const remakers = real.length ? real : sampleRemakers;
   const categories = real.length
-    ? ["All", ...Array.from(new Set(real.map((r) => r.category).filter(Boolean)))]
+    ? [
+        "All",
+        ...Array.from(new Set(real.map((r) => r.category).filter(Boolean))),
+      ]
     : sampleCategories;
 
   const filteredRemakers =
@@ -1340,10 +1348,7 @@ export default function ReMakerDiscover() {
                       {maker.description}
                     </p>
 
-                    <a
-                      href="/remakers"
-                      className="remaker-card-link"
-                    >
+                    <a href="/remakers" className="remaker-card-link">
                       View studio
                       <span className="material-symbols-outlined">
                         arrow_forward

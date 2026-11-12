@@ -20,7 +20,18 @@ export default function UserTicketDetails() {
   const { toast, show } = useToast();
   const [text, setText] = useState("");
 
-  if (!ticket) return <div className="dn"><EmptyState icon={LifeBuoy} title="Ticket not found" text="Check your tickets list." actionLabel="My tickets" to="/user-help/tickets" /></div>;
+  if (!ticket)
+    return (
+      <div className="dn">
+        <EmptyState
+          icon={LifeBuoy}
+          title="Ticket not found"
+          text="Check your tickets list."
+          actionLabel="My tickets"
+          to="/user-help/tickets"
+        />
+      </div>
+    );
 
   const idx = STEPS.indexOf(ticket.status);
   const send = (e) => {
@@ -33,16 +44,41 @@ export default function UserTicketDetails() {
 
   return (
     <div className="dn hp">
-      <Crumbs items={[{ label: "Help", to: "/user-help" }, { label: "My tickets", to: "/user-help/tickets" }, { label: ticket.id }]} />
+      <Crumbs
+        items={[
+          { label: "Help", to: "/user-help" },
+          { label: "My tickets", to: "/user-help/tickets" },
+          { label: ticket.id },
+        ]}
+      />
 
       <header className="uhp-head row">
         <div>
-          <div className="uhp-ticket-top"><b>{ticket.id}</b><TicketBadge status={ticket.status} />{ticket.orderId && <Link to={`/user-orders/${ticket.orderId}`} className="dn-chip">{ticket.orderId}</Link>}</div>
+          <div className="uhp-ticket-top">
+            <b>{ticket.id}</b>
+            <TicketBadge status={ticket.status} />
+            {ticket.orderId && (
+              <Link to={`/user-orders/${ticket.orderId}`} className="dn-chip">
+                {ticket.orderId}
+              </Link>
+            )}
+          </div>
           <h1>{ticket.subject}</h1>
-          <p className="dn-muted">{ticket.category} · opened {formatDateTime(ticket.createdAt)}</p>
+          <p className="dn-muted">
+            {ticket.category} · opened {formatDateTime(ticket.createdAt)}
+          </p>
         </div>
         {ticket.status !== "Resolved" && (
-          <button type="button" className="dn-btn dn-btn--ghost" onClick={() => { closeTicket(ticket.id); show("Ticket marked as resolved."); }}><CheckCircle2 size={16} /> Mark as resolved</button>
+          <button
+            type="button"
+            className="dn-btn dn-btn--ghost"
+            onClick={() => {
+              closeTicket(ticket.id);
+              show("Ticket marked as resolved.");
+            }}
+          >
+            <CheckCircle2 size={16} /> Mark as resolved
+          </button>
         )}
       </header>
 
@@ -50,7 +86,14 @@ export default function UserTicketDetails() {
         <ol className="uhp-steps">
           {STEPS.map((s, i) => (
             <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
-              <span>{i < idx || ticket.status === "Resolved" ? <Check size={14} /> : i + 1}</span><b>{s}</b>
+              <span>
+                {i < idx || ticket.status === "Resolved" ? (
+                  <Check size={14} />
+                ) : (
+                  i + 1
+                )}
+              </span>
+              <b>{s}</b>
             </li>
           ))}
         </ol>
@@ -59,17 +102,41 @@ export default function UserTicketDetails() {
       <section className="dn-card uhp-thread">
         {ticket.messages.map((m) => (
           <article key={m.id} className={`uhp-msg ${m.from}`}>
-            <span className="uhp-msg-av">{m.from === "user" ? "You" : "RO"}</span>
+            <span className="uhp-msg-av">
+              {m.from === "user" ? "You" : "RO"}
+            </span>
             <div>
-              <header><strong>{m.from === "user" ? "You" : "ReOrbit support"}</strong><time>{formatDateTime(m.at)}</time></header>
+              <header>
+                <strong>{m.from === "user" ? "You" : "ReOrbit support"}</strong>
+                <time>{formatDateTime(m.at)}</time>
+              </header>
               <p>{m.text}</p>
             </div>
           </article>
         ))}
 
         <form className="uhp-reply" onSubmit={send}>
-          <textarea className="dn-textarea" style={{ minHeight: 84 }} value={text} maxLength={600} onChange={(e) => setText(e.target.value)} placeholder={ticket.status === "Resolved" ? "Reply to reopen this ticket…" : "Write a reply…"} aria-label="Your reply" />
-          <button type="submit" className="dn-btn" disabled={text.trim().length < 2}><Send size={15} /> {ticket.status === "Resolved" ? "Reopen & send" : "Send reply"}</button>
+          <textarea
+            className="dn-textarea"
+            style={{ minHeight: 84 }}
+            value={text}
+            maxLength={600}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={
+              ticket.status === "Resolved"
+                ? "Reply to reopen this ticket…"
+                : "Write a reply…"
+            }
+            aria-label="Your reply"
+          />
+          <button
+            type="submit"
+            className="dn-btn"
+            disabled={text.trim().length < 2}
+          >
+            <Send size={15} />{" "}
+            {ticket.status === "Resolved" ? "Reopen & send" : "Send reply"}
+          </button>
         </form>
       </section>
       {toast}

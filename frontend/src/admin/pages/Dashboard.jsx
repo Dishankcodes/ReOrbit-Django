@@ -229,9 +229,7 @@ export default function AdminDashboard() {
   })();
 
   const access = useAccess();
-  const firstName = (access.me?.name || adminName)
-    .trim()
-    .split(/\s+/)[0];
+  const firstName = (access.me?.name || adminName).trim().split(/\s+/)[0];
 
   const report = useReport("6m");
   const users = useUsers();

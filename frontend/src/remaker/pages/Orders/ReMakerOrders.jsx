@@ -75,7 +75,11 @@ export default function ReMakerOrders() {
               src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
               alt=""
             />
-            <img className="b" src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img
+              className="b"
+              src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
           </div>
           <h2>You haven&apos;t bought anything yet</h2>
           <p>

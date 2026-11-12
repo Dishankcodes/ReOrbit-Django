@@ -74,7 +74,11 @@ export default function UserListingDetails() {
   }, [location.state, announced, show]);
 
   if (!listing && !listingsStatus.loaded && !listingsStatus.error) {
-    return <div className="dn"><PageLoader label="Loading your listing…" /></div>;
+    return (
+      <div className="dn">
+        <PageLoader label="Loading your listing…" />
+      </div>
+    );
   }
 
   if (!listing) {
@@ -93,11 +97,7 @@ export default function UserListingDetails() {
 
   const { status } = listing;
   const meta = LISTING_STATUS[status];
-  const editable = [
-    "Draft",
-    "Withdrawn",
-    "Live",
-  ].includes(status);
+  const editable = ["Draft", "Withdrawn", "Live"].includes(status);
   const pickup = PICKUP_OPTIONS.find((o) => o.id === listing.pickup);
 
   return (
@@ -171,25 +171,31 @@ export default function UserListingDetails() {
           <AlertTriangle size={20} />
           <div>
             <strong>ReOrbit turned this listing off</strong>
-            {listing.adminDisabled.reason} Buyers can't see it until the team turns it back on.{" "}
+            {listing.adminDisabled.reason} Buyers can't see it until the team
+            turns it back on.{" "}
             <Link to="/user-help/contact" className="dn-link">
               Contact support →
             </Link>
           </div>
         </div>
       )}
-      {listing.suggestedPrice != null && ["Live", "Draft"].includes(status) && listing.suggestedPrice !== listing.price && (
-        <div className="dn-banner dn-banner--warn usl-banner">
-          <Tag size={20} />
-          <div>
-            <strong>ReOrbit suggests {formatPrice(listing.suggestedPrice)}</strong>
-            {listing.suggestedMessage || "Our team thinks this price will help it sell."}{" "}
-            <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
-              Change the price →
-            </Link>
+      {listing.suggestedPrice != null &&
+        ["Live", "Draft"].includes(status) &&
+        listing.suggestedPrice !== listing.price && (
+          <div className="dn-banner dn-banner--warn usl-banner">
+            <Tag size={20} />
+            <div>
+              <strong>
+                ReOrbit suggests {formatPrice(listing.suggestedPrice)}
+              </strong>
+              {listing.suggestedMessage ||
+                "Our team thinks this price will help it sell."}{" "}
+              <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
+                Change the price →
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       {status === "Live" && (
         <div className="dn-banner usl-banner">
           <CheckCircle2 size={20} />
@@ -411,7 +417,10 @@ export default function UserListingDetails() {
           onConfirm={() => {
             deleteListing(listing.id)
               .then(() => navigate("/user-sell", { replace: true }))
-              .catch((e) => { setConfirm(null); show(e.message || "Could not delete."); });
+              .catch((e) => {
+                setConfirm(null);
+                show(e.message || "Could not delete.");
+              });
           }}
         >
           <p>This permanently removes {listing.id}. It can't be undone.</p>

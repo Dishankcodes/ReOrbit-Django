@@ -16,12 +16,13 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  MATERIAL_SUGGESTIONS,
-  formatPrice,
-} from "../data/remakerProducts";
+import { MATERIAL_SUGGESTIONS, formatPrice } from "../data/remakerProducts";
 
-import { useProductCategories, saveProduct, PICKUP_OPTIONS } from "../data/productsStore";
+import {
+  useProductCategories,
+  saveProduct,
+  PICKUP_OPTIONS,
+} from "../data/productsStore";
 import { useOrders as useLiveOrders } from "../../user/data/ordersStore";
 import { formatDate } from "../data/ordersStore";
 
@@ -42,7 +43,12 @@ function buildInitial(product) {
   const photos = Array(MAX_PHOTOS).fill(null);
 
   (product?.images || []).slice(0, MAX_PHOTOS).forEach((url, index) => {
-    photos[index] = { id: `existing-${index}`, url, file: null, serverId: product.imageRows?.[index]?.id };
+    photos[index] = {
+      id: `existing-${index}`,
+      url,
+      file: null,
+      serverId: product.imageRows?.[index]?.id,
+    };
   });
 
   return {
@@ -74,9 +80,13 @@ export default function ProductForm({ mode = "add", product = null }) {
   const isEdit = mode === "edit";
 
   const serverCategories = useProductCategories();
-  const categoryNames = useMemo(() => serverCategories.map((c) => c.name), [serverCategories]);
+  const categoryNames = useMemo(
+    () => serverCategories.map((c) => c.name),
+    [serverCategories],
+  );
   const [saving, setSaving] = useState(false);
-  const createdId = useRef(null); /* draft id created by a save that later failed */
+  const createdId =
+    useRef(null); /* draft id created by a save that later failed */
   const hold = product?.hold || null; // set when ReOrbit switched the product off
   const suggested = null;
 
@@ -119,10 +129,7 @@ export default function ProductForm({ mode = "add", product = null }) {
      --------------------------------------------------------- */
 
   const errors = {
-    photos:
-      photoCount < MIN_PHOTOS
-        ? "Add at least one photo."
-        : "",
+    photos: photoCount < MIN_PHOTOS ? "Add at least one photo." : "",
     title:
       values.title.trim().length < 5
         ? "Give your product a title of at least 5 characters."
@@ -345,13 +352,20 @@ export default function ProductForm({ mode = "add", product = null }) {
     try {
       await saveProduct(values, {
         id: product?.id || createdId.current,
-        onCreated: (newId) => { createdId.current = newId; },
+        onCreated: (newId) => {
+          createdId.current = newId;
+        },
         ...options,
       });
       flash("success", okText, true);
     } catch (err) {
       const f = err.errors ? Object.values(err.errors)[0] : null;
-      flash("error", (Array.isArray(f) ? f[0] : f) || err.message || "Could not save the product.");
+      flash(
+        "error",
+        (Array.isArray(f) ? f[0] : f) ||
+          err.message ||
+          "Could not save the product.",
+      );
     } finally {
       setSaving(false);
     }
@@ -368,7 +382,10 @@ export default function ProductForm({ mode = "add", product = null }) {
       return;
     }
 
-    persist({ publish: true }, isEdit ? "Changes saved." : "Product published.");
+    persist(
+      { publish: true },
+      isEdit ? "Changes saved." : "Product published.",
+    );
   };
 
   const handleSaveEdit = () => {
@@ -407,7 +424,13 @@ export default function ProductForm({ mode = "add", product = null }) {
     () =>
       myOrders
         .filter((o) => o.status === "Delivered")
-        .flatMap((o) => (o.items || []).map((i) => ({ id: i.id, title: i.title, bought: formatDate(o.created_at) }))),
+        .flatMap((o) =>
+          (o.items || []).map((i) => ({
+            id: i.id,
+            title: i.title,
+            bought: formatDate(o.created_at),
+          })),
+        ),
     [myOrders],
   );
   const originItem = ORIGIN_ITEMS.find(
@@ -496,8 +519,8 @@ export default function ProductForm({ mode = "add", product = null }) {
               <div>
                 <h2>Photos</h2>
                 <p>
-                  Add at least one photo, up to {MAX_PHOTOS}. The first one
-                  is the cover buyers see in the marketplace.
+                  Add at least one photo, up to {MAX_PHOTOS}. The first one is
+                  the cover buyers see in the marketplace.
                 </p>
               </div>
               <span
@@ -795,12 +818,21 @@ export default function ProductForm({ mode = "add", product = null }) {
           <section className="rpf-card">
             <header className="rpf-card-head">
               <div>
-                <h2>How will it reach the buyer? <em>*</em></h2>
-                <p>Choose who will collect and manage delivery after a buyer places an order.</p>
+                <h2>
+                  How will it reach the buyer? <em>*</em>
+                </h2>
+                <p>
+                  Choose who will collect and manage delivery after a buyer
+                  places an order.
+                </p>
               </div>
             </header>
 
-            <div className="rpf-pickups" role="radiogroup" aria-label="Delivery method">
+            <div
+              className="rpf-pickups"
+              role="radiogroup"
+              aria-label="Delivery method"
+            >
               {PICKUP_OPTIONS.map((option) => (
                 <button
                   type="button"
@@ -868,7 +900,11 @@ export default function ProductForm({ mode = "add", product = null }) {
                         setField("originItemId", event.target.value)
                       }
                     >
-                      <option value="">{ORIGIN_ITEMS.length ? "Choose an item" : "You have not bought anything on ReOrbit yet"}</option>
+                      <option value="">
+                        {ORIGIN_ITEMS.length
+                          ? "Choose an item"
+                          : "You have not bought anything on ReOrbit yet"}
+                      </option>
                       {ORIGIN_ITEMS.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.title} (bought {item.bought})

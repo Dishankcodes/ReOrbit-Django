@@ -31,7 +31,8 @@ export default function AddressBook({ show }) {
       if (done) show(done);
     } catch (e) {
       setFieldErrors(e.errors || {});
-      if (!e.errors) show(e.message || "Something went wrong. Please try again.");
+      if (!e.errors)
+        show(e.message || "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -46,7 +47,8 @@ export default function AddressBook({ show }) {
           <h2>Addresses</h2>
 
           <small>
-            Your default address is filled in automatically at checkout and when you donate.
+            Your default address is filled in automatically at checkout and when
+            you donate.
           </small>
         </div>
 
@@ -61,10 +63,15 @@ export default function AddressBook({ show }) {
         )}
       </div>
 
-      {loading && addresses.length === 0 && <PageLoader label="Loading your addresses…" minHeight={120} />}
+      {loading && addresses.length === 0 && (
+        <PageLoader label="Loading your addresses…" minHeight={120} />
+      )}
       {error && addresses.length === 0 && (
         <p className="dn-error" role="alert">
-          {error} <button type="button" className="dn-link" onClick={reload}>Try again</button>
+          {error}{" "}
+          <button type="button" className="dn-link" onClick={reload}>
+            Try again
+          </button>
         </p>
       )}
       <div className="ust-addrs">
@@ -76,7 +83,9 @@ export default function AddressBook({ show }) {
               saving={saving}
               serverErrors={fieldErrors}
               onCancel={() => setMode(null)}
-              onSave={(v) => run(() => editAddress(a.id, v), "Address updated.")}
+              onSave={(v) =>
+                run(() => editAddress(a.id, v), "Address updated.")
+              }
             />
           ) : (
             <article key={a.id} className="ust-addr">
@@ -114,7 +123,12 @@ export default function AddressBook({ show }) {
                     type="button"
                     className="dn-btn dn-btn--soft dn-btn--sm"
                     disabled={saving}
-                    onClick={() => run(() => makeDefaultAddress(a.id), "Default address changed.")}
+                    onClick={() =>
+                      run(
+                        () => makeDefaultAddress(a.id),
+                        "Default address changed.",
+                      )
+                    }
                   >
                     Make default
                   </button>
@@ -165,4 +179,3 @@ export default function AddressBook({ show }) {
     </section>
   );
 }
-

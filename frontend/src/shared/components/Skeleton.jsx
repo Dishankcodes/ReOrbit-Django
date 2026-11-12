@@ -16,20 +16,36 @@ export function useLoading() {
 }
 
 export function Skel({ w = "100%", h = 14, r = 8, style }) {
-  return <span className="sk" style={{ width: w, height: h, borderRadius: r, ...style }} aria-hidden="true" />;
+  return (
+    <span
+      className="sk"
+      style={{ width: w, height: h, borderRadius: r, ...style }}
+      aria-hidden="true"
+    />
+  );
 }
 
 /* A grid of product-card skeletons */
 export function SkeletonCards({ count = 8, min = 250 }) {
   return (
-    <div className="sk-grid" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${min}px, 1fr))` }} role="status" aria-label="Loading">
+    <div
+      className="sk-grid"
+      style={{
+        gridTemplateColumns: `repeat(auto-fill, minmax(${min}px, 1fr))`,
+      }}
+      role="status"
+      aria-label="Loading"
+    >
       {Array.from({ length: count }).map((_, i) => (
         <div className="sk-card" key={i}>
           <Skel h={170} r={14} />
           <Skel w="40%" h={10} />
           <Skel w="85%" h={16} />
           <Skel w="60%" h={12} />
-          <div className="sk-row"><Skel w="35%" h={20} /><Skel w="28%" h={32} r={999} /></div>
+          <div className="sk-row">
+            <Skel w="35%" h={20} />
+            <Skel w="28%" h={32} r={999} />
+          </div>
         </div>
       ))}
     </div>
@@ -60,7 +76,11 @@ export function SkeletonTable({ rows = 8, cols = 5 }) {
   return (
     <div className="sk-table" role="status" aria-label="Loading">
       {Array.from({ length: rows }).map((_, r) => (
-        <div className="sk-tr" key={r} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        <div
+          className="sk-tr"
+          key={r}
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
           {Array.from({ length: cols }).map((__, c) => (
             <Skel key={c} w={c === 0 ? "60%" : "80%"} h={13} />
           ))}

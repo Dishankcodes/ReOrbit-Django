@@ -18,40 +18,87 @@ export default function UserBadgeDetail() {
   const { toast, show } = useToast();
   const badge = badges.find((b) => b.id === badgeId);
 
-  if (!badge) return <div className="dn"><EmptyState icon={Trophy} title="Badge not found" text="Check the badges page." actionLabel="All badges" to="/user-badges" /></div>;
+  if (!badge)
+    return (
+      <div className="dn">
+        <EmptyState
+          icon={Trophy}
+          title="Badge not found"
+          text="Check the badges page."
+          actionLabel="All badges"
+          to="/user-badges"
+        />
+      </div>
+    );
 
   const pct = Math.round((badge.value / badge.target) * 100);
   const share = async () => {
-    try { await navigator.clipboard.writeText(`I earned the ${badge.title} badge on ReOrbit!`); show("Copied. Paste it anywhere to share."); } catch { show("Couldn't copy."); }
+    try {
+      await navigator.clipboard.writeText(
+        `I earned the ${badge.title} badge on ReOrbit!`,
+      );
+      show("Copied. Paste it anywhere to share.");
+    } catch {
+      show("Couldn't copy.");
+    }
   };
 
   return (
     <div className="dn rw">
-      <Crumbs items={[{ label: "Badges", to: "/user-badges" }, { label: badge.title }]} />
-      <section className={`dn-card urw-bdetail ${badge.earned ? "is-earned" : ""}`}>
+      <Crumbs
+        items={[
+          { label: "Badges", to: "/user-badges" },
+          { label: badge.title },
+        ]}
+      />
+      <section
+        className={`dn-card urw-bdetail ${badge.earned ? "is-earned" : ""}`}
+      >
         <BadgeIcon name={badge.icon} earned={badge.earned} size={46} />
-        <span className="dn-eyebrow">{badge.earned ? "Badge earned" : "Badge in progress"}</span>
+        <span className="dn-eyebrow">
+          {badge.earned ? "Badge earned" : "Badge in progress"}
+        </span>
         <h1>{badge.title}</h1>
         <p>{badge.text}</p>
 
         <div className="urw-bdetail-progress">
-          <div><b>{pct}%</b><span>{badge.value.toLocaleString("en-IN")} of {badge.target.toLocaleString("en-IN")}</span></div>
-          <i className="urw-bar"><b style={{ width: `${pct}%` }} /></i>
+          <div>
+            <b>{pct}%</b>
+            <span>
+              {badge.value.toLocaleString("en-IN")} of{" "}
+              {badge.target.toLocaleString("en-IN")}
+            </span>
+          </div>
+          <i className="urw-bar">
+            <b style={{ width: `${pct}%` }} />
+          </i>
         </div>
 
         {badge.earned ? (
-          <p className="urw-bdetail-done"><CheckCircle2 size={18} /> Earned on {formatLongDate(badge.earnedAt)}</p>
+          <p className="urw-bdetail-done">
+            <CheckCircle2 size={18} /> Earned on{" "}
+            {formatLongDate(badge.earnedAt)}
+          </p>
         ) : (
-          <p className="urw-bdetail-left"><Award size={18} /> {(badge.target - badge.value).toLocaleString("en-IN")} to go</p>
+          <p className="urw-bdetail-left">
+            <Award size={18} />{" "}
+            {(badge.target - badge.value).toLocaleString("en-IN")} to go
+          </p>
         )}
 
         <div className="urw-done-actions">
           {badge.earned ? (
-            <button type="button" className="dn-btn" onClick={share}><Share2 size={15} /> Share badge</button>
+            <button type="button" className="dn-btn" onClick={share}>
+              <Share2 size={15} /> Share badge
+            </button>
           ) : (
-            <Link to={badge.hint.to} className="dn-btn">{badge.hint.label}</Link>
+            <Link to={badge.hint.to} className="dn-btn">
+              {badge.hint.label}
+            </Link>
           )}
-          <Link to="/user-badges" className="dn-btn dn-btn--ghost">All badges</Link>
+          <Link to="/user-badges" className="dn-btn dn-btn--ghost">
+            All badges
+          </Link>
         </div>
       </section>
       {toast}

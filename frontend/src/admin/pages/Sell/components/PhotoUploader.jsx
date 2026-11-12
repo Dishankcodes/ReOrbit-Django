@@ -150,7 +150,8 @@ export default function PhotoUploader({ images, onChange }) {
       />
       <div className="sl-photo-meta">
         <span className={count >= MIN_PHOTOS ? "ok" : ""}>
-          {count} of {MAX_PHOTOS} photos · {count >= MIN_PHOTOS ? "more are optional" : "add at least 1"}
+          {count} of {MAX_PHOTOS} photos ·{" "}
+          {count >= MIN_PHOTOS ? "more are optional" : "add at least 1"}
         </span>
         <div className="sl-photo-dots" aria-hidden="true">
           {Array.from({ length: MAX_PHOTOS }, (_, i) => (

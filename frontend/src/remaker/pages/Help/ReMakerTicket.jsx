@@ -22,8 +22,14 @@ export default function ReMakerTicket() {
       <section className="rk hlp">
         <div className="rk-empty">
           <div className="rk-empty-art" aria-hidden="true">
-            <img src="https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-            <img src="https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img
+              src="https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
+            <img
+              src="https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
           </div>
           <h3>We could not find that ticket</h3>
           <p>It may have been removed, or the link is out of date.</p>

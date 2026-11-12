@@ -5,7 +5,12 @@ import { startConversation } from "../../data/messagesStore";
 
 /* Opens (or starts) the chat with someone about something.
    target: { key, kind, name, subtitle, image, context } - see messagesStore.startConversation */
-export default function MessageButton({ target, label = "Message", className = "dn-btn dn-btn--ghost", iconSize = 15 }) {
+export default function MessageButton({
+  target,
+  label = "Message",
+  className = "dn-btn dn-btn--ghost",
+  iconSize = 15,
+}) {
   const navigate = useNavigate();
   return (
     <button
@@ -23,9 +28,16 @@ export const sellerChat = (item) => ({
   key: `${item.sellerType === "remaker" ? "remaker" : "seller"}:${item.sellerId}`,
   kind: item.sellerType === "remaker" ? "remaker" : "seller",
   name: item.seller,
-  subtitle: item.sellerType === "remaker" ? `ReMaker · ${item.city}` : `Seller · ${item.city}`,
+  subtitle:
+    item.sellerType === "remaker"
+      ? `ReMaker · ${item.city}`
+      : `Seller · ${item.city}`,
   image: item.sellerImage,
-  context: { label: `${item.title} · ₹${Number(item.price).toLocaleString("en-IN")}`, to: `/user-marketplace/product/${item.id}`, image: item.image },
+  context: {
+    label: `${item.title} · ₹${Number(item.price).toLocaleString("en-IN")}`,
+    to: `/user-marketplace/product/${item.id}`,
+    image: item.image,
+  },
 });
 
 export const personChat = (p, kind) => ({

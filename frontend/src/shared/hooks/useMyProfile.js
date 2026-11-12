@@ -92,7 +92,10 @@ export default function useMyProfile(type) {
     setBusy(true);
     try {
       const profile = await uploadImage(type, kind, file);
-      return mergeProfile(profile, kind === "cover" ? "Cover image updated." : "Profile photo updated.");
+      return mergeProfile(
+        profile,
+        kind === "cover" ? "Cover image updated." : "Profile photo updated.",
+      );
     } catch (e) {
       return { ok: false, message: e.errors?.image?.[0] || e.message };
     } finally {
@@ -104,7 +107,10 @@ export default function useMyProfile(type) {
     setBusy(true);
     try {
       const profile = await removeImage(type, kind);
-      return mergeProfile(profile, kind === "cover" ? "Cover image removed." : "Profile photo removed.");
+      return mergeProfile(
+        profile,
+        kind === "cover" ? "Cover image removed." : "Profile photo removed.",
+      );
     } catch (e) {
       return { ok: false, message: e.message };
     } finally {
@@ -112,5 +118,14 @@ export default function useMyProfile(type) {
     }
   };
 
-  return { ...state, loading, error, busy, reload: load, save, setImage, clearImage };
+  return {
+    ...state,
+    loading,
+    error,
+    busy,
+    reload: load,
+    save,
+    setImage,
+    clearImage,
+  };
 }

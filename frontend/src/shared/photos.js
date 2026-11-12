@@ -1,7 +1,8 @@
 /* Product photos (free to use, from Pexels). Each subject has a few different
    pictures so two listings of the same kind don't look identical.
    Backend later: photos come from uploads; this is only the demo set. */
-const px = (id) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1000`;
+const px = (id) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1000`;
 
 export const PHOTO_BANK = {
   cabinet: [177143, 5824819, 5825540, 8134812],
@@ -33,11 +34,23 @@ const RULES = [
   [/textile|cushion|pillow|quilt|fabric|rug/i, "textile"],
 ];
 
-const hash = (s) => [...String(s)].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7);
+const hash = (s) =>
+  [...String(s)].reduce(
+    (h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0,
+    7,
+  );
 
 export function photoKey(text = "", category = "") {
-  const hit = RULES.find(([re]) => re.test(text)) || RULES.find(([re]) => re.test(category));
-  return hit ? hit[1] : category === "Books" ? "books" : category === "Clothing" || category === "Fashion" ? "jacket" : "cabinet";
+  const hit =
+    RULES.find(([re]) => re.test(text)) ||
+    RULES.find(([re]) => re.test(category));
+  return hit
+    ? hit[1]
+    : category === "Books"
+      ? "books"
+      : category === "Clothing" || category === "Fashion"
+        ? "jacket"
+        : "cabinet";
 }
 
 export function photoFor(text = "", category = "", salt = "") {

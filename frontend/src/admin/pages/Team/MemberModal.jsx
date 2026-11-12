@@ -127,7 +127,9 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
         phone: f.phone?.[0],
         permissions: f.modules?.[0],
       });
-      setFormError(Object.keys(f).length ? "" : err.message || "Could not save.");
+      setFormError(
+        Object.keys(f).length ? "" : err.message || "Could not save.",
+      );
     } finally {
       setSaving(false);
     }
@@ -167,7 +169,8 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           <p className="ad-modal-text">
             They’ll be a <b>{done.member.roleLabel}</b> with access to{" "}
             {summarize(done.member.permissions).total} modules. Share these
-            sign-in details with them. No email is sent, and this password is shown only once.
+            sign-in details with them. No email is sent, and this password is
+            shown only once.
           </p>
           <dl className="tm-cred">
             <div>
@@ -323,9 +326,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
             </button>
           </div>
         </div>
-        {err.permissions && (
-          <p className="ad-modal-error">{err.permissions}</p>
-        )}
+        {err.permissions && <p className="ad-modal-error">{err.permissions}</p>}
         <div className="tm-matrix">
           {GROUPS.map((g) => (
             <div key={g} className="tm-mgroup">
@@ -380,7 +381,11 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           >
             Cancel
           </button>
-          <button type="submit" className="ad-btn ad-btn-primary" disabled={saving}>
+          <button
+            type="submit"
+            className="ad-btn ad-btn-primary"
+            disabled={saving}
+          >
             {editing ? (
               <>
                 <Save size={15} />

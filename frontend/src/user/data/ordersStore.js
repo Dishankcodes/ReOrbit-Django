@@ -86,9 +86,17 @@ export const CANCEL_REASONS = [
   "Other",
 ];
 
-
 /* ---------- server order -> screen order ---------- */
-const STAGE_OF = { Pending_Payment: 0, Confirmed: 1, Packed: 2, Shipped: 3, Delivery_Failed: 3, Returned_To_Origin: 0, Delivered: 5, Cancelled: 0 };
+const STAGE_OF = {
+  Pending_Payment: 0,
+  Confirmed: 1,
+  Packed: 2,
+  Shipped: 3,
+  Delivery_Failed: 3,
+  Returned_To_Origin: 0,
+  Delivered: 5,
+  Cancelled: 0,
+};
 
 /* what the buyer sees about money coming back: from the refund records */
 function refundOf(o) {
@@ -96,7 +104,10 @@ function refundOf(o) {
   if (!rows.length) return null;
   const total = rows.reduce((n, r) => n + r.amount, 0);
   const done = rows.every((r) => r.status === "Done");
-  const last = rows.map((r) => r.processed_at || r.created_at).sort().pop();
+  const last = rows
+    .map((r) => r.processed_at || r.created_at)
+    .sort()
+    .pop();
   return { amount: total, status: done ? "Refunded" : "Processing", at: last };
 }
 
@@ -133,7 +144,9 @@ function adapt(o, reviews) {
     paymentId: o.payment.id,
     awaitingPayment: o.status === "Pending_Payment",
     canCancel: !!o.can_cancel,
-    courier: o.courier ? { name: o.courier.name, awb: o.courier.tracking_no, phone: "" } : null,
+    courier: o.courier
+      ? { name: o.courier.name, awb: o.courier.tracking_no, phone: "" }
+      : null,
     eta: null,
     deliveredAt: o.delivered_at || null,
     review: reviews[o.id] || null,
@@ -149,27 +162,43 @@ function adapt(o, reviews) {
     returnUntil: o.return_until || null,
     codCollected: o.payment.status === "COD_Collected",
     address: {
-      name: o.address?.name, line: [o.address?.line1, o.address?.line2].filter(Boolean).join(", "),
-      city: o.address?.city, state: o.address?.state, pincode: o.address?.pincode, phone: o.address?.phone,
+      name: o.address?.name,
+      line: [o.address?.line1, o.address?.line2].filter(Boolean).join(", "),
+      city: o.address?.city,
+      state: o.address?.state,
+      pincode: o.address?.pincode,
+      phone: o.address?.phone,
     },
     seller: o.seller,
     item: {
-      id: first.id, title: more > 0 ? `${first.title} + ${more} more` : first.title || "Order",
-      image: first.cover || "", category: "", summary: "", condition: "", label: "",
+      id: first.id,
+      title:
+        more > 0 ? `${first.title} + ${more} more` : first.title || "Order",
+      image: first.cover || "",
+      category: "",
+      summary: "",
+      condition: "",
+      label: "",
     },
   };
 }
 
 /* ---------- store ---------- */
-let raw = [];            /* server orders, newest first */
+let raw = []; /* server orders, newest first */
 let reviews = {};
 let status = { loaded: false, loading: false, error: "", at: 0 };
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const emit = () => listeners.forEach((l) => l());
 let version = 0;
 const getVersion = () => version;
-const bump = () => { version += 1; emit(); };
+const bump = () => {
+  version += 1;
+  emit();
+};
 
 const FRESH_MS = 30000;
 
@@ -182,14 +211,24 @@ export async function loadOrders(force = false) {
     let page = await buyerOrdersApi.list("?page_size=100");
     let rows = page.results;
     for (let p = 2; p <= Math.min(page.total_pages, 5); p += 1) {
-      rows = rows.concat((await buyerOrdersApi.list(`?page_size=100&page=${p}`)).results);
+      rows = rows.concat(
+        (await buyerOrdersApi.list(`?page_size=100&page=${p}`)).results,
+      );
     }
     /* keep the tracking events we already fetched for an order */
     const had = new Map(raw.map((o) => [o.id, o]));
-    raw = rows.map((o) => (had.get(o.id)?.events && !o.events ? { ...o, events: had.get(o.id).events } : o));
+    raw = rows.map((o) =>
+      had.get(o.id)?.events && !o.events
+        ? { ...o, events: had.get(o.id).events }
+        : o,
+    );
     status = { loaded: true, loading: false, error: "", at: Date.now() };
   } catch (e) {
-    status = { ...status, loading: false, error: e.message || "Could not load your orders." };
+    status = {
+      ...status,
+      loading: false,
+      error: e.message || "Could not load your orders.",
+    };
   }
   bump();
 }
@@ -201,7 +240,9 @@ export function addPlacedOrders(apiOrders) {
 }
 
 function replaceOrder(o) {
-  raw = raw.some((x) => x.id === o.id) ? raw.map((x) => (x.id === o.id ? o : x)) : [o, ...raw];
+  raw = raw.some((x) => x.id === o.id)
+    ? raw.map((x) => (x.id === o.id ? o : x))
+    : [o, ...raw];
   bump();
 }
 
@@ -221,7 +262,12 @@ export async function returnAction(id, action) {
   replaceOrder(await buyerOrdersApi.returnAction(id, action));
 }
 
-export const clearOrders = () => { raw = []; reviews = {}; status = { loaded: false, loading: false, error: "", at: 0 }; bump(); };
+export const clearOrders = () => {
+  raw = [];
+  reviews = {};
+  status = { loaded: false, loading: false, error: "", at: 0 };
+  bump();
+};
 
 /* the review also shows on the seller / ReMaker profile (demo profiles only) */
 export function reviewOrder(id, review) {
@@ -230,7 +276,9 @@ export function reviewOrder(id, review) {
   const item = o && getItemById(o.items?.[0]?.id);
   if (item?.sellerId) {
     addSellerReview(item.sellerId, {
-      id: `order-${id}`, name: "Aarav", rating: review.rating,
+      id: `order-${id}`,
+      name: "Aarav",
+      rating: review.rating,
       text: review.text || "Rated this order without a written review.",
       date: String(review.at || new Date().toISOString()).slice(0, 10),
     });
@@ -241,7 +289,8 @@ export function reviewOrder(id, review) {
 /* ---------- derived ---------- */
 export const canCancel = (o) => !!o.canCancel;
 export const orderTotal = (o) => o.total;
-export const isActive = (o) => !o.cancelled && o.stage < 5 && o.apiStatus !== "Returned_To_Origin";
+export const isActive = (o) =>
+  !o.cancelled && o.stage < 5 && o.apiStatus !== "Returned_To_Origin";
 
 /* ReMaker sellers have their own profile route */
 export const sellerPath = (item) =>
@@ -251,12 +300,18 @@ export const sellerPath = (item) =>
 
 function decorate(o) {
   const order = adapt(o, reviews);
-  const seller = o.seller?.type === "platform" ? { name: "ReOrbit" } : { name: o.seller?.name || "Seller", username: o.seller?.username };
+  const seller =
+    o.seller?.type === "platform"
+      ? { name: "ReOrbit" }
+      : { name: o.seller?.name || "Seller", username: o.seller?.username };
   return {
     ...order,
     seller,
     sellerIsRemaker: o.seller?.type === "remaker",
-    sellerPath: o.seller?.type === "remaker" && o.seller.id ? `/user-marketplace/remaker/${o.seller.id}` : null,
+    sellerPath:
+      o.seller?.type === "remaker" && o.seller.id
+        ? `/user-marketplace/remaker/${o.seller.id}`
+        : null,
     status: statusOf(order),
   };
 }
@@ -264,7 +319,9 @@ function decorate(o) {
 /* Orders list. Loads once, then at most every 30 s while screens are open. */
 export function useOrders() {
   useSyncExternalStore(subscribe, getVersion, getVersion);
-  useEffect(() => { loadOrders(); }, []);
+  useEffect(() => {
+    loadOrders();
+  }, []);
   return useMemo(() => raw.map(decorate), [version]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
@@ -276,7 +333,10 @@ export function useOrdersStatus() {
 /* One order, with its tracking history fetched on demand. */
 export function useOrder(id) {
   const list = useOrders();
-  const found = useMemo(() => list.find((o) => o.id === id) || null, [list, id]);
+  const found = useMemo(
+    () => list.find((o) => o.id === id) || null,
+    [list, id],
+  );
   const needsEvents = !found || !found.eventsLoaded;
   useEffect(() => {
     if (id && needsEvents) refreshOrder(id).catch(() => {});

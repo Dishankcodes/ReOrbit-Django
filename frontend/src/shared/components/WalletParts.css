@@ -1,21 +1,87 @@
 /* Wallet pieces that the earlier earnings styles don't cover. Colours come from the page. */
-.wlt-ledger { list-style: none; margin: 0; padding: 0; display: grid; }
-.wlt-ledger li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(127,127,127,.18); }
-.wlt-ledger li:last-child { border-bottom: 0; }
-.wlt-l-main { display: grid; gap: 2px; min-width: 0; }
-.wlt-l-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wlt-l-main small { opacity: .7; }
-.wlt-amt { font-weight: 700; font-variant-numeric: tabular-nums; }
-.wlt-amt.in { color: #0b6b3a; }
-.wlt-amt.out { color: #9a1f1f; }
-.wlt-more { margin: 14px auto 0; display: block; }
-.wlt-error { color: #b3261e; margin: 10px 0; font-size: 14px; }
-.wlt-hint { opacity: .7; margin: 6px 0 0; }
-.wlt-static { cursor: default; }
-.wlt-method { display: flex; gap: 8px; margin: 12px 0 4px; }
-.wlt-method button { flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(127,127,127,.4); background: none; font: inherit; font-weight: 600; cursor: pointer; color: inherit; }
-.wlt-method button.on { border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; }
-.sls-earn.bad { background: #f9dcdc; color: #9a1f1f; }
+.wlt-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.wlt-ledger li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+}
+.wlt-ledger li:last-child {
+  border-bottom: 0;
+}
+.wlt-l-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.wlt-l-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wlt-l-main small {
+  opacity: 0.7;
+}
+.wlt-amt {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.wlt-amt.in {
+  color: #0b6b3a;
+}
+.wlt-amt.out {
+  color: #9a1f1f;
+}
+.wlt-more {
+  margin: 14px auto 0;
+  display: block;
+}
+.wlt-error {
+  color: #b3261e;
+  margin: 10px 0;
+  font-size: 14px;
+}
+.wlt-hint {
+  opacity: 0.7;
+  margin: 6px 0 0;
+}
+.wlt-static {
+  cursor: default;
+}
+.wlt-method {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+.wlt-method button {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+.wlt-method button.on {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.sls-earn.bad {
+  background: #f9dcdc;
+  color: #9a1f1f;
+}
 
 /* On the member side the hero uses the member green, not the ReMaker maroon. */
-.usl-wallet { --rp-maroon: #1e3d2f; --rp-maroon-soft: #2a4d3a; }
+.usl-wallet {
+  --rp-maroon: #1e3d2f;
+  --rp-maroon-soft: #2a4d3a;
+}

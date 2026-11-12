@@ -14,7 +14,11 @@ import {
   SearchX,
 } from "lucide-react";
 
-import { useUsers, useUsersStatus, changeUserStatus } from "../../data/realAccounts";
+import {
+  useUsers,
+  useUsersStatus,
+  changeUserStatus,
+} from "../../data/realAccounts";
 import { ACTION_LIST, canApply } from "../../data/userActions";
 import { formatDate, timeAgo } from "../../utils/format";
 
@@ -354,7 +358,11 @@ export default function AdminUsers() {
             title="Could not load userss"
             text={error}
             action={
-              <button type="button" className="ad-btn ad-btn-primary ad-btn-sm" onClick={reload}>
+              <button
+                type="button"
+                className="ad-btn ad-btn-primary ad-btn-sm"
+                onClick={reload}
+              >
                 Try again
               </button>
             }
@@ -363,7 +371,10 @@ export default function AdminUsers() {
 
         {loading && <SkeletonTable rows={8} cols={6} />}
 
-        <div className="au-table-wrap" style={loading ? { display: "none" } : undefined}>
+        <div
+          className="au-table-wrap"
+          style={loading ? { display: "none" } : undefined}
+        >
           <table className="au-table">
             <thead>
               <tr>

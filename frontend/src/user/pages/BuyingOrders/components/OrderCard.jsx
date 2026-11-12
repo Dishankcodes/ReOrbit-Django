@@ -25,7 +25,12 @@ export function etaLine(order) {
   if (order.stage >= 5)
     return `Delivered on ${formatDate(order.deliveredAt || order.placedAt)}`;
   if (order.awaitingPayment) return "Waiting for payment";
-  if (!order.eta) return order.stage >= 3 ? "On its way" : order.stage === 2 ? "Packed, ships soon" : "Confirmed, being prepared";
+  if (!order.eta)
+    return order.stage >= 3
+      ? "On its way"
+      : order.stage === 2
+        ? "Packed, ships soon"
+        : "Confirmed, being prepared";
   const day = relativeDay(order.eta);
   return day === "Today"
     ? "Arriving today"

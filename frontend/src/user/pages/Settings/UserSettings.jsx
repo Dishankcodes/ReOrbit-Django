@@ -27,13 +27,11 @@ import {
   useSettings,
 } from "../../data/settingsStore";
 
-import {
-} from "../../data/checkoutStore";
+import {} from "../../data/checkoutStore";
 
 import ConfirmModal from "../../components/ui/ConfirmModal";
 
 import useToast from "../../components/ui/useToast";
-
 
 import "../../css/shared/ui-base.css";
 
@@ -618,7 +616,8 @@ export default function UserSettings() {
 
   /* addresses moved to their own page; keep old links working */
   useEffect(() => {
-    if (params.get("section") === "addresses") navigate("/user-addresses", { replace: true });
+    if (params.get("section") === "addresses")
+      navigate("/user-addresses", { replace: true });
   }, [params, navigate]);
 
   const body = useMemo(() => {

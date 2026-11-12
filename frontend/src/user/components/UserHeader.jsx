@@ -222,13 +222,25 @@ function getMorePages(pathname) {
 /* Titles for marketplace detail pages, chats and other nested routes. */
 function getBrowsePage(pathname) {
   if (pathname.startsWith("/user-marketplace/product/"))
-    return { title: "Product Details", subtitle: "Look closely, then give it a new home." };
+    return {
+      title: "Product Details",
+      subtitle: "Look closely, then give it a new home.",
+    };
   if (pathname.startsWith("/user-marketplace/seller/"))
-    return { title: "Seller Profile", subtitle: "Their listings, reviews and story." };
+    return {
+      title: "Seller Profile",
+      subtitle: "Their listings, reviews and story.",
+    };
   if (pathname.startsWith("/user-marketplace/remaker/"))
-    return { title: "ReMaker Profile", subtitle: "Studio, portfolio and pieces for sale." };
+    return {
+      title: "ReMaker Profile",
+      subtitle: "Studio, portfolio and pieces for sale.",
+    };
   if (pathname.startsWith("/user-messages/"))
-    return { title: "Messages", subtitle: "Chat with sellers, buyers, ReMakers and ReOrbit." };
+    return {
+      title: "Messages",
+      subtitle: "Chat with sellers, buyers, ReMakers and ReOrbit.",
+    };
   return null;
 }
 
@@ -517,7 +529,13 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
             }}
             aria-label="Open profile menu"
           >
-            <div className="user-header-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
+            <div className="user-header-avatar">
+              {mediaUrl(user?.profile?.profile_image) ? (
+                <img src={mediaUrl(user?.profile?.profile_image)} alt="" />
+              ) : (
+                initials
+              )}
+            </div>
 
             <div className="user-header-user-info">
               <strong>{userName}</strong>
@@ -534,7 +552,13 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
           {profileOpen && (
             <div className="user-dropdown user-profile-dropdown">
               <div className="user-profile-dropdown-user">
-                <div className="user-profile-dropdown-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
+                <div className="user-profile-dropdown-avatar">
+                  {mediaUrl(user?.profile?.profile_image) ? (
+                    <img src={mediaUrl(user?.profile?.profile_image)} alt="" />
+                  ) : (
+                    initials
+                  )}
+                </div>
 
                 <div>
                   <strong>{userName}</strong>

@@ -169,12 +169,18 @@ export default function ReMakerJobs() {
       )}
 
       {loading ? (
-          <SkeletonRows count={5} />
-        ) : visible.length === 0 ? (
+        <SkeletonRows count={5} />
+      ) : visible.length === 0 ? (
         <div className="rk-empty">
           <div className="rk-empty-art" aria-hidden="true">
-            <img src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-            <img src="https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img
+              src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
+            <img
+              src="https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
           </div>
           <h3>
             {tab === "open"

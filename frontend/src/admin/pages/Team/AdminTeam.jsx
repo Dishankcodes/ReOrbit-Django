@@ -178,7 +178,11 @@ function Credentials({ member, password, onClose }) {
             <Copy size={15} />
             {copied ? "Copied" : "Copy details"}
           </button>
-          <button type="button" className="ad-btn ad-btn-primary" onClick={onClose}>
+          <button
+            type="button"
+            className="ad-btn ad-btn-primary"
+            onClick={onClose}
+          >
             Done
           </button>
         </div>
@@ -691,7 +695,10 @@ export default function AdminTeam() {
             if (kind === "remove") {
               run(() => removeMember(m.id), `${m.name} was removed.`);
             } else {
-              run(() => setMemberStatus(m.id, "Suspended"), `${m.name} was suspended.`);
+              run(
+                () => setMemberStatus(m.id, "Suspended"),
+                `${m.name} was suspended.`,
+              );
             }
           }}
         />

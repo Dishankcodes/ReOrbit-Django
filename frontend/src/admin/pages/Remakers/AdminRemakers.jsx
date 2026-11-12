@@ -454,7 +454,11 @@ export default function AdminRemakers() {
             title="Could not load ReMakerss"
             text={error}
             action={
-              <button type="button" className="ad-btn ad-btn-primary ad-btn-sm" onClick={reload}>
+              <button
+                type="button"
+                className="ad-btn ad-btn-primary ad-btn-sm"
+                onClick={reload}
+              >
                 Try again
               </button>
             }

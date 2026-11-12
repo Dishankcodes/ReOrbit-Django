@@ -41,7 +41,11 @@ export default function CategoriesTab({ canEdit, by, toast }) {
       if (okText) toast(okText);
       return true;
     } catch (e) {
-      toast(e.errors?.name?.[0] || e.message || "That did not work. Please try again.");
+      toast(
+        e.errors?.name?.[0] ||
+          e.message ||
+          "That did not work. Please try again.",
+      );
       return false;
     } finally {
       setBusy(false);
@@ -67,8 +71,14 @@ export default function CategoriesTab({ canEdit, by, toast }) {
 
   const save = async (values) => {
     const done = form.category
-      ? await run(() => updateCategory(form.category.id, values), `${form.category.name} was updated.`)
-      : await run(() => createCategory(values), `${values.name.trim()} was added.`);
+      ? await run(
+          () => updateCategory(form.category.id, values),
+          `${form.category.name} was updated.`,
+        )
+      : await run(
+          () => createCategory(values),
+          `${values.name.trim()} was added.`,
+        );
     if (done) setForm(null);
   };
   const menu = (c) => [
@@ -90,13 +100,20 @@ export default function CategoriesTab({ canEdit, by, toast }) {
                       onClick: () =>
                         c.usage.live > 0
                           ? setHiding(c)
-                          : run(() => setCategoryActive(c.id, false), `${c.name} is hidden.`),
+                          : run(
+                              () => setCategoryActive(c.id, false),
+                              `${c.name} is hidden.`,
+                            ),
                     }
                   : {
                       key: "show",
                       label: "Show to members",
                       icon: Eye,
-                      onClick: () => run(() => setCategoryActive(c.id, true), `${c.name} is visible again.`),
+                      onClick: () =>
+                        run(
+                          () => setCategoryActive(c.id, true),
+                          `${c.name} is visible again.`,
+                        ),
                     },
               ]
             : []),
@@ -228,7 +245,15 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         ) : (
           <EmptyState
             icon={cats.length ? SearchX : Tags}
-            title={cats.length ? "No category matches" : status === "loading" || status === "idle" ? "Loading categories" : status === "error" ? "Could not load categories" : "No categories yet"}
+            title={
+              cats.length
+                ? "No category matches"
+                : status === "loading" || status === "idle"
+                  ? "Loading categories"
+                  : status === "error"
+                    ? "Could not load categories"
+                    : "No categories yet"
+            }
             text={
               cats.length
                 ? "Try a different search."
@@ -266,7 +291,13 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         text="Nothing uses this category, so it can be removed safely. This cannot be undone."
         confirmLabel="Delete category"
         onConfirm={async () => {
-          if (await run(() => removeCategory(deleting.id), `${deleting.name} was deleted.`)) setDeleting(null);
+          if (
+            await run(
+              () => removeCategory(deleting.id),
+              `${deleting.name} was deleted.`,
+            )
+          )
+            setDeleting(null);
         }}
         onClose={() => setDeleting(null)}
       />
@@ -278,7 +309,13 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         confirmLabel="Hide category"
         text={`${hiding?.usage.live} live listing${hiding?.usage.live === 1 ? "" : "s"} stay on the marketplace. Members just cannot choose this category for new items.`}
         onConfirm={async () => {
-          if (await run(() => setCategoryActive(hiding.id, false), `${hiding.name} is hidden.`)) setHiding(null);
+          if (
+            await run(
+              () => setCategoryActive(hiding.id, false),
+              `${hiding.name} is hidden.`,
+            )
+          )
+            setHiding(null);
         }}
         onClose={() => setHiding(null)}
       />

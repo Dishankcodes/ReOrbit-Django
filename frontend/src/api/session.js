@@ -78,7 +78,10 @@ if (SESSION_CHANNEL) {
         write(s, keyFor("access", incomingType), message.access);
         write(s, keyFor("refresh", incomingType), message.refresh);
       }
-    } else if (message?.type === "logout" && message.account === currentPortal()) {
+    } else if (
+      message?.type === "logout" &&
+      message.account === currentPortal()
+    ) {
       clearSession({ broadcast: false });
       window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
     }
@@ -126,7 +129,9 @@ const remove = (store, key) => {
 
 /* The storage that currently holds this side's session (or null). */
 const activeStore = (type = currentPortal()) =>
-  stores().find((s) => read(s, keyFor("access", type)) || read(s, keyFor("refresh", type))) || null;
+  stores().find(
+    (s) => read(s, keyFor("access", type)) || read(s, keyFor("refresh", type)),
+  ) || null;
 
 /* One-time move of the old single-slot session into its side's slot. */
 (function migrateLegacy() {
@@ -143,7 +148,9 @@ const activeStore = (type = currentPortal()) =>
       if (id) write(s, keyFor("id", type), id);
       write(s, keyFor("type", type), type);
     }
-    [BASE.access, BASE.refresh, BASE.type, BASE.id].forEach((k) => remove(s, k));
+    [BASE.access, BASE.refresh, BASE.type, BASE.id].forEach((k) =>
+      remove(s, k),
+    );
   });
 })();
 
@@ -170,7 +177,9 @@ export function decodeToken(token) {
 /* "user" | "remaker" | "admin" | null: whose session this tab holds (its own side). */
 export const getAccountType = () => {
   const type = currentPortal();
-  const claim = decodeToken(getAccessToken(type) || getRefreshToken(type) || "");
+  const claim = decodeToken(
+    getAccessToken(type) || getRefreshToken(type) || "",
+  );
   return claim?.account_type || null;
 };
 
@@ -193,7 +202,13 @@ export const getAccount = (type = currentPortal()) => {
 /* Save a new session after login or registration.
    type: "user" | "remaker" | "admin", account: the object the API returned.
    Only that side's slot changes; the other sides stay signed in. */
-export function saveSession({ access, refresh, type, account, remember = true }) {
+export function saveSession({
+  access,
+  refresh,
+  type,
+  account,
+  remember = true,
+}) {
   const [primary, other] = remember
     ? [window.localStorage, window.sessionStorage]
     : [window.sessionStorage, window.localStorage];
@@ -215,7 +230,8 @@ export function updateTokens({ access, refresh }) {
   const s = activeStore(type) || window.localStorage;
   if (access) write(s, keyFor("access", type), access);
   if (refresh) write(s, keyFor("refresh", type), refresh);
-  if (access && refresh) SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
+  if (access && refresh)
+    SESSION_CHANNEL?.postMessage({ type: "tokens", access, refresh });
 }
 
 /* Update the cached account (for example after a profile edit). */
@@ -223,14 +239,16 @@ export const ACCOUNT_UPDATED_EVENT = "reorbit:account-updated";
 
 export function updateAccount(type, account) {
   const s = activeStore(type);
-  if (s && ACCOUNT_KEY[type]) write(s, ACCOUNT_KEY[type], JSON.stringify(account));
+  if (s && ACCOUNT_KEY[type])
+    write(s, ACCOUNT_KEY[type], JSON.stringify(account));
   window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
 }
 
 /* Sign out of THIS side only. */
 export function clearSession({ broadcast = true } = {}) {
   const type = currentPortal();
-  if (broadcast) SESSION_CHANNEL?.postMessage({ type: "logout", account: type });
+  if (broadcast)
+    SESSION_CHANNEL?.postMessage({ type: "logout", account: type });
   stores().forEach((s) => slotKeys(type).forEach((k) => remove(s, k)));
 }
 

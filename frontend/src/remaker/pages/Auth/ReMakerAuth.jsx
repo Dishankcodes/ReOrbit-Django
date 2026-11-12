@@ -110,7 +110,10 @@ export default function ReMakerAuth() {
         setEmail(data.email || "");
         // Suggest a username from the email; the person can change it.
         setUsername(
-          (data.email || "").split("@")[0].replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 30),
+          (data.email || "")
+            .split("@")[0]
+            .replace(/[^A-Za-z0-9_.-]/g, "")
+            .slice(0, 30),
         );
         setStep("google-username");
         return;
@@ -391,11 +394,11 @@ export default function ReMakerAuth() {
       }
 
       saveSession({
-          access: accessToken,
-          refresh: refreshToken,
-          type: "remaker",
-          account: remaker,
-        });
+        access: accessToken,
+        refresh: refreshToken,
+        type: "remaker",
+        account: remaker,
+      });
 
       setStep("confirm");
 
@@ -716,8 +719,8 @@ export default function ReMakerAuth() {
 
                   <p>
                     {email ? `Signed in with Google as ${email}. ` : ""}
-                    Your name comes from Google. Change it if you like, and
-                    pick the username people will see on your ReMaker profile.
+                    Your name comes from Google. Change it if you like, and pick
+                    the username people will see on your ReMaker profile.
                   </p>
                 </div>
 

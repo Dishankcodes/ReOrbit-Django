@@ -23,7 +23,10 @@ async function performRefresh() {
   try {
     const response = await fetch(`${API_BASE_URL}${REFRESH_PATH}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
       body: JSON.stringify({ refresh }),
     });
 

@@ -24,9 +24,9 @@ const loadCart = () => {
   try {
     const value = JSON.parse(window.localStorage.getItem(CART_KEY) || "[]");
     return Array.isArray(value)
-      /* Real products are not in the catalogue until the live marketplace has loaded,
+      ? /* Real products are not in the catalogue until the live marketplace has loaded,
          so keep every well-formed entry; the cart screens hide ones that stay unknown. */
-      ? value.filter((c) => c && c.id && Number(c.qty) >= 1)
+        value.filter((c) => c && c.id && Number(c.qty) >= 1)
       : [];
   } catch {
     return [];
@@ -225,7 +225,10 @@ export function useCheckoutLines() {
       .filter((l) => l && l.item.purchasable && l.qty > 0);
     return {
       source: checkout?.source || "cart",
-      loadingItems: (checkout ? checkout.lines : cart).length > 0 && !live.ready && lines.length === 0,
+      loadingItems:
+        (checkout ? checkout.lines : cart).length > 0 &&
+        !live.ready &&
+        lines.length === 0,
       ...priceLines(lines),
     };
   }, [checkout, cart, sold, live.version, live.ready]);

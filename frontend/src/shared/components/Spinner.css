@@ -1,4 +1,9 @@
-.ro-spin-wrap { display: inline-flex; align-items: center; gap: 10px; color: inherit; }
+.ro-spin-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+}
 .ro-spin {
   display: inline-block;
   box-sizing: border-box;
@@ -9,15 +14,54 @@
   opacity: 0.8;
   animation: ro-spin 0.7s linear infinite;
 }
-.ro-spin-label { font-size: 0.92rem; opacity: 0.75; }
-.ro-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ro-pageloader { display: flex; align-items: center; justify-content: center; width: 100%; color: var(--dn-p, #2a4d3a); }
-@keyframes ro-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ro-spin { animation-duration: 1.6s; } }
+.ro-spin-label {
+  font-size: 0.92rem;
+  opacity: 0.75;
+}
+.ro-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.ro-pageloader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: var(--dn-p, #2a4d3a);
+}
+@keyframes ro-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ro-spin {
+    animation-duration: 1.6s;
+  }
+}
 
 /* Page switch: the old page stays until the next one is ready (React transition), then the new
    page fades in. Opacity only, so nothing moves and no layout changes. */
-.ro-route { display: contents; }
-.ro-route > * { animation: ro-route-in .18s ease-out; }
-@keyframes ro-route-in { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .ro-route > * { animation: none; } }
+.ro-route {
+  display: contents;
+}
+.ro-route > * {
+  animation: ro-route-in 0.18s ease-out;
+}
+@keyframes ro-route-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ro-route > * {
+    animation: none;
+  }
+}

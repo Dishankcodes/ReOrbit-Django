@@ -10,10 +10,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 
-import {
-  PRODUCT_STATUS,
-  formatPrice,
-} from "../../data/remakerProducts";
+import { PRODUCT_STATUS, formatPrice } from "../../data/remakerProducts";
 
 import { useMyProducts, setProductActive } from "../../data/productsStore";
 
@@ -56,7 +53,8 @@ export default function ReMakerProducts() {
   }, [products]);
 
   const visible = products.filter((product) => {
-    const matchesFilter = filter === "all" || bucket(product, holdOf(product)) === filter;
+    const matchesFilter =
+      filter === "all" || bucket(product, holdOf(product)) === filter;
     const matchesQuery =
       !query ||
       product.title.toLowerCase().includes(query) ||
@@ -80,7 +78,11 @@ export default function ReMakerProducts() {
       {(error || saveError) && (
         <p className="rpl-hold" role="alert" style={{ margin: "0 0 14px" }}>
           {saveError || error}{" "}
-          {!saveError && <button type="button" onClick={retry}>Try again</button>}
+          {!saveError && (
+            <button type="button" onClick={retry}>
+              Try again
+            </button>
+          )}
         </p>
       )}
       <div className="rpl-toolbar">

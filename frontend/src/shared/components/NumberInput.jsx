@@ -19,7 +19,11 @@ export default function NumberInput({
 
   // follow the parent when it changes the number itself (the +/- buttons, reset)
   useEffect(() => {
-    setText((current) => (current === "" || Number(current) === Number(value) ? current : String(value ?? "")));
+    setText((current) =>
+      current === "" || Number(current) === Number(value)
+        ? current
+        : String(value ?? ""),
+    );
   }, [value]);
 
   const clamp = (n) => Math.min(max, Math.max(min, n));
@@ -39,7 +43,9 @@ export default function NumberInput({
       autoComplete="off"
       value={text}
       onChange={(event) => {
-        const digits = event.target.value.replace(/\D/g, "").slice(0, String(max).length);
+        const digits = event.target.value
+          .replace(/\D/g, "")
+          .slice(0, String(max).length);
         setText(digits);
         // keep the parent in step while typing (clamped), but never push "" up
         if (digits !== "") {

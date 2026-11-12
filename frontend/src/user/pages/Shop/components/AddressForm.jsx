@@ -5,13 +5,39 @@ import { pincodeProblem } from "../../../../api/profile";
 import { getAccount } from "../../../../api/session";
 
 const account = getAccount() || {};
-const profileName = account.full_name || account.fullName || account.name || [account.first_name, account.last_name].filter(Boolean).join(" ");
-const digitsOnly = (value) => String(value || "").replace(/\D/g, "").replace(/^91(?=\d{10}$)/, "").slice(0, 10);
-const EMPTY = { label: "Home", name: profileName || "", phone: "", line: "", city: "", state: "Gujarat", pincode: "" };
+const profileName =
+  account.full_name ||
+  account.fullName ||
+  account.name ||
+  [account.first_name, account.last_name].filter(Boolean).join(" ");
+const digitsOnly = (value) =>
+  String(value || "")
+    .replace(/\D/g, "")
+    .replace(/^91(?=\d{10}$)/, "")
+    .slice(0, 10);
+const EMPTY = {
+  label: "Home",
+  name: profileName || "",
+  phone: "",
+  line: "",
+  city: "",
+  state: "Gujarat",
+  pincode: "",
+};
 
 /* Add a new delivery address (inline, validated). */
-export default function AddressForm({ onSave, onCancel, initial = null, saving = false, serverErrors = {} }) {
-  const [f, setF] = useState(() => initial ? { ...EMPTY, ...initial, phone: digitsOnly(initial.phone) } : EMPTY);
+export default function AddressForm({
+  onSave,
+  onCancel,
+  initial = null,
+  saving = false,
+  serverErrors = {},
+}) {
+  const [f, setF] = useState(() =>
+    initial
+      ? { ...EMPTY, ...initial, phone: digitsOnly(initial.phone) }
+      : EMPTY,
+  );
   const [touched, setTouched] = useState(false);
   const set = (key, value) => setF((x) => ({ ...x, [key]: value }));
 
@@ -29,7 +55,16 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
     event.preventDefault();
     setTouched(true);
     if (bad || saving) return;
-    onSave({ ...f, state: "Gujarat", name: f.name.trim(), line: f.line.trim(), city: f.city.trim(), state: f.state.trim(), pincode: f.pincode.trim(), phone: `+91${digitsOnly(f.phone)}` });
+    onSave({
+      ...f,
+      state: "Gujarat",
+      name: f.name.trim(),
+      line: f.line.trim(),
+      city: f.city.trim(),
+      state: f.state.trim(),
+      pincode: f.pincode.trim(),
+      phone: `+91${digitsOnly(f.phone)}`,
+    });
   };
 
   const field = (key, label, msg, props = {}, wide = false) => (
@@ -43,7 +78,9 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
       />
       {touched && err[key] && <span className="dn-error">{msg}</span>}
       {!(touched && err[key]) && serverMsg(key === "line" ? "line1" : key) && (
-        <span className="dn-error">{serverMsg(key === "line" ? "line1" : key)}</span>
+        <span className="dn-error">
+          {serverMsg(key === "line" ? "line1" : key)}
+        </span>
       )}
     </label>
   );
@@ -57,25 +94,67 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
           <span className="dn-label">Phone</span>
           <div className="dn-phone-input">
             <span aria-label="Country code">+91</span>
-            <input className={`dn-input ${touched && err.phone ? "is-error" : ""}`} value={f.phone} onChange={(event) => set("phone", digitsOnly(event.target.value))} inputMode="numeric" type="tel" maxLength={10} placeholder="98765 43210" aria-label="10-digit phone number" />
+            <input
+              className={`dn-input ${touched && err.phone ? "is-error" : ""}`}
+              value={f.phone}
+              onChange={(event) => set("phone", digitsOnly(event.target.value))}
+              inputMode="numeric"
+              type="tel"
+              maxLength={10}
+              placeholder="98765 43210"
+              aria-label="10-digit phone number"
+            />
           </div>
-          {touched && err.phone && <span className="dn-error">Enter a 10-digit phone number.</span>}
-          {!(touched && err.phone) && serverMsg("phone") && <span className="dn-error">{serverMsg("phone")}</span>}
+          {touched && err.phone && (
+            <span className="dn-error">Enter a 10-digit phone number.</span>
+          )}
+          {!(touched && err.phone) && serverMsg("phone") && (
+            <span className="dn-error">{serverMsg("phone")}</span>
+          )}
         </label>
-        {field("line", "Address", "Add the flat, building and street.", { placeholder: "Flat, building, street, area" }, true)}
+        {field(
+          "line",
+          "Address",
+          "Add the flat, building and street.",
+          { placeholder: "Flat, building, street, area" },
+          true,
+        )}
         <label className="dn-field">
           <span className="dn-label">City</span>
-          <CitySelect value={f.city} onChange={(v) => set("city", v)} invalid={touched && err.city} placeholder="Choose your city" />
-          {touched && err.city && <span className="dn-error">Choose a Gujarat city from the list.</span>}
+          <CitySelect
+            value={f.city}
+            onChange={(v) => set("city", v)}
+            invalid={touched && err.city}
+            placeholder="Choose your city"
+          />
+          {touched && err.city && (
+            <span className="dn-error">
+              Choose a Gujarat city from the list.
+            </span>
+          )}
         </label>
         <label className="dn-field">
           <span className="dn-label">State</span>
-          <input className="dn-input" value="Gujarat" readOnly aria-readonly="true" />
+          <input
+            className="dn-input"
+            value="Gujarat"
+            readOnly
+            aria-readonly="true"
+          />
         </label>
-        {field("pincode", "Pincode", pincodeProblem(f.pincode.trim()) || "Enter a valid Gujarat pincode.", { inputMode: "numeric", maxLength: 6 })}
+        {field(
+          "pincode",
+          "Pincode",
+          pincodeProblem(f.pincode.trim()) || "Enter a valid Gujarat pincode.",
+          { inputMode: "numeric", maxLength: 6 },
+        )}
         <label className="dn-field">
           <span className="dn-label">Save as</span>
-          <select className="dn-select" value={f.label} onChange={(event) => set("label", event.target.value)}>
+          <select
+            className="dn-select"
+            value={f.label}
+            onChange={(event) => set("label", event.target.value)}
+          >
             <option>Home</option>
             <option>Work</option>
             <option>Other</option>
@@ -83,8 +162,17 @@ export default function AddressForm({ onSave, onCancel, initial = null, saving =
         </label>
       </div>
       <div className="ushp-form-actions">
-        <button type="button" className="dn-btn dn-btn--ghost dn-btn--sm" onClick={onCancel} disabled={saving}>Cancel</button>
-        <button type="submit" className="dn-btn dn-btn--sm" disabled={saving}>{saving ? "Saving…" : "Save address"}</button>
+        <button
+          type="button"
+          className="dn-btn dn-btn--ghost dn-btn--sm"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Cancel
+        </button>
+        <button type="submit" className="dn-btn dn-btn--sm" disabled={saving}>
+          {saving ? "Saving…" : "Save address"}
+        </button>
       </div>
     </form>
   );

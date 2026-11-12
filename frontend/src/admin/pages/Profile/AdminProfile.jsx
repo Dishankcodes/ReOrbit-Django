@@ -1,5 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Clock, KeyRound, Lock, Save, ShieldCheck, Mail } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  KeyRound,
+  Lock,
+  Save,
+  ShieldCheck,
+  Mail,
+} from "lucide-react";
 
 import {
   changeAdminPassword,
@@ -23,7 +31,11 @@ const initials = (name = "") => {
 
 const fmtDate = (iso) =>
   iso
-    ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(iso).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
     : "–";
 
 const fmtDateTime = (iso) =>
@@ -36,14 +48,19 @@ const fmtDateTime = (iso) =>
       })
     : "Just now";
 
-const roleLabel = (level) => (level === "Super_Admin" ? "Super Admin" : level || "Admin");
+const roleLabel = (level) =>
+  level === "Super_Admin" ? "Super Admin" : level || "Admin";
 
 function Field({ label, hint, error, children }) {
   return (
     <label className={`st-field ${error ? "bad" : ""}`}>
       <span className="st-label">{label}</span>
       <span className="st-input">{children}</span>
-      {error ? <small className="st-err">{error}</small> : hint ? <small>{hint}</small> : null}
+      {error ? (
+        <small className="st-err">{error}</small>
+      ) : hint ? (
+        <small>{hint}</small>
+      ) : null}
     </label>
   );
 }
@@ -73,7 +90,9 @@ export default function AdminProfile() {
     try {
       const data = await fetchAdminProfile();
       setAdmin(data);
-      setName((current) => (current === (admin?.full_name ?? "") ? data.full_name : current));
+      setName((current) =>
+        current === (admin?.full_name ?? "") ? data.full_name : current,
+      );
       updateAccount("admin", { ...(getAccount("admin") || {}), ...data });
     } catch (e) {
       setLoadError(e.message || "Could not load your profile.");
@@ -116,20 +135,25 @@ export default function AdminProfile() {
     const errors = {};
     if (!pw.current) errors.current = "Enter your current password.";
     if (!pw.next) errors.next = "Enter a new password.";
-    else if (pw.next === pw.current) errors.next = "Choose a different password.";
+    else if (pw.next === pw.current)
+      errors.next = "Choose a different password.";
     if (pw.again !== pw.next) errors.again = "Passwords do not match.";
     setPwErrors(errors);
     if (Object.keys(errors).length) return;
 
     setPwBusy(true);
     try {
-      await changeAdminPassword({ current_password: pw.current, new_password: pw.next });
+      await changeAdminPassword({
+        current_password: pw.current,
+        new_password: pw.next,
+      });
       setPw({ current: "", next: "", again: "" });
       toast("Password updated.");
     } catch (e) {
       setPwErrors({
         current: e.errors?.current_password?.[0],
-        next: e.errors?.new_password?.[0] || (!e.errors ? e.message : undefined),
+        next:
+          e.errors?.new_password?.[0] || (!e.errors ? e.message : undefined),
       });
     } finally {
       setPwBusy(false);
@@ -171,23 +195,33 @@ export default function AdminProfile() {
 
       <div className="ap-stats">
         <div className="ap-stat">
-          <span><CalendarDays size={18} /></span>
+          <span>
+            <CalendarDays size={18} />
+          </span>
           <div>
             <b>{fmtDate(admin.activated_at || admin.created_at)}</b>
             <small>Admin since</small>
           </div>
         </div>
         <div className="ap-stat">
-          <span><Clock size={18} /></span>
+          <span>
+            <Clock size={18} />
+          </span>
           <div>
             <b>{fmtDateTime(admin.last_login_at)}</b>
             <small>Last sign-in</small>
           </div>
         </div>
         <div className="ap-stat">
-          <span><KeyRound size={18} /></span>
+          <span>
+            <KeyRound size={18} />
+          </span>
           <div>
-            <b>{admin.permission_level === "Super_Admin" ? "All areas" : `${editable} can edit`}</b>
+            <b>
+              {admin.permission_level === "Super_Admin"
+                ? "All areas"
+                : `${editable} can edit`}
+            </b>
             <small>Access</small>
           </div>
         </div>
@@ -219,7 +253,11 @@ export default function AdminProfile() {
           </Field>
 
           <Field label="Role">
-            <input value={roleLabel(admin.permission_level)} readOnly disabled />
+            <input
+              value={roleLabel(admin.permission_level)}
+              readOnly
+              disabled
+            />
           </Field>
 
           <Field label="Admin ID">
@@ -255,7 +293,9 @@ export default function AdminProfile() {
         <header>
           <div>
             <h3>Your access</h3>
-            <p>Set by a Super Admin. Ask them if you need access to another area.</p>
+            <p>
+              Set by a Super Admin. Ask them if you need access to another area.
+            </p>
           </div>
         </header>
 

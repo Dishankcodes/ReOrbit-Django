@@ -156,9 +156,7 @@ export default function Auth() {
         navigate("/user-dashboard");
       }, 500);
     } catch (err) {
-      setError(
-        err?.data?.message || err?.message || "Google sign-in failed.",
-      );
+      setError(err?.data?.message || err?.message || "Google sign-in failed.");
     } finally {
       setLoading(false);
     }

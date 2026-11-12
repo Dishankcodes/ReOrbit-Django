@@ -14,19 +14,26 @@ const listeners = new Set();
 const TTL = 60 * 1000;
 
 function load(force = false) {
-  if (!force && cache && Date.now() - loadedAt < TTL) return Promise.resolve(cache);
+  if (!force && cache && Date.now() - loadedAt < TTL)
+    return Promise.resolve(cache);
   if (!inflight) {
     inflight = apiRequest("/marketplace/categories/", { auth: false })
       .then((r) => {
         cache = (r.data.categories || []).map((c) => ({
-          id: c.public_id, name: c.name, icon: c.icon || "Package", blurb: c.description || "", active: true,
+          id: c.public_id,
+          name: c.name,
+          icon: c.icon || "Package",
+          blurb: c.description || "",
+          active: true,
         }));
         loadedAt = Date.now();
         listeners.forEach((l) => l(cache));
         return cache;
       })
       .catch(() => cache || [])
-      .finally(() => { inflight = null; });
+      .finally(() => {
+        inflight = null;
+      });
   }
   return inflight;
 }

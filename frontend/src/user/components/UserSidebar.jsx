@@ -196,7 +196,11 @@ export default function UserSidebar({
   const unreadMessages = useTotalUnread();
   const unreadNotifications = useNotifications().unread;
   const cartCount = useCartCount();
-  const counts = { messages: unreadMessages, notifications: unreadNotifications, cart: cartCount };
+  const counts = {
+    messages: unreadMessages,
+    notifications: unreadNotifications,
+    cart: cartCount,
+  };
 
   const [user, setUser] = useState(() => getStoredUser());
 
@@ -248,13 +252,25 @@ export default function UserSidebar({
   const isItemActive = (item) => {
     if (item.path === "/user-dashboard") return pathname === item.path;
     if (item.path === "/user-sell")
-      return pathname === "/user-sell" || (pathname.startsWith("/user-sell/") && !/^\/user-sell\/(new|sales)/.test(pathname));
+      return (
+        pathname === "/user-sell" ||
+        (pathname.startsWith("/user-sell/") &&
+          !/^\/user-sell\/(new|sales)/.test(pathname))
+      );
     if (item.path === "/user-sell/new") return pathname === "/user-sell/new";
-    if (item.path === "/user-sell/sales") return pathname.startsWith("/user-sell/sales");
+    if (item.path === "/user-sell/sales")
+      return pathname.startsWith("/user-sell/sales");
     if (item.path === "/user-orbit-points")
-      return pathname.startsWith("/user-orbit-points") && !pathname.startsWith("/user-orbit-points/vouchers") && !pathname.startsWith("/user-orbit-points/rewards");
+      return (
+        pathname.startsWith("/user-orbit-points") &&
+        !pathname.startsWith("/user-orbit-points/vouchers") &&
+        !pathname.startsWith("/user-orbit-points/rewards")
+      );
     if (item.path === "/user-orbit-points/vouchers")
-      return pathname.startsWith("/user-orbit-points/vouchers") || pathname.startsWith("/user-orbit-points/rewards");
+      return (
+        pathname.startsWith("/user-orbit-points/vouchers") ||
+        pathname.startsWith("/user-orbit-points/rewards")
+      );
     return pathname === item.path || pathname.startsWith(item.path + "/");
   };
 
@@ -276,7 +292,10 @@ export default function UserSidebar({
         <span className="user-sidebar-link-text">{item.label}</span>
 
         {counts[item.badge] > 0 && (
-          <span className="user-sidebar-count" aria-label={`${counts[item.badge]} unread`}>
+          <span
+            className="user-sidebar-count"
+            aria-label={`${counts[item.badge]} unread`}
+          >
             {counts[item.badge] > 99 ? "99+" : counts[item.badge]}
           </span>
         )}
@@ -377,7 +396,13 @@ export default function UserSidebar({
         className="user-sidebar-profile"
         onClick={handleProfileClick}
       >
-        <div className="user-sidebar-avatar">{mediaUrl(user?.profile?.profile_image) ? <img src={mediaUrl(user?.profile?.profile_image)} alt="" /> : initials}</div>
+        <div className="user-sidebar-avatar">
+          {mediaUrl(user?.profile?.profile_image) ? (
+            <img src={mediaUrl(user?.profile?.profile_image)} alt="" />
+          ) : (
+            initials
+          )}
+        </div>
 
         <div className="user-sidebar-profile-info">
           <strong>{userName}</strong>

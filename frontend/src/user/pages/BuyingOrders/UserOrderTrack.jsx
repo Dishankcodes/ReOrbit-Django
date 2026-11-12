@@ -47,7 +47,11 @@ export default function UserOrderTrack() {
   const { toast, show } = useToast();
 
   if (!order && !ordersStatus.loaded && !ordersStatus.error) {
-    return <div className="dn"><PageLoader label="Loading your order…" /></div>;
+    return (
+      <div className="dn">
+        <PageLoader label="Loading your order…" />
+      </div>
+    );
   }
 
   if (!order) {
@@ -76,7 +80,9 @@ export default function UserOrderTrack() {
     ((parseInt(order.id.replace(/\D/g, ""), 10) * 7) % 9000) + 1000,
   );
   const next = !cancelled && !delivered ? STAGES[order.stage + 1] : null;
-  const lastEvent = order.events[order.events.length - 1] || { at: order.deliveredAt || order.placedAt };
+  const lastEvent = order.events[order.events.length - 1] || {
+    at: order.deliveredAt || order.placedAt,
+  };
 
   const copyAwb = async () => {
     try {
@@ -101,11 +107,18 @@ export default function UserOrderTrack() {
   } else {
     if (order.eta) {
       const day = relativeDay(order.eta);
-      title = day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
+      title =
+        day === "Today" ? "Arriving today" : `Arriving ${day.toLowerCase()}`;
       sub = `Expected by ${formatLongDate(order.eta)}`;
     } else {
-      title = order.awaitingPayment ? "Waiting for payment" : order.stage >= 3 ? "On its way" : "Being prepared";
-      sub = order.courier ? `With ${order.courier.name}` : "The seller is getting your order ready.";
+      title = order.awaitingPayment
+        ? "Waiting for payment"
+        : order.stage >= 3
+          ? "On its way"
+          : "Being prepared";
+      sub = order.courier
+        ? `With ${order.courier.name}`
+        : "The seller is getting your order ready.";
     }
   }
 

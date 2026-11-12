@@ -214,7 +214,9 @@ export default function AdminSidebar({
         end={item.path === "/admin-dashboard"}
         className={({ isActive }) =>
           `admin-sidebar-link ${
-            isActive && !(item.path === "/admin-shop" && onSavedPage) ? "active" : ""
+            isActive && !(item.path === "/admin-shop" && onSavedPage)
+              ? "active"
+              : ""
           }`
         }
         onClick={handleNavigation}

@@ -113,7 +113,12 @@ export default function UserDonationPickup() {
       setEditing(false);
       show("Pickup rescheduled. We've told the pickup team.");
     } catch (e) {
-      setError(e.errors?.date?.[0] || e.errors?.slot?.[0] || e.message || "Could not change the pickup.");
+      setError(
+        e.errors?.date?.[0] ||
+          e.errors?.slot?.[0] ||
+          e.message ||
+          "Could not change the pickup.",
+      );
     }
   };
 

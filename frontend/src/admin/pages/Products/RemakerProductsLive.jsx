@@ -19,7 +19,12 @@ import "../../css/users/AdminUsers.css";
 import "../../css/products/ProductsReal.css";
 
 const ACTIONS = PRODUCT_ACTION_LIST;
-const LABEL = { Draft: "Draft", Listed: "Live", Sold_Out: "Sold out", Inactive: "Off" };
+const LABEL = {
+  Draft: "Draft",
+  Listed: "Live",
+  Sold_Out: "Sold out",
+  Inactive: "Off",
+};
 
 /* Live ReMaker products from the server, moderated by admins. Paged and
    filtered on the server, so it stays fast however many products exist. */
@@ -57,7 +62,10 @@ export default function RemakerProductsLive({ toast }) {
         action.key === "deactivate"
           ? await deactivateRemakerProduct(product.id, reason)
           : await reactivateRemakerProduct(product.id);
-      setData((d) => ({ ...d, results: d.results.map((r) => (r.id === row.id ? row : r)) }));
+      setData((d) => ({
+        ...d,
+        results: d.results.map((r) => (r.id === row.id ? row : r)),
+      }));
       toast(`${product.title} ${action.toast}.`);
     } catch (e) {
       toast(e.message || "Could not update the product.");
@@ -72,7 +80,10 @@ export default function RemakerProductsLive({ toast }) {
           <input
             type="search"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search product, ID or ReMaker"
             aria-label="Search products"
           />
@@ -80,7 +91,13 @@ export default function RemakerProductsLive({ toast }) {
         <div className="au-toolbar-right">
           <label className="au-select">
             <span>Status</span>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+            >
               <option value="">All</option>
               <option value="Listed">Live</option>
               <option value="Sold_Out">Sold out</option>
@@ -100,7 +117,14 @@ export default function RemakerProductsLive({ toast }) {
       ) : (
         <table className="apr-table">
           <thead>
-            <tr><th>Product</th><th>ReMaker</th><th>Price</th><th>Stock</th><th>Status</th><th /></tr>
+            <tr>
+              <th>Product</th>
+              <th>ReMaker</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th />
+            </tr>
           </thead>
           <tbody>
             {data.results.map((p) => {
@@ -109,26 +133,61 @@ export default function RemakerProductsLive({ toast }) {
                 <tr key={p.id}>
                   <td>
                     <div className="apr-prod">
-                      {p.cover ? <img src={p.cover} alt="" loading="lazy" /> : <span className="apr-noimg" />}
-                      <span><b>{p.title}</b><small>{p.id} · {p.category.name}</small></span>
+                      {p.cover ? (
+                        <img src={p.cover} alt="" loading="lazy" />
+                      ) : (
+                        <span className="apr-noimg" />
+                      )}
+                      <span>
+                        <b>{p.title}</b>
+                        <small>
+                          {p.id} · {p.category.name}
+                        </small>
+                      </span>
                     </div>
                   </td>
-                  <td>{p.remaker.name}<br /><small>@{p.remaker.username}</small></td>
+                  <td>
+                    {p.remaker.name}
+                    <br />
+                    <small>@{p.remaker.username}</small>
+                  </td>
                   <td>{formatINR(Number(p.price))}</td>
                   <td>{p.stock}</td>
                   <td>
-                    <span className={`apr-badge ${p.status}`}>{off ? "Switched off" : LABEL[p.status]}</span>
+                    <span className={`apr-badge ${p.status}`}>
+                      {off ? "Switched off" : LABEL[p.status]}
+                    </span>
                     {off && <p className="apr-note">{p.deactivation.reason}</p>}
                   </td>
                   <td>
                     <div className="apr-actions">
                       {canEdit && off && (
-                        <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm"
-                          onClick={() => setPending({ action: ACTIONS.reactivate, product: p })}>Reactivate</button>
+                        <button
+                          type="button"
+                          className="ad-btn ad-btn-ghost ad-btn-sm"
+                          onClick={() =>
+                            setPending({
+                              action: ACTIONS.reactivate,
+                              product: p,
+                            })
+                          }
+                        >
+                          Reactivate
+                        </button>
                       )}
                       {canEdit && !off && p.status !== "Draft" && (
-                        <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm"
-                          onClick={() => setPending({ action: ACTIONS.deactivate, product: p })}>Deactivate</button>
+                        <button
+                          type="button"
+                          className="ad-btn ad-btn-ghost ad-btn-sm"
+                          onClick={() =>
+                            setPending({
+                              action: ACTIONS.deactivate,
+                              product: p,
+                            })
+                          }
+                        >
+                          Deactivate
+                        </button>
                       )}
                     </div>
                   </td>
@@ -140,8 +199,16 @@ export default function RemakerProductsLive({ toast }) {
       )}
 
       {data && data.count > 0 && (
-        <Pagination page={data.page} pageSize={pageSize} total={data.count} onPage={setPage}
-          onPageSize={(n) => { setPageSize(n); setPage(1); }} />
+        <Pagination
+          page={data.page}
+          pageSize={pageSize}
+          total={data.count}
+          onPage={setPage}
+          onPageSize={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+        />
       )}
 
       <ConfirmActionModal

@@ -36,7 +36,6 @@ export function formatDateTime(value) {
   return `${date.getDate()} ${MONTHS[date.getMonth()]}, ${hours % 12 || 12}:${minutes} ${suffix}`;
 }
 
-
 /* purchases for the Help pages; problems are raised from the order itself, so no reports list here */
 export function useOrders() {
   const orders = useLiveOrders();

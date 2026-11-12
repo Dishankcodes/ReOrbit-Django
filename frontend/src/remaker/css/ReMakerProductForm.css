@@ -1200,7 +1200,6 @@
   cursor: not-allowed;
 }
 
-
 /* DELIVERY METHOD */
 
 .rpf-pickups {
@@ -1220,7 +1219,10 @@
   background: #fff;
   color: var(--rp-text);
   text-align: left;
-  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .rpf-pickups button:hover {

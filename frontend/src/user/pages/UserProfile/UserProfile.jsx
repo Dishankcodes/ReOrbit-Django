@@ -207,7 +207,11 @@ export default function UserProfile() {
     event.preventDefault();
     const needsCurrent = me.account?.has_password;
 
-    if ((needsCurrent && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword) {
+    if (
+      (needsCurrent && !passwordData.currentPassword) ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
       notify("Please complete all password fields.", true);
       return;
     }
@@ -220,7 +224,11 @@ export default function UserProfile() {
         current_password: passwordData.currentPassword,
         new_password: passwordData.newPassword,
       });
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setShowPasswordForm(false);
       me.reload();
       notify("Password updated successfully.");
@@ -247,7 +255,11 @@ export default function UserProfile() {
         <div className="user-profile-wrapper">
           <div className="profile-message is-error">
             <span>{me.error}</span>
-            <button type="button" className="profile-small-edit" onClick={me.reload}>
+            <button
+              type="button"
+              className="profile-small-edit"
+              onClick={me.reload}
+            >
               Try again
             </button>
           </div>
@@ -308,7 +320,9 @@ export default function UserProfile() {
 
         {/* SUCCESS / ERROR MESSAGE */}
         {saveMessage && (
-          <div className={`profile-message ${messageIsError ? "is-error" : ""}`}>
+          <div
+            className={`profile-message ${messageIsError ? "is-error" : ""}`}
+          >
             {messageIsError ? <X size={18} /> : <CheckCircle2 size={18} />}
             <span>{saveMessage}</span>
           </div>
@@ -391,7 +405,11 @@ export default function UserProfile() {
                 <span style={{ width: `${rewards.progress}%` }} />
               </div>
 
-              <small>{rewards.next ? `${rewards.progress}% to ${rewards.next.name}` : "Top level reached"}</small>
+              <small>
+                {rewards.next
+                  ? `${rewards.progress}% to ${rewards.next.name}`
+                  : "Top level reached"}
+              </small>
             </div>
           </div>
         </section>
@@ -488,11 +506,16 @@ export default function UserProfile() {
                     invalid={Boolean(fieldErrors.city)}
                     onChange={(city) => {
                       setFormData((current) => ({ ...current, city }));
-                      setFieldErrors((current) => ({ ...current, city: undefined }));
+                      setFieldErrors((current) => ({
+                        ...current,
+                        city: undefined,
+                      }));
                     }}
                   />
                   {fieldErrors.city && (
-                    <small className="profile-field-error">{fieldErrors.city[0]}</small>
+                    <small className="profile-field-error">
+                      {fieldErrors.city[0]}
+                    </small>
                   )}
                 </div>
 
@@ -533,7 +556,9 @@ export default function UserProfile() {
                   placeholder="Tell us a little about yourself..."
                 />
                 {fieldErrors.bio && (
-                  <small className="profile-field-error">{fieldErrors.bio[0]}</small>
+                  <small className="profile-field-error">
+                    {fieldErrors.bio[0]}
+                  </small>
                 )}
               </div>
 
@@ -589,7 +614,11 @@ export default function UserProfile() {
 
                 <div>
                   <strong>Password</strong>
-                  <span>{me.account?.has_password ? "Protected with a password" : "No password yet (Google sign-in)"}</span>
+                  <span>
+                    {me.account?.has_password
+                      ? "Protected with a password"
+                      : "No password yet (Google sign-in)"}
+                  </span>
                 </div>
               </div>
 
@@ -605,18 +634,18 @@ export default function UserProfile() {
             {showPasswordForm && (
               <form className="password-form" onSubmit={handlePasswordSubmit}>
                 {me.account?.has_password && (
-                <div className="password-form-field">
-                  <label htmlFor="currentPassword">Current Password</label>
+                  <div className="password-form-field">
+                    <label htmlFor="currentPassword">Current Password</label>
 
-                  <input
-                    id="currentPassword"
-                    name="currentPassword"
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    placeholder="Enter current password"
-                  />
-                </div>
+                    <input
+                      id="currentPassword"
+                      name="currentPassword"
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter current password"
+                    />
+                  </div>
                 )}
 
                 <div className="password-form-field">
@@ -663,7 +692,9 @@ export default function UserProfile() {
                 </div>
               </div>
 
-              <span className="verified-text">{me.account?.email_verified_at ? "Verified" : "Not verified"}</span>
+              <span className="verified-text">
+                {me.account?.email_verified_at ? "Verified" : "Not verified"}
+              </span>
             </div>
           </section>
         </div>

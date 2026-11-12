@@ -13,18 +13,49 @@ const OUT = "src/remaker/css/remaker-buying-theme.css";
 const SCOPE = ".remaker-page-content";
 
 function hsl([r, g, b]) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b),
+    l = (max + min) / 2;
   const d = max - min;
   if (!d) return [0, 0, l];
   const s = d / (1 - Math.abs(2 * l - 1));
-  let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  let h =
+    max === r
+      ? ((g - b) / d) % 6
+      : max === g
+        ? (b - r) / d + 2
+        : (r - g) / d + 4;
   return [(h * 60 + 360) % 360, s, l];
 }
 function rgb(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
-  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
-  return "#" + [r, g, b].map((v) => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("");
+  const c = (1 - Math.abs(2 * l - 1)) * s,
+    x = c * (1 - Math.abs(((h / 60) % 2) - 1)),
+    m = l - c / 2;
+  const [r, g, b] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  return (
+    "#" +
+    [r, g, b]
+      .map((v) =>
+        Math.round((v + m) * 255)
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+  );
 }
 function swap(hex) {
   let h = hex.slice(1);
@@ -32,39 +63,61 @@ function swap(hex) {
   if (h.length !== 6) return hex;
   const v = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
   const [hue, s, l] = hsl(v);
-  if (hue < 70 || hue > 190 || s < 0.04) return hex;       // not green: reds, ambers, greys stay
-  if (s > 0.42 && l > 0.22 && l < 0.6) return hex;          // vivid success green stays
-  if (l < 0.42) return rgb(357, Math.min(0.5, s + 0.1), l * 0.62);   // brand dark green -> maroon
-  if (l < 0.7) return rgb(8, 0.07, l * 0.95);                        // muted text green -> warm grey
-  return hex;                                                         // pale tints stay (sage)
+  if (hue < 70 || hue > 190 || s < 0.04) return hex; // not green: reds, ambers, greys stay
+  if (s > 0.42 && l > 0.22 && l < 0.6) return hex; // vivid success green stays
+  if (l < 0.42) return rgb(357, Math.min(0.5, s + 0.1), l * 0.62); // brand dark green -> maroon
+  if (l < 0.7) return rgb(8, 0.07, l * 0.95); // muted text green -> warm grey
+  return hex; // pale tints stay (sage)
 }
 const recolor = (v) => v.replace(/#[0-9a-fA-F]{3,6}\b/g, swap);
 
-const scope = (sel, hasVars) => sel.split(",").map((s) => {
-  s = s.trim();
-  if (/^(:root|html|body)$/.test(s)) return hasVars ? SCOPE : null;   // keep custom properties only
-  if (/^(:root|html|body)\b/.test(s)) return null;
-  return `${SCOPE} ${s}`;
-}).filter(Boolean).join(", ");
+const scope = (sel, hasVars) =>
+  sel
+    .split(",")
+    .map((s) => {
+      s = s.trim();
+      if (/^(:root|html|body)$/.test(s)) return hasVars ? SCOPE : null; // keep custom properties only
+      if (/^(:root|html|body)\b/.test(s)) return null;
+      return `${SCOPE} ${s}`;
+    })
+    .filter(Boolean)
+    .join(", ");
 
 const out = [];
 for (const dir of DIRS) {
-  for (const f of fs.readdirSync(path.join(SRC, dir)).filter((x) => x.endsWith(".css")).sort()) {
+  for (const f of fs
+    .readdirSync(path.join(SRC, dir))
+    .filter((x) => x.endsWith(".css"))
+    .sort()) {
     const root = postcss.parse(fs.readFileSync(path.join(SRC, dir, f), "utf8"));
     root.walkAtRules(/keyframes$/, (a) => a.remove());
     root.walkAtRules("import", (a) => a.remove());
     root.walkAtRules("font-face", (a) => a.remove());
     root.walkRules((r) => {
-      if (r.parent?.type === "atrule" && /keyframes$/.test(r.parent.name)) return;
-      const s = scope(r.selector, r.nodes?.some((n) => n.prop?.startsWith("--")));
-      if (s === SCOPE) r.each((n) => { if (n.type === "decl" && !n.prop.startsWith("--")) n.remove(); });
+      if (r.parent?.type === "atrule" && /keyframes$/.test(r.parent.name))
+        return;
+      const s = scope(
+        r.selector,
+        r.nodes?.some((n) => n.prop?.startsWith("--")),
+      );
+      if (s === SCOPE)
+        r.each((n) => {
+          if (n.type === "decl" && !n.prop.startsWith("--")) n.remove();
+        });
       if (!s) return r.remove();
       r.selector = s;
     });
-    root.walkDecls((d) => { d.value = recolor(d.value); });
-    root.walkRules((r) => { if (!r.nodes?.length) r.remove(); });
+    root.walkDecls((d) => {
+      d.value = recolor(d.value);
+    });
+    root.walkRules((r) => {
+      if (!r.nodes?.length) r.remove();
+    });
     out.push(`/* ${dir}/${f} */\n${root.toString()}`);
   }
 }
-fs.writeFileSync(OUT, `/* GENERATED by scripts/gen-remaker-theme.mjs - do not edit by hand. */\n${out.join("\n")}\n`);
+fs.writeFileSync(
+  OUT,
+  `/* GENERATED by scripts/gen-remaker-theme.mjs - do not edit by hand. */\n${out.join("\n")}\n`,
+);
 console.log("wrote", OUT, fs.statSync(OUT).size, "bytes");

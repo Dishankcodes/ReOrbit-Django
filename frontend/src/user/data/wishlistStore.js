@@ -8,13 +8,21 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { wishlistApi } from "../../api/social";
-import { getAccount, isSignedIn, portalOf, SESSION_ENDED_EVENT } from "../../api/session";
+import {
+  getAccount,
+  isSignedIn,
+  portalOf,
+  SESSION_ENDED_EVENT,
+} from "../../api/session";
 
-const portal = () => portalOf(typeof window !== "undefined" ? window.location.pathname : "/");
+const portal = () =>
+  portalOf(typeof window !== "undefined" ? window.location.pathname : "/");
 
 /* the old browser-only lists are gone; drop what they left behind */
 try {
-  ["reorbit_user_wishlist", "reorbit_remaker_wishlist"].forEach((k) => window.localStorage.removeItem(k));
+  ["reorbit_user_wishlist", "reorbit_remaker_wishlist"].forEach((k) =>
+    window.localStorage.removeItem(k),
+  );
 } catch {
   /* ignore */
 }
@@ -49,16 +57,24 @@ export async function loadWishlist(force = false) {
       set({ loading: false }); /* signed out or switched while loading */
       return;
     }
-    set({ ids: items.filter((i) => !i.unavailable).map((i) => i.id), loaded: true, loading: false });
+    set({
+      ids: items.filter((i) => !i.unavailable).map((i) => i.id),
+      loaded: true,
+      loading: false,
+    });
   } catch (e) {
-    set({ loading: false, error: e.message || "Could not load your wishlist." });
+    set({
+      loading: false,
+      error: e.message || "Could not load your wishlist.",
+    });
   }
 }
 
 function clearWishlistState() {
   set({ ids: [], loaded: false, loading: false, error: "", owner: "" });
 }
-if (typeof window !== "undefined") window.addEventListener(SESSION_ENDED_EVENT, clearWishlistState);
+if (typeof window !== "undefined")
+  window.addEventListener(SESSION_ENDED_EVENT, clearWishlistState);
 
 /* Run `call` after changing the list on screen; undo the change if it fails. */
 async function optimistic(next, call) {
@@ -74,12 +90,19 @@ async function optimistic(next, call) {
 /* returns true when the product is now saved */
 export function toggleWishlist(id) {
   const has = state.ids.includes(id);
-  if (has) optimistic(state.ids.filter((x) => x !== id), () => wishlistApi.remove(id));
+  if (has)
+    optimistic(
+      state.ids.filter((x) => x !== id),
+      () => wishlistApi.remove(id),
+    );
   else optimistic([id, ...state.ids], () => wishlistApi.add(id));
   return !has;
 }
 export const removeFromWishlist = (id) =>
-  optimistic(state.ids.filter((x) => x !== id), () => wishlistApi.remove(id));
+  optimistic(
+    state.ids.filter((x) => x !== id),
+    () => wishlistApi.remove(id),
+  );
 
 /* returns the ids that were removed, so the screen can offer Undo */
 export function clearWishlist() {

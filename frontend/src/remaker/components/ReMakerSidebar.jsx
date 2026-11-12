@@ -424,7 +424,13 @@ export default function ReMakerSidebar({
         className="remaker-sidebar-profile"
         onClick={handleProfileClick}
       >
-        <div className="remaker-sidebar-avatar">{mediaUrl(remaker?.profile?.profile_image) ? <img src={mediaUrl(remaker?.profile?.profile_image)} alt="" /> : initials}</div>
+        <div className="remaker-sidebar-avatar">
+          {mediaUrl(remaker?.profile?.profile_image) ? (
+            <img src={mediaUrl(remaker?.profile?.profile_image)} alt="" />
+          ) : (
+            initials
+          )}
+        </div>
 
         <div className="remaker-sidebar-profile-info">
           <strong>{remakerName}</strong>

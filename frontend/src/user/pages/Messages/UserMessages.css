@@ -524,7 +524,6 @@
   }
 }
 
-
 /* user theme: the chat reuses the shared chat styles with the user palette */
 .um-chat {
   --rp-maroon: #1e3d2f;
@@ -540,12 +539,26 @@
   font-family: var(--font-sans, "Plus Jakarta Sans", system-ui, sans-serif);
 }
 .um-chat .umsg-kind.seller,
-.um-chat .umsg-kind.buyer { background: #fdf1e3; color: #9a5a1c; }
-.um-chat .umsg-kind.remaker { background: #e4ede7; color: #2a4d3a; }
-.um-chat .umsg-kind.reorbit { background: #1e3d2f; color: #fff; }
-.um-chat-head { margin-bottom: 14px; }
-.um-chat-wrap { display: flex; flex-direction: column; gap: 0; }
-
+.um-chat .umsg-kind.buyer {
+  background: #fdf1e3;
+  color: #9a5a1c;
+}
+.um-chat .umsg-kind.remaker {
+  background: #e4ede7;
+  color: #2a4d3a;
+}
+.um-chat .umsg-kind.reorbit {
+  background: #1e3d2f;
+  color: #fff;
+}
+.um-chat-head {
+  margin-bottom: 14px;
+}
+.um-chat-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 /* composer tool buttons */
 .umsg-composer-tools .umsg-tool {
@@ -561,29 +574,87 @@
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 .umsg-composer-tools .umsg-tool:hover,
-.umsg-composer-tools .umsg-tool.on { background: #edf5f1; border-color: #adcec1; }
-
+.umsg-composer-tools .umsg-tool.on {
+  background: #edf5f1;
+  border-color: #adcec1;
+}
 
 /* own buttons, filter chips and error text (no longer borrowed from the ReMaker styles) */
 .um-chat .umsg-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 11px 18px; border-radius: 12px; font: 700 13px var(--font-sans, inherit);
-  text-decoration: none; cursor: pointer; transition: transform .2s ease, background .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font: 700 13px var(--font-sans, inherit);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
 }
-.um-chat .umsg-btn.small { padding: 8px 14px; font-size: 12.5px; }
-.um-chat .umsg-btn.primary { border: 1px solid var(--rp-maroon); background: var(--rp-maroon); color: #fff; box-shadow: 0 8px 20px rgba(30, 61, 47, 0.16); }
-.um-chat .umsg-btn.primary:hover:not(:disabled) { transform: translateY(-1px); background: var(--rp-maroon-soft); }
-.um-chat .umsg-btn.primary:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
-.um-chat .umsg-btn.ghost { border: 1px solid var(--rp-border); background: #fff; color: var(--rp-maroon); }
-.um-chat .umsg-btn.ghost:hover:not(:disabled) { background: var(--rp-sage-light); }
-.um-chat .umsg-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-.um-chat .umsg-chips button { flex: none; padding: 8px 14px; border: 1px solid var(--rp-border); border-radius: 999px; background: #fff; color: var(--rp-muted); font: 600 12px var(--font-sans, inherit); cursor: pointer; }
-.um-chat .umsg-chips button:hover { color: var(--rp-maroon); }
-.um-chat .umsg-chips button.active { background: var(--rp-green); border-color: var(--rp-green); color: #fff; }
-.um-chat .umsg-error { margin: 0; color: #b04b4b; font-size: 12.5px; font-weight: 600; }
+.um-chat .umsg-btn.small {
+  padding: 8px 14px;
+  font-size: 12.5px;
+}
+.um-chat .umsg-btn.primary {
+  border: 1px solid var(--rp-maroon);
+  background: var(--rp-maroon);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(30, 61, 47, 0.16);
+}
+.um-chat .umsg-btn.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--rp-maroon-soft);
+}
+.um-chat .umsg-btn.primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.um-chat .umsg-btn.ghost {
+  border: 1px solid var(--rp-border);
+  background: #fff;
+  color: var(--rp-maroon);
+}
+.um-chat .umsg-btn.ghost:hover:not(:disabled) {
+  background: var(--rp-sage-light);
+}
+.um-chat .umsg-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.um-chat .umsg-chips button {
+  flex: none;
+  padding: 8px 14px;
+  border: 1px solid var(--rp-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rp-muted);
+  font: 600 12px var(--font-sans, inherit);
+  cursor: pointer;
+}
+.um-chat .umsg-chips button:hover {
+  color: var(--rp-maroon);
+}
+.um-chat .umsg-chips button.active {
+  background: var(--rp-green);
+  border-color: var(--rp-green);
+  color: #fff;
+}
+.um-chat .umsg-error {
+  margin: 0;
+  color: #b04b4b;
+  font-size: 12.5px;
+  font-weight: 600;
+}
 
 /* ---------- inputs: match the rest of the user app ---------- */
 .umsg .sr-only {
@@ -597,7 +668,10 @@
   white-space: nowrap;
   border: 0;
 }
-.umsg-search { display: block; margin: 12px 0 10px; }
+.umsg-search {
+  display: block;
+  margin: 12px 0 10px;
+}
 .umsg-search input,
 .umsg-composer-row textarea {
   width: 100%;
@@ -609,23 +683,53 @@
   font: inherit;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
-.umsg-search input { height: 42px; padding: 0 14px; }
-.umsg-composer-row textarea { padding: 12px 14px; line-height: 1.4; }
+.umsg-search input {
+  height: 42px;
+  padding: 0 14px;
+}
+.umsg-composer-row textarea {
+  padding: 12px 14px;
+  line-height: 1.4;
+}
 .umsg-search input::placeholder,
-.umsg-composer-row textarea::placeholder { color: #8aa097; }
+.umsg-composer-row textarea::placeholder {
+  color: #8aa097;
+}
 .umsg-search input:focus,
 .umsg-composer-row textarea:focus {
   border-color: #2f6b52;
   box-shadow: 0 0 0 3px rgba(47, 107, 82, 0.14);
 }
-.umsg-composer-row .umsg-btn.primary { height: 46px; padding: 0 22px; border-radius: 12px; }
+.umsg-composer-row .umsg-btn.primary {
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 12px;
+}
 @media (max-width: 640px) {
-  .umsg-composer-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .umsg-composer-tools { grid-column: 1 / -1; flex-direction: row; padding-bottom: 0; }
+  .umsg-composer-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .umsg-composer-tools {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    padding-bottom: 0;
+  }
 }
 
-.umsg-thread-actions button, .umsg-thread-actions a { white-space: nowrap; }
-.umsg-composer-row { grid-template-columns: minmax(0, 1fr) auto; }
-.umsg-composer-tools { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; padding-bottom: 0; }
+.umsg-thread-actions button,
+.umsg-thread-actions a {
+  white-space: nowrap;
+}
+.umsg-composer-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.umsg-composer-tools {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding-bottom: 0;
+}

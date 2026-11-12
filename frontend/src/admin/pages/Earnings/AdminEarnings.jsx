@@ -643,7 +643,6 @@ function EarningsOverview() {
   );
 }
 
-
 /* Real money: seller payouts (default). "Platform overview" is the earlier demo view. */
 const TABS = [
   { key: "payouts", label: "Seller payouts" },
@@ -653,14 +652,23 @@ const TABS = [
 
 export default function AdminEarnings() {
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "payouts";
+  const tab = TABS.some((t) => t.key === params.get("tab"))
+    ? params.get("tab")
+    : "payouts";
   const { toast, toastNode } = useToast();
   return (
     <div className="au-page">
       <div className="apr-tabs" role="tablist" aria-label="Earnings">
         {TABS.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
-            onClick={() => setParams(t.key === "payouts" ? {} : { tab: t.key })}>{t.label}</button>
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setParams(t.key === "payouts" ? {} : { tab: t.key })}
+          >
+            {t.label}
+          </button>
         ))}
       </div>
       {tab === "payouts" && <PayoutsLive toast={toast} />}

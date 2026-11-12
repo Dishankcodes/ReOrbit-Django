@@ -261,7 +261,11 @@ export function useRewards() {
           }),
         );
     donations
-      .filter((d) => ["Received", "Completed"].includes(d.status) && (d.reward?.points || 0) > 0)
+      .filter(
+        (d) =>
+          ["Received", "Completed"].includes(d.status) &&
+          (d.reward?.points || 0) > 0,
+      )
       .forEach((d) =>
         earn.push({
           id: `don-${d.id}`,
@@ -269,7 +273,10 @@ export function useRewards() {
           title: "Donation received",
           detail: `${d.title} · ${d.quantity} ${d.quantity === 1 ? "item" : "items"}`,
           points: d.reward.points,
-          at: (d.events.find((e) => e.label === "Received at the warehouse") || d.events[d.events.length - 1]).at,
+          at: (
+            d.events.find((e) => e.label === "Received at the warehouse") ||
+            d.events[d.events.length - 1]
+          ).at,
           to: `/user-donations/${d.id}`,
         }),
       );
@@ -292,19 +299,17 @@ export function useRewards() {
         });
       });
     if (pointsOf(rules, "follow") > 0)
-      following
-        .slice(0, 10)
-        .forEach((id, i) =>
-          earn.push({
-            id: `fol-${id}`,
-            kind: "follow",
-            title: "Followed a ReMaker",
-            detail: id.replace(/-/g, " "),
-            points: pointsOf(rules, "follow"),
-            at: dayISO(-(i + 1) * 3),
-            to: `/user-marketplace/remaker/${id}`,
-          }),
-        );
+      following.slice(0, 10).forEach((id, i) =>
+        earn.push({
+          id: `fol-${id}`,
+          kind: "follow",
+          title: "Followed a ReMaker",
+          detail: id.replace(/-/g, " "),
+          points: pointsOf(rules, "follow"),
+          at: dayISO(-(i + 1) * 3),
+          to: `/user-marketplace/remaker/${id}`,
+        }),
+      );
 
     const spend = used.map((r) => ({
       id: r.rid,

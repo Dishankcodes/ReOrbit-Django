@@ -266,11 +266,15 @@ export default function AdminDonations() {
     const { action, ids } = pending;
     setPending(null);
     clearSelection();
-    const results = await Promise.allSettled(ids.map((id) => runDonationAction(id, action.key, payload)));
+    const results = await Promise.allSettled(
+      ids.map((id) => runDonationAction(id, action.key, payload)),
+    );
     const failed = results.filter((r) => r.status === "rejected");
     const done = ids.length - failed.length;
     if (failed.length) {
-      toast(`${failed[0].reason?.message || "Could not update the donation."}${ids.length > 1 ? ` (${done} of ${ids.length} done)` : ""}`);
+      toast(
+        `${failed[0].reason?.message || "Could not update the donation."}${ids.length > 1 ? ` (${done} of ${ids.length} done)` : ""}`,
+      );
     } else {
       toast(
         ids.length === 1

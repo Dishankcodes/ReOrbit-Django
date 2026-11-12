@@ -5,11 +5,22 @@
   animation: sk-shimmer 1.3s ease-in-out infinite;
 }
 @keyframes sk-shimmer {
-  from { background-position: 120% 0; }
-  to { background-position: -120% 0; }
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
 }
-@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
-.sk-grid { display: grid; gap: 18px; }
+@media (prefers-reduced-motion: reduce) {
+  .sk {
+    animation: none;
+  }
+}
+.sk-grid {
+  display: grid;
+  gap: 18px;
+}
 .sk-card {
   display: flex;
   flex-direction: column;
@@ -19,8 +30,18 @@
   border-radius: 18px;
   background: #fff;
 }
-.sk-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; }
-.sk-rows { display: flex; flex-direction: column; gap: 12px; }
+.sk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+.sk-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .sk-rowitem {
   display: flex;
   align-items: center;
@@ -30,7 +51,28 @@
   border-radius: 16px;
   background: #fff;
 }
-.sk-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.sk-table { display: flex; flex-direction: column; border: 1px solid #d8e4de; border-radius: 14px; background: #fff; overflow: hidden; }
-.sk-tr { display: grid; gap: 18px; align-items: center; padding: 18px 20px; border-bottom: 1px solid #edf2ef; }
-.sk-tr:last-child { border-bottom: 0; }
+.sk-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.sk-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d8e4de;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+.sk-tr {
+  display: grid;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #edf2ef;
+}
+.sk-tr:last-child {
+  border-bottom: 0;
+}

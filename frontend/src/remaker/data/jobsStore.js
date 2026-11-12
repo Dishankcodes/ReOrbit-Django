@@ -100,7 +100,10 @@ function seed() {
       days: 10,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 4 kg",
-      before: ["https://images.pexels.com/photos/6333743/pexels-photo-6333743.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/6333743/pexels-photo-6333743.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+      before: [
+        "https://images.pexels.com/photos/6333743/pexels-photo-6333743.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        "https://images.pexels.com/photos/6333743/pexels-photo-6333743.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
       status: "Open",
       postedAt: ago(26),
       dueAt: "",
@@ -124,7 +127,9 @@ function seed() {
       days: 7,
       warehouse: "Sanand, Ahmedabad",
       weight: "About 12 kg",
-      before: ["https://images.pexels.com/photos/33375682/pexels-photo-33375682.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+      before: [
+        "https://images.pexels.com/photos/33375682/pexels-photo-33375682.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
       status: "Open",
       postedAt: ago(50),
       dueAt: "",
@@ -148,7 +153,10 @@ function seed() {
       days: 9,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 7 kg",
-      before: ["https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+      before: [
+        "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
       status: "Open",
       postedAt: ago(70),
       dueAt: "",
@@ -172,7 +180,9 @@ function seed() {
       days: 10,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 6 kg",
-      before: ["https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+      before: [
+        "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
       status: "In progress",
       postedAt: ago(130),
       assignedAt: ago(110),
@@ -188,7 +198,8 @@ function seed() {
           id: "pg2",
           at: ago(40),
           text: "Took the chair apart and cleaned old glue from all the joints. New dowels are cut.",
-          photo: "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
+          photo:
+            "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
         },
       ],
     }),
@@ -211,7 +222,9 @@ function seed() {
       days: 8,
       warehouse: "Sanand, Ahmedabad",
       weight: "About 5 kg",
-      before: ["https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+      before: [
+        "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
       status: "Assigned",
       postedAt: ago(40),
       assignedAt: ago(5),
@@ -236,8 +249,11 @@ function seed() {
       days: 7,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 5 kg",
-      before: ["https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000"],
-      afterImage: "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      before: [
+        "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
+      afterImage:
+        "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
       status: "In review",
       postedAt: ago(260),
       assignedAt: ago(240),
@@ -255,7 +271,8 @@ function seed() {
           id: "pg4",
           at: ago(60),
           text: "New wiring done and tested. Shade fitted.",
-          photo: "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
+          photo:
+            "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
         },
       ],
     }),
@@ -278,8 +295,11 @@ function seed() {
       days: 9,
       warehouse: "Sanand, Ahmedabad",
       weight: "About 9 kg",
-      before: ["https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000"],
-      afterImage: "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      before: [
+        "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
+      afterImage:
+        "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
       status: "Needs changes",
       postedAt: ago(420),
       assignedAt: ago(400),
@@ -300,7 +320,8 @@ function seed() {
           id: "pg6",
           at: ago(140),
           text: "Fitted a pine plank and finished. Ready for review.",
-          photo: "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
+          photo:
+            "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
         },
         {
           id: "pg7",
@@ -328,8 +349,11 @@ function seed() {
       days: 14,
       warehouse: "Naroda, Ahmedabad",
       weight: "About 22 kg",
-      before: ["https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"],
-      afterImage: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      before: [
+        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
+      afterImage:
+        "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
       status: "Completed",
       postedAt: ago(1200),
       assignedAt: ago(1180),
@@ -367,8 +391,11 @@ function seed() {
       days: 7,
       warehouse: "Sanand, Ahmedabad",
       weight: "About 3 kg",
-      before: ["https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000"],
-      afterImage: "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      before: [
+        "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      ],
+      afterImage:
+        "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
       status: "Completed",
       postedAt: ago(1900),
       assignedAt: ago(1880),

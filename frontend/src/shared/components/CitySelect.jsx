@@ -33,7 +33,9 @@ export default function CitySelect({
     const q = query.trim().toLowerCase();
     if (!q) return GUJARAT_CITIES;
     return GUJARAT_CITIES.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.district.toLowerCase().includes(q),
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.district.toLowerCase().includes(q),
     ).sort((a, b) => {
       const as = a.name.toLowerCase().startsWith(q) ? 0 : 1;
       const bs = b.name.toLowerCase().startsWith(q) ? 0 : 1;
@@ -59,7 +61,9 @@ export default function CitySelect({
   }, [query]);
 
   useEffect(() => {
-    listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
+    listRef.current
+      ?.querySelector('[data-active="true"]')
+      ?.scrollIntoView({ block: "nearest" });
   }, [active, open]);
 
   const openList = () => {
@@ -122,7 +126,11 @@ export default function CitySelect({
               role="combobox"
               aria-expanded="true"
               aria-controls={listId}
-              aria-activedescendant={matches[active] ? `${uid}-opt-${matches[active].name}` : undefined}
+              aria-activedescendant={
+                matches[active]
+                  ? `${uid}-opt-${matches[active].name}`
+                  : undefined
+              }
               aria-label="Search cities"
               placeholder="Search city or district"
               value={query}
@@ -131,14 +139,20 @@ export default function CitySelect({
               autoComplete="off"
             />
             {query && (
-              <button type="button" aria-label="Clear search" onClick={() => setQuery("")}>
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery("")}
+              >
                 <X size={14} />
               </button>
             )}
           </div>
 
           <ul id={listId} role="listbox" className="rcs-list" ref={listRef}>
-            {matches.length === 0 && <li className="rcs-empty">No city matches “{query}”.</li>}
+            {matches.length === 0 && (
+              <li className="rcs-empty">No city matches “{query}”.</li>
+            )}
             {matches.map((city, i) => (
               <li
                 key={city.name}

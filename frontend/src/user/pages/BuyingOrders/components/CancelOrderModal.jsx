@@ -3,7 +3,12 @@ import { Ban } from "lucide-react";
 import ConfirmModal from "../../../components/ui/ConfirmModal";
 import { CANCEL_REASONS } from "../../../data/ordersStore";
 
-export default function CancelOrderModal({ order, onConfirm, onClose, busy = false }) {
+export default function CancelOrderModal({
+  order,
+  onConfirm,
+  onClose,
+  busy = false,
+}) {
   const [reason, setReason] = useState(CANCEL_REASONS[0]);
 
   return (

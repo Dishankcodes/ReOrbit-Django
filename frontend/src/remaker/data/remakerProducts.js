@@ -168,7 +168,10 @@ export const REMAKER_PRODUCTS = [
     price: 3399,
     stock: 4,
     status: "Listed",
-    images: ["https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+    images: [
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    ],
     materials: ["Reclaimed wood", "Jute"],
     originType: "own",
     originItemId: "",

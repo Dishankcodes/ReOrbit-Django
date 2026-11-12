@@ -127,16 +127,14 @@ export function useDonationRewards() {
     return donations
       .filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status))
       .map((d) => {
-        const paid = ["Received", "Completed"].includes(d.status) && d.reward?.points > 0;
+        const paid =
+          ["Received", "Completed"].includes(d.status) && d.reward?.points > 0;
         const points = paid
           ? d.reward.points /* what the server really paid */
-          : (base.active ? base.points : 0) + (per.active ? per.points * d.quantity : 0);
+          : (base.active ? base.points : 0) +
+            (per.active ? per.points * d.quantity : 0);
         const rev = revoked[d.id];
-        const status = rev
-          ? "Revoked"
-          : paid
-            ? "Credited"
-            : "Pending";
+        const status = rev ? "Revoked" : paid ? "Credited" : "Pending";
         return {
           id: d.id,
           donation: d,

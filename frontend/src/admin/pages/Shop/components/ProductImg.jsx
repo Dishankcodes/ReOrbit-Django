@@ -6,7 +6,11 @@ export default function ProductImg({ src, alt, className = "" }) {
   return (
     <img
       className={className}
-      src={broken || !src ? "https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000" : src}
+      src={
+        broken || !src
+          ? "https://images.pexels.com/photos/8251682/pexels-photo-8251682.jpeg?auto=compress&cs=tinysrgb&w=1000"
+          : src
+      }
       alt={alt}
       loading="lazy"
       onError={() => setBroken(true)}

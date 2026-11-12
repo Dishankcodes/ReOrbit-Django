@@ -16,14 +16,70 @@ import { useCategoryNames } from "../../shared/catalog";
    --------------------------------------------------------- */
 
 export const DONATION_CATEGORIES = [
-  { id: "Furniture", label: "Furniture", hint: "Chairs, tables, shelves", weight: 9, image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Clothing", label: "Clothing", hint: "Clean, wearable clothes", weight: 0.8, image: "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Books", label: "Books", hint: "Novels, textbooks, kids' books", weight: 0.5, image: "https://images.pexels.com/photos/19208445/pexels-photo-19208445.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Electronics", label: "Electronics", hint: "Working devices & accessories", weight: 3, image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Home Decor", label: "Home Decor", hint: "Lamps, frames, vases", weight: 1.5, image: "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Kitchen", label: "Kitchen", hint: "Utensils, cookware, appliances", weight: 2.5, image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Fashion", label: "Fashion", hint: "Bags, shoes, accessories", weight: 0.7, image: "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000" },
-  { id: "Sports", label: "Sports & Toys", hint: "Gear, games, toys", weight: 1.5, image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000" },
+  {
+    id: "Furniture",
+    label: "Furniture",
+    hint: "Chairs, tables, shelves",
+    weight: 9,
+    image:
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Clothing",
+    label: "Clothing",
+    hint: "Clean, wearable clothes",
+    weight: 0.8,
+    image:
+      "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Books",
+    label: "Books",
+    hint: "Novels, textbooks, kids' books",
+    weight: 0.5,
+    image:
+      "https://images.pexels.com/photos/19208445/pexels-photo-19208445.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Electronics",
+    label: "Electronics",
+    hint: "Working devices & accessories",
+    weight: 3,
+    image:
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Home Decor",
+    label: "Home Decor",
+    hint: "Lamps, frames, vases",
+    weight: 1.5,
+    image:
+      "https://images.pexels.com/photos/10945653/pexels-photo-10945653.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Kitchen",
+    label: "Kitchen",
+    hint: "Utensils, cookware, appliances",
+    weight: 2.5,
+    image:
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Fashion",
+    label: "Fashion",
+    hint: "Bags, shoes, accessories",
+    weight: 0.7,
+    image:
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
+  {
+    id: "Sports",
+    label: "Sports & Toys",
+    hint: "Gear, games, toys",
+    weight: 1.5,
+    image:
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  },
 ];
 
 /* The categories the team lets people pick (Admin > Content). */
@@ -34,7 +90,12 @@ export function useDonationCategories() {
       names.map(
         (n) =>
           DONATION_CATEGORIES.find((c) => c.id === n) || {
-            id: n, label: n, hint: "Clean, usable items", weight: 1.5, image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+            id: n,
+            label: n,
+            hint: "Clean, usable items",
+            weight: 1.5,
+            image:
+              "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
           },
       ),
     [names],
@@ -42,9 +103,21 @@ export function useDonationCategories() {
 }
 
 export const CONDITIONS = [
-  { id: "Good", label: "Good", help: "Works / looks great. Minor signs of use at most." },
-  { id: "Medium", label: "Medium", help: "Fully usable but visibly used or lightly worn." },
-  { id: "Worst", label: "Needs repair", help: "Usable only after repair. Reviewed with extra care." },
+  {
+    id: "Good",
+    label: "Good",
+    help: "Works / looks great. Minor signs of use at most.",
+  },
+  {
+    id: "Medium",
+    label: "Medium",
+    help: "Fully usable but visibly used or lightly worn.",
+  },
+  {
+    id: "Worst",
+    label: "Needs repair",
+    help: "Usable only after repair. Reviewed with extra care.",
+  },
 ];
 
 export const SLOTS = [
@@ -70,11 +143,21 @@ export const NGOS = [
 export const REWARD_RULES = { co2PerKg: 1.9, base: 50, perItem: 10 };
 
 /* Rough weight per item (kg) and voucher value, as worked out on the server. */
-const SERVER_WEIGHT = { Furniture: 12, "Home Decor": 3, Fashion: 1.2, Clothing: 3.5, Kitchen: 4, Electronics: 5, Books: 4, Sports: 3 };
+const SERVER_WEIGHT = {
+  Furniture: 12,
+  "Home Decor": 3,
+  Fashion: 1.2,
+  Clothing: 3.5,
+  Kitchen: 4,
+  Electronics: 5,
+  Books: 4,
+  Sports: 3,
+};
 const CONDITION_FACTOR = { Good: 1, Medium: 0.7, Worst: 0.4 };
 export const estimateVoucher = (category, quantity, condition) => {
   const kg = (SERVER_WEIGHT[category] || 1.5) * Math.max(1, quantity || 1);
-  const worth = Math.round((kg * 12 * (CONDITION_FACTOR[condition] ?? 0.7)) / 10) * 10;
+  const worth =
+    Math.round((kg * 12 * (CONDITION_FACTOR[condition] ?? 0.7)) / 10) * 10;
   return Math.max(50, Math.min(500, worth));
 };
 
@@ -105,13 +188,41 @@ export const WHAT_WE_SKIP = [
    --------------------------------------------------------- */
 
 export const STATUS_META = {
-  Pending: { label: "Under review", tone: "amber", blurb: "We're reviewing your donation." },
-  Scheduled: { label: "Pickup scheduled", tone: "blue", blurb: "Your free pickup is booked." },
-  Picked_Up: { label: "Picked up", tone: "violet", blurb: "On its way to our warehouse." },
-  Received: { label: "Received", tone: "teal", blurb: "Checked in at the warehouse." },
-  Completed: { label: "Completed", tone: "green", blurb: "Delivered. Certificate issued." },
-  Rejected: { label: "Not accepted", tone: "red", blurb: "We couldn't accept this item." },
-  Cancelled: { label: "Cancelled", tone: "grey", blurb: "You cancelled this donation." },
+  Pending: {
+    label: "Under review",
+    tone: "amber",
+    blurb: "We're reviewing your donation.",
+  },
+  Scheduled: {
+    label: "Pickup scheduled",
+    tone: "blue",
+    blurb: "Your free pickup is booked.",
+  },
+  Picked_Up: {
+    label: "Picked up",
+    tone: "violet",
+    blurb: "On its way to our warehouse.",
+  },
+  Received: {
+    label: "Received",
+    tone: "teal",
+    blurb: "Checked in at the warehouse.",
+  },
+  Completed: {
+    label: "Completed",
+    tone: "green",
+    blurb: "Delivered. Certificate issued.",
+  },
+  Rejected: {
+    label: "Not accepted",
+    tone: "red",
+    blurb: "We couldn't accept this item.",
+  },
+  Cancelled: {
+    label: "Cancelled",
+    tone: "grey",
+    blurb: "You cancelled this donation.",
+  },
 };
 
 export const TRACK_STEPS = [
@@ -122,14 +233,22 @@ export const TRACK_STEPS = [
   { key: "Completed", label: "Completed", sub: "Certificate issued" },
 ];
 
-export const ACTIVE_STATUSES = ["Pending", "Scheduled", "Picked_Up", "Received"];
+export const ACTIVE_STATUSES = [
+  "Pending",
+  "Scheduled",
+  "Picked_Up",
+  "Received",
+];
 export const CLOSED_STATUSES = ["Rejected", "Cancelled"];
 export const canCancel = (d) => ["Pending", "Scheduled"].includes(d.status);
 export const canReschedule = (d) =>
   ["Pending", "Scheduled"].includes(d.status) && d.pickup.rescheduleCount < 2;
 
 export const stepIndex = (status) =>
-  Math.max(0, TRACK_STEPS.findIndex((step) => step.key === status));
+  Math.max(
+    0,
+    TRACK_STEPS.findIndex((step) => step.key === status),
+  );
 
 /* ---------------------------------------------------------
    Pincode serviceability (Serviceable_Pincodes table)
@@ -143,10 +262,15 @@ const RANGES = [
 
 export function checkPincode(value) {
   const text = String(value || "").trim();
-  if (!/^\d{6}$/.test(text)) return { valid: false, serviceable: false, city: "" };
+  if (!/^\d{6}$/.test(text))
+    return { valid: false, serviceable: false, city: "" };
   const num = Number(text);
   const range = RANGES.find(([from, to]) => num >= from && num <= to);
-  return { valid: true, serviceable: Boolean(range), city: range ? range[2] : "" };
+  return {
+    valid: true,
+    serviceable: Boolean(range),
+    city: range ? range[2] : "",
+  };
 }
 
 /* ---------------------------------------------------------
@@ -177,12 +301,23 @@ const adapt = (d) => ({
     handoverCode: d.pickup.handover_code || "",
     rescheduleCount: d.pickup.reschedule_count,
   },
-  ngo: d.ngo ? { name: d.ngo, city: NGOS.find((n) => n.name === d.ngo)?.city || "Gujarat" } : null,
+  ngo: d.ngo
+    ? {
+        name: d.ngo,
+        city: NGOS.find((n) => n.name === d.ngo)?.city || "Gujarat",
+      }
+    : null,
   certificateId: d.certificate_id,
   rejectReason: d.reject_reason || "",
   cancelReason: d.cancel_reason || "",
   reward: d.reward || { points: 0, voucher: null },
-  events: (d.events || []).map((e) => ({ id: e.id, label: e.label, detail: e.detail, at: e.at, tone: e.tone })),
+  events: (d.events || []).map((e) => ({
+    id: e.id,
+    label: e.label,
+    detail: e.detail,
+    at: e.at,
+    tone: e.tone,
+  })),
 });
 
 /* ---------------------------------------------------------
@@ -210,16 +345,25 @@ export async function loadDonations(force = false) {
   setState({ loading: true, error: "" });
   try {
     const rows = await donationApi.list();
-    if (state.owner === owner) setState({ list: rows.map(adapt), loaded: true, loading: false });
+    if (state.owner === owner)
+      setState({ list: rows.map(adapt), loaded: true, loading: false });
   } catch (e) {
-    setState({ loading: false, error: e.message || "Could not load your donations." });
+    setState({
+      loading: false,
+      error: e.message || "Could not load your donations.",
+    });
   }
 }
 
 const put = (row) => {
   const next = adapt(row);
   const has = state.list.some((d) => d.id === next.id);
-  setState({ list: has ? state.list.map((d) => (d.id === next.id ? next : d)) : [next, ...state.list], loaded: true });
+  setState({
+    list: has
+      ? state.list.map((d) => (d.id === next.id ? next : d))
+      : [next, ...state.list],
+    loaded: true,
+  });
   return next;
 };
 
@@ -227,10 +371,19 @@ const put = (row) => {
    date, slot, note, files (File[]). Rejects with .errors (field -> messages) when something is wrong. */
 export async function createDonation(form) {
   const body = new FormData();
-  [["title", form.title], ["category", form.category], ["description", form.description],
-    ["condition", form.condition], ["quantity", form.quantity], ["address_id", form.addressId],
-    ["contact_name", form.contactName], ["phone", form.phone], ["date", form.date], ["slot", form.slot],
-    ["note", form.note || ""]].forEach(([k, v]) => body.append(k, v ?? ""));
+  [
+    ["title", form.title],
+    ["category", form.category],
+    ["description", form.description],
+    ["condition", form.condition],
+    ["quantity", form.quantity],
+    ["address_id", form.addressId],
+    ["contact_name", form.contactName],
+    ["phone", form.phone],
+    ["date", form.date],
+    ["slot", form.slot],
+    ["note", form.note || ""],
+  ].forEach(([k, v]) => body.append(k, v ?? ""));
   (form.files || []).forEach((file) => body.append("images", file));
   return put(await donationApi.create(body));
 }
@@ -253,13 +406,19 @@ export async function updatePickupNote(id, note) {
 
 const useStore = () => {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  useEffect(() => { loadDonations(); }, []);
+  useEffect(() => {
+    loadDonations();
+  }, []);
   return s.owner === me() ? s : idle;
 };
 
 export function useDonations() {
   const { list } = useStore();
-  return useMemo(() => [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [list]);
+  return useMemo(
+    () =>
+      [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    [list],
+  );
 }
 
 export function useDonation(id) {
@@ -279,39 +438,69 @@ export function useDonationsStatus() {
 
 let vouchers = { list: [], ready: 0, loaded: false, loading: false, owner: "" };
 const vSubs = new Set();
-const setVouchers = (patch) => { vouchers = { ...vouchers, ...patch }; vSubs.forEach((l) => l()); };
+const setVouchers = (patch) => {
+  vouchers = { ...vouchers, ...patch };
+  vSubs.forEach((l) => l());
+};
 
 export async function loadVouchers(force = false) {
   const owner = me();
-  if (vouchers.owner !== owner) vouchers = { list: [], ready: 0, loaded: false, loading: false, owner };
+  if (vouchers.owner !== owner)
+    vouchers = { list: [], ready: 0, loaded: false, loading: false, owner };
   if (vouchers.loading || (vouchers.loaded && !force)) return;
   setVouchers({ loading: true });
   try {
     const r = await voucherApi.mine();
-    setVouchers({ list: r.vouchers, ready: r.ready, loaded: true, loading: false });
+    setVouchers({
+      list: r.vouchers,
+      ready: r.ready,
+      loaded: true,
+      loading: false,
+    });
   } catch {
     setVouchers({ loading: false, loaded: true });
   }
 }
 
 export function useVouchers() {
-  const v = useSyncExternalStore((l) => { vSubs.add(l); return () => vSubs.delete(l); }, () => vouchers, () => vouchers);
-  useEffect(() => { loadVouchers(); }, []);
-  return { vouchers: v.owner === me() ? v.list : [], ready: v.owner === me() ? v.ready : 0, loading: v.loading };
+  const v = useSyncExternalStore(
+    (l) => {
+      vSubs.add(l);
+      return () => vSubs.delete(l);
+    },
+    () => vouchers,
+    () => vouchers,
+  );
+  useEffect(() => {
+    loadVouchers();
+  }, []);
+  return {
+    vouchers: v.owner === me() ? v.list : [],
+    ready: v.owner === me() ? v.ready : 0,
+    loading: v.loading,
+  };
 }
 
 export const estimatePoints = (quantity) =>
   REWARD_RULES.base + REWARD_RULES.perItem * Math.max(1, quantity || 1);
 
 export const estimateWeight = (category, quantity) => {
-  return Math.round((SERVER_WEIGHT[category] || 1.5) * Math.max(1, quantity || 1) * 10) / 10;
+  return (
+    Math.round(
+      (SERVER_WEIGHT[category] || 1.5) * Math.max(1, quantity || 1) * 10,
+    ) / 10
+  );
 };
 
 export function summarize(list) {
-  const counted = list.filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status));
+  const counted = list.filter((d) =>
+    ["Picked_Up", "Received", "Completed"].includes(d.status),
+  );
   const completed = list.filter((d) => d.status === "Completed");
   const weight = counted.reduce((sum, d) => sum + d.weightKg, 0);
-  const earned = list.filter((d) => ["Received", "Completed"].includes(d.status));
+  const earned = list.filter((d) =>
+    ["Received", "Completed"].includes(d.status),
+  );
   return {
     total: list.length,
     active: list.filter((d) => ACTIVE_STATUSES.includes(d.status)).length,

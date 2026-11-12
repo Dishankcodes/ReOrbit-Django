@@ -93,15 +93,20 @@ export default function UserDonationNew() {
   const book = useServerAddresses();
   const address = useMemo(
     () =>
-      book.addresses.find((item) => item.id === (form.addressId || book.defaultId)) ||
-      null,
+      book.addresses.find(
+        (item) => item.id === (form.addressId || book.defaultId),
+      ) || null,
     [book.addresses, book.defaultId, form.addressId],
   );
 
   /* the contact is the person at that address, until the donor types their own */
   useEffect(() => {
     if (!address || contactEdited.current) return;
-    setForm((current) => ({ ...current, contactName: address.name || "", phone: address.phone || "" }));
+    setForm((current) => ({
+      ...current,
+      contactName: address.name || "",
+      phone: address.phone || "",
+    }));
   }, [address]);
 
   /* ---------- validation ---------- */
@@ -179,7 +184,14 @@ export default function UserDonationNew() {
       const f = e.errors || {};
       const first = (k) => (Array.isArray(f[k]) ? f[k][0] : f[k]);
       const next = {};
-      if (f.title || f.description || f.category || f.condition || f.quantity || f.images) {
+      if (
+        f.title ||
+        f.description ||
+        f.category ||
+        f.condition ||
+        f.quantity ||
+        f.images
+      ) {
         if (first("title")) next.title = first("title");
         if (first("description")) next.description = first("description");
         if (first("category")) next.category = first("category");
@@ -187,14 +199,22 @@ export default function UserDonationNew() {
         if (first("quantity")) next.quantity = first("quantity");
         if (first("images")) next.images = first("images");
         setStep(0);
-      } else if (f.address_id || f.date || f.slot || f.contact_name || f.phone) {
+      } else if (
+        f.address_id ||
+        f.date ||
+        f.slot ||
+        f.contact_name ||
+        f.phone
+      ) {
         if (first("address_id")) next.addressId = first("address_id");
-        if (first("date") || first("slot")) next.schedule = first("date") || first("slot");
+        if (first("date") || first("slot"))
+          next.schedule = first("date") || first("slot");
         if (first("contact_name")) next.contactName = first("contact_name");
         if (first("phone")) next.phone = first("phone");
         setStep(1);
       } else {
-        next.addressId = e.message || "We couldn't submit your donation. Please try again.";
+        next.addressId =
+          e.message || "We couldn't submit your donation. Please try again.";
         setStep(1);
       }
       setErrors(next);

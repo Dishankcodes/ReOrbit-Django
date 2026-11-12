@@ -85,7 +85,10 @@ const EXTRA = {
   },
 
   "refurbished-desk-lamp": {
-    gallery: ["https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+    gallery: [
+      "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    ],
     materials: ["Steel arm", "LED holder"],
     dimensions: "18 × 18 × 46 cm",
     age: "About 4 years old",
@@ -109,7 +112,10 @@ const EXTRA = {
   },
 
   "classic-novel-collection": {
-    gallery: ["https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000", "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000"],
+    gallery: [
+      "https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000",
+      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    ],
     materials: ["Paper", "Cloth-bound covers"],
     dimensions: "12 books, 20 × 13 cm each",
     age: "Mixed, 1980s to 2000s",
@@ -220,7 +226,9 @@ export function deliveryCharge(price, source = "remaker") {
 const decorate = (item) => {
   const extra = EXTRA[item.id] || {};
 
-  const gallery = (extra.gallery || []).map((path) => (path.startsWith("http") ? path : IMG + path));
+  const gallery = (extra.gallery || []).map((path) =>
+    path.startsWith("http") ? path : IMG + path,
+  );
 
   return {
     ...item,

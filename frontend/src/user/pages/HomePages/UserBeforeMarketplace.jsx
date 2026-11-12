@@ -7,7 +7,6 @@ export default function Marketplace() {
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
 
-
   /* real listings from every seller */
   const { data: live } = usePublic("/marketplace/?page_size=48");
   const real = (live?.results || []).filter((c) => c.cover).map(publicProduct);
@@ -1020,8 +1019,12 @@ export default function Marketplace() {
             {/* PRODUCT GRID */}
 
             {filteredProducts.length === 0 && (
-              <p style={{ textAlign: "center", padding: "32px 0", opacity: 0.7 }}>
-                {products.length === 0 ? "No pieces are listed right now. Check back soon." : "Nothing matches that search."}
+              <p
+                style={{ textAlign: "center", padding: "32px 0", opacity: 0.7 }}
+              >
+                {products.length === 0
+                  ? "No pieces are listed right now. Check back soon."
+                  : "Nothing matches that search."}
               </p>
             )}
             <div className="marketplace-grid">

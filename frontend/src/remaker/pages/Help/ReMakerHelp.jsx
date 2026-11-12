@@ -248,8 +248,14 @@ export default function ReMakerHelp() {
           {shownTickets.length === 0 ? (
             <div className="rk-empty">
               <div className="rk-empty-art" aria-hidden="true">
-                <img src="https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-                <img src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+                <img
+                  src="https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
+                <img
+                  src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
               </div>
               <h3>
                 {tickets.length === 0
@@ -289,8 +295,14 @@ export default function ReMakerHelp() {
           {reports.length === 0 ? (
             <div className="rk-empty">
               <div className="rk-empty-art" aria-hidden="true">
-                <img src="https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-                <img src="https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+                <img
+                  src="https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
+                <img
+                  src="https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
               </div>
               <h3>You have not reported anything</h3>
               <p>

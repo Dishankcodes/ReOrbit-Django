@@ -30,14 +30,24 @@ export function portalPath(path) {
   const map = MAPS[portalOf(window.location.pathname)];
   if (!map) return path;
   for (const [from, to] of map) {
-    if (path === from || path.startsWith(`${from}/`) || path.startsWith(`${from}?`) || path.startsWith(`${from}#`)) {
+    if (
+      path === from ||
+      path.startsWith(`${from}/`) ||
+      path.startsWith(`${from}?`) ||
+      path.startsWith(`${from}#`)
+    ) {
       return to + path.slice(from.length);
     }
   }
   return path;
 }
 
-const fix = (to) => (typeof to === "string" ? portalPath(to) : to && to.pathname ? { ...to, pathname: portalPath(to.pathname) } : to);
+const fix = (to) =>
+  typeof to === "string"
+    ? portalPath(to)
+    : to && to.pathname
+      ? { ...to, pathname: portalPath(to.pathname) }
+      : to;
 
 export * from "react-router-dom";
 
@@ -55,5 +65,8 @@ export function Navigate({ to, ...rest }) {
 
 export function useNavigate() {
   const nav = RR.useNavigate();
-  return React.useCallback((to, opts) => (typeof to === "number" ? nav(to) : nav(fix(to), opts)), [nav]);
+  return React.useCallback(
+    (to, opts) => (typeof to === "number" ? nav(to) : nav(fix(to), opts)),
+    [nav],
+  );
 }

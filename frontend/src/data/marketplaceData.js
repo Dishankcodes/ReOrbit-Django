@@ -130,21 +130,24 @@ export const REMAKERS = [
       {
         id: "tara-portfolio-1",
         title: "Restored Teak Cabinet",
-        image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A rescued teak cabinet restored while preserving its original character.",
       },
       {
         id: "tara-portfolio-2",
         title: "Vintage Chair Restoration",
-        image: "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A damaged vintage chair transformed into a functional statement piece.",
       },
       {
         id: "tara-portfolio-3",
         title: "Reclaimed Wood Console",
-        image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A console created using reclaimed wood from an old structure.",
       },
@@ -172,20 +175,23 @@ export const REMAKERS = [
       {
         id: "arjun-portfolio-1",
         title: "Reclaimed Wood Shelf",
-        image: "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A minimal wall shelf made from recovered wood.",
       },
       {
         id: "arjun-portfolio-2",
         title: "Upcycled Lamp",
-        image: "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "An old industrial component transformed into a modern lamp.",
       },
       {
         id: "arjun-portfolio-3",
         title: "Recycled Metal Decor",
-        image: "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "Decorative artwork made using recovered metal pieces.",
       },
     ],
@@ -212,19 +218,22 @@ export const REMAKERS = [
       {
         id: "priya-portfolio-1",
         title: "Recovered Textile Bag",
-        image: "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A lifestyle bag made from recovered textile material.",
       },
       {
         id: "priya-portfolio-2",
         title: "Patchwork Jacket",
-        image: "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/7679725/pexels-photo-7679725.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description: "A unique jacket created from leftover textile pieces.",
       },
       {
         id: "priya-portfolio-3",
         title: "Textile Home Collection",
-        image: "https://images.pexels.com/photos/8266834/pexels-photo-8266834.jpeg?auto=compress&cs=tinysrgb&w=1000",
+        image:
+          "https://images.pexels.com/photos/8266834/pexels-photo-8266834.jpeg?auto=compress&cs=tinysrgb&w=1000",
         description:
           "A collection of home accessories created from discarded fabrics.",
       },
@@ -264,23 +273,71 @@ export const REVIEWS = {
   ],
 
   "user-aarav-patel": [
-    { id: "review-11", name: "Pooja", rating: 5, text: "Lovely lamp, well packed and exactly as shown.", date: "2026-09-12" },
-    { id: "review-12", name: "Harsh", rating: 5, text: "Quick replies and a smooth handover.", date: "2026-08-28" },
+    {
+      id: "review-11",
+      name: "Pooja",
+      rating: 5,
+      text: "Lovely lamp, well packed and exactly as shown.",
+      date: "2026-09-12",
+    },
+    {
+      id: "review-12",
+      name: "Harsh",
+      rating: 5,
+      text: "Quick replies and a smooth handover.",
+      date: "2026-08-28",
+    },
   ],
 
   "user-nisha-rao": [
-    { id: "review-13", name: "Kavya", rating: 5, text: "The side table is sturdy and the finish is lovely.", date: "2026-09-06" },
-    { id: "review-14", name: "Arnav", rating: 4, text: "Good seller, item matched the photos.", date: "2026-08-14" },
+    {
+      id: "review-13",
+      name: "Kavya",
+      rating: 5,
+      text: "The side table is sturdy and the finish is lovely.",
+      date: "2026-09-06",
+    },
+    {
+      id: "review-14",
+      name: "Arnav",
+      rating: 4,
+      text: "Good seller, item matched the photos.",
+      date: "2026-08-14",
+    },
   ],
 
   "user-kabir-verma": [
-    { id: "review-15", name: "Sana", rating: 5, text: "The refurbished lamp works perfectly. Great value.", date: "2026-09-01" },
-    { id: "review-16", name: "Tejas", rating: 4, text: "Honest description and careful packing.", date: "2026-08-05" },
+    {
+      id: "review-15",
+      name: "Sana",
+      rating: 5,
+      text: "The refurbished lamp works perfectly. Great value.",
+      date: "2026-09-01",
+    },
+    {
+      id: "review-16",
+      name: "Tejas",
+      rating: 4,
+      text: "Honest description and careful packing.",
+      date: "2026-08-05",
+    },
   ],
 
   "user-anaya-singh": [
-    { id: "review-17", name: "Ritika", rating: 5, text: "The jacket is beautifully finished. Very creative reuse of fabric.", date: "2026-09-10" },
-    { id: "review-18", name: "Dev", rating: 5, text: "Fast delivery and the quality is excellent.", date: "2026-08-22" },
+    {
+      id: "review-17",
+      name: "Ritika",
+      rating: 5,
+      text: "The jacket is beautifully finished. Very creative reuse of fabric.",
+      date: "2026-09-10",
+    },
+    {
+      id: "review-18",
+      name: "Dev",
+      rating: 5,
+      text: "Fast delivery and the quality is excellent.",
+      date: "2026-08-22",
+    },
   ],
 
   "tara-bose": [
@@ -389,7 +446,10 @@ export function getSellerFromItem(item) {
 const postedReviews = {};
 
 export function addSellerReview(sellerId, review) {
-  postedReviews[sellerId] = [review, ...(postedReviews[sellerId] || []).filter((r) => r.id !== review.id)];
+  postedReviews[sellerId] = [
+    review,
+    ...(postedReviews[sellerId] || []).filter((r) => r.id !== review.id),
+  ];
 }
 
 export function getSellerReviews(sellerId) {
@@ -419,7 +479,8 @@ export function getRemakerProducts(remakerId) {
    The marketplace screens, cart and wishlist all read ITEMS, so live rows are
    swapped into that same array in place (marked live: true). */
 export function setLiveItems(cards) {
-  for (let i = ITEMS.length - 1; i >= 0; i -= 1) if (ITEMS[i].live) ITEMS.splice(i, 1);
+  for (let i = ITEMS.length - 1; i >= 0; i -= 1)
+    if (ITEMS[i].live) ITEMS.splice(i, 1);
   ITEMS.unshift(
     ...cards.map((c) => ({
       id: c.id,

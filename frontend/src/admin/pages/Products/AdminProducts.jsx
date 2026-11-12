@@ -624,14 +624,25 @@ const TABS = [
    "Marketplace overview" is the earlier demo view and stays until user listings are wired here. */
 export default function AdminProducts() {
   const [params, setParams] = useSearchParams();
-  const tab = TABS.some((t) => t.key === params.get("tab")) ? params.get("tab") : "remakers";
+  const tab = TABS.some((t) => t.key === params.get("tab"))
+    ? params.get("tab")
+    : "remakers";
   const { toast, toastNode } = useToast();
   return (
     <div className="au-page">
       <div className="apr-tabs" role="tablist" aria-label="Products">
         {TABS.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
-            onClick={() => setParams(t.key === "remakers" ? {} : { tab: t.key })}>{t.label}</button>
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() =>
+              setParams(t.key === "remakers" ? {} : { tab: t.key })
+            }
+          >
+            {t.label}
+          </button>
         ))}
       </div>
       {tab === "remakers" && <RemakerProductsLive toast={toast} />}

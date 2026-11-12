@@ -26,25 +26,37 @@ export default function UserArtistProfile() {
         if (active) setArtist(record);
       })
       .catch((e) => {
-        if (active) setError(e.message || "This studio is no longer available.");
+        if (active)
+          setError(e.message || "This studio is no longer available.");
       })
       .finally(() => {
         if (active) setLoading(false);
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [artistId]);
 
   if (loading) {
-    return <div className="dn mk-empty" role="status">Loading ReMaker profile…</div>;
+    return (
+      <div className="dn mk-empty" role="status">
+        Loading ReMaker profile…
+      </div>
+    );
   }
 
   if (error || !artist) {
     return (
-      <div className="dn mk-empty" style={{ margin: "40px auto", maxWidth: 520 }}>
+      <div
+        className="dn mk-empty"
+        style={{ margin: "40px auto", maxWidth: 520 }}
+      >
         <UserX size={32} />
         <h3>ReMaker not found</h3>
         <p>{error || "This studio is no longer available."}</p>
-        <Link to="/user-remakers" className="dn-btn">See all ReMakers</Link>
+        <Link to="/user-remakers" className="dn-btn">
+          See all ReMakers
+        </Link>
       </div>
     );
   }
@@ -60,7 +72,13 @@ export default function UserArtistProfile() {
       onFollow={() => toggle(artist.id)}
       chat={personChat(artist, "remaker")}
       reportType="ReMaker"
-      reportTarget={{ name: artist.name, sub: `${artist.craft} · ${artist.city}`, image: artist.image, ownerName: artist.name, ownerRole: "ReMaker" }}
+      reportTarget={{
+        name: artist.name,
+        sub: `${artist.craft} · ${artist.city}`,
+        image: artist.image,
+        ownerName: artist.name,
+        ownerRole: "ReMaker",
+      }}
       fileComplaint={fileComplaint}
       initialTab={params.get("tab")}
     />

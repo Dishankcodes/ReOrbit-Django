@@ -21,7 +21,12 @@ import {
 
 import CitySelect from "../../shared/components/CitySelect";
 import useMyProfile from "../../shared/hooks/useMyProfile";
-import { GUJARAT, GUJARAT_PIN_HINT, mediaUrl, pincodeProblem } from "../../api/profile";
+import {
+  GUJARAT,
+  GUJARAT_PIN_HINT,
+  mediaUrl,
+  pincodeProblem,
+} from "../../api/profile";
 
 import "../css/ReMakerProfile.css";
 
@@ -123,7 +128,10 @@ function Field({ id, label, children, error, span }) {
 
 export default function ReMakerProfile() {
   const me = useMyProfile("remaker");
-  const saved = useMemo(() => toDraft(me.account, me.profile), [me.account, me.profile]);
+  const saved = useMemo(
+    () => toDraft(me.account, me.profile),
+    [me.account, me.profile],
+  );
 
   const [draft, setDraft] = useState(saved);
   const [editing, setEditing] = useState(false);
@@ -146,7 +154,9 @@ export default function ReMakerProfile() {
     toastTimer.current = setTimeout(() => setToast(""), 2600);
   };
 
-  const data = editing ? { ...draft, avatar: saved.avatar, cover: saved.cover } : saved;
+  const data = editing
+    ? { ...draft, avatar: saved.avatar, cover: saved.cover }
+    : saved;
 
   const setField = (field, value) => {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -299,11 +309,17 @@ export default function ReMakerProfile() {
   const p = me.profile || {};
 
   const stats = [
-    { icon: Recycle, value: String(p.total_uploads ?? 0), label: "Products listed" },
+    {
+      icon: Recycle,
+      value: String(p.total_uploads ?? 0),
+      label: "Products listed",
+    },
     {
       icon: Star,
       value: p.rating_count ? Number(p.rating_average).toFixed(1) : "–",
-      label: p.rating_count ? `Average rating (${p.rating_count})` : "No ratings yet",
+      label: p.rating_count
+        ? `Average rating (${p.rating_count})`
+        : "No ratings yet",
     },
     { icon: Users, value: String(p.total_sales ?? 0), label: "Sales" },
   ];
@@ -348,19 +364,27 @@ export default function ReMakerProfile() {
       {/* ======================= HERO ======================= */}
       <header className="rpp-hero">
         <div className="rpp-cover">
-          {data.cover && <img className="rpp-cover-img" src={data.cover} alt="" />}
-          {!data.cover && <svg aria-hidden="true" viewBox="0 0 1200 220" preserveAspectRatio="xMaxYMid slice">
-            <g fill="none" stroke="currentColor" strokeWidth="1.2">
-              <circle cx="1010" cy="110" r="70" />
-              <circle cx="1010" cy="110" r="125" />
-              <circle cx="1010" cy="110" r="185" />
-              <circle cx="1010" cy="110" r="250" />
-              <circle cx="1010" cy="110" r="320" />
-            </g>
-            <circle cx="1080" cy="64" r="7" fill="#c1c8c4" />
-            <circle cx="890" cy="152" r="5" fill="#c1c8c4" opacity="0.7" />
-            <circle cx="1200" cy="190" r="9" fill="#c1c8c4" opacity="0.5" />
-          </svg>}
+          {data.cover && (
+            <img className="rpp-cover-img" src={data.cover} alt="" />
+          )}
+          {!data.cover && (
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 1200 220"
+              preserveAspectRatio="xMaxYMid slice"
+            >
+              <g fill="none" stroke="currentColor" strokeWidth="1.2">
+                <circle cx="1010" cy="110" r="70" />
+                <circle cx="1010" cy="110" r="125" />
+                <circle cx="1010" cy="110" r="185" />
+                <circle cx="1010" cy="110" r="250" />
+                <circle cx="1010" cy="110" r="320" />
+              </g>
+              <circle cx="1080" cy="64" r="7" fill="#c1c8c4" />
+              <circle cx="890" cy="152" r="5" fill="#c1c8c4" opacity="0.7" />
+              <circle cx="1200" cy="190" r="9" fill="#c1c8c4" opacity="0.5" />
+            </svg>
+          )}
           {editing && (
             <div className="rpp-cover-actions">
               <button
@@ -506,13 +530,21 @@ export default function ReMakerProfile() {
                 <Field id="rpp-user" label="Username" error={err("username")}>
                   {textInput("rpp-user", "username", { maxLength: 100 })}
                 </Field>
-                <Field id="rpp-studio" label="Studio name" error={err("studioName")}>
+                <Field
+                  id="rpp-studio"
+                  label="Studio name"
+                  error={err("studioName")}
+                >
                   {textInput("rpp-studio", "studioName", { maxLength: 120 })}
                 </Field>
                 <Field id="rpp-full" label="Full name" error={err("fullName")}>
                   {textInput("rpp-full", "fullName", { maxLength: 60 })}
                 </Field>
-                <Field id="rpp-spec" label="Speciality" error={err("speciality")}>
+                <Field
+                  id="rpp-spec"
+                  label="Speciality"
+                  error={err("speciality")}
+                >
                   {textInput("rpp-spec", "speciality", { maxLength: 150 })}
                 </Field>
                 <Field id="rpp-bio" label="Bio" span error={err("bio")}>
@@ -529,7 +561,9 @@ export default function ReMakerProfile() {
               </div>
             ) : (
               <>
-                {data.speciality && <p className="rpp-sub">{data.speciality}</p>}
+                {data.speciality && (
+                  <p className="rpp-sub">{data.speciality}</p>
+                )}
                 <p className="rpp-bio">{data.bio || "No bio added yet."}</p>
               </>
             )}
@@ -612,7 +646,9 @@ export default function ReMakerProfile() {
                   }
                   placeholder="Years of experience, in a line (100 characters)."
                 />
-                {err("experience") && <span className="rpp-error">{err("experience")}</span>}
+                {err("experience") && (
+                  <span className="rpp-error">{err("experience")}</span>
+                )}
               </div>
             ) : (
               <p className="rpp-bio">
@@ -726,7 +762,11 @@ export default function ReMakerProfile() {
                     />
                   </Field>
                   <Field id="rpp-state" label="State">
-                    {textInput("rpp-state", "state", { value: GUJARAT, readOnly: true, disabled: true })}
+                    {textInput("rpp-state", "state", {
+                      value: GUJARAT,
+                      readOnly: true,
+                      disabled: true,
+                    })}
                   </Field>
                 </div>
                 <Field id="rpp-pin" label="Pincode" error={err("pincode")}>
@@ -746,9 +786,7 @@ export default function ReMakerProfile() {
                 <li>
                   <MapPin size={16} />
                   <span>
-                    {[data.city, data.state]
-                      .filter(Boolean)
-                      .join(", ")}
+                    {[data.city, data.state].filter(Boolean).join(", ")}
                     <small>{data.pincode}</small>
                   </span>
                 </li>
@@ -777,24 +815,35 @@ export default function ReMakerProfile() {
                       placeholder="https://"
                       value={draft.social[key] || ""}
                       onChange={(event) =>
-                        setField("social", { ...draft.social, [key]: event.target.value })
+                        setField("social", {
+                          ...draft.social,
+                          [key]: event.target.value,
+                        })
                       }
                     />
                   </Field>
                 ))}
-                {serverErrors.social && <span className="rpp-error">{serverErrors.social}</span>}
+                {serverErrors.social && (
+                  <span className="rpp-error">{serverErrors.social}</span>
+                )}
               </div>
             ) : SOCIALS.some(([key]) => data.social[key]) ? (
               <ul className="rpp-contact">
-                {SOCIALS.filter(([key]) => data.social[key]).map(([key, label]) => (
-                  <li key={key}>
-                    <span>
-                      <a href={data.social[key]} target="_blank" rel="noreferrer noopener">
-                        {label}
-                      </a>
-                    </span>
-                  </li>
-                ))}
+                {SOCIALS.filter(([key]) => data.social[key]).map(
+                  ([key, label]) => (
+                    <li key={key}>
+                      <span>
+                        <a
+                          href={data.social[key]}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          {label}
+                        </a>
+                      </span>
+                    </li>
+                  ),
+                )}
               </ul>
             ) : (
               <p className="rpp-empty">No links added yet.</p>

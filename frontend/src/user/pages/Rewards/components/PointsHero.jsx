@@ -13,32 +13,68 @@ export default function PointsHero({ rewards, compact = false }) {
     <section className={`urw-hero ${compact ? "is-compact" : ""}`}>
       <div className="urw-hero-main">
         <span className="dn-eyebrow">Your Orbit Points</span>
-        <div className="urw-balance"><Star size={30} fill="currentColor" /> <strong>{balance.toLocaleString("en-IN")}</strong></div>
+        <div className="urw-balance">
+          <Star size={30} fill="currentColor" />{" "}
+          <strong>{balance.toLocaleString("en-IN")}</strong>
+        </div>
         <p>
-          {next
-            ? <><b>{toNext.toLocaleString("en-IN")} points</b> to reach <b>{next.name}</b></>
-            : "You've reached the top level. Thank you for giving things a second life."}
+          {next ? (
+            <>
+              <b>{toNext.toLocaleString("en-IN")} points</b> to reach{" "}
+              <b>{next.name}</b>
+            </>
+          ) : (
+            "You've reached the top level. Thank you for giving things a second life."
+          )}
         </p>
         {!compact && (
           <div className="urw-hero-actions">
-            <Link to="/user-orbit-points/vouchers" className="dn-btn">Redeem rewards <ChevronRight size={15} /></Link>
-            <Link to="/user-orbit-points/earn" className="dn-btn dn-btn--ghost">Ways to earn</Link>
+            <Link to="/user-orbit-points/vouchers" className="dn-btn">
+              Redeem rewards <ChevronRight size={15} />
+            </Link>
+            <Link to="/user-orbit-points/earn" className="dn-btn dn-btn--ghost">
+              Ways to earn
+            </Link>
           </div>
         )}
       </div>
 
       <div className="urw-ring" aria-label={`${progress}% to the next level`}>
         <svg viewBox="0 0 120 120" width="150" height="150" aria-hidden="true">
-          <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth="10" />
-          <circle cx="60" cy="60" r={r} fill="none" stroke="#2a4d3a" strokeWidth="10" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c - (c * progress) / 100} transform="rotate(-90 60 60)" />
+          <circle
+            cx="60"
+            cy="60"
+            r={r}
+            fill="none"
+            stroke="rgba(255,255,255,.45)"
+            strokeWidth="10"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r={r}
+            fill="none"
+            stroke="#2a4d3a"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c - (c * progress) / 100}
+            transform="rotate(-90 60 60)"
+          />
         </svg>
-        <div><Award size={20} /><b>{level.name}</b><small>{lifetime.toLocaleString("en-IN")} lifetime</small></div>
+        <div>
+          <Award size={20} />
+          <b>{level.name}</b>
+          <small>{lifetime.toLocaleString("en-IN")} lifetime</small>
+        </div>
       </div>
 
       <ol className="urw-levels">
         {LEVELS.map((l) => (
           <li key={l.key} className={l.min <= lifetime ? "on" : ""}>
-            <i /><span>{l.name}</span><small>{l.min.toLocaleString("en-IN")}</small>
+            <i />
+            <span>{l.name}</span>
+            <small>{l.min.toLocaleString("en-IN")}</small>
           </li>
         ))}
       </ol>

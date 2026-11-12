@@ -10,7 +10,13 @@ export default function DonationNotFound() {
   if (error)
     return (
       <div className="dn">
-        <EmptyState icon={SearchX} title="Could not load your donations" text={error} actionLabel="Go to donation history" to="/user-donations/history" />
+        <EmptyState
+          icon={SearchX}
+          title="Could not load your donations"
+          text={error}
+          actionLabel="Go to donation history"
+          to="/user-donations/history"
+        />
       </div>
     );
   return (

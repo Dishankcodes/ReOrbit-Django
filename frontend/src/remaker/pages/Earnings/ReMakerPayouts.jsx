@@ -2,7 +2,10 @@ import React from "react";
 
 import EarningsNav from "./EarningsNav";
 import { useWallet } from "../../../shared/data/walletStore";
-import { PayoutsPanel, WalletGate } from "../../../shared/components/WalletParts";
+import {
+  PayoutsPanel,
+  WalletGate,
+} from "../../../shared/components/WalletParts";
 
 import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";

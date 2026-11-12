@@ -1,10 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import {
-  LOGIN_PATH,
-  SESSION_ENDED_EVENT,
-  isSignedIn,
-} from "../../api/session";
+import { LOGIN_PATH, SESSION_ENDED_EVENT, isSignedIn } from "../../api/session";
 
 /* Route guard. Wrap a group of routes:
 

@@ -37,16 +37,29 @@ const adapt = (d) => ({
   reward: d.reward,
   waitingDays: d.waiting_days,
   overdue: d.overdue,
-  events: (d.events || []).map((e) => ({ id: e.id, label: e.label, detail: e.detail, tone: e.tone, at: e.at, actor: e.actor })),
+  events: (d.events || []).map((e) => ({
+    id: e.id,
+    label: e.label,
+    detail: e.detail,
+    tone: e.tone,
+    at: e.at,
+    actor: e.actor,
+  })),
   donor: d.donor,
 });
 
 const idle = { list: [], loaded: false, loading: false, error: "", owner: "" };
 let state = idle;
 const listeners = new Set();
-const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l); };
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
 const getSnapshot = () => state;
-const setState = (patch) => { state = { ...state, ...patch }; listeners.forEach((l) => l()); };
+const setState = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+};
 const me = () => getAccount("admin")?.public_id || "";
 
 export async function loadDonations(force = false) {
@@ -56,22 +69,33 @@ export async function loadDonations(force = false) {
   setState({ loading: true, error: "" });
   try {
     const r = await adminDonationApi.list();
-    if (state.owner === owner) setState({ list: r.results.map(adapt), loaded: true, loading: false });
+    if (state.owner === owner)
+      setState({ list: r.results.map(adapt), loaded: true, loading: false });
   } catch (e) {
-    setState({ loading: false, error: e.message || "Could not load donations." });
+    setState({
+      loading: false,
+      error: e.message || "Could not load donations.",
+    });
   }
 }
 
 const put = (row) => {
   const next = adapt(row);
   const has = state.list.some((d) => d.id === next.id);
-  setState({ list: has ? state.list.map((d) => (d.id === next.id ? next : d)) : [next, ...state.list], loaded: true });
+  setState({
+    list: has
+      ? state.list.map((d) => (d.id === next.id ? next : d))
+      : [next, ...state.list],
+    loaded: true,
+  });
   return next;
 };
 
 const useStore = () => {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  useEffect(() => { loadDonations(); }, []);
+  useEffect(() => {
+    loadDonations();
+  }, []);
   return s.owner === me() ? s : idle;
 };
 
@@ -88,7 +112,11 @@ export function useDonation(id) {
 /* { loading, error, reload } for the list pages */
 export function useDonationsStatus() {
   const s = useStore();
-  return { loading: s.loading || !s.loaded, error: s.error, reload: () => loadDonations(true) };
+  return {
+    loading: s.loading || !s.loaded,
+    error: s.error,
+    reload: () => loadDonations(true),
+  };
 }
 
 /* key: accept | reject | reschedule | cancelPickup | pickedUp | received | complete | reopen

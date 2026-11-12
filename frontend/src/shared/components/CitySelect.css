@@ -20,7 +20,9 @@
   font-size: 0.92rem;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .rcs-trigger:hover:not(:disabled) {

@@ -32,7 +32,13 @@ import {
   estimatePoints,
   useDonation,
 } from "../../data/donationsStore";
-import { formatDate, formatDateTime, formatLongDate, kg, relativeDay } from "../../utils/format";
+import {
+  formatDate,
+  formatDateTime,
+  formatLongDate,
+  kg,
+  relativeDay,
+} from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import SafeImage from "../../components/ui/SafeImage";
@@ -62,7 +68,9 @@ export default function UserDonationDetails() {
   const Icon = categoryIcon(donation.category);
   const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
   const rewarded = ["Received", "Completed"].includes(status);
-  const points = rewarded ? donation.reward.points : estimatePoints(donation.quantity);
+  const points = rewarded
+    ? donation.reward.points
+    : estimatePoints(donation.quantity);
   const voucher = donation.reward.voucher;
   const completed = status === "Completed";
   const closed = status === "Rejected" || status === "Cancelled";
@@ -111,26 +119,43 @@ export default function UserDonationDetails() {
               name: "ReOrbit Pickup Team",
               subtitle: `Donation ${donation.id}`,
               image: "",
-              context: { label: `Donation ${donation.id}`, to: `/user-donations/${donation.id}`, image: "" },
+              context: {
+                label: `Donation ${donation.id}`,
+                to: `/user-donations/${donation.id}`,
+                image: "",
+              },
             }}
           />
           {completed && (
-            <Link to={`/user-donations/${donation.id}/certificate`} className="dn-btn">
+            <Link
+              to={`/user-donations/${donation.id}/certificate`}
+              className="dn-btn"
+            >
               <Download size={16} /> Certificate
             </Link>
           )}
           {canReschedule(donation) && (
-            <Link to={`/user-donations/${donation.id}/pickup`} className="dn-btn dn-btn--ghost">
+            <Link
+              to={`/user-donations/${donation.id}/pickup`}
+              className="dn-btn dn-btn--ghost"
+            >
               <CalendarClock size={16} /> Manage pickup
             </Link>
           )}
           {closed && (
-            <Link to={`/user-donations/new?repeat=${donation.id}`} className="dn-btn">
+            <Link
+              to={`/user-donations/new?repeat=${donation.id}`}
+              className="dn-btn"
+            >
               <RotateCcw size={16} /> Donate again
             </Link>
           )}
           {canCancel(donation) && (
-            <button type="button" className="dn-btn dn-btn--danger" onClick={() => setCancelling(true)}>
+            <button
+              type="button"
+              className="dn-btn dn-btn--danger"
+              onClick={() => setCancelling(true)}
+            >
               <Ban size={16} /> Cancel
             </button>
           )}
@@ -161,7 +186,8 @@ export default function UserDonationDetails() {
           <Clock size={20} />
           <div>
             <strong>Waiting for review</strong>
-            Our team usually confirms within 24 hours. You'll be notified when your pickup is booked.
+            Our team usually confirms within 24 hours. You'll be notified when
+            your pickup is booked.
           </div>
         </div>
       )}
@@ -170,7 +196,8 @@ export default function UserDonationDetails() {
           <Truck size={20} />
           <div>
             <strong>
-              Pickup {relativeDay(pickup.date).toLowerCase()} · {formatLongDate(pickup.date)}
+              Pickup {relativeDay(pickup.date).toLowerCase()} ·{" "}
+              {formatLongDate(pickup.date)}
             </strong>
             {pickup.slot}. Keep the item packed and ready at your door.
           </div>
@@ -181,11 +208,14 @@ export default function UserDonationDetails() {
           <Award size={20} />
           <div>
             <strong>
-              {completed ? `Delivered to ${donation.ngo?.name}. ` : "Received at our warehouse. "}
+              {completed
+                ? `Delivered to ${donation.ngo?.name}. `
+                : "Received at our warehouse. "}
               You earned a ₹{voucher.amount} voucher
             </strong>
-            Use code <b>{voucher.code}</b> at checkout in the marketplace (it asks for a cart of ₹{voucher.amount * 2} or more)
-            {" "}and {points} Orbit Points are in your account.
+            Use code <b>{voucher.code}</b> at checkout in the marketplace (it
+            asks for a cart of ₹{voucher.amount * 2} or more) and {points} Orbit
+            Points are in your account.
             {completed && " Your certificate is ready."}
           </div>
         </div>
@@ -219,7 +249,11 @@ export default function UserDonationDetails() {
             <div className="dn-card-head">
               <div>
                 <h2>Donation progress</h2>
-                <small>{closed ? "This donation was closed." : "Follow your donation from your door to an NGO."}</small>
+                <small>
+                  {closed
+                    ? "This donation was closed."
+                    : "Follow your donation from your door to an NGO."}
+                </small>
               </div>
             </div>
             <ProgressTracker donation={donation} />
@@ -232,10 +266,30 @@ export default function UserDonationDetails() {
             </div>
             <p className="dn-det-desc">{donation.description}</p>
             <dl className="dn-det-facts">
-              <div><dt><Icon size={15} /> Category</dt><dd>{donation.category}</dd></div>
-              <div><dt><Package size={15} /> Quantity</dt><dd>{donation.quantity}</dd></div>
-              <div><dt><Scale size={15} /> Est. weight</dt><dd>{kg(donation.weightKg)}</dd></div>
-              <div><dt><CalendarDays size={15} /> Submitted</dt><dd>{formatDateTime(donation.createdAt)}</dd></div>
+              <div>
+                <dt>
+                  <Icon size={15} /> Category
+                </dt>
+                <dd>{donation.category}</dd>
+              </div>
+              <div>
+                <dt>
+                  <Package size={15} /> Quantity
+                </dt>
+                <dd>{donation.quantity}</dd>
+              </div>
+              <div>
+                <dt>
+                  <Scale size={15} /> Est. weight
+                </dt>
+                <dd>{kg(donation.weightKg)}</dd>
+              </div>
+              <div>
+                <dt>
+                  <CalendarDays size={15} /> Submitted
+                </dt>
+                <dd>{formatDateTime(donation.createdAt)}</dd>
+              </div>
             </dl>
           </section>
 
@@ -270,24 +324,41 @@ export default function UserDonationDetails() {
                   <MapPin size={16} />
                   <div>
                     <strong>{pickup.address.label}</strong>
-                    <span>{pickup.address.line}, {pickup.address.city} – {pickup.address.pincode}</span>
+                    <span>
+                      {pickup.address.line}, {pickup.address.city} –{" "}
+                      {pickup.address.pincode}
+                    </span>
                   </div>
                 </li>
                 <li>
                   <Truck size={16} />
                   <div>
-                    <strong>{pickup.partner ? pickup.partner.name : "To be assigned"}</strong>
-                    <span>{pickup.partner ? pickup.partner.team : "We assign a partner once accepted"}</span>
+                    <strong>
+                      {pickup.partner ? pickup.partner.name : "To be assigned"}
+                    </strong>
+                    <span>
+                      {pickup.partner
+                        ? pickup.partner.team
+                        : "We assign a partner once accepted"}
+                    </span>
                   </div>
                 </li>
               </ul>
-              {pickup.partner && ["Scheduled", "Picked_Up"].includes(status) && (
-                <a href={`tel:${pickup.partner.phone.replace(/\s/g, "")}`} className="dn-btn dn-btn--soft dn-btn--sm dn-btn--block">
-                  <Phone size={14} /> Call {pickup.partner.name.split(" ")[0]}
-                </a>
-              )}
+              {pickup.partner &&
+                ["Scheduled", "Picked_Up"].includes(status) && (
+                  <a
+                    href={`tel:${pickup.partner.phone.replace(/\s/g, "")}`}
+                    className="dn-btn dn-btn--soft dn-btn--sm dn-btn--block"
+                  >
+                    <Phone size={14} /> Call {pickup.partner.name.split(" ")[0]}
+                  </a>
+                )}
               {["Pending", "Scheduled"].includes(status) && (
-                <Link to={`/user-donations/${donation.id}/pickup`} className="dn-link" style={{ marginTop: 14 }}>
+                <Link
+                  to={`/user-donations/${donation.id}/pickup`}
+                  className="dn-link"
+                  style={{ marginTop: 14 }}
+                >
                   Open pickup manager →
                 </Link>
               )}
@@ -299,9 +370,13 @@ export default function UserDonationDetails() {
               <Award size={30} />
               <h3>Donation certificate</h3>
               <p>
-                {donation.certificateId} · issued for your gift to {donation.ngo?.name}.
+                {donation.certificateId} · issued for your gift to{" "}
+                {donation.ngo?.name}.
               </p>
-              <Link to={`/user-donations/${donation.id}/certificate`} className="dn-btn dn-btn--sm dn-btn--block">
+              <Link
+                to={`/user-donations/${donation.id}/certificate`}
+                className="dn-btn dn-btn--sm dn-btn--block"
+              >
                 View & download
               </Link>
             </section>
@@ -309,9 +384,13 @@ export default function UserDonationDetails() {
 
           {completed && donation.ngo && (
             <section className="dn-card dn-card-pad">
-              <div className="dn-card-head"><h3>Where it went</h3></div>
+              <div className="dn-card-head">
+                <h3>Where it went</h3>
+              </div>
               <div className="dn-det-ngo">
-                <span><Heart size={20} /></span>
+                <span>
+                  <Heart size={20} />
+                </span>
                 <div>
                   <strong>{donation.ngo.name}</strong>
                   <small>{donation.ngo.city}</small>
@@ -323,16 +402,31 @@ export default function UserDonationDetails() {
           <section className="dn-card dn-card-pad">
             <div className="dn-card-head">
               <h3>Impact</h3>
-              {!rewarded && !closed && <span className="dn-chip">Estimated</span>}
+              {!rewarded && !closed && (
+                <span className="dn-chip">Estimated</span>
+              )}
             </div>
             <div className="dn-det-impact">
-              <div><Star size={17} /><strong>{closed ? 0 : points}</strong><span>{rewarded ? "Points credited" : "Orbit Points"}</span></div>
-              <div><Scale size={17} /><strong>{closed ? "0 kg" : kg(donation.weightKg)}</strong><span>Waste diverted</span></div>
-              <div><Wind size={17} /><strong>{closed ? "0 kg" : `${co2} kg`}</strong><span>CO₂ saved</span></div>
+              <div>
+                <Star size={17} />
+                <strong>{closed ? 0 : points}</strong>
+                <span>{rewarded ? "Points credited" : "Orbit Points"}</span>
+              </div>
+              <div>
+                <Scale size={17} />
+                <strong>{closed ? "0 kg" : kg(donation.weightKg)}</strong>
+                <span>Waste diverted</span>
+              </div>
+              <div>
+                <Wind size={17} />
+                <strong>{closed ? "0 kg" : `${co2} kg`}</strong>
+                <span>CO₂ saved</span>
+              </div>
             </div>
             {!rewarded && !closed && (
               <p className="dn-hint" style={{ marginTop: 12 }}>
-                Your voucher and points are issued when the item reaches our warehouse.
+                Your voucher and points are issued when the item reaches our
+                warehouse.
               </p>
             )}
           </section>
@@ -341,8 +435,13 @@ export default function UserDonationDetails() {
             <CircleHelp size={22} />
             <div>
               <strong>Need help with this donation?</strong>
-              <p>Our support team can help with pickups, rejections or certificates.</p>
-              <Link to="/user-help" className="dn-link">Contact support →</Link>
+              <p>
+                Our support team can help with pickups, rejections or
+                certificates.
+              </p>
+              <Link to="/user-help" className="dn-link">
+                Contact support →
+              </Link>
             </div>
           </section>
         </aside>
@@ -357,12 +456,16 @@ export default function UserDonationDetails() {
           onConfirm={confirmCancel}
         >
           <p>
-            {donation.id} · {donation.title} will be cancelled and any booked pickup will be released.
-            You can always donate it again later.
+            {donation.id} · {donation.title} will be cancelled and any booked
+            pickup will be released. You can always donate it again later.
           </p>
           <label className="dn-field">
             <span className="dn-label">Why are you cancelling?</span>
-            <select className="dn-select" value={reason} onChange={(event) => setReason(event.target.value)}>
+            <select
+              className="dn-select"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+            >
               {CANCEL_REASONS.map((item) => (
                 <option key={item}>{item}</option>
               ))}

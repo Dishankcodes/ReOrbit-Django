@@ -3,7 +3,11 @@ import { Link } from "react-router-dom";
 
 import EarningsNav from "./EarningsNav";
 import { useWallet } from "../../../shared/data/walletStore";
-import { BalanceHero, LedgerList, WalletGate } from "../../../shared/components/WalletParts";
+import {
+  BalanceHero,
+  LedgerList,
+  WalletGate,
+} from "../../../shared/components/WalletParts";
 
 import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
@@ -17,11 +21,20 @@ export default function ReMakerEarnings() {
       <WalletGate wallet={wallet}>
         {(summary) => (
           <>
-            <BalanceHero summary={summary} payoutsTo="/remaker-earnings/payouts" transactionsTo="/remaker-earnings/transactions" />
+            <BalanceHero
+              summary={summary}
+              payoutsTo="/remaker-earnings/payouts"
+              transactionsTo="/remaker-earnings/transactions"
+            />
             <section className="rod-panel">
               <div className="rod-panel-head">
                 <h3>Recent transactions</h3>
-                <Link to="/remaker-earnings/transactions" className="sls-textbtn">See all</Link>
+                <Link
+                  to="/remaker-earnings/transactions"
+                  className="sls-textbtn"
+                >
+                  See all
+                </Link>
               </div>
               <LedgerList />
             </section>

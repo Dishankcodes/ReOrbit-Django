@@ -122,7 +122,10 @@ export default function ChatThread({ conversation, onBack }) {
 
         <div className="umsg-thread-actions">
           {profileLink(conversation.key) && (
-            <Link to={profileLink(conversation.key)} className="umsg-btn ghost small">
+            <Link
+              to={profileLink(conversation.key)}
+              className="umsg-btn ghost small"
+            >
               View profile
             </Link>
           )}

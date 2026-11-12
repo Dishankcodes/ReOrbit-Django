@@ -20,9 +20,21 @@ import { saveSession } from "../../../api/session";
 import "../../css/AdminLogin.css";
 
 const POINTS = [
-  { icon: Users, title: "Users and ReMakers", text: "Every account, in one place." },
-  { icon: PackageCheck, title: "Listings and orders", text: "Follow each item from upload to doorstep." },
-  { icon: Warehouse, title: "Pickups and warehouse", text: "Keep the circular loop moving." },
+  {
+    icon: Users,
+    title: "Users and ReMakers",
+    text: "Every account, in one place.",
+  },
+  {
+    icon: PackageCheck,
+    title: "Listings and orders",
+    text: "Follow each item from upload to doorstep.",
+  },
+  {
+    icon: Warehouse,
+    title: "Pickups and warehouse",
+    text: "Keep the circular loop moving.",
+  },
 ];
 
 export default function AdminLogin() {
@@ -67,7 +79,10 @@ export default function AdminLogin() {
       setTimeout(() => navigate("/admin-dashboard"), 400);
     } catch (err) {
       setError(
-        err?.data?.message || err?.data?.detail || err?.message || "Unable to sign in.",
+        err?.data?.message ||
+          err?.data?.detail ||
+          err?.message ||
+          "Unable to sign in.",
       );
       setLoading(false);
     }
@@ -77,14 +92,61 @@ export default function AdminLogin() {
     <div className="al-page">
       {/* BRAND PANEL */}
       <aside className="al-aside">
-        <svg className="al-orbits" viewBox="0 0 620 620" fill="none" aria-hidden="true">
-          <circle cx="310" cy="310" r="120" stroke="currentColor" strokeOpacity="0.16" />
-          <circle cx="310" cy="310" r="195" stroke="currentColor" strokeOpacity="0.12" />
-          <circle cx="310" cy="310" r="270" stroke="currentColor" strokeOpacity="0.09" />
-          <circle cx="310" cy="310" r="300" stroke="currentColor" strokeOpacity="0.06" />
-          <circle cx="430" cy="310" r="6" fill="currentColor" fillOpacity="0.55" />
-          <circle cx="146" cy="175" r="5" fill="currentColor" fillOpacity="0.4" />
-          <circle cx="395" cy="545" r="7" fill="currentColor" fillOpacity="0.3" />
+        <svg
+          className="al-orbits"
+          viewBox="0 0 620 620"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="310"
+            cy="310"
+            r="120"
+            stroke="currentColor"
+            strokeOpacity="0.16"
+          />
+          <circle
+            cx="310"
+            cy="310"
+            r="195"
+            stroke="currentColor"
+            strokeOpacity="0.12"
+          />
+          <circle
+            cx="310"
+            cy="310"
+            r="270"
+            stroke="currentColor"
+            strokeOpacity="0.09"
+          />
+          <circle
+            cx="310"
+            cy="310"
+            r="300"
+            stroke="currentColor"
+            strokeOpacity="0.06"
+          />
+          <circle
+            cx="430"
+            cy="310"
+            r="6"
+            fill="currentColor"
+            fillOpacity="0.55"
+          />
+          <circle
+            cx="146"
+            cy="175"
+            r="5"
+            fill="currentColor"
+            fillOpacity="0.4"
+          />
+          <circle
+            cx="395"
+            cy="545"
+            r="7"
+            fill="currentColor"
+            fillOpacity="0.3"
+          />
         </svg>
 
         <div className="al-brand">
@@ -102,8 +164,8 @@ export default function AdminLogin() {
             Run the circular marketplace, <em>end to end.</em>
           </h2>
           <p>
-            Manage members, listings, orders and pickups for ReOrbit from one calm,
-            organised workspace.
+            Manage members, listings, orders and pickups for ReOrbit from one
+            calm, organised workspace.
           </p>
 
           <ul className="al-points">

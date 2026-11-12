@@ -53,7 +53,8 @@ export const orders = [
     productId: "teak-drawer-chest",
     product: "Teak drawer chest, 1970s",
     seller: "Meera Iyer",
-    image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     amount: 4200,
     status: "Delivered",
     date: "28 Sep 2026",
@@ -64,7 +65,8 @@ export const orders = [
     productId: "ceramic-table-lamp",
     product: "Handmade ceramic table lamp",
     seller: "Aarav Patel",
-    image: "https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000",
     amount: 1650,
     status: "In transit",
     date: "04 Oct 2026",
@@ -75,7 +77,8 @@ export const orders = [
     productId: "vintage-reading-chair",
     product: "Vintage reading chair",
     seller: "Rohan Shah",
-    image: "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
     amount: 2800,
     status: "Processing",
     date: "06 Oct 2026",

@@ -8,18 +8,36 @@ export function productApi(base) {
   return {
     list: (params = "") => apiRequest(`${base}/${params}`).then((r) => r.data),
     get: (id) => apiRequest(`${base}/${id}/`).then(one),
-    create: (body) => apiRequest(`${base}/`, { method: "POST", body }).then(one),
-    update: (id, body) => apiRequest(`${base}/${id}/`, { method: "PATCH", body }).then(one),
-    publish: (id) => apiRequest(`${base}/${id}/publish/`, { method: "POST", body: {} }).then(one),
-    pause: (id) => apiRequest(`${base}/${id}/pause/`, { method: "POST", body: {} }).then(one),
+    create: (body) =>
+      apiRequest(`${base}/`, { method: "POST", body }).then(one),
+    update: (id, body) =>
+      apiRequest(`${base}/${id}/`, { method: "PATCH", body }).then(one),
+    publish: (id) =>
+      apiRequest(`${base}/${id}/publish/`, { method: "POST", body: {} }).then(
+        one,
+      ),
+    pause: (id) =>
+      apiRequest(`${base}/${id}/pause/`, { method: "POST", body: {} }).then(
+        one,
+      ),
     remove: (id) => apiRequest(`${base}/${id}/`, { method: "DELETE" }),
     upload: (id, files) => {
       const form = new FormData();
       files.forEach((f) => form.append("images", f));
-      return apiRequest(`${base}/${id}/images/`, { method: "POST", body: form }).then(one);
+      return apiRequest(`${base}/${id}/images/`, {
+        method: "POST",
+        body: form,
+      }).then(one);
     },
-    removeImage: (id, imageId) => apiRequest(`${base}/${id}/images/${imageId}/`, { method: "DELETE" }).then(one),
-    reorder: (id, order) => apiRequest(`${base}/${id}/images/order/`, { method: "POST", body: { order } }).then(one),
+    removeImage: (id, imageId) =>
+      apiRequest(`${base}/${id}/images/${imageId}/`, { method: "DELETE" }).then(
+        one,
+      ),
+    reorder: (id, order) =>
+      apiRequest(`${base}/${id}/images/order/`, {
+        method: "POST",
+        body: { order },
+      }).then(one),
   };
 }
 
@@ -32,7 +50,9 @@ export async function listAll(api, params = "") {
   const first = await api.list(`${params}${sep}page_size=100`);
   let rows = first.results;
   for (let p = 2; p <= first.total_pages; p += 1) {
-    rows = rows.concat((await api.list(`${params}${sep}page_size=100&page=${p}`)).results);
+    rows = rows.concat(
+      (await api.list(`${params}${sep}page_size=100&page=${p}`)).results,
+    );
   }
   return rows;
 }
@@ -48,21 +68,34 @@ export async function syncPhotos(api, id, photos, current) {
   rows = rows.filter((r) => keep.has(r.id));
   const fresh = photos.filter((p) => p.file);
   if (fresh.length) {
-    rows = (await api.upload(id, fresh.map((p) => p.file))).images;
+    rows = (
+      await api.upload(
+        id,
+        fresh.map((p) => p.file),
+      )
+    ).images;
     const added = rows.slice(rows.length - fresh.length);
-    fresh.forEach((p, n) => { p.serverId = added[n].id; });
+    fresh.forEach((p, n) => {
+      p.serverId = added[n].id;
+    });
   }
   const order = photos.map((p) => p.serverId).filter(Boolean);
-  if (order.length > 1 && order.some((v, n) => rows[n]?.id !== v)) await api.reorder(id, order);
+  if (order.length > 1 && order.some((v, n) => rows[n]?.id !== v))
+    await api.reorder(id, order);
 }
 
 /* categories that can hold products, cached for the session */
 let catPromise = null;
 export function fetchProductCategories() {
   if (!catPromise) {
-    catPromise = apiRequest("/marketplace/categories/?for=product", { auth: false })
+    catPromise = apiRequest("/marketplace/categories/?for=product", {
+      auth: false,
+    })
       .then((r) => r.data.categories)
-      .catch((e) => { catPromise = null; throw e; });
+      .catch((e) => {
+        catPromise = null;
+        throw e;
+      });
   }
   return catPromise;
 }

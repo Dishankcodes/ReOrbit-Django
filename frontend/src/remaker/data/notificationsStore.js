@@ -430,9 +430,10 @@ export function syncAnnouncements(list) {
       text: a.message,
       createdAt: a.at,
       read: false,
-      link: a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
-        ? { to: a.link, label: "Open" }
-        : null,
+      link:
+        a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
+          ? { to: a.link, label: "Open" }
+          : null,
       image: "",
     }));
 

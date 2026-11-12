@@ -23,7 +23,16 @@ export default function ReMakerTransactions() {
           <h3>Transactions</h3>
           <div className="wlt-method" role="radiogroup" aria-label="Filter">
             {FILTERS.map(([k, l]) => (
-              <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{l}</button>
+              <button
+                key={k}
+                type="button"
+                role="radio"
+                aria-checked={kind === k}
+                className={kind === k ? "on" : ""}
+                onClick={() => setKind(k)}
+              >
+                {l}
+              </button>
             ))}
           </div>
         </div>

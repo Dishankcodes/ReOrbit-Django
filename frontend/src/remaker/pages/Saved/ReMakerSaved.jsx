@@ -29,7 +29,8 @@ const toListing = (i) => ({
 
 export default function ReMakerSaved() {
   const wishlist = useWishlist();
-  const live = useLiveMarketplace(); /* real products join ITEMS once this has loaded */
+  const live =
+    useLiveMarketplace(); /* real products join ITEMS once this has loaded */
 
   const [source, setSource] = useState("all");
   const [sort, setSort] = useState("recent");
@@ -107,8 +108,14 @@ export default function ReMakerSaved() {
       <section className="rk sav">
         <div className="rk-empty">
           <div className="rk-empty-art" aria-hidden="true">
-            <img src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-            <img src="https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img
+              src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
+            <img
+              src="https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
           </div>
           <h3>Nothing saved yet</h3>
           <p>

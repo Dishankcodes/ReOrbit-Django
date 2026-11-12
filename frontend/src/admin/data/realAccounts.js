@@ -49,7 +49,11 @@ function baseProfile(p = {}) {
 }
 
 export function mapUser(row) {
-  const joined = { type: "account", text: "Created a ReOrbit account", at: row.created_at };
+  const joined = {
+    type: "account",
+    text: "Created a ReOrbit account",
+    at: row.created_at,
+  };
   return {
     user_id: row.public_id,
     full_name: row.full_name,
@@ -109,7 +113,13 @@ export function mapRemaker(row) {
     reviews: [],
     reports: [],
     statusHistory: history(row, row.public_id),
-    activity: [{ type: "account", text: "Created a ReOrbit account", at: row.created_at }],
+    activity: [
+      {
+        type: "account",
+        text: "Created a ReOrbit account",
+        at: row.created_at,
+      },
+    ],
   };
 }
 
@@ -148,10 +158,15 @@ function createStore({ path, map, idKey }) {
     state = { rows: [], loading: false, loaded: false, error: "" };
     listeners.forEach((l) => l());
   };
-  if (typeof window !== "undefined") window.addEventListener("reorbit:session-ended", reset);
+  if (typeof window !== "undefined")
+    window.addEventListener("reorbit:session-ended", reset);
 
   const useSnapshot = () => {
-    const snap = useSyncExternalStore(subscribe, () => state, () => state);
+    const snap = useSyncExternalStore(
+      subscribe,
+      () => state,
+      () => state,
+    );
     useEffect(() => {
       load();
     }, []);
@@ -187,8 +202,16 @@ function createStore({ path, map, idKey }) {
   return { useSnapshot, changeStatus, reload: () => load(true) };
 }
 
-const users = createStore({ path: "/users/admin/", map: mapUser, idKey: "user_id" });
-const remakers = createStore({ path: "/remakers/admin/", map: mapRemaker, idKey: "remaker_id" });
+const users = createStore({
+  path: "/users/admin/",
+  map: mapUser,
+  idKey: "user_id",
+});
+const remakers = createStore({
+  path: "/remakers/admin/",
+  map: mapRemaker,
+  idKey: "remaker_id",
+});
 
 /* lists */
 export const useUsers = () => users.useSnapshot().rows;
@@ -197,11 +220,21 @@ export const useRemakers = () => remakers.useSnapshot().rows;
 /* one record: { record, loading, error, reload } */
 export function useUser(id) {
   const s = users.useSnapshot();
-  return { record: s.rows.find((r) => r.user_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: users.reload };
+  return {
+    record: s.rows.find((r) => r.user_id === id) || null,
+    loading: s.loading || !s.loaded,
+    error: s.error,
+    reload: users.reload,
+  };
 }
 export function useRemaker(id) {
   const s = remakers.useSnapshot();
-  return { record: s.rows.find((r) => r.remaker_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: remakers.reload };
+  return {
+    record: s.rows.find((r) => r.remaker_id === id) || null,
+    loading: s.loading || !s.loaded,
+    error: s.error,
+    reload: remakers.reload,
+  };
 }
 
 /* { loading, error, reload } for the list pages */

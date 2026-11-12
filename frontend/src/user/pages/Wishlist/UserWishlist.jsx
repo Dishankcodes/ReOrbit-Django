@@ -119,7 +119,8 @@ export default function UserWishlist() {
   const navigate = useNavigate();
   const wish = useWishlist();
   const stockOf = useStockOf();
-  const live = useLiveMarketplace(); /* real products join ITEMS once this has loaded */
+  const live =
+    useLiveMarketplace(); /* real products join ITEMS once this has loaded */
   const { toast, show } = useToast();
 
   const [query, setQuery] = useState("");
@@ -189,7 +190,9 @@ export default function UserWishlist() {
   if (saved.length === 0 && (wish.loading || !live.ready)) {
     return (
       <div className="dn wl">
-        <p className="dn-muted" role="status">Loading your wishlist…</p>
+        <p className="dn-muted" role="status">
+          Loading your wishlist…
+        </p>
       </div>
     );
   }
@@ -199,7 +202,10 @@ export default function UserWishlist() {
       <div className="dn wl">
         {wish.error && (
           <p className="dn-muted" role="alert">
-            {wish.error} <button type="button" onClick={wish.reload}>Try again</button>
+            {wish.error}{" "}
+            <button type="button" onClick={wish.reload}>
+              Try again
+            </button>
           </p>
         )}
         <EmptyState

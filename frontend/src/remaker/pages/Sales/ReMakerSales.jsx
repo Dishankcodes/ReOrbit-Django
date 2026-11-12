@@ -13,11 +13,20 @@ export default function ReMakerSales() {
       <div className="rod-intro">
         <div>
           <h2>Orders from customers</h2>
-          <p>Pack each order, add the courier details, and mark it delivered.</p>
+          <p>
+            Pack each order, add the courier details, and mark it delivered.
+          </p>
         </div>
-        <Link to="/remaker-earnings" className="rod-btn ghost">View earnings</Link>
+        <Link to="/remaker-earnings" className="rod-btn ghost">
+          View earnings
+        </Link>
       </div>
-      <SellerOrders api={salesApi} role="remaker" accent="#421517" detailPath={(id) => `/remaker-sales/${id}`} />
+      <SellerOrders
+        api={salesApi}
+        role="remaker"
+        accent="#421517"
+        detailPath={(id) => `/remaker-sales/${id}`}
+      />
     </section>
   );
 }

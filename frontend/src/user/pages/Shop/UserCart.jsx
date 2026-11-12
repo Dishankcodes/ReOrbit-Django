@@ -15,7 +15,14 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { clearCart, removeFromCart, setCartQty, startCheckout, useCart, useCartCount } from "../../data/shopStore";
+import {
+  clearCart,
+  removeFromCart,
+  setCartQty,
+  startCheckout,
+  useCart,
+  useCartCount,
+} from "../../data/shopStore";
 import { isLiveId, useServerQuote } from "../../data/checkoutStore";
 import { useLiveMarketplace } from "../../data/liveMarketplace";
 import Spinner, { PageLoader } from "../../../shared/components/Spinner";
@@ -34,7 +41,8 @@ import "../../css/shop/UserCart.css";
 
 export default function UserCart() {
   const navigate = useNavigate();
-  const { ready } = useLiveMarketplace(); /* real products join the catalogue once this has loaded */
+  const { ready } =
+    useLiveMarketplace(); /* real products join the catalogue once this has loaded */
   const cart = useCart();
   const stored = useCartCount();
   const { toast, show } = useToast();
@@ -43,11 +51,18 @@ export default function UserCart() {
   const buyable = cart.lines.filter((l) => isLiveId(l.id));
   const q = useServerQuote(buyable);
   const problems = q.quote?.problems || {};
-  const canCheckout = buyable.length > 0 && !!q.quote && Object.keys(problems).length === 0 && !q.loading;
+  const canCheckout =
+    buyable.length > 0 &&
+    !!q.quote &&
+    Object.keys(problems).length === 0 &&
+    !q.loading;
 
   const checkout = () => {
     if (!canCheckout) return;
-    startCheckout(buyable.map((l) => ({ id: l.id, qty: l.qty })), "cart");
+    startCheckout(
+      buyable.map((l) => ({ id: l.id, qty: l.qty })),
+      "cart",
+    );
     navigate("/user-checkout");
   };
 
@@ -86,10 +101,18 @@ export default function UserCart() {
           <span className="dn-eyebrow">Almost yours</span>
           <h1>Your cart</h1>
           <p className="dn-muted">
-            {cart.all.length} {cart.all.length === 1 ? "piece" : "pieces"} · review before you check out
+            {cart.all.length} {cart.all.length === 1 ? "piece" : "pieces"} ·
+            review before you check out
           </p>
         </div>
-        <button type="button" className="ushp-textbtn danger" onClick={() => { clearCart(); show("Cart cleared."); }}>
+        <button
+          type="button"
+          className="ushp-textbtn danger"
+          onClick={() => {
+            clearCart();
+            show("Cart cleared.");
+          }}
+        >
           <Trash2 size={15} /> Clear cart
         </button>
       </header>
@@ -103,32 +126,89 @@ export default function UserCart() {
             const off = l.unavailable || sample || !!problem;
             const remaker = item.sellerType === "remaker";
             return (
-              <article key={l.id} className={`dn-card ushp-line ${off ? "is-off" : ""}`}>
-                <Link to={`/user-marketplace/product/${item.id}`} className="ushp-line-img">
+              <article
+                key={l.id}
+                className={`dn-card ushp-line ${off ? "is-off" : ""}`}
+              >
+                <Link
+                  to={`/user-marketplace/product/${item.id}`}
+                  className="ushp-line-img"
+                >
                   <SafeImage src={item.image} alt={item.title} />
                 </Link>
 
                 <div className="ushp-line-main">
                   <span className="ushp-cat">
                     {item.category} · {item.condition} ·{" "}
-                    {remaker ? <b><Sparkles size={11} /> ReMaker</b> : <b><BadgeCheck size={11} /> Community</b>}
+                    {remaker ? (
+                      <b>
+                        <Sparkles size={11} /> ReMaker
+                      </b>
+                    ) : (
+                      <b>
+                        <BadgeCheck size={11} /> Community
+                      </b>
+                    )}
                   </span>
-                  <h3><Link to={`/user-marketplace/product/${item.id}`}>{item.title}</Link></h3>
+                  <h3>
+                    <Link to={`/user-marketplace/product/${item.id}`}>
+                      {item.title}
+                    </Link>
+                  </h3>
                   <Link to={sellerPath(item)} className="dn-link ushp-seller">
                     {remaker ? "Made by" : "Sold by"} {item.seller}
                   </Link>
 
                   {off ? (
-                    <p className="ushp-warn"><AlertTriangle size={14} /> {sample ? "This is a sample piece and can't be bought yet." : problem || item.reason} Remove it to continue.</p>
+                    <p className="ushp-warn">
+                      <AlertTriangle size={14} />{" "}
+                      {sample
+                        ? "This is a sample piece and can't be bought yet."
+                        : problem || item.reason}{" "}
+                      Remove it to continue.
+                    </p>
                   ) : (
                     <div className="ushp-line-ctrl">
-                      <div className="ushp-qty" role="group" aria-label={`Quantity of ${item.title}`}>
-                        <button type="button" onClick={() => setCartQty(item.id, l.qty - 1, item.available)} disabled={l.qty <= 1} aria-label="Decrease quantity"><Minus size={14} /></button>
+                      <div
+                        className="ushp-qty"
+                        role="group"
+                        aria-label={`Quantity of ${item.title}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCartQty(item.id, l.qty - 1, item.available)
+                          }
+                          disabled={l.qty <= 1}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={14} />
+                        </button>
                         <output>{l.qty}</output>
-                        <button type="button" onClick={() => setCartQty(item.id, l.qty + 1, item.available)} disabled={l.qty >= item.available} aria-label="Increase quantity"><Plus size={14} /></button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCartQty(item.id, l.qty + 1, item.available)
+                          }
+                          disabled={l.qty >= item.available}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={14} />
+                        </button>
                       </div>
-                      {item.available <= 2 && <span className="ushp-low">Only {item.available} left</span>}
-                      <button type="button" className="ushp-textbtn danger" onClick={() => { removeFromCart(item.id); show("Removed from cart."); }}>
+                      {item.available <= 2 && (
+                        <span className="ushp-low">
+                          Only {item.available} left
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="ushp-textbtn danger"
+                        onClick={() => {
+                          removeFromCart(item.id);
+                          show("Removed from cart.");
+                        }}
+                      >
                         <Trash2 size={14} /> Remove
                       </button>
                     </div>
@@ -142,7 +222,11 @@ export default function UserCart() {
                   </div>
                 )}
                 {off && (
-                  <button type="button" className="ushp-textbtn danger ushp-line-remove" onClick={() => removeFromCart(item.id)}>
+                  <button
+                    type="button"
+                    className="ushp-textbtn danger ushp-line-remove"
+                    onClick={() => removeFromCart(item.id)}
+                  >
                     <Trash2 size={14} /> Remove
                   </button>
                 )}
@@ -155,26 +239,76 @@ export default function UserCart() {
           <h3>Order summary</h3>
 
           {q.error && (
-            <p className="dn-error" role="alert">{q.error} <button type="button" className="dn-link" onClick={q.retry}>Try again</button></p>
+            <p className="dn-error" role="alert">
+              {q.error}{" "}
+              <button type="button" className="dn-link" onClick={q.retry}>
+                Try again
+              </button>
+            </p>
           )}
           <dl aria-busy={q.loading}>
-            <div><dt>Subtotal ({buyable.reduce((n, l) => n + l.qty, 0)} items)</dt><dd>{quote ? formatPrice(quote.subtotal) : <Spinner />}</dd></div>
-            <div><dt>Delivery</dt><dd>{quote ? (quote.delivery_fee ? formatPrice(quote.delivery_fee) : "Free") : <Spinner />}</dd></div>
-            {quote && quote.platform_fee > 0 && <div><dt>{feeLabel()}</dt><dd>{formatPrice(quote.platform_fee)}</dd></div>}
-            <div className="total"><dt>Total</dt><dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd></div>
+            <div>
+              <dt>Subtotal ({buyable.reduce((n, l) => n + l.qty, 0)} items)</dt>
+              <dd>{quote ? formatPrice(quote.subtotal) : <Spinner />}</dd>
+            </div>
+            <div>
+              <dt>Delivery</dt>
+              <dd>
+                {quote ? (
+                  quote.delivery_fee ? (
+                    formatPrice(quote.delivery_fee)
+                  ) : (
+                    "Free"
+                  )
+                ) : (
+                  <Spinner />
+                )}
+              </dd>
+            </div>
+            {quote && quote.platform_fee > 0 && (
+              <div>
+                <dt>{feeLabel()}</dt>
+                <dd>{formatPrice(quote.platform_fee)}</dd>
+              </div>
+            )}
+            <div className="total">
+              <dt>Total</dt>
+              <dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd>
+            </div>
           </dl>
           {quote && quote.groups.length > 1 && (
-            <p className="ushp-note">Pieces from {quote.groups.length} sellers ship as {quote.groups.length} separate orders; delivery and fees are worked out per seller.</p>
+            <p className="ushp-note">
+              Pieces from {quote.groups.length} sellers ship as{" "}
+              {quote.groups.length} separate orders; delivery and fees are
+              worked out per seller.
+            </p>
           )}
 
-          <button type="button" className="dn-btn dn-btn--block ushp-big" onClick={checkout} disabled={!canCheckout}>
-            {q.loading ? <Spinner label="Checking prices…" /> : <>Proceed to checkout <ArrowRight size={16} /></>}
+          <button
+            type="button"
+            className="dn-btn dn-btn--block ushp-big"
+            onClick={checkout}
+            disabled={!canCheckout}
+          >
+            {q.loading ? (
+              <Spinner label="Checking prices…" />
+            ) : (
+              <>
+                Proceed to checkout <ArrowRight size={16} />
+              </>
+            )}
           </button>
-          <Link to="/user-marketplace" className="dn-link ushp-center">Continue shopping</Link>
+          <Link to="/user-marketplace" className="dn-link ushp-center">
+            Continue shopping
+          </Link>
 
           <ul className="ushp-mini">
-            <li><ShieldCheck size={14} /> Secure checkout</li>
-            <li><Truck size={14} /> Delivery to your address</li>
+            <li>
+              <ShieldCheck size={14} /> Secure checkout
+            </li>
+            <li>
+              <Truck size={14} /> Delivery to your address
+            </li>
           </ul>
         </aside>
       </div>

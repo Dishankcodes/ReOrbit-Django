@@ -15,7 +15,13 @@ export default function ReMakerEditProduct() {
   const { product, error } = useMyProduct(productId);
 
   if (!product && !error) {
-    return <section className="rpf"><div className="rpf-card rpf-missing"><PageLoader label="Loading product…" minHeight={160} /></div></section>;
+    return (
+      <section className="rpf">
+        <div className="rpf-card rpf-missing">
+          <PageLoader label="Loading product…" minHeight={160} />
+        </div>
+      </section>
+    );
   }
 
   if (!product) {

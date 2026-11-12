@@ -20,7 +20,8 @@ export default function UserAddresses() {
       <header className="ust-head">
         <span className="dn-eyebrow">Account</span>
         <p className="dn-muted">
-          Save the places you receive orders and hand over donations. Your default address is filled in for you.
+          Save the places you receive orders and hand over donations. Your
+          default address is filled in for you.
         </p>
       </header>
 

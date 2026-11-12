@@ -47,85 +47,99 @@ const ITEM_POOL = [
   {
     title: "Vintage Teak Drawer Chest",
     category: "Furniture",
-    image: "https://images.pexels.com/photos/10397037/pexels-photo-10397037.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/10397037/pexels-photo-10397037.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 6500,
   },
   {
     title: "Ceramic Table Lamp",
     category: "Home Decor",
-    image: "https://images.pexels.com/photos/6825324/pexels-photo-6825324.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/6825324/pexels-photo-6825324.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 1200,
   },
   {
     title: "Wooden Study Chair",
     category: "Furniture",
-    image: "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 2400,
   },
   {
     title: "Solid Wood Dining Table",
     category: "Furniture",
-    image: "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 9800,
   },
   {
     title: "Denim Jackets Bundle (4)",
     category: "Clothing",
-    image: "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 1800,
   },
   {
     title: "Old Laptop (working)",
     category: "Electronics",
-    image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 7500,
   },
   {
     title: "Glass Jars Set (12)",
     category: "Kitchen",
-    image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 650,
   },
   {
     title: "Steel Bookshelf",
     category: "Furniture",
-    image: "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 3200,
   },
   {
     title: "Brass Cooking Pots",
     category: "Kitchen",
-    image: "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 2100,
   },
   {
     title: "Children's Books Bundle",
     category: "Books",
-    image: "https://images.pexels.com/photos/5009179/pexels-photo-5009179.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/5009179/pexels-photo-5009179.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 500,
   },
   {
     title: "Cotton Sarees (6)",
     category: "Clothing",
-    image: "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/16428589/pexels-photo-16428589.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 2800,
   },
   {
     title: "Carved Window Frames",
     category: "Home Decor",
-    image: "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 3600,
   },
   {
     title: "Kids Bicycle",
     category: "Sports",
-    image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 1900,
   },
   {
     title: "Rattan Side Table",
     category: "Furniture",
-    image: "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     price: 2700,
   },
 ];
@@ -134,37 +148,43 @@ const REMAKER_PRODUCT_POOL = [
   {
     title: "Reclaimed Wood Lamp",
     price: 1249,
-    image: "https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Priya Shah",
   },
   {
     title: "Upcycled Denim Tote",
     price: 749,
-    image: "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Tara Bose",
   },
   {
     title: "Teak Offcut Organizer",
     price: 699,
-    image: "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Arjun Mehta",
   },
   {
     title: "Refurbished Study Chair",
     price: 3199,
-    image: "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Arjun Mehta",
   },
   {
     title: "Glass Jar Planters (set of 3)",
     price: 899,
-    image: "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Priya Shah",
   },
   {
     title: "Rustic Coffee Table",
     price: 5400,
-    image: "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    image:
+      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
     seller: "Tara Bose",
   },
 ];

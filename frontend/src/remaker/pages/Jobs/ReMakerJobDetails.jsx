@@ -50,8 +50,14 @@ export default function ReMakerJobDetails() {
       <section className="rk job">
         <div className="rk-empty">
           <div className="rk-empty-art" aria-hidden="true">
-            <img src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-            <img src="https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+            <img
+              src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
+            <img
+              src="https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000"
+              alt=""
+            />
           </div>
           <h3>We could not find that job</h3>
           <p>

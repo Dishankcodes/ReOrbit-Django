@@ -6,7 +6,11 @@ const LINKS = [
   { to: "/user-orbit-points", end: true, label: "Overview", icon: Star },
   { to: "/user-orbit-points/history", label: "History", icon: History },
   { to: "/user-orbit-points/earn", label: "Ways to earn", icon: Sparkles },
-  { to: "/user-orbit-points/vouchers", label: "Rewards & vouchers", icon: Ticket },
+  {
+    to: "/user-orbit-points/vouchers",
+    label: "Rewards & vouchers",
+    icon: Ticket,
+  },
   { to: "/user-badges", label: "Badges", icon: Trophy },
 ];
 
@@ -16,7 +20,14 @@ export default function PointsNav() {
       {LINKS.map((l) => {
         const Icon = l.icon;
         return (
-          <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => `urw-nav-link ${isActive ? "is-active" : ""}`}>
+          <NavLink
+            key={l.to}
+            to={l.to}
+            end={l.end}
+            className={({ isActive }) =>
+              `urw-nav-link ${isActive ? "is-active" : ""}`
+            }
+          >
             <Icon size={15} /> {l.label}
           </NavLink>
         );

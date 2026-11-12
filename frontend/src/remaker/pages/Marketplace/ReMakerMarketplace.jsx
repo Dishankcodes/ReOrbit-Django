@@ -350,9 +350,11 @@ export default function ReMakerMarketplace() {
 
                   <p className="rmk-seller">
                     <Link
-                      to={listing.source === "remaker"
-                        ? `/remaker-marketplace/remaker/${encodeURIComponent(String(listing.sellerId ?? ""))}`
-                        : `/remaker-marketplace/seller/${encodeURIComponent(String(listing.sellerId ?? ""))}`}
+                      to={
+                        listing.source === "remaker"
+                          ? `/remaker-marketplace/remaker/${encodeURIComponent(String(listing.sellerId ?? ""))}`
+                          : `/remaker-marketplace/seller/${encodeURIComponent(String(listing.sellerId ?? ""))}`
+                      }
                       onClick={(event) => event.stopPropagation()}
                     >
                       {listing.seller}

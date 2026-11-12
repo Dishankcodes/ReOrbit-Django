@@ -2,7 +2,14 @@ import { PAYMENT_LABEL } from "../../data/ordersStore";
 import { formatDate } from "../../utils/format";
 
 /* Everything typed by a seller or buyer is escaped: this page is written into a window on our own origin. */
-const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const esc = (v) =>
+  String(v ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
 
 const inr = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
 
@@ -14,7 +21,8 @@ export function printInvoice(o) {
 
   const row = (a, b, cls = "") =>
     `<tr class="${cls}"><td>${a}</td><td class="r">${b}</td></tr>`;
-  const paid = o.paymentStatus === "Paid" || (o.payment !== "COD" && !o.awaitingPayment);
+  const paid =
+    o.paymentStatus === "Paid" || (o.payment !== "COD" && !o.awaitingPayment);
   const a = o.address;
 
   w.document

@@ -9,7 +9,13 @@ import "../../css/shared/ui-base.css";
 export default function UserSaleDetails() {
   return (
     <div className="dn sl">
-      <SellerOrderDetails api={salesApi} role="user" accent="#2a4d3a" listPath="/user-sell/sales" listLabel="Sales & orders" />
+      <SellerOrderDetails
+        api={salesApi}
+        role="user"
+        accent="#2a4d3a"
+        listPath="/user-sell/sales"
+        listLabel="Sales & orders"
+      />
     </div>
   );
 }

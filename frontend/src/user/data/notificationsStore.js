@@ -74,10 +74,15 @@ export function useNotifications() {
     const since = Date.now() - WINDOW_DAYS * DAY;
     const out = [];
 
-    const lastOf = (list) => (Array.isArray(list) && list.length ? list[list.length - 1] : null);
+    const lastOf = (list) =>
+      Array.isArray(list) && list.length ? list[list.length - 1] : null;
     const ORDER_TEXT = {
-      Pending_Payment: "Waiting for payment", Confirmed: "Order confirmed", Packed: "Order packed",
-      Shipped: "Order shipped", Delivered: "Order delivered", Cancelled: "Order cancelled",
+      Pending_Payment: "Waiting for payment",
+      Confirmed: "Order confirmed",
+      Packed: "Order packed",
+      Shipped: "Order shipped",
+      Delivered: "Order delivered",
+      Cancelled: "Order cancelled",
     };
 
     orders.forEach((o) => {

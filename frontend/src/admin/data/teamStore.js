@@ -262,14 +262,19 @@ export const presetOf = (key) =>
 export const ALL_EDIT = all("edit");
 
 /* ---------- shape of a member in the UI ---------- */
-const labelOf = (key) => (ROLE_PRESETS.find((r) => r.key === key) || ROLE_PRESETS.at(-1)).label;
+const labelOf = (key) =>
+  (ROLE_PRESETS.find((r) => r.key === key) || ROLE_PRESETS.at(-1)).label;
 
 function fromApi(a) {
   if (!a) return null;
   const isSuper = a.permission_level === "Super_Admin";
   const role = isSuper ? "super" : a.role_key || "custom";
   const status =
-    a.status === "Blocked" ? "Suspended" : a.invited && !isSuper ? "Invited" : "Active";
+    a.status === "Blocked"
+      ? "Suspended"
+      : a.invited && !isSuper
+        ? "Invited"
+        : "Active";
   return {
     id: a.public_id,
     name: a.full_name,
@@ -352,7 +357,10 @@ export function loadTeam({ force = false } = {}) {
       set({ members, log, loaded: true, error: "" });
       writeCache(members, log);
     } catch (e) {
-      set({ error: e.message || "Could not load the team.", loaded: state.loaded });
+      set({
+        error: e.message || "Could not load the team.",
+        loaded: state.loaded,
+      });
     } finally {
       teamInFlight = null;
     }
@@ -367,7 +375,9 @@ export function refreshMyAccess() {
   if (meChecked) return;
   meChecked = true;
   fetchMe()
-    .then((admin) => updateAccount("admin", { ...(getAccount("admin") || {}), ...admin }))
+    .then((admin) =>
+      updateAccount("admin", { ...(getAccount("admin") || {}), ...admin }),
+    )
     .catch(() => {
       meChecked = false;
     });
@@ -400,7 +410,8 @@ export function useAccess() {
     const previewing = previewId
       ? members.find((m) => m.id === previewId) || null
       : null;
-    const me = previewing || real || { name: "Admin", role: "custom", roleLabel: "", permissions: {} };
+    const me = previewing ||
+      real || { name: "Admin", role: "custom", roleLabel: "", permissions: {} };
     const isSuper = me.role === "super";
     const level = (key) =>
       key === "team"
@@ -479,7 +490,10 @@ export async function updateMember(id, values) {
 }
 export async function setMemberStatus(id, status) {
   const member = fromApi(
-    await setTeamMemberStatus(id, status === "Suspended" ? "Blocked" : "Active"),
+    await setTeamMemberStatus(
+      id,
+      status === "Suspended" ? "Blocked" : "Active",
+    ),
   );
   replace(member);
   if (state.previewId === id && status !== "Active") set({ previewId: null });

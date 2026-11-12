@@ -99,7 +99,8 @@ export default function ReMakerReviews() {
 
   const submitReport = (reason) => {
     reportReview(reporting.id, reason);
-    const reviewerName = reporting.reviewer?.name || String(reporting.reviewer || "A customer");
+    const reviewerName =
+      reporting.reviewer?.name || String(reporting.reviewer || "A customer");
     fileComplaint({
       type: "Review",
       name: `${reviewerName}’s review`,
@@ -169,8 +170,14 @@ export default function ReMakerReviews() {
           {visible.length === 0 ? (
             <div className="rvp-empty">
               <div className="rvp-empty-art" aria-hidden="true">
-                <img src="https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
-                <img src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+                <img
+                  src="https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
+                <img
+                  src="https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                  alt=""
+                />
               </div>
               <h3>{filtersOn ? "No reviews match" : "No reviews yet"}</h3>
               <p>

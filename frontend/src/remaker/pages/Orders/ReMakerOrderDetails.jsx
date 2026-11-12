@@ -27,7 +27,11 @@ export function OrderNotFound() {
     <section className="rod">
       <div className="rod-empty">
         <div className="rod-empty-art single" aria-hidden="true">
-          <img className="a" src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
+          <img
+            className="a"
+            src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"
+            alt=""
+          />
         </div>
         <h2>We couldn&apos;t find that order</h2>
         <p>

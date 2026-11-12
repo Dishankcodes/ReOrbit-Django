@@ -463,8 +463,8 @@ export default function AdminSellForm() {
                 <div>
                   <h3>Add photos</h3>
                   <p>
-                    One photo is enough; up to {MAX_PHOTOS} clear photos sell faster. The
-                    first one is the cover.
+                    One photo is enough; up to {MAX_PHOTOS} clear photos sell
+                    faster. The first one is the cover.
                   </p>
                 </div>
               </header>

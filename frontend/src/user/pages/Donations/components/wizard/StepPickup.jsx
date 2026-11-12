@@ -12,7 +12,15 @@ import { createAddress } from "../../../../data/checkoutStore";
 import AddressForm from "../../../Shop/components/AddressForm";
 import DateSlotPicker from "../DateSlotPicker";
 
-export default function StepPickup({ form, set, errors, addresses, addressId, loading, error }) {
+export default function StepPickup({
+  form,
+  set,
+  errors,
+  addresses,
+  addressId,
+  loading,
+  error,
+}) {
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -53,10 +61,14 @@ export default function StepPickup({ form, set, errors, addresses, addressId, lo
           <p className="dn-hint">Loading your saved addresses…</p>
         )}
         {error && addresses.length === 0 && (
-          <p className="dn-error" role="alert">{error}</p>
+          <p className="dn-error" role="alert">
+            {error}
+          </p>
         )}
         {!loading && !error && addresses.length === 0 && !adding && (
-          <p className="dn-hint">You have no saved address yet. Add one to continue.</p>
+          <p className="dn-hint">
+            You have no saved address yet. Add one to continue.
+          </p>
         )}
 
         <div className="dn-addrs" role="radiogroup" aria-label="Pickup address">

@@ -85,5 +85,13 @@ export function usePagedList(fetcher, params = "") {
     };
   }, [load]);
 
-  return { rows, more, state, error, reload: () => load(1, true), loadMore: () => load(page + 1, false), loadingMore: false };
+  return {
+    rows,
+    more,
+    state,
+    error,
+    reload: () => load(1, true),
+    loadMore: () => load(page + 1, false),
+    loadingMore: false,
+  };
 }
