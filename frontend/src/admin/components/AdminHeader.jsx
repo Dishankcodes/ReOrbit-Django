@@ -89,6 +89,10 @@ const pageInformation = {
     title: "Buy Products",
     subtitle: "Shop community items and ReMaker products as the platform.",
   },
+  "/admin-shop/wishlist": {
+    title: "Saved Items",
+    subtitle: "Products you saved to look at again.",
+  },
   "/admin-shop/cart": {
     title: "Cart",
     subtitle: "Review the products you are about to buy.",

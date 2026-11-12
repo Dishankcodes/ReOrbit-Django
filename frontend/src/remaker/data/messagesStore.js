@@ -210,46 +210,6 @@ function seed() {
       ],
     },
     {
-      id: "cv-6",
-      kind: "reorbit",
-      name: "ReOrbit Warehouse Team",
-      subtitle: "Refurbishing jobs",
-      image: "",
-      customerId: "",
-      context: {
-        label: "Job JB-5098 · Cane-back dining chair",
-        to: "/remaker-jobs/JB-5098",
-        image: "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      },
-      unread: 1,
-      messages: [
-        {
-          id: "f1",
-          from: "system",
-          text: "You were assigned job JB-5098.",
-          at: ago(3000),
-        },
-        {
-          id: "f2",
-          from: "them",
-          text: "Hi Nivya! The chair for JB-5098 is ready for collection at the Naroda warehouse. Anytime between 10 am and 5 pm works.",
-          at: ago(2900),
-        },
-        {
-          id: "f3",
-          from: "me",
-          text: "Thanks, I will collect it on Saturday morning.",
-          at: ago(2880),
-        },
-        {
-          id: "f4",
-          from: "them",
-          text: "Reminder: please upload progress photos by Friday so we can plan the quality check.",
-          at: ago(60),
-        },
-      ],
-    },
-    {
       id: "cv-7",
       kind: "reorbit",
       name: "ReOrbit Support",

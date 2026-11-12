@@ -108,7 +108,6 @@ INSTALLED_APPS = [
     "apps.donations",
     "apps.pickups",
     "apps.warehouse",
-    "apps.jobs",
     "apps.rewards",
     "apps.messaging",
     "apps.adminops",

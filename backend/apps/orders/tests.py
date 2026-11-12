@@ -510,6 +510,14 @@ class OtherBuyerTests(OrderBase):
         self.assertEqual(r.status_code, 409)
         self.assertIn("own product", str(r.data))
 
+    def test_admin_cannot_buy_own_store_product_but_can_buy_a_colleagues(self):
+        r = self.buy(self.adm, [{"id": self.tote.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 201, r.data)  # another admin's product is fine
+        self.addr_for[self.boss] = self.post("/api/orders/addresses/", GOOD_ADDR, as_=self.boss).data["data"]["address"]["id"]
+        r = self.buy(self.boss, [{"id": self.tote.public_id, "qty": 1}])
+        self.assertEqual(r.status_code, 409)
+        self.assertIn("own store product", str(r.data))
+
     def test_admin_buys_and_orders_show_in_admin_list_with_buyer_type(self):
         r = self.buy(self.adm, [{"id": self.table.public_id, "qty": 1}])
         self.assertEqual(r.status_code, 201, r.data)

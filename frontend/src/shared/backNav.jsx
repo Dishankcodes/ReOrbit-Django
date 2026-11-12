@@ -106,7 +106,6 @@ const NAMES = {
   "remaker-portfolio": ["Portfolio", "Work"],
   "remaker-orders": ["My orders", "Order"],
   "remaker-sales": ["Sales", "Sale"],
-  "remaker-jobs": ["Jobs", "Job"],
   "remaker-customers": ["Customers", "Customer"],
   "remaker-messages": ["Messages", "Conversation"],
   "remaker-help": ["Help"],

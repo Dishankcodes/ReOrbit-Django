@@ -22,7 +22,6 @@ import {
   Sparkles,
   Store,
   Heart,
-  Hammer,
   MessageSquare,
 } from "lucide-react";
 
@@ -76,11 +75,6 @@ const studioMenu = [
     icon: PlusCircle,
   },
 
-  {
-    label: "Warehouse jobs",
-    path: "/remaker-jobs",
-    icon: Hammer,
-  },
 ];
 
 /* ====

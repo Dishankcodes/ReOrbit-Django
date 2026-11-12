@@ -1,20 +1,19 @@
 /* =========================================================
-   User › Shop (cart, checkout, payment). UI only, in-memory.
+   User › Shop (cart, checkout, payment). Shared by the User, ReMaker and Admin portals.
 
    Same flow as the admin shop: browse -> product -> cart ->
    checkout (delivery, payment, review) -> payment -> success.
    Buying creates real orders in ordersStore, so every purchase
    also appears in My orders and can be tracked.
-   Backend later: replace with Cart / Checkout / Payment APIs.
+   Prices, stock and orders come from the server (checkoutStore / ordersStore).
    ========================================================= */
 
-import { portalOf } from "../../api/session";
+import { portalOf, getAccount } from "../../api/session";
 import { useLiveMarketplace } from "./liveMarketplace";
 import { useMemo, useSyncExternalStore } from "react";
 import { ITEMS, getItemById } from "../../data/marketplaceData";
 import { deliveryFor, platformFeeOf, getCommerce } from "../../shared/commerce";
 
-const OWN_SELLER_ID = "user-aarav-patel"; // the logged-in demo user
 /* one cart per portal, so a member, a ReMaker and an admin signed in on the same browser never share one */
 const CART_KEY = `reorbit_${portalOf(typeof window !== "undefined" ? window.location.pathname : "/")}_cart`;
 
@@ -63,7 +62,10 @@ const useShopState = () =>
 /* ---------- items + stock ---------- */
 export function withStock(item, sold) {
   const available = Math.max(0, item.quantity - (sold[item.id] || 0));
-  const own = item.sellerId === OWN_SELLER_ID;
+  /* own listing = sold by the account signed in to this portal (the server enforces it too) */
+  const me = getAccount() || {};
+  const myId = me.public_id || me.id || null;
+  const own = !!myId && String(item.sellerId) === String(myId);
   let reason = "";
   if (own) reason = "This is your own listing, so you can't buy it.";
   else if (available <= 0)

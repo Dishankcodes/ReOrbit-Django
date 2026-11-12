@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "../../../shared/portalRouter";
 import {
   Heart,
   Search,
@@ -15,6 +15,7 @@ import {
 
 import { ITEMS, formatPrice } from "../../../data/marketplaceData";
 import { useWishlist } from "../../data/wishlistStore";
+import { useLiveMarketplace } from "../../data/liveMarketplace";
 import {
   addToCart,
   startCheckout,
@@ -118,6 +119,7 @@ export default function UserWishlist() {
   const navigate = useNavigate();
   const wish = useWishlist();
   const stockOf = useStockOf();
+  const live = useLiveMarketplace(); /* real products join ITEMS once this has loaded */
   const { toast, show } = useToast();
 
   const [query, setQuery] = useState("");
@@ -132,7 +134,7 @@ export default function UserWishlist() {
         .map((id) => ITEMS.find((i) => i.id === id))
         .filter(Boolean)
         .map((item) => ({ item, stock: stockOf(item) })),
-    [wish.ids, stockOf],
+    [wish.ids, stockOf, live.version],
   );
   const categories = useMemo(
     () => [...new Set(saved.map((s) => s.item.category))],
@@ -184,9 +186,22 @@ export default function UserWishlist() {
     setAvail("all");
   };
 
+  if (saved.length === 0 && (wish.loading || !live.ready)) {
+    return (
+      <div className="dn wl">
+        <p className="dn-muted" role="status">Loading your wishlist…</p>
+      </div>
+    );
+  }
+
   if (saved.length === 0) {
     return (
       <div className="dn wl">
+        {wish.error && (
+          <p className="dn-muted" role="alert">
+            {wish.error} <button type="button" onClick={wish.reload}>Try again</button>
+          </p>
+        )}
         <EmptyState
           icon={Heart}
           title="Your wishlist is empty"

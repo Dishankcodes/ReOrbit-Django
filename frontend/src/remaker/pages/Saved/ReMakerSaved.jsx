@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  MARKET_LISTINGS,
-  formatPrice,
-} from "../../data/remakerMarketplaceData";
+import { ITEMS, formatPrice } from "../../../data/marketplaceData";
+import { useLiveMarketplace } from "../../../user/data/liveMarketplace";
 import useWishlist, {
   clearWishlist,
   setWishlist,
@@ -15,8 +13,23 @@ import SavedCard from "./components/SavedCard";
 import "../../css/ReMakerUi.css";
 import "./SavedPage.css";
 
+/* a live marketplace row, shaped like the listing the saved cards draw */
+const toListing = (i) => ({
+  id: i.id,
+  title: i.title,
+  category: i.category,
+  price: i.price,
+  quantity: i.soldOut ? 0 : i.quantity,
+  gallery: i.image ? [i.image] : [],
+  source: i.sellerType,
+  seller: i.seller,
+  city: i.city,
+  condition: i.condition,
+});
+
 export default function ReMakerSaved() {
   const wishlist = useWishlist();
+  const live = useLiveMarketplace(); /* real products join ITEMS once this has loaded */
 
   const [source, setSource] = useState("all");
   const [sort, setSort] = useState("recent");
@@ -37,17 +50,19 @@ export default function ReMakerSaved() {
     () =>
       wishlist.ids
         .map((id, index) => ({
-          listing: MARKET_LISTINGS.find((item) => item.id === id),
+          listing: ITEMS.find((item) => item.id === id),
           index,
         }))
-        .filter((entry) => entry.listing),
-    [wishlist.ids],
+        .filter((entry) => entry.listing)
+        .map((entry) => ({ ...entry, listing: toListing(entry.listing) })),
+    [wishlist.ids, live.version],
   );
 
   const counts = {
     all: saved.length,
     user: saved.filter((entry) => entry.listing.source === "user").length,
     remaker: saved.filter((entry) => entry.listing.source === "remaker").length,
+    admin: saved.filter((entry) => entry.listing.source === "admin").length,
   };
 
   const visible = useMemo(() => {
@@ -78,6 +93,14 @@ export default function ReMakerSaved() {
     setConfirmClear(false);
     flash("Cleared your saved items.", () => setWishlist(removed));
   };
+
+  if (saved.length === 0 && (wishlist.loading || !live.ready)) {
+    return (
+      <section className="rk sav">
+        <p role="status">Loading your saved items…</p>
+      </section>
+    );
+  }
 
   if (saved.length === 0) {
     return (
@@ -152,6 +175,7 @@ export default function ReMakerSaved() {
             { key: "all", label: "Everything" },
             { key: "user", label: "Community items" },
             { key: "remaker", label: "ReMaker pieces" },
+            { key: "admin", label: "ReOrbit store" },
           ].map((item) => (
             <button
               type="button"

@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  SOURCE_LABEL,
-  formatPrice,
-} from "../../../data/remakerMarketplaceData";
+import { formatPrice } from "../../../../data/marketplaceData";
+
+const SOURCE_LABEL = {
+  user: "Community item",
+  remaker: "ReMaker piece",
+  admin: "ReOrbit store",
+};
 
 export default function SavedCard({ listing, onRemove }) {
   const [failed, setFailed] = useState(false);

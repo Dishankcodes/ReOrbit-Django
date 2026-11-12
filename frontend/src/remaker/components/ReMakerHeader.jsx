@@ -55,10 +55,6 @@ const pageInformation = {
     subtitle: "Marketplace pieces you saved for later.",
   },
 
-  "/remaker-jobs": {
-    title: "Warehouse jobs",
-    subtitle: "Refurbishing work from the ReOrbit warehouse.",
-  },
 
   "/remaker-messages": {
     title: "Messages",
@@ -197,11 +193,6 @@ const customerProfileInformation = {
   subtitle: "Contact details and order history.",
 };
 
-const jobDetailInformation = {
-  title: "Job details",
-  subtitle: "Brief, fee and your progress on this job.",
-};
-
 const ticketInformation = {
   title: "Support ticket",
   subtitle: "Your conversation with ReOrbit Support.",
@@ -236,10 +227,6 @@ function getPageInformation(pathname) {
 
   if (/^\/remaker-portfolio\/[^/]+$/.test(pathname)) {
     return portfolioViewInformation;
-  }
-
-  if (/^\/remaker-jobs\/[^/]+$/.test(pathname)) {
-    return jobDetailInformation;
   }
 
   if (/^\/remaker-help\/tickets\/[^/]+$/.test(pathname)) {

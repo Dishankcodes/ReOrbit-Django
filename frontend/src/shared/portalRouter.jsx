@@ -11,12 +11,14 @@ import { portalOf } from "../api/session";
 const MAPS = {
   remaker: [
     ["/user-marketplace", "/remaker-marketplace"],
+    ["/user-wishlist", "/remaker-saved"],
     ["/user-orders", "/remaker-orders"],
     ["/user-cart", "/remaker-cart"],
     ["/user-checkout", "/remaker-checkout"],
   ],
   admin: [
     ["/user-marketplace", "/admin-shop"],
+    ["/user-wishlist", "/admin-shop/wishlist"],
     ["/user-orders", "/admin-shop/orders"],
     ["/user-cart", "/admin-shop/cart"],
     ["/user-checkout", "/admin-shop/checkout"],

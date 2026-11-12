@@ -7,7 +7,7 @@ guards them) plus `buyer_type` and `buyer_key` ("user:5"), which every lookup us
 BUYER_TYPES = ("user", "remaker", "admin")
 
 # where each kind of buyer follows an order in the app
-ORDER_PATH = {"user": "/user-orders", "remaker": "/remaker-orders", "admin": "/admin-shop-orders"}
+ORDER_PATH = {"user": "/user-orders", "remaker": "/remaker-orders", "admin": "/admin-shop/orders"}
 
 
 def type_of(account):

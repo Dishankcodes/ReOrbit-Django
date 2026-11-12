@@ -30,7 +30,6 @@ export const FAQ_CATEGORIES = [
     note: "Accept, pack, deliver",
   },
   { key: "money", label: "Earnings and payouts", note: "Fees and withdrawals" },
-  { key: "jobs", label: "ReOrbit jobs", note: "Warehouse refurbishing work" },
   { key: "account", label: "Account and safety", note: "Security and privacy" },
 ];
 
@@ -108,24 +107,6 @@ export const FAQS = [
     a: "Yes. Go to Earnings, then Payouts, and choose Change next to your bank account. We keep only the last 4 digits of the account number.",
   },
   {
-    id: "f13",
-    category: "jobs",
-    q: "What are ReOrbit jobs?",
-    a: "ReOrbit's warehouse receives donated and unsold items. Verified ReMakers can take on refurbishing jobs for a fixed fee. You rework the item, submit photos, and get paid after a quality check.",
-  },
-  {
-    id: "f14",
-    category: "jobs",
-    q: "What happens if my work fails the quality check?",
-    a: "You get notes about what to fix and the job goes back to In progress. You can resubmit it as many times as you need before the deadline.",
-  },
-  {
-    id: "f15",
-    category: "jobs",
-    q: "Who provides the materials?",
-    a: "Each job says what is included. Most jobs give you the item and basic finishing supplies. Extra materials are usually your own cost.",
-  },
-  {
     id: "f16",
     category: "account",
     q: "How do I turn on two-step verification?",
@@ -149,7 +130,6 @@ export const TICKET_CATEGORIES = [
   "Orders and shipping",
   "Earnings and payouts",
   "Products and listings",
-  "ReOrbit jobs",
   "Account and security",
   "Report a person or order",
   "Something is not working",

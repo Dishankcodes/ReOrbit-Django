@@ -129,6 +129,8 @@ def _unavailable(obj, kind, qty, buyer, sellers):
         if obj.status not in ("Listed",) or seller is None or seller.status != ReMakers.Status.ACTIVE:
             return "This product is no longer available."
     else:
+        if buyer_kit.type_of(buyer) == "admin" and obj.admin_id == buyer.pk:
+            return "This is your own store product, so you can't buy it."
         if obj.status != "Listed":
             return "This product is no longer available."
     if qty > obj.stock:

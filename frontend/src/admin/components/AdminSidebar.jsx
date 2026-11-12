@@ -26,8 +26,9 @@ import {
   ShieldAlert,
   LifeBuoy,
   LayoutTemplate,
+  Heart,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
 import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
@@ -61,6 +62,12 @@ const mainMenu = [
     label: "Buy Products",
     path: "/admin-shop",
     icon: ShoppingCart,
+  },
+  {
+    key: "shop",
+    label: "Saved Items",
+    path: "/admin-shop/wishlist",
+    icon: Heart,
   },
   { key: "sell", label: "Sell Products", path: "/admin-sell", icon: Store },
 ];
@@ -196,6 +203,8 @@ export default function AdminSidebar({
     }
   };
 
+  const onSavedPage = useLocation().pathname === "/admin-shop/wishlist";
+
   const renderMenuItem = (item) => {
     const Icon = item.icon;
     return (
@@ -204,7 +213,9 @@ export default function AdminSidebar({
         to={item.path}
         end={item.path === "/admin-dashboard"}
         className={({ isActive }) =>
-          `admin-sidebar-link ${isActive ? "active" : ""}`
+          `admin-sidebar-link ${
+            isActive && !(item.path === "/admin-shop" && onSavedPage) ? "active" : ""
+          }`
         }
         onClick={handleNavigation}
       >
