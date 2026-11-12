@@ -293,7 +293,7 @@ export function useRewards() {
           pointsOf(rules, "listing") > 0,
       )
       .forEach((l) => {
-        const e = l.events.find((x) => x.label === "Listing published");
+        const e = eventsOf(l).find((x) => x.label === "Listing published");
         earn.push({
           id: `lst-${l.id}`,
           kind: "listing",
