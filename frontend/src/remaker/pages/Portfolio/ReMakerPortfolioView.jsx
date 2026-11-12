@@ -3,11 +3,11 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import BeforeAfter from "../../pages-components/BeforeAfter";
 import PortfolioDeleteModal from "../../pages-components/PortfolioDeleteModal";
-import { REMAKER_PRODUCTS, formatPrice } from "../../data/remakerProducts";
+import { formatPrice } from "../../data/remakerProducts";
 import {
   deleteWork,
   formatWorkDate,
-  useWork,
+  useWorkState,
   usePortfolio,
 } from "../../data/portfolioStore";
 
@@ -17,16 +17,37 @@ export default function ReMakerPortfolioView() {
   /* works with both /:workId and /:id */
   const params = useParams();
   const workId = params.workId ?? params.id;
-  const work = useWork(workId);
+  const { work, loading, error, retry } = useWorkState(workId);
+
+  if (loading) {
+    return (
+      <section className="rpt">
+        <div className="rpt-empty" role="status" aria-live="polite">
+          <p>Loading this work...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="rpt">
+        <div className="rpt-missing">
+          <h2>We couldn&apos;t load this work</h2>
+          <p>{error}</p>
+          <button type="button" className="rpt-btn primary" onClick={retry}>
+            Try again
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   if (!work) {
     return (
       <section className="rpt">
         <div className="rpt-missing">
-          <img
-            src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000"
-            alt=""
-          />
+          <img src="https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000" alt="" />
           <h2>We couldn&apos;t find that work</h2>
           <p>It may have been deleted, or the link is out of date.</p>
           <Link to="/remaker-portfolio" className="rpt-btn primary">
@@ -61,13 +82,17 @@ function View({ work }) {
   const newer = index > 0 ? all[index - 1] : null;
   const older = index < all.length - 1 ? all[index + 1] : null;
 
-  const product = work.linkedProductId
-    ? REMAKER_PRODUCTS.find((item) => item.id === work.linkedProductId)
-    : null;
+  const product = work.linkedProduct;
+  const [problem, setProblem] = useState("");
 
-  const confirmRemove = () => {
-    const removed = deleteWork(work.id);
-    navigate("/remaker-portfolio", { state: { undo: removed } });
+  const confirmRemove = async () => {
+    try {
+      const removed = await deleteWork(work.id);
+      navigate("/remaker-portfolio", { state: { undo: removed } });
+    } catch (error) {
+      setConfirmDelete(false);
+      setProblem(error.message || "We couldn't delete this work. Try again.");
+    }
   };
 
   return (
@@ -159,7 +184,7 @@ function View({ work }) {
                 to={`/remaker-products/${product.id}/edit`}
                 className="rpt-linked-card"
               >
-                {product.images[0] && <img src={product.images[0]} alt="" />}
+                {product.image && <img src={product.image} alt="" />}
                 <span>
                   <strong>{product.title}</strong>
                   <em>
@@ -218,6 +243,12 @@ function View({ work }) {
           onConfirm={confirmRemove}
           onCancel={() => setConfirmDelete(false)}
         />
+      )}
+
+      {problem && (
+        <div className="rpt-toast" role="alert">
+          {problem}
+        </div>
       )}
 
       {notice && (

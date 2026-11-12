@@ -1,4 +1,5 @@
 import { apiRequest } from "./api";
+import { fetchPublicWorks } from "./portfolio";
 
 function mapPublicRemaker(row) {
   const profile = row.profile || {};
@@ -29,32 +30,16 @@ function mapPublicRemaker(row) {
   };
 }
 
-export async function fetchPublicRemakers() {
-  const remakers = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const response = await apiRequest(
-      `/remakers/public/?page=${page}&page_size=100`,
-      { auth: false },
-    );
-    const data = response.data || {};
-    remakers.push(...(data.results || []).map(mapPublicRemaker));
-    totalPages = Number(data.total_pages || 1);
-    page += 1;
-  } while (page <= totalPages);
-
-  return remakers;
-}
-
 export async function fetchPublicRemaker(publicId) {
-  const response = await apiRequest(
-    `/remakers/public/${encodeURIComponent(publicId)}/`,
-    { auth: false },
-  );
+  /* A portfolio that fails to load must not hide the whole profile */
+  const [response, portfolio] = await Promise.all([
+    apiRequest(`/remakers/public/${encodeURIComponent(publicId)}/`, {
+      auth: false,
+    }),
+    fetchPublicWorks(publicId).catch(() => []),
+  ]);
   if (!response.data?.remaker) {
     throw new Error("ReMaker profile was not found.");
   }
-  return mapPublicRemaker(response.data.remaker);
+  return { ...mapPublicRemaker(response.data.remaker), portfolio };
 }

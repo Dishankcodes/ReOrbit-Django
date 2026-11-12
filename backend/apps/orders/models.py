@@ -55,6 +55,7 @@ class Order(PublicIdModel, TimeStampedModel):
     subtotal = models.PositiveIntegerField()
     platform_fee = models.PositiveIntegerField(default=0)
     delivery_fee = models.PositiveIntegerField(default=0)
+    discount = models.PositiveIntegerField(default=0, help_text="Voucher discount taken off the goods; ReOrbit carries it, the seller is paid in full.")
     total = models.PositiveIntegerField()
 
     address = models.JSONField(help_text="Copy of the delivery address at purchase time.")

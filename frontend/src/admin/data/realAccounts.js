@@ -9,9 +9,10 @@
    they reset on refresh until the status endpoints are built.
    ========================================================= */
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { apiRequest } from "../../api/api";
 import { mediaUrl } from "../../api/profile";
+import { fetchAdminWorks } from "../../api/portfolio";
 
 const splitList = (text, sep) =>
   String(text || "")
@@ -49,11 +50,7 @@ function baseProfile(p = {}) {
 }
 
 export function mapUser(row) {
-  const joined = {
-    type: "account",
-    text: "Created a ReOrbit account",
-    at: row.created_at,
-  };
+  const joined = { type: "account", text: "Created a ReOrbit account", at: row.created_at };
   return {
     user_id: row.public_id,
     full_name: row.full_name,
@@ -113,13 +110,7 @@ export function mapRemaker(row) {
     reviews: [],
     reports: [],
     statusHistory: history(row, row.public_id),
-    activity: [
-      {
-        type: "account",
-        text: "Created a ReOrbit account",
-        at: row.created_at,
-      },
-    ],
+    activity: [{ type: "account", text: "Created a ReOrbit account", at: row.created_at }],
   };
 }
 
@@ -158,15 +149,10 @@ function createStore({ path, map, idKey }) {
     state = { rows: [], loading: false, loaded: false, error: "" };
     listeners.forEach((l) => l());
   };
-  if (typeof window !== "undefined")
-    window.addEventListener("reorbit:session-ended", reset);
+  if (typeof window !== "undefined") window.addEventListener("reorbit:session-ended", reset);
 
   const useSnapshot = () => {
-    const snap = useSyncExternalStore(
-      subscribe,
-      () => state,
-      () => state,
-    );
+    const snap = useSyncExternalStore(subscribe, () => state, () => state);
     useEffect(() => {
       load();
     }, []);
@@ -202,16 +188,8 @@ function createStore({ path, map, idKey }) {
   return { useSnapshot, changeStatus, reload: () => load(true) };
 }
 
-const users = createStore({
-  path: "/users/admin/",
-  map: mapUser,
-  idKey: "user_id",
-});
-const remakers = createStore({
-  path: "/remakers/admin/",
-  map: mapRemaker,
-  idKey: "remaker_id",
-});
+const users = createStore({ path: "/users/admin/", map: mapUser, idKey: "user_id" });
+const remakers = createStore({ path: "/remakers/admin/", map: mapRemaker, idKey: "remaker_id" });
 
 /* lists */
 export const useUsers = () => users.useSnapshot().rows;
@@ -220,21 +198,34 @@ export const useRemakers = () => remakers.useSnapshot().rows;
 /* one record: { record, loading, error, reload } */
 export function useUser(id) {
   const s = users.useSnapshot();
-  return {
-    record: s.rows.find((r) => r.user_id === id) || null,
-    loading: s.loading || !s.loaded,
-    error: s.error,
-    reload: users.reload,
-  };
+  return { record: s.rows.find((r) => r.user_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: users.reload };
 }
 export function useRemaker(id) {
   const s = remakers.useSnapshot();
-  return {
-    record: s.rows.find((r) => r.remaker_id === id) || null,
-    loading: s.loading || !s.loaded,
-    error: s.error,
-    reload: remakers.reload,
-  };
+  return { record: s.rows.find((r) => r.remaker_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: remakers.reload };
+}
+
+/* One ReMaker's portfolio, read from /api/portfolio/admin/<id>/ when the profile opens.
+   -> { works: null | [...], loading, error } (works use the portfolio_id / before_image / after_image names) */
+export function useRemakerPortfolio(remakerId) {
+  const [state, setState] = useState({ works: null, loading: true, error: "" });
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setState({ works: null, loading: true, error: "" });
+    fetchAdminWorks(remakerId)
+      .then((works) => active && setState({ works, loading: false, error: "" }))
+      .catch((e) =>
+        active &&
+        setState({ works: null, loading: false, error: e.message || "Could not load the portfolio." }),
+      );
+    return () => {
+      active = false;
+    };
+  }, [remakerId, attempt]);
+
+  return { ...state, reload: () => setAttempt((n) => n + 1) };
 }
 
 /* { loading, error, reload } for the list pages */

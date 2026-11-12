@@ -57,7 +57,8 @@ def can_request(order):
 
 def refund_amount(order, fault):
     """Item price and platform fee always; the delivery fee only when the seller was at fault."""
-    return order.subtotal + order.platform_fee + (order.delivery_fee if fault == "seller" else 0)
+    gross = order.subtotal + order.platform_fee + (order.delivery_fee if fault == "seller" else 0)
+    return max(gross - order.discount, 0)  # never more than the buyer really paid
 
 
 def earning_taken_back(order, fault):

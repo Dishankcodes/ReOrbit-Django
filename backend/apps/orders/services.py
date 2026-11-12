@@ -31,6 +31,7 @@ from apps.listings.models import Item, MediaImage
 from apps.listings.sellables import settle_status
 from apps.payments import gateway, refunds
 from apps.payments.models import Payment
+from apps.rewards import services as rewards
 from apps.remakers.models import RemakerProduct, ReMakers
 from apps.users.models import Users
 
@@ -225,11 +226,34 @@ def _notify_buyer(order, title, body):
 # --------------------------------------------------------------------------- #
 # checkout
 # --------------------------------------------------------------------------- #
-def quote(buyer, raw_lines, method=None):
+def _apply_voucher(plan, buyer, code, lock):
+    """Take a donation voucher off the goods. Returns (voucher, discount) or raises VoucherError.
+    The discount is shared across the sellers' orders by goods value, so every order's total
+    (and so every refund) stays the money that buyer really paid for it."""
+    groups = plan["groups"]
+    if not code or not groups:
+        return None, 0
+    goods = sum(g["subtotal"] for g in groups)
+    voucher, discount = rewards.check(buyer, code, goods, lock=lock)
+    discount = min(discount, sum(g["total"] for g in groups) - 1)  # never a free checkout
+    for g, part in zip(groups, rewards.split_discount(discount, [g["subtotal"] for g in groups])):
+        g["discount"] = part
+        g["total"] -= part
+    return voucher, discount
+
+
+def quote(buyer, raw_lines, method=None, voucher_code=None):
     """Price a cart without touching stock. Same maths as create_checkout."""
     merged = parse_lines(raw_lines)
     s = PlatformSettings.load()
     plan = _plan(buyer, merged, s, lock=False)
+    voucher_info, voucher_error = None, ""
+    try:
+        voucher, discount = _apply_voucher(plan, buyer, voucher_code, lock=False)
+        if voucher:
+            voucher_info = {"code": voucher.code, "title": voucher.title, "amount": discount}
+    except rewards.VoucherError as exc:
+        voucher_error = exc.message
     grand = sum(g["total"] for g in plan["groups"])
     cod = cod_block_reason(grand, s)
     return {
@@ -237,6 +261,9 @@ def quote(buyer, raw_lines, method=None):
         "subtotal": sum(g["subtotal"] for g in plan["groups"]),
         "platform_fee": sum(g["platform_fee"] for g in plan["groups"]),
         "delivery_fee": sum(g["delivery_fee"] for g in plan["groups"]),
+        "discount": sum(g.get("discount", 0) for g in plan["groups"]),
+        "voucher": voucher_info,
+        "voucher_error": voucher_error,
         "total": grand,
         "cod_allowed": not cod,
         "cod_reason": cod,
@@ -248,7 +275,7 @@ def _public_group(g):
     return {
         "seller": g["seller"],
         "subtotal": g["subtotal"], "platform_fee": g["platform_fee"],
-        "delivery_fee": g["delivery_fee"], "total": g["total"],
+        "delivery_fee": g["delivery_fee"], "discount": g.get("discount", 0), "total": g["total"],
         "lines": [{"id": ln["public_id"], "title": ln["title"], "qty": ln["qty"], "unit_price": ln["unit_price"],
                    "line_total": ln["line_total"]} for ln in g["lines"]],
     }
@@ -362,6 +389,12 @@ def create_checkout(buyer, data, key=None):
             if plan["problems"]:
                 raise CheckoutError("Some items in your cart can't be bought right now.", plan["problems"],
                                     code="UNAVAILABLE", status=409)
+            voucher, discount = None, 0
+            if data.get("voucher_code"):
+                try:
+                    voucher, discount = _apply_voucher(plan, buyer, data.get("voucher_code"), lock=True)
+                except rewards.VoucherError as exc:
+                    raise CheckoutError(exc.message, {"voucher_code": [exc.message]}, code=exc.code)
             grand = sum(g["total"] for g in plan["groups"])
             if cod:
                 reason = cod_block_reason(grand, s)
@@ -369,6 +402,7 @@ def create_checkout(buyer, data, key=None):
                     raise CheckoutError(reason, {"method": [reason]}, code="COD_BLOCKED")
             payment = Payment.objects.create(
                 **buyer_kit.fields(buyer), method=method, amount=grand, idempotency_key=key or None,
+                voucher=voucher, discount=discount,
                 status=Payment.Status.COD if cod else Payment.Status.CREATED,
                 expires_at=None if cod else now + timedelta(minutes=HOLD_MINUTES),
             )
@@ -382,7 +416,7 @@ def create_checkout(buyer, data, key=None):
                     status=Order.Status.CONFIRMED if cod else Order.Status.PENDING_PAYMENT,
                     payment_status=Order.PayStatus.COD_DUE if cod else Order.PayStatus.PENDING,
                     subtotal=g["subtotal"], platform_fee=g["platform_fee"], delivery_fee=g["delivery_fee"],
-                    total=g["total"], address=snapshot, note=note,
+                    discount=g.get("discount", 0), total=g["total"], address=snapshot, note=note,
                     confirmed_at=now if cod else None,
                 )
                 for ln in g["lines"]:
@@ -398,6 +432,8 @@ def create_checkout(buyer, data, key=None):
                 if cod:
                     _notify_seller(order, "New order", f"{order.public_id}: new order to pack ({len(g['lines'])} item(s)).")
                     _notify_buyer(order, "Order placed", f"{order.public_id} is confirmed. Pay ₹{order.total:,} on delivery.")
+            if voucher:
+                rewards.mark_used(voucher)
     except IntegrityError:  # two taps at once with the same key
         prior = _existing_for_key(buyer, key)
         if prior:
@@ -439,6 +475,7 @@ def release_payment(payment_pk, new_status, reason, actor="system"):
             event(o, "Payment not completed", reason[:255], actor)
         p.status, p.failure_reason = new_status, reason[:255]
         p.save(update_fields=["status", "failure_reason", "updated_at"])
+        rewards.restore(p.voucher)  # the checkout never went through: the voucher is theirs again
         return p
 
 
@@ -546,6 +583,7 @@ def confirm_paid(payment_pk, razorpay_payment_id):
         else:
             p.status, p.razorpay_payment_id, p.paid_at = Payment.Status.PAID, razorpay_payment_id, now
             p.save(update_fields=["status", "razorpay_payment_id", "paid_at", "updated_at"])
+            rewards.reclaim(p.voucher)
             _finalize_paid(p, now)
     if refund_needed:
         refunds.process(late_refund.pk)  # on failure it stays a visible "needs attention" refund an admin can retry
@@ -666,6 +704,8 @@ def cancel_order(order_pk, *, by, actor, reason="", ip=None):
         o.payment_status = Order.PayStatus.REFUND_PENDING if paid_online else Order.PayStatus.VOID
         o.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "payment_status", "updated_at"])
         event(o, "Cancelled", o.cancel_reason, by)
+        if o.payment.voucher_id and not o.payment.orders.exclude(status=Order.Status.CANCELLED).exists():
+            rewards.restore(o.payment.voucher)  # every order of that checkout is cancelled: give the voucher back
         if by == "admin":
             audit(actor, "order.cancel", "order", o.public_id, before={"status": before}, after={"status": "Cancelled"}, reason=reason, ip=ip)
         if by != "buyer":

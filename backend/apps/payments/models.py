@@ -31,6 +31,8 @@ class Payment(PublicIdModel, TimeStampedModel):
     method = models.CharField(max_length=10, choices=Method.choices)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.CREATED)
     amount = models.PositiveIntegerField(help_text="Whole rupees, the grand total of every order in this checkout.")
+    discount = models.PositiveIntegerField(default=0, help_text="Voucher discount already taken off `amount`.")
+    voucher = models.ForeignKey("rewards.Voucher", null=True, blank=True, on_delete=models.PROTECT, related_name="payments")
     currency = models.CharField(max_length=3, default="INR")
     idempotency_key = models.CharField(max_length=64, null=True, blank=True)
     razorpay_order_id = models.CharField(max_length=64, null=True, blank=True, unique=True)

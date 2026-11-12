@@ -1,193 +1,145 @@
 /* =========================================================
-   REMAKER PORTFOLIO - UI STORE (no backend yet)
-   Shapes follow the ReMaker_Portfolio table:
-   portfolio_id, title, description, before_image, after_image,
-   uploaded_at. Plus category and linkedProductId (a portfolio
-   entry can point at a ReMaker_Products row).
-
-   Works are kept in localStorage so add / edit / delete survive a
-   refresh. Swap the functions below for API calls later; the pages
-   only use the exports of this file.
+   REMAKER PORTFOLIO - store backed by /api/portfolio/me/
+   The pages only use the exports of this file. The list is loaded once and
+   kept; add / edit / delete update it in place so going back to the list is
+   instant. Photos are real uploads (a Before and an After per work).
    ========================================================= */
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
-const KEY = "reorbit_remaker_portfolio_v1";
-const IMG = "/images/portfolio/";
+import { portfolioApi, mapWork } from "../../api/portfolio";
 
-const SEED = [
-  {
-    id: "pf-1006",
-    title: "Teak Door Console Table",
-    category: "Furniture",
-    description:
-      "A 70-year-old teak wardrobe door that was headed for scrap. I stripped the old varnish, kept the carved panel, rebuilt the frame and set it on hand-bent iron legs. Finished with a plant-based wax so the grain stays warm.",
-    before:
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "rp-1001",
-    createdAt: "2026-09-21T10:20:00.000Z",
-  },
-  {
-    id: "pf-1005",
-    title: "Reclaimed Wood Floor Lamp",
-    category: "Lighting",
-    description:
-      "Offcuts from a dismantled bookshelf, planed and joined into a tripod stand. New braided cable, dimmer switch and a linen shade. The warm bulb shows every knot in the wood.",
-    before:
-      "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/34237532/pexels-photo-34237532.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "rp-1002",
-    createdAt: "2026-09-14T08:05:00.000Z",
-  },
-  {
-    id: "pf-1004",
-    title: "Denim Patchwork Tote",
-    category: "Fashion",
-    description:
-      "Six worn denim jackets cut and pieced into one sturdy everyday tote. Cotton lined and stitched to carry a laptop and groceries. Every bag has its own pattern.",
-    before:
-      "https://images.pexels.com/photos/10566057/pexels-photo-10566057.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "rp-1003",
-    createdAt: "2026-09-02T15:40:00.000Z",
-  },
-  {
-    id: "pf-1003",
-    title: "Iron Grille Wall Shelf",
-    category: "Home Decor",
-    description:
-      "A rusted window grille, wire-brushed and sealed, paired with a reclaimed pine plank. The pattern throws soft shadows on the wall in the evening.",
-    before:
-      "https://images.pexels.com/photos/4503943/pexels-photo-4503943.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/3664343/pexels-photo-3664343.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "rp-1004",
-    createdAt: "2026-08-24T12:00:00.000Z",
-  },
-  {
-    id: "pf-1002",
-    title: "Cane-Back Accent Chair",
-    category: "Furniture",
-    description:
-      "A wobbly dining chair with a broken back. New cane weave, tightened joints and a sage green finish. Still in progress for listing.",
-    before:
-      "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "",
-    createdAt: "2026-08-11T09:30:00.000Z",
-  },
-  {
-    id: "pf-1001",
-    title: "Teak Cabinet Revival",
-    category: "Furniture",
-    description:
-      "A teak cabinet rescued from a home clear-out. Original brass hinges kept, new shelves cut from the same wood, and a hand-rubbed oil finish.",
-    before:
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    after:
-      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    linkedProductId: "",
-    createdAt: "2026-07-30T16:10:00.000Z",
-  },
-];
-
-/* ---------- store ---------- */
-
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-
-    if (raw) {
-      const value = JSON.parse(raw);
-      if (Array.isArray(value)) return value;
-    }
-  } catch {
-    /* ignore and fall back to the seed */
-  }
-
-  return SEED.map((work) => ({ ...work }));
-}
-
-let works = load();
+let state = { works: [], loaded: false, loading: false, error: "" };
 const listeners = new Set();
 
-function persist() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(works));
-    return true;
-  } catch {
-    /* storage full or blocked: the change still lives for this session */
-    return false;
-  }
-}
-
-function commit(next) {
-  works = next;
-  const persisted = persist();
-  listeners.forEach((listener) => listener());
-  return persisted;
-}
-
-function subscribe(listener) {
+const subscribe = (listener) => {
   listeners.add(listener);
   return () => listeners.delete(listener);
+};
+const snapshot = () => state;
+const set = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((listener) => listener());
+};
+
+/* a different account signing in on this tab must not see the previous works */
+if (typeof window !== "undefined") {
+  window.addEventListener("reorbit:session-ended", () => {
+    state = { works: [], loaded: false, loading: false, error: "" };
+    listeners.forEach((listener) => listener());
+  });
 }
 
-function getSnapshot() {
-  return works;
+let inFlight = null;
+
+export function loadPortfolio({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+
+  set({ loading: true, error: "" });
+  inFlight = portfolioApi
+    .mine()
+    .then((rows) => set({ works: rows.map(mapWork), loaded: true, loading: false }))
+    .catch((error) =>
+      set({
+        loading: false,
+        error: error.message || "We couldn't load your portfolio.",
+      }),
+    )
+    .finally(() => {
+      inFlight = null;
+    });
+
+  return inFlight;
 }
+
+function useLoaded() {
+  const current = useSyncExternalStore(subscribe, snapshot, snapshot);
+
+  useEffect(() => {
+    if (!current.loaded && !current.loading && !current.error) loadPortfolio();
+  }, [current.loaded, current.loading, current.error]);
+
+  return current;
+}
+
+const newestFirst = (list) =>
+  [...list].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
 /* Newest first */
 export function usePortfolio() {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
+  return newestFirst(useLoaded().works);
+}
 
-  return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+/* { loaded, error, retry } so pages can show a loading or error state */
+export function usePortfolioStatus() {
+  const { loaded, loading, error } = useLoaded();
+
+  return {
+    loaded,
+    loading: loading || (!loaded && !error),
+    error,
+    retry: () => loadPortfolio({ force: true }),
+  };
 }
 
 export function useWork(id) {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
+  const { works } = useLoaded();
 
-  return list.find((work) => work.id === id) || null;
+  return works.find((work) => work.id === id) || null;
 }
 
-export function addWork(data) {
-  const id = `pf-${Date.now().toString(36)}`;
-  const work = { ...data, id, createdAt: new Date().toISOString() };
-  const persisted = commit([...works, work]);
+/* The work plus whether we are still waiting for it (so a refresh on
+   /remaker-portfolio/PF-1001 doesn't flash "we couldn't find that work"). */
+export function useWorkState(id) {
+  const { works, loaded, error } = useLoaded();
+  const work = works.find((item) => item.id === id) || null;
 
-  return { id, persisted };
+  return {
+    work,
+    loading: !work && !loaded && !error,
+    error: !work && Boolean(error) && !loaded ? error : "",
+    retry: () => loadPortfolio({ force: true }),
+  };
 }
 
-export function updateWork(id, patch) {
-  const persisted = commit(
-    works.map((work) => (work.id === id ? { ...work, ...patch } : work)),
-  );
+function upsert(row) {
+  const exists = state.works.some((work) => work.id === row.id);
 
-  return { persisted };
+  set({
+    works: exists
+      ? state.works.map((work) => (work.id === row.id ? row : work))
+      : [...state.works, row],
+  });
+
+  return row;
 }
 
-/* Returns the removed work so the UI can offer Undo */
-export function deleteWork(id) {
-  const removed = works.find((work) => work.id === id) || null;
+/* The three calls below throw an Error with .errors (field -> messages) when
+   the server says no, so the form can show the reason. */
+export async function addWork(values) {
+  const row = mapWork(await portfolioApi.add(values));
 
-  if (removed) commit(works.filter((work) => work.id !== id));
+  upsert(row);
+  return { id: row.id };
+}
 
+export async function updateWork(id, values) {
+  upsert(mapWork(await portfolioApi.update(id, values)));
+  return { id };
+}
+
+/* Resolves with the removed work so the UI can offer Undo */
+export async function deleteWork(id) {
+  const removed = mapWork(await portfolioApi.remove(id));
+
+  set({ works: state.works.filter((work) => work.id !== id) });
   return removed;
 }
 
-export function restoreWork(work) {
-  if (!work || works.some((item) => item.id === work.id)) return;
+export async function restoreWork(work) {
+  if (!work) return null;
 
-  commit([...works, work]);
-}
-
-export function resetPortfolio() {
-  commit(SEED.map((work) => ({ ...work })));
+  return upsert(mapWork(await portfolioApi.restore(work.id)));
 }
 
 /* ---------- helpers ---------- */
@@ -204,6 +156,10 @@ export function formatWorkDate(iso) {
   });
 }
 
+/* Photos for a portfolio work: JPG, PNG or WebP, up to 5 MB (the server's limit) */
+export const PORTFOLIO_PHOTO_MB = 5;
+
+/* Other screens (chat, orders, tickets) still use these two */
 export const MAX_UPLOAD_MB = 8;
 
 /* Resize to keep stored images small, returns a data URL */

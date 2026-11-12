@@ -1,2 +1,9 @@
-# Mounted at /api/warehouse/. Owner builds /me/... (user + remaker) and /admin/... here.
-urlpatterns = []
+# Mounted at /api/warehouse/.
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("admin/", views.AdminItems.as_view()),
+    path("admin/<str:public_id>/", views.AdminItemDetail.as_view()),
+]

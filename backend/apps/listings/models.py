@@ -107,6 +107,9 @@ class MediaImage(models.Model):
     class Kind(models.TextChoices):
         COVER = "Cover", "Cover"
         GALLERY = "Gallery", "Gallery"
+        # Portfolio works: exactly one Before and one After photo per work.
+        BEFORE = "Before", "Before"
+        AFTER = "After", "After"
 
     # Exactly one parent is set (see the check constraint below).
     item = models.ForeignKey(
@@ -117,6 +120,9 @@ class MediaImage(models.Model):
     )
     admin_item = models.ForeignKey(
         "admins.AdminItem", on_delete=models.CASCADE, related_name="images", null=True, blank=True
+    )
+    portfolio = models.ForeignKey(
+        "portfolio.PortfolioEntry", on_delete=models.CASCADE, related_name="images", null=True, blank=True
     )
     image = models.ImageField(upload_to="listings/", validators=[validate_image])
     image_type = models.CharField(max_length=30, choices=Kind.choices, default=Kind.GALLERY)
@@ -133,14 +139,22 @@ class MediaImage(models.Model):
             models.Index(fields=["item", "display_order"], name="media_item_order_idx"),
             models.Index(fields=["remaker_product", "display_order"], name="media_rprod_order_idx"),
             models.Index(fields=["admin_item", "display_order"], name="media_aitem_order_idx"),
+            models.Index(fields=["portfolio", "display_order"], name="media_portfolio_order_idx"),
         ]
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    Q(item__isnull=False, remaker_product__isnull=True, admin_item__isnull=True)
-                    | Q(item__isnull=True, remaker_product__isnull=False, admin_item__isnull=True)
-                    | Q(item__isnull=True, remaker_product__isnull=True, admin_item__isnull=False)
+                    Q(item__isnull=False, remaker_product__isnull=True, admin_item__isnull=True, portfolio__isnull=True)
+                    | Q(item__isnull=True, remaker_product__isnull=False, admin_item__isnull=True, portfolio__isnull=True)
+                    | Q(item__isnull=True, remaker_product__isnull=True, admin_item__isnull=False, portfolio__isnull=True)
+                    | Q(item__isnull=True, remaker_product__isnull=True, admin_item__isnull=True, portfolio__isnull=False)
                 ),
                 name="media_exactly_one_parent",
-            )
+            ),
+            # A portfolio work has at most one Before and one After photo.
+            models.UniqueConstraint(
+                fields=["portfolio", "image_type"],
+                condition=Q(portfolio__isnull=False),
+                name="media_portfolio_one_per_role",
+            ),
         ]

@@ -71,7 +71,7 @@ def order_data(o, request, *, events=False, buyer=False):
             }
             for ln in o.lines.all()
         ],
-        "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee, "total": o.total,
+        "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee, "discount": o.discount, "total": o.total,
         "address": o.address, "note": o.note,
         "courier": {"name": o.courier_name, "tracking_no": o.tracking_no} if o.tracking_no else None,
         "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,

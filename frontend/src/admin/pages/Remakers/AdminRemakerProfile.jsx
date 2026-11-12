@@ -24,7 +24,7 @@ import {
   BadgeIndianRupee,
 } from "lucide-react";
 
-import { useRemaker, changeRemakerStatus } from "../../data/realAccounts";
+import { useRemaker, useRemakerPortfolio, changeRemakerStatus } from "../../data/realAccounts";
 import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { getAvailableActions } from "../../data/userActions";
 import { formatDate, formatINR } from "../../utils/format";
@@ -62,7 +62,15 @@ const NOTICE_TEXT = {
 export default function AdminRemakerProfile() {
   const { remakerId } = useParams();
   const navigate = useNavigate();
-  const { record: remaker, loading, error, reload } = useRemaker(remakerId);
+  const { record, loading, error, reload } = useRemaker(remakerId);
+  const works = useRemakerPortfolio(remakerId);
+  const remaker = record && {
+    ...record,
+    portfolio: works.works || [],
+    portfolioLoading: works.loading,
+    portfolioError: works.error,
+    reloadPortfolio: works.reload,
+  };
   const { toast, toastNode } = useToast();
   const [tab, setTab] = useState("overview");
   const [pending, setPending] = useState(null);

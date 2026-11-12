@@ -1,9 +1,37 @@
 import React from "react";
 import { Images } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
+import { SkeletonRows } from "../../../../shared/components/Skeleton";
 import { formatDate } from "../../../utils/format";
 
 export default function PortfolioTab({ remaker }) {
+  if (remaker.portfolioLoading) {
+    return (
+      <section className="aup-card">
+        <SkeletonRows count={3} />
+      </section>
+    );
+  }
+  if (remaker.portfolioError) {
+    return (
+      <section className="aup-card">
+        <EmptyState
+          icon={Images}
+          title="Could not load the portfolio"
+          text={remaker.portfolioError}
+          action={
+            <button
+              type="button"
+              className="ad-btn ad-btn-primary ad-btn-sm"
+              onClick={remaker.reloadPortfolio}
+            >
+              Try again
+            </button>
+          }
+        />
+      </section>
+    );
+  }
   if (remaker.portfolio.length === 0) {
     return (
       <section className="aup-card">

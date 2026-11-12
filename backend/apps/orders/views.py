@@ -165,7 +165,8 @@ class QuoteView(APIView):
 
     def post(self, request):
         try:
-            return ok(services.quote(request.user.account, request.data.get("items")))
+            return ok(services.quote(request.user.account, request.data.get("items"),
+                                      voucher_code=request.data.get("voucher_code")))
         except services.CheckoutError as e:
             return _checkout_fail(e)
 

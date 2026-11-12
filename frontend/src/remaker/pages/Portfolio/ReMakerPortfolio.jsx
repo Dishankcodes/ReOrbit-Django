@@ -8,12 +8,14 @@ import {
   formatWorkDate,
   restoreWork,
   usePortfolio,
+  usePortfolioStatus,
 } from "../../data/portfolioStore";
 
 import "../../css/ReMakerPortfolio.css";
 
 export default function ReMakerPortfolio() {
   const works = usePortfolio();
+  const status = usePortfolioStatus();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -21,6 +23,7 @@ export default function ReMakerPortfolio() {
   const [sort, setSort] = useState("newest");
   const [toDelete, setToDelete] = useState(null);
   const [undo, setUndo] = useState(location.state?.undo || null);
+  const [problem, setProblem] = useState("");
   const timer = useRef(null);
 
   /* Clear router state so a refresh doesn't bring the toast back */
@@ -58,21 +61,66 @@ export default function ReMakerPortfolio() {
 
   const linkedCount = works.filter((work) => work.linkedProductId).length;
 
-  const confirmRemove = () => {
-    const removed = deleteWork(toDelete.id);
-    setToDelete(null);
-    setUndo(removed);
+  const confirmRemove = async () => {
+    try {
+      const removed = await deleteWork(toDelete.id);
+      setProblem("");
+      setToDelete(null);
+      setUndo(removed);
+    } catch (error) {
+      setToDelete(null);
+      setProblem(error.message || "We couldn't delete that work. Try again.");
+    }
   };
 
-  const handleUndo = () => {
-    restoreWork(undo);
+  const handleUndo = async () => {
+    const work = undo;
+
     setUndo(null);
+
+    try {
+      await restoreWork(work);
+      setProblem("");
+    } catch (error) {
+      setProblem(error.message || "We couldn't bring that work back.");
+    }
   };
+
+  /* ---------- loading / error ---------- */
+  if (!status.loaded) {
+    return (
+      <section className="rpt">
+        <div className="rpt-empty" role="status" aria-live="polite">
+          {status.error ? (
+            <>
+              <h2>We couldn&apos;t load your portfolio</h2>
+              <p>{status.error}</p>
+              <button
+                type="button"
+                className="rpt-btn primary"
+                onClick={status.retry}
+              >
+                Try again
+              </button>
+            </>
+          ) : (
+            <p>Loading your portfolio...</p>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   /* ---------- empty ---------- */
   if (works.length === 0) {
     return (
       <section className="rpt">
+        {problem && (
+          <p className="rpt-error" role="alert">
+            {problem}
+          </p>
+        )}
+
         <div className="rpt-empty">
           <div className="rpt-empty-art" aria-hidden="true">
             <img
@@ -110,6 +158,12 @@ export default function ReMakerPortfolio() {
 
   return (
     <section className="rpt">
+      {problem && (
+        <p className="rpt-error" role="alert">
+          {problem}
+        </p>
+      )}
+
       {/* SUMMARY */}
       <div className="rpt-summary">
         <div>
