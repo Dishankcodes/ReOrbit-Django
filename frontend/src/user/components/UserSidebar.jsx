@@ -54,6 +54,11 @@ const mainMenu = [
     icon: Package,
   },
   {
+    label: "My Reviews",
+    path: "/user-reviews",
+    icon: Star,
+  },
+  {
     label: "Wishlist",
     path: "/user-wishlist",
     icon: Heart,

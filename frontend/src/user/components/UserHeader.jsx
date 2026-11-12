@@ -31,6 +31,11 @@ const pageInformation = {
     subtitle: "Track and manage your ReOrbit purchases.",
   },
 
+  "/user-reviews": {
+    title: "My Reviews",
+    subtitle: "Rate your orders and the sellers who sent them.",
+  },
+
   "/user-wishlist": {
     title: "Your Wishlist",
     subtitle: "Products you want to keep in your orbit.",

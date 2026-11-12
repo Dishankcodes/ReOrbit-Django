@@ -10,6 +10,7 @@ import {
   IndianRupee,
   Users,
   Star,
+  StarHalf,
   BarChart3,
   Bell,
   MapPin,
@@ -22,6 +23,7 @@ import {
   Sparkles,
   Store,
   Heart,
+  Hammer,
   MessageSquare,
 } from "lucide-react";
 
@@ -75,6 +77,11 @@ const studioMenu = [
     icon: PlusCircle,
   },
 
+  {
+    label: "Warehouse jobs",
+    path: "/remaker-jobs",
+    icon: Hammer,
+  },
 ];
 
 /* ====
@@ -124,6 +131,11 @@ const communityMenu = [
     label: "Reviews",
     path: "/remaker-reviews",
     icon: Star,
+  },
+  {
+    label: "My Reviews",
+    path: "/remaker-my-reviews",
+    icon: StarHalf,
   },
 ];
 
