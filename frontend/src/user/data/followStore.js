@@ -41,3 +41,7 @@ export function useFollowing() {
   useEffect(() => { loadFollowing(); }, []);
   return useMemo(() => ({ ids: list, count: list.length, isFollowing: (id) => list.includes(id), toggle: toggleFollow }), [list]);
 }
+
+// Keep the follower-count helper exported for RemakerCard and other shared UI.
+export const followerCount = (base, following) =>
+  Math.max(0, Number(base) || 0) + (following ? 1 : 0);
