@@ -1,48 +1,43 @@
-/* User-side ReMaker follows. Until the follow API is implemented, IDs are stored locally. */
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { followApi } from "../../api/social";
+import { getAccount, isSignedIn, SESSION_ENDED_EVENT } from "../../api/session";
 
-import { useMemo, useSyncExternalStore } from "react";
-import { saveFollowingIds } from "./userUiState";
+let ids = [];
+let loadedFor = "";
+let pending = false;
+const listeners = new Set();
+const owner = () => getAccount()?.public_id || getAccount()?.id || "";
+const subscribe = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
+const emit = () => listeners.forEach((fn) => fn());
+const getSnapshot = () => ids;
 
-const KEY = "reorbit_user_following";
-
-function load() {
+export async function loadFollowing(force = false) {
+  const key = owner();
+  if (!key || !isSignedIn("user") || (loadedFor === key && !force) || pending) return;
+  pending = true;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw === null) return [];
-    const value = JSON.parse(raw);
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
+    ids = (await followApi.list()).map((row) => row.id);
+    loadedFor = key;
+  } finally {
+    pending = false;
+    emit();
   }
 }
 
-let ids = load();
-const listeners = new Set();
-
-const subscribe = (listener) => {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-};
-const getSnapshot = () => ids;
-
 export function toggleFollow(id) {
-  ids = ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id];
-  saveFollowingIds(ids);
-  listeners.forEach((listener) => listener());
-  return ids.includes(id);
+  const before = ids;
+  const following = !before.includes(id);
+  ids = following ? [...before, id] : before.filter((item) => item !== id);
+  emit();
+  const action = following ? followApi.follow(id) : followApi.unfollow(id);
+  action.catch(() => { ids = before; emit(); });
+  return following;
 }
+
+if (typeof window !== "undefined") window.addEventListener(SESSION_ENDED_EVENT, () => { ids = []; loadedFor = ""; emit(); });
 
 export function useFollowing() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return useMemo(
-    () => ({
-      ids: list,
-      count: list.length,
-      isFollowing: (id) => list.includes(id),
-      toggle: toggleFollow,
-    }),
-    [list],
-  );
+  useEffect(() => { loadFollowing(); }, []);
+  return useMemo(() => ({ ids: list, count: list.length, isFollowing: (id) => list.includes(id), toggle: toggleFollow }), [list]);
 }
-
-export const followerCount = (base, following) => base + (following ? 1 : 0);

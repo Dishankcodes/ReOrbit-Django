@@ -8,38 +8,24 @@
    Prices, stock and orders come from the server (checkoutStore / ordersStore).
    ========================================================= */
 
-import { portalOf, getAccount } from "../../api/session";
+import { getAccount, isSignedIn } from "../../api/session";
 import { useLiveMarketplace } from "./liveMarketplace";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { cartApi } from "../../api/social";
 import { ITEMS, getItemById } from "../../data/marketplaceData";
 import { deliveryFor, platformFeeOf, getCommerce } from "../../shared/commerce";
-
-/* one cart per portal, so a member, a ReMaker and an admin signed in on the same browser never share one */
-const CART_KEY = `reorbit_${portalOf(typeof window !== "undefined" ? window.location.pathname : "/")}_cart`;
 
 /* Delivery, the platform fee and the cash-on-delivery limit come from
    Admin > Settings > Commerce (see shared/commerce.js). */
 
-const loadCart = () => {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(CART_KEY) || "[]");
-    return Array.isArray(value)
-      ? /* Real products are not in the catalogue until the live marketplace has loaded,
-         so keep every well-formed entry; the cart screens hide ones that stay unknown. */
-        value.filter((c) => c && c.id && Number(c.qty) >= 1)
-      : [];
-  } catch {
-    return [];
-  }
-};
-
 let state = {
-  cart: loadCart(), // [{ id, qty }]
+  cart: [], // server-owned [{ id, qty }]
   sold: {}, // { [itemId]: qty bought this session }
   checkout: null, // { lines: [{ id, qty }], source: "cart" | "buy" }
 };
 
 const listeners = new Set();
+let cartLoading = false;
 const subscribe = (l) => {
   listeners.add(l);
   return () => listeners.delete(l);
@@ -48,16 +34,20 @@ const getSnapshot = () => state;
 const set = (patch) => {
   state = { ...state, ...patch };
   if (patch.cart) {
-    try {
-      window.localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
-    } catch {
-      /* ignore */
-    }
+    cartApi.replace(state.cart).catch(() => {});
   }
   listeners.forEach((l) => l());
 };
-const useShopState = () =>
-  useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+const useShopState = () => {
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    if (cartLoading || !isSignedIn()) return;
+    cartLoading = true;
+    cartApi.get().then((rows) => set({ cart: rows.filter((row) => !row.unavailable).map(({ id, qty }) => ({ id, qty })) }))
+      .catch(() => {}).finally(() => { cartLoading = false; });
+  }, []);
+  return snapshot;
+};
 
 /* ---------- items + stock ---------- */
 export function withStock(item, sold) {
