@@ -1,274 +1,273 @@
 /* =========================================================
-   Admin › Rewards data layer (UI only, in-memory).
-   - Vouchers, earning rules, redemptions, manual adjustments live here.
-   - Donation points are DERIVED from the Donations store, so finishing
-     a donation (or editing the donation rules) changes the ledger live.
-   - User balances are derived from the Users store (orders, reviews,
-     items) plus all of the above.
+   Admin › Rewards data layer (/api/rewards/admin/*).
+   Vouchers and coupons, earning rules, redemptions, member points
+   and donation rewards all live on the server. Every change is a
+   request; the lists below show what the server says, so nothing
+   disappears or drifts when the page is reloaded.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
-import {
-  INITIAL_VOUCHERS,
-  INITIAL_RULES,
-  LEVELS,
-  levelFor,
-} from "./rewardsData";
-import { useUsers } from "./usersStore";
-import { useDonations } from "./donationsStore";
-import { DEMO_TODAY } from "../utils/format";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { adminRewardsApi } from "../../api/rewards";
 
-const DAY = 86400000;
-const hash = (t) => {
-  let h = 2166136261;
-  for (let i = 0; i < t.length; i += 1) {
-    h ^= t.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
+export const LEVELS = [
+  { key: "seedling", name: "Seedling", min: 0 },
+  { key: "sprout", name: "Sprout", min: 500 },
+  { key: "orbiter", name: "Orbiter", min: 1500 },
+  { key: "guardian", name: "Guardian", min: 3000 },
+  { key: "champion", name: "Champion", min: 5000 },
+];
+export const levelFor = (lifetime) =>
+  [...LEVELS].reverse().find((l) => lifetime >= l.min);
+
+/* "Who can use it", as the form shows it, and the fields the server stores. */
+const AUDIENCE_RULES = {
+  Everyone: { audience: "all", min_level: 0, remaker_only: false },
+  "New users": { audience: "new", min_level: 0, remaker_only: false },
+  Donors: { audience: "donors", min_level: 0, remaker_only: false },
+  "Level Orbiter and above": { audience: "all", min_level: 2, remaker_only: false },
+  ReMakers: { audience: "all", min_level: 0, remaker_only: true },
 };
-const todayStr = () => DEMO_TODAY.toISOString().slice(0, 10);
+export const AUDIENCES = Object.keys(AUDIENCE_RULES);
+const audienceLabel = (o) => {
+  if (o.remaker_only) return "ReMakers";
+  if (o.audience === "new") return "New users";
+  if (o.audience === "donors") return "Donors";
+  if (o.min_level >= 2) return "Level Orbiter and above";
+  return "Everyone";
+};
 
 /* ---------- state ---------- */
-let state = {
-  vouchers: INITIAL_VOUCHERS,
-  rules: INITIAL_RULES,
-  revoked: {}, // donationId -> reason
-  adjustments: [], // { id, user_id, amount, reason, at }
-  redemptionOv: {}, // redemptionId -> { status }
-  extraRedemptions: [],
+const idle = {
+  offers: { rows: [], loaded: false, loading: false, error: "" },
+  rules: { rows: [], loaded: false, loading: false, error: "" },
+  redemptions: { rows: [], loaded: false, loading: false, error: "" },
+  users: { rows: [], loaded: false, loading: false, error: "" },
+  donations: { rows: [], loaded: false, loading: false, error: "" },
 };
+let state = idle;
 const listeners = new Set();
 const subscribe = (l) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
 const getSnapshot = () => state;
-const getState = () => state;
-export const getRewardsState = getState;
-const set = (patch) => {
-  state = { ...state, ...patch };
+const setSection = (name, patch) => {
+  state = { ...state, [name]: { ...state[name], ...patch } };
   listeners.forEach((l) => l());
 };
 const useRewardsState = () =>
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-/* ---------- vouchers ---------- */
-export function voucherStatus(v) {
-  if (v.draft) return "Draft";
-  const t = todayStr();
-  if (v.valid_to < t) return "Expired";
-  if (v.used >= v.usage_limit) return "Used_Up";
-  if (v.paused) return "Paused";
-  if (v.valid_from > t) return "Scheduled";
-  return "Active";
+/* every page of a list (100 at a time) */
+async function everyPage(fetchPage) {
+  const rows = [];
+  for (let page = 1; page <= 50; page += 1) {
+    const r = await fetchPage({ page, page_size: 100 });
+    rows.push(...(r.results || []));
+    if (page >= (r.total_pages || 1)) break;
+  }
+  return rows;
 }
-export function useVouchers() {
-  const { vouchers } = useRewardsState();
-  return useMemo(
-    () =>
-      vouchers.map((v) => {
-        const status = voucherStatus(v);
-        const daysLeft = Math.ceil(
-          (new Date(`${v.valid_to}T23:59:59`).getTime() -
-            DEMO_TODAY.getTime()) /
-            DAY,
-        );
-        return {
-          ...v,
-          status,
-          daysLeft,
-          expiringSoon: status === "Active" && daysLeft <= 7,
-          usagePct: Math.min(100, Math.round((v.used / v.usage_limit) * 100)),
-        };
-      }),
-    [vouchers],
-  );
-}
-export function saveVoucher(data) {
-  const { vouchers } = state;
-  if (data.id)
-    set({
-      vouchers: vouchers.map((v) => (v.id === data.id ? { ...v, ...data } : v)),
-    });
-  else {
-    const n = Math.max(...vouchers.map((v) => Number(v.id.slice(4)))) + 1;
-    set({
-      vouchers: [
-        { used: 0, paused: false, draft: false, ...data, id: `VCH-${n}` },
-        ...vouchers,
-      ],
-    });
+
+const LOADERS = {
+  offers: async () => (await adminRewardsApi.offers()).offers,
+  rules: async () => (await adminRewardsApi.rules()).rules,
+  redemptions: () => everyPage(adminRewardsApi.redemptions),
+  users: () => everyPage(adminRewardsApi.users),
+  donations: async () => (await adminRewardsApi.donationRewards()).results,
+};
+export async function loadRewardsSection(name, force = false) {
+  const s = state[name];
+  if (s.loading || (s.loaded && !force)) return;
+  setSection(name, { loading: true, error: "" });
+  try {
+    setSection(name, { rows: await LOADERS[name](), loaded: true, loading: false });
+  } catch (e) {
+    /* e.g. an admin without the Rewards module: show an empty list, not a crash */
+    setSection(name, { loading: false, loaded: true, error: e.message || "Could not load." });
   }
 }
-export const patchVoucher = (id, patch) =>
-  set({
-    vouchers: state.vouchers.map((v) => (v.id === id ? { ...v, ...patch } : v)),
-  });
-export const removeVoucher = (id) =>
-  set({ vouchers: state.vouchers.filter((v) => v.id !== id) });
-export const codeTaken = (code, exceptId) =>
-  state.vouchers.some((v) => v.code === code && v.id !== exceptId);
+const useSection = (name) => {
+  const all = useRewardsState();
+  useEffect(() => {
+    loadRewardsSection(name);
+  }, [name]);
+  return all[name];
+};
+export const reloadRewards = (...names) =>
+  Promise.all(
+    (names.length ? names : Object.keys(LOADERS)).map((n) => loadRewardsSection(n, true)),
+  );
 
-/* ---------- rules ---------- */
-export const useRules = () => useRewardsState().rules;
-export const saveRule = (id, patch) =>
-  set({
-    rules: state.rules.map((r) => (r.id === id ? { ...r, ...patch } : r)),
-  });
-
-/* ---------- donation rewards (derived from Donations) ---------- */
-export function useDonationRewards() {
-  const donations = useDonations();
-  const { rules, revoked } = useRewardsState();
-  return useMemo(() => {
-    const base = rules.find((r) => r.id === "donationBase");
-    const per = rules.find((r) => r.id === "donationItem");
-    return donations
-      .filter((d) => ["Picked_Up", "Received", "Completed"].includes(d.status))
-      .map((d) => {
-        const paid =
-          ["Received", "Completed"].includes(d.status) && d.reward?.points > 0;
-        const points = paid
-          ? d.reward.points /* what the server really paid */
-          : (base.active ? base.points : 0) +
-            (per.active ? per.points * d.quantity : 0);
-        const rev = revoked[d.id];
-        const status = rev ? "Revoked" : paid ? "Credited" : "Pending";
-        return {
-          id: d.id,
-          donation: d,
-          donor: d.donor,
-          points,
-          status,
-          revoke_reason: rev || "",
-          at: d.events[d.events.length - 1]?.at || d.donation_date,
-        };
-      })
-      .sort((a, b) => new Date(b.at) - new Date(a.at));
-  }, [donations, rules, revoked]);
-}
-export const revokeDonationReward = (id, reason) =>
-  set({ revoked: { ...state.revoked, [id]: reason } });
-export const restoreDonationReward = (id) => {
-  const r = { ...state.revoked };
-  delete r[id];
-  set({ revoked: r });
+/* A request that failed becomes { ok:false, error, errors } so screens can show it. */
+const attempt = async (fn) => {
+  try {
+    return { ok: true, data: await fn() };
+  } catch (e) {
+    return { ok: false, error: e.message || "Something went wrong.", errors: e.errors || {} };
+  }
 };
 
-/* ---------- redemptions ---------- */
-function seedRedemptions(users, vouchers) {
-  const pointVouchers = vouchers.filter((v) => v.kind === "points");
-  const out = [];
-  users.forEach((u) => {
-    if (u.status === "Deleted") return;
-    const h = hash(u.user_id);
-    const n = h % 3; // 0-2 redemptions
-    for (let i = 0; i < n; i += 1) {
-      const v = pointVouchers[(h + i * 7) % pointVouchers.length];
-      const age = 3 + ((h >> (i + 2)) % 60);
-      const st = age > 45 ? "Expired" : (h >> i) % 3 === 0 ? "Issued" : "Used";
-      out.push({
-        id: `RD-${u.user_id.slice(4)}${i + 1}`,
-        user_id: u.user_id,
-        voucher_id: v.id,
-        voucher_code: v.code,
-        voucher_title: v.title,
-        points: v.points_cost,
-        issued_code: `${v.code.slice(0, 4)}-${(h % 9000) + 1000 + i}`,
-        at: new Date(DEMO_TODAY.getTime() - age * DAY).toISOString(),
-        status: st,
-      });
-    }
+/* ---------- vouchers and coupons ---------- */
+export function voucherStatus(v) {
+  return v.status;
+}
+const adaptOffer = (o) => ({
+  ...o,
+  audience: audienceLabel(o),
+  daysLeft: o.days_left,
+  expiringSoon: o.expiring_soon,
+  usagePct: o.usage_pct,
+});
+export function useVouchers() {
+  const s = useSection("offers");
+  return useMemo(() => s.rows.map(adaptOffer), [s.rows]);
+}
+const offerBody = (data) => {
+  const { audience, ...rest } = data;
+  return { ...rest, ...(AUDIENCE_RULES[audience] || AUDIENCE_RULES.Everyone) };
+};
+/* create (no id) or edit (id) */
+export async function saveVoucher(data) {
+  const body = offerBody(data);
+  const res = await attempt(() =>
+    data.id ? adminRewardsApi.saveOffer(data.id, body) : adminRewardsApi.createOffer(body),
+  );
+  if (res.ok) await reloadRewards("offers");
+  return res;
+}
+export async function patchVoucher(id, patch) {
+  const res = await attempt(() => adminRewardsApi.saveOffer(id, patch));
+  if (res.ok) await reloadRewards("offers");
+  return res;
+}
+export async function removeVoucher(id) {
+  const res = await attempt(() => adminRewardsApi.deleteOffer(id));
+  if (res.ok) await reloadRewards("offers");
+  return res;
+}
+/* Quick check against what is loaded; the server makes the final call. */
+export const codeTaken = (code, exceptId) =>
+  state.offers.rows.some((v) => v.code === code && v.id !== exceptId);
+
+/* ---------- rules ---------- */
+export const useRules = () => useSection("rules").rows;
+const pendingRules = {}; // id -> { patch, timer, waiters }
+const sendRule = async (id) => {
+  const job = pendingRules[id];
+  delete pendingRules[id];
+  const res = await attempt(() => adminRewardsApi.saveRule(id, job.patch));
+  if (res.ok) {
+    setSection("rules", {
+      rows: state.rules.rows.map((r) => (r.id === id ? res.data.rule : r)),
+    });
+  } else {
+    await reloadRewards("rules"); // put back what the server really has
+  }
+  job.waiters.forEach((w) => w(res));
+};
+/* Shows the change at once and sends it; typing in a number box is sent once, after a pause. */
+export function saveRule(id, patch) {
+  setSection("rules", {
+    rows: state.rules.rows.map((r) => (r.id === id ? { ...r, ...patch } : r)),
   });
-  return out;
+  return new Promise((resolve) => {
+    const job = pendingRules[id] || { patch: {}, timer: null, waiters: [] };
+    clearTimeout(job.timer);
+    job.patch = { ...job.patch, ...patch };
+    job.waiters.push(resolve);
+    pendingRules[id] = job;
+    job.timer = setTimeout(() => sendRule(id), "active" in patch ? 0 : 600);
+  });
 }
 
+/* ---------- donation rewards ---------- */
+const adaptDonationReward = (r) => ({
+  id: r.id,
+  donation: { id: r.id, title: r.title, quantity: r.quantity, image: null, status: r.status_of_donation },
+  donor: { ...r.donor, image: null, city: r.donor.email },
+  points: r.points,
+  voucher: r.voucher,
+  status: r.status,
+  revoke_reason: "",
+  at: r.at,
+});
+export function useDonationRewards() {
+  const s = useSection("donations");
+  return useMemo(() => s.rows.map(adaptDonationReward), [s.rows]);
+}
+export async function revokeDonationReward(id, reason) {
+  const res = await attempt(() => adminRewardsApi.revokeDonation(id, reason));
+  await reloadRewards("donations", "users");
+  return res;
+}
+export async function restoreDonationReward(id) {
+  const res = await attempt(() => adminRewardsApi.restoreDonation(id));
+  await reloadRewards("donations", "users");
+  return res;
+}
+
+/* ---------- redemptions (vouchers bought with points) ---------- */
+const REDEEM_STATUS = { Active: "Issued", Used: "Used", Expired: "Expired", Void: "Cancelled" };
 export function useRedemptions() {
-  const users = useUsers();
-  const { vouchers, redemptionOv, extraRedemptions } = useRewardsState();
-  return useMemo(() => {
-    const byUser = Object.fromEntries(users.map((u) => [u.user_id, u]));
-    return [...extraRedemptions, ...seedRedemptions(users, INITIAL_VOUCHERS)]
-      .map((r) => ({
-        ...r,
-        status: redemptionOv[r.id]?.status || r.status,
-        user: byUser[r.user_id],
-        title:
-          vouchers.find((v) => v.id === r.voucher_id)?.title || r.voucher_title,
-      }))
-      .filter((r) => r.user)
-      .sort((a, b) => new Date(b.at) - new Date(a.at));
-  }, [users, vouchers, redemptionOv, extraRedemptions]);
-}
-export const setRedemptionStatus = (id, status) =>
-  set({ redemptionOv: { ...state.redemptionOv, [id]: { status } } });
-
-/* ---------- user balances ---------- */
-export function useUserPoints() {
-  const users = useUsers();
-  const donationRewards = useDonationRewards();
-  const redemptions = useRedemptions();
-  const { adjustments } = useRewardsState();
+  const s = useSection("redemptions");
   return useMemo(
     () =>
-      users
-        .filter((u) => u.status !== "Deleted")
-        .map((u) => {
-          const purchases = Math.round(((u.totals?.spent || 0) / 100) * 10);
-          const reviews = (u.reviews?.length || 0) * 20;
-          const listings =
-            u.items.filter((i) => i.item_status !== "Draft").length * 30;
-          const donated = donationRewards
-            .filter((r) => r.donor.id === u.user_id && r.status === "Credited")
-            .reduce((n, r) => n + r.points, 0);
-          const pendingDonation = donationRewards
-            .filter((r) => r.donor.id === u.user_id && r.status === "Pending")
-            .reduce((n, r) => n + r.points, 0);
-          const adj = adjustments.filter((a) => a.user_id === u.user_id);
-          const bonus = adj
-            .filter((a) => a.amount > 0)
-            .reduce((n, a) => n + a.amount, 0);
-          const deducted = adj
-            .filter((a) => a.amount < 0)
-            .reduce((n, a) => n + -a.amount, 0);
-          const spent = redemptions
-            .filter((r) => r.user_id === u.user_id && r.status !== "Cancelled")
-            .reduce((n, r) => n + r.points, 0);
-          const lifetime = purchases + reviews + listings + donated + bonus;
-          const balance = Math.max(0, lifetime - spent - deducted + 0);
-          return {
-            user: u,
-            purchases,
-            reviews,
-            listings,
-            donated,
-            pendingDonation,
-            bonus,
-            deducted,
-            spent,
-            lifetime,
-            balance,
-            level: levelFor(lifetime),
-          };
-        }),
-    [users, donationRewards, redemptions, adjustments],
+      s.rows.map((r) => ({
+        id: r.id,
+        user_id: r.owner.id,
+        user: { ...r.owner, full_name: r.owner.name },
+        voucher_id: r.offer,
+        voucher_code: r.code,
+        title: r.title,
+        points: r.points_spent,
+        issued_code: r.code,
+        at: r.created_at,
+        status: REDEEM_STATUS[r.status] || r.status,
+      })),
+    [s.rows],
   );
 }
-
-export function adjustPoints(user_id, amount, reason) {
-  set({
-    adjustments: [
-      {
-        id: `ADJ-${Date.now()}`,
-        user_id,
-        amount,
-        reason,
-        at: new Date().toISOString(),
-      },
-      ...state.adjustments,
-    ],
-  });
+export async function cancelRedemption(id, reason) {
+  const res = await attempt(() => adminRewardsApi.cancelRedemption(id, reason));
+  await reloadRewards("redemptions", "users", "offers");
+  return res;
 }
-export const useAdjustments = () => useRewardsState().adjustments;
-export { LEVELS };
+
+/* ---------- member balances ---------- */
+export function useUserPoints() {
+  const u = useSection("users");
+  const d = useSection("donations");
+  return useMemo(() => {
+    const due = {};
+    d.rows
+      .filter((r) => r.status === "Pending")
+      .forEach((r) => {
+        due[r.donor.id] = (due[r.donor.id] || 0) + r.points;
+      });
+    return u.rows.map((r) => ({
+      user: {
+        user_id: r.id,
+        full_name: r.name,
+        email: r.email,
+        status: r.status,
+        path: r.path,
+        profile: { profile_image: null },
+      },
+      purchases: r.purchases,
+      reviews: r.reviews,
+      listings: r.listings,
+      donated: r.donated,
+      pendingDonation: due[r.id] || 0,
+      spent: r.spent,
+      lifetime: r.lifetime,
+      balance: r.balance,
+      level: levelFor(r.lifetime),
+    }));
+  }, [u.rows, d.rows]);
+}
+export async function adjustPoints(user_id, amount, reason) {
+  const res = await attempt(() => adminRewardsApi.adjust(user_id, { amount, reason }));
+  if (res.ok) await reloadRewards("users");
+  return res;
+}

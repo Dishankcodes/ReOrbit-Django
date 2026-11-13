@@ -14,20 +14,30 @@ const GROUP_ICON = { Buying: ShoppingBag, Donating: Gift, Community: Sparkles };
 function RuleRow({ rule, toast }) {
   const [value, setValue] = useState(String(rule.points));
   const dirty = Number(value) !== rule.points;
-  const save = () => {
+  const live = rule.live !== false;
+  const save = async () => {
     const n = Number(value);
     if (!(n >= 0) || value === "") {
       setValue(String(rule.points));
       return;
     }
-    saveRule(rule.id, { points: n });
-    toast(`“${rule.title}” now gives ${n} points.`);
+    const res = await saveRule(rule.id, { points: n });
+    if (res.ok) toast(`“${rule.title}” now gives ${n} points.`);
+    else {
+      setValue(String(rule.points));
+      toast(res.error);
+    }
   };
   return (
     <li className={`rw-rule ${rule.active ? "" : "off"}`}>
       <div className="rw-rule-text">
         <strong>{rule.title}</strong>
         <p>{rule.description}</p>
+        {!live && (
+          <p>
+            <em>Not live yet: nothing on the platform hands this out, so it earns no points.</em>
+          </p>
+        )}
       </div>
       <div className="rw-rule-points">
         <input
@@ -37,7 +47,7 @@ function RuleRow({ rule, toast }) {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && save()}
           aria-label={`Points for ${rule.title}`}
-          disabled={!rule.active}
+          disabled={!rule.active || !live}
         />
         <span>
           pts<small>{rule.unit}</small>
@@ -58,9 +68,13 @@ function RuleRow({ rule, toast }) {
         aria-checked={rule.active}
         aria-label={`${rule.title} is ${rule.active ? "on" : "off"}`}
         className={`rw-switch ${rule.active ? "on" : ""}`}
-        onClick={() => {
-          saveRule(rule.id, { active: !rule.active });
-          toast(`“${rule.title}” turned ${rule.active ? "off" : "on"}.`);
+        disabled={!live}
+        onClick={async () => {
+          const next = !rule.active;
+          const res = await saveRule(rule.id, { active: next });
+          toast(
+            res.ok ? `“${rule.title}” turned ${next ? "on" : "off"}.` : res.error,
+          );
         }}
       >
         <i />
@@ -75,7 +89,7 @@ export default function RulesTab({ toast }) {
   const base = rules.find((r) => r.id === "donationBase");
   const per = rules.find((r) => r.id === "donationItem");
   const sample =
-    (base.active ? base.points : 0) + (per.active ? per.points * 3 : 0);
+    (base?.active ? base.points : 0) + (per?.active ? per.points * 3 : 0);
 
   return (
     <div className="rw-pane rw-rules">
@@ -110,7 +124,7 @@ export default function RulesTab({ toast }) {
                   <Calculator size={15} />
                   <p>
                     A donation of <b>3 items</b> earns the donor{" "}
-                    <b>{sample} points</b> once it is Completed.
+                    <b>{sample} points</b> once it reaches our warehouse.
                   </p>
                   <Link to="/admin-donations" className="aup-link">
                     Open donations <ArrowRight size={13} />

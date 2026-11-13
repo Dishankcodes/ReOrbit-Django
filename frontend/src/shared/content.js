@@ -12,7 +12,7 @@ import {
   fillTokens,
 } from "../admin/data/contentStore";
 import { useCommerce } from "./commerce";
-import { useSettings } from "../admin/data/settingsStore";
+import { useRules } from "./platformRules";
 
 export const usePublishedFaqs = () => {
   const all = useFaqs();
@@ -38,7 +38,8 @@ export function useLiveBanners(placement, viewer = "Visitors only") {
 export function usePolicyText(key) {
   const policies = usePolicies();
   const commerce = useCommerce();
-  const { warehouse } = useSettings();
+  const { unsoldDays } = useRules();
+  const warehouse = useMemo(() => ({ unsoldDays }), [unsoldDays]);
   const p = policies.find((x) => x.key === key);
   return useMemo(() => {
     if (!p) return null;

@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { donationApi, voucherApi } from "../../api/donations";
 import { getAccount } from "../../api/session";
+import { donationRates, useDonationRates } from "./rewardsStore";
 import { useCategoryNames } from "../../shared/catalog";
 
 /* ---------------------------------------------------------
@@ -406,6 +407,7 @@ export async function updatePickupNote(id, note) {
 
 const useStore = () => {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useDonationRates(); // the points estimate follows the rules set by ReOrbit
   useEffect(() => {
     loadDonations();
   }, []);
@@ -482,7 +484,7 @@ export function useVouchers() {
 }
 
 export const estimatePoints = (quantity) =>
-  REWARD_RULES.base + REWARD_RULES.perItem * Math.max(1, quantity || 1);
+  donationRates().base + donationRates().perItem * Math.max(1, quantity || 1);
 
 export const estimateWeight = (category, quantity) => {
   return (

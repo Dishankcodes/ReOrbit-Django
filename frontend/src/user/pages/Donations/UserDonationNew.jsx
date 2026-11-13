@@ -20,6 +20,7 @@ import {
 import { useServerAddresses } from "../../data/checkoutStore";
 import Crumbs from "../../components/ui/Crumbs";
 import StepItem from "./components/wizard/StepItem";
+import { useRules } from "../../../shared/platformRules";
 import StepPickup from "./components/wizard/StepPickup";
 import StepReview from "./components/wizard/StepReview";
 import WizardSummary from "./components/wizard/WizardSummary";
@@ -70,6 +71,7 @@ export default function UserDonationNew() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const minItems = Math.max(1, Number(useRules().minDonationItems) || 1);
   const [form, setForm] = useState(initial);
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState({});
@@ -121,7 +123,11 @@ export default function UserDonationNew() {
       if (form.description.trim().length < 10)
         next.description = "Add a few more details (at least 10 characters).";
       if (!form.condition) next.condition = "Select the condition of the item.";
-      if (form.quantity < 1) next.quantity = "Quantity must be at least 1.";
+      if (form.quantity < minItems)
+        next.quantity =
+          minItems > 1
+            ? `Please donate at least ${minItems} items at a time.`
+            : "Quantity must be at least 1.";
       if (form.images.length < 1) next.images = "Add at least one photo.";
     }
 
@@ -233,6 +239,8 @@ export default function UserDonationNew() {
 
       <header className="dn-new-head">
         <div>
+          <span className="dn-eyebrow">New donation</span>
+          <h1>Donate an item</h1>
           <p className="dn-muted">
             {repeat
               ? `Starting from "${repeat.title}". Update the details and submit again.`

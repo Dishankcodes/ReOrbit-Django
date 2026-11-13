@@ -5,14 +5,14 @@
    - platform fee (charged to the BUYER on member orders)
    - delivery fees and the free-delivery limit
    - cash on delivery (on/off and the order limit)
-   Changing a value in Admin Settings changes the numbers
-   everywhere. Backend later: one GET /settings/commerce.
+   The values come live from the server (see platformRules.js), so
+   a change saved in Admin Settings reaches every app.
    ========================================================= */
 
-import { getSettings, useSettings } from "../admin/data/settingsStore";
+import { getRules, useRules } from "./platformRules";
 
-export const getCommerce = () => getSettings().commerce;
-export const useCommerce = () => useSettings().commerce;
+export const getCommerce = () => getRules();
+export const useCommerce = () => useRules();
 
 const num = (v) => Number(v) || 0;
 
@@ -23,6 +23,7 @@ export const platformFeeOf = (subtotal, c = getCommerce()) =>
 /* Delivery for one order line.
    - Member items (user listings): free when the seller hands it to the
      courier, `itemDelivery` when ReOrbit manages the pickup and delivery.
+   - ReOrbit's own listings ("platform"): `sellDelivery`, free from `sellFreeFrom`.
    - ReMaker products: `productDelivery`, free from `freeDeliveryFrom`. */
 export function deliveryFor(
   { sellerType, pickup, subtotal },
@@ -32,6 +33,9 @@ export function deliveryFor(
     return pickup === "platform" || pickup === "Managed by platform"
       ? num(c.itemDelivery)
       : 0;
+  }
+  if (sellerType === "platform" || sellerType === "admin") {
+    return num(subtotal) >= num(c.sellFreeFrom) ? 0 : num(c.sellDelivery);
   }
   return num(subtotal) >= num(c.freeDeliveryFrom) ? 0 : num(c.productDelivery);
 }

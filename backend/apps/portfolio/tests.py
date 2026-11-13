@@ -483,14 +483,14 @@ class FailureCleanupTests(PortfolioBase):
                 raise RuntimeError("disk full")
             return real(file, **kwargs)
 
-        with mock.patch.object(views, "process_image", flaky), self.assertRaises(RuntimeError):
+        with self.assertLogs("django.request", "ERROR"), mock.patch.object(views, "process_image", flaky), self.assertRaises(RuntimeError):
             self.upload()
         self.assertEqual(PortfolioEntry.objects.count(), 0)
         self.assertEqual(MediaImage.objects.count(), 0)
         self.assertEqual(media_files(), self.start)
 
     def test_failure_after_both_photos_saved_leaves_nothing(self):
-        with mock.patch.object(views, "audit", side_effect=RuntimeError("boom")), self.assertRaises(RuntimeError):
+        with self.assertLogs("django.request", "ERROR"), mock.patch.object(views, "audit", side_effect=RuntimeError("boom")), self.assertRaises(RuntimeError):
             self.upload()
         self.assertEqual(PortfolioEntry.objects.count(), 0)
         self.assertEqual(MediaImage.objects.count(), 0)
@@ -502,7 +502,7 @@ class FailureCleanupTests(PortfolioBase):
         old = entry.images.get(image_type="After")
         old_name, storage = old.image.name, old.image.storage
         files_before = media_files()
-        with mock.patch.object(views, "audit", side_effect=RuntimeError("boom")), self.assertRaises(RuntimeError):
+        with self.assertLogs("django.request", "ERROR"), mock.patch.object(views, "audit", side_effect=RuntimeError("boom")), self.assertRaises(RuntimeError):
             with self.captureOnCommitCallbacks(execute=True):
                 self.patch_multipart(work["id"], {"title": "New title here", "after": photo("n.png", fmt="PNG")})
         self.assertEqual(entry.images.get(image_type="After").image.name, old_name)
@@ -555,45 +555,33 @@ class VisibilityAndFeaturedTests(PortfolioBase):
 
 
 class MigrationUpgradeTests(TransactionTestCase):
-    """Existing databases: the new migrations apply on top of existing data and reverse."""
+    """Existing databases: the migrations roll back and forward over real data."""
 
     OLD = [("listings", "0003_item_quantity_gte_0"), ("portfolio", None)]
 
-    def test_upgrade_keeps_existing_images_and_is_reversible(self):
+    def test_rollback_and_upgrade_keep_existing_images(self):
+        # a fully migrated database with a product photo and a portfolio work
+        cat = Category.objects.create(name="Furniture", slug="furniture-mig")
+        maker = ReMakers.objects.create(full_name="M", username="mig1", email="mig1@example.com")
+        product = RemakerProduct.objects.create(remaker=maker, category=cat, title="Chair", price=10, stock=1)
+        MediaImage.objects.create(remaker_product=product, image="listings/old.jpg", image_type="Cover")
+        entry = PortfolioEntry.objects.create(remaker=maker, title="Work", description="d" * 30, category=cat)
+        MediaImage.objects.create(portfolio=entry, image="listings/b.jpg", image_type="Before")
+
+        # roll back to before portfolios existed: only the portfolio photo goes
         executor = MigrationExecutor(connection)
         executor.migrate(self.OLD)
         old = executor.loader.project_state([self.OLD[0]]).apps
+        remaining = old.get_model("listings", "MediaImage").objects.all()
+        self.assertEqual([m.image_type for m in remaining], ["Cover"])
 
-        Category = old.get_model("core", "Category")
-        Remakers = old.get_model("remakers", "ReMakers")
-        Product = old.get_model("remakers", "RemakerProduct")
-        Media = old.get_model("listings", "MediaImage")
-        cat = Category.objects.create(name="Furniture", slug="furniture", public_id="CAT-9001")
-        maker = Remakers.objects.create(full_name="M", username="m1", email="m1@example.com", public_id="RMK-9001")
-        product = Product.objects.create(remaker=maker, category=cat, title="Chair", price=10, stock=1, public_id="RPR-9001")
-        Media.objects.create(remaker_product=product, image="listings/old.jpg", image_type="Cover")
-
-        executor = MigrationExecutor(connection)
-        leaves = executor.loader.graph.leaf_nodes()
-        executor.migrate(leaves)
-        new = executor.loader.project_state(leaves).apps
-        Media = new.get_model("listings", "MediaImage")
-        Entry = new.get_model("portfolio", "PortfolioEntry")
-        self.assertEqual(Media.objects.filter(remaker_product__public_id="RPR-9001").count(), 1)
-
-        entry = Entry.objects.create(remaker_id=maker.pk, title="Work", description="d" * 30, public_id="PF-9001")
-        Media.objects.create(portfolio=entry, image="listings/b.jpg", image_type="Before")
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            Media.objects.create(portfolio=entry, image="listings/b2.jpg", image_type="Before")
-        with self.assertRaises(IntegrityError), transaction.atomic():
-            Media.objects.create(image="listings/orphan.jpg", image_type="Gallery")
-
-        # and back again: the old state still has the old data
-        executor = MigrationExecutor(connection)
-        executor.migrate(self.OLD)
-        old = executor.loader.project_state([self.OLD[0]]).apps
-        self.assertEqual(old.get_model("listings", "MediaImage").objects.count(), 1)
-
-        # leave the database fully migrated for the tests that follow
+        # and forward again: the product photo is untouched and the new rules hold
         executor = MigrationExecutor(connection)
         executor.migrate(executor.loader.graph.leaf_nodes())
+        self.assertEqual(MediaImage.objects.filter(remaker_product=product).count(), 1)
+        entry = PortfolioEntry.objects.create(remaker=maker, title="Again", description="d" * 30, category=cat)
+        MediaImage.objects.create(portfolio=entry, image="listings/b.jpg", image_type="Before")
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            MediaImage.objects.create(portfolio=entry, image="listings/b2.jpg", image_type="Before")
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            MediaImage.objects.create(image="listings/orphan.jpg", image_type="Gallery")

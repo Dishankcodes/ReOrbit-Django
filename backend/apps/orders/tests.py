@@ -46,6 +46,7 @@ class OrderBase(APIBase):
         self.addCleanup(patcher.stop)
         s = PlatformSettings.load()
         s.platform_fee_pct, s.item_delivery, s.product_delivery, s.free_delivery_from = 3, 149, 79, 1500
+        s.admin_item_delivery, s.admin_item_free_from = 79, 1500  # ReOrbit's own listings
         s.cod_enabled, s.cod_limit = True, 20000
         s.save()
         self.cat = Category.objects.create(name="Furniture", slug="furniture", applies_to="Both")

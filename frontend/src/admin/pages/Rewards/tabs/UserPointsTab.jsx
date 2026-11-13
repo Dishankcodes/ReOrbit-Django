@@ -44,7 +44,7 @@ export default function UserPointsTab({ toast }) {
         (r) =>
           !t ||
           [r.user.full_name, r.user.email].some((x) =>
-            x.toLowerCase().includes(t),
+            String(x || "").toLowerCase().includes(t),
           ),
       )
       .sort(SORTS[sort].fn);
@@ -53,12 +53,14 @@ export default function UserPointsTab({ toast }) {
   const safe = Math.min(page, pageCount);
   const shown = filtered.slice((safe - 1) * pageSize, safe * pageSize);
 
-  const save = (id, amount, reason) => {
-    adjustPoints(id, amount, reason);
+  const save = async (id, amount, reason) => {
+    const res = await adjustPoints(id, amount, reason);
+    if (!res.ok) return res; // the modal shows the server's reason
     toast(
       `${amount > 0 ? "Added" : "Deducted"} ${Math.abs(amount)} points ${amount > 0 ? "to" : "from"} ${adjust.user.full_name}.`,
     );
     setAdjust(null);
+    return res;
   };
 
   return (
@@ -161,7 +163,7 @@ export default function UserPointsTab({ toast }) {
                       <div className="ap-owner">
                         <UserAvatar
                           name={r.user.full_name}
-                          src={r.user.profile.profile_image}
+                          src={null}
                           size={34}
                           rounded="10px"
                         />
@@ -193,7 +195,7 @@ export default function UserPointsTab({ toast }) {
                     </td>
                     <td className="col-spent">
                       <span className="au-muted-strong">
-                        {fmt(r.spent + r.deducted)}
+                        {fmt(r.spent)}
                       </span>
                     </td>
                     <td className="col-pend">

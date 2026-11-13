@@ -64,6 +64,9 @@ class Category(PublicIdModel, TimeStampedModel):
 # --------------------------------------------------------------------------- #
 # Platform settings: exactly one row (pk = 1)
 # --------------------------------------------------------------------------- #
+DEFAULT_SUPPORT_EMAIL = "support@reorbit.in"
+
+
 class PlatformSettings(TimeStampedModel):
     platform_fee_pct = models.DecimalField(
         max_digits=5,
@@ -81,7 +84,18 @@ class PlatformSettings(TimeStampedModel):
     payout_hold_days = models.PositiveIntegerField(default=7, help_text="Days after delivery before an earning can be paid out")
     payout_min_amount = models.PositiveIntegerField(default=100, help_text="Smallest payout, in rupees")
     payout_auto = models.BooleanField(default=False, help_text="Create payouts automatically for available balances")
+    # ReOrbit's own listings (Admin_Items) have their own delivery rule
+    admin_item_delivery = models.PositiveIntegerField(default=149)
+    admin_item_free_from = models.PositiveIntegerField(default=5000)
+    # Smallest number of items one donation may contain
+    min_donation_items = models.PositiveIntegerField(
+        default=1, validators=[MinValueValidator(1), MaxValueValidator(99)]
+    )
     support_email = models.EmailField(blank=True)
+    # Groups the admin Settings screen saves as a unit (validated in apps/platform)
+    warehouse_rules = models.JSONField(default=dict, blank=True)
+    notification_settings = models.JSONField(default=dict, blank=True)
+    platform_settings = models.JSONField(default=dict, blank=True)  # maintenance, session minutes
     updated_by = models.ForeignKey(
         "admins.Admins",
         null=True,
@@ -116,16 +130,27 @@ class PlatformSettings(TimeStampedModel):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
+    @property
+    def maintenance(self):
+        return bool((self.platform_settings or {}).get("maintenance", False))
+
     def as_public_dict(self):
-        """The commerce rules the User and ReMaker apps read (camelCase for the frontend)."""
+        """The rules every app (User, ReMaker, Admin) reads, in camelCase for the frontend."""
+        warehouse = self.warehouse_rules or {}
         return {
             "platformFeePct": float(self.platform_fee_pct),
             "itemDelivery": self.item_delivery,
             "productDelivery": self.product_delivery,
             "freeDeliveryFrom": self.free_delivery_from,
+            "sellDelivery": self.admin_item_delivery,
+            "sellFreeFrom": self.admin_item_free_from,
             "codEnabled": self.cod_enabled,
             "codLimit": self.cod_limit,
             "maxListingsPerDay": self.max_listings_per_day,
+            "minDonationItems": self.min_donation_items,
+            "supportEmail": self.support_email or DEFAULT_SUPPORT_EMAIL,
+            "unsoldDays": warehouse.get("unsoldDays", 7),
+            "maintenance": self.maintenance,
         }
 
 

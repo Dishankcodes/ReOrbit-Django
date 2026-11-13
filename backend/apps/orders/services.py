@@ -25,7 +25,7 @@ from django.utils import timezone
 from apps.admins.models import Admins, AdminItem
 from apps.core import buyers as buyer_kit
 from apps.core.models import Notification, PlatformSettings, SavedAddress
-from apps.core.pricing import cod_block_reason, delivery_charge, platform_fee
+from apps.core.pricing import cod_block_reason, delivery_charge, maintenance_block_reason, platform_fee
 from apps.core.services import audit, notify
 from apps.listings.models import Item, MediaImage
 from apps.listings.sellables import settle_status
@@ -356,6 +356,12 @@ def create_checkout(buyer, data, key=None):
     prior = _existing_for_key(buyer, key)
     if prior:
         return _replay(prior)
+
+    # Maintenance mode stops members placing new orders; ReOrbit's own admins can still buy.
+    if type(buyer)._meta.label != "admins.Admins":
+        reason = maintenance_block_reason()
+        if reason:
+            raise CheckoutError(reason, code="MAINTENANCE", status=503)
 
     method = str(data.get("method") or "").upper()
     if method not in (Payment.Method.RAZORPAY, Payment.Method.COD):

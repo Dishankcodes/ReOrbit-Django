@@ -1,5 +1,5 @@
 import NumberInput from "../../../../../shared/components/NumberInput";
-import React from "react";
+import React, { useEffect } from "react";
 import { Minus, Plus, ShieldAlert } from "lucide-react";
 import {
   CONDITIONS,
@@ -7,9 +7,17 @@ import {
 } from "../../../../data/donationsStore";
 import { categoryIcon } from "../categoryIcons";
 import PhotoUploader from "../../../../components/ui/PhotoUploader";
+import { useRules } from "../../../../../shared/platformRules";
 
 export default function StepItem({ form, set, errors }) {
   const categories = useDonationCategories();
+  /* the smallest donation ReOrbit accepts (Admin › Settings › Platform) */
+  const minItems = Math.max(1, Number(useRules().minDonationItems) || 1);
+
+  useEffect(() => {
+    if (form.quantity < minItems) set("quantity", minItems);
+  }, [form.quantity, minItems, set]);
+
   return (
     <div className="dn-form">
       {/* category */}
@@ -107,13 +115,13 @@ export default function StepItem({ form, set, errors }) {
             <button
               type="button"
               aria-label="Decrease quantity"
-              onClick={() => set("quantity", Math.max(1, form.quantity - 1))}
-              disabled={form.quantity <= 1}
+              onClick={() => set("quantity", Math.max(minItems, form.quantity - 1))}
+              disabled={form.quantity <= minItems}
             >
               <Minus size={16} />
             </button>
             <NumberInput
-              min={1}
+              min={minItems}
               max={99}
               value={form.quantity}
               aria-label="Quantity"
@@ -127,6 +135,11 @@ export default function StepItem({ form, set, errors }) {
               <Plus size={16} />
             </button>
           </div>
+          {minItems > 1 && (
+            <span className="dn-hint">
+              Please donate at least {minItems} items at a time.
+            </span>
+          )}
           {errors.quantity && (
             <span className="dn-error">{errors.quantity}</span>
           )}

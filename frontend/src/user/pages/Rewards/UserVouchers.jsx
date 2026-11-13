@@ -17,7 +17,12 @@ import "../../css/rewards/rewards-base.css";
 export default function UserVouchers() {
   const { balance, levelIndex, redeemed } = useRewards();
   const vouchers = useVoucherList();
-  const donated = useVouchers();
+  const allHeld = useVouchers();
+  /* vouchers earned from donations; the ones bought with points are under "My vouchers" */
+  const donated = {
+    ...allHeld,
+    vouchers: allHeld.vouchers.filter((v) => v.source?.type === "donation"),
+  };
   const [tab, setTab] = useState("donation");
   const { toast, show } = useToast();
 

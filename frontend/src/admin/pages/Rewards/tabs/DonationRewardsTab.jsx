@@ -65,16 +65,18 @@ export default function DonationRewardsTab({ toast }) {
         (r) =>
           !t ||
           [r.id, r.donor.name, r.donation.title].some((x) =>
-            x.toLowerCase().includes(t),
+            String(x || "").toLowerCase().includes(t),
           ),
       );
   }, [rows, filter, query]);
 
-  const confirm = (reason) => {
+  const confirm = async (reason) => {
     const { action, r } = pending;
-    if (action.key === "revoke") revokeDonationReward(r.id, reason);
-    else restoreDonationReward(r.id);
-    toast(`${r.id}: ${action.toast}.`);
+    const res =
+      action.key === "revoke"
+        ? await revokeDonationReward(r.id, reason)
+        : await restoreDonationReward(r.id);
+    toast(res.ok ? `${r.id}: ${action.toast}.` : res.error);
     setPending(null);
   };
 
@@ -87,9 +89,9 @@ export default function DonationRewardsTab({ toast }) {
         <div>
           <strong>Connected to the Donations module</strong>
           <p>
-            When a donation is marked Completed there, the donor is credited
-            automatically using the donation rules. Donations that are picked up
-            or received are shown as pending.
+            When a donation is marked Received at the warehouse, the donor is
+            credited once, automatically, using the donation rules. Donations
+            that are picked up but not yet received show as pending.
           </p>
         </div>
         <Link to="/admin-donations" className="ad-btn ad-btn-ghost ad-btn-sm">
@@ -128,7 +130,7 @@ export default function DonationRewardsTab({ toast }) {
           <div>
             <small>Points on the way</small>
             <strong>{sum("Pending").toLocaleString("en-IN")}</strong>
-            <em>Credited when completed</em>
+            <em>Credited when received</em>
           </div>
         </button>
         <button

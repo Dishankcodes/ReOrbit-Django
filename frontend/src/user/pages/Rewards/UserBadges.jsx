@@ -66,6 +66,8 @@ export default function UserBadges() {
       <PointsNav />
       <header className="urw-head">
         <div>
+          <span className="dn-eyebrow">Achievements</span>
+          <h1>Badges</h1>
           <p className="dn-muted">
             {earnedBadges} of {badges.length} earned. Badges unlock
             automatically as you make a difference.
@@ -108,7 +110,7 @@ export default function UserBadges() {
               <p>{b.text}</p>
               {b.earned ? (
                 <span className="urw-badge-date">
-                  Earned {formatDate(b.earnedAt)}
+                  {b.earnedAt ? `Earned ${formatDate(b.earnedAt)}` : "Earned"}
                 </span>
               ) : (
                 <>

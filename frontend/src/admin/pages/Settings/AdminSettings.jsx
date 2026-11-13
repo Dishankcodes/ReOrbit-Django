@@ -24,6 +24,7 @@ import {
 import {
   useSettings,
   saveSection,
+  loadSettings,
   setSecurity,
   revokeSession,
   DEFAULTS,
@@ -179,6 +180,48 @@ function useDraft(stored) {
   return { draft, setDraft, set, dirty, discard: () => setDraft(stored) };
 }
 const N = (v) => (v === "" || v == null ? "" : Number(v));
+
+/* The first reason the server gave for refusing a save */
+function problemOf(e) {
+  for (const group of Object.values(e?.errors || {})) {
+    if (Array.isArray(group) && group[0]) return String(group[0]);
+    if (group && typeof group === "object") {
+      const first = Object.values(group)[0];
+      if (first) return String(first);
+    }
+  }
+  return e?.message || "We couldn’t save that. Try again.";
+}
+
+/* Saves to the server, then toasts; keeps the form as it is if the server says no. */
+function useSaver(toast) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const run = async (action, success) => {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await action();
+      toast(success);
+    } catch (e) {
+      setError(problemOf(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+  return { saving, error, run };
+}
+function SaveError({ message }) {
+  return message ? (
+    <p className="st-note warn" role="alert">
+      <Info size={15} />
+      <span>
+        <b>Not saved.</b> {message}
+      </span>
+    </p>
+  ) : null;
+}
 const numIn = (set, k) => (e) =>
   set(k, e.target.value === "" ? "" : Number(e.target.value));
 
@@ -357,6 +400,7 @@ function SecuritySection({ s, toast }) {
 
 function CommerceSection({ s, toast }) {
   const d = useDraft(s.commerce);
+  const save = useSaver(toast);
   const c = d.draft;
   const e = {};
   if (!(c.platformFeePct >= 0 && c.platformFeePct <= 30))
@@ -511,21 +555,23 @@ function CommerceSection({ s, toast }) {
           </div>
         )}
       </Card>
+      <SaveError message={save.error} />
       <SaveBar
         dirty={d.dirty}
-        disabled={bad}
+        disabled={bad || save.saving}
         onDiscard={d.discard}
         onReset={() => d.setDraft({ ...DEFAULTS.commerce })}
-        onSave={() => {
-          saveSection(
-            "commerce",
-            { ...c, platformFeePct: N(c.platformFeePct) },
-            "Fees & delivery updated",
-          );
-          toast(
+        onSave={() =>
+          save.run(
+            () =>
+              saveSection(
+                "commerce",
+                { ...c, platformFeePct: N(c.platformFeePct) },
+                "Fees & delivery updated",
+              ),
             "Fees and delivery rules saved. New checkouts use them straight away.",
-          );
-        }}
+          )
+        }
       />
     </>
   );
@@ -533,6 +579,7 @@ function CommerceSection({ s, toast }) {
 
 function WarehouseSection({ s, toast }) {
   const d = useDraft(s.warehouse);
+  const save = useSaver(toast);
   const w = d.draft;
   const stock = useStock();
   const listed = stock.filter(
@@ -641,15 +688,18 @@ function WarehouseSection({ s, toast }) {
           </Field>
         </div>
       </Card>
+      <SaveError message={save.error} />
       <SaveBar
         dirty={d.dirty}
-        disabled={bad}
+        disabled={bad || save.saving}
         onDiscard={d.discard}
         onReset={() => d.setDraft({ ...DEFAULTS.warehouse })}
-        onSave={() => {
-          saveSection("warehouse", { ...w }, "Warehouse rules updated");
-          toast("Warehouse rules saved. Alerts have been recalculated.");
-        }}
+        onSave={() =>
+          save.run(
+            () => saveSection("warehouse", { ...w }, "Warehouse rules updated"),
+            "Warehouse rules saved. Alerts have been recalculated.",
+          )
+        }
       />
     </>
   );
@@ -780,6 +830,7 @@ function NotificationsSection({ s, toast }) {
 
 function PlatformSection({ s, toast }) {
   const d = useDraft(s.platform);
+  const save = useSaver(toast);
   const p = d.draft;
   const e = {};
   if (!/^\S+@\S+\.\S+$/.test(p.supportEmail))
@@ -849,20 +900,26 @@ function PlatformSection({ s, toast }) {
       >
         <ActivityLog />
       </Card>
+      <SaveError message={save.error} />
       <SaveBar
         dirty={d.dirty}
-        disabled={Object.keys(e).length > 0}
+        disabled={Object.keys(e).length > 0 || save.saving}
         onDiscard={d.discard}
-        onSave={() => {
-          saveSection(
-            "platform",
-            p,
+        onSave={() =>
+          save.run(
+            () =>
+              saveSection(
+                "platform",
+                p,
+                p.maintenance
+                  ? "Maintenance mode turned on"
+                  : "Platform settings updated",
+              ),
             p.maintenance
-              ? "Maintenance mode turned on"
-              : "Platform settings updated",
-          );
-          toast("Platform settings saved.");
-        }}
+              ? "Maintenance mode is on. Members see the “be right back” page."
+              : "Platform settings saved.",
+          )
+        }
       />
     </>
   );
@@ -886,6 +943,9 @@ function ActivityLog() {
     </ul>
   );
 }
+
+/* these sections read what the server holds */
+const SERVER_SECTIONS = ["commerce", "warehouse", "platform"];
 
 export default function AdminSettings() {
   const [params, setParams] = useSearchParams();
@@ -947,9 +1007,28 @@ export default function AdminSettings() {
             </span>
           </p>
         )}
-        <fieldset className="st-fieldset" disabled={readOnly}>
-          <Body s={s} toast={toast} />
-        </fieldset>
+        {SERVER_SECTIONS.includes(section) && !s.loaded ? (
+          <p className="st-empty" role="status">
+            {s.loadError ? (
+              <>
+                {s.loadError}{" "}
+                <button
+                  type="button"
+                  className="ad-btn ad-btn-primary ad-btn-sm"
+                  onClick={() => loadSettings({ force: true })}
+                >
+                  Try again
+                </button>
+              </>
+            ) : (
+              "Loading settings…"
+            )}
+          </p>
+        ) : (
+          <fieldset className="st-fieldset" disabled={readOnly}>
+            <Body s={s} toast={toast} />
+          </fieldset>
+        )}
       </div>
       {toastNode}
     </div>

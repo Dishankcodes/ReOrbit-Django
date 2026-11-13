@@ -5,6 +5,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import ReMakerSidebar from "./ReMakerSidebar";
 import ReMakerHeader from "./ReMakerHeader";
 import AccountGate from "../../shared/components/AccountGate";
+import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useRemakerAccountStatus } from "../../shared/accountStatus";
 import AnnouncementSync from "../../shared/components/AnnouncementSync";
 import { syncAnnouncements } from "../data/notificationsStore";
@@ -97,11 +98,13 @@ export default function ReMakerLayout() {
         />
 
         <main className="remaker-page-content">
-          <AccountGate info={account} role="remaker">
-            <Suspense fallback={<DelayedLoader minHeight={320} />}>
-              <div className="ro-route">{<Outlet />}</div>
-            </Suspense>
-          </AccountGate>
+          <MaintenanceGate>
+            <AccountGate info={account} role="remaker">
+              <Suspense fallback={<DelayedLoader minHeight={320} />}>
+                <div className="ro-route">{<Outlet />}</div>
+              </Suspense>
+            </AccountGate>
+          </MaintenanceGate>
         </main>
       </div>
     </div>

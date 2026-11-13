@@ -5,6 +5,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import UserSidebar from "./UserSidebar";
 import UserHeader from "./UserHeader";
 import AccountGate from "../../shared/components/AccountGate";
+import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useUserAccountStatus } from "../../shared/accountStatus";
 
 import "./UserLayout.css";
@@ -74,11 +75,13 @@ export default function UserLayout() {
         />
 
         <main className="user-page-content">
-          <AccountGate info={account} role="user">
-            <Suspense fallback={<DelayedLoader minHeight={320} />}>
-              <div className="ro-route">{<Outlet />}</div>
-            </Suspense>
-          </AccountGate>
+          <MaintenanceGate>
+            <AccountGate info={account} role="user">
+              <Suspense fallback={<DelayedLoader minHeight={320} />}>
+                <div className="ro-route">{<Outlet />}</div>
+              </Suspense>
+            </AccountGate>
+          </MaintenanceGate>
         </main>
       </div>
     </div>

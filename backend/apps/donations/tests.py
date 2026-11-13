@@ -90,7 +90,7 @@ class DonationFlowTests(DonationBase):
         v = Voucher.objects.get()
         self.assertEqual((v.owner_id, v.amount, v.status), (self.donor.pk, 140, "Active"))  # 3 books x 4 kg x ₹12, rounded to ₹10
         self.assertEqual(d["reward"]["voucher"]["code"], v.code)
-        self.assertEqual(d["reward"]["points"], rewards.points_for(3))
+        self.assertEqual(d["reward"]["points"], rewards.donation_points(3))
         item = WarehouseItem.objects.get()
         self.assertEqual((item.donation.public_id, item.status, item.quantity), (did, "In_Stock", 3))
         mine = self.get("/api/rewards/me/vouchers/", as_=self.donor).data["data"]

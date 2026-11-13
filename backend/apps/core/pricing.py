@@ -22,6 +22,8 @@ def delivery_charge(seller_type, subtotal, platform_pickup=False, settings=None)
     s = settings or PlatformSettings.load()
     if seller_type == "user":
         return s.item_delivery if platform_pickup else 0
+    if seller_type == "platform":  # ReOrbit's own listings
+        return 0 if subtotal >= s.admin_item_free_from else s.admin_item_delivery
     return 0 if subtotal >= s.free_delivery_from else s.product_delivery
 
 
@@ -33,3 +35,12 @@ def cod_block_reason(total, settings=None):
     if total > s.cod_limit:
         return f"Pay on delivery is available for orders up to ₹{s.cod_limit:,}."
     return ""
+
+
+MAINTENANCE_MESSAGE = "ReOrbit is taking a short break for maintenance. Please try again soon."
+
+
+def maintenance_block_reason(settings=None):
+    """Return "" normally; the message to show members while maintenance mode is on."""
+    s = settings or PlatformSettings.load()
+    return MAINTENANCE_MESSAGE if s.maintenance else ""

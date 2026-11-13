@@ -117,6 +117,10 @@ def save_product_review(account, order_id, line_id, data, files=(), remove_photo
 
     if review is None:
         review = ProductReview.objects.create(order=order, order_item=line, **base, **fields)
+        if base["reviewer_type"] == "user":
+            from apps.rewards import services as rewards  # local import: rewards reads reviews lazily too
+
+            rewards.on_review(account, review)  # Orbit Points for a new review (not for edits)
     else:
         for k, v in fields.items():
             setattr(review, k, v)

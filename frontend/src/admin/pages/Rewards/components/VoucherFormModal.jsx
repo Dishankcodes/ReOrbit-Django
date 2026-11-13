@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { X, Wand2, Coins, Ticket } from "lucide-react";
-import { AUDIENCES } from "../../../data/rewardsData";
-import { codeTaken } from "../../../data/rewardsStore";
-import { DEMO_TODAY } from "../../../utils/format";
+import { AUDIENCES, codeTaken } from "../../../data/rewardsStore";
 
-const todayISO = () => DEMO_TODAY.toISOString().slice(0, 10);
+const todayISO = () => new Date().toISOString().slice(0, 10);
 const addDays = (n) =>
-  new Date(DEMO_TODAY.getTime() + n * 86400000).toISOString().slice(0, 10);
+  new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 const EMPTY = () => ({
   kind: "code",
   title: "",
@@ -30,12 +28,15 @@ const randomCode = () =>
 export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
   const [f, setF] = useState(EMPTY());
   const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState("");
   const editing = !!voucher;
 
   useEffect(() => {
     if (!open) return undefined;
     setF(voucher ? { ...EMPTY(), ...voucher } : EMPTY());
     setErrors({});
+    setFormError("");
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -61,8 +62,8 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
     if (f.title.trim().length < 3)
       e.title = "Give it a short name (3+ characters).";
     const code = f.code.trim().toUpperCase();
-    if (!/^[A-Z0-9]{4,16}$/.test(code))
-      e.code = "4 to 16 letters or numbers, no spaces.";
+    if (!/^[A-Z0-9-]{3,11}$/.test(code))
+      e.code = "3 to 11 letters, numbers or dashes, no spaces.";
     else if (codeTaken(code, voucher?.id))
       e.code = "This code is already in use.";
     if (f.value === "" || Number.isNaN(Number(f.value)) || Number(f.value) < 0)
@@ -82,14 +83,17 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
     return Object.keys(e).length === 0;
   };
 
-  const submit = (asDraft) => (ev) => {
+  const submit = (asDraft) => async (ev) => {
     ev.preventDefault();
+    if (busy) return;
     if (!asDraft && !validate()) return;
     if (asDraft && f.title.trim().length < 3) {
       setErrors({ title: "Give it a name before saving a draft." });
       return;
     }
-    onSave(
+    setBusy(true);
+    setFormError("");
+    const res = await onSave(
       {
         ...f,
         code: f.code.trim().toUpperCase() || randomCode(),
@@ -101,6 +105,16 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
       },
       !!voucher,
     );
+    setBusy(false);
+    if (res && res.ok === false) {
+      /* field errors from the server: { code: ["…"], … } */
+      const fields = {};
+      Object.entries(res.errors || {}).forEach(([k, v]) => {
+        fields[k] = Array.isArray(v) ? v[0] : String(v);
+      });
+      setErrors(fields);
+      setFormError(res.error);
+    }
   };
 
   const Err = ({ k }) =>
@@ -327,6 +341,7 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
           </label>
         </div>
 
+        {formError && <small className="ad-modal-error">{formError}</small>}
         <div className="ad-modal-actions">
           <button
             type="button"
@@ -339,12 +354,13 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
             <button
               type="button"
               className="ad-btn ad-btn-ghost"
+              disabled={busy}
               onClick={submit(true)}
             >
               Save as draft
             </button>
           )}
-          <button type="submit" className="ad-btn ad-btn-primary">
+          <button type="submit" className="ad-btn ad-btn-primary" disabled={busy}>
             {editing && !voucher.draft ? "Save changes" : "Publish voucher"}
           </button>
         </div>

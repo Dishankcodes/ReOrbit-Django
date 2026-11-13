@@ -8,6 +8,8 @@ export default function AdjustPointsModal({ row, onSave, onClose }) {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   useEffect(() => {
     if (!row) return undefined;
@@ -32,11 +34,15 @@ export default function AdjustPointsModal({ row, onSave, onClose }) {
   const after =
     mode === "add" ? row.balance + (n || 0) : row.balance - (n || 0);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTouched(true);
-    if (invalid) return;
-    onSave(row.user.user_id, mode === "add" ? n : -n, reason.trim());
+    if (invalid || busy) return;
+    setBusy(true);
+    setServerError("");
+    const res = await onSave(row.user.user_id, mode === "add" ? n : -n, reason.trim());
+    setBusy(false);
+    if (res && res.ok === false) setServerError(res.error);
   };
 
   return (
@@ -132,6 +138,7 @@ export default function AdjustPointsModal({ row, onSave, onClose }) {
             New balance: <strong>{after.toLocaleString("en-IN")} pts</strong>
           </p>
         )}
+        {serverError && <small className="ad-modal-error">{serverError}</small>}
         <div className="ad-modal-actions">
           <button
             type="button"
@@ -142,6 +149,7 @@ export default function AdjustPointsModal({ row, onSave, onClose }) {
           </button>
           <button
             type="submit"
+            disabled={busy}
             className={`ad-btn ${mode === "add" ? "ad-btn-primary" : "ad-btn-danger"}`}
           >
             {mode === "add" ? "Add points" : "Deduct points"}

@@ -76,8 +76,8 @@ export default function UserBadgeDetail() {
 
         {badge.earned ? (
           <p className="urw-bdetail-done">
-            <CheckCircle2 size={18} /> Earned on{" "}
-            {formatLongDate(badge.earnedAt)}
+            <CheckCircle2 size={18} /> Earned
+            {badge.earnedAt ? ` on ${formatLongDate(badge.earnedAt)}` : ""}
           </p>
         ) : (
           <p className="urw-bdetail-left">

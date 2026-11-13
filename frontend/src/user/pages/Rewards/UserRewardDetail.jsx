@@ -21,6 +21,7 @@ export default function UserRewardDetail() {
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   if (!voucher || voucher.kind !== "points") {
     return (
@@ -39,10 +40,13 @@ export default function UserRewardDetail() {
   const locked = levelIndex < voucher.level;
   const out = voucher.left <= 0 || voucher.paused;
   const short = balance < voucher.cost;
-  const can = !locked && !out && !short;
+  const maxed = voucher.claimedByMe >= voucher.perUser;
+  const can = !locked && !out && !short && !maxed;
 
-  const redeem = () => {
-    const res = redeemVoucher(voucher.id, { balance, level: levelIndex });
+  const redeem = async () => {
+    setBusy(true);
+    const res = await redeemVoucher(voucher.id);
+    setBusy(false);
     setConfirm(false);
     if (res.ok) setResult(res.entry);
     else setError(res.error);
@@ -177,12 +181,17 @@ export default function UserRewardDetail() {
               {(voucher.cost - balance).toLocaleString("en-IN")} more points.
             </p>
           )}
+          {maxed && !locked && !out && (
+            <p className="urw-warn">
+              <Info size={14} /> You've claimed the most you can.
+            </p>
+          )}
           {error && <p className="dn-error">{error}</p>}
 
           <button
             type="button"
             className="dn-btn dn-btn--block ushp-big"
-            disabled={!can}
+            disabled={!can || busy}
             onClick={() => setConfirm(true)}
           >
             Redeem for {voucher.cost.toLocaleString("en-IN")} points

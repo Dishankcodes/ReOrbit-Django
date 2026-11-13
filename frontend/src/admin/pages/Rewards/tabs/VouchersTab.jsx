@@ -24,7 +24,7 @@ import {
   patchVoucher,
   removeVoucher,
 } from "../../../data/rewardsStore";
-import { DEMO_TODAY, formatDate } from "../../../utils/format";
+import { formatDate } from "../../../utils/format";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import RowActionMenu from "../../../components/ui/RowActionMenu";
 import ConfirmActionModal from "../../../components/ui/ConfirmActionModal";
@@ -128,8 +128,9 @@ export default function VouchersTab({ toast }) {
     }
     toast(`Code ${code} copied.`);
   };
-  const onSave = (data, isEdit) => {
-    saveVoucher(data);
+  const onSave = async (data, isEdit) => {
+    const res = await saveVoucher(data);
+    if (!res.ok) return res; // the form shows what the server said
     setForm({ open: false, voucher: null });
     toast(
       data.draft
@@ -138,20 +139,20 @@ export default function VouchersTab({ toast }) {
           ? `${data.code} updated.`
           : `${data.code} created.`,
     );
+    return res;
   };
-  const confirm = () => {
+  const confirm = async () => {
     const { action, v } = pending;
-    if (action.key === "pause") patchVoucher(v.id, { paused: true });
-    if (action.key === "resume") patchVoucher(v.id, { paused: false });
+    let res = { ok: true };
+    if (action.key === "pause") res = await patchVoucher(v.id, { paused: true });
+    if (action.key === "resume") res = await patchVoucher(v.id, { paused: false });
     if (action.key === "end")
-      patchVoucher(v.id, {
-        valid_to: new Date(DEMO_TODAY.getTime() - 86400000)
-          .toISOString()
-          .slice(0, 10),
+      res = await patchVoucher(v.id, {
+        valid_to: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
         paused: false,
       });
-    if (action.key === "delete") removeVoucher(v.id);
-    toast(`${v.code} ${action.toast}.`);
+    if (action.key === "delete") res = await removeVoucher(v.id);
+    toast(res.ok ? `${v.code} ${action.toast}.` : res.error);
     setPending(null);
   };
 
@@ -166,17 +167,17 @@ export default function VouchersTab({ toast }) {
       key: "dup",
       label: "Duplicate",
       icon: Files,
-      onClick: () => {
-        saveVoucher({
+      onClick: async () => {
+        const res = await saveVoucher({
           ...v,
           id: undefined,
-          code: `${v.code.slice(0, 11)}COPY`,
+          code: `${v.code.slice(0, 7)}-C${Math.floor(10 + Math.random() * 89)}`,
           title: `${v.title} (copy)`,
           used: 0,
           draft: true,
           paused: false,
         });
-        toast(`Draft copy of ${v.code} created.`);
+        toast(res.ok ? `Draft copy of ${v.code} created.` : res.error);
       },
     },
     {

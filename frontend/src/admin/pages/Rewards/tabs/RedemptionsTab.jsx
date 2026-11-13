@@ -3,16 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Search,
   X,
-  CheckCheck,
   Undo2,
   UserRound,
   SearchX,
   Copy,
 } from "lucide-react";
-import {
-  useRedemptions,
-  setRedemptionStatus,
-} from "../../../data/rewardsStore";
+import { useRedemptions, cancelRedemption } from "../../../data/rewardsStore";
 import { formatDate, timeAgo } from "../../../utils/format";
 import UserAvatar from "../../../components/ui/UserAvatar";
 import StatusBadge from "../../../components/ui/StatusBadge";
@@ -32,16 +28,6 @@ const CANCEL = {
   placeholder: "e.g. Redeemed by mistake",
   confirmLabel: "Cancel & refund points",
   toast: "cancelled and points refunded",
-};
-const USED = {
-  key: "used",
-  title: "Mark this voucher as used?",
-  body: "The user has applied the code on an order.",
-  tone: "positive",
-  icon: "check",
-  needsReason: false,
-  confirmLabel: "Mark as used",
-  toast: "marked as used",
 };
 const TONE = {
   Issued: "Scheduled",
@@ -68,7 +54,7 @@ export default function RedemptionsTab({ toast }) {
       Cancelled: 0,
     };
     rows.forEach((r) => {
-      c[r.status] += 1;
+      if (c[r.status] !== undefined) c[r.status] += 1;
     });
     return c;
   }, [rows]);
@@ -79,8 +65,8 @@ export default function RedemptionsTab({ toast }) {
       .filter(
         (r) =>
           !t ||
-          [r.user.full_name, r.title, r.issued_code, r.voucher_code].some((x) =>
-            x.toLowerCase().includes(t),
+          [r.user.full_name, r.user.email, r.title, r.issued_code].some((x) =>
+            String(x || "").toLowerCase().includes(t),
           ),
       );
   }, [rows, query, status]);
@@ -88,11 +74,10 @@ export default function RedemptionsTab({ toast }) {
   const safe = Math.min(page, pageCount);
   const shown = filtered.slice((safe - 1) * pageSize, safe * pageSize);
 
-  const confirm = () => {
+  const confirm = async (reason) => {
     const { action, r } = pending;
-    if (action.key === "used") setRedemptionStatus(r.id, "Used");
-    else setRedemptionStatus(r.id, "Cancelled");
-    toast(`${r.issued_code} ${action.toast}.`);
+    const res = await cancelRedemption(r.id, reason);
+    toast(res.ok ? `${r.issued_code} ${action.toast}.` : res.error);
     setPending(null);
   };
 
@@ -190,7 +175,7 @@ export default function RedemptionsTab({ toast }) {
                       <div className="ap-owner">
                         <UserAvatar
                           name={r.user.full_name}
-                          src={r.user.profile.profile_image}
+                          src={null}
                           size={30}
                           rounded="9px"
                         />
@@ -199,7 +184,7 @@ export default function RedemptionsTab({ toast }) {
                             {r.user.full_name}
                           </span>
                           <span className="au-sub" style={{ margin: 0 }}>
-                            {r.user.profile.city}
+                            {r.user.email}
                           </span>
                         </div>
                       </div>
@@ -232,14 +217,6 @@ export default function RedemptionsTab({ toast }) {
                           ...(r.status === "Issued"
                             ? [
                                 "separator",
-                                {
-                                  key: "used",
-                                  label: "Mark as used",
-                                  icon: CheckCheck,
-                                  tone: "positive",
-                                  onClick: () =>
-                                    setPending({ action: USED, r }),
-                                },
                                 {
                                   key: "cancel",
                                   label: "Cancel & refund points",

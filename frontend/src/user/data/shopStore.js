@@ -95,11 +95,17 @@ export function useStockOf() {
 }
 
 /* ---------- money ---------- */
-/* ReOrbit's own listings carry no platform fee. */
-const feeApplies = (item) => item.sellerType !== "platform";
+/* ReOrbit's own listings carry no platform fee and have their own delivery rule. */
+const isPlatform = (item) =>
+  item.sellerType === "platform" || item.sellerType === "admin";
+const feeApplies = (item) => !isPlatform(item);
 export const deliveryFee = (subtotal, item = {}) =>
   deliveryFor({
-    sellerType: item.sellerType === "remaker" ? "remaker" : "user",
+    sellerType: isPlatform(item)
+      ? "platform"
+      : item.sellerType === "remaker"
+        ? "remaker"
+        : "user",
     pickup: item.pickup || "platform",
     subtotal,
   });

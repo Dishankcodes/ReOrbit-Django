@@ -35,6 +35,7 @@ from apps.core.images import delete_file, process_image
 from apps.core.models import AuditLog, Category, PlatformSettings
 from apps.core.pagination import StandardPagination
 from apps.core.responses import created, fail, ok
+from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
 from apps.core.validators import validate_gujarat_pincode, validate_image
 
@@ -364,6 +365,9 @@ class MyPublishView(MyBase):
         item = self.mine(request, public_id)
         if item.item_status == Item.Status.LISTED:
             return self.show(request, item, "Already live.")
+        reason = maintenance_block_reason()
+        if reason:
+            return fail(reason, status=503, code="MAINTENANCE")
         if item.item_status not in (Item.Status.DRAFT, Item.Status.WITHDRAWN):
             return fail(f"A {item.item_status.lower()} listing can't be published.", status=409)
         if item.moderation_status == Item.Moderation.DISABLED:

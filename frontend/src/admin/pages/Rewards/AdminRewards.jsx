@@ -102,7 +102,7 @@ export default function AdminRewards() {
           <div>
             <small>Points from donations</small>
             <strong>{fmt(kpi.donated)}</strong>
-            <em>Credited when a donation completes</em>
+            <em>Credited when a donation is received</em>
           </div>
         </button>
         <button

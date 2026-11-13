@@ -15,7 +15,8 @@ from django.utils import timezone
 
 from apps.admins.models import Admins
 from apps.core.images import process_image
-from apps.core.models import Category, SavedAddress
+from apps.core.models import Category, PlatformSettings, SavedAddress
+from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
 from apps.core.validators import validate_image, validate_phone
 from apps.rewards import services as rewards
@@ -105,6 +106,9 @@ def _notify_admins(d, title, body):
 # the donor
 # --------------------------------------------------------------------------- #
 def create(user, data, files):
+    reason = maintenance_block_reason()
+    if reason:
+        raise DonationError(reason, code="MAINTENANCE", status=503)
     errors = {}
     title = _text(data.get("title"), 120)
     if len(title) < 3:
@@ -125,6 +129,9 @@ def create(user, data, files):
     except (TypeError, ValueError):
         quantity = 1
         errors["quantity"] = ["Quantity must be between 1 and 99."]
+    minimum = PlatformSettings.load().min_donation_items
+    if "quantity" not in errors and quantity < minimum:
+        errors["quantity"] = [f"Please donate at least {minimum} items at a time."]
     contact = _text(data.get("contact_name"), 120)
     if len(contact) < 2:
         errors["contact_name"] = ["Enter a contact name."]

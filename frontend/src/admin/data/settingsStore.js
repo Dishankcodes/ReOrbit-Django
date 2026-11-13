@@ -1,9 +1,15 @@
-/* Platform settings (in-memory, resets on refresh).
-   The commerce and warehouse values below are read by the live logic:
+/* Platform settings.
+   commerce, warehouse and platform are saved on the server
+   (/api/platform/admin/settings/) and loaded from it, so they survive a refresh and reach
+   the User and ReMaker apps. The server uses them to price orders and enforce limits.
+   profile, notifications and security are this admin's own and stay in this browser.
+   The admin screens read them from here:
    - deliveryFee()      in shopStore / adminSell
-   - UNSOLD alert rule  in warehouseStore + Warehouse pages
-   so changing them here changes what the rest of the admin does. */
-import { useSyncExternalStore } from "react";
+   - UNSOLD alert rule  in warehouseStore + Warehouse pages */
+import { useEffect, useSyncExternalStore } from "react";
+
+import { fetchAdminSettings, saveAdminSettings } from "../../api/platform";
+import { setRules } from "../../shared/platformRules";
 
 function storedAdmin() {
   try {
@@ -88,6 +94,9 @@ let state = {
     ],
   },
   log: [],
+  loaded: false,
+  loading: false,
+  loadError: "",
 };
 const listeners = new Set();
 const subscribe = (l) => {
@@ -97,12 +106,71 @@ const subscribe = (l) => {
 const snap = () => state;
 const emit = () => listeners.forEach((l) => l());
 
-export const getSettings = () => state;
-export const useSettings = () => useSyncExternalStore(subscribe, snap, snap);
+const REMOTE = ["commerce", "warehouse", "platform"];
+
+/* Take what the server holds and show it everywhere (this tab's public rules too). */
+function adopt(data) {
+  state = {
+    ...state,
+    commerce: data.commerce,
+    warehouse: data.warehouse,
+    platform: data.platform,
+    log: (data.log || []).map((e) => ({ what: e.what, at: e.at })),
+    loaded: true,
+    loading: false,
+    loadError: "",
+  };
+  if (data.rules) setRules(data.rules);
+  emit();
+}
+
+let inFlight = null;
+export function loadSettings({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+  state = { ...state, loading: true, loadError: "" };
+  emit();
+  inFlight = fetchAdminSettings()
+    .then(adopt)
+    .catch((e) => {
+      state = {
+        ...state,
+        loading: false,
+        loadError: e.message || "We couldn't load the settings.",
+      };
+      emit();
+    })
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
+}
+
+function ensureLoaded() {
+  if (!state.loaded && !state.loading && !state.loadError) loadSettings();
+}
+
+export const getSettings = () => {
+  ensureLoaded();
+  return state;
+};
+export function useSettings() {
+  const current = useSyncExternalStore(subscribe, snap, snap);
+  useEffect(() => {
+    ensureLoaded();
+  }, [current.loaded, current.loading, current.loadError]);
+  return current;
+}
 
 const stamp = (what) => ({ what, at: new Date().toISOString() });
-/* section: "profile" | "commerce" | "warehouse" | "notifications" | "platform" */
-export function saveSection(section, value, label) {
+/* section: "profile" | "commerce" | "warehouse" | "notifications" | "platform"
+   Returns a promise. The three server-backed sections resolve once the server has saved
+   (and reject with an Error that has .errors if it refuses); profile saves at once. */
+export async function saveSection(section, value, label) {
+  if (REMOTE.includes(section)) {
+    const data = await saveAdminSettings({ [section]: value });
+    adopt(data);
+    return data;
+  }
   state = {
     ...state,
     [section]: value,
@@ -125,6 +193,7 @@ export function saveSection(section, value, label) {
     }
   }
   emit();
+  return null;
 }
 export function setSecurity(patch, label) {
   state = {
@@ -141,7 +210,7 @@ export function revokeSession(id) {
   );
 }
 export function resetSection(section, defaults) {
-  saveSection(section, defaults, `${section} reset to defaults`);
+  return saveSection(section, defaults, `${section} reset to defaults`);
 }
 
 /* defaults, used by the "Reset" buttons */
