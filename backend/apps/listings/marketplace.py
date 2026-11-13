@@ -192,4 +192,6 @@ class DetailView(APIView):
         else:
             from django.http import Http404
             raise Http404
+        if kind == "admin":  # the store owner's "Views" number
+            type(o).objects.filter(pk=o.pk).update(view_count=F("view_count") + 1)
         return ok({"product": detail(kind, o, request)})

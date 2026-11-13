@@ -6,10 +6,9 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { INITIAL_ORDERS } from "./adminOrders";
-import { SEED_SALES } from "./adminSell";
 
-/* purchases + the admin's own sales, newest first */
-let orders = [...SEED_SALES, ...INITIAL_ORDERS].sort(
+/* newest first */
+let orders = [...INITIAL_ORDERS].sort(
   (a, b) => new Date(b.order_date) - new Date(a.order_date),
 );
 const listeners = new Set();

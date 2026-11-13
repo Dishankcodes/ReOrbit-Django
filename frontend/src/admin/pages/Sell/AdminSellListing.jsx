@@ -7,7 +7,6 @@ import {
   Pencil,
   PauseCircle,
   PlayCircle,
-  ShoppingBag,
   Eye,
   Heart,
   PackageCheck,
@@ -24,7 +23,6 @@ import {
   useSellListing,
   setListingStatus,
   removeListing,
-  simulateBuyerOrder,
 } from "../../data/sellStore";
 import { SELL_SOURCES } from "../../data/adminSell";
 import { formatDate, formatINR } from "../../utils/format";
@@ -91,19 +89,23 @@ export default function AdminSellListing() {
   const off = l.mrp > l.price ? Math.round((1 - l.price / l.mrp) * 100) : 0;
   const pct = l.quantity ? Math.round((l.available / l.quantity) * 100) : 0;
 
-  const confirm = () => {
-    if (pending === "pause") {
-      setListingStatus(l.id, "Paused");
-      toast("Listing paused.");
-    }
-    if (pending === "resume") {
-      setListingStatus(l.id, "Active");
-      toast("Listing is live again.");
-    }
-    if (pending === "delete") {
-      removeListing(l.id);
-      navigate("/admin-sell", { replace: true });
-      return;
+  const confirm = async () => {
+    try {
+      if (pending === "pause") {
+        await setListingStatus(l.id, "Paused");
+        toast("Listing paused.");
+      }
+      if (pending === "resume") {
+        await setListingStatus(l.id, "Active");
+        toast("Listing is live again.");
+      }
+      if (pending === "delete") {
+        await removeListing(l.id);
+        navigate("/admin-sell", { replace: true });
+        return;
+      }
+    } catch (e) {
+      toast(e.message || "That did not work. Please try again.");
     }
     setPending(null);
   };
@@ -305,18 +307,6 @@ export default function AdminSellListing() {
               </button>
             )}
           </div>
-          {live && (
-            <button
-              type="button"
-              className="sl-demo"
-              onClick={() => {
-                const o = simulateBuyerOrder(l);
-                toast(`New order ${o.order_id} from ${o.buyer.name}.`);
-              }}
-            >
-              <ShoppingBag size={15} /> Demo: pretend a buyer just ordered this
-            </button>
-          )}
         </div>
       </div>
 

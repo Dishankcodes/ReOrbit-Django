@@ -200,3 +200,16 @@
     display: table-cell;
   }
 }
+
+/* a whole product row opens its details page */
+.apr-row-link {
+  cursor: pointer;
+}
+.apr-row-link:hover td,
+.apr-row-link:focus-visible td {
+  background: var(--ad-hover, rgba(42, 77, 58, 0.05));
+}
+.apr-row-link:focus-visible {
+  outline: 2px solid var(--ad-green, #2a4d3a);
+  outline-offset: -2px;
+}

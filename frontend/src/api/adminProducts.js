@@ -13,3 +13,8 @@ export const reactivateRemakerProduct = (id) =>
     method: "POST",
     body: {},
   }).then((r) => r.data.product);
+
+export const fetchAdminRemakerProduct = (id) =>
+  apiRequest(`/remakers/products/admin/${id}/`).then((r) => r.data.product);
+export const fetchStoreStats = () =>
+  apiRequest("/admins/store/stats/").then((r) => r.data.stats);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import AdminProductDetailsLive from "./AdminProductDetailsLive";
 import {
   ChevronRight,
   ArrowLeft,
@@ -80,7 +81,7 @@ function Stars({ value }) {
   );
 }
 
-export default function AdminProductDetails() {
+function DemoProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const product = useProduct(productId);
@@ -738,5 +739,16 @@ export default function AdminProductDetails() {
       />
       {toastNode}
     </div>
+  );
+}
+
+/* Real products (ReMaker RPR-…, ReOrbit store ADI-…) open the live page; the
+   marketplace overview's sample listings keep the older page. */
+export default function AdminProductDetails() {
+  const { productId } = useParams();
+  return /^(RPR|ADI)-/.test(productId || "") ? (
+    <AdminProductDetailsLive />
+  ) : (
+    <DemoProductDetails />
   );
 }

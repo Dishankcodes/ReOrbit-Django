@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Plus, Search, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import {
   adminStoreApi as api,
@@ -308,6 +309,7 @@ function ProductModal({ product, categories, onClose, onSaved }) {
 }
 
 export default function StoreProducts({ toast }) {
+  const navigate = useNavigate();
   const { can } = useAccess();
   const canEdit = can("products", "edit");
   const [query, setQuery] = useState("");
@@ -432,7 +434,17 @@ export default function StoreProducts({ toast }) {
           </thead>
           <tbody>
             {data.results.map((p) => (
-              <tr key={p.id}>
+              <tr
+                key={p.id}
+                className="apr-row-link"
+                tabIndex={0}
+                onClick={() => navigate(`/admin-products/${p.id}`)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" &&
+                  e.target === e.currentTarget &&
+                  navigate(`/admin-products/${p.id}`)
+                }
+              >
                 <td>
                   <div className="apr-prod">
                     {p.cover ? (
@@ -455,7 +467,7 @@ export default function StoreProducts({ toast }) {
                   </span>
                 </td>
                 <td>
-                  <div className="apr-actions">
+                  <div className="apr-actions" onClick={(e) => e.stopPropagation()}>
                     {canEdit && (
                       <button
                         type="button"

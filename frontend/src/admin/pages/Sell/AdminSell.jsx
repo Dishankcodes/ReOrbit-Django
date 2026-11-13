@@ -12,7 +12,6 @@ import {
   PauseCircle,
   PlayCircle,
   Trash2,
-  ShoppingBag,
   Images,
   X,
   PackageSearch,
@@ -24,7 +23,7 @@ import {
   needsAction,
   setListingStatus,
   removeListing,
-  simulateBuyerOrder,
+  useSellStatus,
 } from "../../data/sellStore";
 import { SELL_SOURCES } from "../../data/adminSell";
 import { formatINR } from "../../utils/format";
@@ -107,12 +106,16 @@ export default function AdminSell() {
     );
   }, [listings, filter, q]);
 
-  const confirm = () => {
+  const confirm = async () => {
     const { action, l } = pending;
-    if (action.key === "pause") setListingStatus(l.id, "Paused");
-    if (action.key === "resume") setListingStatus(l.id, "Active");
-    if (action.key === "delete") removeListing(l.id);
-    toast(`${l.title} ${action.toast}.`);
+    try {
+      if (action.key === "pause") await setListingStatus(l.id, "Paused");
+      if (action.key === "resume") await setListingStatus(l.id, "Active");
+      if (action.key === "delete") await removeListing(l.id);
+      toast(`${l.title} ${action.toast}.`);
+    } catch (e) {
+      toast(e.message || "That did not work. Please try again.");
+    }
     setPending(null);
   };
   const menu = (l) => [
@@ -128,24 +131,6 @@ export default function AdminSell() {
       icon: Pencil,
       onClick: () => navigate(`/admin-sell/edit/${l.id}`),
     },
-    ...(l.status === "Active" || l.status === "Sold_Out"
-      ? [
-          {
-            key: "demo",
-            label: "Demo: receive an order",
-            icon: ShoppingBag,
-            disabled: l.available === 0,
-            onClick: () => {
-              if (l.available === 0) {
-                toast("This listing is sold out.");
-                return;
-              }
-              const o = simulateBuyerOrder(l);
-              toast(`New order ${o.order_id} from ${o.buyer.name}.`);
-            },
-          },
-        ]
-      : []),
     "separator",
     ...(l.rawStatus === "Active"
       ? [

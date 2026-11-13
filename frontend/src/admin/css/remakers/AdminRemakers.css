@@ -200,11 +200,32 @@
   gap: 18px;
 }
 .rm-pf {
+  position: relative;
   overflow: hidden;
   border: 1px solid #d8e4de;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 8px 30px rgba(8, 39, 31, 0.04);
+}
+/* covers the whole card so a click anywhere opens the work */
+.rm-pf-open {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.rm-pf-open:focus-visible {
+  outline: 2px solid #08271f;
+  outline-offset: -3px;
+}
+.rm-pf:hover {
+  box-shadow: 0 14px 34px rgba(8, 39, 31, 0.1);
 }
 .rm-pf-images {
   position: relative;

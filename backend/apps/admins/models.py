@@ -120,6 +120,15 @@ class AdminItem(SellableBase):
 
     admin = models.ForeignKey(Admins, on_delete=models.PROTECT, related_name="store_items")
     sku = models.CharField(max_length=80, unique=True)
+    # How the storefront describes it (the Sell products screens)
+    mrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Original price, shown struck through")
+    condition = models.CharField(max_length=20, blank=True)
+    source = models.CharField(max_length=12, default="other", help_text="warehouse | refurbished | other")
+    inventory_id = models.CharField(max_length=40, blank=True, help_text="Warehouse stock this was listed from, if any")
+    specs = models.JSONField(default=dict, blank=True, help_text="material, dimensions, weight (kg), warranty")
+    delivery = models.CharField(max_length=8, default="flat", help_text="free | flat")
+    returnable = models.BooleanField(default=True)
+    view_count = models.PositiveIntegerField(default=0, help_text="Times the public product page was opened")
 
     class Meta:
         db_table = "admin_items"

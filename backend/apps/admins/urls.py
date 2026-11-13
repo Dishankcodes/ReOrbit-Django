@@ -16,6 +16,7 @@ urlpatterns = [
     path("profile/", ProfileView.as_view()),
     path("password/change/", ChangePasswordView.as_view()),
     path("store/", sv.ListCreateView.as_view()),
+    path("store/stats/", sv.StatsView.as_view()),
     path("store/<str:public_id>/", sv.DetailView.as_view()),
     path("store/<str:public_id>/publish/", sv.PublishView.as_view()),
     path("store/<str:public_id>/pause/", sv.PauseView.as_view()),

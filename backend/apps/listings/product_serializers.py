@@ -51,10 +51,12 @@ class RemakerProductSerializer(_Base):
 
 class AdminItemSerializer(_Base):
     admin = serializers.SerializerMethodField()
+    views = serializers.IntegerField(source="view_count", read_only=True)
 
     class Meta:
         model = AdminItem
-        fields = COMMON + ["sku", "admin"]
+        fields = COMMON + ["sku", "admin", "mrp", "condition", "source", "inventory_id",
+                           "specs", "delivery", "returnable", "views"]
 
     def get_admin(self, obj):
         return {"id": obj.admin.public_id, "name": obj.admin.full_name}

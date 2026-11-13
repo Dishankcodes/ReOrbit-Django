@@ -318,6 +318,8 @@ def _filters(request, qs, admin=False):
         qs = qs.filter(return_request__isnull=False)
     if request.query_params.get("cod") == "pending":
         qs = qs.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True).exclude(payment_status="Paid")
+    if admin and request.query_params.get("item"):  # sales of one product
+        qs = qs.filter(lines__ref_id=request.query_params["item"]).distinct()
     if admin and request.query_params.get("seller_type") in ("user", "remaker", "platform"):
         qs = qs.filter(seller_type=request.query_params["seller_type"])
     return qs

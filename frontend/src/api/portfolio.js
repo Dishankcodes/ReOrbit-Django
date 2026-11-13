@@ -54,8 +54,10 @@ export function mapAdminWork(w) {
     portfolio_id: w.id,
     title: w.title,
     description: w.description || "",
+    category: w.category?.name || "",
     before_image: mediaUrl(w.before),
     after_image: mediaUrl(w.after),
+    linked_product: linked(w.linked_product),
     uploaded_at: w.uploaded_at,
     visibility: w.visibility,
   };

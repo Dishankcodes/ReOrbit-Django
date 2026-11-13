@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import {
   deactivateRemakerProduct,
@@ -29,6 +30,7 @@ const LABEL = {
 /* Live ReMaker products from the server, moderated by admins. Paged and
    filtered on the server, so it stays fast however many products exist. */
 export default function RemakerProductsLive({ toast }) {
+  const navigate = useNavigate();
   const { can } = useAccess();
   const canEdit = can("products", "edit");
   const [query, setQuery] = useState("");
@@ -130,7 +132,17 @@ export default function RemakerProductsLive({ toast }) {
             {data.results.map((p) => {
               const off = !!p.deactivation;
               return (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  className="apr-row-link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/admin-products/${p.id}`)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    e.target === e.currentTarget &&
+                    navigate(`/admin-products/${p.id}`)
+                  }
+                >
                   <td>
                     <div className="apr-prod">
                       {p.cover ? (
@@ -160,7 +172,7 @@ export default function RemakerProductsLive({ toast }) {
                     {off && <p className="apr-note">{p.deactivation.reason}</p>}
                   </td>
                   <td>
-                    <div className="apr-actions">
+                    <div className="apr-actions" onClick={(e) => e.stopPropagation()}>
                       {canEdit && off && (
                         <button
                           type="button"
