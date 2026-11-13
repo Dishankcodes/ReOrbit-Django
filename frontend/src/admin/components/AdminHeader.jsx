@@ -65,6 +65,10 @@ const pageInformation = {
     title: "Support",
     subtitle: "Answer help tickets from users and ReMakers.",
   },
+  "/admin-messages": {
+    title: "Messages",
+    subtitle: "Reply to conversations from Users and ReMakers.",
+  },
   "/admin-warehouse": {
     title: "Warehouse",
     subtitle: "Monitor inventory and refurbishment operations.",
@@ -385,7 +389,10 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                                       subtitle:
                                         "Account details, orders, donations and moderation.",
                                     }
-                                  : pageInformation[location.pathname] || {
+                                  : pageInformation[location.pathname] ||
+                                    (location.pathname.startsWith("/admin-messages/")
+                                      ? pageInformation["/admin-messages"]
+                                      : null) || {
                                       title: "ReOrbit Admin",
                                       subtitle: "Manage the ReOrbit ecosystem.",
                                     };

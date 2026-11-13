@@ -27,6 +27,7 @@ import {
   LifeBuoy,
   LayoutTemplate,
   Heart,
+  MessageCircle,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
@@ -34,6 +35,7 @@ import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
 import { useTickets as useUserTickets } from "../../user/data/supportStore";
 import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
+import { useConversations as useMessageConversations } from "../../user/data/messagesStore";
 import "./AdminSidebar.css";
 
 const mainMenu = [
@@ -87,6 +89,7 @@ const operationsMenu = [
     icon: ShieldAlert,
   },
   { key: "support", label: "Support", path: "/admin-support", icon: LifeBuoy },
+  { key: "messages", label: "Messages", path: "/admin-messages", icon: MessageCircle },
   {
     key: "warehouse",
     label: "Warehouse",
@@ -169,6 +172,11 @@ export default function AdminSidebar({
   const complaintCounts = useComplaintCounts();
   const userTickets = useUserTickets();
   const remakerTickets = useRemakerTickets();
+  const messageConversations = useMessageConversations(false);
+  const unreadMessages = messageConversations.reduce(
+    (total, conversation) => total + (conversation.unread || 0),
+    0,
+  );
   const openTickets = [...userTickets, ...remakerTickets].filter(
     (t) => t.status === "Open",
   ).length;
@@ -229,6 +237,14 @@ export default function AdminSidebar({
             aria-label={`${openTickets} waiting for a reply`}
           >
             {openTickets}
+          </span>
+        )}
+        {item.key === "messages" && unreadMessages > 0 && (
+          <span
+            className="admin-sidebar-count"
+            aria-label={`${unreadMessages} unread messages`}
+          >
+            {unreadMessages}
           </span>
         )}
         {item.key === "complaints" && complaintCounts.open > 0 && (

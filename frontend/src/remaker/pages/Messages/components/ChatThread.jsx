@@ -70,7 +70,7 @@ export default function ChatThread({ conversation, onBack }) {
   const send = () => {
     if (!canSend) return;
 
-    sendMessage(conversation.id, { text, image });
+    sendMessage(conversation.id, { text, image }).catch((problem) => setError(problem.message || "Message could not be sent."));
     setText("");
     setImage("");
     setShowQuick(false);

@@ -16,35 +16,16 @@ export default function MessageButton({
     <button
       type="button"
       className={className}
-      onClick={() => navigate(`/user-messages/${startConversation(target)}`)}
+      onClick={async () => {
+        try {
+          const id = await startConversation(target);
+          navigate(`/user-messages/${id}`);
+        } catch (error) {
+          window.dispatchEvent(new CustomEvent("reorbit:toast", { detail: error.message }));
+        }
+      }}
     >
       <MessageCircle size={iconSize} /> {label}
     </button>
   );
 }
-
-/* Ready-made targets so every page starts the same chat for the same person */
-export const sellerChat = (item) => ({
-  key: `${item.sellerType === "remaker" ? "remaker" : "seller"}:${item.sellerId}`,
-  kind: item.sellerType === "remaker" ? "remaker" : "seller",
-  name: item.seller,
-  subtitle:
-    item.sellerType === "remaker"
-      ? `ReMaker · ${item.city}`
-      : `Seller · ${item.city}`,
-  image: item.sellerImage,
-  context: {
-    label: `${item.title} · ₹${Number(item.price).toLocaleString("en-IN")}`,
-    to: `/user-marketplace/product/${item.id}`,
-    image: item.image,
-  },
-});
-
-export const personChat = (p, kind) => ({
-  key: `${kind}:${p.id}`,
-  kind,
-  name: p.name,
-  subtitle: `${kind === "remaker" ? "ReMaker" : "Seller"} · ${p.city}`,
-  image: p.image,
-  context: null,
-});

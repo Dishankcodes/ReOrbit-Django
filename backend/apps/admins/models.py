@@ -26,6 +26,7 @@ ADMIN_MODULES = (
     "finance",  # see full payout bank/UPI details and mark payouts paid
     "reports",
     "settings",
+    "messages",
 )
 MODULE_LEVELS = {"none": 0, "view": 1, "edit": 2}
 

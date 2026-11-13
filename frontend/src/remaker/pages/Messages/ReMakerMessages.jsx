@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   lastMessage,
   markConversationRead,
+  useConversation,
   useConversations,
 } from "../../data/messagesStore";
 
@@ -21,13 +22,16 @@ export default function ReMakerMessages() {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
 
+  const fallback = !id && conversations[0] ? conversations[0] : null;
+  const loaded = useConversation(id || fallback?.id);
   const active = conversations.find((item) => item.id === id) || null;
-  const unknown = id && !active;
+  const unknown = id && !active && conversations.length > 0;
 
   /* opening a conversation reads it (once, when you open it) */
   useEffect(() => {
-    if (id) markConversationRead(id);
-  }, [id]);
+    const activeId = id || fallback?.id;
+    if (activeId) markConversationRead(activeId);
+  }, [id, fallback?.id]);
 
   const counts = useMemo(
     () => ({
@@ -58,8 +62,8 @@ export default function ReMakerMessages() {
   const open = (nextId) => navigate(`/remaker-messages/${nextId}`);
 
   /* On a wide screen the first conversation opens by default */
-  const fallback = !id && conversations[0] ? conversations[0] : null;
   const shown = active || fallback;
+  const detailed = loaded?.id === shown?.id ? loaded : shown;
 
   return (
     <section className={`rk msg ${id && active ? "chat-open" : ""}`}>
@@ -84,7 +88,7 @@ export default function ReMakerMessages() {
         </div>
       ) : shown ? (
         <ChatThread
-          conversation={shown}
+          conversation={detailed}
           onBack={() => navigate("/remaker-messages")}
         />
       ) : (

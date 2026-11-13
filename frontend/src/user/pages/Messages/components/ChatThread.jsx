@@ -21,15 +21,17 @@ const KIND_LABEL = {
 };
 
 /* Where "View profile" goes, worked out from the chat key */
-function profileLink(key = "") {
+function profileLink(key = "", adminMode = false) {
   const [kind, id] = key.split(":");
+  if (adminMode && kind === "user" && id) return `/admin-users/${id}`;
+  if (adminMode && kind === "remaker" && id) return `/admin-remakers/${id}`;
   if (kind === "seller" && id) return `/user-marketplace/seller/${id}`;
   if (kind === "remaker" && id) return `/user-marketplace/remaker/${id}`;
   return null;
 }
 
 /* One open conversation: header, order context, messages and the composer */
-export default function ChatThread({ conversation, onBack }) {
+export default function ChatThread({ conversation, onBack, adminMode = false }) {
   const [text, setText] = useState("");
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
@@ -81,7 +83,7 @@ export default function ChatThread({ conversation, onBack }) {
   const send = () => {
     if (!canSend) return;
 
-    sendMessage(conversation.id, { text, image });
+    sendMessage(conversation.id, { text, image }).catch((problem) => setError(problem.message || "Message could not be sent."));
     setText("");
     setImage("");
     setShowQuick(false);
@@ -94,7 +96,8 @@ export default function ChatThread({ conversation, onBack }) {
     }
   };
 
-  const quick = QUICK_REPLIES[conversation.kind] || [];
+  const quick = QUICK_REPLIES[conversation.kind] ||
+    (adminMode ? QUICK_REPLIES.reorbit : []);
 
   return (
     <section
@@ -114,16 +117,20 @@ export default function ChatThread({ conversation, onBack }) {
           <h3>{conversation.name}</h3>
           <small>
             <em className={`umsg-kind ${conversation.kind}`}>
-              {KIND_LABEL[conversation.kind]}
+              {adminMode
+                ? conversation.peer?.type === "remaker"
+                  ? "ReMaker"
+                  : "Customer"
+                : KIND_LABEL[conversation.kind]}
             </em>
             {conversation.subtitle}
           </small>
         </div>
 
         <div className="umsg-thread-actions">
-          {profileLink(conversation.key) && (
+            {profileLink(conversation.key, adminMode) && (
             <Link
-              to={profileLink(conversation.key)}
+              to={profileLink(conversation.key, adminMode)}
               className="umsg-btn ghost small"
             >
               View profile
@@ -155,7 +162,17 @@ export default function ChatThread({ conversation, onBack }) {
       </header>
 
       {conversation.context && (
-        <Link to={conversation.context.to} className="umsg-context">
+        <Link
+          to={
+            adminMode
+              ? (conversation.context.to || "")
+                  .replace(/^\/user-marketplace/, "/admin-shop")
+                  .replace(/^\/user-orders/, "/admin-orders")
+                  .replace(/^\/user-sell$/, "/admin-products")
+              : conversation.context.to
+          }
+          className="umsg-context"
+        >
           {conversation.context.image && (
             <img src={conversation.context.image} alt="" />
           )}

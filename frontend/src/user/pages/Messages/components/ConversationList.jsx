@@ -12,6 +12,7 @@ export default function ConversationList({
   query,
   onQuery,
   counts,
+  kinds = KINDS,
 }) {
   return (
     <aside className="umsg-list">
@@ -32,7 +33,7 @@ export default function ConversationList({
           role="group"
           aria-label="Filter conversations"
         >
-          {KINDS.map((item) => (
+          {kinds.map((item) => (
             <button
               type="button"
               key={item.key}

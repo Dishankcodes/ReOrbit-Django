@@ -107,6 +107,13 @@ export const MODULES = [
     hint: "Help tickets from users and ReMakers",
   },
   {
+    key: "messages",
+    label: "Messages",
+    group: "Operations",
+    path: "/admin-messages",
+    hint: "Conversations with Users and ReMakers",
+  },
+  {
     key: "warehouse",
     label: "Warehouse",
     group: "Operations",
@@ -208,6 +215,7 @@ export const ROLE_PRESETS = [
       donations: "view",
       complaints: "edit",
       support: "edit",
+      messages: "edit",
       rewards: "view",
       content: "view",
       notifications: "edit",

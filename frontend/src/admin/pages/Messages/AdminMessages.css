@@ -1,0 +1,18 @@
+.admin-messaging-page {
+  --rp-maroon: #123d31;
+  --rp-green: #123d31;
+  --rp-sage-light: #e7efeb;
+  --rp-border: #d9e2dd;
+}
+
+.admin-messaging-page .umsg-thread-head,
+.admin-messaging-page .umsg-context {
+  background-color: #f0f4f2;
+}
+
+.admin-messaging-page .umsg {
+  height: calc(100vh - 190px);
+  min-height: 500px;
+  border-radius: 12px;
+  box-shadow: none;
+}

@@ -74,6 +74,7 @@ const NAMES = {
   "admin-pickups": ["Pickups", "Pickup"],
   "admin-complaints": ["Complaints", "Complaint"],
   "admin-support": ["Support"],
+  "admin-messages": ["Messages", "Conversation"],
   "admin-warehouse": ["Warehouse", "Warehouse item"],
   "admin-rewards": ["Rewards"],
   "admin-sell": ["Sell products", "Listing"],

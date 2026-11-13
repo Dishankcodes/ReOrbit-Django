@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   lastMessage,
   markConversationRead,
+  useConversation,
   useConversations,
 } from "../../data/messagesStore";
 
@@ -13,7 +14,11 @@ import ConversationList from "./components/ConversationList";
 import "../../../remaker/css/ReMakerUi.css";
 import "./UserMessages.css";
 
-export default function UserMessages() {
+export default function UserMessages({
+  adminMode = false,
+  ChatThreadComponent = ChatThread,
+  ConversationListComponent = ConversationList,
+}) {
   const { id } = useParams();
   const navigate = useNavigate();
   const conversations = useConversations();
@@ -21,18 +26,27 @@ export default function UserMessages() {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
 
+  const fallback = !id
+    ? conversations.find((item) =>
+        adminMode ? item.kind === "support" : item.kind === "reorbit",
+      ) || conversations[0]
+    : null;
+  const loaded = useConversation(id || fallback?.id);
   const active = conversations.find((item) => item.id === id) || null;
-  const unknown = id && !active;
+  const unknown = id && !active && conversations.length > 0;
 
   /* opening a conversation reads it (once, when you open it) */
   useEffect(() => {
-    if (id) markConversationRead(id);
-  }, [id]);
+    const activeId = id || fallback?.id;
+    if (activeId) markConversationRead(activeId);
+  }, [id, fallback?.id]);
 
   const counts = useMemo(
     () => ({
       all: conversations.length,
       unread: conversations.filter((item) => item.unread > 0).length,
+      customer: conversations.filter((item) => item.kind === "customer").length,
+      support: conversations.filter((item) => item.kind === "support").length,
       seller: conversations.filter((item) => item.kind === "seller").length,
       buyer: conversations.filter((item) => item.kind === "buyer").length,
       remaker: conversations.filter((item) => item.kind === "remaker").length,
@@ -56,15 +70,18 @@ export default function UserMessages() {
     });
   }, [conversations, filter, query]);
 
-  const open = (nextId) => navigate(`/user-messages/${nextId}`);
+  const basePath = adminMode ? "/admin-messages" : "/user-messages";
+  const open = (nextId) => navigate(`${basePath}/${nextId}`);
 
   /* On a wide screen the first conversation opens by default */
-  const fallback = !id && conversations[0] ? conversations[0] : null;
   const shown = active || fallback;
+  const detailed = loaded?.id === shown?.id ? loaded : shown;
 
   return (
-    <section className={`um-chat umsg ${id && active ? "chat-open" : ""}`}>
-      <ConversationList
+    <section
+      className={`um-chat umsg ${adminMode ? "admin-messaging" : ""} ${id && active ? "chat-open" : ""}`}
+    >
+      <ConversationListComponent
         conversations={visible}
         activeId={shown?.id}
         onSelect={open}
@@ -73,20 +90,32 @@ export default function UserMessages() {
         query={query}
         onQuery={setQuery}
         counts={counts}
+        kinds={
+          adminMode
+            ? [
+                { key: "all", label: "All" },
+                { key: "unread", label: "Unread" },
+                { key: "customer", label: "Customers" },
+                { key: "remaker", label: "ReMakers" },
+                { key: "support", label: "Support" },
+              ]
+            : undefined
+        }
       />
 
       {unknown ? (
         <div className="umsg-empty">
           <h3>We could not find that conversation</h3>
           <p>It may have been removed, or the link is out of date.</p>
-          <Link to="/user-messages" className="umsg-btn primary">
+          <Link to={basePath} className="umsg-btn primary">
             Back to messages
           </Link>
         </div>
       ) : shown ? (
-        <ChatThread
-          conversation={shown}
-          onBack={() => navigate("/user-messages")}
+        <ChatThreadComponent
+          conversation={detailed}
+          adminMode={adminMode}
+          onBack={() => navigate(basePath)}
         />
       ) : (
         <div className="umsg-empty">
