@@ -4,6 +4,7 @@ from django.utils.dateparse import parse_datetime
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.permissions import BasePermission
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitAuthenticated
@@ -18,6 +19,62 @@ PAGE_SIZE = 50
 MESSAGE_PAGE_SIZE = 50
 MAX_MESSAGE_SIZE = 5000
 MAX_ATTACHMENT_SIZE = 2_000_000  # Base64 image storage is intentionally unchanged in this pass.
+
+
+class HasAdminMessagesOrSupport(BasePermission):
+    """Lets the assigned support team work shared ReOrbit conversations.
+
+    Direct, non-support conversations still require the separate messages
+    module and are filtered again at object level below.
+    """
+
+    message = "You do not have access to messages or support."
+
+    def has_permission(self, request, view):
+        account = getattr(request.user, "account", None)
+        if account is None or getattr(request.user, "account_type", None) != "admin":
+            return False
+        needed = "view" if request.method in ("GET", "HEAD", "OPTIONS") else "edit"
+        return account.has_module("messages", needed) or account.has_module("support", needed)
+
+
+def _support_team():
+    return [
+        admin for admin in Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("admin_id")
+        if admin.has_module("support", "edit")
+    ]
+
+
+def _support_viewers():
+    return [
+        admin for admin in Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("admin_id")
+        if admin.has_module("support", "view")
+    ]
+
+
+def _can_view_support(account):
+    return account.has_module("support", "view")
+
+
+def _can_view_direct_messages(account):
+    return account.has_module("messages", "view")
+
+
+def _admin_participants(request, account):
+    """Return only the inbox rows this Admin is allowed to see.
+
+    A support-only sub-admin must never gain access to ordinary direct
+    messages.  Conversely, a messages-only admin must not get the shared
+    support queue merely because they can use the messaging screen.
+    """
+    rows = _queryset_for(request, account, "admin")
+    supports = _can_view_support(account)
+    directs = _can_view_direct_messages(account)
+    if supports and not directs:
+        return rows.filter(conversation__kind="reorbit")
+    if directs and not supports:
+        return rows.exclude(conversation__kind="reorbit")
+    return rows
 
 
 def _prefetch_participants(queryset):
@@ -66,6 +123,92 @@ def _profile(account, kind):
     }
 
 
+def _support_direct_key(kind, account):
+    return f"support:{kind}:{account.pk}"
+
+
+def _sync_support_team(conversation, team=None):
+    """Keep a legacy or new ReOrbit thread visible to its current team only."""
+    team = team if team is not None else _support_viewers()
+    team_ids = [admin.pk for admin in team]
+    ConversationParticipant.objects.filter(
+        conversation=conversation, account_type="admin"
+    ).exclude(admin_id__in=team_ids).delete()
+    for admin in team:
+        ConversationParticipant.objects.get_or_create(
+            conversation=conversation, admin=admin, defaults={"account_type": "admin"}
+        )
+
+
+def _sync_admin_support_inbox(account):
+    """Backfill a newly-added agent into every existing shared support thread."""
+    if not _can_view_support(account):
+        return
+    conversations = Conversation.objects.filter(kind="reorbit").only("pk")
+    ConversationParticipant.objects.bulk_create(
+        [
+            ConversationParticipant(conversation=conversation, admin=account, account_type="admin")
+            for conversation in conversations
+        ],
+        ignore_conflicts=True,
+    )
+
+
+def _ensure_support_conversation(kind, account):
+    """Create/upgrade a shared ReOrbit support thread for a member.
+
+    The old implementation paired the member with one arbitrary Admin. This
+    keeps any existing thread and adds every active support agent as a
+    participant, so the support queue is shared without exposing private chats.
+    """
+    team = _support_team()
+    if not team:
+        return None
+    direct_key = _support_direct_key(kind, account)
+    with transaction.atomic():
+        participant = ConversationParticipant.objects.select_related("conversation").filter(
+            **{kind: account}, conversation__kind="reorbit"
+        ).order_by("conversation__created_at", "conversation_id").first()
+        if participant:
+            conversation = participant.conversation
+            if conversation.direct_key != direct_key:
+                conflict = Conversation.objects.filter(direct_key=direct_key).exclude(pk=conversation.pk).first()
+                if conflict:
+                    conversation = conflict
+                    participant, _ = ConversationParticipant.objects.get_or_create(
+                        conversation=conversation, **{kind: account}, defaults={"account_type": kind}
+                    )
+                else:
+                    conversation.direct_key = direct_key
+                    conversation.save(update_fields=["direct_key", "updated_at"])
+        else:
+            conversation, _ = Conversation.objects.get_or_create(
+                direct_key=direct_key,
+                defaults={
+                    "kind": "reorbit",
+                    "subject": "ReOrbit Support",
+                    "context": {
+                        "label": "ReOrbit Support",
+                        "to": "/remaker-help" if kind == "remaker" else "/user-help",
+                    },
+                },
+            )
+            participant, _ = ConversationParticipant.objects.get_or_create(
+                conversation=conversation, **{kind: account}, defaults={"account_type": kind}
+            )
+        if participant.is_archived:
+            participant.is_archived = False
+            participant.save(update_fields=["is_archived", "updated_at"])
+        _sync_support_team(conversation, _support_viewers())
+        if not conversation.messages.exists():
+            welcome = Message.objects.create(
+                conversation=conversation, sender_type="admin", sender_admin=team[0],
+                text="Welcome to ReOrbit Support. How can we help?",
+            )
+            MessageNotification.objects.get_or_create(participant=participant, message=welcome)
+    return conversation
+
+
 def _message_page(conversation, before=None, after=None):
     messages = conversation.messages.all()
     if before is not None:
@@ -87,7 +230,13 @@ def _message_page(conversation, before=None, after=None):
 
 def _row(conv, participant, include_messages=False, before=None, after=None):
     peers = [peer for peer in conv.participants.all() if peer.pk != participant.pk]
-    peer = peers[0] if peers else None
+    if conv.kind == "reorbit":
+        peer = next(
+            (candidate for candidate in peers if candidate.account_type != participant.account_type),
+            peers[0] if peers else None,
+        )
+    else:
+        peer = peers[0] if peers else None
     account = getattr(peer, peer.account_type) if peer else None
     if include_messages:
         message_rows, has_more = _message_page(conv, before=before, after=after)
@@ -294,6 +443,13 @@ def _queryset_for(request, account, kind):
 
 def _inbox_counts(account, kind, query=""):
     base = ConversationParticipant.objects.filter(**{kind: account}, is_archived=False)
+    if kind == "admin":
+        supports = _can_view_support(account)
+        directs = _can_view_direct_messages(account)
+        if supports and not directs:
+            base = base.filter(conversation__kind="reorbit")
+        elif directs and not supports:
+            base = base.exclude(conversation__kind="reorbit")
     if query:
         text_match = Message.objects.filter(
             conversation_id=OuterRef("conversation_id"), text__icontains=query
@@ -345,6 +501,13 @@ def _unread_conversations(account, kind):
     ).annotate(
         unread_count=Count("notifications", filter=Q(notifications__read_at__isnull=True), distinct=True)
     ).select_related("conversation").order_by("-conversation__updated_at", "-conversation_id", "-pk")
+    if kind == "admin":
+        supports = _can_view_support(account)
+        directs = _can_view_direct_messages(account)
+        if supports and not directs:
+            participants = participants.filter(conversation__kind="reorbit")
+        elif directs and not supports:
+            participants = participants.exclude(conversation__kind="reorbit")
     participants = _with_latest_message(participants)[:100]
     participants = _prefetch_participants(participants)
     return [_row(row.conversation, row, False) for row in participants]
@@ -360,45 +523,9 @@ class ConversationList(APIView):
         if kind not in ("user", "remaker"):
             raise PermissionDenied("This account cannot use direct messages.")
 
-        # Ensure a support thread is visible after the participant previously archived it.
-        support_admin = Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("admin_id").first()
-        if support_admin:
-            support = ConversationParticipant.objects.filter(
-                **{kind: account}, conversation__kind="reorbit"
-            ).select_related("conversation").first()
-            if support:
-                if support.is_archived:
-                    support.is_archived = False
-                    support.save(update_fields=["is_archived", "updated_at"])
-            else:
-                defaults = {
-                    "kind": "reorbit", "subject": "ReOrbit Support",
-                    "context": {"label": "ReOrbit Support", "to": "/remaker-help" if kind == "remaker" else "/user-help"},
-                }
-                direct_key = _direct_key(kind, account, "admin", support_admin)
-                with transaction.atomic():
-                    conversation, _ = Conversation.objects.get_or_create(
-                        direct_key=direct_key, defaults=defaults
-                    )
-                    mine, _ = ConversationParticipant.objects.get_or_create(
-                        conversation=conversation, **{kind: account},
-                        defaults={"account_type": kind},
-                    )
-                    ConversationParticipant.objects.get_or_create(
-                        conversation=conversation, admin=support_admin,
-                        defaults={"account_type": "admin"},
-                    )
-                    mine.is_archived = False
-                    mine.save(update_fields=["is_archived", "updated_at"])
-                    if not conversation.messages.exists():
-                        welcome = Message.objects.create(
-                            conversation=conversation, sender_type="admin",
-                            sender_admin=support_admin,
-                            text="Welcome to ReOrbit Support. How can we help?",
-                        )
-                        MessageNotification.objects.get_or_create(
-                            participant=mine, message=welcome
-                        )
+        # A ReOrbit thread is a shared support-team conversation, not a
+        # private chat with whichever admin record happened to be first.
+        _ensure_support_conversation(kind, account)
 
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
         since = request.query_params.get("since")
@@ -457,11 +584,15 @@ class ConversationList(APIView):
             raise PermissionDenied("Use the permission-checked admin messages endpoint.")
         if actor_type not in ("user", "remaker"):
             raise PermissionDenied("This account cannot start direct messages.")
-        target = (
-            Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("admin_id").first()
-            if kind == "admin" and public_id == "support"
-            else MODELS[kind].objects.filter(public_id=public_id, status="Active").first()
-        )
+        if kind == "admin" and public_id == "support":
+            conv = _ensure_support_conversation(actor_type, account)
+            if conv is None:
+                return fail("ReOrbit Support is temporarily unavailable.", status=503)
+            participant = ConversationParticipant.objects.get(
+                conversation=conv, **{actor_type: account}
+            )
+            return created({"conversation": _row(conv, participant, include_messages=True)})
+        target = MODELS[kind].objects.filter(public_id=public_id, status="Active").first()
         if target is None:
             return fail("That account is unavailable.", status=404)
         if actor_type == kind and target.pk == account.pk:
@@ -568,11 +699,12 @@ class ConversationDetail(APIView):
 
 
 class AdminInbox(ConversationList):
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("messages")]
+    permission_classes = [IsReOrbitAdmin, HasAdminMessagesOrSupport]
 
     def get(self, request):
         account = request.user.account
         kind = "admin"
+        _sync_admin_support_inbox(account)
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
         since = request.query_params.get("since")
         since_at = parse_datetime(since) if since else None
@@ -581,7 +713,7 @@ class AdminInbox(ConversationList):
         watermark = timezone.now()
         counts = _inbox_counts(account, kind, query)
         rows = _with_latest_message(
-            _queryset_for(request, account, kind).annotate(
+            _admin_participants(request, account).annotate(
                 unread_count=Count("notifications", filter=Q(notifications__read_at__isnull=True))
             )
         ).order_by("-conversation__updated_at", "-conversation_id", "-pk")
@@ -618,6 +750,8 @@ class AdminInbox(ConversationList):
         })
 
     def post(self, request):
+        if not request.user.account.has_module("messages", "edit"):
+            raise PermissionDenied("You do not have access to direct messages.")
         data = request.data
         kind = str(data.get("target_type") or "")
         public_id = str(data.get("target_id") or "")
@@ -639,13 +773,19 @@ class AdminInbox(ConversationList):
 
 
 class AdminConversationDetail(ConversationDetail):
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("messages")]
+    permission_classes = [IsReOrbitAdmin, HasAdminMessagesOrSupport]
 
     def _get(self, request, public_id):
-        return get_object_or_404(
+        participant = get_object_or_404(
             ConversationParticipant.objects.select_related("conversation").prefetch_related(
                 "conversation__participants"
             ),
             conversation__public_id=public_id,
             admin=request.user.account,
         )
+        if participant.conversation.kind == "reorbit":
+            if not _can_view_support(request.user.account):
+                raise PermissionDenied("You do not have access to ReOrbit Support.")
+        elif not _can_view_direct_messages(request.user.account):
+            raise PermissionDenied("You do not have access to direct messages.")
+        return participant

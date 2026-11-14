@@ -18,6 +18,8 @@ const createState = () => ({
   nextOffset: null,
   total: 0,
   counts: {},
+  unreadCount: 0,
+  supportAgents: [],
   filters: {},
   request: null,
   requestKey: "",
@@ -176,7 +178,9 @@ async function loadTickets(scope, filters = {}, { append = false, silent = false
     : supportApi.list()
   ).then((response) => {
     if (version !== state.version) return state.tickets;
-    const page = scope === "admin" ? response : { tickets: response, total: response.length };
+    const page = Array.isArray(response)
+      ? { tickets: response, total: response.length }
+      : (response || { tickets: [], total: 0 });
     const incoming = (page.tickets || []).map((ticket) => normalizeTicket(ticket, scope));
     const byId = new Map((append ? state.tickets : []).map((ticket) => [ticket.id, ticket]));
     incoming.forEach((ticket) => {
@@ -186,6 +190,8 @@ async function loadTickets(scope, filters = {}, { append = false, silent = false
     state.tickets = sortTickets([...byId.values()]);
     state.total = Number(page.total ?? state.tickets.length);
     state.counts = page.counts || state.counts;
+    state.unreadCount = Number(page.unread_count || 0);
+    state.supportAgents = Array.isArray(page.support_agents) ? page.support_agents : state.supportAgents;
     state.nextOffset = page.next_offset ?? null;
     state.hasMore = Boolean(page.has_more);
     state.loaded = true;
@@ -322,6 +328,8 @@ export function useSupportStatus(scope, id = null, filters = {}) {
     loadingMore: state.loadingMore,
     total: state.total,
     counts: state.counts,
+    unreadCount: state.unreadCount,
+    supportAgents: state.supportAgents,
   };
 }
 
@@ -383,6 +391,16 @@ export async function setSupportTicketStatus(scope, id, status) {
   }
   const normalized = mergeTicket(scope, ticket);
   await refreshLoadedLists(scope);
+  return normalized;
+}
+
+export async function setSupportTicketAssignee(id, assigneeId) {
+  const ticket = await supportApi.adminAction(id, {
+    action: "assign",
+    assignee_id: assigneeId || "none",
+  });
+  const normalized = mergeTicket("admin", ticket);
+  await refreshLoadedLists("admin");
   return normalized;
 }
 

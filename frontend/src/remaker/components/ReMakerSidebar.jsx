@@ -32,6 +32,7 @@ import "./ReMakerSidebar.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
 import { mediaUrl } from "../../api/profile";
 import { useTotalUnread } from "../data/messagesStore";
+import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 
 /* ====
    MARKETPLACE MENU
@@ -219,6 +220,8 @@ export default function ReMakerSidebar({
 
   const [remaker, setReMaker] = useState(() => getStoredReMaker());
   const unreadMessages = useTotalUnread();
+  useSupportTickets("remaker");
+  const supportStatus = useSupportStatus("remaker");
 
   /* ====
      STORAGE LISTENER
@@ -306,6 +309,11 @@ export default function ReMakerSidebar({
         {item.path === "/remaker-messages" && unreadMessages > 0 && (
           <span className="remaker-sidebar-count" aria-label={`${unreadMessages} unread messages`}>
             {unreadMessages > 99 ? "99+" : unreadMessages}
+          </span>
+        )}
+        {item.path === "/remaker-help" && supportStatus.unreadCount > 0 && (
+          <span className="remaker-sidebar-count" aria-label={`${supportStatus.unreadCount} unread support replies`}>
+            {supportStatus.unreadCount > 99 ? "99+" : supportStatus.unreadCount}
           </span>
         )}
       </NavLink>

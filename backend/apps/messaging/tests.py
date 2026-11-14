@@ -8,6 +8,7 @@ class MessagingFlowTests(APIBase):
         self.user = self.make_user("message-user@example.com")
         self.maker = self.make_remaker()
         self.admin = self.make_admin("message-admin@example.com", modules={"messages": "edit"})
+        self.support_agent = self.make_admin("support-agent@example.com", modules={"support": "edit"})
 
     def test_user_remaker_messages_persist_and_sync_read_unread_state(self):
         created = self.post("/api/messaging/me/", {"target_type": "remaker", "target_id": self.maker.public_id,
@@ -78,11 +79,11 @@ class MessagingFlowTests(APIBase):
         self.post(f"/api/messaging/admin/{conv}/", {"action": "read"}, as_=self.admin)
         admin_detail = self.get(f"/api/messaging/admin/{conv}/", as_=self.admin).data["data"]["conversation"]
         self.assertEqual(admin_detail["unread"], 0)
-        self.assertEqual(Conversation.objects.count(), 2)
+        self.assertEqual(Conversation.objects.count(), 3)
         self.assertEqual(ConversationParticipant.objects.filter(conversation__public_id=conv).count(), 2)
 
     def test_admin_module_permission_is_required_for_list_create_and_detail(self):
-        no_messages = self.make_admin("no-messages@example.com", modules={"support": "edit"})
+        no_messages = self.make_admin("no-messages@example.com", modules={"orders": "edit"})
         created = self.post("/api/messaging/admin/", {
             "target_type": "user", "target_id": self.user.public_id,
         }, as_=self.admin)
@@ -117,3 +118,34 @@ class MessagingFlowTests(APIBase):
         self.assertTrue(self.post(f"/api/messaging/me/{conversation_id}/", {"action": "archive"}, as_=self.user).data["success"])
         refreshed = self.get("/api/messaging/me/", as_=self.user)
         self.assertIn(conversation_id, [row["id"] for row in refreshed.data["data"]["conversations"]])
+
+    def test_support_team_shares_reorbit_thread_without_exposing_private_messages(self):
+        second_agent = self.make_admin("second-support@example.com", modules={"support": "edit"})
+        user_inbox = self.get("/api/messaging/me/", as_=self.user)
+        support = next(row for row in user_inbox.data["data"]["conversations"] if row["kind"] == "reorbit")
+        conversation_id = support["id"]
+        for agent in (self.support_agent, second_agent):
+            inbox = self.get("/api/messaging/admin/", as_=agent)
+            self.assertEqual(inbox.status_code, 200, inbox.data)
+            self.assertIn(conversation_id, [row["id"] for row in inbox.data["data"]["conversations"]])
+
+        self.assertEqual(self.post(
+            f"/api/messaging/me/{conversation_id}/", {"text": "I need help with my order."}, as_=self.user
+        ).status_code, 201)
+        first = self.get("/api/messaging/admin/", as_=self.support_agent).data["data"]
+        second = self.get("/api/messaging/admin/", as_=second_agent).data["data"]
+        self.assertEqual(next(row for row in first["conversations"] if row["id"] == conversation_id)["unread"], 1)
+        self.assertEqual(next(row for row in second["conversations"] if row["id"] == conversation_id)["unread"], 1)
+        self.assertEqual(self.post(
+            f"/api/messaging/admin/{conversation_id}/", {"text": "A support agent is checking this."}, as_=second_agent
+        ).status_code, 201)
+        self.assertEqual(self.get(f"/api/messaging/admin/{conversation_id}/", as_=self.support_agent).status_code, 200)
+
+        private = self.post("/api/messaging/me/", {
+            "target_type": "remaker", "target_id": self.maker.public_id,
+        }, as_=self.user).data["data"]["conversation"]["id"]
+        support_only_ids = [row["id"] for row in self.get(
+            "/api/messaging/admin/", as_=self.support_agent
+        ).data["data"]["conversations"]]
+        self.assertNotIn(private, support_only_ids)
+        self.assertEqual(self.get(f"/api/messaging/admin/{private}/", as_=self.support_agent).status_code, 404)

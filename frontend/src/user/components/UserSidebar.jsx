@@ -32,6 +32,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTotalUnread } from "../data/messagesStore";
 import { useNotifications } from "../data/notificationsStore";
 import { useCartCount } from "../data/shopStore";
+import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 
 import "./UserSidebar.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
@@ -162,6 +163,7 @@ const supportMenu = [
     label: "Help & FAQ",
     path: "/user-help",
     icon: CircleHelp,
+    badge: "support",
   },
 ];
 
@@ -196,10 +198,13 @@ export default function UserSidebar({
   const unreadMessages = useTotalUnread();
   const unreadNotifications = useNotifications().unread;
   const cartCount = useCartCount();
+  useSupportTickets("user");
+  const supportStatus = useSupportStatus("user");
   const counts = {
     messages: unreadMessages,
     notifications: unreadNotifications,
     cart: cartCount,
+    support: supportStatus.unreadCount,
   };
 
   const [user, setUser] = useState(() => getStoredUser());

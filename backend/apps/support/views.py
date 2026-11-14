@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 from django.db import transaction
-from django.db.models import Count, OuterRef, Q, Subquery
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -10,8 +10,9 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitAuthenticated
 from apps.core import buyers
 from apps.core.responses import created, fail, ok
+from apps.admins.models import Admins
 from apps.orders.models import Order
-from .models import SupportTicket, TicketMessage
+from .models import SupportTicket, SupportTicketAdminRead, TicketMessage
 
 ADMIN_PAGE_SIZE = 50
 
@@ -30,19 +31,78 @@ def _ticket_queryset(include_message_senders=True):
     return queryset
 
 
-def _with_message_summary(queryset):
+def _with_message_summary(queryset, viewer=None):
     latest = TicketMessage.objects.filter(ticket_id=OuterRef("pk")).order_by(
         "-created_at", "-pk"
     )
-    return queryset.annotate(
+    latest_member = TicketMessage.objects.filter(
+        ticket_id=OuterRef("pk"), sender_type__in=("user", "remaker")
+    ).order_by("-created_at", "-pk")
+    latest_admin = TicketMessage.objects.filter(
+        ticket_id=OuterRef("pk"), sender_type="admin"
+    ).order_by("-created_at", "-pk")
+    result = queryset.annotate(
         _message_count=Count("messages", distinct=True),
         _last_message_text=Subquery(latest.values("text")[:1]),
         _last_message_at=Subquery(latest.values("created_at")[:1]),
         _last_message_sender=Subquery(latest.values("sender_type")[:1]),
+        _last_member_at=Subquery(latest_member.values("created_at")[:1]),
+        _last_admin_at=Subquery(latest_admin.values("created_at")[:1]),
     )
+    if viewer and buyers.type_of(viewer) == "admin":
+        receipt = SupportTicketAdminRead.objects.filter(
+            ticket_id=OuterRef("pk"), admin=viewer
+        )
+        result = result.annotate(_viewer_read_at=Subquery(receipt.values("last_read_at")[:1]))
+    return result
 
 
-def _ticket_row(ticket, include_messages=True):
+def _member_unread(ticket):
+    last_admin_at = getattr(ticket, "_last_admin_at", None)
+    if last_admin_at is None:
+        last_admin_at = ticket.messages.filter(sender_type="admin").order_by("-created_at", "-pk").values_list("created_at", flat=True).first()
+    return bool(last_admin_at and (ticket.member_last_read_at is None or last_admin_at > ticket.member_last_read_at))
+
+
+def _admin_unread(ticket, admin):
+    last_member_at = getattr(ticket, "_last_member_at", None)
+    if last_member_at is None:
+        last_member_at = ticket.messages.filter(sender_type__in=("user", "remaker")).order_by("-created_at", "-pk").values_list("created_at", flat=True).first()
+    receipt = getattr(ticket, "_viewer_read_at", None)
+    if receipt is None and not hasattr(ticket, "_viewer_read_at"):
+        receipt = SupportTicketAdminRead.objects.filter(ticket=ticket, admin=admin).values_list("last_read_at", flat=True).first()
+    return bool(last_member_at and (receipt is None or last_member_at > receipt))
+
+
+def _mark_member_read(ticket):
+    ticket.member_last_read_at = timezone.now()
+    ticket.save(update_fields=["member_last_read_at", "updated_at"])
+
+
+def _mark_admin_read(ticket, admin):
+    now = timezone.now()
+    SupportTicketAdminRead.objects.update_or_create(
+        ticket=ticket, admin=admin, defaults={"last_read_at": now}
+    )
+    return now
+
+
+def _support_agents():
+    """Active admins who can actively work tickets, including Super Admins."""
+    return [
+        admin for admin in Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("full_name", "admin_id")
+        if admin.has_module("support", "edit")
+    ]
+
+
+def _support_agent_rows():
+    return [
+        {"id": admin.public_id, "name": admin.full_name, "email": admin.email}
+        for admin in _support_agents()
+    ]
+
+
+def _ticket_row(ticket, include_messages=True, viewer=None):
     owner = ticket.user or ticket.remaker
     messages = list(ticket.messages.all()) if include_messages else None
     if include_messages:
@@ -90,6 +150,13 @@ def _ticket_row(ticket, include_messages=True):
         "messages": [],
         "messagesLoaded": include_messages,
     }
+    if viewer:
+        viewer_type = buyers.type_of(viewer)
+        result["unread"] = (
+            _admin_unread(ticket, viewer)
+            if viewer_type == "admin"
+            else _member_unread(ticket)
+        )
     if include_messages:
         result["messages"] = [
             {
@@ -163,9 +230,13 @@ class MyTickets(APIView):
         if owner is None:
             return fail("Support tickets are available to Users and ReMakers.", status=403)
         rows = _with_message_summary(
-            _ticket_queryset(include_message_senders=False).filter(**owner)
+            _ticket_queryset(include_message_senders=False).filter(**owner), request.user.account
         )
-        return ok({"tickets": [_ticket_row(ticket, include_messages=False) for ticket in rows]})
+        tickets = [_ticket_row(ticket, include_messages=False, viewer=request.user.account) for ticket in rows]
+        return ok({
+            "tickets": tickets,
+            "unread_count": sum(1 for ticket in tickets if ticket["unread"]),
+        })
 
     def post(self, request):
         owner = _owner(request.user.account)
@@ -200,7 +271,9 @@ class MyTickets(APIView):
                 priority=priority,
             )
             _message(request.user.account, ticket, text, attachment)
-        return created({"ticket": _ticket_row(ticket)}, message="Support ticket created.")
+            ticket.member_last_read_at = timezone.now()
+            ticket.save(update_fields=["member_last_read_at"])
+        return created({"ticket": _ticket_row(ticket, viewer=request.user.account)}, message="Support ticket created.")
 
 
 class MyTicketDetail(APIView):
@@ -215,12 +288,18 @@ class MyTicketDetail(APIView):
 
     def get(self, request, public_id):
         ticket = self._get(request, public_id)
-        return fail("Support tickets are available to Users and ReMakers.", status=403) if ticket is None else ok({"ticket": _ticket_row(ticket)})
+        if ticket is None:
+            return fail("Support tickets are available to Users and ReMakers.", status=403)
+        _mark_member_read(ticket)
+        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
 
     def post(self, request, public_id):
         ticket = self._get(request, public_id)
         if ticket is None:
             return fail("Support tickets are available to Users and ReMakers.", status=403)
+        if request.data.get("action") == "read":
+            _mark_member_read(ticket)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
         if request.data.get("action") == "close":
             requested_status = request.data.get("status")
             status = (
@@ -230,13 +309,15 @@ class MyTicketDetail(APIView):
             )
             _set_status(ticket, status)
             ticket.save(update_fields=["status", "closed_at", "updated_at"])
-            return ok({"ticket": _ticket_row(ticket)})
+            _mark_member_read(ticket)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
 
         text = str(request.data.get("message") or request.data.get("text") or "").strip()
         if request.data.get("action") == "reopen" and not text:
             _set_status(ticket, SupportTicket.Status.OPEN)
             ticket.save(update_fields=["status", "closed_at", "updated_at"])
-            return ok({"ticket": _ticket_row(ticket)})
+            _mark_member_read(ticket)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
         if len(text) < 1 or len(text) > 4000:
             return fail("Enter a reply message of up to 4,000 characters.")
         attachment = _attachment(request)
@@ -250,8 +331,10 @@ class MyTicketDetail(APIView):
                 _set_status(ticket, SupportTicket.Status.OPEN)
                 ticket.save(update_fields=["status", "closed_at", "updated_at"])
             _message(request.user.account, ticket, text, attachment)
+            ticket.member_last_read_at = timezone.now()
+            ticket.save(update_fields=["member_last_read_at", "updated_at"])
         ticket.refresh_from_db()
-        return created({"ticket": _ticket_row(ticket)})
+        return created({"ticket": _ticket_row(ticket, viewer=request.user.account)})
 
 
 class AdminTickets(APIView):
@@ -260,10 +343,11 @@ class AdminTickets(APIView):
     def get(self, request, public_id=None):
         if public_id:
             ticket = get_object_or_404(_ticket_queryset(), public_id=public_id)
-            return ok({"ticket": _ticket_row(ticket)})
+            _mark_admin_read(ticket, request.user.account)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
 
         queryset = _with_message_summary(
-            _ticket_queryset(include_message_senders=False)
+            _ticket_queryset(include_message_senders=False), request.user.account
         )
         status = request.query_params.get("status")
         priority = request.query_params.get("priority")
@@ -300,6 +384,9 @@ class AdminTickets(APIView):
                 status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
             ).count(),
         }
+        unread_count = queryset.filter(_last_member_at__isnull=False).filter(
+            Q(_viewer_read_at__isnull=True) | Q(_last_member_at__gt=F("_viewer_read_at"))
+        ).count()
         if status:
             if status == "Waiting":
                 queryset = queryset.filter(status=SupportTicket.Status.WAITING)
@@ -318,13 +405,20 @@ class AdminTickets(APIView):
             raise ValidationError("Ticket page parameters must be integers.")
         total = queryset.count()
         tickets = list(
-            _with_message_summary(_ticket_queryset(include_message_senders=False))
+            _with_message_summary(
+                _ticket_queryset(include_message_senders=False), request.user.account
+            )
             .filter(pk__in=queryset.values("pk"))
             .order_by("-updated_at", "-pk")[offset:offset + limit]
         )
         return ok({
-            "tickets": [_ticket_row(ticket, include_messages=False) for ticket in tickets],
+            "tickets": [
+                _ticket_row(ticket, include_messages=False, viewer=request.user.account)
+                for ticket in tickets
+            ],
             "counts": counts,
+            "unread_count": unread_count,
+            "support_agents": _support_agent_rows(),
             "total": total,
             "offset": offset,
             "next_offset": offset + len(tickets) if offset + len(tickets) < total else None,
@@ -372,12 +466,27 @@ class AdminTickets(APIView):
                 }[action]
                 _set_status(ticket, status)
             elif action == "assign":
-                ticket.assigned_to = request.user.account
+                assignee_id = str(request.data.get("assignee_id") or "").strip()
+                if not assignee_id:
+                    ticket.assigned_to = request.user.account
+                elif assignee_id.lower() in ("none", "unassigned"):
+                    ticket.assigned_to = None
+                else:
+                    ticket.assigned_to = next(
+                        (agent for agent in _support_agents() if agent.public_id == assignee_id),
+                        None,
+                    )
+                    if ticket.assigned_to is None:
+                        return fail("Choose an active support agent.")
+            elif action == "read":
+                _mark_admin_read(ticket, request.user.account)
+                return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
             else:
                 return fail("Unsupported support action.")
             if "priority" in request.data:
                 ticket.priority = request.data["priority"]
             ticket.save()
+            _mark_admin_read(ticket, request.user.account)
         ticket.refresh_from_db()
         ticket = _ticket_queryset().get(pk=ticket.pk)
-        return ok({"ticket": _ticket_row(ticket)})
+        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})

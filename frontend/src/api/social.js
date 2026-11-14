@@ -31,7 +31,7 @@ export const cartApi = {
 };
 
 export const supportApi = {
-  list: () => apiRequest("/support/me/").then((response) => response.data.tickets),
+  list: () => apiRequest("/support/me/").then((response) => response.data),
   get: (id) => apiRequest(`/support/me/${encodeURIComponent(id)}/`).then((response) => response.data.ticket),
   create: (body) => apiRequest("/support/me/", { method: "POST", body }).then((response) => response.data.ticket),
   reply: (id, body) => apiRequest(`/support/me/${encodeURIComponent(id)}/`, { method: "POST", body }).then((response) => response.data.ticket),

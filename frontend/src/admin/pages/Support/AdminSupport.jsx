@@ -24,6 +24,7 @@ import {
 import {
   loadMoreSupportTickets,
   replyToSupportTicket,
+  setSupportTicketAssignee,
   setSupportTicketStatus,
   useSupportStatus,
   useSupportTicketDetail,
@@ -153,6 +154,7 @@ export default function AdminSupport() {
       })),
       photos: t.photos || [],
       lastMessage: t.lastMessage || null,
+      assignedTo: t.assignedTo || null,
     }));
   }, [tickets]);
 
@@ -179,7 +181,7 @@ export default function AdminSupport() {
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
   const baseCurrent = all.find((t) => t.key === openKey) || null;
   const current = baseCurrent && ticketDetail
-    ? { ...baseCurrent, messages: (ticketDetail.messages || []).map((m) => ({
+    ? { ...baseCurrent, assignedTo: ticketDetail.assignedTo || baseCurrent.assignedTo, messages: (ticketDetail.messages || []).map((m) => ({
         id: m.id, team: m.from === "team", text: m.text, at: m.at, name: m.name,
       })), photos: ticketDetail.photos || [] }
     : baseCurrent;
@@ -193,6 +195,10 @@ export default function AdminSupport() {
   const setTo = async (t, next) => {
     await setSupportTicketStatus("admin", t.id, next);
     toast(`${t.id} is now ${label(next).toLowerCase()}.`);
+  };
+  const assign = async (t, assigneeId) => {
+    await setSupportTicketAssignee(t.id, assigneeId);
+    toast(assigneeId ? "Ticket assignment updated." : "Ticket is now unassigned.");
   };
 
   return (
@@ -414,6 +420,8 @@ export default function AdminSupport() {
           onClose={() => setOpenKey(null)}
           onSend={send}
           onStatus={setTo}
+          onAssign={assign}
+          supportAgents={ticketState.supportAgents}
           loading={detailState.loading}
           detailError={detailState.error}
         />
@@ -423,7 +431,7 @@ export default function AdminSupport() {
   );
 }
 
-function TicketModal({ ticket: t, onClose, onSend, onStatus, loading, detailError }) {
+function TicketModal({ ticket: t, onClose, onSend, onStatus, onAssign, supportAgents, loading, detailError }) {
   const [text, setText] = useState("");
   const [next, setNext] = useState("");
   const [touched, setTouched] = useState(false);
@@ -463,6 +471,18 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus, loading, detailErro
       setBusy(false);
     }
   };
+  const changeAssignee = async (event) => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await onAssign(t, event.target.value);
+    } catch (requestError) {
+      setError(requestError.message || "The ticket assignment could not be updated.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div
@@ -498,6 +518,7 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus, loading, detailErro
             <span className={`sp-status ${tone(t.status)}`}>
               {label(t.status)}
             </span>
+            {t.assignedTo && <span>· Assigned to {t.assignedTo.name}</span>}
           </div>
         </header>
 
@@ -548,6 +569,15 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus, loading, detailErro
             )}
           </label>
           <div className="sp-reply-row">
+            <label className="au-select">
+              <span>Assigned to</span>
+              <select value={t.assignedTo?.id || ""} onChange={changeAssignee} disabled={busy}>
+                <option value="">Unassigned</option>
+                {(supportAgents || []).map((agent) => (
+                  <option key={agent.id} value={agent.id}>{agent.name}</option>
+                ))}
+              </select>
+            </label>
             <label className="au-select">
               <span>Then set to</span>
               <select value={next} onChange={(e) => setNext(e.target.value)}>

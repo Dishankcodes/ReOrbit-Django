@@ -1,5 +1,6 @@
 from apps.core.testing import APIBase
-from .models import SupportTicket, TicketMessage
+from apps.admins.models import Admins
+from .models import SupportTicket, SupportTicketAdminRead, TicketMessage
 
 
 class SupportTicketTests(APIBase):
@@ -94,3 +95,45 @@ class SupportTicketTests(APIBase):
         self.assertEqual(ticket.status_code, 201, ticket.data)
         self.assertEqual(ticket.data["data"]["ticket"]["requester"]["type"], "remaker")
         self.assertEqual(ticket.data["data"]["ticket"]["priority"], SupportTicket.Priority.HIGH)
+
+    def test_shared_team_inbox_assignment_and_per_agent_read_receipts(self):
+        second_agent = self.make_admin("second-support@example.com", modules={"support": "edit"})
+        super_admin = self.make_admin(
+            "super-support@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN,
+        )
+        created = self.post("/api/support/me/", {
+            "subject": "Need help with delivery", "message": "Can the team check this delivery?",
+        }, as_=self.user)
+        ticket_id = created.data["data"]["ticket"]["id"]
+
+        first = self.get("/api/support/admin/", as_=self.agent).data["data"]
+        second = self.get("/api/support/admin/", as_=second_agent).data["data"]
+        self.assertEqual(first["unread_count"], 1)
+        self.assertEqual(second["unread_count"], 1)
+        self.assertTrue(first["tickets"][0]["unread"])
+        self.assertIn(second_agent.public_id, [agent["id"] for agent in first["support_agents"]])
+        self.assertIn(super_admin.public_id, [agent["id"] for agent in first["support_agents"]])
+
+        opened = self.get(f"/api/support/admin/{ticket_id}/", as_=self.agent)
+        self.assertFalse(opened.data["data"]["ticket"]["unread"])
+        self.assertEqual(SupportTicketAdminRead.objects.filter(ticket__public_id=ticket_id, admin=self.agent).count(), 1)
+        self.assertEqual(self.get("/api/support/admin/", as_=self.agent).data["data"]["unread_count"], 0)
+        self.assertEqual(self.get("/api/support/admin/", as_=second_agent).data["data"]["unread_count"], 1)
+
+        assigned = self.post(f"/api/support/admin/{ticket_id}/", {
+            "action": "assign", "assignee_id": second_agent.public_id,
+        }, as_=self.agent)
+        self.assertEqual(assigned.status_code, 200, assigned.data)
+        self.assertEqual(assigned.data["data"]["ticket"]["assignedTo"]["id"], second_agent.public_id)
+        self.assertEqual(self.get(f"/api/support/admin/{ticket_id}/", as_=super_admin).status_code, 200)
+
+        replied = self.post(f"/api/support/admin/{ticket_id}/", {
+            "action": "reply", "message": "We are checking the delivery now.",
+        }, as_=second_agent)
+        self.assertEqual(replied.status_code, 200, replied.data)
+        member_list = self.get("/api/support/me/", as_=self.user).data["data"]
+        self.assertEqual(member_list["unread_count"], 1)
+        self.assertTrue(member_list["tickets"][0]["unread"])
+        member_detail = self.get(f"/api/support/me/{ticket_id}/", as_=self.user).data["data"]["ticket"]
+        self.assertFalse(member_detail["unread"])
+        self.assertEqual(self.get("/api/support/me/", as_=self.user).data["data"]["unread_count"], 0)

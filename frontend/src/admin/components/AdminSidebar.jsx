@@ -178,7 +178,7 @@ export default function AdminSidebar({
   const unreadMessages = useUnreadMessages(access.canSee("messages"));
   useSupportTickets("admin", {}, access.canSee("support"));
   const supportStatus = useSupportStatus("admin");
-  const openTickets = supportStatus.counts.Open || 0;
+  const unreadSupportTickets = supportStatus.unreadCount || 0;
   const { profile } = useSettings();
   const adminName = access.previewing
     ? access.me.name
@@ -230,12 +230,12 @@ export default function AdminSidebar({
       >
         <Icon size={18} strokeWidth={1.8} className="admin-sidebar-link-icon" />
         <span className="admin-sidebar-link-text">{item.label}</span>
-        {item.key === "support" && openTickets > 0 && (
+        {item.key === "support" && unreadSupportTickets > 0 && (
           <span
             className="admin-sidebar-count"
-            aria-label={`${openTickets} waiting for a reply`}
+            aria-label={`${unreadSupportTickets} unread support tickets`}
           >
-            {openTickets}
+            {unreadSupportTickets > 99 ? "99+" : unreadSupportTickets}
           </span>
         )}
         {item.key === "messages" && unreadMessages > 0 && (
