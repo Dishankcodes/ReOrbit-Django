@@ -57,7 +57,7 @@ export const QUICK_REPLIES = {
   ],
 };
 
-const POLL_MS = 8000;
+const POLL_MS = 3000;
 const PAGE_SIZE = 50;
 const createState = () => ({
   rows: [],
@@ -196,7 +196,7 @@ async function loadList(scope, view, { append = false, poll = false } = {}) {
   }
   const run = messagingApi.list(params)
     .then((page) => {
-      if (version !== state.requestVersion && !poll) return state.rows;
+      if (version !== state.requestVersion) return state.rows;
       const incoming = page.conversations || [];
       if (poll && state.serverTime) {
         const removed = new Set((page.removed || []).map(String));
@@ -431,19 +431,70 @@ export async function loadOlderMessages(id) {
 
 export async function sendMessage(id, { text = "", image = "" } = {}) {
   const scope = currentScope();
-  const message = await messagingApi.send(id, { text: text.trim(), image });
   const state = stateFor(scope);
   const previous = state.details.get(id) || state.rows.find((row) => row.id === id) || {
     id, messages: [], unread: 0,
   };
+  const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const optimistic = {
+    id: optimisticId,
+    from: "me",
+    sender_type: scope,
+    text: text.trim(),
+    image,
+    at: new Date().toISOString(),
+    pending: true,
+  };
+
+  // Render locally before waiting for the network so the sender sees the
+  // message immediately and the inbox preview moves with the conversation.
   mergeConversation(scope, {
     ...previous,
     id,
     unread: 0,
-    messages: [message],
-    last_message: { id: message.id, text: message.text, image: message.image, at: message.at, from: "me" },
+    messages: [optimistic],
+    last_message: {
+      id: optimisticId, text: optimistic.text, image, at: optimistic.at, from: "me",
+    },
+    updated_at: optimistic.at,
   }, "append");
-  return message;
+
+  try {
+    const message = await messagingApi.send(id, { text: text.trim(), image });
+    const detail = state.details.get(id);
+    if (detail) {
+      state.details.set(id, {
+        ...detail,
+        messages: (detail.messages || []).filter((item) => item.id !== optimisticId),
+      });
+    }
+    state.rows = state.rows.map((row) => row.id === id
+      ? { ...row, messages: (row.messages || []).filter((item) => item.id !== optimisticId) }
+      : row);
+    const merged = mergeConversation(scope, {
+      ...(state.details.get(id) || previous),
+      id,
+      unread: 0,
+      messages: [message],
+      last_message: {
+        id: message.id, text: message.text, image: message.image, at: message.at, from: "me",
+      },
+    }, "append");
+    return merged.messages.find((item) => String(item.id) === String(message.id)) || message;
+  } catch (error) {
+    const detail = state.details.get(id);
+    if (detail) {
+      state.details.set(id, {
+        ...detail,
+        messages: (detail.messages || []).filter((item) => item.id !== optimisticId),
+      });
+    }
+    state.rows = state.rows.map((row) => row.id === id
+      ? { ...row, messages: (row.messages || []).filter((item) => item.id !== optimisticId) }
+      : row);
+    emit(state);
+    throw error;
+  }
 }
 
 function updateUnread(scope, id, value) {
