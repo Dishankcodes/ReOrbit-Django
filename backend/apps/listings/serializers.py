@@ -107,11 +107,12 @@ class AdminItemSerializer(ItemSerializer):
 
     def get_seller(self, obj):
         u = obj.user
+        profile = getattr(u, "profile", None)
         return {
             "id": u.public_id,
             "name": u.full_name,
             "email": u.email,
             "status": u.status,
-            "city": u.city or "",
+            "city": getattr(profile, "city", "") or "",
             "since": u.created_at,
         }

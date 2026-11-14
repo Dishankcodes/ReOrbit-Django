@@ -16,6 +16,9 @@ Admin (module "products")
   GET  admin/                      every listing, with filters
   GET  admin/<id>/
   POST admin/<id>/moderate/        {"status": Normal|Flagged|Disabled, "note": "..."}
+  POST admin/<id>/suggest-price/   {"price": 1200, "note": "..."}  the seller is notified
+Seller, continued
+  POST me/<id>/price-suggestion/   {"accept": true|false}  take or decline the admin's suggested price
 """
 
 from datetime import timedelta
@@ -35,12 +38,11 @@ from apps.core.images import delete_file, process_image
 from apps.core.models import AuditLog, Category, PlatformSettings
 from apps.core.pagination import StandardPagination
 from apps.core.responses import created, fail, ok
-from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
 from apps.core.validators import validate_gujarat_pincode, validate_image
 
 from .models import Item, MediaImage
-from .serializers import CategorySerializer, ItemSerializer, PublicItemSerializer
+from .serializers import AdminItemSerializer, CategorySerializer, ItemSerializer, PublicItemSerializer
 
 MAX_IMAGES = 8
 MAX_PRICE = 10_000_000
@@ -185,6 +187,10 @@ def published_today(user):
 
 def daily_cap():
     return max(1, PlatformSettings.load().max_listings_per_day)
+
+
+def before_price(snapshot):
+    return Decimal(snapshot["listing_price"]) if snapshot["listing_price"] is not None else None
 
 
 def _snapshot(i):
@@ -338,6 +344,9 @@ class MyDetailView(MyBase):
         before = _snapshot(item)
         for k, v in values.items():
             setattr(item, k, v)
+        if item.suggestion_status == Item.Suggestion.PENDING and "listing_price" in values \
+                and values["listing_price"] != before_price(before):
+            item.suggestion_status = Item.Suggestion.DECLINED  # the seller chose their own price
         if item.item_status == Item.Status.LISTED:  # a live listing must stay complete
             missing = readiness(item)
             if missing:
@@ -365,9 +374,6 @@ class MyPublishView(MyBase):
         item = self.mine(request, public_id)
         if item.item_status == Item.Status.LISTED:
             return self.show(request, item, "Already live.")
-        reason = maintenance_block_reason()
-        if reason:
-            return fail(reason, status=503, code="MAINTENANCE")
         if item.item_status not in (Item.Status.DRAFT, Item.Status.WITHDRAWN):
             return fail(f"A {item.item_status.lower()} listing can't be published.", status=409)
         if item.moderation_status == Item.Moderation.DISABLED:
@@ -492,6 +498,8 @@ class AdminListView(APIView):
             rows = rows.filter(moderation_status=q["moderation"])
         if q.get("category"):
             rows = rows.filter(category__slug=q["category"])
+        if q.get("suggestion") in Item.Suggestion.values:
+            rows = rows.filter(suggestion_status=q["suggestion"])
         if q.get("q"):
             t = q["q"].strip()
             rows = rows.filter(
@@ -500,7 +508,7 @@ class AdminListView(APIView):
         pager = StandardPagination()
         page = pager.paginate_queryset(rows, request)
         return pager.get_paginated_response(
-            ItemSerializer(page, many=True, context=_ctx(request)).data
+            AdminItemSerializer(page, many=True, context=_ctx(request)).data
         )
 
 
@@ -512,7 +520,7 @@ class AdminDetailView(APIView):
             Item.objects.select_related("category", "user").prefetch_related("images"),
             public_id=public_id,
         )
-        return ok({"listing": ItemSerializer(item, context=_ctx(request)).data})
+        return ok({"listing": AdminItemSerializer(item, context=_ctx(request)).data})
 
 
 class AdminModerateView(APIView):
@@ -549,4 +557,62 @@ class AdminModerateView(APIView):
             title, body = texts[status]
             notify(item.user, title, body, module="listings", ref_type="item", ref_id=item.public_id)
         item = Item.objects.select_related("category", "user").prefetch_related("images").get(pk=item.pk)
-        return ok({"listing": ItemSerializer(item, context=_ctx(request)).data}, "Listing updated.")
+        return ok({"listing": AdminItemSerializer(item, context=_ctx(request)).data}, "Listing updated.")
+
+
+class AdminSuggestPriceView(APIView):
+    permission_classes = [HasAdminModule("products", "edit")]
+
+    @transaction.atomic
+    def post(self, request, public_id):
+        item = get_object_or_404(Item.objects.select_for_update(), public_id=public_id, deleted_at__isnull=True)
+        errors = {}
+        price = _whole_rupees(request.data.get("price"), "price", errors, required=True)
+        note = " ".join(str(request.data.get("note") or "").split())[:300]
+        if errors:
+            return fail("Enter a valid price.", errors=errors)
+        if item.item_status in (Item.Status.SOLD, Item.Status.DONATED):
+            return fail(f"A {item.item_status.lower()} listing can't be re-priced.", status=409)
+        if item.listing_price is not None and price == item.listing_price:
+            return fail("That is already the listing price.", errors={"price": ["Pick a different price."]})
+        admin = request.user.account
+        before = _snapshot(item)
+        item.suggested_price, item.suggested_note = price, note
+        item.suggested_at, item.suggested_by = timezone.now(), admin
+        item.suggestion_status = Item.Suggestion.PENDING
+        item.save()
+        audit(admin, "listing.suggest_price", "item", item.public_id, before=before,
+              after={**_snapshot(item), "suggested_price": str(price)}, reason=note, ip=IP(request))
+        notify(item.user, "ReOrbit suggested a new price",
+               f"For “{item.title}”: ₹{price:,.0f}." + (f" {note}" if note else "") + " Open My Listings to accept or decline.",
+               module="listings", ref_type="item", ref_id=item.public_id)
+        item = Item.objects.select_related("category", "user").prefetch_related("images").get(pk=item.pk)
+        return ok({"listing": AdminItemSerializer(item, context=_ctx(request)).data}, "Price suggestion sent.")
+
+
+class MyPriceSuggestionView(MyBase):
+    """The seller answers an admin's suggested price."""
+
+    @transaction.atomic
+    def post(self, request, public_id):
+        item = get_object_or_404(
+            Item.objects.select_for_update(), public_id=public_id,
+            user=request.user.account, deleted_at__isnull=True,
+        )
+        if item.suggestion_status != Item.Suggestion.PENDING or item.suggested_price is None:
+            return fail("There is no price suggestion to answer.", status=409)
+        accept = request.data.get("accept")
+        if not isinstance(accept, bool):
+            return fail("Say whether you accept the suggested price.", errors={"accept": ["Required."]})
+        if accept and item.item_status in (Item.Status.SOLD, Item.Status.DONATED):
+            return fail(f"A {item.item_status.lower()} listing can't be re-priced.", status=409)
+        before = _snapshot(item)
+        if accept:
+            item.listing_price = item.suggested_price
+            item.suggestion_status = Item.Suggestion.ACCEPTED
+        else:
+            item.suggestion_status = Item.Suggestion.DECLINED
+        item.save()
+        audit(request.user.account, "listing.price_accepted" if accept else "listing.price_declined",
+              "item", item.public_id, before=before, after=_snapshot(item), ip=IP(request))
+        return self.show(request, item, "Price updated." if accept else "Suggestion declined.")

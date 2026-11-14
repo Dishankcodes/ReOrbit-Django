@@ -23,6 +23,11 @@ export const withdrawListing = (id) =>
   apiRequest(`/listings/me/${id}/withdraw/`, { method: "POST", body: {} }).then(
     (r) => r.data,
   );
+export const answerPriceSuggestion = (id, accept) =>
+  apiRequest(`/listings/me/${id}/price-suggestion/`, {
+    method: "POST",
+    body: { accept },
+  }).then((r) => r.data);
 export const deleteListing = (id) =>
   apiRequest(`/listings/me/${id}/`, { method: "DELETE" });
 
@@ -51,4 +56,11 @@ export const moderateListing = (id, status, note = "") =>
   apiRequest(`/listings/admin/${id}/moderate/`, {
     method: "POST",
     body: { status, note },
+  }).then((r) => r.data.listing);
+export const fetchAdminListing = (id) =>
+  apiRequest(`/listings/admin/${id}/`).then((r) => r.data.listing);
+export const suggestListingPrice = (id, price, note = "") =>
+  apiRequest(`/listings/admin/${id}/suggest-price/`, {
+    method: "POST",
+    body: { price, note },
   }).then((r) => r.data.listing);

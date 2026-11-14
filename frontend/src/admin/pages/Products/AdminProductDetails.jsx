@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import AdminProductDetailsLive from "./AdminProductDetailsLive";
+import AdminListingDetailLive from "./AdminListingDetailLive";
 import {
   ChevronRight,
   ArrowLeft,
@@ -742,10 +743,11 @@ function DemoProductDetails() {
   );
 }
 
-/* Real products (ReMaker RPR-…, ReOrbit store ADI-…) open the live page; the
-   marketplace overview's sample listings keep the older page. */
+/* Every product on the marketplace is real data: ReMaker (RPR-…), ReOrbit store
+   (ADI-…) and member listings (LST-…). */
 export default function AdminProductDetails() {
   const { productId } = useParams();
+  if (/^LST-/.test(productId || "")) return <AdminListingDetailLive />;
   return /^(RPR|ADI)-/.test(productId || "") ? (
     <AdminProductDetailsLive />
   ) : (

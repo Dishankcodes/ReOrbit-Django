@@ -216,9 +216,14 @@ function fromApi(a) {
           at: a.moderated_at,
         }
       : null,
-    flagged: a.moderation_status === "Flagged",
-    suggestedPrice: null,
-    suggestedMessage: "",
+    flagged:
+      a.moderation_status === "Flagged"
+        ? { reason: a.moderation_note || "No reason was given." }
+        : null,
+    suggestedPrice:
+      a.suggestion_status === "Pending" ? Number(a.suggested_price) : null,
+    suggestedMessage:
+      a.suggestion_status === "Pending" ? a.suggested_note || "" : "",
     events,
   };
 }
@@ -385,6 +390,10 @@ export async function withdrawListing(id) {
 }
 export async function relistListing(id) {
   return apply(await api.publishListing(id));
+}
+/* Take (accept = true) or decline the price ReOrbit suggested. */
+export async function answerPriceSuggestion(id, accept) {
+  return apply(await api.answerPriceSuggestion(id, accept));
 }
 export async function deleteListing(id) {
   await api.deleteListing(id);

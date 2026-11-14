@@ -40,6 +40,11 @@ class Item(PublicIdModel, TimeStampedModel):
         FLAGGED = "Flagged", "Flagged"
         DISABLED = "Disabled", "Disabled"
 
+    class Suggestion(models.TextChoices):
+        PENDING = "Pending", "Pending"
+        ACCEPTED = "Accepted", "Accepted"
+        DECLINED = "Declined", "Declined"
+
     user = models.ForeignKey(
         "users.Users", on_delete=models.PROTECT, related_name="items"
     )
@@ -72,6 +77,16 @@ class Item(PublicIdModel, TimeStampedModel):
         related_name="+",
     )
     moderated_at = models.DateTimeField(null=True, blank=True)
+    # Admin "suggest a price": the seller accepts (price changes) or declines.
+    suggested_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    suggested_note = models.CharField(max_length=300, blank=True)
+    suggested_at = models.DateTimeField(null=True, blank=True)
+    suggested_by = models.ForeignKey(
+        "admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    suggestion_status = models.CharField(
+        max_length=10, choices=Suggestion.choices, blank=True, default=""
+    )
     city = models.CharField(max_length=100)
     pincode = models.CharField(max_length=10)
     deleted_at = models.DateTimeField(null=True, blank=True)

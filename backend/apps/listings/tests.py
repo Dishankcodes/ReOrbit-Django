@@ -190,3 +190,45 @@ class ListingTests(APIBase):
         # back to normal
         self.assertEqual(self.post(url, {"status": "Normal"}, as_=mod).status_code, 200)
         self.assertEqual(self.get(f"/api/listings/admin/{pid}/", as_=viewer).status_code, 200)
+
+    def test_suggest_price_accept_decline(self):
+        pid, _ = self.live()
+        mod = self.make_admin("mod@example.com", modules={"products": "edit"})
+        viewer = self.make_admin("view@example.com", modules={"products": "view"})
+        url = f"/api/listings/admin/{pid}/suggest-price/"
+        self.assertEqual(self.post(url, {"price": 3000}, as_=viewer).status_code, 403)
+        self.assertEqual(self.post(url, {"price": "abc"}, as_=mod).status_code, 400)
+        self.assertEqual(self.post(url, {"price": 3800}, as_=mod).status_code, 400)  # same as current
+        r = self.post(url, {"price": 3000, "note": "Similar items sell for less"}, as_=mod)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["listing"]["suggestion_status"], "Pending")
+        self.assertTrue(self.user.notifications.filter(title="ReOrbit suggested a new price").exists())
+        # the seller sees it; buyers do not
+        mine = self.get(f"/api/listings/me/{pid}/", as_=self.user).data["data"]["listing"]
+        self.assertEqual(mine["suggestion_status"], "Pending")
+        self.assertNotIn("suggested_price", self.client.get(f"/api/listings/{pid}/").data["data"]["listing"])
+        # others cannot answer it
+        ans = f"/api/listings/me/{pid}/price-suggestion/"
+        self.assertEqual(self.post(ans, {"accept": True}, as_=self.other).status_code, 404)
+        r = self.post(ans, {"accept": True}, as_=self.user)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["listing"]["listing_price"], "3000.00")
+        self.assertEqual(r.data["data"]["listing"]["suggestion_status"], "Accepted")
+        self.assertEqual(self.post(ans, {"accept": True}, as_=self.user).status_code, 409)
+        # a second suggestion can be declined and the price stays
+        self.post(url, {"price": 2500}, as_=mod)
+        r = self.post(ans, {"accept": False}, as_=self.user)
+        self.assertEqual(r.data["data"]["listing"]["listing_price"], "3000.00")
+        self.assertEqual(r.data["data"]["listing"]["suggestion_status"], "Declined")
+        self.assertEqual(Item.objects.get(public_id=pid).suggestion_status, "Declined")
+
+    def test_admin_list_filters_and_seller_details(self):
+        pid, _ = self.live()
+        mod = self.make_admin("mod@example.com", modules={"products": "edit"})
+        self.post(f"/api/listings/admin/{pid}/moderate/", {"status": "Flagged", "note": "Check photos"}, as_=mod)
+        rows = self.get("/api/listings/admin/?moderation=Flagged", as_=mod).data["data"]["results"]
+        self.assertEqual([r["id"] for r in rows], [pid])
+        self.assertEqual(rows[0]["seller"]["email"], "seller@example.com")
+        self.assertEqual(self.get("/api/listings/admin/?moderation=Disabled", as_=mod).data["data"]["results"], [])
+        # a flagged listing stays on the marketplace
+        self.assertEqual(len(self.client.get("/api/listings/").data["data"]["results"]), 1)

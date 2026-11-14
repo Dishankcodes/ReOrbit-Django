@@ -23,6 +23,7 @@ import {
 import {
   LISTING_STATUS,
   PICKUP_OPTIONS,
+  answerPriceSuggestion,
   deleteListing,
   relistListing,
   useListing,
@@ -64,6 +65,7 @@ export default function UserListingDetails() {
   const [photo, setPhoto] = useState(0);
   const [confirm, setConfirm] = useState(null); // "withdraw" | "delete"
   const [announced, setAnnounced] = useState(false);
+  const [answering, setAnswering] = useState(false);
 
   React.useEffect(() => {
     const key = location.state?.just;
@@ -94,6 +96,18 @@ export default function UserListingDetails() {
       </div>
     );
   }
+
+  const answer = async (accept) => {
+    setAnswering(true);
+    try {
+      await answerPriceSuggestion(listing.id, accept);
+      show(accept ? "Price updated." : "Suggestion declined.");
+    } catch (e) {
+      show(e.message || "Could not save your answer. Please try again.");
+    } finally {
+      setAnswering(false);
+    }
+  };
 
   const { status } = listing;
   const meta = LISTING_STATUS[status];
@@ -179,8 +193,20 @@ export default function UserListingDetails() {
           </div>
         </div>
       )}
+      {listing.flagged && !listing.adminDisabled && (
+        <div className="dn-banner dn-banner--warn usl-banner" role="status">
+          <AlertTriangle size={20} />
+          <div>
+            <strong>ReOrbit flagged this listing</strong>
+            {listing.flagged.reason} It stays live, but please check it.{" "}
+            <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
+              Edit listing →
+            </Link>
+          </div>
+        </div>
+      )}
       {listing.suggestedPrice != null &&
-        ["Live", "Draft"].includes(status) &&
+        ["Live", "Draft", "Withdrawn"].includes(status) &&
         listing.suggestedPrice !== listing.price && (
           <div className="dn-banner dn-banner--warn usl-banner">
             <Tag size={20} />
@@ -190,9 +216,23 @@ export default function UserListingDetails() {
               </strong>
               {listing.suggestedMessage ||
                 "Our team thinks this price will help it sell."}{" "}
-              <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
-                Change the price →
-              </Link>
+              <button
+                type="button"
+                className="dn-link"
+                disabled={answering}
+                onClick={() => answer(true)}
+              >
+                Accept the new price
+              </button>
+              {" · "}
+              <button
+                type="button"
+                className="dn-link"
+                disabled={answering}
+                onClick={() => answer(false)}
+              >
+                Keep my price
+              </button>
             </div>
           </div>
         )}

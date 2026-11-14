@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tags, ImagePlus, CircleHelp, ScrollText, History } from "lucide-react";
 
@@ -8,6 +8,7 @@ import {
   useFaqs,
   usePolicies,
   useContentLog,
+  onContentError,
 } from "../../data/contentStore";
 import { useAccess } from "../../data/teamStore";
 import { formatDateTime } from "../../utils/format";
@@ -26,6 +27,7 @@ export default function AdminContent() {
   const [params, setParams] = useSearchParams();
   const access = useAccess();
   const { toast, toastNode } = useToast();
+  useEffect(() => onContentError((m) => toast(`Not saved: ${m}`)), [toast]);
   const cats = useCategories();
   const banners = useBanners();
   const faqs = useFaqs();

@@ -2,7 +2,11 @@
    Nothing renders when no banner is live. More than one rotates every 6 seconds. */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLiveBanners } from "../content";
+import {
+  useLiveBanners,
+  trackBannerView,
+  trackBannerClick,
+} from "../content";
 import "./BannerSlot.css";
 
 const RATIO = {
@@ -23,11 +27,17 @@ export default function BannerSlot({ placement, viewer }) {
     return () => clearInterval(t);
   }, [count]);
 
+  const shown = count ? banners[Math.min(index, count - 1)] : null;
+  useEffect(() => {
+    if (shown) trackBannerView(shown.id);
+  }, [shown?.id]);
+
   if (!count) return null;
-  const b = banners[Math.min(index, count - 1)];
+  const b = shown;
   const strip = placement === "Home strip";
   const go = () => {
     if (!b.link) return;
+    trackBannerClick(b.id);
     if (/^https?:/.test(b.link)) window.open(b.link, "_blank", "noopener");
     else navigate(b.link);
   };

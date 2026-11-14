@@ -1,36 +1,17 @@
 /* =========================================================
-   Admin › Content data layer (UI only, in-memory, resets on refresh).
-
-   Four kinds of content the team looks after:
-     1. Categories  – the list members pick from when they list an item.
-                      Counts are LIVE (products, donations, stock, sell listings),
-                      and a category that is in use cannot be renamed or deleted,
-                      because those records only remember the name.
-     2. Banners     – promos on the Home page and shop. Their state (Live,
-                      Scheduled, Ended, Draft) follows the dates, so nobody has
-                      to remember to switch one off.
-     3. FAQs        – questions and answers, grouped by topic.
-     4. Policies    – Terms, Privacy, Returns… Every publish makes a new
-                      version that can be read and restored later.
-                      Bodies can contain {tokens} such as {platform_fee},
-                      which are filled from Settings when shown.
-
-   Backend later: Categories, Banners, Faqs and Policy_Versions tables.
+   Admin › Content store.
+   Categories, banners, FAQs and policies all live in the backend:
+     /api/core/admin/categories/   /api/content/admin/...
+   Nothing here is seeded. The store loads on first use, applies each change on
+   screen at once, then confirms it with the server (and puts the screen back,
+   with the server's message, if the server says no).
    ========================================================= */
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { adminCategoryApi } from "../../api/adminCategories";
+import { adminContentApi } from "../../api/adminContent";
 import { refreshCategories } from "../../shared/catalog";
-import { DEMO_TODAY } from "../utils/format";
 
-const iso = (v) => new Date(v).toISOString();
-const DAY = 86400000;
-const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
-export const TODAY_KEY = dayKey(DEMO_TODAY);
-
-/* ---------------------------------------------------------
-   Seed data
-   --------------------------------------------------------- */
 export const CATEGORY_ICON_KEYS = [
   "Armchair",
   "Home",
@@ -122,20 +103,6 @@ export const BANNER_IMAGES = [
   },
 ];
 
-const bn = (n, o) => ({
-  id: `BN-${n}`,
-  subtitle: "",
-  cta: "Shop now",
-  link: "/",
-  audience: "Everyone",
-  end: "",
-  active: true,
-  views: 0,
-  clicks: 0,
-  createdAt: iso("2026-09-01T09:00:00"),
-  ...o,
-});
-
 export const FAQ_TOPICS = [
   "Buying",
   "Selling",
@@ -144,17 +111,6 @@ export const FAQ_TOPICS = [
   "Payments & refunds",
   "Account",
 ];
-const fq = (n, topic, q, a, o = {}) => ({
-  id: `FQ-${n}`,
-  topic,
-  q,
-  a,
-  published: true,
-  helpful: 0,
-  notHelpful: 0,
-  ...o,
-});
-
 const POLICY_TOKENS = [
   {
     token: "{platform_fee}",
@@ -179,452 +135,17 @@ const POLICY_TOKENS = [
 ];
 export { POLICY_TOKENS };
 
-const ver = (v, at, by, note, body) => ({ v, at: iso(at), by, note, body });
-
-const TERMS = `## 1. Using ReOrbit
-ReOrbit is a marketplace for second-life goods. You must be 18 or older, or use the service with a parent or guardian, and give true information when you sign up.
-
-## 2. Listing and buying
-Describe items honestly and show their real condition. Listings go live as soon as you publish them. We may turn off or remove a listing that breaks these terms.
-
-## 3. Fees
-Orders placed by members carry a platform fee of {platform_fee}, shown at checkout before you pay. Platform products over {free_delivery_from} ship free.
-
-## 4. Accounts
-You are responsible for what happens on your account. We may warn, suspend or block accounts for scams, abuse or repeated policy breaches.
-
-## 5. Changes
-We may update these terms. When we do, the version and date at the top change, and important changes are announced in the app.`;
-
-const PRIVACY = `## What we collect
-Your name, email, phone number, address for pickups and delivery, the items you list or buy, and basic usage data that helps us fix problems.
-
-## How we use it
-To run your account, arrange pickups and deliveries, process payments, prevent fraud and send updates about your orders and donations.
-
-## Who sees it
-Your public profile shows your name, city and listings. Your address and phone number are shared only with the pickup team or courier handling your order.
-
-## Your choices
-You can edit your details, download your data or ask us to delete your account from Settings. Some records, such as paid orders, are kept as the law requires.`;
-
-const REFUNDS = `## Returns
-If an item arrives different from its description, tell us within 7 days of delivery and we will arrange a return.
-
-## Refunds
-Once the return is received and checked, the money goes back to the original payment method. Cash on delivery orders are refunded to your Orbit wallet or bank account.
-
-## Not eligible
-Items damaged after delivery, items that were described honestly, and orders cancelled after they were shipped.
-
-## Platform fee
-The platform fee of {platform_fee} is refunded together with the item when the problem was ours or the seller's.`;
-
-const SHIPPING = `## Delivery
-Orders are packed within 2 working days and delivered in 3 to 7 working days, depending on where you live.
-
-## Delivery fee
-Delivery on platform products is free from {free_delivery_from}. Below that, the fee is shown at checkout.
-
-## Cash on delivery
-Available for orders up to {cod_limit}. Keep the exact amount ready when the courier arrives.
-
-## Tracking
-You will get an update when your order is confirmed, shipped and delivered, and you can follow it from My orders.`;
-
-const DONATION = `## What we accept
-Furniture, home decor, kitchenware, clothing, books, electronics that work and sports goods, in a usable condition.
-
-## What we cannot take
-Broken or unsafe electrical items, mattresses, damaged upholstery and anything dangerous or illegal.
-
-## Free pickup
-Once we accept your donation, a pickup team collects it from your door at no cost. Please keep the item ready in your chosen slot.
-
-## Your reward
-You earn Orbit Points for every completed donation and receive a donation certificate. Items we cannot sell are passed on to partner NGOs.`;
-
-const COMMUNITY = `## Be honest
-Show real photos, describe flaws and never ask for payment outside ReOrbit.
-
-## Be respectful
-Abuse, threats and harassment lead to a warning, and repeated problems to suspension.
-
-## Respect creators
-Do not copy another ReMaker's work or sell counterfeit items.
-
-## Report problems
-Use the report button on any listing, review or profile. Every report is read by a person on our team.`;
-
 /* ---------------------------------------------------------
    State
    --------------------------------------------------------- */
 let state = {
-  seq: { cat: 11, bn: 8, fq: 15 },
   categories: [], // loaded from the backend (see loadCategories)
   catStatus: "idle", // idle | loading | ready | error
-  banners: [
-    bn(1, {
-      title: "Diwali Green Sale",
-      subtitle: "15% off upcycled products. Use code DIWALI15.",
-      cta: "Shop the sale",
-      link: "/shop",
-      placement: "Home hero",
-      image:
-        "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-10-15",
-      end: "2026-11-05",
-      views: 12840,
-      clicks: 612,
-      createdAt: iso("2026-10-10T10:00:00"),
-    }),
-    bn(2, {
-      title: "Give a chair, earn Orbit Points",
-      subtitle: "Free pickup from your door. Donate in two minutes.",
-      cta: "Donate now",
-      link: "/donate",
-      placement: "Home hero",
-      image:
-        "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-09-01",
-      end: "",
-      views: 31200,
-      clicks: 1540,
-      createdAt: iso("2026-08-28T10:00:00"),
-    }),
-    bn(3, {
-      title: "Meet our ReMakers",
-      subtitle: "Restored, reworked and rebuilt by makers near you.",
-      cta: "Meet them",
-      link: "/remakers",
-      placement: "Home hero",
-      image:
-        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-11-10",
-      end: "2026-11-30",
-      createdAt: iso("2026-10-18T10:00:00"),
-    }),
-    bn(4, {
-      title: "Free pickup across Ahmedabad",
-      subtitle: "",
-      cta: "Learn more",
-      link: "/how-it-works",
-      placement: "Home strip",
-      image:
-        "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-09-01",
-      end: "",
-      views: 22910,
-      clicks: 388,
-      createdAt: iso("2026-08-28T10:30:00"),
-    }),
-    bn(5, {
-      title: "Furniture under ₹5,000",
-      subtitle: "Pre-loved, with honest condition notes.",
-      cta: "Browse",
-      link: "/user-marketplace",
-      placement: "Shop top",
-      image:
-        "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-10-01",
-      end: "",
-      views: 9475,
-      clicks: 702,
-      createdAt: iso("2026-09-29T10:00:00"),
-    }),
-    bn(6, {
-      title: "Monsoon clean-out week",
-      subtitle: "Declutter and earn double Orbit Points.",
-      cta: "Donate",
-      link: "/donate",
-      placement: "Home hero",
-      image:
-        "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "2026-08-01",
-      end: "2026-08-20",
-      views: 18400,
-      clicks: 940,
-      createdAt: iso("2026-07-28T10:00:00"),
-    }),
-    bn(7, {
-      title: "New year upcycle drive",
-      subtitle: "Draft: copy still being written.",
-      cta: "Join in",
-      link: "/",
-      placement: "Home strip",
-      image:
-        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      start: "",
-      end: "",
-      active: false,
-      createdAt: iso("2026-10-19T10:00:00"),
-    }),
-  ],
-  faqs: [
-    fq(
-      1,
-      "Buying",
-      "How do I know an item is in good condition?",
-      "Every listing shows its condition and real photos, and you can message the seller before you buy. If something is not as described, you can report it and our team will look into it.",
-      { helpful: 84, notHelpful: 6 },
-    ),
-    fq(
-      2,
-      "Buying",
-      "Can I return something I bought?",
-      "Yes. If the item is different from its description, tell us within 7 days of delivery and we will arrange a return and refund.",
-      { helpful: 61, notHelpful: 4 },
-    ),
-    fq(
-      3,
-      "Buying",
-      "Is cash on delivery available?",
-      "Yes, for orders up to {cod_limit}. Keep the exact amount ready when the courier arrives.",
-      { helpful: 40, notHelpful: 3 },
-    ),
-    fq(
-      4,
-      "Selling",
-      "How do I list an item?",
-      "Open Sell an item, add photos, a title, the condition and your price. Our team reviews it, usually within a day, and then it goes live.",
-      { helpful: 72, notHelpful: 5 },
-    ),
-    fq(
-      5,
-      "Selling",
-      "Why was my listing rejected?",
-      "The most common reasons are unclear photos, a misleading description or an item we cannot accept. The rejection message tells you what to fix, and you can submit it again.",
-      { helpful: 33, notHelpful: 9 },
-    ),
-    fq(
-      6,
-      "Selling",
-      "What does ReOrbit charge?",
-      "A platform fee of {platform_fee} is added to the buyer's order at checkout. Listing is free.",
-      { helpful: 29, notHelpful: 2 },
-    ),
-    fq(
-      7,
-      "Donating",
-      "Is pickup really free?",
-      "Yes. Once we accept your donation, a pickup team collects it from your door at no cost. You choose a date and a time slot.",
-      { helpful: 118, notHelpful: 3 },
-    ),
-    fq(
-      8,
-      "Donating",
-      "What happens to my donation?",
-      "Items in good shape are cleaned and sold. Items a ReMaker can restore are refurbished first. What we cannot sell goes to partner NGOs.",
-      { helpful: 56, notHelpful: 2 },
-    ),
-    fq(
-      9,
-      "Donating",
-      "How do I earn Orbit Points?",
-      "You earn points for every completed donation, for purchases and for reviews. Points can be used on vouchers at checkout.",
-      { helpful: 47, notHelpful: 4 },
-    ),
-    fq(
-      10,
-      "ReMakers",
-      "How do I become a ReMaker?",
-      "Create an account, choose ReMaker and add your portfolio. Then you can list your creations right away.",
-      { helpful: 38, notHelpful: 5 },
-    ),
-    fq(
-      11,
-      "ReMakers",
-      "Can I take on refurbishment work?",
-      "Yes. ReMakers can be assigned items from the ReOrbit warehouse and are paid when the finished piece sells.",
-      { helpful: 21, notHelpful: 3 },
-    ),
-    fq(
-      12,
-      "Payments & refunds",
-      "How long do refunds take?",
-      "Once a return is checked, the money reaches your original payment method in 5 to 7 working days.",
-      { helpful: 52, notHelpful: 8 },
-    ),
-    fq(
-      13,
-      "Account",
-      "How do I reset my password?",
-      "On the login page choose Forgot password, enter your email and follow the link we send you.",
-      { helpful: 44, notHelpful: 1 },
-    ),
-    fq(
-      14,
-      "Account",
-      "How do I delete my account?",
-      "Go to Settings, then Account, and choose Delete account. Paid orders are kept as the law requires.",
-      { helpful: 12, notHelpful: 2, published: false },
-    ),
-  ],
-  policies: [
-    {
-      key: "terms",
-      title: "Terms of use",
-      icon: "Scale",
-      summary: "The rules for using ReOrbit.",
-      version: "2.1",
-      status: "Published",
-      updatedAt: iso("2026-09-12T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: null,
-      body: TERMS,
-      versions: [
-        ver(
-          "2.1",
-          "2026-09-12T10:00:00",
-          "ReOrbit team",
-          "Added the platform fee section",
-          TERMS,
-        ),
-        ver(
-          "2.0",
-          "2026-03-02T10:00:00",
-          "ReOrbit team",
-          "Rewritten in plain language",
-          TERMS.replace(
-            /Orders placed by members[\s\S]*?\n\n## 4/,
-            "Fees are shown at checkout.\n\n## 4",
-          ),
-        ),
-        ver(
-          "1.0",
-          "2025-01-10T10:00:00",
-          "ReOrbit team",
-          "First version",
-          "## Using ReOrbit\nBy using ReOrbit you agree to these terms.",
-        ),
-      ],
-    },
-    {
-      key: "privacy",
-      title: "Privacy policy",
-      icon: "Lock",
-      summary: "What we collect and why.",
-      version: "1.4",
-      status: "Published",
-      updatedAt: iso("2026-07-05T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: null,
-      body: PRIVACY,
-      versions: [
-        ver(
-          "1.4",
-          "2026-07-05T10:00:00",
-          "ReOrbit team",
-          "Clarified who sees addresses",
-          PRIVACY,
-        ),
-        ver(
-          "1.0",
-          "2025-01-10T10:00:00",
-          "ReOrbit team",
-          "First version",
-          "## What we collect\nYour name, email and the items you list.",
-        ),
-      ],
-    },
-    {
-      key: "refunds",
-      title: "Returns and refunds",
-      icon: "RotateCcw",
-      summary: "When and how we give money back.",
-      version: "1.2",
-      status: "Published",
-      updatedAt: iso("2026-08-20T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: {
-        body: REFUNDS.replace("within 7 days", "within 10 days"),
-        note: "Extend the return window to 10 days for Diwali",
-        at: iso("2026-10-18T15:00:00"),
-        by: "ReOrbit team",
-      },
-      body: REFUNDS,
-      versions: [
-        ver(
-          "1.2",
-          "2026-08-20T10:00:00",
-          "ReOrbit team",
-          "Added platform fee refund",
-          REFUNDS,
-        ),
-        ver(
-          "1.0",
-          "2025-01-10T10:00:00",
-          "ReOrbit team",
-          "First version",
-          "## Returns\nTell us if an item is not as described.",
-        ),
-      ],
-    },
-    {
-      key: "shipping",
-      title: "Shipping and delivery",
-      icon: "Truck",
-      summary: "How orders reach you.",
-      version: "1.1",
-      status: "Published",
-      updatedAt: iso("2026-06-10T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: null,
-      body: SHIPPING,
-      versions: [
-        ver(
-          "1.1",
-          "2026-06-10T10:00:00",
-          "ReOrbit team",
-          "Added cash on delivery",
-          SHIPPING,
-        ),
-        ver(
-          "1.0",
-          "2025-01-10T10:00:00",
-          "ReOrbit team",
-          "First version",
-          "## Delivery\nOrders are delivered in 3 to 7 working days.",
-        ),
-      ],
-    },
-    {
-      key: "donation",
-      title: "Donation guidelines",
-      icon: "Gift",
-      summary: "What we accept and how pickups work.",
-      version: "1.0",
-      status: "Published",
-      updatedAt: iso("2025-01-10T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: null,
-      body: DONATION,
-      versions: [
-        ver(
-          "1.0",
-          "2025-01-10T10:00:00",
-          "ReOrbit team",
-          "First version",
-          DONATION,
-        ),
-      ],
-    },
-    {
-      key: "community",
-      title: "Community guidelines",
-      icon: "UsersRound",
-      summary: "How we expect everyone to behave.",
-      version: "1.0",
-      status: "Draft",
-      updatedAt: iso("2026-10-14T10:00:00"),
-      updatedBy: "ReOrbit team",
-      draft: null,
-      body: COMMUNITY,
-      versions: [],
-      neverPublished: true,
-    },
-  ],
+  banners: [],
+  faqs: [],
+  policies: [],
   log: [],
+  status: "idle", // idle | loading | ready | error  (banners, FAQs, policies)
 };
 
 const listeners = new Set();
@@ -638,21 +159,70 @@ const set = (patch) => {
   listeners.forEach((l) => l());
 };
 const useRaw = () => useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-const stamp = () => new Date().toISOString();
-const logAdd = (by, text) =>
-  set({
-    log: [
-      {
-        id: `L${Date.now()}${Math.random().toString(36).slice(2, 5)}`,
-        by: by || "Admin",
-        text,
-        at: stamp(),
-      },
-      ...state.log,
-    ].slice(0, 30),
-  });
 
-export const useContentLog = () => useRaw().log;
+/* The Content page registers a toast here so a refused change is shown. */
+let errorHandler = null;
+export const onContentError = (fn) => {
+  errorHandler = fn;
+  return () => {
+    if (errorHandler === fn) errorHandler = null;
+  };
+};
+const failed = (e) =>
+  errorHandler?.(
+    e?.errors
+      ? Object.values(e.errors).flat()[0]
+      : e?.message || "That did not work. Please try again.",
+  );
+
+export async function loadContent(force = false) {
+  if (!force && (state.status === "loading" || state.status === "ready"))
+    return;
+  set({ status: "loading" });
+  try {
+    const [banners, faqs, policies, log] = await Promise.all([
+      adminContentApi.banners(),
+      adminContentApi.faqs(),
+      adminContentApi.policies(),
+      adminContentApi.log(),
+    ]);
+    set({ banners, faqs, policies, log, status: "ready" });
+  } catch (e) {
+    set({ status: "error" });
+  }
+}
+const reloadLog = () =>
+  adminContentApi
+    .log()
+    .then((log) => set({ log }))
+    .catch(() => {});
+
+/* Runs a server call after an on-screen change. If the server refuses, reload
+   the real data (undoing the on-screen change) and show why. */
+function sync(promise, onDone) {
+  return promise
+    .then((r) => {
+      onDone?.(r);
+      reloadLog();
+      return r;
+    })
+    .catch((e) => {
+      failed(e);
+      loadContent(true);
+    });
+}
+const swapRow = (list, row) => list.map((x) => (x.id === row.id ? row : x));
+
+function useContentLoader() {
+  const raw = useRaw();
+  useEffect(() => {
+    loadContent();
+  }, []);
+  return raw;
+}
+export const useContentStatus = () => useRaw().status;
+export const useContentLog = () => useContentLoader().log;
+
 
 /* ---------------------------------------------------------
    Categories (real data: Admin > Content talks to /api/core/admin/categories/)
@@ -730,261 +300,222 @@ export async function removeCategory(id) {
   refreshCategories();
 }
 
+
 /* ---------------------------------------------------------
-   Banners
+   Banners  (status, CTR and the "starts in" days come from the server)
    --------------------------------------------------------- */
-export function bannerStatus(b) {
-  if (!b.active) return { key: "Draft", label: "Draft" };
-  if (b.start && b.start > TODAY_KEY)
-    return { key: "Scheduled", label: "Scheduled" };
-  if (b.end && b.end < TODAY_KEY) return { key: "Ended", label: "Ended" };
-  return { key: "Live", label: "Live" };
-}
 export function useBanners() {
-  const { banners } = useRaw();
-  return useMemo(
-    () =>
-      banners.map((b) => {
-        const st = bannerStatus(b);
-        const ctr = b.views ? (b.clicks / b.views) * 100 : 0;
-        const startsIn = b.start
-          ? Math.round((new Date(b.start) - new Date(TODAY_KEY)) / DAY)
-          : 0;
-        const endsIn = b.end
-          ? Math.round((new Date(b.end) - new Date(TODAY_KEY)) / DAY)
-          : null;
-        return { ...b, status: st.key, ctr, startsIn, endsIn };
-      }),
-    [banners],
-  );
+  return useContentLoader().banners;
 }
-/* values: { title, subtitle, cta, link, placement, audience, image, start, end } */
-export function saveBanner(id, values, by) {
-  const clean = {
-    title: values.title.trim(),
-    subtitle: values.subtitle.trim(),
-    cta: values.cta.trim(),
-    link: values.link.trim(),
-    placement: values.placement,
-    audience: values.audience,
-    image: values.image,
-    start: values.start || "",
-    end: values.end || "",
-  };
+const uid = () => `tmp-${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+const bannerBody = (v) => ({
+  title: v.title,
+  subtitle: v.subtitle || "",
+  cta: v.cta || "",
+  link: v.link,
+  placement: v.placement,
+  audience: v.audience,
+  image: v.image,
+  start: v.start || "",
+  end: v.end || "",
+});
+
+/* Returns the id at once (a temporary one for a new banner, swapped for the real one). */
+export function saveBanner(id, values) {
   if (id) {
     set({
-      banners: state.banners.map((b) => (b.id === id ? { ...b, ...clean } : b)),
+      banners: state.banners.map((b) =>
+        b.id === id ? { ...b, ...bannerBody(values) } : b,
+      ),
     });
-    logAdd(by, `Updated the banner “${clean.title}”`);
+    sync(adminContentApi.updateBanner(id, bannerBody(values)), (row) =>
+      set({ banners: swapRow(state.banners, row) }),
+    );
     return id;
   }
-  const nid = `BN-${state.seq.bn}`;
+  const tmp = uid();
   set({
-    seq: { ...state.seq, bn: state.seq.bn + 1 },
     banners: [
       ...state.banners,
       {
-        id: nid,
-        ...clean,
+        ...bannerBody(values),
+        id: tmp,
         active: false,
+        status: "Draft",
         views: 0,
         clicks: 0,
-        createdAt: stamp(),
+        ctr: 0,
+        startsIn: 0,
+        endsIn: null,
+        createdAt: new Date().toISOString(),
       },
     ],
   });
-  logAdd(by, `Created the banner “${clean.title}” as a draft`);
-  return nid;
+  sync(adminContentApi.createBanner(bannerBody(values)), (row) =>
+    set({ banners: state.banners.map((b) => (b.id === tmp ? row : b)) }),
+  );
+  return tmp;
 }
-export function setBannerActive(id, active, by) {
-  const cur = state.banners.find((b) => b.id === id);
+export function setBannerActive(id, active) {
   set({
-    banners: state.banners.map((b) => (b.id === id ? { ...b, active } : b)),
+    banners: state.banners.map((b) =>
+      b.id === id
+        ? {
+            ...b,
+            active,
+            status: active ? (b.status === "Draft" ? "Live" : b.status) : "Draft",
+          }
+        : b,
+    ),
   });
-  if (cur)
-    logAdd(
-      by,
-      `${active ? "Published" : "Unpublished"} the banner “${cur.title}”`,
-    );
+  // the server works out Live / Scheduled / Ended from the dates
+  sync(adminContentApi.updateBanner(id, { active }), (row) =>
+    set({ banners: swapRow(state.banners, row) }),
+  );
 }
-export function duplicateBanner(id, by) {
-  const cur = state.banners.find((b) => b.id === id);
-  if (!cur) return null;
-  const nid = `BN-${state.seq.bn}`;
-  set({
-    seq: { ...state.seq, bn: state.seq.bn + 1 },
-    banners: [
-      ...state.banners,
-      {
-        ...cur,
-        id: nid,
-        title: `${cur.title} (copy)`,
-        active: false,
-        views: 0,
-        clicks: 0,
-        createdAt: stamp(),
-      },
-    ],
-  });
-  logAdd(by, `Duplicated the banner “${cur.title}”`);
-  return nid;
+export function duplicateBanner(id) {
+  sync(adminContentApi.duplicateBanner(id), (row) =>
+    set({ banners: [...state.banners, row] }),
+  );
 }
-export function removeBanner(id, by) {
-  const cur = state.banners.find((b) => b.id === id);
+export function removeBanner(id) {
   set({ banners: state.banners.filter((b) => b.id !== id) });
-  if (cur) logAdd(by, `Deleted the banner “${cur.title}”`);
+  sync(adminContentApi.removeBanner(id));
 }
 export function moveBanner(id, dir) {
   const list = [...state.banners];
-  const cur = list.find((b) => b.id === id);
-  if (!cur) return;
-  const sameIdx = list
-    .map((b, i) => (b.placement === cur.placement ? i : -1))
-    .filter((i) => i >= 0);
-  const pos = sameIdx.indexOf(list.indexOf(cur));
-  const target = sameIdx[pos + dir];
-  if (target === undefined) return;
-  const a = list.indexOf(cur);
-  [list[a], list[target]] = [list[target], list[a]];
+  const i = list.findIndex((b) => b.id === id);
+  if (i < 0) return;
+  let j = i + dir;
+  while (j >= 0 && j < list.length && list[j].placement !== list[i].placement)
+    j += dir;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
   set({ banners: list });
+  sync(adminContentApi.moveBanner(id, dir), (rows) => set({ banners: rows }));
 }
 
 /* ---------------------------------------------------------
    FAQs
    --------------------------------------------------------- */
-export const useFaqs = () => {
-  const { faqs } = useRaw();
-  return useMemo(() => faqs.map((f, i) => ({ ...f, position: i })), [faqs]);
-};
-/* values: { topic, q, a } */
-export function saveFaq(id, values, by) {
-  const clean = { topic: values.topic, q: values.q.trim(), a: values.a.trim() };
+export const useFaqs = () => useContentLoader().faqs;
+
+export function saveFaq(id, values) {
+  const body = { topic: values.topic, q: values.q, a: values.a };
   if (id) {
     set({
-      faqs: state.faqs.map((f) => (f.id === id ? { ...f, ...clean } : f)),
+      faqs: state.faqs.map((f) => (f.id === id ? { ...f, ...body } : f)),
     });
-    logAdd(by, `Edited the FAQ “${clean.q}”`);
+    sync(adminContentApi.updateFaq(id, body), (row) =>
+      set({ faqs: swapRow(state.faqs, row) }),
+    );
     return id;
   }
-  const nid = `FQ-${state.seq.fq}`;
+  const tmp = uid();
   set({
-    seq: { ...state.seq, fq: state.seq.fq + 1 },
     faqs: [
       ...state.faqs,
-      {
-        id: nid,
-        ...clean,
-        published: values.published !== false,
-        helpful: 0,
-        notHelpful: 0,
-      },
+      { ...body, id: tmp, published: true, helpful: 0, notHelpful: 0 },
     ],
   });
-  logAdd(by, `Added the FAQ “${clean.q}”`);
-  return nid;
+  sync(adminContentApi.createFaq({ ...body, published: true }), (row) =>
+    set({ faqs: state.faqs.map((f) => (f.id === tmp ? row : f)) }),
+  );
+  return tmp;
 }
-export function setFaqPublished(id, published, by) {
-  const cur = state.faqs.find((f) => f.id === id);
+export function setFaqPublished(id, published) {
   set({ faqs: state.faqs.map((f) => (f.id === id ? { ...f, published } : f)) });
-  if (cur)
-    logAdd(by, `${published ? "Published" : "Unpublished"} the FAQ “${cur.q}”`);
+  sync(adminContentApi.updateFaq(id, { published }), (row) =>
+    set({ faqs: swapRow(state.faqs, row) }),
+  );
 }
-export function removeFaq(id, by) {
-  const cur = state.faqs.find((f) => f.id === id);
+export function removeFaq(id) {
   set({ faqs: state.faqs.filter((f) => f.id !== id) });
-  if (cur) logAdd(by, `Deleted the FAQ “${cur.q}”`);
+  sync(adminContentApi.removeFaq(id));
 }
 export function moveFaq(id, dir) {
   const list = [...state.faqs];
-  const cur = list.find((f) => f.id === id);
-  if (!cur) return;
-  const sameIdx = list
-    .map((f, i) => (f.topic === cur.topic ? i : -1))
-    .filter((i) => i >= 0);
-  const pos = sameIdx.indexOf(list.indexOf(cur));
-  const target = sameIdx[pos + dir];
-  if (target === undefined) return;
-  const a = list.indexOf(cur);
-  [list[a], list[target]] = [list[target], list[a]];
+  const i = list.findIndex((f) => f.id === id);
+  if (i < 0) return;
+  let j = i + dir;
+  while (j >= 0 && j < list.length && list[j].topic !== list[i].topic) j += dir;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
   set({ faqs: list });
+  sync(adminContentApi.moveFaq(id, dir), (rows) => set({ faqs: rows }));
 }
 
 /* ---------------------------------------------------------
-   Policies
+   Policies  (drafts, versions and the live text are all stored by the server)
    --------------------------------------------------------- */
-export const usePolicies = () => {
-  const { policies } = useRaw();
-  return policies;
-};
+export const usePolicies = () => useContentLoader().policies;
 
-const bump = (v, major) => {
-  const [a, b] = String(v).split(".").map(Number);
-  return major ? `${a + 1}.0` : `${a}.${b + 1}`;
-};
+const putPolicy = (row) =>
+  set({ policies: state.policies.map((p) => (p.key === row.key ? row : p)) });
 
 export function saveDraft(key, body, note, by) {
-  set({
-    policies: state.policies.map((p) =>
-      p.key === key
-        ? {
-            ...p,
-            draft: { body, note: note || "", at: stamp(), by: by || "Admin" },
-          }
-        : p,
-    ),
+  putPolicy({
+    ...state.policies.find((p) => p.key === key),
+    draft: { body, note, at: new Date().toISOString(), by: by || "Admin" },
   });
-  logAdd(
-    by,
-    `Saved a draft of ${state.policies.find((p) => p.key === key)?.title}`,
-  );
+  sync(adminContentApi.saveDraft(key, { body, note }), putPolicy);
 }
-export function discardDraft(key, by) {
-  set({
-    policies: state.policies.map((p) =>
-      p.key === key ? { ...p, draft: null } : p,
-    ),
-  });
-  logAdd(
-    by,
-    `Discarded the draft of ${state.policies.find((p) => p.key === key)?.title}`,
-  );
+export function discardDraft(key) {
+  putPolicy({ ...state.policies.find((p) => p.key === key), draft: null });
+  sync(adminContentApi.discardDraft(key), putPolicy);
 }
-/* Publishing makes the body live and keeps the old one in the version list. */
+
+/* The version number is worked out the same way on the server. */
+const nextVersion = (p, major) => {
+  if (p.neverPublished) return "1.0";
+  const [a, b] = String(p.version).split(".").map(Number);
+  return major ? `${a + 1}.0` : `${a}.${b + 1}`;
+};
 export function publishPolicy(key, body, note, major, by) {
   const p = state.policies.find((x) => x.key === key);
-  if (!p) return null;
-  const first = p.neverPublished || !p.versions.length;
-  const v = first ? "1.0" : bump(p.version, major);
-  const at = stamp();
-  set({
-    policies: state.policies.map((x) =>
-      x.key !== key
-        ? x
-        : {
-            ...x,
-            body,
-            version: v,
-            status: "Published",
-            updatedAt: at,
-            updatedBy: by || "Admin",
-            draft: null,
-            neverPublished: false,
-            versions: [
-              { v, at, by: by || "Admin", note: note || "", body },
-              ...x.versions,
-            ],
-          },
-    ),
+  const v = nextVersion(p, major);
+  const at = new Date().toISOString();
+  putPolicy({
+    ...p,
+    body,
+    version: v,
+    status: "Published",
+    neverPublished: false,
+    updatedAt: at,
+    updatedBy: by || "Admin",
+    draft: null,
+    versions: [
+      { v, at, by: by || "Admin", note: note || "First version", body },
+      ...(p.versions || []),
+    ],
   });
-  logAdd(by, `Published ${p.title} version ${v}`);
+  sync(adminContentApi.publish(key, { body, note, major: !!major }), (r) =>
+    putPolicy(r.policy),
+  );
   return v;
 }
+
 /* Putting back an old version publishes it as a NEW version, so nothing is lost. */
 export function restoreVersion(key, v, by) {
   const p = state.policies.find((x) => x.key === key);
   const old = p?.versions.find((x) => x.v === v);
   if (!old) return null;
-  return publishPolicy(key, old.body, `Restored version ${v}`, false, by);
+  const nv = nextVersion(p, false);
+  const at = new Date().toISOString();
+  putPolicy({
+    ...p,
+    body: old.body,
+    version: nv,
+    updatedAt: at,
+    updatedBy: by || "Admin",
+    draft: null,
+    versions: [
+      { v: nv, at, by: by || "Admin", note: `Restored version ${v}`, body: old.body },
+      ...p.versions,
+    ],
+  });
+  sync(adminContentApi.restore(key, v), (r) => putPolicy(r.policy));
+  return nv;
 }
 
 /* Fills {tokens} with the live values from Settings. */
