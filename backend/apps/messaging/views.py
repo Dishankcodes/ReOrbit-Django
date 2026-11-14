@@ -273,15 +273,14 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
     peer_profile = _profile(account, peer.account_type) if account else None
 
     if participant.account_type == "admin":
-        display_kind = (
-            "support"
-            if conv.kind == "reorbit"
-            else "customer"
-            if peer and peer.account_type == "user"
-            else "remaker"
-            if peer and peer.account_type == "remaker"
-            else conv.kind
-        )
+        # In the admin inbox the label describes the external participant,
+        # not the shared support-thread's internal conversation kind.
+        if peer and peer.account_type == "user":
+            display_kind = "customer"
+        elif peer and peer.account_type == "remaker":
+            display_kind = "remaker"
+        else:
+            display_kind = "support" if conv.kind == "reorbit" else conv.kind
     elif peer and peer.account_type == "admin":
         display_kind = "reorbit"
     elif participant.account_type == "remaker" and peer and peer.account_type == "user":
