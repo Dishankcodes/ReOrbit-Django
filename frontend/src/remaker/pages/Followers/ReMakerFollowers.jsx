@@ -1,18 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { Users } from "lucide-react";
 
 import {
   followBack,
   followerStats,
   growthSeries,
+  isEngaged,
   removeFollower,
-  restoreFollower,
   restoreFollowing,
   unfollow,
   useFollowers,
+  useFollowersStatus,
   useFollowing,
 } from "../../data/followersStore";
-import { useCustomers } from "../../data/salesStore";
 
 import FollowerCard from "./components/FollowerCard";
 import FollowerDrawer from "./components/FollowerDrawer";
@@ -27,7 +28,7 @@ const PAGE_SIZE = 12;
 export default function ReMakerFollowers() {
   const followers = useFollowers();
   const following = useFollowing();
-  const customers = useCustomers();
+  const status = useFollowersStatus();
 
   const [tab, setTab] = useState("followers");
   const [filter, setFilter] = useState("all");
@@ -63,9 +64,7 @@ export default function ReMakerFollowers() {
         (person) => new Date(person.followedAt).getTime() >= monthAgo,
       ).length,
       customers: followers.filter((person) => person.customerId).length,
-      engaged: followers.filter(
-        (person) => person.views >= 34 || person.saves >= 5,
-      ).length,
+      engaged: followers.filter(isEngaged).length,
       makers: followers.filter((person) => person.type === "ReMaker").length,
     };
   }, [followers]);
@@ -78,8 +77,7 @@ export default function ReMakerFollowers() {
       if (filter === "new" && new Date(person.followedAt).getTime() < monthAgo)
         return false;
       if (filter === "customers" && !person.customerId) return false;
-      if (filter === "engaged" && !(person.views >= 34 || person.saves >= 5))
-        return false;
+      if (filter === "engaged" && !isEngaged(person)) return false;
       if (filter === "makers" && person.type !== "ReMaker") return false;
       if (!text) return true;
 
@@ -93,7 +91,7 @@ export default function ReMakerFollowers() {
       recent: (a, b) => b.followedAt.localeCompare(a.followedAt),
       oldest: (a, b) => a.followedAt.localeCompare(b.followedAt),
       name: (a, b) => a.name.localeCompare(b.name),
-      engaged: (a, b) => b.views + b.saves * 5 - (a.views + a.saves * 5),
+      engaged: (a, b) => b.saves + b.orders * 5 - (a.saves + a.orders * 5),
     };
 
     return [...filtered].sort(sorters[sort]);
@@ -110,28 +108,65 @@ export default function ReMakerFollowers() {
     setShown(PAGE_SIZE);
   };
 
-  const handleRemove = (person) => {
-    const removed = removeFollower(person.id);
+  /* A removed follower can only come back by following again themselves,
+     so there is no Undo here. */
+  const handleRemove = async (person) => {
     setOpen(null);
-    if (removed)
-      flash(`Removed ${removed.name}.`, () => restoreFollower(removed));
+
+    try {
+      const removed = await removeFollower(person.id);
+      if (removed) flash(`Removed ${removed.name}.`);
+    } catch (error) {
+      flash(error.message || "We couldn't remove that follower.");
+    }
   };
 
-  const handleFollowBack = (person) => {
-    followBack(person);
-    flash(`You now follow ${person.name}.`);
+  const handleFollowBack = async (person) => {
+    try {
+      await followBack(person);
+      flash(`You now follow ${person.name}.`);
+    } catch (error) {
+      flash(error.message || `We couldn't follow ${person.name}.`);
+    }
   };
 
-  const handleUnfollow = (item) => {
-    const removed = unfollow(item.id);
-    if (removed)
-      flash(`Unfollowed ${removed.name}.`, () => restoreFollowing(removed));
+  const handleUnfollow = async (item) => {
+    try {
+      const removed = await unfollow(item.id);
+      if (removed)
+        flash(`Unfollowed ${removed.name}.`, () =>
+          restoreFollowing(removed).catch((error) =>
+            flash(error.message || "We couldn't follow them again."),
+          ),
+        );
+    } catch (error) {
+      flash(error.message || `We couldn't unfollow ${item.name}.`);
+    }
   };
 
-  const customerFor = (person) =>
-    person.customerId
-      ? customers.find((entry) => entry.customer.id === person.customerId)
-      : null;
+  if (!status.loaded) {
+    return (
+      <section className="fol">
+        <div className="fol-empty" role="status">
+          {status.error ? (
+            <>
+              <h3>We couldn&apos;t load your followers</h3>
+              <p>{status.error}</p>
+              <button
+                type="button"
+                className="fol-btn primary"
+                onClick={status.retry}
+              >
+                Try again
+              </button>
+            </>
+          ) : (
+            <p>Loading your followers...</p>
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="fol">
@@ -197,9 +232,12 @@ export default function ReMakerFollowers() {
 
           {visible.length === 0 ? (
             <div className="fol-empty">
-              <div className="fol-empty-art" aria-hidden="true">
-                <img src="/images/users/meera-iyer.jpg" alt="" />
-                <img src="/images/users/kabir-verma.jpg" alt="" />
+              <div
+                className="fol-empty-art"
+                aria-hidden="true"
+                style={{ display: "grid", placeItems: "center", height: 90 }}
+              >
+                <Users size={44} strokeWidth={1.4} />
               </div>
               <h3>
                 {followers.length === 0
@@ -260,9 +298,12 @@ export default function ReMakerFollowers() {
         <>
           {following.length === 0 ? (
             <div className="fol-empty">
-              <div className="fol-empty-art" aria-hidden="true">
-                <img src="/images/remakers/tara-bose.jpg" alt="" />
-                <img src="/images/remakers/arjun-mehta.jpg" alt="" />
+              <div
+                className="fol-empty-art"
+                aria-hidden="true"
+                style={{ display: "grid", placeItems: "center", height: 90 }}
+              >
+                <Users size={44} strokeWidth={1.4} />
               </div>
               <h3>You are not following anyone</h3>
               <p>
@@ -293,7 +334,6 @@ export default function ReMakerFollowers() {
       {open && (
         <FollowerDrawer
           person={open}
-          customer={customerFor(open)}
           following={followingIds.has(open.id)}
           onClose={() => setOpen(null)}
           onRemove={handleRemove}

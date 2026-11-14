@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { REPORT_REASONS } from "../../../data/reviewsStore";
+import { useReportReasons } from "../../../data/reviewsStore";
 
 export default function ReportReviewModal({ review, onSubmit, onClose }) {
-  const [reason, setReason] = useState(REPORT_REASONS[0]);
+  const REPORT_REASONS = useReportReasons();
+  const [reason, setReason] = useState(REPORT_REASONS[0] || "");
   const dialogRef = useRef(null);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function ReportReviewModal({ review, onSubmit, onClose }) {
           <button
             type="button"
             className="rvp-btn primary"
+            disabled={!reason}
             onClick={() => onSubmit(reason)}
           >
             Send report

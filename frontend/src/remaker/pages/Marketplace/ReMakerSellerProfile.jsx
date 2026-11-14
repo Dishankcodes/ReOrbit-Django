@@ -29,8 +29,8 @@ import {
   formatPrice,
   getListingsBySeller,
   getSellerProfile,
-  getSellerReviews,
 } from "../../data/remakerMarketplaceData";
+import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import useWishlist from "../../hooks/useWishlist";
 
 import "../../css/ReMakerSellerProfile.css";
@@ -83,7 +83,7 @@ function Profile({ profile }) {
   const isRemaker = type === "remaker";
 
   const listings = getListingsBySeller(data.id);
-  const reviews = getSellerReviews(data.id);
+  const { reviews, summary } = useSellerReviews(type, data.id);
   const portfolio = isRemaker ? data.portfolio || [] : [];
 
   const [tab, setTab] = useState("listings");
@@ -95,8 +95,8 @@ function Profile({ profile }) {
     ? [
         {
           icon: Star,
-          value: data.rating,
-          label: `${data.totalReviews} reviews`,
+          value: summary.count ? summary.average.toFixed(1) : "-",
+          label: `${summary.count} reviews`,
         },
         {
           icon: Users,
@@ -113,8 +113,8 @@ function Profile({ profile }) {
     : [
         {
           icon: Star,
-          value: data.rating,
-          label: `${data.totalReviews} reviews`,
+          value: summary.count ? summary.average.toFixed(1) : "-",
+          label: `${summary.count} reviews`,
         },
         { icon: Package, value: data.productsSold, label: "Items sold" },
         { icon: CalendarDays, value: data.joined, label: "Member since" },
@@ -126,7 +126,7 @@ function Profile({ profile }) {
     ...(portfolio.length
       ? [{ key: "portfolio", label: `Portfolio (${portfolio.length})` }]
       : []),
-    { key: "reviews", label: `Reviews (${data.totalReviews})` },
+    { key: "reviews", label: `Reviews (${summary.count})` },
     { key: "about", label: "About" },
   ];
 
@@ -318,12 +318,12 @@ function Profile({ profile }) {
           <div className="rsp-reviews">
             <RatingSummary
               reviews={reviews}
-              average={data.rating}
-              total={data.totalReviews}
+              average={summary.average}
+              total={summary.count}
             />
-            {data.totalReviews > reviews.length && (
+            {summary.count > reviews.length && (
               <p className="rsp-more">
-                Showing the latest {reviews.length} of {data.totalReviews}{" "}
+                Showing the latest {reviews.length} of {summary.count}{" "}
                 reviews.
               </p>
             )}
@@ -366,7 +366,7 @@ function Profile({ profile }) {
               ],
               isRemaker ? ["Craft", data.craft] : null,
               ["Location", data.city],
-              ["Rating", `${data.rating} from ${data.totalReviews} reviews`],
+              ["Rating", summary.count ? `${summary.average.toFixed(1)} from ${summary.count} reviews` : "No reviews yet"],
               isRemaker
                 ? ["Pieces listed", data.productsCount]
                 : ["Items sold", data.productsSold],

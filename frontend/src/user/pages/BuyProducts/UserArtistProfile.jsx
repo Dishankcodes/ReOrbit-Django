@@ -4,6 +4,7 @@ import { UserX } from "lucide-react";
 
 import { fetchPublicRemaker } from "../../../api/remakers";
 import { useUserComplaintFiler } from "../../../shared/complaints";
+import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { useFollowing } from "../../data/followStore";
 import { personChat } from "../../components/ui/MessageButton";
 import ProfileShell from "./ProfileShell";
@@ -16,6 +17,7 @@ export default function UserArtistProfile() {
   const [error, setError] = useState("");
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
+  const { reviews } = useSellerReviews("remaker", artistId);
 
   useEffect(() => {
     let active = true;
@@ -66,7 +68,7 @@ export default function UserArtistProfile() {
       person={artist}
       isMaker
       products={[]}
-      reviews={[]}
+      reviews={reviews}
       portfolio={artist.portfolio || []}
       following={isFollowing(artist.id)}
       onFollow={() => toggle(artist.id)}

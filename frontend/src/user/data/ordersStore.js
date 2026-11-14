@@ -6,7 +6,6 @@
    ========================================================= */
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { addSellerReview, getItemById } from "../../data/marketplaceData";
 import { buyerOrdersApi } from "../../api/orders";
 
 export const STAGES = [
@@ -111,7 +110,7 @@ function refundOf(o) {
   return { amount: total, status: done ? "Refunded" : "Processing", at: last };
 }
 
-function adapt(o, reviews) {
+function adapt(o) {
   const lines = o.items || [];
   const first = lines[0] || {};
   const qty = lines.reduce((n, l) => n + l.qty, 0) || 1;
@@ -149,7 +148,7 @@ function adapt(o, reviews) {
       : null,
     eta: null,
     deliveredAt: o.delivered_at || null,
-    review: reviews[o.id] || null,
+    review: o.review ? { rating: o.review.rating, at: o.review.at } : null,
     reference: o.payment.id,
     note: o.note || "",
     events,
@@ -185,7 +184,6 @@ function adapt(o, reviews) {
 
 /* ---------- store ---------- */
 let raw = []; /* server orders, newest first */
-let reviews = {};
 let status = { loaded: false, loading: false, error: "", at: 0 };
 const listeners = new Set();
 const subscribe = (l) => {
@@ -264,27 +262,9 @@ export async function returnAction(id, action) {
 
 export const clearOrders = () => {
   raw = [];
-  reviews = {};
   status = { loaded: false, loading: false, error: "", at: 0 };
   bump();
 };
-
-/* the review also shows on the seller / ReMaker profile (demo profiles only) */
-export function reviewOrder(id, review) {
-  reviews = { ...reviews, [id]: review };
-  const o = raw.find((x) => x.id === id);
-  const item = o && getItemById(o.items?.[0]?.id);
-  if (item?.sellerId) {
-    addSellerReview(item.sellerId, {
-      id: `order-${id}`,
-      name: "Aarav",
-      rating: review.rating,
-      text: review.text || "Rated this order without a written review.",
-      date: String(review.at || new Date().toISOString()).slice(0, 10),
-    });
-  }
-  bump();
-}
 
 /* ---------- derived ---------- */
 export const canCancel = (o) => !!o.canCancel;
@@ -299,7 +279,7 @@ export const sellerPath = (item) =>
     : `/user-marketplace/seller/${item.sellerId}`;
 
 function decorate(o) {
-  const order = adapt(o, reviews);
+  const order = adapt(o);
   const seller =
     o.seller?.type === "platform"
       ? { name: "ReOrbit" }

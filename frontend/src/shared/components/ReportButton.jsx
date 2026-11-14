@@ -33,6 +33,7 @@ export default function ReportButton({
   const [details, setDetails] = useState("");
   const [touched, setTouched] = useState(false);
   const [sent, setSent] = useState(false);
+  const [failed, setFailed] = useState("");
   const ref = useRef(null);
 
   useEffect(() => {
@@ -53,20 +54,26 @@ export default function ReportButton({
     setDetails("");
     setTouched(false);
     setSent(false);
+    setFailed("");
     setOpen(true);
   };
   const tooShort = details.trim().length < 10;
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTouched(true);
     if (tooShort) return;
-    file({
-      type,
-      reason,
-      description: `${reason}. ${details.trim()}`,
-      ...target,
-    });
-    setSent(true);
+    setFailed("");
+    try {
+      await file({
+        type,
+        reason,
+        description: `${reason}. ${details.trim()}`,
+        ...target,
+      });
+      setSent(true);
+    } catch (err) {
+      setFailed(err?.message || "We couldn't send your report. Please try again.");
+    }
   };
 
   return (
@@ -148,6 +155,11 @@ export default function ReportButton({
                     </small>
                   )}
                 </label>
+                {failed && (
+                  <small className="rb-error" role="alert">
+                    {failed}
+                  </small>
+                )}
                 <div className="rb-actions">
                   <button
                     type="button"

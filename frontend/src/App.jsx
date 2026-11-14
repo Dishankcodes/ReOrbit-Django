@@ -439,10 +439,6 @@ const AdminSupport = page(
   "admin",
   () => import("./admin/pages/Support/AdminSupport"),
 );
-const AdminMessages = page(
-  "admin",
-  () => import("./admin/pages/Messages/AdminMessages"),
-);
 const AdminComplaintDetails = page(
   "admin",
   () => import("./admin/pages/Complaints/AdminComplaintDetails"),
@@ -475,6 +471,10 @@ const AdminNotifications = page(
 const AdminContent = page(
   "admin",
   () => import("./admin/pages/Content/AdminContent"),
+);
+const AdminReviews = page(
+  "admin",
+  () => import("./admin/pages/Reviews/AdminReviews"),
 );
 const AdminHelp = page("admin", () => import("./admin/pages/Help/AdminHelp"));
 const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
@@ -834,8 +834,6 @@ export default function App() {
             />
             <Route path="/admin-complaints" element={<AdminComplaints />} />
             <Route path="/admin-support" element={<AdminSupport />} />
-            <Route path="/admin-messages" element={<AdminMessages />} />
-            <Route path="/admin-messages/:id" element={<AdminMessages />} />
             <Route
               path="/admin-complaints/:complaintId"
               element={<AdminComplaintDetails />}
@@ -851,6 +849,7 @@ export default function App() {
               element={<AdminNotifications />}
             />
             <Route path="/admin-content" element={<AdminContent />} />
+            <Route path="/admin-reviews" element={<AdminReviews />} />
             <Route path="/admin-help" element={<AdminHelp />} />
             <Route path="/admin-states" element={<AdminStates />} />
 

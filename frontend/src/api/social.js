@@ -17,6 +17,8 @@ export const wishlistApi = {
 
 export const followApi = {
   list: () => apiRequest("/social/follow/").then((r) => r.data.following),
+  /* Newest live products from the ReMakers I follow */
+  feed: () => apiRequest("/social/follow/feed/").then((r) => r.data.items),
   followers: () => apiRequest("/social/followers/").then((r) => r.data.followers),
   removeFollower: (id) => apiRequest(`/social/followers/${id}/`, { method: "DELETE" }),
   follow: (id) => apiRequest("/social/follow/", { method: "POST", body: { id } }),

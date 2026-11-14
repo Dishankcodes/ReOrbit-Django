@@ -4,6 +4,7 @@ import {
   REPLY_TEMPLATES,
   deleteReply,
   relativeAgo,
+  reportReviewError,
   saveReply,
 } from "../../../data/reviewsStore";
 
@@ -16,6 +17,7 @@ export default function ReplyBox({ review }) {
   const [text, setText] = useState(review.reply?.text || "");
   const [attempted, setAttempted] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const tone =
     review.rating >= 4 ? "high" : review.rating === 3 ? "mid" : "low";
@@ -27,12 +29,28 @@ export default function ReplyBox({ review }) {
     setEditing(true);
   };
 
-  const submit = () => {
+  const submit = async () => {
     setAttempted(true);
-    if (tooShort) return;
+    if (tooShort || saving) return;
 
-    saveReply(review.id, text);
-    setEditing(false);
+    setSaving(true);
+    try {
+      await saveReply(review.id, text);
+      setEditing(false);
+    } catch (e) {
+      reportReviewError(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    try {
+      await deleteReply(review.id);
+      setConfirmDelete(false);
+    } catch (e) {
+      reportReviewError(e);
+    }
   };
 
   /* ----- writing / editing ----- */
@@ -84,6 +102,7 @@ export default function ReplyBox({ review }) {
           <button
             type="button"
             className="rvp-btn primary small"
+            disabled={saving}
             onClick={submit}
           >
             {review.reply ? "Save reply" : "Post reply"}
@@ -125,7 +144,7 @@ export default function ReplyBox({ review }) {
               <button
                 type="button"
                 className="danger"
-                onClick={() => deleteReply(review.id)}
+                onClick={remove}
               >
                 Yes, delete
               </button>

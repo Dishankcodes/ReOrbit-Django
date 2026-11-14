@@ -5,8 +5,12 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from django.db.models import Avg, Count
+
 from apps.core import buyers
+from apps.core.events import emit, review_posted
 from apps.core.images import delete_file, process_image
+from apps.core.services import notify
 from apps.core.validators import validate_image
 from apps.orders.models import Order, OrderItem
 
@@ -63,6 +67,60 @@ def edit_until(review):
     return review.created_at + timedelta(days=EDIT_DAYS)
 
 
+def seller_account(order):
+    """(type, account) of whoever sold the order, or (None, None) for ReOrbit's own store."""
+    if order.seller_type in ("user", "remaker"):
+        acct = getattr(order, f"seller_{order.seller_type}", None)
+        if acct is not None:
+            return order.seller_type, acct
+    return None, None
+
+
+def find_review(public_id):
+    """A review by its public id (PRV-… product review, SRV-… seller review)."""
+    pid = str(public_id or "")
+    model = ProductReview if pid.startswith("PRV-") else SellerReview if pid.startswith("SRV-") else None
+    if model is None:
+        return None
+    return model.objects.select_for_update().filter(public_id=pid).first()
+
+
+def order_of(review):
+    return review.order
+
+
+def refresh_rating(order):
+    """Recount a ReMaker's rating: the average of every visible product and seller review they have received.
+
+    (Members who sell have no stored rating; the public pages work theirs out from the reviews.)
+    """
+    t, acct = seller_account(order)
+    if t != "remaker":
+        return
+    visible = ProductReview.Status.VISIBLE
+    p = ProductReview.objects.filter(order__seller_remaker=acct, status=visible).aggregate(n=Count("pk"), a=Avg("rating"))
+    s = SellerReview.objects.filter(seller_remaker=acct, status=visible).aggregate(n=Count("pk"), a=Avg("rating"))
+    n = (p["n"] or 0) + (s["n"] or 0)
+    total = (p["a"] or 0) * (p["n"] or 0) + (s["a"] or 0) * (s["n"] or 0)
+    type(acct).objects.filter(pk=acct.pk).update(rating_average=round(total / n, 2) if n else 0, rating_count=n)
+
+
+def _announce_new(review, order, what, title_text):
+    """Tell the seller, and raise the cross-domain event. Called only when a review is first written."""
+    t, acct = seller_account(order)
+    if acct is not None:
+        stars = "★" * review.rating
+        if t == "remaker":
+            url = "/remaker-reviews"
+        else:
+            url = "/user-sell"
+        notify(acct, f"New {review.rating}-star review", f"{stars} {what}{title_text}.",
+               module="reviews", target_url=url, ref_type="review", ref_id=review.public_id)
+    reviewer = getattr(review, f"reviewer_{review.reviewer_type}")
+    emit(review_posted, type(review), review_public_id=review.public_id, reviewer_ref=reviewer.public_id,
+         seller_ref=acct.public_id if acct is not None else "")
+
+
 def _delivered_order(account, order_id):
     o = (Order.objects.select_related("seller_user", "seller_remaker")
          .filter(public_id=order_id, buyer_key=buyers.key_of(account)).first())
@@ -71,6 +129,11 @@ def _delivered_order(account, order_id):
     if o.status != Order.Status.DELIVERED:
         raise ReviewError("You can review an order once it is delivered.", code="not_delivered")
     return o
+
+
+def _check_hidden(review):
+    if review.status == review.Status.HIDDEN:
+        raise ReviewError("ReOrbit has hidden this review, so it can't be edited.", status=409, code="review_hidden")
 
 
 def _check_edit_window(review):
@@ -101,6 +164,7 @@ def save_product_review(account, order_id, line_id, data, files=(), remove_photo
         raise ReviewError("We couldn't find that item in the order.", status=404)
     review = ProductReview.objects.select_for_update().filter(order_item=line).first()
     if review:
+        _check_hidden(review)
         _check_edit_window(review)
 
     errors = {}
@@ -115,12 +179,9 @@ def save_product_review(account, order_id, line_id, data, files=(), remove_photo
     if errors:
         raise ReviewError("Please fix the highlighted fields.", errors=errors)
 
-    if review is None:
+    is_new = review is None
+    if is_new:
         review = ProductReview.objects.create(order=order, order_item=line, **base, **fields)
-        if base["reviewer_type"] == "user":
-            from apps.rewards import services as rewards  # local import: rewards reads reviews lazily too
-
-            rewards.on_review(account, review)  # Orbit Points for a new review (not for edits)
     else:
         for k, v in fields.items():
             setattr(review, k, v)
@@ -131,6 +192,9 @@ def save_product_review(account, order_id, line_id, data, files=(), remove_photo
             p.delete()
     for f in files:
         ProductReviewPhoto.objects.create(review=review, image=process_image(f, max_side=1600))
+    refresh_rating(order)
+    if is_new:
+        _announce_new(review, order, f"on “{line.title}”", f": {review.title}" if review.title else "")
     return review
 
 
@@ -143,6 +207,7 @@ def save_seller_review(account, order_id, data):
         raise ReviewError("This order was sold by ReOrbit, so there is no seller to review.", code="platform_seller")
     review = SellerReview.objects.select_for_update().filter(order=order).first()
     if review:
+        _check_hidden(review)
         _check_edit_window(review)
 
     errors = {}
@@ -159,26 +224,60 @@ def save_seller_review(account, order_id, data):
 
     if review is None:
         seller = {"seller_type": order.seller_type, f"seller_{order.seller_type}": getattr(order, f"seller_{order.seller_type}")}
-        return SellerReview.objects.create(order=order, **seller, **base, **fields)
+        review = SellerReview.objects.create(order=order, **seller, **base, **fields)
+        refresh_rating(order)
+        _announce_new(review, order, f"on order {order.public_id}", "")
+        return review
     for k, v in fields.items():
         setattr(review, k, v)
     review.edited_at = timezone.now()
     review.save()
+    refresh_rating(order)
+    return review
+
+
+def _my_received(account, review_id):
+    """A review that `account` received as the seller (product or seller review), locked for update."""
+    t = buyers.type_of(account)
+    review = find_review(review_id) if t in ("user", "remaker") else None
+    order = review.order if review else None
+    if review is None or seller_account(order) != (t, account):
+        raise ReviewError("We couldn't find that review.", status=404)
+    return review
+
+
+def _notify_reviewer(review, title, body):
+    reviewer = getattr(review, f"reviewer_{review.reviewer_type}")
+    url = "/remaker-my-reviews" if review.reviewer_type == "remaker" else "/user-reviews"
+    notify(reviewer, title, body, module="reviews", target_url=url, ref_type="review", ref_id=review.public_id)
+
+
+@transaction.atomic
+def reply_to_review(account, review_id, text):
+    """The member or ReMaker who sold the order answers the review. They can edit or remove the answer."""
+    review = _my_received(account, review_id)
+    if review.status == review.Status.HIDDEN:
+        raise ReviewError("This review is hidden, so it can't be answered.", status=409, code="review_hidden")
+    text = " ".join(str(text or "").split())
+    if len(text) < 10:
+        raise ReviewError("Please fix the highlighted fields.", errors={"reply": ["Write at least 10 characters."]})
+    if len(text) > 500:
+        raise ReviewError("Please fix the highlighted fields.", errors={"reply": ["Keep this under 500 characters."]})
+    first = not review.reply
+    review.reply, review.replied_at, review.reply_edited = text, review.replied_at if not first else timezone.now(), not first
+    review.save(update_fields=["reply", "replied_at", "reply_edited", "updated_at"])
+    if first:
+        _notify_reviewer(review, "The seller replied to your review", f"“{text[:120]}{'…' if len(text) > 120 else ''}”")
     return review
 
 
 @transaction.atomic
-def reply_to_seller_review(account, review_id, text):
-    """The member or ReMaker who sold the order answers the review once (they can edit the answer)."""
-    t = buyers.type_of(account)
-    review = SellerReview.objects.select_for_update().filter(public_id=review_id, seller_type=t, **{f"seller_{t}": account}).first() if t in ("user", "remaker") else None
-    if review is None:
-        raise ReviewError("We couldn't find that review.", status=404)
-    text = " ".join(str(text or "").split())
-    if not text:
-        raise ReviewError("Write a reply.", errors={"reply": ["Write a reply."]})
-    if len(text) > 500:
-        raise ReviewError("Please fix the highlighted fields.", errors={"reply": ["Keep this under 500 characters."]})
-    review.reply, review.replied_at = text, timezone.now()
-    review.save(update_fields=["reply", "replied_at", "updated_at"])
+def delete_reply(account, review_id):
+    review = _my_received(account, review_id)
+    review.reply, review.replied_at, review.reply_edited = "", None, False
+    review.save(update_fields=["reply", "replied_at", "reply_edited", "updated_at"])
     return review
+
+
+# kept for the old name
+reply_to_seller_review = reply_to_review

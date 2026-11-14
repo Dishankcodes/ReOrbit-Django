@@ -107,13 +107,6 @@ export const MODULES = [
     hint: "Help tickets from users and ReMakers",
   },
   {
-    key: "messages",
-    label: "Messages",
-    group: "Operations",
-    path: "/admin-messages",
-    hint: "Conversations with Users and ReMakers",
-  },
-  {
     key: "warehouse",
     label: "Warehouse",
     group: "Operations",
@@ -215,7 +208,6 @@ export const ROLE_PRESETS = [
       donations: "view",
       complaints: "edit",
       support: "edit",
-      messages: "edit",
       rewards: "view",
       content: "view",
       notifications: "edit",
@@ -394,6 +386,7 @@ export function refreshMyAccess() {
 /* ---------- permission helpers ---------- */
 export function moduleForPath(pathname) {
   if (pathname.startsWith("/admin-team")) return "team";
+  if (pathname.startsWith("/admin-reviews")) return "complaints";
   if (
     pathname.startsWith("/admin-settings") ||
     pathname.startsWith("/admin-profile") ||

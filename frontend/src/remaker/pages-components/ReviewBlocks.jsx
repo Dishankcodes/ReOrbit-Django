@@ -106,6 +106,11 @@ export function ReviewList({ reviews, verified = false }) {
           </div>
 
           <p>{review.text}</p>
+          {review.reply && (
+            <p className="rvw-reply">
+              <b>Seller reply:</b> {review.reply.text}
+            </p>
+          )}
         </article>
       ))}
     </div>

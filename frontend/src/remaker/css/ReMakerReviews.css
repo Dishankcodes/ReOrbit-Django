@@ -222,3 +222,12 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.rvw-list .rvw-reply {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid #cfd9c8;
+  border-radius: 0 10px 10px 0;
+  background: #f6f8f3;
+  font-size: 14px;
+}

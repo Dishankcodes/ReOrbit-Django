@@ -1,14 +1,20 @@
 import React, { useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 
 import { Avatar } from "../../../pages-components/ReviewBlocks";
-import { followedLabel } from "../../../data/followersStore";
+import { followedLabel, placeLabel } from "../../../data/followersStore";
 import { formatPrice } from "../../../data/remakerMarketplaceData";
+
+function joinedLabel(iso) {
+  const date = new Date(iso);
+
+  return Number.isNaN(date.getTime())
+    ? "-"
+    : date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
 
 /* Slide-over with everything we know about a follower */
 export default function FollowerDrawer({
   person,
-  customer,
   following,
   onClose,
   onRemove,
@@ -37,9 +43,6 @@ export default function FollowerDrawer({
   }, [onClose]);
 
   const isMaker = person.type === "ReMaker";
-  const hasProfile = ["arjun-mehta", "priya-shah", "tara-bose"].includes(
-    person.id,
-  );
 
   return (
     <div
@@ -65,9 +68,7 @@ export default function FollowerDrawer({
             <Avatar src={person.image} name={person.name} />
           </span>
           <h2 id="fol-drawer-name">{person.name}</h2>
-          <p>
-            {person.city}, {person.state}
-          </p>
+          <p>{placeLabel(person)}</p>
           <div className="fol-badges center">
             <i className={isMaker ? "maker" : ""}>
               {isMaker ? "ReMaker" : "Shopper"}
@@ -76,7 +77,7 @@ export default function FollowerDrawer({
           </div>
         </div>
 
-        <p className="fol-drawer-bio">{person.bio}</p>
+        {person.bio && <p className="fol-drawer-bio">{person.bio}</p>}
         {person.craft && <p className="fol-drawer-craft">{person.craft}</p>}
 
         <dl className="fol-drawer-facts">
@@ -86,11 +87,11 @@ export default function FollowerDrawer({
           </div>
           <div>
             <dt>On ReOrbit since</dt>
-            <dd>{person.joined}</dd>
+            <dd>{joinedLabel(person.joined)}</dd>
           </div>
           <div>
-            <dt>Product views</dt>
-            <dd>{person.views}</dd>
+            <dt>Orders from you</dt>
+            <dd>{person.orders}</dd>
           </div>
           <div>
             <dt>Wishlist saves</dt>
@@ -98,31 +99,19 @@ export default function FollowerDrawer({
           </div>
         </dl>
 
-        {customer && (
+        {person.customerId && (
           <section className="fol-drawer-buyer">
             <small>Buyer history</small>
             <div>
-              <strong>{customer.orders.length}</strong>
-              <span>{customer.orders.length === 1 ? "order" : "orders"}</span>
-              <strong>{formatPrice(customer.spent)}</strong>
-              <span>spent</span>
+              <strong>{person.orders}</strong>
+              <span>{person.orders === 1 ? "order" : "orders"}</span>
+              <strong>{formatPrice(person.spent)}</strong>
+              <span>delivered</span>
             </div>
-            <Link to={`/remaker-customers/${person.customerId}`}>
-              Open customer profile →
-            </Link>
           </section>
         )}
 
         <div className="fol-drawer-actions">
-          {hasProfile && (
-            <Link
-              to={`/remaker-marketplace/seller/${person.id}`}
-              className="fol-btn primary"
-            >
-              View ReMaker profile
-            </Link>
-          )}
-
           {isMaker && !following && (
             <button
               type="button"

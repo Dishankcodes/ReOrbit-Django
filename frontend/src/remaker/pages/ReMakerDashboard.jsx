@@ -19,10 +19,18 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import {
+  followedLabel,
+  followerStats,
+  useFollowers,
+} from "../data/followersStore";
+
 import "../css/ReMakerDashboard.css";
 
 export default function ReMakerDashboard() {
   const navigate = useNavigate();
+  const followers = useFollowers();
+  const followerNumbers = followerStats(followers);
 
   const storedRemaker = JSON.parse(
     localStorage.getItem("reorbit_remaker") || "null",
@@ -63,9 +71,9 @@ export default function ReMakerDashboard() {
     },
     {
       title: "Followers",
-      value: "2,846",
-      change: "+8.2%",
-      label: "this month",
+      value: followerNumbers.total.toLocaleString("en-IN"),
+      change: `+${followerNumbers.last30}`,
+      label: "in the last 30 days",
       icon: Users,
       type: "followers",
     },
@@ -143,12 +151,16 @@ export default function ReMakerDashboard() {
       description: "A customer reviewed your wooden lamp.",
       time: "2 hrs ago",
     },
-    {
-      icon: Users,
-      title: "New followers",
-      description: "You gained 18 new followers today.",
-      time: "5 hrs ago",
-    },
+    ...(followers.length
+      ? [
+          {
+            icon: Users,
+            title: "New follower",
+            description: `${followers[0].name} started following you.`,
+            time: followedLabel(followers[0].followedAt),
+          },
+        ]
+      : []),
     {
       icon: CheckCircle2,
       title: "Product approved",

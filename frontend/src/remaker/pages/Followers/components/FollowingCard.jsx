@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
 import { Avatar } from "../../../pages-components/ReviewBlocks";
 import { followedLabel } from "../../../data/followersStore";
@@ -15,7 +14,8 @@ export default function FollowingCard({ item, onUnfollow }) {
       <div className="fol-follow-text">
         <strong>{item.name}</strong>
         <small>
-          {item.craft} · {item.city}
+          {item.craft}
+          {item.city ? ` · ${item.city}` : ""}
         </small>
         <span>
           {item.rating ? `${item.rating} rating` : "New ReMaker"}
@@ -28,14 +28,6 @@ export default function FollowingCard({ item, onUnfollow }) {
       </div>
 
       <div className="fol-follow-actions">
-        {item.profile && (
-          <Link
-            to={`/remaker-marketplace/seller/${item.id}`}
-            className="fol-btn ghost small"
-          >
-            View profile
-          </Link>
-        )}
         <button
           type="button"
           className="fol-btn danger-ghost small"

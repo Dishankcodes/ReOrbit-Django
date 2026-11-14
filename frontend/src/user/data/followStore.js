@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { followApi } from "../../api/social";
 import { getAccount, isSignedIn, SESSION_ENDED_EVENT } from "../../api/session";
+import { bumpFollowDelta, followDelta, resetFollowDeltas } from "../../api/followDeltas";
 
 let ids = [];
 let loadedFor = "";
@@ -28,13 +29,14 @@ export function toggleFollow(id) {
   const before = ids;
   const following = !before.includes(id);
   ids = following ? [...before, id] : before.filter((item) => item !== id);
+  bumpFollowDelta(id, following ? 1 : -1);
   emit();
   const action = following ? followApi.follow(id) : followApi.unfollow(id);
-  action.catch(() => { ids = before; emit(); });
+  action.catch(() => { ids = before; bumpFollowDelta(id, following ? -1 : 1); emit(); });
   return following;
 }
 
-if (typeof window !== "undefined") window.addEventListener(SESSION_ENDED_EVENT, () => { ids = []; loadedFor = ""; emit(); });
+if (typeof window !== "undefined") window.addEventListener(SESSION_ENDED_EVENT, () => { ids = []; loadedFor = ""; resetFollowDeltas(); emit(); });
 
 export function useFollowing() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -42,6 +44,6 @@ export function useFollowing() {
   return useMemo(() => ({ ids: list, count: list.length, isFollowing: (id) => list.includes(id), toggle: toggleFollow }), [list]);
 }
 
-// Keep the follower-count helper exported for RemakerCard and other shared UI.
-export const followerCount = (base, following) =>
-  Math.max(0, Number(base) || 0) + (following ? 1 : 0);
+// The server's follower count plus any follow / unfollow done on this screen.
+export const followerCount = (base, id) =>
+  Math.max(0, (Number(base) || 0) + followDelta(id));

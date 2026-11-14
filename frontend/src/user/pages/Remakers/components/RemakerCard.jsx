@@ -61,7 +61,7 @@ export default function RemakerCard({ maker, following, onToggle }) {
         <dl className="urm-stats">
           <div>
             <dd>
-              {followerCount(maker.followers, following).toLocaleString(
+              {followerCount(maker.followers, maker.id).toLocaleString(
                 "en-IN",
               )}
             </dd>

@@ -56,6 +56,10 @@ class ItemSerializer(serializers.ModelSerializer):
             "moderation_status",
             "moderation_note",
             "moderated_at",
+            "suggested_price",
+            "suggested_note",
+            "suggested_at",
+            "suggestion_status",
             "city",
             "pincode",
             "images",
@@ -89,6 +93,25 @@ class PublicItemSerializer(ItemSerializer):
                 "moderation_status",
                 "moderation_note",
                 "moderated_at",
+                "suggested_price",
+                "suggested_note",
+                "suggested_at",
+                "suggestion_status",
                 "updated_at",
             )
         ]
+
+
+class AdminItemSerializer(ItemSerializer):
+    """The admin sees who the seller is, not just a name."""
+
+    def get_seller(self, obj):
+        u = obj.user
+        return {
+            "id": u.public_id,
+            "name": u.full_name,
+            "email": u.email,
+            "status": u.status,
+            "city": u.city or "",
+            "since": u.created_at,
+        }

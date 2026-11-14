@@ -19,6 +19,10 @@ def stars(**kw):
 
 
 class _Review(PublicIdModel, TimeStampedModel):
+    class Status(models.TextChoices):
+        VISIBLE = "Visible", "Visible"
+        HIDDEN = "Hidden", "Hidden"
+
     reviewer_type = models.CharField(max_length=8)  # user | remaker
     reviewer_key = models.CharField(max_length=24, db_index=True)  # "user:5"
     reviewer_user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
@@ -26,6 +30,15 @@ class _Review(PublicIdModel, TimeStampedModel):
     rating = stars()
     body = models.CharField(max_length=1000, blank=True)
     edited_at = models.DateTimeField(null=True, blank=True)
+    # The seller's answer. Both kinds of review can be answered once (and the answer edited or removed).
+    reply = models.CharField(max_length=500, blank=True)
+    replied_at = models.DateTimeField(null=True, blank=True)
+    reply_edited = models.BooleanField(default=False)
+    # Moderation: a hidden review is removed from public pages and from the rating.
+    status = models.CharField(max_length=8, choices=Status.choices, default=Status.VISIBLE, db_index=True)
+    hidden_reason = models.CharField(max_length=300, blank=True)
+    hidden_at = models.DateTimeField(null=True, blank=True)
+    hidden_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
     class Meta:
         abstract = True
@@ -80,8 +93,6 @@ class SellerReview(_Review):
     dispatch = stars(null=True, blank=True)
     as_promised = stars(null=True, blank=True)
     tags = models.JSONField(default=list, blank=True)
-    reply = models.CharField(max_length=500, blank=True)
-    replied_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "seller_reviews"
@@ -101,5 +112,57 @@ class SellerReview(_Review):
                     | Q(seller_type="remaker", seller_remaker__isnull=False, seller_user__isnull=True)
                 ),
                 name="sellrev_one_seller",
+            ),
+        ]
+
+
+class ReviewReport(PublicIdModel, TimeStampedModel):
+    """A member or ReMaker asks ReOrbit to look at a review (usually the seller who got it)."""
+
+    public_id_prefix = "RRP"
+
+    class Status(models.TextChoices):
+        PENDING = "Pending", "Pending"
+        UPHELD = "Upheld", "Upheld"  # the review was hidden
+        DISMISSED = "Dismissed", "Dismissed"  # the review stays
+
+    product_review = models.ForeignKey(ProductReview, null=True, blank=True, on_delete=models.CASCADE, related_name="reports")
+    seller_review = models.ForeignKey(SellerReview, null=True, blank=True, on_delete=models.CASCADE, related_name="reports")
+    reporter_type = models.CharField(max_length=8)  # user | remaker
+    reporter_key = models.CharField(max_length=24, db_index=True)  # "user:5"
+    reporter_user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
+    reporter_remaker = models.ForeignKey("remakers.ReMakers", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
+    reason = models.CharField(max_length=60)
+    note = models.CharField(max_length=500, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
+    resolved_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolution_note = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        db_table = "review_reports"
+        ordering = ["-created_at", "-pk"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(product_review__isnull=False, seller_review__isnull=True)
+                    | Q(product_review__isnull=True, seller_review__isnull=False)
+                ),
+                name="revreport_one_review",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(reporter_type="user", reporter_user__isnull=False, reporter_remaker__isnull=True)
+                    | Q(reporter_type="remaker", reporter_remaker__isnull=False, reporter_user__isnull=True)
+                ),
+                name="revreport_one_reporter",
+            ),
+            models.UniqueConstraint(
+                fields=["reporter_key", "product_review"], condition=Q(product_review__isnull=False),
+                name="revreport_once_per_product_review",
+            ),
+            models.UniqueConstraint(
+                fields=["reporter_key", "seller_review"], condition=Q(seller_review__isnull=False),
+                name="revreport_once_per_seller_review",
             ),
         ]

@@ -4,17 +4,15 @@ import {
   IMPACT,
   ITEMS,
   REMAKERS,
-  REVIEWS,
   USERS,
   formatPrice as formatMarketplacePrice,
   getItemById,
   getRemakerById,
   getProductsBySeller,
-  getSellerReviews,
 } from "../../data/marketplaceData";
 
-export { CATEGORIES, CONDITIONS, IMPACT, ITEMS, REMAKERS, REVIEWS, USERS };
-export { getItemById, getRemakerById, getProductsBySeller, getSellerReviews };
+export { CATEGORIES, CONDITIONS, IMPACT, ITEMS, REMAKERS, USERS };
+export { getItemById, getRemakerById, getProductsBySeller };
 
 export const currentUser = {
   id: "user-aarav-patel",

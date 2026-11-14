@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Avatar } from "../../../pages-components/ReviewBlocks";
-import { relativeAgo, withdrawReport } from "../../../data/reviewsStore";
+import {
+  relativeAgo,
+  reportReviewError,
+  withdrawReport,
+} from "../../../data/reviewsStore";
 import PhotoViewer from "./PhotoViewer";
 import ReplyBox from "./ReplyBox";
 import Stars from "./Stars";
@@ -10,10 +14,19 @@ import Stars from "./Stars";
 export default function ReviewCard({ review, onReport }) {
   const [viewer, setViewer] = useState(-1);
   const { reviewer } = review;
+  const service = review.kind === "seller";
+
+  const withdraw = async () => {
+    try {
+      await withdrawReport(review.id);
+    } catch (e) {
+      reportReviewError(e);
+    }
+  };
 
   return (
     <article
-      className={`rvp-card ${!review.reply ? "needs" : ""} ${review.report ? "reported" : ""}`}
+      className={`rvp-card ${!review.reply && !review.hidden ? "needs" : ""} ${review.report ? "reported" : ""}`}
     >
       <header className="rvp-card-head">
         <span className="rvp-avatar">
@@ -41,16 +54,27 @@ export default function ReviewCard({ review, onReport }) {
         </div>
       </header>
 
-      <Link
-        to={`/remaker-products/${review.productId}/edit`}
-        className="rvp-product"
-      >
-        <img src={review.productImage} alt="" />
-        <span>
-          <small>Review of</small>
-          <strong>{review.productTitle}</strong>
-        </span>
-      </Link>
+      {service ? (
+        <div className="rvp-product">
+          <span>
+            <small>Review of</small>
+            <strong>
+              {review.productTitle} · order {review.orderId}
+            </strong>
+          </span>
+        </div>
+      ) : (
+        <Link
+          to={`/remaker-products/${review.productId}/edit`}
+          className="rvp-product"
+        >
+          {review.productImage && <img src={review.productImage} alt="" />}
+          <span>
+            <small>Review of</small>
+            <strong>{review.productTitle}</strong>
+          </span>
+        </Link>
+      )}
 
       <p className="rvp-text">{review.text}</p>
 
@@ -82,29 +106,46 @@ export default function ReviewCard({ review, onReport }) {
           <div>
             <strong>You reported this review</strong>
             <small>
-              {review.report.reason} · {review.report.status}
+              {review.report.reason} ·{" "}
+              {review.report.status === "Upheld"
+                ? "ReOrbit hid it"
+                : review.report.status === "Dismissed"
+                  ? "ReOrbit kept it"
+                  : "Waiting for ReOrbit"}
+              {review.report.note ? ` · ${review.report.note}` : ""}
             </small>
           </div>
-          <button type="button" onClick={() => withdrawReport(review.id)}>
-            Withdraw report
-          </button>
+          {review.report.status === "Pending" && (
+            <button type="button" onClick={withdraw}>
+              Withdraw report
+            </button>
+          )}
         </div>
       ) : null}
 
-      <ReplyBox review={review} />
+      {review.hidden ? (
+        <div className="rvp-reported">
+          <div>
+            <strong>ReOrbit hid this review</strong>
+            <small>
+              {review.hiddenReason ||
+                "It broke our review rules."}{" "}
+              It no longer counts towards your rating.
+            </small>
+          </div>
+        </div>
+      ) : (
+        <ReplyBox review={review} />
+      )}
 
-      <footer className="rvp-card-foot">
-        <span>
-          {review.helpful} {review.helpful === 1 ? "person" : "people"} found
-          this helpful
-        </span>
-
-        {!review.report && (
+      {!review.report && !review.hidden && (
+        <footer className="rvp-card-foot">
+          <span />
           <button type="button" onClick={() => onReport(review)}>
             Report review
           </button>
-        )}
-      </footer>
+        </footer>
+      )}
 
       {viewer >= 0 && (
         <PhotoViewer

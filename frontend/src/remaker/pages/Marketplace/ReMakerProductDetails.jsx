@@ -38,12 +38,14 @@ import {
   deliveryCharge,
   formatPrice,
   getListingById,
-  getProductReviews,
   getListingsBySeller,
   getRelatedListings,
   getSeller,
-  getSellerReviews,
 } from "../../data/remakerMarketplaceData";
+import {
+  useProductReviews,
+  useSellerReviews,
+} from "../../../shared/hooks/usePublicReviews";
 import useWishlist from "../../hooks/useWishlist";
 
 import "../../css/ReMakerProductDetails.css";
@@ -96,8 +98,12 @@ function Details({ listing }) {
   const wishlist = useWishlist();
 
   const seller = getSeller(listing);
-  const sellerReviews = getSellerReviews(listing.sellerId);
-  const productReviews = getProductReviews(listing.id);
+  const { reviews: sellerReviews, summary: sellerSummary } = useSellerReviews(
+    listing.source === "remaker" ? "remaker" : "user",
+    listing.sellerId,
+  );
+  const { reviews: productReviews, summary: productSummary } =
+    useProductReviews(listing.id);
   const related = useMemo(() => getRelatedListings(listing), [listing]);
   const fromSeller = useMemo(
     () =>
@@ -129,9 +135,7 @@ function Details({ listing }) {
     (delivery === "platform" ? charge : 0) +
     platformFee;
   const outOfStock = listing.quantity < 1;
-  const reviewCount = isRemaker
-    ? productReviews.length
-    : (seller?.totalReviews ?? sellerReviews.length);
+  const reviewCount = isRemaker ? productSummary.count : sellerSummary.count;
 
   const step = (delta) =>
     setIndex(
@@ -165,8 +169,11 @@ function Details({ listing }) {
   const closeOrder = () => setOrdering(false);
 
   const sellerMetrics = [
-    { label: "Rating", value: seller?.rating ?? listing.sellerRating },
-    { label: "Reviews", value: seller?.totalReviews ?? sellerReviews.length },
+    {
+      label: "Rating",
+      value: sellerSummary.count ? sellerSummary.average.toFixed(1) : "-",
+    },
+    { label: "Reviews", value: sellerSummary.count },
     {
       label: isRemaker ? "Pieces listed" : "Sold so far",
       value: isRemaker
@@ -661,7 +668,7 @@ function Details({ listing }) {
                   className={reviewView === "product" ? "active" : ""}
                   onClick={() => setReviewView("product")}
                 >
-                  This product ({productReviews.length})
+                  This product ({productSummary.count})
                 </button>
                 <button
                   type="button"
@@ -683,7 +690,11 @@ function Details({ listing }) {
             {reviewView === "product" && isRemaker ? (
               productReviews.length ? (
                 <>
-                  <RatingSummary reviews={productReviews} />
+                  <RatingSummary
+                    reviews={productReviews}
+                    average={productSummary.average}
+                    total={productSummary.count}
+                  />
                   <ReviewList reviews={productReviews} verified />
                 </>
               ) : (
@@ -695,8 +706,8 @@ function Details({ listing }) {
               <>
                 <RatingSummary
                   reviews={sellerReviews}
-                  average={seller?.rating}
-                  total={seller?.totalReviews}
+                  average={sellerSummary.average}
+                  total={sellerSummary.count}
                 />
                 <ReviewList reviews={sellerReviews} />
                 <p className="rmd-all-reviews">

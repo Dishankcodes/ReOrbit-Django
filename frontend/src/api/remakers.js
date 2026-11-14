@@ -1,7 +1,8 @@
 import { apiRequest } from "./api";
+import { resetFollowDeltas } from "./followDeltas";
 import { fetchPublicWorks } from "./portfolio";
 
-function mapPublicRemaker(row) {
+export function mapPublicRemaker(row) {
   const profile = row.profile || {};
   const skills = String(profile.skills || "")
     .split(",")
@@ -20,8 +21,8 @@ function mapPublicRemaker(row) {
     coverImage: profile.cover_image || "",
     rating: Number.isFinite(rating) ? rating : 0,
     totalReviews: Number(profile.rating_count || 0),
-    followers: 0,
-    productsCount: Number(profile.total_uploads || 0),
+    followers: Number(row.followers_count || 0),
+    productsCount: Number(row.products_count ?? profile.total_uploads ?? 0),
     itemsRescued: 0,
     yearsOfExperience: Number.parseInt(profile.experience, 10) || 0,
     sellerType: "remaker",
@@ -44,6 +45,7 @@ export async function fetchPublicRemakers() {
     pages = response.data?.total_pages || 1;
     page += 1;
   } while (page <= pages && page <= 10);
+  resetFollowDeltas(); /* these counts are fresh */
   return rows.map(mapPublicRemaker);
 }
 
@@ -58,5 +60,6 @@ export async function fetchPublicRemaker(publicId) {
   if (!response.data?.remaker) {
     throw new Error("ReMaker profile was not found.");
   }
+  resetFollowDeltas();
   return { ...mapPublicRemaker(response.data.remaker), portfolio };
 }

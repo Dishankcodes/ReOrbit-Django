@@ -8,6 +8,7 @@
 """
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsReOrbitAuthenticated
@@ -138,14 +139,50 @@ class CartView(APIView):
         return ok(_cart_data(cart, request))
 
 
+FOLLOWER_TYPES = ("user", "remaker")  # admins may follow, but never count as followers
+
+
+def _img(request, field):
+    """Absolute URL of an ImageField value, or '' when there is no photo."""
+    if not field:
+        return ""
+    try:
+        return request.build_absolute_uri(field.url)
+    except ValueError:
+        return ""
+
+
 class FollowView(APIView):
+    """GET: the ReMakers I follow, newest first, each with their public card data."""
+
     permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request):
+        from apps.remakers.models import ReMakers
+        from apps.remakers.public_serializers import PublicReMakerSerializer, with_public_counts
+
         own = buyers.owner(request.user.account)
-        qs = Follow.objects.filter(**own).select_related("target", "target__profile")
-        rows = [{"id": f.target.public_id, "name": f.target.full_name, "username": f.target.username,
-                 "followedAt": f.created_at, "type": "ReMaker"} for f in qs]
+        follows = list(
+            Follow.objects.filter(**own, target__status=ReMakers.Status.ACTIVE)
+            .select_related("target")
+            .order_by("-created_at", "-id")
+        )
+        makers = {
+            m.pk: m
+            for m in with_public_counts(
+                ReMakers.objects.filter(pk__in=[f.target_id for f in follows]).select_related("profile")
+            )
+        }
+        rows = []
+        for f in follows:
+            m = makers.get(f.target_id)
+            if m is None:
+                continue
+            rows.append({
+                "id": m.public_id, "name": m.full_name, "username": m.username,
+                "followedAt": f.created_at, "type": "ReMaker",
+                "remaker": PublicReMakerSerializer(m, context={"request": request}).data,
+            })
         return ok({"following": rows, "count": len(rows)})
 
     def post(self, request):
@@ -162,6 +199,25 @@ class FollowView(APIView):
         return created({"following": True, "id": target.public_id, "followedAt": row.created_at})
 
 
+class FollowFeedView(APIView):
+    """Newest live products from the ReMakers I follow (the 'Latest updates' tab)."""
+
+    permission_classes = [IsReOrbitAuthenticated]
+    LIMIT = 30
+
+    def get(self, request):
+        own = buyers.owner(request.user.account)
+        maker_ids = list(Follow.objects.filter(**own).values_list("target_id", flat=True))
+        products = (
+            _remaker_qs()
+            .filter(remaker_id__in=maker_ids)
+            .select_related("category", "remaker")
+            .prefetch_related("images")
+            .order_by("-created_at", "-pk")[: self.LIMIT]
+        )
+        return ok({"items": [card("remaker", p, request) for p in products]})
+
+
 class FollowItemView(APIView):
     permission_classes = [IsReOrbitAuthenticated]
 
@@ -171,27 +227,76 @@ class FollowItemView(APIView):
 
 
 class FollowersView(APIView):
+    """ReMaker only. GET: everyone who follows me, with real profile, order and wishlist facts.
+
+    A follower counts as a customer only when they have a real order with me
+    (confirmed or later). `saves` is how many of my products they have wishlisted.
+    """
+
     permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request):
+        from django.db.models import Count, Sum
+
+        from apps.orders.models import Order
+
         account = request.user.account
         if buyers.type_of(account) != "remaker":
             return fail("Only a ReMaker can view their follower list.", status=403)
-        rows = Follow.objects.filter(target=account).select_related("user", "remaker", "admin")
+
+        rows = list(
+            Follow.objects.filter(target=account, follower_type__in=FOLLOWER_TYPES)
+            .select_related("user__profile", "remaker__profile")
+            .order_by("-created_at", "-id")
+        )
+        user_ids = [f.user_id for f in rows if f.follower_type == "user"]
+
+        # Orders placed with me by my member followers (not cancelled / unpaid / failed).
+        bought = {
+            r["buyer_user"]: r
+            for r in Order.objects.filter(
+                seller_remaker=account, buyer_type="user", buyer_user__in=user_ids,
+                status__in=[Order.Status.CONFIRMED, Order.Status.PACKED, Order.Status.SHIPPED, Order.Status.DELIVERED],
+            ).values("buyer_user").annotate(
+                orders=Count("id"),
+                spent=Sum("subtotal", filter=Q(status=Order.Status.DELIVERED)),
+            )
+        }
+        # How many of my products each follower has saved.
+        mine = list(account.products.filter(deleted_at__isnull=True).values_list("public_id", flat=True))
+        saved = {
+            r["user"]: r["n"]
+            for r in WishlistEntry.objects.filter(user__in=user_ids, item_ref__in=mine)
+            .values("user").annotate(n=Count("id"))
+        }
+
         people = []
         for f in rows:
-            actor = getattr(f, f.follower_type)
+            actor = f.user if f.follower_type == "user" else f.remaker
             profile = getattr(actor, "profile", None)
-            people.append({"id": actor.public_id, "name": actor.full_name, "type": "ReMaker" if f.follower_type == "remaker" else "User",
-                           "city": getattr(profile, "city", "") if profile else "", "image": getattr(profile, "profile_image", "") if profile else "",
-                           "followedAt": f.created_at, "customerId": actor.public_id if f.follower_type == "user" else ""})
+            is_user = f.follower_type == "user"
+            deal = bought.get(actor.pk, {}) if is_user else {}
+            people.append({
+                "id": actor.public_id, "name": actor.full_name,
+                "type": "User" if is_user else "ReMaker",
+                "username": getattr(actor, "username", ""),
+                "city": (profile.city or "") if profile else "",
+                "state": (profile.state or "") if profile else "",
+                "bio": (profile.bio or "") if profile else "",
+                "image": _img(request, profile.profile_image) if profile else "",
+                "joined": actor.created_at,
+                "followedAt": f.created_at,
+                "customerId": actor.public_id if deal else "",
+                "orders": deal.get("orders", 0),
+                "spent": deal.get("spent") or 0,
+                "saves": saved.get(actor.pk, 0) if is_user else 0,
+            })
         return ok({"followers": people, "count": len(people)})
 
     def delete(self, request, public_id):
         account = request.user.account
         if buyers.type_of(account) != "remaker":
             return fail("Only a ReMaker can manage their follower list.", status=403)
-        from django.db.models import Q
         removed, _ = Follow.objects.filter(target=account).filter(
             Q(user__public_id=public_id) | Q(remaker__public_id=public_id)
         ).delete()

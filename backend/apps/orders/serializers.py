@@ -71,8 +71,7 @@ def order_data(o, request, *, events=False, buyer=False):
             }
             for ln in o.lines.all()
         ],
-        "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee,
-        "discount": o.discount, "total": o.total,
+        "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee, "discount": o.discount, "total": o.total,
         "address": o.address, "note": o.note,
         "courier": {"name": o.courier_name, "tracking_no": o.tracking_no} if o.tracking_no else None,
         "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,
@@ -85,6 +84,11 @@ def order_data(o, request, *, events=False, buyer=False):
                    "note": o.fail_note, "fault": o.fail_fault, "at": o.failed_at} if o.fail_reason else None,
         "refunds": [refund_data(r) for r in o.refunds.all()],
     }
+    # the buyer's own product reviews of this order (the Orders screens show "Rate this order" until one exists)
+    revs = [r for r in o.product_reviews.all()]
+    data["review"] = (
+        {"rating": revs[0].rating, "at": revs[0].created_at, "count": len(revs)} if revs else None
+    )
     rr = getattr(o, "return_request", None)
     data["return"] = return_data(rr, request) if rr else None
     data["can_return"] = rr is None and o.status == Order.Status.DELIVERED and returns.window_open(o)

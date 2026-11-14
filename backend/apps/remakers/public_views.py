@@ -7,7 +7,7 @@ from apps.core.pagination import StandardPagination
 from apps.core.responses import ok
 
 from .models import ReMakers
-from .public_serializers import PublicReMakerSerializer
+from .public_serializers import PublicReMakerSerializer, with_public_counts
 
 
 class PublicReMakerList(ListAPIView):
@@ -19,7 +19,7 @@ class PublicReMakerList(ListAPIView):
     serializer_class = PublicReMakerSerializer
 
     def get_queryset(self):
-        return (
+        return with_public_counts(
             ReMakers.objects.filter(status=ReMakers.Status.ACTIVE)
             .select_related("profile")
             .order_by("full_name", "pk")
@@ -37,7 +37,9 @@ class PublicReMakerDetail(APIView):
 
     def get(self, request, public_id):
         remaker = get_object_or_404(
-            ReMakers.objects.filter(status=ReMakers.Status.ACTIVE).select_related("profile"),
+            with_public_counts(
+                ReMakers.objects.filter(status=ReMakers.Status.ACTIVE).select_related("profile")
+            ),
             public_id=public_id,
         )
         serializer = PublicReMakerSerializer(remaker, context={"request": request})

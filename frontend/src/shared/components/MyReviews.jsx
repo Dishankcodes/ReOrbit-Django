@@ -517,8 +517,8 @@ function Tile({ entry, orderPath, onOpen }) {
   const pr = entry.product_review;
   const sr = entry.seller_review;
   const sellerKind = entry.seller.type;
-  const canEditProduct = !pr || stillEditable(pr);
-  const canEditSeller = !sr || stillEditable(sr);
+  const canEditProduct = !pr || (stillEditable(pr) && pr.status !== "Hidden");
+  const canEditSeller = !sr || (stillEditable(sr) && sr.status !== "Hidden");
 
   let action = null;
   if (!pr)
@@ -593,7 +593,18 @@ function Tile({ entry, orderPath, onOpen }) {
           </div>
         </div>
 
+        {(pr?.status === "Hidden" || sr?.status === "Hidden") && (
+          <p className="rv-na">
+            ReOrbit hid {pr?.status === "Hidden" ? "your product review" : "your seller review"}:{" "}
+            {(pr?.status === "Hidden" ? pr : sr).hidden_reason || "it broke our review rules."}
+          </p>
+        )}
         {pr?.body && <p className="rv-quote">“{pr.body}”</p>}
+        {pr?.reply && (
+          <p className="rv-reply">
+            <MessageSquareQuote size={13} /> <b>Seller reply:</b> {pr.reply}
+          </p>
+        )}
         {sr?.reply && (
           <p className="rv-reply">
             <MessageSquareQuote size={13} /> <b>Seller reply:</b> {sr.reply}
@@ -633,8 +644,12 @@ export default function MyReviews({
     loading: true,
     error: "",
   });
-  const [filter, setFilter] = useState("waiting");
-  const [text, setText] = useState("");
+  /* /user-reviews?q=ORD-… (from an order's "Rate order") opens with that order searched */
+  const startText = useRef(
+    new URLSearchParams(window.location.search).get("q") || "",
+  ).current;
+  const [filter, setFilter] = useState(startText ? "all" : "waiting");
+  const [text, setText] = useState(startText);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
   const first = useRef(true);

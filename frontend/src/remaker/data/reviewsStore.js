@@ -1,396 +1,189 @@
 /* =========================================================
-   REMAKER REVIEWS - UI STORE (no backend yet)
-   Customer reviews of the ReMaker's products. Follows the Reviews
-   table (product_id, rating, review text, created_at). The extras
-   (reply, photos, tags, report) are what this page needs on top.
-
-   Replies and reports are saved in localStorage so they survive a
-   refresh. Replace the functions below with API calls later.
+   REMAKER REVIEWS (received)
+   Every review the ReMaker has received, from the server:
+     GET  /api/reviews/received/            product reviews + seller reviews
+     POST /api/reviews/received/<id>/reply/ (DELETE removes it)
+     POST /api/reviews/<id>/report/         (DELETE withdraws a pending report)
+   Nothing is stored in the browser. A change shows on screen at once and is
+   put back, with the reason, if the server refuses it.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 
-import { REMAKER_PRODUCTS } from "./remakerProducts";
+import { receivedReviewsApi, reviewReportApi } from "../../api/reviews";
+import { getAccount } from "../../api/session";
 
-const KEY = "reorbit_remaker_reviews_v1";
-const NOW = Date.now();
-const ago = (hours) => new Date(NOW - hours * 3600000).toISOString();
-
-const IMG_USERS = "/images/users/";
-const PORT = "/images/portfolio/";
-
-export const REVIEW_TAGS = [
-  "Quality",
-  "Finish",
-  "Design",
-  "Packaging",
-  "Delivery",
-  "Value",
-  "Communication",
-];
-
-/* [productId, rating, hoursAgo, reviewer, text, tags, photos, helpful, reply?] */
-const RAW = [
-  [
-    "rp-1002",
-    5,
-    30,
-    {
-      name: "Meera Iyer",
-      city: "Bengaluru",
-      image: IMG_USERS + "meera-iyer.jpg",
-      customerId: "c-meera",
-    },
-    "The light is gorgeous. You can see every knot in the wood and the linen shade makes the glow so warm. It looks like something from a design store.",
-    ["Design", "Quality"],
-    [
-      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    6,
-    null,
-  ],
-  [
-    "rp-1003",
-    5,
-    62,
-    {
-      name: "Aarav Patel",
-      city: "Ahmedabad",
-      image: IMG_USERS + "aarav-patel.jpg",
-      customerId: "c-aarav",
-    },
-    "Three of these for my team and everyone loves them. The stitching is strong and no two patches are the same. Arrived well wrapped.",
-    ["Quality", "Packaging"],
-    [
-      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    9,
-    {
-      text: "Thank you Aarav! I am so glad the team enjoys them. I will share when the next denim batch is ready.",
-      hours: 40,
-    },
-  ],
-  [
-    "rp-1001",
-    4,
-    96,
-    {
-      name: "Nisha Rao",
-      city: "Mumbai",
-      image: IMG_USERS + "nisha-rao.jpg",
-      customerId: "c-nisha",
-    },
-    "Beautiful console and the carved panel is a real talking point. It is heavier than I expected so plan for two people. One small scuff on the leg but nothing serious.",
-    ["Design", "Finish"],
-    [],
-    4,
-    {
-      text: "Thanks Nisha. Sorry about the scuff, a dab of wax pencil will hide it. Message me if you want the exact shade.",
-      hours: 70,
-    },
-  ],
-  [
-    "rp-1001",
-    5,
-    140,
-    {
-      name: "Rohan Shah",
-      city: "Pune",
-      image: IMG_USERS + "rohan-shah.jpg",
-      customerId: "c-rohan",
-    },
-    "Worth every rupee. The teak grain is stunning and the iron legs are rock solid. It has become the first thing guests notice in our hall.",
-    ["Quality", "Value"],
-    [
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    12,
-    null,
-  ],
-  [
-    "rp-1004",
-    5,
-    190,
-    {
-      name: "Tara Bose",
-      city: "Kolkata",
-      image: "/images/remakers/tara-bose.jpg",
-      customerId: "c-tara",
-    },
-    "As a fellow ReMaker I notice the details. The wire brushing and sealing on the grille is very clean, and the pine plank was a smart pairing.",
-    ["Finish", "Design"],
-    [
-      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    15,
-    { text: "That means a lot coming from you, Tara. Thank you!", hours: 170 },
-  ],
-  [
-    "rp-1002",
-    3,
-    215,
-    {
-      name: "Kabir Verma",
-      city: "Delhi",
-      image: IMG_USERS + "kabir-verma.jpg",
-      customerId: "c-kabir",
-    },
-    "Lovely lamp, but the cloth cable is shorter than I hoped and I need an extender to reach my socket. Looks great otherwise.",
-    ["Design", "Value"],
-    [],
-    3,
-    null,
-  ],
-  [
-    "rp-1003",
-    5,
-    260,
-    {
-      name: "Anaya Singh",
-      city: "Jaipur",
-      image: IMG_USERS + "anaya-singh.jpg",
-      customerId: "c-anaya",
-    },
-    "Picked it up in person. The tote is roomy enough for my laptop and still looks stylish. Lovely to meet the maker too.",
-    ["Quality", "Communication"],
-    [],
-    5,
-    {
-      text: "It was a pleasure meeting you Anaya. Enjoy the tote!",
-      hours: 250,
-    },
-  ],
-  [
-    "rp-1003",
-    2,
-    330,
-    { name: "Dev Malhotra", city: "Surat", image: "", customerId: "c-dev" },
-    "The strap seam started to come apart after about a week. Pretty design but I expected better stitching for the price.",
-    ["Quality"],
-    [],
-    7,
-    null,
-  ],
-  [
-    "rp-1002",
-    4,
-    400,
-    { name: "Isha Kapoor", city: "Bengaluru", image: "", customerId: "c-isha" },
-    "Gorgeous piece. Took a day longer than promised to ship but the packaging was excellent and nothing was damaged.",
-    ["Packaging", "Delivery"],
-    [],
-    2,
-    {
-      text: "Thanks Isha, and sorry for the delay. I now ship on the same day I mark an order packed.",
-      hours: 380,
-    },
-  ],
-  [
-    "rp-1004",
-    4,
-    480,
-    { name: "Vikram Joshi", city: "Pune", image: "", customerId: "" },
-    "A really striking wall shelf. The shadows in the evening are lovely. The mounting hardware instructions could be clearer.",
-    ["Design", "Communication"],
-    [],
-    3,
-    null,
-  ],
-  [
-    "rp-1001",
-    5,
-    560,
-    { name: "Pranav Desai", city: "Ahmedabad", image: "", customerId: "" },
-    "Picked this over three store options and I am so happy I did. You can feel the history in the wood.",
-    ["Quality", "Design"],
-    [
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    8,
-    { text: "Thank you Pranav, that is the best thing to hear.", hours: 540 },
-  ],
-  [
-    "rp-1003",
-    5,
-    620,
-    { name: "Mansi Gupta", city: "Mumbai", image: "", customerId: "" },
-    "Bought two as gifts and both people asked where to get one. The patchwork is so charming.",
-    ["Design", "Value"],
-    [
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    6,
-    null,
-  ],
-  [
-    "rp-1002",
-    1,
-    700,
-    { name: "Harsh Vora", city: "Rajkot", image: "", customerId: "" },
-    "Complete scam seller, never buy from here. Terrible. Do not trust anyone on this site.",
-    [],
-    [],
-    0,
-    null,
-  ],
-  [
-    "rp-1001",
-    4,
-    810,
-    { name: "Leena Nair", city: "Kochi", image: "", customerId: "" },
-    "Excellent finish and the wax smell is faint and pleasant. I would have loved a size guide in the listing.",
-    ["Finish", "Communication"],
-    [],
-    2,
-    {
-      text: "Great point Leena. I have added the exact dimensions to the product page.",
-      hours: 790,
-    },
-  ],
-  [
-    "rp-1004",
-    5,
-    900,
-    { name: "Ishaan Rao", city: "Hyderabad", image: "", customerId: "" },
-    "Sturdy and so unusual. My friends keep asking where it came from. The story card in the box was a lovely touch.",
-    ["Design", "Packaging"],
-    [
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    ],
-    10,
-    null,
-  ],
-  [
-    "rp-1002",
-    5,
-    1010,
-    { name: "Gauri Kulkarni", city: "Nashik", image: "", customerId: "" },
-    "Bright, warm and the dimmer works perfectly. Excellent value for something this handmade.",
-    ["Value", "Quality"],
-    [],
-    4,
-    { text: "Thank you Gauri! Enjoy the glow.", hours: 990 },
-  ],
-];
-
-function seed() {
-  return RAW.map((row, index) => {
-    const [
-      productId,
-      rating,
-      hours,
-      reviewer,
-      text,
-      tags,
-      photos,
-      helpful,
-      reply,
-    ] = row;
-    const product = REMAKER_PRODUCTS.find((item) => item.id === productId);
-
-    return {
-      id: `rv-${1000 + index}`,
-      productId,
-      productTitle: product.title,
-      productImage: product.images[0],
-      rating,
-      createdAt: ago(hours),
-      reviewer,
-      text,
-      tags,
-      photos,
-      helpful,
-      verified: true,
-      reply: reply ? { text: reply.text, createdAt: ago(reply.hours) } : null,
-      report: null,
-    };
-  });
-}
-
-/* ---------- store ---------- */
-
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-
-    if (raw) {
-      const value = JSON.parse(raw);
-      if (Array.isArray(value)) return value;
-    }
-  } catch {
-    /* fall back to the seed */
-  }
-
-  return seed();
-}
-
-let reviews = load();
-const listeners = new Set();
-
-function commit(next) {
-  reviews = next;
-
-  try {
-    localStorage.setItem(KEY, JSON.stringify(reviews));
-  } catch {
-    /* storage full or blocked: the change still lives for this session */
-  }
-
-  listeners.forEach((listener) => listener());
-}
-
-const subscribe = (listener) => {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+/* The list belongs to whoever is signed in; a different account starts clean. */
+let owner = "";
+const whoAmI = () => {
+  const a = getAccount();
+  return a ? String(a.public_id || a.id || "") : "";
 };
 
-const getSnapshot = () => reviews;
+const ASPECT_LABELS = {
+  quality: "Quality",
+  as_described: "As described",
+  value: "Value",
+  packaging: "Packaging",
+  communication: "Communication",
+  packing: "Packing",
+  dispatch: "Dispatch",
+  as_promised: "As promised",
+};
+
+/* Server review -> the shape the cards use. */
+function fromApi(r) {
+  const seller = r.kind === "seller";
+  const aspects = Object.entries(r.aspects || {}).map(([key, value]) => ({
+    label: ASPECT_LABELS[key] || key,
+    value,
+  }));
+  const text = [r.title && !seller ? r.title : "", r.body]
+    .filter(Boolean)
+    .join(". ");
+
+  return {
+    id: r.id,
+    kind: r.kind,
+    orderId: r.order_id,
+    productId: seller ? "service" : r.product?.ref || "",
+    productTitle: seller ? "Your service" : r.product?.title || "Product",
+    productImage: seller ? "" : r.product?.image || "",
+    rating: r.rating,
+    createdAt: r.created_at,
+    reviewer: {
+      name: r.reviewer?.name || "A customer",
+      city: r.reviewer?.city || "",
+      image: r.reviewer?.image || "",
+      customerId: "",
+    },
+    text: text || "Rated without a written review.",
+    aspects,
+    tags: [...aspects.map((a) => `${a.label} ${a.value}★`), ...(r.tags || [])],
+    photos: (r.photos || []).map((p) => p.url),
+    recommend: r.recommend,
+    verified: true,
+    reply: r.reply
+      ? {
+          text: r.reply.text,
+          createdAt: r.reply.created_at,
+          edited: !!r.reply.edited,
+        }
+      : null,
+    report: r.report
+      ? {
+          reason: r.report.reason,
+          status: r.report.status,
+          createdAt: r.report.created_at,
+          note: r.report.resolution_note || "",
+        }
+      : null,
+    hidden: r.status === "Hidden",
+    hiddenReason: r.hidden_reason || "",
+  };
+}
+
+let state = {
+  list: [],
+  status: "idle", // idle | loading | ready | error
+  error: "",
+  reasons: [],
+};
+const listeners = new Set();
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const getSnapshot = () => state;
+const set = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+};
+
+export async function loadReviews(force = false) {
+  const me = whoAmI();
+  if (owner !== me) {
+    owner = me;
+    state = { list: [], status: "idle", error: "", reasons: [] };
+    force = true;
+  }
+  if (!force && (state.status === "loading" || state.status === "ready"))
+    return;
+  set({ status: "loading", error: "" });
+  try {
+    const data = await receivedReviewsApi.list();
+    set({
+      list: data.results.map(fromApi),
+      reasons: data.report_reasons || [],
+      status: "ready",
+    });
+  } catch (e) {
+    set({
+      status: "error",
+      error: e?.message || "We couldn't load your reviews.",
+    });
+  }
+}
+
+/* Errors from changes made on screen (reply, report ...) go to whoever registered here. */
+let errorHandler = null;
+export const onReviewError = (fn) => {
+  errorHandler = fn;
+  return () => {
+    if (errorHandler === fn) errorHandler = null;
+  };
+};
+export const reportReviewError = (e) =>
+  errorHandler?.(e?.errors ? Object.values(e.errors).flat()[0] : e?.message || "That did not work. Please try again.");
 
 export function useReviews() {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
-
+  const snap = useSyncExternalStore(subscribe, getSnapshot);
+  useEffect(() => {
+    loadReviews();
+  }, []);
   return useMemo(
-    () => [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [list],
+    () => [...snap.list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [snap.list],
   );
 }
 
-function patch(id, change) {
-  commit(
-    reviews.map((review) =>
-      review.id === id ? { ...review, ...change } : review,
-    ),
-  );
+export function useReviewsStatus() {
+  const snap = useSyncExternalStore(subscribe, getSnapshot);
+  return { status: snap.status, error: snap.error };
 }
 
-export function saveReply(id, text) {
-  const existing = reviews.find((review) => review.id === id);
+export const useReportReasons = () =>
+  useSyncExternalStore(subscribe, getSnapshot).reasons;
 
+const replace = (review) =>
+  set({ list: state.list.map((r) => (r.id === review.id ? review : r)) });
+const patch = (id, change) =>
+  set({ list: state.list.map((r) => (r.id === id ? { ...r, ...change } : r)) });
+
+/* Each action resolves when the server has saved it and rejects with the server's message. */
+export async function saveReply(id, text) {
+  replace(fromApi(await receivedReviewsApi.reply(id, text.trim())));
+}
+
+export async function deleteReply(id) {
+  replace(fromApi(await receivedReviewsApi.removeReply(id)));
+}
+
+export async function reportReview(id, reason, note = "") {
+  const report = await reviewReportApi.report(id, reason, note);
   patch(id, {
-    reply: {
-      text: text.trim(),
-      createdAt: existing?.reply?.createdAt || new Date().toISOString(),
-      edited: Boolean(existing?.reply),
+    report: {
+      reason: report.reason,
+      status: report.status,
+      createdAt: report.created_at,
+      note: "",
     },
   });
 }
 
-export function deleteReply(id) {
-  patch(id, { reply: null });
-}
-
-export function reportReview(id, reason) {
-  patch(id, {
-    report: { reason, createdAt: new Date().toISOString(), status: "Pending" },
-  });
-}
-
-export function withdrawReport(id) {
+export async function withdrawReport(id) {
+  await reviewReportApi.withdraw(id);
   patch(id, { report: null });
-}
-
-export function resetReviews() {
-  commit(seed());
 }
 
 /* ---------- summaries ---------- */
@@ -399,32 +192,35 @@ export function summarize(list) {
   const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   let sum = 0;
   let replied = 0;
-  const tagMap = new Map();
+  let counted = 0;
+  const aspectMap = new Map();
 
   list.forEach((review) => {
+    if (review.hidden) return; // a hidden review no longer counts
+    counted += 1;
     distribution[review.rating] += 1;
     sum += review.rating;
     if (review.reply) replied += 1;
 
-    review.tags.forEach((tag) => {
-      const entry = tagMap.get(tag) || { tag, count: 0, sum: 0 };
+    review.aspects.forEach(({ label, value }) => {
+      const entry = aspectMap.get(label) || { tag: label, count: 0, sum: 0 };
       entry.count += 1;
-      entry.sum += review.rating;
-      tagMap.set(tag, entry);
+      entry.sum += value;
+      aspectMap.set(label, entry);
     });
   });
 
-  const tags = [...tagMap.values()]
+  const tags = [...aspectMap.values()]
     .map((entry) => ({ ...entry, average: entry.sum / entry.count }))
     .sort((a, b) => b.count - a.count);
 
   return {
-    count: list.length,
-    average: list.length ? sum / list.length : 0,
+    count: counted,
+    average: counted ? sum / counted : 0,
     distribution,
     replied,
-    needsReply: list.length - replied,
-    responseRate: list.length ? (replied / list.length) * 100 : 0,
+    needsReply: counted - replied,
+    responseRate: counted ? (replied / counted) * 100 : 0,
     praised: tags.filter((tag) => tag.average >= 4.3).slice(0, 4),
     attention: tags.filter((tag) => tag.average < 4.3).slice(0, 3),
   };
@@ -434,6 +230,7 @@ export function ratingsByProduct(list) {
   const map = new Map();
 
   list.forEach((review) => {
+    if (review.hidden || review.kind === "seller") return;
     const entry = map.get(review.productId) || {
       productId: review.productId,
       title: review.productTitle,
@@ -451,14 +248,6 @@ export function ratingsByProduct(list) {
     .map((entry) => ({ ...entry, average: entry.sum / entry.count }))
     .sort((a, b) => b.count - a.count);
 }
-
-export const REPORT_REASONS = [
-  "Abusive or hateful language",
-  "Not about my product or service",
-  "Contains personal information",
-  "Looks fake or paid for",
-  "Spam or advertising",
-];
 
 export const REPLY_TEMPLATES = {
   high: [

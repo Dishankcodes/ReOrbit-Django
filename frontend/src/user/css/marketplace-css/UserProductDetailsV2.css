@@ -514,3 +514,12 @@
     gap: 18px;
   }
 }
+
+.pd-reviews .pd-reply {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-left: 3px solid #b8d4c0;
+  border-radius: 0 10px 10px 0;
+  background: #f3f8f4;
+  font-size: 14px;
+}

@@ -26,7 +26,6 @@ import {
   PAYMENT_LABEL,
   cancelOrder,
   canCancel,
-  reviewOrder,
   useOrder,
   useOrdersStatus,
 } from "../../data/ordersStore";
@@ -38,7 +37,6 @@ import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
 import CancelOrderModal from "./components/CancelOrderModal";
-import ReviewModal from "./components/ReviewModal";
 import SellerCard from "./components/SellerCard";
 import OrderStepper from "./components/OrderStepper";
 import { StatusBadge } from "./components/OrderBadges";
@@ -57,7 +55,6 @@ export default function UserOrderDetails() {
 
   const [cancelling, setCancelling] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const st = useOrdersStatus();
 
   if (!order && (st.loading || !st.loaded)) {
@@ -123,13 +120,12 @@ export default function UserOrderDetails() {
             </Link>
           )}
           {delivered && !order.review && (
-            <button
-              type="button"
+            <Link
+              to={`/user-reviews?q=${encodeURIComponent(order.id)}`}
               className="dn-btn"
-              onClick={() => setReviewing(true)}
             >
               <Star size={16} /> Rate order
-            </button>
+            </Link>
           )}
           {delivered && (
             <Link
@@ -303,16 +299,12 @@ export default function UserOrderDetails() {
                 <h2>Your review</h2>
                 <Stars value={order.review.rating} size={18} />
               </div>
-              <p className="ob-review-text">
-                {order.review.text ||
-                  "You rated this order without a written review."}
-              </p>
               <Link
-                to={order.sellerPath + "?tab=reviews"}
+                to={`/user-reviews?q=${encodeURIComponent(order.id)}`}
                 className="dn-link"
                 style={{ marginTop: 12 }}
               >
-                See it on {order.seller?.name}'s profile →
+                See or edit it in My Reviews →
               </Link>
             </section>
           )}
@@ -441,18 +433,6 @@ export default function UserOrderDetails() {
           }}
         />
       )}
-      {reviewing && (
-        <ReviewModal
-          order={order}
-          onClose={() => setReviewing(false)}
-          onSubmit={(review) => {
-            reviewOrder(order.id, review);
-            setReviewing(false);
-            show("Thanks! Your review has been posted.");
-          }}
-        />
-      )}
-
       {toast}
     </div>
   );

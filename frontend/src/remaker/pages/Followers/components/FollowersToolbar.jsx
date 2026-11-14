@@ -15,7 +15,7 @@ export default function FollowersToolbar({
     { key: "all", label: "Everyone", count: counts.all },
     { key: "new", label: "New this month", count: counts.new },
     { key: "customers", label: "Customers", count: counts.customers },
-    { key: "engaged", label: "Highly engaged", count: counts.engaged },
+    { key: "engaged", label: "Saved your work", count: counts.engaged },
     { key: "makers", label: "ReMakers", count: counts.makers },
   ];
 

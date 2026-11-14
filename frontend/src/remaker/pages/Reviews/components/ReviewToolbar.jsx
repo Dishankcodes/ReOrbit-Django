@@ -71,7 +71,6 @@ export default function ReviewToolbar({
             <option value="oldest">Oldest first</option>
             <option value="highest">Highest rating</option>
             <option value="lowest">Lowest rating</option>
-            <option value="helpful">Most helpful</option>
           </select>
         </label>
       </div>

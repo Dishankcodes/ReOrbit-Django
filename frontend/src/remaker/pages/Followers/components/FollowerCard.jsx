@@ -1,7 +1,11 @@
 import React from "react";
 
 import { Avatar } from "../../../pages-components/ReviewBlocks";
-import { followedLabel } from "../../../data/followersStore";
+import {
+  followedLabel,
+  isEngaged,
+  placeLabel,
+} from "../../../data/followersStore";
 
 /* One follower, as a card or as a row */
 export default function FollowerCard({
@@ -11,7 +15,7 @@ export default function FollowerCard({
   onOpen,
   onFollowBack,
 }) {
-  const engaged = person.views >= 34 || person.saves >= 5;
+  const engaged = isEngaged(person);
 
   return (
     <article className={`fol-card ${view}`}>
@@ -27,23 +31,21 @@ export default function FollowerCard({
 
         <span className="fol-card-text">
           <strong>{person.name}</strong>
-          <small>
-            {person.city}, {person.state}
-          </small>
+          <small>{placeLabel(person)}</small>
 
           <span className="fol-badges">
             <i className={person.type === "ReMaker" ? "maker" : ""}>
               {person.type === "ReMaker" ? "ReMaker" : "Shopper"}
             </i>
             {person.customerId && <i className="customer">Customer</i>}
-            {engaged && <i className="engaged">Engaged</i>}
+            {engaged && <i className="engaged">Saved your work</i>}
           </span>
         </span>
 
         {view === "list" && (
           <span className="fol-card-stats">
-            <b>{person.views}</b>
-            <small>views</small>
+            <b>{person.orders}</b>
+            <small>orders</small>
             <b>{person.saves}</b>
             <small>saves</small>
           </span>

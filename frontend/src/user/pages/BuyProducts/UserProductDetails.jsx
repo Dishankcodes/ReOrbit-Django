@@ -31,10 +31,13 @@ import {
   getItemById,
   getProductsBySeller,
   getSellerFromItem,
-  getSellerReviews,
   formatPrice,
 } from "../../../data/marketplaceData";
 import ReportButton from "../../../shared/components/ReportButton";
+import {
+  reviewReportFiler,
+  useProductReviews,
+} from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
 import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
@@ -77,10 +80,7 @@ export default function UserProductDetails() {
   }, [productId]);
 
   const seller = useMemo(() => getSellerFromItem(item), [item]);
-  const reviews = useMemo(
-    () => (item ? getSellerReviews(item.sellerId) : []),
-    [item],
-  );
+  const { reviews, summary: reviewSummary } = useProductReviews(item?.id);
   const related = useMemo(
     () =>
       item
@@ -331,7 +331,7 @@ export default function UserProductDetails() {
           </div>
           <div>
             <dt>Reviews</dt>
-            <dd>{seller?.totalReviews || reviews.length}</dd>
+            <dd>{reviewSummary.count}</dd>
           </div>
           <div>
             <dt>Listed</dt>
@@ -348,7 +348,7 @@ export default function UserProductDetails() {
       <div className="pd-tabs" role="tablist">
         {[
           ["details", "Details"],
-          ["reviews", `Reviews (${reviews.length})`],
+          ["reviews", `Reviews (${reviewSummary.count})`],
         ].map(([k, l]) => (
           <button
             key={k}
@@ -429,10 +429,15 @@ export default function UserProductDetails() {
                   <time>{r.date}</time>
                 </div>
                 <p>{r.text}</p>
+                {r.reply && (
+                  <p className="pd-reply">
+                    <b>Seller reply:</b> {r.reply.text}
+                  </p>
+                )}
                 <ReportButton
                   type="Review"
                   label="Report review"
-                  file={fileComplaint}
+                  file={reviewReportFiler(r.id)}
                   target={{
                     name: `${r.name}’s review`,
                     sub: `On ${item.seller} · ${r.rating}★`,
@@ -447,7 +452,7 @@ export default function UserProductDetails() {
               </article>
             ))
           ) : (
-            <p className="pd-none">No reviews for this seller yet.</p>
+            <p className="pd-none">No one has reviewed this product yet.</p>
           )}
         </section>
       )}

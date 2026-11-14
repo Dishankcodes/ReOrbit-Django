@@ -1,16 +1,20 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
+  loadReviews,
+  onReviewError,
   ratingsByProduct,
   reportReview,
+  reportReviewError,
   summarize,
   useReviews,
+  useReviewsStatus,
 } from "../../data/reviewsStore";
+import { PageLoader } from "../../../shared/components/Spinner";
 
 import ProductRatings from "./components/ProductRatings";
 import ReportReviewModal from "./components/ReportReviewModal";
-import { useRemakerComplaintFiler } from "../../../shared/complaints";
 import ReviewCard from "./components/ReviewCard";
 import ReviewToolbar from "./components/ReviewToolbar";
 import ReviewsHero from "./components/ReviewsHero";
@@ -21,7 +25,7 @@ const PAGE_SIZE = 6;
 
 export default function ReMakerReviews() {
   const reviews = useReviews();
-  const fileComplaint = useRemakerComplaintFiler();
+  const { status, error } = useReviewsStatus();
 
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -32,13 +36,22 @@ export default function ReMakerReviews() {
   const [reporting, setReporting] = useState(null);
   const [notice, setNotice] = useState("");
 
+  useEffect(
+    () =>
+      onReviewError((message) => {
+        setNotice(message);
+        setTimeout(() => setNotice(""), 4200);
+      }),
+    [],
+  );
+
   const summary = useMemo(() => summarize(reviews), [reviews]);
   const byProduct = useMemo(() => ratingsByProduct(reviews), [reviews]);
 
   const counts = useMemo(
     () => ({
       all: reviews.length,
-      needs: reviews.filter((review) => !review.reply).length,
+      needs: reviews.filter((review) => !review.reply && !review.hidden).length,
       replied: reviews.filter((review) => review.reply).length,
       photos: reviews.filter((review) => review.photos.length > 0).length,
       reported: reviews.filter((review) => review.report).length,
@@ -50,7 +63,7 @@ export default function ReMakerReviews() {
     const text = query.trim().toLowerCase();
 
     const filtered = reviews.filter((review) => {
-      if (tab === "needs" && review.reply) return false;
+      if (tab === "needs" && (review.reply || review.hidden)) return false;
       if (tab === "replied" && !review.reply) return false;
       if (tab === "photos" && review.photos.length === 0) return false;
       if (tab === "reported" && !review.report) return false;
@@ -76,7 +89,6 @@ export default function ReMakerReviews() {
         b.rating - a.rating || b.createdAt.localeCompare(a.createdAt),
       lowest: (a, b) =>
         a.rating - b.rating || b.createdAt.localeCompare(a.createdAt),
-      helpful: (a, b) => b.helpful - a.helpful,
     };
 
     return [...filtered].sort(sorters[sort]);
@@ -97,25 +109,43 @@ export default function ReMakerReviews() {
     setShown(PAGE_SIZE);
   };
 
-  const submitReport = (reason) => {
-    reportReview(reporting.id, reason);
-    const reviewerName =
-      reporting.reviewer?.name || String(reporting.reviewer || "A customer");
-    fileComplaint({
-      type: "Review",
-      name: `${reviewerName}’s review`,
-      sub: `On ${reporting.productTitle} · ${reporting.rating}★`,
-      reviewer: reviewerName,
-      onProduct: reporting.productTitle,
-      rating: reporting.rating,
-      text: reporting.text,
-      reason,
-      description: `Reported by the seller: ${reason}.`,
-    });
+  const submitReport = async (reason) => {
+    const target = reporting;
     setReporting(null);
-    setNotice("Report sent. Our team will review it within 48 hours.");
-    setTimeout(() => setNotice(""), 3600);
+    try {
+      await reportReview(target.id, reason);
+      setNotice("Report sent. Our team will review it within 48 hours.");
+      setTimeout(() => setNotice(""), 3600);
+    } catch (e) {
+      reportReviewError(e);
+    }
   };
+
+  if (status === "error" && reviews.length === 0) {
+    return (
+      <section className="rvp">
+        <div className="rvp-empty">
+          <h3>We couldn't load your reviews</h3>
+          <p>{error}</p>
+          <button
+            type="button"
+            className="rvp-btn ghost"
+            onClick={() => loadReviews(true)}
+          >
+            Try again
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (status !== "ready") {
+    return (
+      <section className="rvp">
+        <PageLoader label="Loading your reviews…" />
+      </section>
+    );
+  }
 
   return (
     <section className="rvp">
@@ -183,7 +213,7 @@ export default function ReMakerReviews() {
               <p>
                 {filtersOn
                   ? "Try a different filter, or clear your search."
-                  : "When customers review your products, they appear here."}
+                  : "When customers review your products or your service, they appear here."}
               </p>
               {filtersOn && (
                 <button

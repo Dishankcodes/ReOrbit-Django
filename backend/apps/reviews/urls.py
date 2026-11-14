@@ -9,4 +9,11 @@ urlpatterns = [
     path("me/orders/<str:order_id>/seller/", v.SellerReviewSave.as_view()),
     path("received/", v.ReceivedReviews.as_view()),
     path("received/<str:review_id>/reply/", v.ReceivedReply.as_view()),
+    path("public/product/<str:ref>/", v.PublicProductReviews.as_view()),
+    path("public/seller/<str:seller_type>/<str:seller_id>/", v.PublicSellerReviews.as_view()),
+    path("admin/", v.AdminReviews.as_view()),
+    path("admin/reports/<str:report_id>/resolve/", v.AdminResolveReport.as_view()),
+    path("admin/<str:review_id>/hide/", v.AdminHide.as_view()),
+    path("admin/<str:review_id>/restore/", v.AdminRestore.as_view()),
+    path("<str:review_id>/report/", v.ReportReview.as_view()),
 ]

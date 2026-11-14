@@ -4,10 +4,10 @@ import { UserX } from "lucide-react";
 
 import {
   getProductsBySeller,
-  getSellerReviews,
   getUserById,
 } from "../../../data/marketplaceData";
 import { useUserComplaintFiler } from "../../../shared/complaints";
+import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { useFollowing } from "../../data/followStore";
 import { personChat } from "../../components/ui/MessageButton";
 import ProfileShell from "./ProfileShell";
@@ -19,6 +19,7 @@ export default function UserSellerProfile() {
   const seller = getUserById(sellerId);
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
+  const { reviews, summary } = useSellerReviews("user", sellerId);
 
   if (!seller) {
     return (
@@ -38,10 +39,14 @@ export default function UserSellerProfile() {
 
   return (
     <ProfileShell
-      person={seller}
+      person={{
+        ...seller,
+        rating: summary.count ? summary.average.toFixed(1) : "-",
+        totalReviews: summary.count,
+      }}
       isMaker={false}
       products={getProductsBySeller(sellerId)}
-      reviews={getSellerReviews(sellerId)}
+      reviews={reviews}
       following={isFollowing(sellerId)}
       onFollow={() => toggle(sellerId)}
       chat={personChat(seller, "seller")}

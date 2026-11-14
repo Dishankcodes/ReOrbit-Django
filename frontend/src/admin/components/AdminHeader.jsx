@@ -61,13 +61,13 @@ const pageInformation = {
     title: "Complaints",
     subtitle: "Review reports about users, ReMakers, listings and reviews.",
   },
+  "/admin-reviews": {
+    title: "Reviews",
+    subtitle: "Moderate buyer reviews and settle reports on them.",
+  },
   "/admin-support": {
     title: "Support",
     subtitle: "Answer help tickets from users and ReMakers.",
-  },
-  "/admin-messages": {
-    title: "Messages",
-    subtitle: "Reply to conversations from Users and ReMakers.",
   },
   "/admin-warehouse": {
     title: "Warehouse",
@@ -389,10 +389,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
                                       subtitle:
                                         "Account details, orders, donations and moderation.",
                                     }
-                                  : pageInformation[location.pathname] ||
-                                    (location.pathname.startsWith("/admin-messages/")
-                                      ? pageInformation["/admin-messages"]
-                                      : null) || {
+                                  : pageInformation[location.pathname] || {
                                       title: "ReOrbit Admin",
                                       subtitle: "Manage the ReOrbit ecosystem.",
                                     };
