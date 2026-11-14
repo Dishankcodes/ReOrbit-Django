@@ -33,8 +33,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
 import { useSettings } from "../data/settingsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
-import { useTickets as useUserTickets } from "../../user/data/supportStore";
-import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
+import { useTotalUnread as useUnreadMessages } from "../../user/data/messagesStore";
+import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 import "./AdminSidebar.css";
 
 const mainMenu = [
@@ -94,6 +94,7 @@ const operationsMenu = [
     icon: MessageSquareText,
   },
   { key: "support", label: "Support", path: "/admin-support", icon: LifeBuoy },
+  { key: "messages", label: "Messages", path: "/admin-messages", icon: MessageSquareText },
   {
     key: "warehouse",
     label: "Warehouse",
@@ -174,11 +175,10 @@ export default function AdminSidebar({
 
   const access = useAccess();
   const complaintCounts = useComplaintCounts();
-  const userTickets = useUserTickets();
-  const remakerTickets = useRemakerTickets();
-  const openTickets = [...userTickets, ...remakerTickets].filter(
-    (t) => t.status === "Open",
-  ).length;
+  const unreadMessages = useUnreadMessages(access.canSee("messages"));
+  useSupportTickets("admin", {}, access.canSee("support"));
+  const supportStatus = useSupportStatus("admin");
+  const openTickets = supportStatus.counts.Open || 0;
   const { profile } = useSettings();
   const adminName = access.previewing
     ? access.me.name
@@ -236,6 +236,14 @@ export default function AdminSidebar({
             aria-label={`${openTickets} waiting for a reply`}
           >
             {openTickets}
+          </span>
+        )}
+        {item.key === "messages" && unreadMessages > 0 && (
+          <span
+            className="admin-sidebar-count"
+            aria-label={`${unreadMessages} unread messages`}
+          >
+            {unreadMessages > 99 ? "99+" : unreadMessages}
           </span>
         )}
         {item.path === "/admin-complaints" && complaintCounts.open > 0 && (

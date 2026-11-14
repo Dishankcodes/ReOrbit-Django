@@ -9,6 +9,7 @@ import {
   timeLabel,
   useTicket,
 } from "../../data/helpStore";
+import { useSupportStatus } from "../../../shared/supportTickets";
 
 import "../../css/ReMakerUi.css";
 import "./HelpPage.css";
@@ -16,6 +17,11 @@ import "./HelpPage.css";
 export default function ReMakerTicket() {
   const { ticketId } = useParams();
   const ticket = useTicket(ticketId);
+  const ticketStatus = useSupportStatus("remaker", ticketId);
+
+  if ((!ticket || !ticket.messagesLoaded) && ticketStatus.loading) {
+    return <section className="rk hlp"><p className="hlp-note">Loading your support ticket…</p></section>;
+  }
 
   if (!ticket) {
     return (
@@ -41,14 +47,16 @@ export default function ReMakerTicket() {
     );
   }
 
-  return <Thread key={ticket.id} ticket={ticket} />;
+  return <Thread key={ticket.id} ticket={ticket} ticketStatus={ticketStatus} />;
 }
 
-function Thread({ ticket }) {
+function Thread({ ticket, ticketStatus }) {
   const location = useLocation();
   const [text, setText] = useState("");
   const [attempted, setAttempted] = useState(false);
   const [notice, setNotice] = useState(location.state?.notice || "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const endRef = useRef(null);
   const timer = useRef(null);
 
@@ -66,15 +74,23 @@ function Thread({ ticket }) {
   const closed = ticket.status === "Closed";
   const resolved = ticket.status === "Resolved";
 
-  const send = (event) => {
+  const send = async (event) => {
     event.preventDefault();
     setAttempted(true);
 
-    if (text.trim().length < 2) return;
-
-    replyToTicket(ticket.id, text);
-    setText("");
-    setAttempted(false);
+    if (text.trim().length < 2 || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await replyToTicket(ticket.id, text);
+      setText("");
+      setAttempted(false);
+      setNotice("Reply sent.");
+    } catch (problem) {
+      setError(problem.message || "Your reply could not be sent. Your draft is still here.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -152,21 +168,33 @@ function Thread({ ticket }) {
                   <button
                     type="button"
                     className="rk-textbtn"
-                    onClick={() => {
-                      setTicketStatus(ticket.id, "Resolved");
-                      setNotice("Ticket marked as resolved.");
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      setError("");
+                      try {
+                        await setTicketStatus(ticket.id, "Resolved");
+                        setNotice("Ticket marked as resolved.");
+                      } catch (problem) {
+                        setError(problem.message || "Ticket status could not be updated.");
+                      } finally {
+                        setBusy(false);
+                      }
                     }}
                   >
                     Mark as resolved
                   </button>
                 )}
-                <button type="submit" className="rk-btn primary">
-                  Send reply
+                <button type="submit" className="rk-btn primary" disabled={busy || text.trim().length < 2}>
+                  {busy ? "Sending…" : "Send reply"}
                 </button>
               </div>
             </form>
           )}
         </div>
+
+        {error && <p className="rk-error" role="alert">{error}</p>}
+        {ticketStatus.error && <p className="rk-error" role="alert">{ticketStatus.error}</p>}
 
         <aside className="hlp-side">
           <section className="rk-card">
@@ -226,9 +254,18 @@ function Thread({ ticket }) {
               <button
                 type="button"
                 className="rk-btn primary"
-                onClick={() => {
-                  setTicketStatus(ticket.id, "Closed");
-                  setNotice("Ticket closed. Thank you!");
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setError("");
+                  try {
+                    await setTicketStatus(ticket.id, "Closed");
+                    setNotice("Ticket closed. Thank you!");
+                  } catch (problem) {
+                    setError(problem.message || "Ticket could not be closed.");
+                  } finally {
+                    setBusy(false);
+                  }
                 }}
               >
                 Yes, close this ticket

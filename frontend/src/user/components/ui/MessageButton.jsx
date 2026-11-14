@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { startConversation } from "../../data/messagesStore";
+import { getAccountType } from "../../../api/session";
 
 /* Opens (or starts) the chat with someone about something.
    target: { key, kind, name, subtitle, image, context } - see messagesStore.startConversation */
@@ -12,16 +13,28 @@ export default function MessageButton({
   iconSize = 15,
 }) {
   const navigate = useNavigate();
+  const [opening, setOpening] = useState(false);
   return (
     <button
       type="button"
       className={className}
+      disabled={opening}
       onClick={async () => {
+        if (opening) return;
+        setOpening(true);
         try {
           const id = await startConversation(target);
-          navigate(`/user-messages/${id}`);
+          const accountType = getAccountType();
+          const base = accountType === "admin"
+            ? "/admin-messages"
+            : accountType === "remaker"
+              ? "/remaker-messages"
+              : "/user-messages";
+          navigate(`${base}/${id}`);
         } catch (error) {
           window.dispatchEvent(new CustomEvent("reorbit:toast", { detail: error.message }));
+        } finally {
+          setOpening(false);
         }
       }}
     >
@@ -29,30 +42,3 @@ export default function MessageButton({
     </button>
   );
 }
-
-
-/* Shared target builders used by product and profile pages. */
-export const sellerChat = (item) => ({
-  key: `${item.sellerType === "remaker" ? "remaker" : "seller"}:${item.sellerId}`,
-  kind: item.sellerType === "remaker" ? "remaker" : "seller",
-  name: item.seller,
-  subtitle:
-    item.sellerType === "remaker"
-      ? `ReMaker · ${item.city}`
-      : `Seller · ${item.city}`,
-  image: item.sellerImage,
-  context: {
-    label: `${item.title} · ₹${Number(item.price).toLocaleString("en-IN")}`,
-    to: `/user-marketplace/product/${item.id}`,
-    image: item.image,
-  },
-});
-
-export const personChat = (person, kind) => ({
-  key: `${kind}:${person.id}`,
-  kind,
-  name: person.name,
-  subtitle: `${kind === "remaker" ? "ReMaker" : "Seller"} · ${person.city}`,
-  image: person.image,
-  context: null,
-});

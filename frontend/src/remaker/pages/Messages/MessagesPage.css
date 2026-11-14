@@ -57,6 +57,30 @@
   overflow-y: auto;
 }
 
+.msg-load-more {
+  margin: 0 12px 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--rp-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--rp-green);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.msg-load-more:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.msg-history-loading {
+  margin: 4px auto 12px;
+  color: var(--rp-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
 .msg-none {
   padding: 24px 12px;
   text-align: center;

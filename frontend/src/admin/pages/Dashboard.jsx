@@ -40,8 +40,7 @@ import { useDonations } from "../data/donationsStore";
 import { usePickups } from "../data/pickupsStore";
 import { useNotifications } from "../data/notificationsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
-import { useTickets as useUserTickets } from "../../user/data/supportStore";
-import { useTickets as useRemakerTickets } from "../../remaker/data/helpStore";
+import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 import { useSettings } from "../data/settingsStore";
 import { useAccess } from "../data/teamStore";
 import { LineChart, delta, compactInr, inr, num } from "./Reports/charts";
@@ -240,8 +239,8 @@ export default function AdminDashboard() {
   const pickups = usePickups();
   const notifications = useNotifications();
   const complaintCounts = useComplaintCounts();
-  const userTickets = useUserTickets();
-  const remakerTickets = useRemakerTickets();
+  useSupportTickets("admin", {}, access.canSee("support"));
+  const supportStatus = useSupportStatus("admin");
 
   const hour = new Date().getHours();
   const greeting =
@@ -254,9 +253,7 @@ export default function AdminDashboard() {
 
   /* What needs a person today. Hidden if the team member can't open that area. */
   const attention = React.useMemo(() => {
-    const openTickets = [...userTickets, ...remakerTickets].filter(
-      (t) => t.status === "Open",
-    ).length;
+    const openTickets = supportStatus.counts.Open || 0;
     const toReview = donations.filter((d) => d.status === "Pending").length;
     const openPickups = pickups.filter((p) =>
       ["Requested", "Scheduled"].includes(p.status),
@@ -323,8 +320,7 @@ export default function AdminDashboard() {
     ].filter((t) => access.canSee(t.area));
     return { tiles, total: tiles.reduce((n, t) => n + t.count, 0) };
   }, [
-    userTickets,
-    remakerTickets,
+    supportStatus.counts,
     donations,
     pickups,
     products,

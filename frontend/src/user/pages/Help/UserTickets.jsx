@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 import { ChevronRight, LifeBuoy, MessageSquarePlus } from "lucide-react";
 
 import { useTickets } from "../../data/supportStore";
+import { refreshSupportTickets, useSupportStatus } from "../../../shared/supportTickets";
 import { formatDate, relativeDay } from "../../utils/format";
 import EmptyState from "../../components/ui/EmptyState";
 import HelpNav from "./components/HelpNav";
@@ -26,12 +27,13 @@ const MATCH = {
 
 export default function UserTickets() {
   const tickets = useTickets();
+  const supportStatus = useSupportStatus("user");
   const [tab, setTab] = useState("all");
   const rows = useMemo(
     () => tickets.filter((t) => (tab === "all" ? true : MATCH[tab](t))),
     [tickets, tab],
   );
-  const loading = useLoading(450);
+  const loading = supportStatus.loading;
 
   return (
     <div className="dn hp">
@@ -71,6 +73,14 @@ export default function UserTickets() {
 
       {loading ? (
         <SkeletonRows count={5} />
+      ) : supportStatus.error ? (
+        <EmptyState
+          icon={LifeBuoy}
+          title="Tickets could not be loaded"
+          text={supportStatus.error}
+          actionLabel="Try again"
+          onAction={() => refreshSupportTickets("user").catch(() => {})}
+        />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={LifeBuoy}

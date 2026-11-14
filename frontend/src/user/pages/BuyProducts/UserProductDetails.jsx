@@ -40,7 +40,8 @@ import {
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
-import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
+import MessageButton from "../../components/ui/MessageButton";
+import { sellerChat } from "../../data/messageTargets";
 
 import "../../css/shared/ui-base.css";
 import "../../css/marketplace-css/UserProductDetailsV2.css";

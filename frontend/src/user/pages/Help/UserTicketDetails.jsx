@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Check, CheckCircle2, LifeBuoy, Send } from "lucide-react";
 
 import { closeTicket, replyToTicket, useTicket } from "../../data/supportStore";
+import { useSupportStatus } from "../../../shared/supportTickets";
 import { formatDateTime } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import EmptyState from "../../components/ui/EmptyState";
@@ -17,8 +18,14 @@ const STEPS = ["Open", "In progress", "Resolved"];
 export default function UserTicketDetails() {
   const { ticketId } = useParams();
   const ticket = useTicket(ticketId);
+  const ticketStatus = useSupportStatus("user", ticketId);
   const { toast, show } = useToast();
   const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  if ((!ticket || !ticket.messagesLoaded) && ticketStatus.loading)
+    return <div className="dn hp"><p className="dn-muted">Loading your support ticket…</p></div>;
 
   if (!ticket)
     return (
@@ -34,12 +41,20 @@ export default function UserTicketDetails() {
     );
 
   const idx = STEPS.indexOf(ticket.status);
-  const send = (e) => {
+  const send = async (e) => {
     e.preventDefault();
-    if (text.trim().length < 2) return;
-    replyToTicket(ticket.id, text);
-    setText("");
-    show("Reply sent.");
+    if (text.trim().length < 2 || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await replyToTicket(ticket.id, text);
+      setText("");
+      show("Reply sent.");
+    } catch (problem) {
+      setError(problem.message || "Your reply could not be sent. Your draft is still here.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -72,9 +87,18 @@ export default function UserTicketDetails() {
           <button
             type="button"
             className="dn-btn dn-btn--ghost"
-            onClick={() => {
-              closeTicket(ticket.id);
-              show("Ticket marked as resolved.");
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                await closeTicket(ticket.id);
+                show("Ticket marked as resolved.");
+              } catch (problem) {
+                setError(problem.message || "Ticket status could not be updated.");
+              } finally {
+                setBusy(false);
+              }
             }}
           >
             <CheckCircle2 size={16} /> Mark as resolved
@@ -100,6 +124,7 @@ export default function UserTicketDetails() {
       </section>
 
       <section className="dn-card uhp-thread">
+        {(error || ticketStatus.error) && <p className="dn-error" role="alert">{error || ticketStatus.error}</p>}
         {ticket.messages.map((m) => (
           <article key={m.id} className={`uhp-msg ${m.from}`}>
             <span className="uhp-msg-av">
@@ -120,6 +145,7 @@ export default function UserTicketDetails() {
             className="dn-textarea"
             style={{ minHeight: 84 }}
             value={text}
+            disabled={busy}
             maxLength={600}
             onChange={(e) => setText(e.target.value)}
             placeholder={
@@ -132,10 +158,10 @@ export default function UserTicketDetails() {
           <button
             type="submit"
             className="dn-btn"
-            disabled={text.trim().length < 2}
+            disabled={text.trim().length < 2 || busy}
           >
             <Send size={15} />{" "}
-            {ticket.status === "Resolved" ? "Reopen & send" : "Send reply"}
+            {busy ? "Sending…" : ticket.status === "Resolved" ? "Reopen & send" : "Send reply"}
           </button>
         </form>
       </section>

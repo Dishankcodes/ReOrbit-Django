@@ -31,9 +31,18 @@ export const cartApi = {
 };
 
 export const supportApi = {
-  list: () => apiRequest("/support/me/").then((r) => r.data.tickets),
-  create: (body) => apiRequest("/support/me/", { method: "POST", body }).then((r) => r.data.ticket),
-  reply: (id, message) => apiRequest(`/support/me/${id}/`, { method: "POST", body: { message } }).then((r) => r.data.ticket),
-  adminList: () => apiRequest("/support/admin/").then((r) => r.data.tickets),
-  adminAction: (id, body) => apiRequest(`/support/admin/${id}/`, { method: "POST", body }).then((r) => r.data.ticket),
+  list: () => apiRequest("/support/me/").then((response) => response.data.tickets),
+  get: (id) => apiRequest(`/support/me/${encodeURIComponent(id)}/`).then((response) => response.data.ticket),
+  create: (body) => apiRequest("/support/me/", { method: "POST", body }).then((response) => response.data.ticket),
+  reply: (id, body) => apiRequest(`/support/me/${encodeURIComponent(id)}/`, { method: "POST", body }).then((response) => response.data.ticket),
+  adminList: (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") query.set(key, String(value));
+    });
+    const suffix = query.toString();
+    return apiRequest(`/support/admin/${suffix ? `?${suffix}` : ""}`).then((response) => response.data);
+  },
+  adminGet: (id) => apiRequest(`/support/admin/${encodeURIComponent(id)}/`).then((response) => response.data.ticket),
+  adminAction: (id, body) => apiRequest(`/support/admin/${encodeURIComponent(id)}/`, { method: "POST", body }).then((response) => response.data.ticket),
 };

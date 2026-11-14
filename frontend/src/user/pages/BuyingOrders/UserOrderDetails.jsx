@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import MessageButton, { sellerChat } from "../../components/ui/MessageButton";
+import MessageButton from "../../components/ui/MessageButton";
+import { sellerChat } from "../../data/messageTargets";
 import { Link, useParams } from "../../../shared/portalRouter";
 import {
   Ban,

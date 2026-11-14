@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
-  lastMessage,
+  loadMoreConversations,
   markConversationRead,
+  refreshMessages,
+  useConversationCounts,
   useConversation,
   useConversations,
+  useMessageStatus,
 } from "../../data/messagesStore";
 
 import ChatThread from "./components/ChatThread";
@@ -21,10 +24,11 @@ export default function UserMessages({
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const conversations = useConversations();
-
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const conversations = useConversations(query, filter);
+  const counts = useConversationCounts();
+  const messageStatus = useMessageStatus(id || "");
 
   const fallback = !id
     ? conversations.find((item) =>
@@ -32,43 +36,15 @@ export default function UserMessages({
       ) || conversations[0]
     : null;
   const loaded = useConversation(id || fallback?.id);
-  const active = conversations.find((item) => item.id === id) || null;
-  const unknown = id && !active && conversations.length > 0;
+  const active = conversations.find((item) => item.id === id) || loaded || null;
+  const unknown = id && !active && !messageStatus.loading;
 
   /* opening a conversation reads it (once, when you open it) */
   useEffect(() => {
     const activeId = id || fallback?.id;
-    if (activeId) markConversationRead(activeId);
+    if (activeId) markConversationRead(activeId).catch(() => {});
   }, [id, fallback?.id]);
-
-  const counts = useMemo(
-    () => ({
-      all: conversations.length,
-      unread: conversations.filter((item) => item.unread > 0).length,
-      customer: conversations.filter((item) => item.kind === "customer").length,
-      support: conversations.filter((item) => item.kind === "support").length,
-      seller: conversations.filter((item) => item.kind === "seller").length,
-      buyer: conversations.filter((item) => item.kind === "buyer").length,
-      remaker: conversations.filter((item) => item.kind === "remaker").length,
-      reorbit: conversations.filter((item) => item.kind === "reorbit").length,
-    }),
-    [conversations],
-  );
-
-  const visible = useMemo(() => {
-    const text = query.trim().toLowerCase();
-
-    return conversations.filter((item) => {
-      if (filter === "unread" && item.unread === 0) return false;
-      if (filter !== "all" && filter !== "unread" && item.kind !== filter)
-        return false;
-      if (!text) return true;
-
-      return `${item.name} ${item.subtitle} ${lastMessage(item).text}`
-        .toLowerCase()
-        .includes(text);
-    });
-  }, [conversations, filter, query]);
+  const visible = conversations;
 
   const basePath = adminMode ? "/admin-messages" : "/user-messages";
   const open = (nextId) => navigate(`${basePath}/${nextId}`);
@@ -90,6 +66,9 @@ export default function UserMessages({
         query={query}
         onQuery={setQuery}
         counts={counts}
+        hasMore={messageStatus.hasMore}
+        loading={messageStatus.loadingMore}
+        onLoadMore={() => loadMoreConversations().catch(() => {})}
         kinds={
           adminMode
             ? [
@@ -106,7 +85,7 @@ export default function UserMessages({
       {unknown ? (
         <div className="umsg-empty">
           <h3>We could not find that conversation</h3>
-          <p>It may have been removed, or the link is out of date.</p>
+          <p>{messageStatus.error || "It may have been removed, or the link is out of date."}</p>
           <Link to={basePath} className="umsg-btn primary">
             Back to messages
           </Link>
@@ -115,6 +94,8 @@ export default function UserMessages({
         <ChatThreadComponent
           conversation={detailed}
           adminMode={adminMode}
+          syncError={messageStatus.error}
+          onRetrySync={refreshMessages}
           onBack={() => navigate(basePath)}
         />
       ) : (

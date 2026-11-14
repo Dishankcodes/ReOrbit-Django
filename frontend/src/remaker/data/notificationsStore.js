@@ -9,12 +9,19 @@
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
+import {
+  lastMessage,
+  markConversationRead,
+  markConversationUnread,
+  useUnreadConversations,
+} from "./messagesStore";
 
 const KEY = "reorbit_remaker_notifications_v1";
 const NOW = Date.now();
 const ago = (hours) => new Date(NOW - hours * 3600000).toISOString();
 
 export const CATEGORIES = [
+  { key: "messages", label: "Messages", note: "Unread conversations" },
   { key: "orders", label: "Sales", note: "Orders from customers" },
   { key: "purchases", label: "Purchases", note: "Things you bought" },
   { key: "reviews", label: "Reviews", note: "Customer feedback" },
@@ -359,22 +366,47 @@ const getSnapshot = () => items;
 
 export function useNotifications() {
   const list = useSyncExternalStore(subscribe, getSnapshot);
+  const unreadConversations = useUnreadConversations();
+  liveMessageIds = unreadConversations.map((conversation) => conversation.id);
 
   return useMemo(
-    () => [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [list],
+    () => {
+      const messageItems = unreadConversations.map((conversation) => {
+        const last = lastMessage(conversation);
+        return {
+          id: `message:${conversation.id}`,
+          category: "messages",
+          title: `Message from ${conversation.name}`,
+          text: last.text || (last.image ? "Sent a photo" : "Open your conversation."),
+          createdAt: last.at,
+          read: false,
+          link: { to: `/remaker-messages/${conversation.id}`, label: "Reply" },
+          image: conversation.image || "",
+        };
+      });
+      return [...list, ...messageItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+    [list, unreadConversations],
   );
 }
 
 export function useUnreadCount() {
   const list = useSyncExternalStore(subscribe, getSnapshot);
+  const unreadConversations = useUnreadConversations();
 
-  return useMemo(() => list.filter((item) => !item.read).length, [list]);
+  return useMemo(
+    () => list.filter((item) => !item.read).length + unreadConversations.length,
+    [list, unreadConversations],
+  );
 }
 
 /* ---------- actions ---------- */
 
 export function markRead(ids) {
+  const values = Array.isArray(ids) ? ids : [ids];
+  values.filter((id) => String(id).startsWith("message:")).forEach((id) => {
+    markConversationRead(String(id).slice("message:".length)).catch(() => {});
+  });
   const set = new Set(Array.isArray(ids) ? ids : [ids]);
   commit(
     items.map((item) => (set.has(item.id) ? { ...item, read: true } : item)),
@@ -382,6 +414,10 @@ export function markRead(ids) {
 }
 
 export function markUnread(ids) {
+  const values = Array.isArray(ids) ? ids : [ids];
+  values.filter((id) => String(id).startsWith("message:")).forEach((id) => {
+    markConversationUnread(String(id).slice("message:".length)).catch(() => {});
+  });
   const set = new Set(Array.isArray(ids) ? ids : [ids]);
   commit(
     items.map((item) => (set.has(item.id) ? { ...item, read: false } : item)),
@@ -389,6 +425,9 @@ export function markUnread(ids) {
 }
 
 export function markAllRead(category = "all") {
+  if (category === "all" || category === "messages") {
+    liveMessageIds.forEach((id) => markConversationRead(id).catch(() => {}));
+  }
   commit(
     items.map((item) =>
       category === "all" || item.category === category
@@ -397,6 +436,8 @@ export function markAllRead(category = "all") {
     ),
   );
 }
+
+let liveMessageIds = [];
 
 /* ---------- admin announcements ---------- */
 

@@ -6,6 +6,9 @@ from apps.core.models import TimeStampedModel
 
 class Conversation(PublicIdModel, TimeStampedModel):
     public_id_prefix = "CON"
+    # Unique identity for a direct pair. NULL is retained for existing rows and
+    # non-direct/group conversations; new direct threads always set this value.
+    direct_key = models.CharField(max_length=80, blank=True, null=True, unique=True)
     subject = models.CharField(max_length=180, blank=True)
     kind = models.CharField(max_length=16, default="direct")
     context = models.JSONField(default=dict, blank=True)
@@ -13,6 +16,7 @@ class Conversation(PublicIdModel, TimeStampedModel):
     class Meta:
         db_table = "conversations"
         ordering = ["-updated_at", "-pk"]
+        indexes = [models.Index(fields=["-updated_at", "-id"], name="conv_updated_pk_idx")]
 
 
 class ConversationParticipant(TimeStampedModel):
@@ -26,6 +30,12 @@ class ConversationParticipant(TimeStampedModel):
     is_archived = models.BooleanField(default=False)
     class Meta:
         db_table = "conversation_participants"
+        indexes = [
+            models.Index(fields=["conversation", "is_archived"], name="convpart_archived_idx"),
+            models.Index(fields=["user", "is_archived"], name="convpart_user_arch_idx"),
+            models.Index(fields=["remaker", "is_archived"], name="convpart_maker_arch_idx"),
+            models.Index(fields=["admin", "is_archived"], name="convpart_admin_arch_idx"),
+        ]
         constraints = [
             models.CheckConstraint(condition=Q(account_type="user", user__isnull=False, remaker__isnull=True, admin__isnull=True) | Q(account_type="remaker", remaker__isnull=False, user__isnull=True, admin__isnull=True) | Q(account_type="admin", admin__isnull=False, user__isnull=True, remaker__isnull=True), name="conversation_participant_one_account"),
             models.UniqueConstraint(fields=["conversation", "user"], condition=Q(user__isnull=False), name="conv_unique_user_participant"),
@@ -45,6 +55,7 @@ class Message(TimeStampedModel):
     class Meta:
         db_table = "messages"
         ordering = ["created_at", "pk"]
+        indexes = [models.Index(fields=["conversation", "-id"], name="message_conv_pk_idx")]
         constraints = [models.CheckConstraint(condition=Q(sender_type="user", sender_user__isnull=False, sender_remaker__isnull=True, sender_admin__isnull=True) | Q(sender_type="remaker", sender_remaker__isnull=False, sender_user__isnull=True, sender_admin__isnull=True) | Q(sender_type="admin", sender_admin__isnull=False, sender_user__isnull=True, sender_remaker__isnull=True), name="message_one_sender"), models.CheckConstraint(condition=~Q(text="", attachment_url=""), name="message_content_required")]
 
 
@@ -54,4 +65,7 @@ class MessageNotification(TimeStampedModel):
     read_at = models.DateTimeField(null=True, blank=True)
     class Meta:
         db_table = "message_notifications"
+        indexes = [
+            models.Index(fields=["participant", "read_at"], name="msgnotif_unread_idx"),
+        ]
         constraints = [models.UniqueConstraint(fields=["participant", "message"], name="message_notification_once")]

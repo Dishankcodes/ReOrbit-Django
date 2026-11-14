@@ -12,6 +12,9 @@ export default function ConversationList({
   query,
   onQuery,
   counts,
+  hasMore = false,
+  loading = false,
+  onLoadMore,
 }) {
   return (
     <aside className="msg-list">
@@ -86,6 +89,16 @@ export default function ConversationList({
           );
         })}
       </ul>
+      {hasMore && (
+        <button
+          type="button"
+          className="msg-load-more"
+          onClick={onLoadMore}
+          disabled={loading}
+        >
+          {loading ? "Loading…" : "Load more conversations"}
+        </button>
+      )}
     </aside>
   );
 }

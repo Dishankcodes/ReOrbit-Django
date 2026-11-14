@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Avatar } from "../../../pages-components/ReviewBlocks";
@@ -7,6 +7,7 @@ import {
   QUICK_REPLIES,
   clockLabel,
   dayLabel,
+  loadOlderMessages,
   markConversationUnread,
   sendMessage,
 } from "../../../data/messagesStore";
@@ -18,13 +19,17 @@ const KIND_LABEL = {
 };
 
 /* One open conversation: header, order context, messages and the composer */
-export default function ChatThread({ conversation, onBack }) {
+export default function ChatThread({ conversation, onBack, syncError = "", onRetrySync }) {
   const [text, setText] = useState("");
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
   const [showQuick, setShowQuick] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const endRef = useRef(null);
   const fileRef = useRef(null);
+  const bodyRef = useRef(null);
+  const scrollRestore = useRef(null);
 
   /* new conversation: clear the draft and jump to the latest message */
   useEffect(() => {
@@ -36,7 +41,19 @@ export default function ChatThread({ conversation, onBack }) {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [conversation.id, conversation.messages.length]);
+  }, [conversation.id]);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    if (scrollRestore.current) {
+      const { height, top } = scrollRestore.current;
+      body.scrollTop = body.scrollHeight - height + top;
+      scrollRestore.current = null;
+    } else {
+      body.scrollTop = body.scrollHeight;
+    }
+  }, [conversation.messages.length]);
 
   /* group messages by day */
   const days = useMemo(() => {
@@ -67,19 +84,41 @@ export default function ChatThread({ conversation, onBack }) {
 
   const canSend = text.trim().length > 0 || image;
 
-  const send = () => {
-    if (!canSend) return;
-
-    sendMessage(conversation.id, { text, image }).catch((problem) => setError(problem.message || "Message could not be sent."));
-    setText("");
-    setImage("");
-    setShowQuick(false);
+  const send = async () => {
+    if (!canSend || sending) return;
+    setSending(true);
+    setError("");
+    try {
+      await sendMessage(conversation.id, { text, image });
+      setText("");
+      setImage("");
+      setShowQuick(false);
+    } catch (problem) {
+      setError(problem.message || "Message could not be sent. Your draft is still here.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const onKeyDown = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !sending) {
       event.preventDefault();
-      send();
+      void send();
+    }
+  };
+
+  const loadOlder = async (event) => {
+    const body = event.currentTarget;
+    if (body.scrollTop > 12 || !conversation.has_more_messages || loadingOlder) return;
+    setLoadingOlder(true);
+    scrollRestore.current = { height: body.scrollHeight, top: body.scrollTop };
+    try {
+      await loadOlderMessages(conversation.id);
+    } catch (problem) {
+      scrollRestore.current = null;
+      setError(problem.message || "Older messages could not be loaded.");
+    } finally {
+      setLoadingOlder(false);
     }
   };
 
@@ -122,8 +161,9 @@ export default function ChatThread({ conversation, onBack }) {
             type="button"
             className="rk-btn ghost small"
             onClick={() => {
-              markConversationUnread(conversation.id);
-              onBack();
+              markConversationUnread(conversation.id)
+                .then(onBack)
+                .catch((problem) => setError(problem.message || "Could not update unread status."));
             }}
           >
             Mark unread
@@ -132,7 +172,12 @@ export default function ChatThread({ conversation, onBack }) {
       </header>
 
       {conversation.context && (
-        <Link to={conversation.context.to} className="msg-context">
+        <Link
+          to={(conversation.context.to || "")
+            .replace(/^\/user-marketplace/, "/remaker-marketplace")
+            .replace(/^\/user-orders/, "/remaker-orders")}
+          className="msg-context"
+        >
           {conversation.context.image && (
             <img src={conversation.context.image} alt="" />
           )}
@@ -144,7 +189,8 @@ export default function ChatThread({ conversation, onBack }) {
         </Link>
       )}
 
-      <div className="msg-body" role="log" aria-live="polite">
+      <div ref={bodyRef} className="msg-body" role="log" aria-live="polite" onScroll={loadOlder}>
+        {loadingOlder && <p className="msg-history-loading">Loading earlier messages…</p>}
         {days.map((group) => (
           <div key={group.label}>
             <p className="msg-day">
@@ -201,7 +247,13 @@ export default function ChatThread({ conversation, onBack }) {
           </div>
         )}
 
-        {error && <p className="rk-error">{error}</p>}
+        {syncError && (
+          <p className="rk-error" role="alert">
+            {syncError}{" "}
+            <button type="button" onClick={() => onRetrySync?.().catch(() => {})}>Retry sync</button>
+          </p>
+        )}
+        {error && <p className="rk-error" role="alert">{error}</p>}
 
         <div className="msg-composer-row">
           <div className="msg-composer-tools">
@@ -241,6 +293,7 @@ export default function ChatThread({ conversation, onBack }) {
             rows={1}
             value={text}
             maxLength={1000}
+            disabled={sending}
             onChange={(event) => setText(event.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Write a message. Press Enter to send."
@@ -250,9 +303,9 @@ export default function ChatThread({ conversation, onBack }) {
             type="button"
             className="rk-btn primary"
             onClick={send}
-            disabled={!canSend}
+            disabled={!canSend || sending}
           >
-            Send
+            {sending ? "Sending…" : "Send"}
           </button>
         </div>
       </div>

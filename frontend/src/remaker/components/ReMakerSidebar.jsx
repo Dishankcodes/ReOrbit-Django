@@ -31,6 +31,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import "./ReMakerSidebar.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
 import { mediaUrl } from "../../api/profile";
+import { useTotalUnread } from "../data/messagesStore";
 
 /* ====
    MARKETPLACE MENU
@@ -217,6 +218,7 @@ export default function ReMakerSidebar({
   const navigate = useNavigate();
 
   const [remaker, setReMaker] = useState(() => getStoredReMaker());
+  const unreadMessages = useTotalUnread();
 
   /* ====
      STORAGE LISTENER
@@ -301,6 +303,11 @@ export default function ReMakerSidebar({
         />
 
         <span className="remaker-sidebar-link-text">{item.label}</span>
+        {item.path === "/remaker-messages" && unreadMessages > 0 && (
+          <span className="remaker-sidebar-count" aria-label={`${unreadMessages} unread messages`}>
+            {unreadMessages > 99 ? "99+" : unreadMessages}
+          </span>
+        )}
       </NavLink>
     );
   };

@@ -8,10 +8,12 @@ class SupportTicket(PublicIdModel, TimeStampedModel):
     class Status(models.TextChoices):
         OPEN = "Open", "Open"
         IN_PROGRESS = "In progress", "In progress"
+        WAITING = "Waiting for you", "Waiting for you"
         RESOLVED = "Resolved", "Resolved"
         CLOSED = "Closed", "Closed"
 
     class Priority(models.TextChoices):
+        LOW = "Low", "Low"
         NORMAL = "Normal", "Normal"
         HIGH = "High", "High"
         URGENT = "Urgent", "Urgent"

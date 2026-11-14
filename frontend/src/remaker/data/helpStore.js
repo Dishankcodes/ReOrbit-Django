@@ -1,18 +1,11 @@
-/* =========================================================
-   REMAKER HELP & SUPPORT - UI STORE (no backend yet)
-   Help articles (FAQs) and the ReMaker's support tickets. A ticket
-   follows the Reports idea from the schema (a reason, a description,
-   a status) and adds a short conversation with ReOrbit support.
-
-   Tickets are saved in localStorage. Replace the functions below with
-   API calls later.
-   ========================================================= */
-
-import { useMemo, useSyncExternalStore } from "react";
-
-const KEY = "reorbit_remaker_tickets_v1";
-const NOW = Date.now();
-const ago = (hours) => new Date(NOW - hours * 3600000).toISOString();
+/* ReMaker support tickets use the shared persistent support API/store. */
+import {
+  createSupportTicket,
+  replyToSupportTicket,
+  setSupportTicketStatus,
+  useSupportTicket,
+  useSupportTickets,
+} from "../../shared/supportTickets";
 
 export const SUPPORT = {
   email: "support@reorbit.in",
@@ -144,271 +137,29 @@ export const STATUS_TONE = {
   Closed: "closed",
 };
 
-function seed() {
-  return [
-    {
-      id: "TK-4821",
-      subject: "Payout PO-2203 shows the wrong amount",
-      category: "Earnings and payouts",
-      priority: "Normal",
-      relatedOrder: "",
-      status: "Waiting for you",
-      createdAt: ago(52),
-      updatedAt: ago(6),
-      photos: [],
-      messages: [
-        {
-          id: "m1",
-          from: "me",
-          name: "You",
-          text: "The payout I received for PO-2203 is ₹15,364 but I expected a little more. Can you check the fee on SO-30933?",
-          at: ago(52),
-        },
-        {
-          id: "m2",
-          from: "support",
-          name: "Meena from ReOrbit Support",
-          text: "Hi, thanks for flagging this. We have looked at both orders. Could you tell us the amount you expected for SO-30933 so we can compare?",
-          at: ago(30),
-        },
-        {
-          id: "m3",
-          from: "support",
-          name: "Meena from ReOrbit Support",
-          text: "Just following up. A quick reply will let us finish the check.",
-          at: ago(6),
-        },
-      ],
-    },
-    {
-      id: "TK-4660",
-      subject: "How do I list a product made from two ReOrbit items?",
-      category: "Products and listings",
-      priority: "Normal",
-      relatedOrder: "",
-      status: "Resolved",
-      createdAt: ago(300),
-      updatedAt: ago(280),
-      photos: [],
-      messages: [
-        {
-          id: "m4",
-          from: "me",
-          name: "You",
-          text: "I combined a door and a window grille. Which item should I link on the product?",
-          at: ago(300),
-        },
-        {
-          id: "m5",
-          from: "support",
-          name: "Arjun from ReOrbit Support",
-          text: "Link the main item that gave the piece its character, usually the biggest one. You can mention the second one in the product story. Hope that helps!",
-          at: ago(282),
-        },
-        {
-          id: "m6",
-          from: "me",
-          name: "You",
-          text: "That works, thank you.",
-          at: ago(281),
-        },
-      ],
-    },
-    {
-      id: "TK-4402",
-      subject: "Product photos will not upload",
-      category: "Something is not working",
-      priority: "Urgent",
-      relatedOrder: "",
-      status: "Closed",
-      createdAt: ago(900),
-      updatedAt: ago(870),
-      photos: [],
-      messages: [
-        {
-          id: "m7",
-          from: "me",
-          name: "You",
-          text: "Uploading a product photo keeps failing on my phone.",
-          at: ago(900),
-        },
-        {
-          id: "m8",
-          from: "support",
-          name: "Meena from ReOrbit Support",
-          text: "Sorry about that. Photos over 8 MB fail on some phones. Try a smaller photo or lower the camera quality. We have also added a clearer message for next time.",
-          at: ago(880),
-        },
-      ],
-    },
-  ];
-}
+export const useTickets = () => useSupportTickets("remaker");
+export const useTicket = (id) => useSupportTicket("remaker", id);
 
-/* ---------- store ---------- */
-
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-
-    if (raw) {
-      const value = JSON.parse(raw);
-      if (Array.isArray(value)) return value;
-    }
-  } catch {
-    /* fall back to the seed */
-  }
-
-  return seed();
-}
-
-let tickets = load();
-const listeners = new Set();
-
-function commit(next) {
-  tickets = next;
-
-  try {
-    localStorage.setItem(KEY, JSON.stringify(tickets));
-  } catch {
-    /* storage full or blocked: the change still lives for this session */
-  }
-
-  listeners.forEach((listener) => listener());
-}
-
-const subscribe = (listener) => {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-};
-
-const getSnapshot = () => tickets;
-
-export function useTickets() {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
-
-  return useMemo(
-    () => [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-    [list],
-  );
-}
-
-export function useTicket(id) {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
-
-  return list.find((ticket) => ticket.id === id) || null;
-}
-
-/* ---------- actions ---------- */
-
-export function createTicket({
+export async function createTicket({
   subject,
   category,
   priority,
   relatedOrder,
   description,
-  photos,
 }) {
-  const id = `TK-${Math.floor(4900 + Math.random() * 900)}`;
-  const now = new Date().toISOString();
-
-  const ticket = {
-    id,
+  return createSupportTicket("remaker", {
     subject,
     category,
     priority,
     relatedOrder,
-    status: "Open",
-    createdAt: now,
-    updatedAt: now,
-    photos,
-    messages: [
-      { id: `${id}-1`, from: "me", name: "You", text: description, at: now },
-      {
-        id: `${id}-2`,
-        from: "support",
-        name: "ReOrbit Support",
-        text: `Thanks for reaching out. Your ticket ${id} is with our team. ${SUPPORT.replyTime.replace("We usually", "We will usually")}.`,
-        at: now,
-        auto: true,
-      },
-    ],
-  };
-
-  commit([...tickets, ticket]);
-
-  return ticket;
+    description,
+  });
 }
 
-export function replyToTicket(id, text) {
-  const now = new Date().toISOString();
-
-  commit(
-    tickets.map((ticket) =>
-      ticket.id === id
-        ? {
-            ...ticket,
-            status:
-              ticket.status === "Waiting for you" ||
-              ticket.status === "Resolved"
-                ? "Open"
-                : ticket.status,
-            updatedAt: now,
-            messages: [
-              ...ticket.messages,
-              {
-                id: `${id}-${ticket.messages.length + 1}`,
-                from: "me",
-                name: "You",
-                text,
-                at: now,
-              },
-            ],
-          }
-        : ticket,
-    ),
-  );
-}
-
-/* The ReOrbit team answers from Admin > Support. */
-export function teamReply(id, text, status) {
-  const now = new Date().toISOString();
-
-  commit(
-    tickets.map((ticket) =>
-      ticket.id === id
-        ? {
-            ...ticket,
-            status: status || ticket.status,
-            updatedAt: now,
-            messages: [
-              ...ticket.messages,
-              {
-                id: `${id}-${ticket.messages.length + 1}`,
-                from: "support",
-                name: "ReOrbit Support",
-                text: text.trim(),
-                at: now,
-              },
-            ],
-          }
-        : ticket,
-    ),
-  );
-}
-
-export function setTicketStatus(id, status) {
-  commit(
-    tickets.map((ticket) =>
-      ticket.id === id
-        ? { ...ticket, status, updatedAt: new Date().toISOString() }
-        : ticket,
-    ),
-  );
-}
-
-export function resetTickets() {
-  commit(seed());
-}
+export const replyToTicket = (id, text) =>
+  replyToSupportTicket("remaker", id, text);
+export const setTicketStatus = (id, status) =>
+  setSupportTicketStatus("remaker", id, status);
 
 export function dateLabel(iso) {
   return new Date(iso).toLocaleDateString("en-IN", {

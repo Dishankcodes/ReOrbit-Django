@@ -69,6 +69,10 @@ const pageInformation = {
     title: "Support",
     subtitle: "Answer help tickets from users and ReMakers.",
   },
+  "/admin-messages": {
+    title: "Messages",
+    subtitle: "Reply to Users and ReMakers you are part of a conversation with.",
+  },
   "/admin-warehouse": {
     title: "Warehouse",
     subtitle: "Monitor inventory and refurbishment operations.",
@@ -267,6 +271,7 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
   const isComplaintDetailsPage = /^\/admin-complaints\/[^/]+$/.test(
     location.pathname,
   );
+  const isMessageDetailsPage = /^\/admin-messages\/[^/]+$/.test(location.pathname);
 
   const isPickupTeamsPage = location.pathname === "/admin-pickups/teams";
   const isPickupDetailsPage = /^\/admin-pickups\/(?!teams$)[^/]+$/.test(
@@ -302,7 +307,9 @@ export default function AdminHeader({ onToggleSidebar, onCloseMobile }) {
     location.pathname,
   );
 
-  const currentPage = isSellListingPage
+  const currentPage = isMessageDetailsPage
+    ? pageInformation["/admin-messages"]
+    : isSellListingPage
     ? {
         title: "Listing Details",
         subtitle: "Photos, stock, performance and the sales of this product.",

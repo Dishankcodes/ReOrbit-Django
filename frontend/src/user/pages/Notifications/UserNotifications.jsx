@@ -11,6 +11,7 @@ import {
   Star,
   Tag,
   Megaphone,
+  MessageCircle,
 } from "lucide-react";
 
 import {
@@ -30,6 +31,7 @@ const ICON = {
   donation: HandHeart,
   sell: Tag,
   support: LifeBuoy,
+  message: MessageCircle,
   reward: Star,
   announcement: Megaphone,
 };

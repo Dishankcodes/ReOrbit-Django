@@ -18,6 +18,7 @@ ADMIN_MODULES = (
     "pickups",
     "complaints",
     "support",
+    "messages",
     "warehouse",
     "rewards",
     "notifications",

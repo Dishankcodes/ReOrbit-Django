@@ -20,6 +20,7 @@ export default function UserContactSupport() {
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
+  const [error, setError] = useState("");
 
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const err = {
@@ -31,22 +32,24 @@ export default function UserContactSupport() {
     f.category,
   );
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTouched(true);
     if (Object.values(err).some(Boolean)) return;
     setBusy(true);
-    window.setTimeout(() => {
-      setDone(
-        createTicket({
+    setError("");
+    try {
+      setDone(await createTicket({
           subject: f.subject,
           category: f.category,
           message: f.message,
           orderId: aboutOrder ? f.orderId : "",
-        }),
-      );
+      }));
+    } catch (problem) {
+      setError(problem.message || "Your request could not be sent. Please try again.");
+    } finally {
       setBusy(false);
-    }, 700);
+    }
   };
 
   if (done) {
@@ -176,6 +179,7 @@ export default function UserContactSupport() {
               <Send size={15} /> {busy ? "Sending…" : "Send request"}
             </button>
           </div>
+          {error && <p className="dn-error" role="alert">{error}</p>}
         </form>
 
         <aside className="uhp-side">

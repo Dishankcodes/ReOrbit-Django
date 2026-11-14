@@ -22,19 +22,13 @@ import {
 } from "lucide-react";
 
 import {
-  useTickets as useUserTickets,
-  teamReply as userReply,
-  teamSetStatus as userStatus,
-} from "../../../user/data/supportStore";
-import {
-  useTickets as useRemakerTickets,
-  teamReply as remakerReply,
-  setTicketStatus as remakerStatus,
-} from "../../../remaker/data/helpStore";
-import {
-  useMyUserAccount,
-  useMyRemakerAccount,
-} from "../../../shared/identity";
+  loadMoreSupportTickets,
+  replyToSupportTicket,
+  setSupportTicketStatus,
+  useSupportStatus,
+  useSupportTicketDetail,
+  useSupportTickets,
+} from "../../../shared/supportTickets";
 import { useAccess } from "../../data/teamStore";
 
 import UserAvatar from "../../components/ui/UserAvatar";
@@ -114,11 +108,7 @@ const CARDS = [
 ];
 
 export default function AdminSupport() {
-  const userTickets = useUserTickets();
-  const remakerTickets = useRemakerTickets();
   const me = useAccess().me;
-  const userAcc = useMyUserAccount();
-  const remakerAcc = useMyRemakerAccount();
   const { toast, toastNode } = useToast();
 
   const [status, setStatus] = useState("All");
@@ -128,12 +118,18 @@ export default function AdminSupport() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [openKey, setOpenKey] = useState(null);
+  const filters = { query, status, priority, source };
+  const tickets = useSupportTickets("admin", filters);
+  const ticketState = useSupportStatus("admin", null, filters);
+  const openId = openKey ? openKey.slice(openKey.indexOf(":") + 1) : null;
+  const ticketDetail = useSupportTicketDetail("admin", openId);
+  const detailState = useSupportStatus("admin", openId);
 
-  /* one shape for both apps */
+  /* One server-backed inbox shape for User and ReMaker tickets. */
   const all = useMemo(() => {
-    const u = userTickets.map((t) => ({
-      key: `User:${t.id}`,
-      source: "User",
+    return tickets.map((t) => ({
+      key: `${t.source}:${t.id}`,
+      source: t.source,
       id: t.id,
       subject: t.subject,
       category: t.category,
@@ -143,81 +139,37 @@ export default function AdminSupport() {
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
       from: {
-        name: userAcc?.full_name || "Member",
-        image: userAcc?.profile?.profile_image,
-        email: userAcc?.email || "",
+        name: t.requester?.name || "Member",
+        image: t.requester?.image || "",
+        email: t.requester?.email || "",
       },
-      messages: t.messages.map((m) => ({
+      messageCount: t.messageCount || t.messages.length,
+      messages: (t.messages || []).map((m) => ({
         id: m.id,
-        team: m.from !== "user",
+        team: m.from === "team",
         text: m.text,
         at: m.at,
-        name:
-          m.from === "user"
-            ? userAcc?.full_name || "Member"
-            : "ReOrbit Support",
-      })),
-    }));
-    const r = remakerTickets.map((t) => ({
-      key: `ReMaker:${t.id}`,
-      source: "ReMaker",
-      id: t.id,
-      subject: t.subject,
-      category: t.category,
-      status: t.status,
-      priority: t.priority,
-      order: t.relatedOrder || "",
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-      from: {
-        name: remakerAcc?.full_name || "ReMaker",
-        image: remakerAcc?.profile?.profile_image,
-        email: remakerAcc?.email || "",
-      },
-      messages: t.messages.map((m) => ({
-        id: m.id,
-        team: m.from !== "me",
-        text: m.text,
-        at: m.at,
-        name:
-          m.from === "me"
-            ? remakerAcc?.full_name || "ReMaker"
-            : m.name || "ReOrbit Support",
+        name: m.name || (m.from === "team" ? "ReOrbit Support" : t.requester?.name || "Member"),
       })),
       photos: t.photos || [],
+      lastMessage: t.lastMessage || null,
     }));
-    return [...u, ...r].sort(
+  }, [tickets]);
+
+  const filtered = useMemo(() => [...all].sort(
       (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
-    );
-  }, [userTickets, remakerTickets, userAcc, remakerAcc]);
+    ), [all]);
 
   const counts = useMemo(() => {
     const c = {
-      All: all.length,
-      Open: 0,
-      "In progress": 0,
-      Waiting: 0,
-      Resolved: 0,
+      All: ticketState.counts.All ?? all.length,
+      Open: ticketState.counts.Open ?? 0,
+      "In progress": ticketState.counts["In progress"] ?? 0,
+      Waiting: ticketState.counts.Waiting ?? 0,
+      Resolved: ticketState.counts.Resolved ?? 0,
     };
-    all.forEach((t) => {
-      c[bucket(t.status)] += 1;
-    });
     return c;
-  }, [all]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return all.filter(
-      (t) =>
-        (status === "All" || bucket(t.status) === status) &&
-        (source === "all" || t.source === source) &&
-        (priority === "all" || t.priority === priority) &&
-        (!q ||
-          [t.id, t.subject, t.category, t.from.name, t.order].some((v) =>
-            String(v).toLowerCase().includes(q),
-          )),
-    );
-  }, [all, status, source, priority, query]);
+  }, [ticketState.counts, all]);
 
   useEffect(() => {
     setPage(1);
@@ -225,16 +177,21 @@ export default function AdminSupport() {
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pages);
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const current = all.find((t) => t.key === openKey) || null;
+  const baseCurrent = all.find((t) => t.key === openKey) || null;
+  const current = baseCurrent && ticketDetail
+    ? { ...baseCurrent, messages: (ticketDetail.messages || []).map((m) => ({
+        id: m.id, team: m.from === "team", text: m.text, at: m.at, name: m.name,
+      })), photos: ticketDetail.photos || [] }
+    : baseCurrent;
   const filtersActive =
     status !== "All" || source !== "all" || priority !== "all" || query;
 
-  const send = (t, text, nextStatus) => {
-    (t.source === "User" ? userReply : remakerReply)(t.id, text, nextStatus);
+  const send = async (t, text, nextStatus) => {
+    await replyToSupportTicket("admin", t.id, text, nextStatus);
     toast(`Reply sent to ${t.from.name}.`);
   };
-  const setTo = (t, next) => {
-    (t.source === "User" ? userStatus : remakerStatus)(t.id, next);
+  const setTo = async (t, next) => {
+    await setSupportTicketStatus("admin", t.id, next);
     toast(`${t.id} is now ${label(next).toLowerCase()}.`);
   };
 
@@ -422,6 +379,10 @@ export default function AdminSupport() {
           />
         )}
 
+        {ticketState.error && (
+          <p className="ad-modal-error" role="alert">{ticketState.error}</p>
+        )}
+
         {filtered.length > 0 && (
           <Pagination
             page={safePage}
@@ -432,6 +393,18 @@ export default function AdminSupport() {
             sizes={[10, 20, 50]}
           />
         )}
+        {ticketState.hasMore && (
+          <div className="sp-load-more">
+            <button
+              type="button"
+              className="ad-btn ad-btn-ghost"
+              disabled={ticketState.loadingMore}
+              onClick={() => loadMoreSupportTickets("admin", filters).catch((error) => toast(error.message || "More tickets could not be loaded."))}
+            >
+              {ticketState.loadingMore ? "Loading tickets…" : "Load more tickets"}
+            </button>
+          </div>
+        )}
       </section>
 
       {current && (
@@ -441,6 +414,8 @@ export default function AdminSupport() {
           onClose={() => setOpenKey(null)}
           onSend={send}
           onStatus={setTo}
+          loading={detailState.loading}
+          detailError={detailState.error}
         />
       )}
       {toastNode}
@@ -448,10 +423,12 @@ export default function AdminSupport() {
   );
 }
 
-function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
+function TicketModal({ ticket: t, onClose, onSend, onStatus, loading, detailError }) {
   const [text, setText] = useState("");
   const [next, setNext] = useState("");
   const [touched, setTouched] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const endRef = useRef(null);
   const options = STATUS_OPTIONS[t.source];
 
@@ -469,14 +446,22 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [t.messages.length]);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setTouched(true);
-    if (text.trim().length < 2) return;
-    onSend(t, text, next || (t.status === "Open" ? "In progress" : t.status));
-    setText("");
-    setNext("");
-    setTouched(false);
+    if (text.trim().length < 2 || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await onSend(t, text, next || (t.status === "Open" ? "In progress" : t.status));
+      setText("");
+      setNext("");
+      setTouched(false);
+    } catch (requestError) {
+      setError(requestError.message || "Your reply could not be sent.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -517,6 +502,7 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
         </header>
 
         <ol className="sp-thread" aria-label="Conversation">
+          {loading && t.messages.length === 0 && <li className="sp-sub">Loading conversation…</li>}
           {t.messages.map((m) => (
             <li key={m.id} className={m.team ? "team" : "member"}>
               <div className="sp-bubble">
@@ -544,6 +530,9 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
           )}
           <li ref={endRef} aria-hidden="true" />
         </ol>
+
+        {detailError && <p className="ad-modal-error" role="alert">{detailError}</p>}
+        {error && <p className="ad-modal-error" role="alert">{error}</p>}
 
         <form className="sp-reply" onSubmit={submit}>
           <label className="ad-modal-field">
@@ -585,7 +574,14 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
                 <button
                   type="button"
                   className="ad-btn ad-btn-ghost"
-                  onClick={() => onStatus(t, "Resolved")}
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    try { await onStatus(t, "Resolved"); }
+                    catch (requestError) { setError(requestError.message || "Status could not be changed."); }
+                    finally { setBusy(false); }
+                  }}
                 >
                   Mark resolved
                 </button>
@@ -594,13 +590,20 @@ function TicketModal({ ticket: t, onClose, onSend, onStatus }) {
                 <button
                   type="button"
                   className="ad-btn ad-btn-ghost"
-                  onClick={() => onStatus(t, "Open")}
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    setError("");
+                    try { await onStatus(t, "Open"); }
+                    catch (requestError) { setError(requestError.message || "Ticket could not be reopened."); }
+                    finally { setBusy(false); }
+                  }}
                 >
                   Reopen
                 </button>
               )}
-              <button type="submit" className="ad-btn ad-btn-primary">
-                <Send size={14} /> Send reply
+              <button type="submit" className="ad-btn ad-btn-primary" disabled={busy || t.status === "Closed"}>
+                <Send size={14} /> {busy ? "Sending…" : "Send reply"}
               </button>
             </div>
           </div>

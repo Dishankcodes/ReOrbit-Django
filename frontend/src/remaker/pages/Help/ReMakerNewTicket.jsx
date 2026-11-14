@@ -26,6 +26,8 @@ export default function ReMakerNewTicket() {
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState([]);
   const [photoError, setPhotoError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [attempted, setAttempted] = useState(false);
   const fileRef = useRef(null);
 
@@ -78,7 +80,7 @@ export default function ReMakerNewTicket() {
     }
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     setAttempted(true);
 
@@ -91,18 +93,24 @@ export default function ReMakerNewTicket() {
       return;
     }
 
-    const ticket = createTicket({
-      subject: subject.trim(),
-      category,
-      priority,
-      relatedOrder: related,
-      description: description.trim(),
-      photos,
-    });
-
-    navigate(`/remaker-help/tickets/${ticket.id}`, {
-      state: { notice: `Ticket ${ticket.id} created. We will reply soon.` },
-    });
+    setSaving(true);
+    setSubmitError("");
+    try {
+      const ticket = await createTicket({
+        subject: subject.trim(),
+        category,
+        priority,
+        relatedOrder: related,
+        description: description.trim(),
+        photos,
+      });
+      navigate(`/remaker-help/tickets/${ticket.id}`, {
+        state: { notice: `Ticket ${ticket.id} created. We will reply soon.` },
+      });
+    } catch (error) {
+      setSubmitError(error.message || "Your support ticket could not be created. Please try again.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -289,13 +297,14 @@ export default function ReMakerNewTicket() {
           </div>
 
           <div className="hlp-form-actions">
-            <button type="submit" className="rk-btn primary">
-              Send ticket
+            <button type="submit" className="rk-btn primary" disabled={saving}>
+              {saving ? "Sending…" : "Send ticket"}
             </button>
             <Link to="/remaker-help?tab=tickets" className="rk-btn ghost">
               Cancel
             </Link>
           </div>
+          {submitError && <span className="rk-error" role="alert">{submitError}</span>}
         </form>
 
         <aside className="hlp-side">

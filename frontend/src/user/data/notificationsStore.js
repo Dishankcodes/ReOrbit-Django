@@ -15,6 +15,7 @@ import { useTickets } from "./supportStore";
 import { useRewards } from "./rewardsStore";
 import { useSettings } from "./settingsStore";
 import { useMyAnnouncements } from "../../shared/announcements";
+import { lastMessage, useUnreadConversations } from "./messagesStore";
 
 const KEY = "reorbit_user_notif_read";
 const DAY = 86400000;
@@ -56,6 +57,7 @@ export const NOTIFICATION_TYPES = {
   donation: { label: "Donations", pref: "donationUpdates" },
   sell: { label: "Selling", pref: "orderUpdates" },
   support: { label: "Support", pref: null },
+  message: { label: "Messages", pref: null },
   reward: { label: "Rewards", pref: "rewards" },
   announcement: { label: "From ReOrbit", pref: null },
 };
@@ -69,6 +71,7 @@ export function useNotifications() {
   const { ledger } = useRewards();
   const settings = useSettings();
   const announcements = useMyAnnouncements("users");
+  const unreadConversations = useUnreadConversations();
 
   return useMemo(() => {
     const since = Date.now() - WINDOW_DAYS * DAY;
@@ -127,7 +130,7 @@ export function useNotifications() {
       });
     });
     tickets.forEach((t) => {
-      const last = lastOf(t.messages);
+      const last = lastOf(t.messages) || t.lastMessage;
       if (!last || last.from !== "team") return;
       out.push({
         id: `tkt-${t.id}-${last.id}`,
@@ -136,6 +139,17 @@ export function useNotifications() {
         message: `${t.id} · ${t.subject}`,
         at: last.at,
         to: `/user-help/tickets/${t.id}`,
+      });
+    });
+    unreadConversations.forEach((conversation) => {
+      const last = lastMessage(conversation);
+      out.push({
+        id: `message-${conversation.id}-${last.id || last.at}`,
+        type: "message",
+        title: `Message from ${conversation.name}`,
+        message: last.text || (last.image ? "Sent a photo" : "Open your conversation."),
+        at: last.at,
+        to: `/user-messages/${conversation.id}`,
       });
     });
     announcements.forEach((a) => {
@@ -185,5 +199,6 @@ export function useNotifications() {
     ledger,
     settings,
     announcements,
+    unreadConversations,
   ]);
 }

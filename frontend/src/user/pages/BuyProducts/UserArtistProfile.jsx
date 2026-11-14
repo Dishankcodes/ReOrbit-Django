@@ -6,7 +6,7 @@ import { fetchPublicRemaker } from "../../../api/remakers";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { useFollowing } from "../../data/followStore";
-import { personChat } from "../../components/ui/MessageButton";
+import { personChat } from "../../data/messageTargets";
 import ProfileShell from "./ProfileShell";
 
 export default function UserArtistProfile() {

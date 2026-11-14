@@ -22,6 +22,12 @@ import { useRemakers } from "./remakersStore";
 import { useAccess } from "./teamStore";
 import { useComplaints, isActive } from "./complaintsStore";
 import { usePickupTeams } from "./pickupTeamsStore";
+import {
+  lastMessage,
+  markConversationRead,
+  markConversationUnread,
+  useUnreadConversations,
+} from "../../shared/messagingStore";
 
 const PERM_OF = {
   Warehouse: "warehouse",
@@ -33,6 +39,7 @@ const PERM_OF = {
   Sales: "sell",
   Users: "users",
   Complaints: "complaints",
+  Messages: "messages",
 };
 import { DEMO_TODAY } from "../utils/format";
 
@@ -106,6 +113,7 @@ export const MODULES = {
   Sales: { label: "Sales", path: "/admin-sell/sales" },
   Users: { label: "Users", path: "/admin-users" },
   Complaints: { label: "Complaints", path: "/admin-complaints" },
+  Messages: { label: "Messages", path: "/admin-messages" },
   System: { label: "System", path: "" },
 };
 
@@ -125,6 +133,7 @@ export function useNotifications() {
   const sales = useSales();
   const { read, unread, dismissed } = useNs();
   const access = useAccess();
+  const unreadConversations = useUnreadConversations(access.canSee("messages"));
 
   return useMemo(() => {
     const out = [];
@@ -135,6 +144,21 @@ export function useNotifications() {
         actionLabel: "Open",
         ...n,
       });
+
+    unreadConversations.forEach((conversation) => {
+      const message = lastMessage(conversation);
+      add({
+        id: `message:${conversation.id}`,
+        module: "Messages",
+        severity: "info",
+        needsAction: true,
+        title: `New message from ${conversation.name || "a member"}`,
+        message: message.text || "You have an unread message.",
+        at: message.at || conversation.updated_at || conversation.updatedAt,
+        path: `/admin-messages/${conversation.id}`,
+        actionLabel: "Reply",
+      });
+    });
 
     /* Warehouse */
     const lvl = (k) => alerts.filter((a) => a.alert.key === k);
@@ -567,6 +591,7 @@ export function useNotifications() {
     users,
     remakers,
     sales,
+    unreadConversations,
     read,
     unread,
     dismissed,
@@ -578,19 +603,33 @@ export function markRead(ids) {
   const r = new Set(state.read);
   const u = new Set(state.unread);
   ids.forEach((id) => {
+    if (String(id).startsWith("message:")) {
+      markConversationRead(String(id).slice("message:".length), "admin").catch(() => {});
+      return;
+    }
     r.add(id);
     u.delete(id);
   });
   set({ read: r, unread: u });
 }
 export function markUnread(id) {
+  if (String(id).startsWith("message:")) {
+    markConversationUnread(String(id).slice("message:".length), "admin").catch(() => {});
+    return;
+  }
   const u = new Set(state.unread);
   u.add(id);
   set({ unread: u });
 }
 export function dismiss(ids) {
   const d = new Set(state.dismissed);
-  ids.forEach((id) => d.add(id));
+  ids.forEach((id) => {
+    if (String(id).startsWith("message:")) {
+      markConversationRead(String(id).slice("message:".length), "admin").catch(() => {});
+    } else {
+      d.add(id);
+    }
+  });
   set({ dismissed: d });
 }
 

@@ -3,13 +3,16 @@
    FAQ + support tickets: Open -> In progress -> Resolved.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { useCommerce } from "../../shared/commerce";
 import { usePublishedFaqs } from "../../shared/content";
-
-const DAY = 86400000;
-const ago = (d, h = 0) =>
-  new Date(Date.now() - d * DAY - h * 3600000).toISOString();
+import {
+  createSupportTicket,
+  replyToSupportTicket,
+  setSupportTicketStatus,
+  useSupportTicket,
+  useSupportTickets,
+} from "../../shared/supportTickets";
 
 export const HELP_CATEGORIES = [
   {
@@ -153,73 +156,6 @@ export const TICKET_CATEGORIES = [
   "Other",
 ];
 
-const msg = (from, text, at) => ({ id: `${from}-${at}`, from, text, at });
-
-const seedTickets = () => [
-  {
-    id: "TKT-4802",
-    subject: "Parcel marked delivered but not received",
-    category: "Order or delivery",
-    orderId: "RO-10388",
-    status: "In progress",
-    priority: "High",
-    createdAt: ago(2),
-    updatedAt: ago(0, 5),
-    messages: [
-      msg(
-        "user",
-        "My order RO-10388 says delivered, but I haven't received anything. Please check with the courier.",
-        ago(2),
-      ),
-      msg(
-        "team",
-        "Sorry about that, Aarav. We've raised this with the courier and asked for the delivery proof. We'll update you within 24 hours.",
-        ago(1, 20),
-      ),
-      msg(
-        "team",
-        "The courier confirmed the parcel was left with the building security. Could you please check with them and let us know?",
-        ago(0, 5),
-      ),
-    ],
-  },
-  {
-    id: "TKT-4711",
-    subject: "How do I get my donation certificate?",
-    category: "Donation pickup",
-    orderId: "",
-    status: "Resolved",
-    priority: "Normal",
-    createdAt: ago(21),
-    updatedAt: ago(20),
-    messages: [
-      msg(
-        "user",
-        "My donation DON-2041 was completed but I can't find the certificate.",
-        ago(21),
-      ),
-      msg(
-        "team",
-        "You can open it from the donation page. We've also emailed it to you. Glad to help!",
-        ago(20, 2),
-      ),
-    ],
-  },
-];
-
-let tickets = seedTickets();
-let seq = 4820;
-const listeners = new Set();
-const subscribe = (l) => {
-  listeners.add(l);
-  return () => listeners.delete(l);
-};
-const getSnapshot = () => tickets;
-const commit = (next) => {
-  tickets = next;
-  listeners.forEach((l) => l());
-};
-
 /* Static answers + the FAQs published in Admin > Content. The admin versions win
    when the question is the same. Money figures come from Settings. */
 const TOPIC_TO_CAT = {
@@ -261,105 +197,14 @@ export function useHelpFaqs() {
   }, [commerce, published]);
 }
 
-export function createTicket({ subject, category, message, orderId }) {
-  seq += 1;
-  const id = `TKT-${seq}`;
-  const at = new Date().toISOString();
-  commit([
-    {
-      id,
-      subject: subject.trim(),
-      category,
-      orderId: orderId || "",
-      status: "Open",
-      priority: category === "Payment or refund" ? "High" : "Normal",
-      createdAt: at,
-      updatedAt: at,
-      messages: [
-        msg("user", message.trim(), at),
-        msg(
-          "team",
-          "Thanks for reaching out. We've received your request and a support specialist will reply within 24 hours.",
-          at,
-        ),
-      ],
-    },
-    ...tickets,
-  ]);
-  return id;
+export async function createTicket(payload) {
+  const ticket = await createSupportTicket("user", payload);
+  return ticket.id;
 }
 
-export function replyToTicket(id, text) {
-  const at = new Date().toISOString();
-  commit(
-    tickets.map((t) =>
-      t.id === id
-        ? {
-            ...t,
-            status: t.status === "Resolved" ? "Open" : t.status,
-            updatedAt: at,
-            messages: [...t.messages, msg("user", text.trim(), at)],
-          }
-        : t,
-    ),
-  );
-}
-
-export function closeTicket(id) {
-  const at = new Date().toISOString();
-  commit(
-    tickets.map((t) =>
-      t.id === id
-        ? {
-            ...t,
-            status: "Resolved",
-            updatedAt: at,
-            messages: [
-              ...t.messages,
-              msg(
-                "team",
-                "Marked as resolved at your request. You can reopen it any time by replying.",
-                at,
-              ),
-            ],
-          }
-        : t,
-    ),
-  );
-}
-
-/* The ReOrbit team answers from Admin > Support. */
-export function teamReply(id, text, status) {
-  const at = new Date().toISOString();
-  commit(
-    tickets.map((t) =>
-      t.id === id
-        ? {
-            ...t,
-            status: status || t.status,
-            updatedAt: at,
-            messages: [...t.messages, msg("team", text.trim(), at)],
-          }
-        : t,
-    ),
-  );
-}
-export function teamSetStatus(id, status) {
-  const at = new Date().toISOString();
-  commit(
-    tickets.map((t) => (t.id === id ? { ...t, status, updatedAt: at } : t)),
-  );
-}
-
-export function useTickets() {
-  const list = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return useMemo(
-    () =>
-      [...list].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)),
-    [list],
-  );
-}
-export function useTicket(id) {
-  const list = useTickets();
-  return useMemo(() => list.find((t) => t.id === id) || null, [list, id]);
-}
+export const replyToTicket = (id, text) =>
+  replyToSupportTicket("user", id, text);
+export const closeTicket = (id) =>
+  setSupportTicketStatus("user", id, "Resolved");
+export const useTickets = () => useSupportTickets("user");
+export const useTicket = (id) => useSupportTicket("user", id);
