@@ -556,7 +556,7 @@ class ConversationList(APIView):
         conversations = [_row(p.conversation, p, False) for p in page]
         removed = []
         if since_at:
-            included = {row["conversation_id"] for row in page}
+            included = {row.conversation_id for row in page}
             changed = ConversationParticipant.objects.filter(
                 **{kind: account}, updated_at__gte=since_at
             ).values_list("conversation_id", "conversation__public_id").distinct()
@@ -731,7 +731,7 @@ class AdminInbox(ConversationList):
         conversations = [_row(p.conversation, p, False) for p in page]
         removed = []
         if since_at:
-            included = {row["conversation_id"] for row in page}
+            included = {row.conversation_id for row in page}
             changed = ConversationParticipant.objects.filter(
                 admin=account, updated_at__gte=since_at
             ).values_list("conversation_id", "conversation__public_id").distinct()
