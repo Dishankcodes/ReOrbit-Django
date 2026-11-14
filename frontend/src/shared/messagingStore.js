@@ -92,8 +92,36 @@ const subscribe = (scope, listener) => {
   state.listeners.add(listener);
   return () => state.listeners.delete(listener);
 };
-const snapshot = (scope) => stateFor(scope);
-const emit = (state) => state.listeners.forEach((listener) => listener());
+function createSnapshot(state) {
+  return {
+    revision: state.snapshot?.revision || 0,
+    rows: state.rows,
+    unreadRows: state.unreadRows,
+    details: new Map(state.details),
+    loading: state.loading,
+    loadingMore: state.loadingMore,
+    detailLoading: new Set(state.detailLoading),
+    error: state.error,
+    hasMore: state.hasMore,
+    counts: state.counts,
+    unreadCount: state.unreadCount,
+    activeId: state.activeId,
+  };
+}
+
+const snapshot = (scope) => {
+  const state = stateFor(scope);
+  if (!state.snapshot) state.snapshot = createSnapshot(state);
+  return state.snapshot;
+};
+
+const emit = (state) => {
+  // useSyncExternalStore requires a new, cached snapshot identity after every
+  // mutation. Returning the mutable store object itself suppresses React renders.
+  state.snapshot = createSnapshot(state);
+  state.snapshot.revision += 1;
+  state.listeners.forEach((listener) => listener());
+};
 const currentScope = () => getAccountType() || "user";
 const isVisible = () =>
   typeof document === "undefined" || document.visibilityState === "visible";
