@@ -32,6 +32,36 @@ class MessagingFlowTests(APIBase):
         self.assertEqual(detail["messages"][-1]["from"], "them")
         self.assertEqual(detail["context"]["label"], "Order ORD-1001")
 
+
+    def test_incremental_inbox_sync_uses_model_attributes_and_role_filters_match_peers(self):
+        other_maker = self.make_remaker(email="second-maker@example.com")
+        direct = self.post("/api/messaging/me/", {
+            "target_type": "remaker", "target_id": self.maker.public_id,
+        }, as_=self.user).data["data"]["conversation"]["id"]
+        maker_chat = self.post("/api/messaging/me/", {
+            "target_type": "remaker", "target_id": other_maker.public_id,
+        }, as_=self.maker).data["data"]["conversation"]["id"]
+
+        # This is the incremental request shape used by the live sidebar poll.
+        from django.utils import timezone
+        since = timezone.now().isoformat()
+        user_sync = self.get(f"/api/messaging/me/?since={since}", as_=self.user)
+        self.assertEqual(user_sync.status_code, 200, user_sync.data)
+        self.assertIn(direct, [row["id"] for row in user_sync.data["data"]["conversations"]])
+
+        maker_remaker_filter = self.get("/api/messaging/me/?kind=remaker", as_=self.maker)
+        self.assertEqual(maker_remaker_filter.status_code, 200, maker_remaker_filter.data)
+        self.assertEqual(
+            [row["id"] for row in maker_remaker_filter.data["data"]["conversations"]],
+            [maker_chat],
+        )
+        maker_customer_filter = self.get("/api/messaging/me/?kind=customer", as_=self.maker)
+        self.assertEqual(maker_customer_filter.status_code, 200, maker_customer_filter.data)
+        self.assertEqual(
+            [row["id"] for row in maker_customer_filter.data["data"]["conversations"]],
+            [],
+        )
+
     def test_direct_conversation_start_is_idempotent(self):
         payload = {"target_type": "remaker", "target_id": self.maker.public_id}
         first = self.post("/api/messaging/me/", payload, as_=self.user)

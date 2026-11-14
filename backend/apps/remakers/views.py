@@ -77,6 +77,13 @@ class RequestOTPView(APIView):
 
         remaker = ReMakers.objects.filter(email__iexact=email).first()
 
+        if purpose == P.REMAKER_LOGIN and Users.objects.filter(email__iexact=email).exists():
+            return fail(
+                "This email belongs to a User account. Sign in from the User login instead.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_USER",
+            )
+
         if purpose == P.REMAKER_REGISTER:
             if remaker:
                 return fail("Email is already registered as a ReMaker.", status=status.HTTP_409_CONFLICT)
@@ -186,6 +193,12 @@ class LoginVerifyOTPView(APIView):
             return fail("Email is required.")
         if not otp:
             return fail("OTP is required.")
+        if Users.objects.filter(email__iexact=email).exists():
+            return fail(
+                "This email belongs to a User account. Sign in from the User login instead.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_USER",
+            )
 
         record, error = verify_otp(email, otp, OTP_Verification.Purpose.REMAKER_LOGIN)
         if error:
@@ -226,6 +239,13 @@ class GoogleAuthView(APIView):
             g = read_signup_token(google_token) if google_token else profile_from_code(request.data.get("code"))
         except GoogleAuthError as exc:
             return fail(exc.message, status=exc.status, code="GOOGLE_AUTH_FAILED")
+
+        if Users.objects.filter(email__iexact=g["email"]).exists():
+            return fail(
+                "This email is already registered as a User. Use the User sign-in instead.",
+                status=status.HTTP_409_CONFLICT,
+                code="EMAIL_USED_BY_USER",
+            )
 
         remaker = (
             ReMakers.objects.filter(google_id=g["sub"]).first()

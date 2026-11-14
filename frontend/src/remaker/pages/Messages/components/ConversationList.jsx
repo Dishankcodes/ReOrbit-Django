@@ -57,6 +57,10 @@ export default function ConversationList({
         {conversations.map((conversation) => {
           const last = lastMessage(conversation);
           const preview = last.image && !last.text ? "Sent a photo" : last.text;
+          const roleLabel = ({
+            customer: "Customer", remaker: "ReMaker",
+            reorbit: "ReOrbit Support", support: "Admin / Support",
+          })[conversation.kind] || "Customer";
 
           return (
             <li key={conversation.id}>
@@ -74,7 +78,9 @@ export default function ConversationList({
                     <strong>{conversation.name}</strong>
                     <time dateTime={last.at}>{listTime(last.at)}</time>
                   </span>
-                  <span className="msg-item-sub">{conversation.subtitle}</span>
+                  <span className="msg-item-sub">
+                    {roleLabel}{conversation.subtitle ? ` · ${conversation.subtitle}` : ""}
+                  </span>
                   <span className="msg-item-preview">
                     {last.from === "me" && <b>You: </b>}
                     {preview}

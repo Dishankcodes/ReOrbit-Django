@@ -57,7 +57,8 @@ export const QUICK_REPLIES = {
   ],
 };
 
-const POLL_MS = 8000;
+// Keep all three inboxes responsive without requiring a WebSocket service.
+const POLL_MS = 3000;
 const PAGE_SIZE = 50;
 const createState = () => ({
   rows: [],
@@ -431,19 +432,44 @@ export async function loadOlderMessages(id) {
 
 export async function sendMessage(id, { text = "", image = "" } = {}) {
   const scope = currentScope();
-  const message = await messagingApi.send(id, { text: text.trim(), image });
   const state = stateFor(scope);
   const previous = state.details.get(id) || state.rows.find((row) => row.id === id) || {
     id, messages: [], unread: 0,
   };
+  // Render immediately; replace the temporary row with the server-confirmed
+  // message once the POST completes. A failed POST removes only this draft.
+  const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const optimistic = {
+    id: optimisticId, from: "me", sender_type: scope,
+    text: text.trim(), image, at: new Date().toISOString(), pending: true,
+  };
   mergeConversation(scope, {
-    ...previous,
-    id,
-    unread: 0,
-    messages: [message],
-    last_message: { id: message.id, text: message.text, image: message.image, at: message.at, from: "me" },
+    ...previous, id, unread: 0, messages: [optimistic],
+    last_message: { ...optimistic, from: "me" },
   }, "append");
-  return message;
+  try {
+    const message = await messagingApi.send(id, { text: text.trim(), image });
+    const latest = state.details.get(id) || state.rows.find((row) => row.id === id) || previous;
+    mergeConversation(scope, {
+      ...latest,
+      messages: [
+        ...(latest.messages || []).filter((item) => item.id !== optimisticId),
+        message,
+      ],
+      last_message: {
+        id: message.id, text: message.text, image: message.image,
+        at: message.at, from: "me",
+      },
+    }, "replace");
+    return message;
+  } catch (error) {
+    const latest = state.details.get(id) || state.rows.find((row) => row.id === id) || previous;
+    mergeConversation(scope, {
+      ...latest,
+      messages: (latest.messages || []).filter((item) => item.id !== optimisticId),
+    }, "replace");
+    throw error;
+  }
 }
 
 function updateUnread(scope, id, value) {

@@ -37,7 +37,7 @@ export function Avatar({ src, name }) {
       {src && !failed ? (
         <img src={src} alt="" onError={() => setFailed(true)} />
       ) : (
-        <b>{initialsOf(name)}</b>
+        <img src="/images/default-avatar.png" alt="" />
       )}
     </span>
   );

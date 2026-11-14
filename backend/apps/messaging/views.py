@@ -425,9 +425,16 @@ def _queryset_for(request, account, kind):
             "remaker": "remaker", "reorbit": "admin", "support": "admin",
         }.get(category)
         if peer_type:
-            participants = participants.filter(
-                conversation__participants__account_type=peer_type
-            ).distinct()
+            # Match the other participant, never the current account itself.
+            # A direct join on account_type also matched the inbox owner's row,
+            # making ReMaker-to-ReMaker filters appear to include every thread.
+            peer_exists = ConversationParticipant.objects.filter(
+                conversation_id=OuterRef("conversation_id"),
+                account_type=peer_type,
+            ).exclude(pk=OuterRef("pk"))
+            participants = participants.annotate(
+                _has_peer_type=Exists(peer_exists)
+            ).filter(_has_peer_type=True)
         if category == "support":
             participants = participants.filter(conversation__kind="reorbit")
         elif category == "reorbit":
@@ -556,7 +563,7 @@ class ConversationList(APIView):
         conversations = [_row(p.conversation, p, False) for p in page]
         removed = []
         if since_at:
-            included = {row["conversation_id"] for row in page}
+            included = {row.conversation_id for row in page}
             changed = ConversationParticipant.objects.filter(
                 **{kind: account}, updated_at__gte=since_at
             ).values_list("conversation_id", "conversation__public_id").distinct()
@@ -731,7 +738,7 @@ class AdminInbox(ConversationList):
         conversations = [_row(p.conversation, p, False) for p in page]
         removed = []
         if since_at:
-            included = {row["conversation_id"] for row in page}
+            included = {row.conversation_id for row in page}
             changed = ConversationParticipant.objects.filter(
                 admin=account, updated_at__gte=since_at
             ).values_list("conversation_id", "conversation__public_id").distinct()

@@ -71,6 +71,18 @@ class ReMakerAuthTests(APIBase):
         )
         self.assertEqual(again.status_code, 400)
 
+    def test_user_owned_email_cannot_authenticate_as_remaker_even_if_legacy_duplicate_exists(self):
+        # Older deployments may already contain a cross-table duplicate. The
+        # User account remains authoritative and ReMaker OTP login must refuse it.
+        self.make_user("shared@example.com")
+        self.make_remaker(email="shared@example.com")
+        response = self.post(
+            "/api/remakers/auth/request-otp/",
+            {"email": "shared@example.com", "purpose": "remaker_login"},
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.data["code"], "EMAIL_USED_BY_USER")
+
     def test_login_for_unknown_email_is_404(self):
         r = self.post("/api/remakers/auth/request-otp/", {"email": "no@example.com", "purpose": "remaker_login"})
         self.assertEqual(r.status_code, 404)
