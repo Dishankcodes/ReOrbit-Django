@@ -30,27 +30,21 @@ export default function UserMessages({
   const counts = useConversationCounts();
   const messageStatus = useMessageStatus(id || "");
 
-  const fallback = !id
-    ? conversations.find((item) =>
-        adminMode ? item.kind === "support" : item.kind === "reorbit",
-      ) || conversations[0]
-    : null;
-  const loaded = useConversation(id || fallback?.id);
+  const loaded = useConversation(id || null);
   const active = conversations.find((item) => item.id === id) || loaded || null;
-  const unknown = id && !active && !messageStatus.loading;
+  const unknown = Boolean(id && !active && !messageStatus.loading);
 
-  /* opening a conversation reads it (once, when you open it) */
+  /* Only mark a conversation read when the user actually selects it. */
   useEffect(() => {
-    const activeId = id || fallback?.id;
-    if (activeId) markConversationRead(activeId).catch(() => {});
-  }, [id, fallback?.id]);
+    if (id) markConversationRead(id).catch(() => {});
+  }, [id]);
   const visible = conversations;
 
   const basePath = adminMode ? "/admin-messages" : "/user-messages";
   const open = (nextId) => navigate(`${basePath}/${nextId}`);
 
-  /* On a wide screen the first conversation opens by default */
-  const shown = active || fallback;
+  /* Keep the right pane unselected until the user chooses a conversation. */
+  const shown = active;
   const detailed = loaded?.id === shown?.id ? loaded : shown;
 
   return (
@@ -100,14 +94,8 @@ export default function UserMessages({
         />
       ) : (
         <div className="umsg-empty">
-          <h3>No messages yet</h3>
-          <p>
-            Ask a seller about an item, talk to a ReMaker about a custom piece,
-            or write to ReOrbit. Your chats show up here.
-          </p>
-          <Link to="/user-marketplace" className="umsg-btn primary">
-            Browse the marketplace
-          </Link>
+          <h3>Select a chat</h3>
+          <p>Choose a conversation from the list to view messages and continue chatting.</p>
         </div>
       )}
     </section>
