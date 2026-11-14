@@ -10,6 +10,31 @@ CONDITION = [("Good", "Good"), ("Medium", "Medium"), ("Worst", "Needs repair")]
 PARTNER_STATUS = [("Active", "Active"), ("Inactive", "Inactive")]
 
 
+def _column_exists(model, schema_editor, field):
+    """Return whether a historical model's field is present in the live table."""
+    with schema_editor.connection.cursor() as cursor:
+        columns = schema_editor.connection.introspection.get_table_description(
+            cursor, model._meta.db_table
+        )
+    return any(column.name == field.column for column in columns)
+
+
+def remove_partner_team_if_present(apps, schema_editor):
+    """Allow this migration to recover databases whose schema drifted from 0001."""
+    Donation = apps.get_model("donations", "Donation")
+    field = Donation._meta.get_field("partner_team")
+    if _column_exists(Donation, schema_editor, field):
+        schema_editor.remove_field(Donation, field)
+
+
+def restore_partner_team_if_missing(apps, schema_editor):
+    """Restore the historical column when reversing, even after repairing drift."""
+    Donation = apps.get_model("donations", "Donation")
+    field = Donation._meta.get_field("partner_team")
+    if not _column_exists(Donation, schema_editor, field):
+        schema_editor.add_field(Donation, field)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -32,7 +57,17 @@ class Migration(migrations.Migration):
             ],
             options={"db_table": "pickup_partners", "ordering": ["name"]},
         ),
-        migrations.RemoveField(model_name="donation", name="partner_team"),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    remove_partner_team_if_present,
+                    restore_partner_team_if_missing,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveField(model_name="donation", name="partner_team"),
+            ],
+        ),
         migrations.AddField(
             model_name="donation", name="assigned_partner",
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,

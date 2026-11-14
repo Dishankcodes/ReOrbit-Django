@@ -57,7 +57,6 @@ export default function AddressForm({
     if (bad || saving) return;
     onSave({
       ...f,
-      state: "Gujarat",
       name: f.name.trim(),
       line: f.line.trim(),
       city: f.city.trim(),

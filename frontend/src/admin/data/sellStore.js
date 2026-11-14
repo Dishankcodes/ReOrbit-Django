@@ -12,19 +12,12 @@
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
-import { useOrders, addOrders, patchOrder } from "./ordersStore";
+import { useOrders, patchOrder } from "./ordersStore";
 import { useStock, runWarehouseAction } from "./warehouseStore";
 import { canApplyWarehouseAction } from "./warehouseActions";
-import {
-  SEED_LISTINGS,
-  SELL_BUYER_USERS,
-  SELL_BUYER_REMAKERS,
-  buildSaleOrder,
-} from "./adminSell";
-import { DEMO_TODAY } from "../utils/format";
 
 /* ---------- state ---------- */
-let state = { listings: SEED_LISTINGS, seq: 1006, saleSeq: 0, demoSeq: 0 };
+let state = { listings: [], seq: 0, saleSeq: 0 };
 const listeners = new Set();
 const subscribe = (l) => {
   listeners.add(l);
@@ -155,7 +148,7 @@ export function saveListing(data, { publish = true } = {}) {
     ...data,
     id,
     status,
-    created_at: DEMO_TODAY.toISOString(),
+    created_at: new Date().toISOString(),
   };
   set({ listings: [listing, ...state.listings], seq: state.seq + 1 });
   /* a warehouse item that is now on sale starts its sales timer */
@@ -192,52 +185,4 @@ export function shipSale(orderId, { courier, tracking }) {
       ...o.events,
     ],
   }));
-}
-
-/* Demo helper: pretend a buyer just ordered this listing. */
-export function simulateBuyerOrder(listing) {
-  const demo = state.demoSeq + 1;
-  const toRemaker = demo % 4 === 0;
-  const pool = toRemaker ? SELL_BUYER_REMAKERS : SELL_BUYER_USERS;
-  const buyerPerson = pool[(demo * 3 + listing.id.length) % pool.length];
-  const methods = ["UPI", "CARD", "COD", "NET_BANKING", "WALLET"];
-  const method = methods[demo % methods.length];
-  const isCod = method === "COD";
-  const seq = 59000 + demo;
-  const order = buildSaleOrder({
-    seq,
-    listing,
-    qty: 1,
-    buyerPerson,
-    buyerKind: toRemaker ? "ReMaker" : "User",
-    placed: new Date(DEMO_TODAY.getTime() + demo * 1000),
-    status: "Pending",
-    method,
-    payment: isCod ? "Pending" : demo % 3 === 0 ? "Pending" : "Pending",
-    shipment: null,
-    cancelReason: "",
-    returnReason: "",
-  });
-  /* online payers have usually paid by the time the seller sees it */
-  if (!isCod && demo % 3 !== 0) {
-    order.transaction = {
-      ...order.transaction,
-      payment_status: "Success",
-      transaction_date: order.order_date,
-    };
-    order.events = order.events.map((e) =>
-      e.id === "payment"
-        ? {
-            ...e,
-            label: "Payment received",
-            detail: `${method.replace("_", " ")} · paid`,
-            tone: "good",
-            pending: false,
-          }
-        : e,
-    );
-  }
-  addOrders([order]);
-  set({ demoSeq: demo });
-  return order;
 }

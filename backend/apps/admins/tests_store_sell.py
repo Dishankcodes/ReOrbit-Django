@@ -30,6 +30,7 @@ class StoreSellTests(OrderBase):
     def test_defaults_for_plain_products(self):
         p = self.make()
         self.assertEqual((p["source"], p["delivery"], p["returnable"], p["specs"]), ("other", "flat", True, {}))
+        self.assertEqual(p["condition"], "Good")
 
     def test_bad_storefront_values_are_refused(self):
         for body, field in (({"condition": "Mint"}, "condition"), ({"source": "garage"}, "source"),

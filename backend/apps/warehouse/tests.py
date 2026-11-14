@@ -185,7 +185,8 @@ class ListingTests(WarehouseBase):
         self.assertEqual((got["sale_status"], got["list_price"], got["original_price"]), ("Listed", 2500, 2500))
         self.assertIsNotNone(got["listed_at"])
         store = AdminItem.objects.get(warehouse_item=item)
-        self.assertEqual((store.status, store.stock, int(store.price), store.sku), ("Listed", 3, 2500, item.sku))
+        self.assertEqual((store.status, store.stock, int(store.price), store.sku, store.condition),
+                         ("Listed", 3, 2500, item.sku, "Good"))
         self.assertEqual(store.category.name, "Furniture")
         self.assertEqual(store.admin_id, self.admin.pk)
         self.assertEqual(got["events"][-1]["label"], "Listed on marketplace")

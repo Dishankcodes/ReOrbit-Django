@@ -17,7 +17,7 @@ def carry_over(apps, schema_editor):
     in the warehouse, or released as a donation if it was given out."""
     Item = apps.get_model("warehouse", "WarehouseItem")
     Event = apps.get_model("warehouse", "WarehouseEvent")
-    for w in Item.objects.select_related("donation", "donation__user").order_by("pk"):
+    for w in Item.objects.select_related("donation", "donation__donor").order_by("pk"):
         given = w.status == "Given_Out"
         w.warehouse_status = "Released" if given else "Received"
         w.sale_status = "Donated" if given else "Not listed"
@@ -26,7 +26,7 @@ def carry_over(apps, schema_editor):
             w.released_at = w.given_at or w.received_at
         else:
             w.zone, w.rack, w.level = "DOCK", "01", 1
-        donor = getattr(w.donation, "user", None) if w.donation_id else None
+        donor = getattr(w.donation, "donor", None) if w.donation_id else None
         if donor is not None:
             w.source_user = donor
             w.source_name = donor.full_name

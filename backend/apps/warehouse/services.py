@@ -181,6 +181,11 @@ def _copy_photos(item, store):
 
 def _put_on_sale(item, admin):
     store = store_item_of(item, lock=True)
+    store_condition = {
+        "Good": "Good",
+        "Fair": "Fair",
+        "Needs refurbishing": "Refurbished",
+    }.get(item.condition, "Good")
     if store is None:
         category = Category.objects.filter(name__iexact=item.category).first()
         if category is None:
@@ -191,12 +196,15 @@ def _put_on_sale(item, admin):
         store = AdminItem.objects.create(
             admin=admin, category=category, sku=item.sku, title=item.title,
             description=f"{item.condition or 'Good'} condition. Checked by ReOrbit before it was listed.",
-            price=item.list_price, stock=item.quantity, status=AdminItem.Status.LISTED, warehouse_item=item,
+            price=item.list_price, stock=item.quantity, status=AdminItem.Status.LISTED,
+            condition=store_condition, warehouse_item=item,
         )
         _copy_photos(item, store)
     else:
-        store.price, store.stock, store.status = item.list_price, item.quantity, AdminItem.Status.LISTED
-        store.save(update_fields=["price", "stock", "status", "updated_at"])
+        store.price, store.stock, store.status, store.condition = (
+            item.list_price, item.quantity, AdminItem.Status.LISTED, store_condition
+        )
+        store.save(update_fields=["price", "stock", "status", "condition", "updated_at"])
     return store
 
 
