@@ -372,14 +372,21 @@ export function useConversation(id) {
   );
   usePolling(scope);
   useEffect(() => {
-    state.activeId = id || null;
+    // useSyncExternalStore returns an immutable snapshot, not the mutable store.
+    // Keep activeId on the live store; emit() must always receive that store
+    // because snapshots deliberately do not expose the listeners collection.
+    const store = stateFor(scope);
+    store.activeId = id || null;
     if (id) {
-      const entry = state.details.get(id) || state.rows.find((row) => row.id === id);
+      const entry = store.details.get(id) || store.rows.find((row) => row.id === id);
       if (!entry?.messages?.length) loadDetail(scope, id).catch(() => {});
     }
-    emit(state);
+    emit(store);
     return () => {
-      if (state.activeId === id) state.activeId = null;
+      if (store.activeId === id) {
+        store.activeId = null;
+        emit(store);
+      }
     };
   }, [scope, id]);
   return state.details.get(id) || state.rows.find((row) => row.id === id) || null;
