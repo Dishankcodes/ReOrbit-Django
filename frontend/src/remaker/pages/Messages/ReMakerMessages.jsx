@@ -26,22 +26,20 @@ export default function ReMakerMessages() {
   const counts = useConversationCounts();
   const messageStatus = useMessageStatus(id || "");
 
-  const fallback = !id && conversations[0] ? conversations[0] : null;
-  const loaded = useConversation(id || fallback?.id);
+  const loaded = useConversation(id || null);
   const active = conversations.find((item) => item.id === id) || loaded || null;
-  const unknown = id && !active && !messageStatus.loading;
+  const unknown = Boolean(id && !active && !messageStatus.loading);
 
-  /* opening a conversation reads it (once, when you open it) */
+  /* Only mark a conversation read when the user actually selects it. */
   useEffect(() => {
-    const activeId = id || fallback?.id;
-    if (activeId) markConversationRead(activeId).catch(() => {});
-  }, [id, fallback?.id]);
+    if (id) markConversationRead(id).catch(() => {});
+  }, [id]);
   const visible = conversations;
 
   const open = (nextId) => navigate(`/remaker-messages/${nextId}`);
 
-  /* On a wide screen the first conversation opens by default */
-  const shown = active || fallback;
+  /* Keep the right pane unselected until the user chooses a conversation. */
+  const shown = active;
   const detailed = loaded?.id === shown?.id ? loaded : shown;
 
   return (
@@ -77,15 +75,8 @@ export default function ReMakerMessages() {
         />
       ) : (
         <div className="msg-empty">
-          <div className="rk-empty-art" aria-hidden="true">
-            <img src="/images/users/meera-iyer.jpg" alt="" />
-            <img src="/images/users/kabir-verma.jpg" alt="" />
-          </div>
-          <h3>No messages yet</h3>
-          <p>
-            When customers or other ReMakers write to you, the chat shows up
-            here.
-          </p>
+          <h3>Select a chat</h3>
+          <p>Choose a conversation from the list to view messages and continue chatting.</p>
         </div>
       )}
     </section>
