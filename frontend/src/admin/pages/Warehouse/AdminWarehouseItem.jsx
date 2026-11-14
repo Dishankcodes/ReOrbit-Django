@@ -19,7 +19,11 @@ import {
   Snowflake,
 } from "lucide-react";
 
-import { useStockItem, runWarehouseAction } from "../../data/warehouseStore";
+import {
+  useStockItem,
+  runWarehouseAction,
+  failureText,
+} from "../../data/warehouseStore";
 import { getWarehouseActions } from "../../data/warehouseActions";
 import { useSettings } from "../../data/settingsStore";
 import { formatDate, formatDateTime, formatINR } from "../../utils/format";
@@ -111,9 +115,13 @@ export default function AdminWarehouseItem() {
   const pct = Math.min(100, (s.daysListed / 30) * 100);
   const sellMargin = s.list_price - s.cost_price;
 
-  const confirmAction = (note) => {
-    runWarehouseAction(s.inventory_id, pending.key, note);
-    toast(`${s.inventory_id} ${pending.toast}.`);
+  const confirmAction = async (note) => {
+    try {
+      await runWarehouseAction(s.inventory_id, pending.key, note);
+      toast(`${s.inventory_id} ${pending.toast}.`);
+    } catch (e) {
+      toast(`Couldn’t do that: ${failureText(e)}`);
+    }
     setPending(null);
   };
 

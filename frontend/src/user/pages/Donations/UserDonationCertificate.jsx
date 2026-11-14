@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { getAccount } from "../../../api/session";
+import { donationApi } from "../../../api/donations";
 import {
   estimatePoints,
   REWARD_RULES,
@@ -65,6 +66,14 @@ export default function UserDonationCertificate() {
     }
   };
 
+  const download = async () => {
+    try {
+      await donationApi.downloadCertificate(donation.id);
+    } catch (e) {
+      show(e.message || "Couldn't download the certificate.");
+    }
+  };
+
   return (
     <div className="dn dn-cert-page">
       <Crumbs
@@ -90,12 +99,15 @@ export default function UserDonationCertificate() {
           >
             <Share2 size={16} /> Share
           </button>
+          <button type="button" className="dn-btn" onClick={download}>
+            <Download size={16} /> Download certificate
+          </button>
           <button
             type="button"
-            className="dn-btn"
+            className="dn-btn dn-btn--ghost"
             onClick={() => window.print()}
           >
-            <Download size={16} /> Download / Print
+            <Printer size={16} /> Print this page
           </button>
         </div>
       </header>

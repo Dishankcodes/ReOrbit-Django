@@ -25,7 +25,7 @@ import {
 
 import {
   useStock,
-  runWarehouseAction,
+  runWarehouseActions,
   ALERT_LEVELS,
 } from "../../data/warehouseStore";
 import {
@@ -332,14 +332,22 @@ export default function AdminWarehouse() {
     });
     if (eligible.length) setPending({ action, ids: eligible });
   };
-  const confirmAction = (note) => {
+  const confirmAction = async (note) => {
     const { action, ids } = pending;
-    ids.forEach((id) => runWarehouseAction(id, action.key, note));
-    toast(
-      ids.length === 1
-        ? `${ids[0]} ${action.toast}.`
-        : `${ids.length} items ${action.toast}.`,
-    );
+    const { done, failed } = await runWarehouseActions(ids, action.key, note);
+    if (failed.length === 0) {
+      toast(
+        ids.length === 1
+          ? `${ids[0]} ${action.toast}.`
+          : `${ids.length} items ${action.toast}.`,
+      );
+    } else if (done.length === 0) {
+      toast(`Couldn’t do that: ${failed[0].message}`);
+    } else {
+      toast(
+        `${done.length} ${action.toast}, ${failed.length} couldn’t be changed: ${failed[0].message}`,
+      );
+    }
     setPending(null);
     clearSelection();
   };

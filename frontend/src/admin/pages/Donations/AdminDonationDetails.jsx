@@ -446,6 +446,7 @@ export default function AdminDonationDetails() {
       <DonationActionModal
         action={pending}
         targets={[d.id]}
+        donation={d}
         onConfirm={confirmAction}
         onClose={() => setPending(null)}
       />

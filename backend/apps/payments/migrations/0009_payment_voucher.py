@@ -5,7 +5,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("payments", "0008_refunds_wallet"),
-        ("rewards", "0001_initial"),
+        ("rewards", "0002_rewards_system"),
     ]
 
     operations = [

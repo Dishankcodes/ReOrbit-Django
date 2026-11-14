@@ -30,6 +30,13 @@ export const REJECT_CHIPS = [
   "Outside pickup area",
   "Photos do not match",
 ];
+export const FAILED_PICKUP_CHIPS = [
+  "Donor was not home",
+  "Wrong or incomplete address",
+  "Donor asked to reschedule",
+  "Gate or building access issue",
+];
+export const CONDITIONS = ["Good", "Medium", "Worst"];
 
 const A = {
   accept: {
@@ -86,11 +93,24 @@ const A = {
     short: "Picked up",
     tone: "positive",
     icon: "truck",
-    fields: "none",
+    fields: "code",
     title: "Mark this donation as picked up?",
-    body: "The pickup team collected the item from the donor.",
+    body: "Ask the donor to read out their 4-digit handover code and enter it below. This confirms the right item left with the right person.",
     confirmLabel: "Mark picked up",
     toast: "marked as picked up",
+  },
+  failed: {
+    key: "failed",
+    label: "Mark pickup as failed",
+    short: "Failed pickup",
+    tone: "danger",
+    icon: "ban",
+    fields: "reason",
+    chips: "failed",
+    title: "Mark this pickup attempt as failed?",
+    body: "The donation is not rejected — the donor can pick a new date and we'll try again.",
+    confirmLabel: "Mark as failed",
+    toast: "marked as a failed pickup attempt",
   },
   received: {
     key: "received",
@@ -98,9 +118,9 @@ const A = {
     short: "Received",
     tone: "positive",
     icon: "stock",
-    fields: "none",
+    fields: "receive",
     title: "Mark this donation as received?",
-    body: "The item reached the warehouse and was checked in.",
+    body: "Confirm what actually arrived at the warehouse. Leave a field blank to accept it as declared.",
     confirmLabel: "Mark received",
     toast: "marked as received",
   },
@@ -137,7 +157,9 @@ export function getDonationActions(d) {
     case "Pending":
       return [A.accept, A.reject];
     case "Scheduled":
-      return [A.pickedUp, A.reschedule, A.cancelPickup];
+      return [A.pickedUp, A.reschedule, A.cancelPickup, A.failed];
+    case "Failed_Pickup":
+      return [A.reschedule, A.cancelPickup];
     case "Picked_Up":
       return [A.received];
     case "Received":

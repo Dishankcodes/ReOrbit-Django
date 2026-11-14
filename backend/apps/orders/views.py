@@ -2,8 +2,8 @@
 
 Buyer (user account)
   GET/POST addresses/            GET/PATCH/DELETE addresses/<id>/     POST addresses/<id>/default/
-  POST quote/                    {items:[{id,qty}]}  -> server prices
-  POST checkout/                 {items, address_id, method: RAZORPAY|COD, note}  (header Idempotency-Key)
+  POST quote/                    {items:[{id,qty}], voucher_code?}  -> server prices (discount, voucher, voucher_error)
+  POST checkout/                 {items, address_id, method: RAZORPAY|COD, note, voucher_code?}  (header Idempotency-Key)
   GET  me/                       my orders      GET me/<id>/      POST me/<id>/cancel/
   POST me/<id>/return/           (multipart) reason, details, photos     POST me/<id>/return/<escalate|withdraw>/
   GET  options/                  courier list, return and failed-delivery reasons
@@ -166,7 +166,7 @@ class QuoteView(APIView):
     def post(self, request):
         try:
             return ok(services.quote(request.user.account, request.data.get("items"),
-                                      voucher_code=request.data.get("voucher_code")))
+                                     voucher_code=request.data.get("voucher_code")))
         except services.CheckoutError as e:
             return _checkout_fail(e)
 
@@ -318,8 +318,6 @@ def _filters(request, qs, admin=False):
         qs = qs.filter(return_request__isnull=False)
     if request.query_params.get("cod") == "pending":
         qs = qs.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True).exclude(payment_status="Paid")
-    if admin and request.query_params.get("item"):  # sales of one product
-        qs = qs.filter(lines__ref_id=request.query_params["item"]).distinct()
     if admin and request.query_params.get("seller_type") in ("user", "remaker", "platform"):
         qs = qs.filter(seller_type=request.query_params["seller_type"])
     return qs

@@ -1,18 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { X, AlertTriangle, CalendarClock, HeartHandshake } from "lucide-react";
 import { ACTION_ICONS } from "../../../components/ui/actionIcons";
-import { SLOTS, NGOS, REJECT_CHIPS } from "../../../data/donationActions";
+import {
+  SLOTS,
+  NGOS,
+  REJECT_CHIPS,
+  FAILED_PICKUP_CHIPS,
+  CONDITIONS,
+} from "../../../data/donationActions";
 import { useTeamOptions } from "../../../data/pickupTeamsStore";
-import { DEMO_TODAY } from "../../../utils/format";
 
-const isoDay = (offset) =>
-  new Date(DEMO_TODAY.getTime() + offset * 86400000).toISOString().slice(0, 10);
+/* Real calendar days (local time). The server refuses pickup dates in the past. */
+const isoDay = (offset) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 /* Confirm modal that also asks for what the action needs:
    a pickup date + slot (accept / reschedule), a reason (reject) or an NGO (complete). */
 export default function DonationActionModal({
   action,
   targets = [],
+  donation = null,
   onConfirm,
   onClose,
 }) {
@@ -22,6 +33,12 @@ export default function DonationActionModal({
   const [partner, setPartner] = useState("");
   const [reason, setReason] = useState("");
   const [ngo, setNgo] = useState(NGOS[0]);
+  const [code, setCode] = useState("");
+  const [acceptedQty, setAcceptedQty] = useState("");
+  const [partialReason, setPartialReason] = useState("");
+  const [receivedQty, setReceivedQty] = useState("");
+  const [receivedCondition, setReceivedCondition] = useState("");
+  const [receivedNote, setReceivedNote] = useState("");
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -31,6 +48,12 @@ export default function DonationActionModal({
     setPartner("");
     setReason("");
     setNgo(NGOS[0]);
+    setCode("");
+    setAcceptedQty("");
+    setPartialReason("");
+    setReceivedQty("");
+    setReceivedCondition("");
+    setReceivedNote("");
     setTouched(false);
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -58,12 +81,50 @@ export default function DonationActionModal({
   const reasonMissing = action.fields === "reason" && reason.trim().length < 5;
   const dateMissing = action.fields === "schedule" && !date;
   const teamMissing = action.fields === "schedule" && !chosen;
+  const codeMissing = action.fields === "code" && code.trim().length !== 4;
+  /* Partial acceptance only makes sense for one donation with more than one item. */
+  const showPartialAccept =
+    action.key === "accept" && !many && donation && donation.quantity > 1;
+  const partialWanted =
+    showPartialAccept &&
+    acceptedQty !== "" &&
+    Number(acceptedQty) < donation.quantity;
+  const acceptedQtyInvalid =
+    showPartialAccept &&
+    acceptedQty !== "" &&
+    (Number(acceptedQty) < 1 || Number(acceptedQty) > donation.quantity);
+  const partialReasonMissing = partialWanted && partialReason.trim().length < 5;
 
   const submit = (e) => {
     e.preventDefault();
     setTouched(true);
-    if (reasonMissing || dateMissing || teamMissing) return;
-    onConfirm({ date, slot, partner, reason: reason.trim(), ngo });
+    if (
+      reasonMissing ||
+      dateMissing ||
+      teamMissing ||
+      codeMissing ||
+      acceptedQtyInvalid ||
+      partialReasonMissing
+    )
+      return;
+    onConfirm({
+      date,
+      slot,
+      partner,
+      reason: reason.trim(),
+      ngo,
+      code: code.trim(),
+      ...(partialWanted
+        ? { accepted_quantity: acceptedQty, partial_reason: partialReason.trim() }
+        : {}),
+      ...(action.fields === "receive"
+        ? {
+            received_quantity: receivedQty,
+            received_condition: receivedCondition,
+            note: receivedNote.trim(),
+          }
+        : {}),
+    });
   };
 
   return (
@@ -163,6 +224,107 @@ export default function DonationActionModal({
                 </small>
               )}
             </label>
+
+            {showPartialAccept && (
+              <label className="ad-modal-field dn-wide">
+                <span>
+                  Items accepted <em>(of {donation.quantity} donated)</em>
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={donation.quantity}
+                  value={acceptedQty}
+                  placeholder={String(donation.quantity)}
+                  onChange={(e) => setAcceptedQty(e.target.value)}
+                />
+                {touched && acceptedQtyInvalid && (
+                  <small className="ad-modal-error">
+                    Enter a number between 1 and {donation.quantity}.
+                  </small>
+                )}
+                {partialWanted && (
+                  <textarea
+                    aria-label="Why the rest was turned away"
+                    rows={2}
+                    value={partialReason}
+                    onChange={(e) => setPartialReason(e.target.value)}
+                    placeholder="e.g. 3 of the 5 chairs are broken beyond use"
+                  />
+                )}
+                {touched && partialReasonMissing && (
+                  <small className="ad-modal-error">
+                    Say briefly why the rest wasn't accepted (at least 5 characters).
+                  </small>
+                )}
+              </label>
+            )}
+          </div>
+        )}
+
+        {action.fields === "code" && (
+          <div className="ad-modal-field">
+            <span>
+              Donor's handover code <em>(ask the donor to read it out)</em>
+            </span>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              placeholder="4-digit code"
+              autoFocus
+            />
+            {many && (
+              <small className="ad-modal-error">
+                Each donation has its own code — this won't match for more than one.
+              </small>
+            )}
+            {touched && codeMissing && (
+              <small className="ad-modal-error">Enter the 4-digit code.</small>
+            )}
+          </div>
+        )}
+
+        {action.fields === "receive" && (
+          <div className="dn-fields">
+            <label className="ad-modal-field">
+              <span>
+                Quantity received <em>(blank = as declared)</em>
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={receivedQty}
+                onChange={(e) => setReceivedQty(e.target.value)}
+              />
+            </label>
+            <label className="ad-modal-field">
+              <span>
+                Condition on arrival <em>(blank = as declared)</em>
+              </span>
+              <select
+                value={receivedCondition}
+                onChange={(e) => setReceivedCondition(e.target.value)}
+              >
+                <option value="">As declared</option>
+                {CONDITIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="ad-modal-field dn-wide">
+              <span>Note (optional)</span>
+              <textarea
+                rows={2}
+                value={receivedNote}
+                onChange={(e) => setReceivedNote(e.target.value)}
+                placeholder="e.g. One item arrived broken"
+              />
+            </label>
           </div>
         )}
 
@@ -172,7 +334,7 @@ export default function DonationActionModal({
               Reason <em>(shown to the donor)</em>
             </span>
             <div className="dn-chips">
-              {REJECT_CHIPS.map((c) => (
+              {(action.chips === "failed" ? FAILED_PICKUP_CHIPS : REJECT_CHIPS).map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -222,7 +384,7 @@ export default function DonationActionModal({
           </button>
           <button
             type="submit"
-            disabled={noTeams}
+            disabled={noTeams || (touched && (codeMissing || acceptedQtyInvalid || partialReasonMissing))}
             className={`ad-btn ad-btn-${action.tone === "positive" ? "primary" : action.tone}`}
           >
             {action.confirmLabel}
