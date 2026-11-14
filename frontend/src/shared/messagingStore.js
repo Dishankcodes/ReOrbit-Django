@@ -57,7 +57,7 @@ export const QUICK_REPLIES = {
   ],
 };
 
-const POLL_MS = 8000;
+const POLL_MS = 3000;
 const PAGE_SIZE = 50;
 const createState = () => ({
   rows: [],
@@ -435,14 +435,68 @@ export async function sendMessage(id, { text = "", image = "" } = {}) {
   const previous = state.details.get(id) || state.rows.find((row) => row.id === id) || {
     id, messages: [], unread: 0,
   };
+
+  // Show the message immediately while the server request is in flight.
+  const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const optimistic = {
+    id: optimisticId,
+    from: "me",
+    sender_type: scope,
+    text: text.trim(),
+    image,
+    at: new Date().toISOString(),
+    pending: true,
+  };
   mergeConversation(scope, {
     ...previous,
     id,
     unread: 0,
-    messages: [message],
-    last_message: { id: message.id, text: message.text, image: message.image, at: message.at, from: "me" },
+    messages: [optimistic],
+    last_message: {
+      id: optimisticId,
+      text: optimistic.text,
+      image,
+      at: optimistic.at,
+      from: "me",
+    },
+    updated_at: optimistic.at,
   }, "append");
-  return message;
+
+  try {
+    const message = await messagingApi.send(id, { text: text.trim(), image });
+    const latest = state.details.get(id) || state.rows.find((row) => row.id === id) || previous;
+    const confirmedHistory = (latest.messages || [])
+      .filter((item) => String(item.id) !== String(optimisticId));
+    const merged = mergeConversation(scope, {
+      ...latest,
+      id,
+      unread: 0,
+      messages: [...confirmedHistory, message],
+      last_message: {
+        id: message.id,
+        text: message.text,
+        image: message.image,
+        at: message.at,
+        from: "me",
+      },
+      updated_at: message.at || new Date().toISOString(),
+    }, "replace");
+    return merged.messages.find((item) => String(item.id) === String(message.id)) || message;
+  } catch (error) {
+    const latest = state.details.get(id) || state.rows.find((row) => row.id === id) || previous;
+    const remaining = (latest.messages || [])
+      .filter((item) => String(item.id) !== String(optimisticId));
+    const last = remaining[remaining.length - 1];
+    mergeConversation(scope, {
+      ...latest,
+      id,
+      messages: remaining,
+      last_message: last
+        ? { id: last.id, text: last.text, image: last.image, at: last.at, from: last.from }
+        : previous.last_message || null,
+    }, "replace");
+    throw error;
+  }
 }
 
 function updateUnread(scope, id, value) {
