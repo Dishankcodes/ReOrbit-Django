@@ -368,3 +368,19 @@
   font-size: 13px;
   display: block !important;
 }
+
+.so-filters { flex: 1 1 360px; justify-content: flex-end; align-items: center; }
+.so-filters input, .so-filters select {
+  min-height: 42px; border-color: var(--so-line); color: inherit; outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.so-filters input { min-width: min(260px, 100%); }
+.so-filters input:focus, .so-filters select:focus {
+  border-color: var(--so-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--so-accent) 14%, transparent);
+}
+.so-card.so-click { cursor: pointer; }
+.so-card.so-click:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--so-accent) 35%, transparent); outline-offset: 2px;
+}
+.so-card .so-actions a { position: relative; z-index: 1; }

@@ -285,3 +285,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep the empty-state CTA legible without changing other wishlist buttons. */
+.wl-empty-state > .dn-btn,
+.wl-empty-state > .dn-btn:visited,
+.wl-empty-state > .dn-btn:hover,
+.wl-empty-state > .dn-btn:focus {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}

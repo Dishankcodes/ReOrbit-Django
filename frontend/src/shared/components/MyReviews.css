@@ -604,3 +604,15 @@
 .rv-add span {
   white-space: nowrap;
 }
+
+/* Member reviews follow the shared ReOrbit user theme. */
+.dn .rv {
+  --rv-line: var(--dn-border, #dce5de);
+  --rv-muted: var(--dn-muted, #6b756d);
+  --rv-ink: var(--dn-text, #1f2923);
+  --rv-card: #fff;
+  font-family: inherit;
+  color: var(--dn-text, #1f2923);
+}
+.dn .rv-head h1, .dn .rv-tile h3, .dn .rv-tile h4 { color: var(--dn-text, #1f2923); }
+.dn .rv-avg, .dn .rv-tile, .dn .rv-empty { box-shadow: var(--dn-shadow, 0 8px 24px rgba(31, 41, 35, .05)); }

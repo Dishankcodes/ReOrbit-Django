@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import Spinner, { PageLoader } from "./Spinner";
 import "./Spinner.css";
@@ -257,6 +257,7 @@ const payLabel = (o) => {
 
 /* A summary card. Everything you can do with the order (pack, ship, cancel, returns...) is on its own page. */
 function OrderRow({ order: o, role, to }) {
+  const navigate = useNavigate();
   const isAdmin = role === "admin";
   const ret = o.return;
   const a = o.address || {};
@@ -273,7 +274,13 @@ function OrderRow({ order: o, role, to }) {
     o.status === "Delivery_Failed";
 
   return (
-    <article className="so-card so-click">
+    <article className="so-card so-click" role="link" tabIndex={0}
+      aria-label={`Open order ${o.id}`} onClick={() => navigate(to)}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault(); navigate(to);
+        }
+      }}>
       <header>
         <b>{o.id}</b>
         <span className={`so-badge s-${o.status}`}>
@@ -367,6 +374,7 @@ function OrderRow({ order: o, role, to }) {
           to={to}
           className={`so-btn${needsYou ? "" : " ghost"}`}
           aria-label={`Open order ${o.id}`}
+          onClick={(event) => event.stopPropagation()}
         >
           {needsYou ? nextLabel || "Needs your attention" : "View order"}{" "}
           <ChevronRight size={15} />

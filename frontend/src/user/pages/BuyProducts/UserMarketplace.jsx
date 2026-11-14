@@ -459,12 +459,22 @@ export default function UserMarketplace() {
         <div className="mk-empty">
           <PackageSearch size={30} />
           <h3>
-            {savedOnly ? "No saved pieces match" : "Nothing matches that yet"}
+            {savedOnly
+              ? "No saved pieces match"
+              : filtered
+                ? "No products match your search"
+                : "No products available right now"}
           </h3>
-          <p>Try a different search or clear the filters.</p>
-          <button type="button" className="dn-btn" onClick={reset}>
-            <SlidersHorizontal size={15} /> Clear filters
-          </button>
+          <p>
+            {filtered
+              ? "Try changing your search or filters to find something."
+              : "There are no products in the marketplace at the moment. Please check back soon."}
+          </p>
+          {filtered && (
+            <button type="button" className="dn-btn" onClick={reset}>
+              <SlidersHorizontal size={15} /> Clear filters
+            </button>
+          )}
         </div>
       )}
 

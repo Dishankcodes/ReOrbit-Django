@@ -615,3 +615,12 @@
 .dn-home .dn-btn.dn-btn--ghost svg {
   stroke: #2a4d3a !important;
 }
+
+/* The empty in-progress donation CTA uses the same white label as other primary actions. */
+.dn-quiet > .dn-btn,
+.dn-quiet > .dn-btn:visited,
+.dn-quiet > .dn-btn:hover,
+.dn-quiet > .dn-btn:focus {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}

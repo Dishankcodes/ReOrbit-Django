@@ -211,6 +211,7 @@ export default function UserWishlist() {
         <EmptyState
           icon={Heart}
           title="Your wishlist is empty"
+          className="wl-empty-state"
           text="Tap the heart on any piece you love and it will wait for you here."
           actionLabel="Browse marketplace"
           to="/user-marketplace"

@@ -357,23 +357,21 @@ export default function UserSellForm() {
                 <span className="dn-label">
                   Category <em>*</em>
                 </span>
-                <div
-                  className="usl-chips"
-                  role="radiogroup"
-                  aria-label="Category"
-                >
-                  {categoryOptions.map((c) => (
-                    <button
-                      type="button"
-                      key={c}
-                      role="radio"
-                      aria-checked={form.category === c}
-                      className={form.category === c ? "on" : ""}
-                      onClick={() => set("category", c)}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <div className="usl-category-select">
+                  <select
+                    id="usl-category"
+                    value={form.category}
+                    onChange={(event) => set("category", event.target.value)}
+                    aria-label="Select a category"
+                    aria-invalid={errors.category ? "true" : undefined}
+                  >
+                    <option value="">Select a category</option>
+                    {categoryOptions.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 {errors.category && (
                   <span className="dn-error">{errors.category}</span>

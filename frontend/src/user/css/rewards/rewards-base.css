@@ -1102,3 +1102,16 @@
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
 }
+
+.urw-earn-strip > .dn-btn--ghost, .urw-earn-strip > .dn-btn--ghost:visited,
+.urw-earn-strip > .dn-btn--ghost:hover, .urw-earn-strip > .dn-btn--ghost:focus {
+  color: #1f2923; -webkit-text-fill-color: #1f2923; background: #fff; border-color: #fff;
+}
+.rw .urw-head > a.dn-btn:not(.dn-btn--ghost),
+.rw .urw-head > a.dn-btn:not(.dn-btn--ghost):visited,
+.rw .urw-head > a.dn-btn:not(.dn-btn--ghost):hover,
+.rw .urw-head > a.dn-btn:not(.dn-btn--ghost):focus { color: #fff; -webkit-text-fill-color: #fff; }
+.urw-donation-empty > .dn-btn, .urw-donation-empty > .dn-btn:visited,
+.urw-donation-empty > .dn-btn:hover, .urw-donation-empty > .dn-btn:focus {
+  color: #fff; -webkit-text-fill-color: #fff;
+}

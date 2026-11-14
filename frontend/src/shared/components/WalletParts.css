@@ -85,3 +85,13 @@
   --rp-maroon: #1e3d2f;
   --rp-maroon-soft: #2a4d3a;
 }
+
+.usl-wallet .rod-btn.primary, .usl-wallet .rod-btn.primary:visited,
+.usl-wallet .rod-btn.primary:hover, .usl-wallet .rod-btn.primary:focus {
+  color: #fff; -webkit-text-fill-color: #fff;
+}
+.usl-wallet .sls-textbtn {
+  border: 1px solid currentColor; border-radius: 9px; padding: 7px 12px;
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.usl-wallet .sls-textbtn:hover { background: rgba(42, 77, 58, .08); }

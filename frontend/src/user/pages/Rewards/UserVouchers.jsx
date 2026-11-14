@@ -83,6 +83,7 @@ export default function UserVouchers() {
           <EmptyState
             icon={Ticket}
             title="No donation vouchers yet"
+            className="urw-donation-empty"
             text="Donate an item. When it reaches our warehouse you get a voucher to use in the marketplace."
             actionLabel="Donate an item"
             to="/user-donations/new"

@@ -192,6 +192,7 @@ export default function UserFollowing() {
           <EmptyState
             icon={Users}
             title="You're not following anyone yet"
+            className="fl-discover-empty"
             text="Find ReMakers whose work you love and tap Follow."
             actionLabel="Discover ReMakers"
             to="/user-remakers"

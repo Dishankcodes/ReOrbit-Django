@@ -594,3 +594,25 @@
     align-items: flex-start;
   }
 }
+
+/* Donation category dropdown follows the same compact form pattern as ReMaker add product. */
+.dn-category-select select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--dn-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+}
+.dn-category-select select:focus {
+  outline: 0;
+  border-color: var(--dn-p);
+  box-shadow: 0 0 0 3px rgba(42, 77, 58, 0.12);
+}
+.dn-category-select select[aria-invalid="true"] {
+  border-color: #b3261e;
+}

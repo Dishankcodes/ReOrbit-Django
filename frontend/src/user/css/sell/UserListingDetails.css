@@ -114,3 +114,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost),
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):visited,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):hover,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):focus { color: #fff; -webkit-text-fill-color: #fff; }

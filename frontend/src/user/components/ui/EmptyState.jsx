@@ -8,9 +8,10 @@ export default function EmptyState({
   actionLabel,
   to,
   onAction,
+  className = "",
 }) {
   return (
-    <div className="dn-card dn-empty">
+    <div className={`dn-card dn-empty ${className}`.trim()}>
       <div className="dn-empty-icon">{Icon && <Icon size={30} />}</div>
       <h3>{title}</h3>
       <p>{text}</p>

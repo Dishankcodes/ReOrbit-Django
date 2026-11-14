@@ -351,3 +351,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Single category dropdown, matching the ReMaker product form pattern. */
+.usl-category-select {
+  position: relative;
+  max-width: 100%;
+}
+.usl-category-select select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 44px 0 14px;
+  border: 1px solid var(--dn-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: auto;
+}
+.usl-category-select select:focus {
+  outline: 0;
+  border-color: var(--dn-p);
+  box-shadow: 0 0 0 3px rgba(42, 77, 58, 0.12);
+}
+.usl-category-select select[aria-invalid="true"] {
+  border-color: #b3261e;
+}
+
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost),
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):visited,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):hover,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):focus { color: #fff; -webkit-text-fill-color: #fff; }

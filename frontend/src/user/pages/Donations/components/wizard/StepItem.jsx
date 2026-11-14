@@ -5,7 +5,6 @@ import {
   CONDITIONS,
   useDonationCategories,
 } from "../../../../data/donationsStore";
-import { categoryIcon } from "../categoryIcons";
 import PhotoUploader from "../../../../components/ui/PhotoUploader";
 import { useRules } from "../../../../../shared/platformRules";
 
@@ -25,23 +24,21 @@ export default function StepItem({ form, set, errors }) {
         <span className="dn-label">
           Category <em>*</em>
         </span>
-        <div className="dn-catpick">
-          {categories.map((cat) => {
-            const Icon = categoryIcon(cat.id);
-            const active = form.category === cat.id;
-            return (
-              <button
-                type="button"
-                key={cat.id}
-                className={`dn-catpick-item ${active ? "is-active" : ""}`}
-                onClick={() => set("category", cat.id)}
-                aria-pressed={active}
-              >
-                <Icon size={20} />
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
+        <div className="dn-category-select">
+          <select
+            id="dn-category"
+            value={form.category}
+            onChange={(event) => set("category", event.target.value)}
+            aria-label="Select a donation category"
+            aria-invalid={errors.category ? "true" : undefined}
+          >
+            <option value="">Select a category</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
         </div>
         {errors.category && <span className="dn-error">{errors.category}</span>}
       </div>

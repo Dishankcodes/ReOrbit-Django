@@ -207,3 +207,8 @@
 .fl-hero-actions .dn-btn svg {
   color: #ffffff;
 }
+
+.fl-discover-empty > .dn-btn,
+.fl-discover-empty > .dn-btn:visited,
+.fl-discover-empty > .dn-btn:hover,
+.fl-discover-empty > .dn-btn:focus { color: #fff; -webkit-text-fill-color: #fff; }
