@@ -14,9 +14,13 @@ urlpatterns = [
     path("policies/<slug:key>/", pub.PublicPolicy.as_view()),
 
     path("admin/banners/", a.AdminBanners.as_view()),
+    path("admin/banners/upload/", a.AdminBannerUpload.as_view()),
+    path("admin/banners/stats/", a.AdminBannerStats.as_view()),
     path("admin/banners/<str:public_id>/", a.AdminBannerDetail.as_view()),
     path("admin/banners/<str:public_id>/duplicate/", a.AdminBannerDuplicate.as_view()),
     path("admin/banners/<str:public_id>/move/", a.AdminBannerMove.as_view()),
+    path("admin/spotlight/", a.AdminSpotlight.as_view()),
+    path("admin/spotlight/search/", a.AdminSpotlightSearch.as_view()),
     path("admin/faqs/", a.AdminFaqs.as_view()),
     path("admin/faqs/<str:public_id>/", a.AdminFaqDetail.as_view()),
     path("admin/faqs/<str:public_id>/move/", a.AdminFaqMove.as_view()),

@@ -1628,3 +1628,22 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* "Buy now" on a boosted hero photo. */
+.rm-page .rm-photo-buy {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #fff;
+  color: #400808;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+.rm-page .rm-photo-buy:hover {
+  background: #400808;
+  color: #fff;
+}

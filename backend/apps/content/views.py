@@ -3,6 +3,10 @@
   GET/POST          /api/content/admin/banners/              list / create (always a draft)
   PATCH/DELETE      /api/content/admin/banners/<id>/         edit, publish (active), delete
   POST              /api/content/admin/banners/<id>/duplicate/   ·   .../move/ {dir: -1|1}
+  POST              /api/content/admin/banners/upload/       a picture file -> {url}
+  GET               /api/content/admin/banners/stats/        live views/clicks/status of every banner (polled)
+  GET/PUT           /api/content/admin/spotlight/            the three Home hero pictures (PUT {surface, ids})
+  GET               /api/content/admin/spotlight/search/?q=  live products the team can pick from
   GET/POST          /api/content/admin/faqs/                 PATCH/DELETE .../faqs/<id>/   POST .../move/
   GET               /api/content/admin/policies/             every policy with its draft and versions
   POST/DELETE       /api/content/admin/policies/<key>/draft/        save / discard the draft
@@ -13,17 +17,21 @@
 
 from datetime import date, timedelta
 
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import F, Max
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin
+from apps.core.images import process_image
 from apps.core.responses import created, fail, ok
 from apps.core.services import audit
 
-from .models import Banner, ContentLog, Faq, Policy, PolicyVersion
+from . import spotlight
+from .models import Banner, ContentLog, Faq, HomePick, Policy, PolicyVersion
 
 
 class _Admin(APIView):
@@ -107,7 +115,7 @@ def clean_banner(data):
         errs["audience"] = ["Choose who sees the banner."]
     out["audience"] = data.get("audience")
     image = str(data.get("image") or "").strip()
-    if not (image.startswith("https://") or image.startswith("/")) or len(image) > 500:
+    if not (image.startswith(("https://", "http://")) or image.startswith("/")) or len(image) > 500:
         errs["image"] = ["Choose a picture for the banner."]
     out["image"] = image
     start, end = _date(data.get("start")), _date(data.get("end"))
@@ -172,6 +180,42 @@ class AdminBannerDetail(_Admin):
             self.log(request, f"Deleted the banner “{title}”")
             self.audit(request, "banner.delete", "banner", ref, before={"title": title})
         return ok({}, message="Banner deleted.")
+
+
+BANNER_MAX_BYTES = 5 * 1024 * 1024
+
+
+class AdminBannerUpload(_Admin):
+    """A real picture for a banner. It is checked, turned upright, stripped of metadata and resized."""
+
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def post(self, request):
+        f = request.FILES.get("file")
+        if f is None:
+            return fail("Choose a picture to upload.", {"file": ["Choose a picture to upload."]})
+        if f.size > BANNER_MAX_BYTES:
+            return fail("That picture is over 5 MB.", {"file": ["Use a picture under 5 MB."]})
+        try:
+            clean = process_image(f, max_side=1920)
+        except Exception:  # not an image, or a format Pillow cannot read
+            return fail("That file is not a picture we can use.", {"file": ["Use a JPG, PNG or WebP picture."]})
+        name = default_storage.save(f"banners/{clean.name}", clean)
+        url = request.build_absolute_uri(default_storage.url(name))
+        self.log(request, "Uploaded a banner picture")
+        return created({"url": url}, message="Picture uploaded.")
+
+
+class AdminBannerStats(_Admin):
+    """Only the numbers that change by themselves, so the page can refresh them without a reload."""
+
+    def get(self, request):
+        today = timezone.localdate()
+        rows = {}
+        for b in Banner.objects.all():
+            r = banner_row(b, today)
+            rows[b.public_id] = {k: r[k] for k in ("views", "clicks", "ctr", "status", "startsIn", "endsIn")}
+        return ok({"results": rows})
 
 
 class AdminBannerDuplicate(_Admin):
@@ -411,3 +455,42 @@ class AdminLog(_Admin):
     def get(self, request):
         return ok({"results": [{"id": f"L{r.id}", "by": r.by_name, "text": r.text, "at": r.created_at}
                                for r in ContentLog.objects.all()[:30]]})
+
+
+# --------------------------------------------------------------------------- #
+# Home spotlight: the three pictures in each Home hero
+# --------------------------------------------------------------------------- #
+def _pick_card(c):
+    return {"id": c["id"], "kind": c["kind"], "title": c["title"], "price": c["price"], "category": c["category"]["name"],
+            "cover": c["cover"], "seller": c["seller"]["name"], "soldOut": c["sold_out"]}
+
+
+def _spotlight_body(request):
+    return {"max": HomePick.MAX,
+            **{s: [_pick_card(c) for c in spotlight.picks_for(s, request)] for s in HomePick.SURFACES}}
+
+
+class AdminSpotlight(_Admin):
+    def get(self, request):
+        return ok(_spotlight_body(request))
+
+    def put(self, request):
+        surface = request.data.get("surface")
+        ids = request.data.get("ids")
+        if not isinstance(ids, list):
+            return fail("Send the picked product ids as a list.", status=400)
+        before = list(HomePick.objects.filter(surface=surface).values_list("ref", flat=True))
+        try:
+            with transaction.atomic():
+                spotlight.set_picks(surface, ids, request.user.account)
+        except spotlight.PickError as exc:
+            return fail(str(exc), {"ids": [str(exc)]})
+        where = "ReMaker Home" if surface == "remaker" else "member Home"
+        self.log(request, f"Changed the {where} spotlight ({len(ids)} picked)")
+        self.audit(request, "home.spotlight", "home_pick", surface, before={"ids": before}, after={"ids": ids})
+        return ok(_spotlight_body(request), message="Home spotlight saved.")
+
+
+class AdminSpotlightSearch(_Admin):
+    def get(self, request):
+        return ok({"results": [_pick_card(c) for c in spotlight.search(request, request.query_params.get("q", ""))]})

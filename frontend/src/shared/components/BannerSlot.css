@@ -1,13 +1,16 @@
 .bn-slot {
+  --bn-bg: var(--primary-dark, #1e3d2f);
+  --bn-shade: 20, 38, 28;
+  --bn-btn-ink: var(--primary, #2a4d3a);
   position: relative;
   width: 100%;
   max-width: 1200px;
   margin: 18px auto;
   overflow: hidden;
   border-radius: 22px;
-  background: var(--primary-dark);
+  background: var(--bn-bg);
   min-height: 110px;
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, "Plus Jakarta Sans", system-ui, sans-serif);
 }
 .bn-slot > img {
   position: absolute;
@@ -21,9 +24,9 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(20, 38, 28, 0.82) 0%,
-    rgba(20, 38, 28, 0.35) 60%,
-    rgba(20, 38, 28, 0) 100%
+    rgba(var(--bn-shade), 0.82) 0%,
+    rgba(var(--bn-shade), 0.35) 60%,
+    rgba(var(--bn-shade), 0) 100%
   );
 }
 .bn-copy {
@@ -42,7 +45,7 @@
 .bn-slot .bn-copy h3 {
   margin: 0;
   color: #f7f5ee !important;
-  font: 700 clamp(1.1rem, 2.4vw, 1.8rem) var(--font-display);
+  font: 700 clamp(1.1rem, 2.4vw, 1.8rem) var(--font-display, "Bricolage Grotesque", Georgia, serif);
   line-height: 1.15;
 }
 .bn-slot .bn-copy p {
@@ -58,8 +61,8 @@
   border: 0;
   border-radius: 999px;
   background: #f7f5ee;
-  color: var(--primary);
-  font: 700 0.85rem var(--font-sans);
+  color: var(--bn-btn-ink);
+  font: 700 0.85rem var(--font-sans, "Plus Jakarta Sans", system-ui, sans-serif);
   cursor: pointer;
 }
 .bn-dots {
@@ -115,4 +118,21 @@
   .bn-slot.strip {
     min-height: 70px;
   }
+}
+
+/* The ReMaker pages use the maroon theme. */
+.rm-page .bn-slot {
+  --bn-bg: #400808;
+  --bn-shade: 64, 8, 8;
+  --bn-btn-ink: #400808;
+}
+/* The admin preview is a picture of the banner, not a control. */
+.bn-slot.is-preview {
+  margin: 0 auto;
+}
+.rm-page .bn-slot {
+  max-width: none;
+}
+.bn-slot.is-preview .bn-copy button {
+  cursor: default;
 }

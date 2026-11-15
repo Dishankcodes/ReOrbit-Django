@@ -257,3 +257,32 @@ export function endSession() {
   clearSession();
   window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
 }
+
+/* ---------------------------------------------------------
+   Come back after login.
+   A page that needs a login sends the visitor to the login page with
+   ?next=/the/page. After signing in, nextAfterLogin() gives that page back.
+   Only an address inside the same side is accepted (a member returns to
+   /user-..., a ReMaker to /remaker-...), so the link cannot send anyone elsewhere.
+   --------------------------------------------------------- */
+const NEXT_PREFIX = { user: "/user-", remaker: "/remaker-" };
+
+export function safeNext(raw, type) {
+  const v = String(raw || "");
+  if (!v.startsWith("/") || v.startsWith("//") || v.includes("\\")) return "";
+  return v.startsWith(NEXT_PREFIX[type] || "\0") ? v : "";
+}
+
+export function loginUrl(type, next) {
+  const ok = safeNext(next, type);
+  return ok ? `${LOGIN_PATH[type]}?next=${encodeURIComponent(ok)}` : LOGIN_PATH[type];
+}
+
+export function nextAfterLogin(type, fallback) {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("next");
+    return safeNext(raw, type) || fallback;
+  } catch {
+    return fallback;
+  }
+}

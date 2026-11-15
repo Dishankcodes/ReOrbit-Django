@@ -11,6 +11,7 @@ import UserLayout from "./user/components/UserLayout";
 import ReMakerLayout from "./remaker/components/ReMakerLayout";
 import AdminLayout from "./admin/components/AdminLayout";
 import RequireAuth from "./shared/components/RequireAuth";
+import BuyRedirect from "./shared/components/BuyRedirect";
 
 /* Public website and authentication */
 const Auth = page("user", () => import("./user/pages/Auth/Auth"));
@@ -439,10 +440,6 @@ const AdminSupport = page(
   "admin",
   () => import("./admin/pages/Support/AdminSupport"),
 );
-const AdminMessages = page(
-  "admin",
-  () => import("./admin/pages/Messages/AdminMessages"),
-);
 const AdminComplaintDetails = page(
   "admin",
   () => import("./admin/pages/Complaints/AdminComplaintDetails"),
@@ -531,6 +528,7 @@ export default function App() {
           path="/user-before-marketplace"
           element={<UserBeforeMarketplace />}
         />
+        <Route path="/buy/:productId" element={<BuyRedirect />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Auth />} />
         <Route
@@ -838,8 +836,6 @@ export default function App() {
             />
             <Route path="/admin-complaints" element={<AdminComplaints />} />
             <Route path="/admin-support" element={<AdminSupport />} />
-            <Route path="/admin-messages" element={<AdminMessages />} />
-            <Route path="/admin-messages/:id" element={<AdminMessages />} />
             <Route
               path="/admin-complaints/:complaintId"
               element={<AdminComplaintDetails />}

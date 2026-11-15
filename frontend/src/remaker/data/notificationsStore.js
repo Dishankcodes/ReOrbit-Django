@@ -377,7 +377,7 @@ export function useNotifications() {
           id: `message:${conversation.id}`,
           category: "messages",
           title: `Message from ${conversation.name}`,
-          text: last.text || (last.image ? "Sent a photo" : "Open your conversation."),
+          text: last.text || (last.image || last.has_image ? "Sent a photo" : "Open your conversation."),
           createdAt: last.at,
           read: false,
           link: { to: `/remaker-messages/${conversation.id}`, label: "Reply" },

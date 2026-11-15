@@ -62,6 +62,26 @@ def _latest_cards(request, n):
     return [card(k, o, request) for k, o in rows[:n]]
 
 
+def _hero_cards(request):
+    """Three cards for the Home hero: the products the team picked first, then the newest ones."""
+    from apps.content import spotlight
+
+    picked = spotlight.picks_for("user", request)
+    for c in picked:
+        c["boosted"] = True
+    ids = {c["id"] for c in picked}
+    rest = [c for c in _latest_cards(request, 3 + len(picked)) if c["id"] not in ids]
+    return (picked + rest)[:3]
+
+
+def _remaker_hero(request):
+    """Pictures the team picked for the ReMaker Home hero (empty = the page keeps its own)."""
+    from apps.content import spotlight
+
+    return [{"id": c["id"], "kind": c["kind"], "title": c["title"], "category": c["category"]["name"],
+             "price": c["price"], "cover": c["cover"]} for c in spotlight.picks_for("remaker", request) if c["cover"]]
+
+
 def _build_home(request):
     counts = _live_counts()
     live_total = sum(counts.values())
@@ -81,7 +101,8 @@ def _build_home(request):
         },
         "categories": [{"name": n, "slug": s, "live": c}
                        for (n, s), c in sorted(counts.items(), key=lambda kv: -kv[1])[:6]],
-        "products": _latest_cards(request, 3),
+        "products": _hero_cards(request),
+        "remaker_hero": _remaker_hero(request),
         "remakers": [_remaker_row(r, request, r.n) for r in top],
     }
 
@@ -92,7 +113,9 @@ class HomeView(APIView):
 
     @method_decorator(cache_control(max_age=60, public=True))
     def get(self, request):
-        key = f"public_home:{request.get_host()}"
+        from apps.content import spotlight
+
+        key = spotlight.home_cache_key(request.get_host())
         data = cache.get(key)
         if data is None:
             data = _build_home(request)

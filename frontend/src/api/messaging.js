@@ -22,6 +22,11 @@ export const messagingApi = {
     apiRequest(`${endpoint()}${encodeURIComponent(id)}/${queryString(params)}`).then(
       (response) => response.data.conversation,
     ),
+  /* One photo of a chat. Threads only say a photo exists; it is fetched on demand. */
+  image: (id, messageId) =>
+    apiRequest(`${endpoint()}${encodeURIComponent(id)}/images/${encodeURIComponent(messageId)}/`).then(
+      (response) => response.data.image || "",
+    ),
   start: (body) =>
     apiRequest(endpoint(), { method: "POST", body }).then(
       (response) => response.data.conversation,

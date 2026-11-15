@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -21,12 +21,14 @@ import {
   duplicateBanner,
   removeBanner,
   moveBanner,
+  refreshBannerStats,
   BANNER_PLACEMENTS,
 } from "../../../data/contentStore";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import EmptyState from "../../../components/ui/EmptyState";
 import RowActionMenu from "../../../components/ui/RowActionMenu";
 import { BannerModal, ConfirmModal } from "./ContentModals";
+import SpotlightPanel from "./SpotlightPanel";
 import { formatDate } from "../../../utils/format";
 
 const FILTERS = ["All", "Live", "Scheduled", "Draft", "Ended"];
@@ -52,6 +54,19 @@ export default function BannersTab({ canEdit, by, toast }) {
   const [form, setForm] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [pulling, setPulling] = useState(null);
+
+  /* Views and clicks update on their own, no refresh needed. Paused while the tab is hidden. */
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") refreshBannerStats();
+    };
+    const t = setInterval(tick, 10000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, []);
 
   const counts = useMemo(
     () =>
@@ -151,7 +166,7 @@ export default function BannersTab({ canEdit, by, toast }) {
         ];
 
   return (
-    <>
+    <div className="cm-stack">
       <section className="cm-tiles" aria-label="Banner summary">
         <div className="cm-tile">
           <span className="cm-tile-n good">{counts.Live}</span>
@@ -371,6 +386,8 @@ export default function BannersTab({ canEdit, by, toast }) {
         </p>
       </section>
 
+      <SpotlightPanel canEdit={canEdit} toast={toast} />
+
       <BannerModal
         open={!!form}
         banner={form?.banner || null}
@@ -403,6 +420,6 @@ export default function BannersTab({ canEdit, by, toast }) {
         }}
         onClose={() => setPulling(null)}
       />
-    </>
+    </div>
   );
 }

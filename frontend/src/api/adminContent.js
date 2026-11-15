@@ -21,6 +21,26 @@ export const adminContentApi = {
       (r) => r.data.results,
     ),
   removeBanner: (id) => apiRequest(`${A}/banners/${id}/`, { method: "DELETE" }),
+  uploadBannerImage: (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiRequest(`${A}/banners/upload/`, {
+      method: "POST",
+      body: form,
+    }).then((r) => r.data.url);
+  },
+  bannerStats: () =>
+    apiRequest(`${A}/banners/stats/`).then((r) => r.data.results),
+
+  spotlight: () => apiRequest(`${A}/spotlight/`).then((r) => r.data),
+  saveSpotlight: (surface, ids) =>
+    apiRequest(`${A}/spotlight/`, body("PUT", { surface, ids })).then(
+      (r) => r.data,
+    ),
+  spotlightSearch: (q) =>
+    apiRequest(`${A}/spotlight/search/?${new URLSearchParams({ q })}`).then(
+      (r) => r.data.results,
+    ),
 
   faqs: () => apiRequest(`${A}/faqs/`).then((r) => r.data.results),
   createFaq: (v) =>

@@ -34,6 +34,8 @@ _AUDIENCES = {
     "visitor": ("Everyone", "Visitors only"),
     "member": ("Everyone", "Signed-in members"),
     "remaker": ("Everyone", "Signed-in members", "ReMakers"),
+    # someone looking at the ReMaker landing page before they sign in
+    "remaker_visitor": ("Everyone", "Visitors only", "ReMakers"),
 }
 
 

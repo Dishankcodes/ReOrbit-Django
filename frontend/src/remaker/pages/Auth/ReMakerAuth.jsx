@@ -12,7 +12,7 @@ import {
   remakerGoogleLogin,
 } from "../../../api/auth";
 import GoogleButton from "../../../shared/components/GoogleButton";
-import { saveSession } from "../../../api/session";
+import { saveSession, nextAfterLogin } from "../../../api/session";
 
 export default function ReMakerAuth() {
   // Navigation steps:
@@ -95,7 +95,7 @@ export default function ReMakerAuth() {
       type: "remaker",
       account: data.remaker,
     });
-    window.location.href = "/remaker-dashboard";
+    window.location.href = nextAfterLogin("remaker", "/remaker-dashboard");
   };
 
   const handleGoogleCode = async (code) => {
@@ -370,7 +370,7 @@ export default function ReMakerAuth() {
           account: remaker,
         });
 
-        window.location.href = "/remaker-dashboard";
+        window.location.href = nextAfterLogin("remaker", "/remaker-dashboard");
         return;
       }
 
@@ -419,7 +419,7 @@ export default function ReMakerAuth() {
     setLoading(true);
     setMessage("");
 
-    window.location.href = "/remaker-dashboard";
+    window.location.href = nextAfterLogin("remaker", "/remaker-dashboard");
   };
 
   // Resend OTP

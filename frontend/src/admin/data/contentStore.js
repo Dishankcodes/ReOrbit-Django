@@ -145,6 +145,8 @@ let state = {
   faqs: [],
   policies: [],
   log: [],
+  spotlight: { max: 3, user: [], remaker: [] },
+  spotStatus: "idle", // idle | loading | ready | error
   status: "idle", // idle | loading | ready | error  (banners, FAQs, policies)
 };
 
@@ -307,6 +309,53 @@ export async function removeCategory(id) {
 export function useBanners() {
   return useContentLoader().banners;
 }
+/* Picture upload: resolves to the stored image's URL, throws the server's message. */
+export const uploadBannerImage = (file) => adminContentApi.uploadBannerImage(file);
+
+/* Live numbers: merges ONLY the counters and status, so edits in progress are kept. */
+export async function refreshBannerStats() {
+  try {
+    const stats = await adminContentApi.bannerStats();
+    let changed = false;
+    const banners = state.banners.map((b) => {
+      const n = stats[b.id];
+      if (!n) return b;
+      const keys = ["views", "clicks", "ctr", "status", "startsIn", "endsIn"];
+      if (keys.every((k) => b[k] === n[k])) return b;
+      changed = true;
+      return { ...b, ...Object.fromEntries(keys.map((k) => [k, n[k]])) };
+    });
+    if (changed) set({ banners });
+  } catch {
+    /* next tick will try again */
+  }
+}
+
+/* Home spotlight: products an admin boosts into the 3-card hero. */
+export function useSpotlight() {
+  const raw = useRaw();
+  useEffect(() => {
+    loadSpotlight();
+  }, []);
+  return { data: raw.spotlight, status: raw.spotStatus };
+}
+export async function loadSpotlight(force = false) {
+  if (!force && state.spotStatus !== "idle") return;
+  set({ spotStatus: "loading" });
+  try {
+    set({ spotlight: await adminContentApi.spotlight(), spotStatus: "ready" });
+  } catch {
+    set({ spotStatus: "error" });
+  }
+}
+/* Throws the server's message when a pick is refused. */
+export async function saveSpotlight(surface, ids) {
+  const data = await adminContentApi.saveSpotlight(surface, ids);
+  set({ spotlight: data, spotStatus: "ready" });
+  reloadLog();
+}
+export const searchSpotlight = (q) => adminContentApi.spotlightSearch(q);
+
 const uid = () => `tmp-${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
 const bannerBody = (v) => ({
   title: v.title,

@@ -36,6 +36,31 @@ class Banner(PublicIdModel, TimeStampedModel):
         ordering = ["placement", "position", "id"]
 
 
+class HomePick(TimeStampedModel):
+    """A product the team boosts into the three-picture collage on a Home page.
+
+    surface "user" is the member Home hero; "remaker" is the ReMaker Home hero. position 1..3.
+    `ref` is the product's public id (LST-.. member listing, RPR-.. ReMaker product, ADI-.. ReOrbit product).
+    """
+
+    SURFACES = ("user", "remaker")
+    MAX = 3
+
+    surface = models.CharField(max_length=10)
+    position = models.PositiveSmallIntegerField()
+    kind = models.CharField(max_length=10)
+    ref = models.CharField(max_length=24)
+    picked_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    class Meta:
+        db_table = "home_picks"
+        ordering = ["surface", "position"]
+        constraints = [
+            models.UniqueConstraint(fields=["surface", "position"], name="home_pick_slot_once"),
+            models.UniqueConstraint(fields=["surface", "ref"], name="home_pick_product_once"),
+        ]
+
+
 class Faq(PublicIdModel, TimeStampedModel):
     public_id_prefix = "FAQ"
 

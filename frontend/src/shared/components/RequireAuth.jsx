@@ -1,6 +1,11 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LOGIN_PATH, SESSION_ENDED_EVENT, isSignedIn } from "../../api/session";
+import {
+  LOGIN_PATH,
+  SESSION_ENDED_EVENT,
+  isSignedIn,
+  loginUrl,
+} from "../../api/session";
 
 /* Route guard. Wrap a group of routes:
 
@@ -23,7 +28,7 @@ export default function RequireAuth({ role }) {
   if (!isSignedIn(role)) {
     return (
       <Navigate
-        to={LOGIN_PATH[role]}
+        to={loginUrl(role, location.pathname + location.search)}
         replace
         state={{ from: location.pathname }}
       />

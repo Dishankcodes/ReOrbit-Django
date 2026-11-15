@@ -20,6 +20,8 @@ import {
   categoryNameTaken,
 } from "../../../data/contentStore";
 import { CategoryIcon } from "./contentBits";
+import BannerCard, { BANNER_RATIO } from "../../../../shared/components/BannerCard";
+import { ImageUploader, LinkSuggestions } from "./BannerFormParts";
 import { formatDate } from "../../../utils/format";
 
 /* Shared frame: backdrop, Escape to close, scroll lock. */
@@ -192,19 +194,7 @@ export function CategoryModal({ open, category, onSave, onClose }) {
 
 /* ======================= banner ======================= */
 export function BannerPreview({ b }) {
-  return (
-    <div
-      className="cm-bn-preview"
-      style={{ backgroundImage: b.image ? `url(${b.image})` : undefined }}
-    >
-      <div className="cm-bn-shade" />
-      <div className="cm-bn-copy">
-        <strong>{b.title || "Your headline appears here"}</strong>
-        {b.subtitle && <span>{b.subtitle}</span>}
-        {b.cta && <em>{b.cta}</em>}
-      </div>
-    </div>
-  );
+  return <BannerCard banner={b} placement={b.placement} preview />;
 }
 
 export function BannerModal({ open, banner, onSave, onClose }) {
@@ -216,7 +206,7 @@ export function BannerModal({ open, banner, onSave, onClose }) {
     link: "/",
     placement: "Home hero",
     audience: "Everyone",
-    image: BANNER_IMAGES[0].src,
+    image: "",
     start: "",
     end: "",
   };
@@ -264,6 +254,7 @@ export function BannerModal({ open, banner, onSave, onClose }) {
         ? "The end date must be after the start date."
         : "",
   };
+  err.image = f.image ? "" : "Add a picture for the banner.";
   const bad = Object.values(err).some(Boolean);
   const submit = (e) => {
     e.preventDefault();
@@ -283,10 +274,13 @@ export function BannerModal({ open, banner, onSave, onClose }) {
       onSubmit={submit}
       text="Banners start as drafts. Publish one when you are happy with it. If you set dates, it goes live and ends on its own."
     >
-      <BannerPreview b={f} />
-      <p className="cm-hint cm-ratio">
-        Shown in “{f.placement}”, best at {place?.ratio} ratio. {place?.blurb}
-      </p>
+      <div className="cm-bnprev">
+        <span className="cm-bnprev-h">Preview · how it looks on the site</span>
+        <BannerPreview b={f} />
+        <p className="cm-hint cm-ratio">
+          Shown in “{f.placement}”, best at {place?.ratio} ratio. {place?.blurb}
+        </p>
+      </div>
       <div className="cm-form">
         <label className="ad-modal-field cm-wide">
           <span>Headline</span>
@@ -319,10 +313,28 @@ export function BannerModal({ open, banner, onSave, onClose }) {
           <input
             value={f.link}
             onChange={(e) => set("link", e.target.value)}
-            placeholder="/shop"
+            placeholder="/discover-marketplace"
           />
           <Err show={touched && err.link}>{err.link}</Err>
         </label>
+        <div className="cm-wide">
+          <LinkSuggestions
+            audience={f.audience}
+            current={f.link.trim()}
+            onPick={(to, label) =>
+              setF((c) => ({
+                ...c,
+                link: to,
+                cta:
+                  label === "Buy now" || !c.cta.trim() || c.cta === "Shop now"
+                    ? label.length <= 20
+                      ? label
+                      : "Shop now"
+                    : c.cta,
+              }))
+            }
+          />
+        </div>
         <label className="ad-modal-field">
           <span>Where it shows</span>
           <select
@@ -370,7 +382,14 @@ export function BannerModal({ open, banner, onSave, onClose }) {
       </div>
       <div className="ad-modal-field">
         <span>Picture</span>
-        <div className="cm-images" role="radiogroup" aria-label="Picture">
+        <ImageUploader
+          value={f.image}
+          ratio={BANNER_RATIO[f.placement] || "16 / 6"}
+          onChange={(u) => set("image", u)}
+        />
+        <Err show={touched && err.image}>{err.image}</Err>
+        <small className="cm-hint">Or pick a sample picture:</small>
+        <div className="cm-images" role="radiogroup" aria-label="Sample pictures">
           {BANNER_IMAGES.map((im) => (
             <button
               key={im.src}

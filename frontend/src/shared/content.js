@@ -56,6 +56,7 @@ const AUDIENCE_KEY = {
   "Visitors only": "visitor",
   "Signed-in members": "member",
   ReMakers: "remaker",
+  "ReMaker visitors": "remaker_visitor", // looking at the ReMaker landing page before signing in
 };
 
 /* placement: "Home hero" etc. (see BANNER_PLACEMENTS). viewer: who is looking. */

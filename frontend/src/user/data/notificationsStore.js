@@ -147,7 +147,7 @@ export function useNotifications() {
         id: `message-${conversation.id}-${last.id || last.at}`,
         type: "message",
         title: `Message from ${conversation.name}`,
-        message: last.text || (last.image ? "Sent a photo" : "Open your conversation."),
+        message: last.text || (last.image || last.has_image ? "Sent a photo" : "Open your conversation."),
         at: last.at,
         to: `/user-messages/${conversation.id}`,
       });

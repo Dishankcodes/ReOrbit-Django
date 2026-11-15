@@ -1,5 +1,6 @@
 import { isSignedIn } from "../../../api/session";
 import React from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import BannerSlot from "../../../shared/components/BannerSlot";
@@ -81,6 +82,8 @@ function useHomeData() {
   const real = data || null;
   const cards = (real?.products || []).filter((p) => p.cover);
   const live = cards.slice(0, 3).map((p) => ({
+    id: p.id,
+    boosted: !!p.boosted,
     title: p.title,
     description: p.summary || "",
     price: inr(p.price),
@@ -136,6 +139,11 @@ function ProductCard({ product, className }) {
         <img src={product.image} alt={product.title} />
         <span className="price-chip">{product.price}</span>
         <span className="category-chip">{product.category}</span>
+        {product.id && (
+          <Link className="hero-buy" to={`/buy/${product.id}`}>
+            Buy now
+          </Link>
+        )}
       </div>
       <div className="hero-product-content">
         <h3>{product.title}</h3>

@@ -1,7 +1,26 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import BannerSlot from "../../../shared/components/BannerSlot";
+import { isSignedIn } from "../../../api/session";
+import { usePublic } from "../../../api/publicData";
 import "../../css/ReMakers.css";
+
+/* The three hero photos. Products the team boosts in Admin > Content replace these by position. */
+const HERO_PHOTOS = [
+  {
+    src: "https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    alt: "Handcrafted furniture in a bright studio",
+  },
+  {
+    src: "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    alt: "Colorful handmade artwork",
+  },
+  {
+    src: "https://images.pexels.com/photos/8762879/pexels-photo-8762879.jpeg?auto=compress&cs=tinysrgb&w=1000",
+    alt: "Crafted interior objects",
+  },
+];
 
 const materials = [
   {
@@ -147,6 +166,12 @@ const testimonials = [
 ];
 
 export default function ReMakers() {
+  const { data } = usePublic("/home/");
+  const viewer = isSignedIn("remaker") ? "ReMakers" : "ReMaker visitors";
+  const picks = (data?.remaker_hero || []).filter((p) => p.cover);
+  const photos = HERO_PHOTOS.map((d, i) =>
+    picks[i] ? { src: picks[i].cover, alt: picks[i].title, id: picks[i].id } : d,
+  );
   return (
     <div className="remaker-page rm-page">
       <Navbar />
@@ -220,26 +245,19 @@ export default function ReMakers() {
               {/* HERO GALLERY */}
 
               <div className="rm-gallery" aria-label="ReMaker creations">
-                <div className="rm-photo">
-                  <img
-                    src="https://images.pexels.com/photos/16390583/pexels-photo-16390583.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                    alt="Handcrafted furniture in a bright studio"
-                  />
-                </div>
-
-                <div className="rm-photo rm-photo-raised">
-                  <img
-                    src="https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                    alt="Colorful handmade artwork"
-                  />
-                </div>
-
-                <div className="rm-photo">
-                  <img
-                    src="https://images.pexels.com/photos/8762879/pexels-photo-8762879.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                    alt="Crafted interior objects"
-                  />
-                </div>
+                {photos.map((p, i) => (
+                  <div
+                    key={i}
+                    className={`rm-photo ${i === 1 ? "rm-photo-raised" : ""}`}
+                  >
+                    <img src={p.src} alt={p.alt} />
+                    {p.id && (
+                      <a className="rm-photo-buy" href={`/buy/${p.id}?as=remaker`}>
+                        Buy now
+                      </a>
+                    )}
+                  </div>
+                ))}
 
                 <div className="rm-orbit-note">
                   <span className="material-symbols-outlined">recycling</span>
@@ -254,6 +272,12 @@ export default function ReMakers() {
             </div>
           </div>
         </section>
+
+        {/* BANNERS from Admin > Content */}
+        <div className="rm-container rm-banners">
+          <BannerSlot placement="Home hero" viewer={viewer} />
+          <BannerSlot placement="Home strip" viewer={viewer} />
+        </div>
 
         {/* =====================================================
             STATS

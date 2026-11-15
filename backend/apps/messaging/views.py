@@ -1,5 +1,6 @@
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Length
 from django.utils.dateparse import parse_datetime
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -93,7 +94,7 @@ def _with_latest_message(queryset):
     return queryset.annotate(
         _last_message_id=Subquery(latest.values("pk")[:1]),
         _last_message_text=Subquery(latest.values("text")[:1]),
-        _last_message_image=Subquery(latest.values("attachment_url")[:1]),
+        _last_message_image_len=Subquery(latest.annotate(_n=Length("attachment_url")).values("_n")[:1]),
         _last_message_at=Subquery(latest.values("created_at")[:1]),
         _last_message_sender_type=Subquery(latest.values("sender_type")[:1]),
         _last_message_sender_user_id=Subquery(latest.values("sender_user_id")[:1]),
@@ -210,7 +211,9 @@ def _ensure_support_conversation(kind, account):
 
 
 def _message_page(conversation, before=None, after=None):
-    messages = conversation.messages.all()
+    # Photos are stored as base64 and can be megabytes each. Never ship them with the
+    # page of messages: only note that one exists. The client fetches each on demand.
+    messages = conversation.messages.annotate(_image_len=Length("attachment_url")).defer("attachment_url")
     if before is not None:
         messages = messages.filter(pk__lt=before).order_by("-created_at", "-pk")
         page = list(messages[: MESSAGE_PAGE_SIZE + 1])
@@ -246,7 +249,7 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
     if hasattr(participant, "_last_message_id"):
         last_id = participant._last_message_id
         last_text = participant._last_message_text
-        last_image = participant._last_message_image
+        last_has_image = bool(participant._last_message_image_len)
         last_at = participant._last_message_at
         last_sender_type = participant._last_message_sender_type
         last_sender_id = getattr(participant, f"_last_message_sender_{last_sender_type}_id", None) if last_sender_type else None
@@ -256,7 +259,7 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
             last = message_rows[-1]
         last_id = last.pk if last else None
         last_text = last.text if last else ""
-        last_image = last.attachment_url if last else ""
+        last_has_image = bool(last and last.attachment_url)
         last_at = last.created_at if last else None
         last_sender_type = last.sender_type if last else None
         last_sender_id = getattr(last, f"sender_{last.sender_type}_id", None) if last else None
@@ -272,23 +275,7 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
         unread = participant.notifications.filter(read_at__isnull=True).count()
     peer_profile = _profile(account, peer.account_type) if account else None
 
-    if participant.account_type == "admin":
-        # In the admin inbox the label describes the external participant,
-        # not the shared support-thread's internal conversation kind.
-        if peer and peer.account_type == "user":
-            display_kind = "customer"
-        elif peer and peer.account_type == "remaker":
-            display_kind = "remaker"
-        else:
-            display_kind = "support" if conv.kind == "reorbit" else conv.kind
-    elif peer and peer.account_type == "admin":
-        display_kind = "reorbit"
-    elif participant.account_type == "remaker" and peer and peer.account_type == "user":
-        display_kind = "customer"
-    elif peer and peer.account_type == "remaker":
-        display_kind = "remaker"
-    else:
-        display_kind = conv.kind
+    display_kind = _category(participant.account_type, peer.account_type if peer else "", conv.kind)
 
     data = {
         "id": conv.public_id,
@@ -304,11 +291,13 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
         "subtitle": peer_profile["city"] if peer_profile else "",
         "image": peer_profile["image"] if peer_profile else "",
         "peer": peer_profile,
-        "context": conv.context,
+        "context": _public_context(conv, participant),
         "unread": unread,
+        "messages_loaded": bool(include_messages),
+        "updated_at": conv.updated_at,
         "messages": [],
         "last_message": (
-            {"id": last_id, "text": last_text, "image": last_image,
+            {"id": last_id, "text": last_text, "image": "", "has_image": last_has_image,
              "at": last_at, "from": last_from}
             if last_id else None
         ),
@@ -329,12 +318,52 @@ def _row(conv, participant, include_messages=False, before=None, after=None):
                 ),
                 "sender_type": message.sender_type,
                 "text": message.text,
-                "image": message.attachment_url,
+                "image": "",
+                "has_image": bool(message._image_len),
                 "at": message.created_at,
             }
             for message in message_rows
         ]
     return data
+
+
+PEER_FILTERS = {
+    # filter key -> account type of the other person in the chat
+    "user": "user", "customer": "user", "seller": "user", "buyer": "user",
+    "remaker": "remaker",
+    "reorbit": "admin", "support": "admin",
+}
+
+
+def _category(viewer_type, peer_type, conv_kind):
+    """The sidebar label/filter for one chat, from the viewer's side.
+
+    It depends only on who the viewer is and who is on the other end, never on
+    the `kind` the starter happened to send (that made the same chat look like a
+    "seller" to both people and broke the filters).
+    """
+    if viewer_type == "admin":
+        return "remaker" if peer_type == "remaker" else "customer"
+    if peer_type == "admin" or conv_kind == "reorbit":
+        return "reorbit"
+    if peer_type == "remaker":
+        return "remaker"
+    return "customer" if viewer_type == "remaker" else "user"
+
+
+def _public_context(conv, participant):
+    """Only real "about this thing" contexts are shown, and only the starter owns the link."""
+    ctx = conv.context if isinstance(conv.context, dict) else {}
+    label = str(ctx.get("label") or "").strip()
+    if conv.kind == "reorbit" or not label:
+        return None
+    owner = f"{participant.account_type}:{getattr(participant, participant.account_type + '_id')}"
+    return {
+        "label": label,
+        "to": str(ctx.get("to") or ""),
+        "image": str(ctx.get("image") or ""),
+        "mine": ctx.get("by") == owner,
+    }
 
 
 def _direct_key(account_type, account, target_type, target):
@@ -388,8 +417,8 @@ def _conversation_for_pair(account_type, account, target_type, target, data):
         conversation=conv, **{target_type: target},
         defaults={"account_type": target_type},
     )
-    if isinstance(data.get("context"), dict) and data.get("context"):
-        conv.context = data["context"]
+    if isinstance(data.get("context"), dict) and data.get("context", {}).get("label"):
+        conv.context = {**data["context"], "by": f"{account_type}:{account.pk}"}
         conv.save(update_fields=["context", "updated_at"])
     return conv
 
@@ -419,31 +448,20 @@ def _queryset_for(request, account, kind):
 
     category = request.query_params.get("kind")
     if category and category != "all":
-        peer_type = {
-            "seller": "user", "buyer": "user", "customer": "user",
-            "remaker": "remaker", "reorbit": "admin", "support": "admin",
-        }.get(category)
-        if peer_type:
-            # Match the other participant, never the current account itself.
-            # A direct join on account_type also matched the inbox owner's row,
-            # making ReMaker-to-ReMaker filters appear to include every thread.
-            peer_exists = ConversationParticipant.objects.filter(
-                conversation_id=OuterRef("conversation_id"),
-                account_type=peer_type,
-            ).exclude(pk=OuterRef("pk"))
-            participants = participants.annotate(
-                _has_peer_type=Exists(peer_exists)
-            ).filter(_has_peer_type=True)
-        if category == "support":
-            participants = participants.filter(conversation__kind="reorbit")
-        elif category == "reorbit":
-            participants = participants.filter(conversation__kind="reorbit")
-        elif category == "seller":
-            participants = participants.filter(conversation__kind="seller")
-        elif category == "buyer":
-            participants = participants.filter(conversation__kind="buyer")
-        elif category == "customer":
-            participants = participants.filter(conversation__kind="customer")
+        peer_type = PEER_FILTERS.get(category)
+        if peer_type is None:
+            return participants.none()
+        # Match the other participant, never the inbox owner's own row.
+        peer_exists = ConversationParticipant.objects.filter(
+            conversation_id=OuterRef("conversation_id"),
+            account_type=peer_type,
+        ).exclude(pk=OuterRef("pk"))
+        participants = participants.annotate(_has_peer_type=Exists(peer_exists)).filter(_has_peer_type=True)
+        if category in ("reorbit", "support"):
+            if kind == "admin":
+                participants = participants.filter(conversation__kind="reorbit")
+        elif kind != "admin":
+            participants = participants.exclude(conversation__kind="reorbit")
     return participants
 
 
@@ -469,16 +487,25 @@ def _inbox_counts(account, kind, query=""):
             | Q(conversation__participants__admin__full_name__icontains=query)
             | Q(_has_matching_message=True)
         ).distinct()
-    peer_type = ConversationParticipant.objects.filter(
-        conversation_id=OuterRef("conversation_id")
-    ).exclude(pk=OuterRef("pk")).values("account_type")[:1]
+    def has_peer(account_type):
+        return Exists(
+            ConversationParticipant.objects.filter(
+                conversation_id=OuterRef("conversation_id"), account_type=account_type
+            ).exclude(pk=OuterRef("pk"))
+        )
+
     rows = list(
         base.annotate(
             _unread=Count(
                 "notifications", filter=Q(notifications__read_at__isnull=True), distinct=True
             ),
-            _peer_type=Subquery(peer_type),
-        ).values("pk", "conversation_id", "conversation__kind", "_unread", "_peer_type")
+            _peer_user=has_peer("user"),
+            _peer_remaker=has_peer("remaker"),
+            _peer_admin=has_peer("admin"),
+        ).values(
+            "pk", "conversation_id", "conversation__kind", "_unread",
+            "_peer_user", "_peer_remaker", "_peer_admin",
+        )
     )
     counts = {
         "all": len(rows),
@@ -486,16 +513,15 @@ def _inbox_counts(account, kind, query=""):
         "unread_messages": sum(row["_unread"] for row in rows),
     }
     for row in rows:
-        peer_type = row["_peer_type"]
-        label = "support" if kind == "admin" and row["conversation__kind"] == "reorbit" else (
-            "reorbit" if peer_type == "admin" else
-            "customer" if kind == "remaker" and peer_type == "user" else
-            "seller" if kind == "user" and peer_type == "user" and row["conversation__kind"] == "seller" else
-            "buyer" if kind == "user" and peer_type == "user" and row["conversation__kind"] == "buyer" else
-            "remaker" if peer_type == "remaker" else
-            "customer" if kind == "admin" and peer_type == "user" else
-            row["conversation__kind"]
-        )
+        if row["_peer_remaker"]:
+            peer_type = "remaker"
+        elif row["_peer_user"]:
+            peer_type = "user"
+        elif row["_peer_admin"]:
+            peer_type = "admin"
+        else:
+            peer_type = ""
+        label = _category(kind, peer_type, row["conversation__kind"])
         counts[label] = counts.get(label, 0) + 1
     return counts
 
@@ -531,7 +557,10 @@ class ConversationList(APIView):
 
         # A ReOrbit thread is a shared support-team conversation, not a
         # private chat with whichever admin record happened to be first.
-        _ensure_support_conversation(kind, account)
+        # Incremental polls (`since`) skip this: it is several queries and the
+        # thread already exists by then.
+        if not request.query_params.get("since"):
+            _ensure_support_conversation(kind, account)
 
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
         since = request.query_params.get("since")
@@ -623,9 +652,7 @@ class ConversationDetail(APIView):
         if request.user.account_type == "admin":
             raise PermissionDenied("Use the permission-checked admin messages endpoint.")
         return get_object_or_404(
-            ConversationParticipant.objects.select_related("conversation").prefetch_related(
-                "conversation__participants"
-            ),
+            _prefetch_participants(ConversationParticipant.objects.select_related("conversation")),
             conversation__public_id=public_id,
             **{request.user.account_type: request.user.account},
         )
@@ -710,7 +737,8 @@ class AdminInbox(ConversationList):
     def get(self, request):
         account = request.user.account
         kind = "admin"
-        _sync_admin_support_inbox(account)
+        if not request.query_params.get("since"):
+            _sync_admin_support_inbox(account)
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
         since = request.query_params.get("since")
         since_at = parse_datetime(since) if since else None
@@ -783,9 +811,7 @@ class AdminConversationDetail(ConversationDetail):
 
     def _get(self, request, public_id):
         participant = get_object_or_404(
-            ConversationParticipant.objects.select_related("conversation").prefetch_related(
-                "conversation__participants"
-            ),
+            _prefetch_participants(ConversationParticipant.objects.select_related("conversation")),
             conversation__public_id=public_id,
             admin=request.user.account,
         )
@@ -795,3 +821,36 @@ class AdminConversationDetail(ConversationDetail):
         elif not _can_view_direct_messages(request.user.account):
             raise PermissionDenied("You do not have access to direct messages.")
         return participant
+
+
+class MessageImage(APIView):
+    """One photo of a chat, fetched on demand so threads open fast."""
+
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def _participant(self, request, public_id):
+        if request.user.account_type == "admin":
+            raise PermissionDenied("Use the permission-checked admin messages endpoint.")
+        return get_object_or_404(
+            ConversationParticipant,
+            conversation__public_id=public_id,
+            **{request.user.account_type: request.user.account},
+        )
+
+    def get(self, request, public_id, message_id):
+        participant = self._participant(request, public_id)
+        message = get_object_or_404(
+            Message.objects.only("attachment_url"), pk=message_id, conversation=participant.conversation
+        )
+        return ok({"image": message.attachment_url})
+
+
+class AdminMessageImage(MessageImage):
+    permission_classes = [IsReOrbitAdmin, HasAdminMessagesOrSupport]
+
+    def _participant(self, request, public_id):
+        return get_object_or_404(
+            ConversationParticipant,
+            conversation__public_id=public_id,
+            admin=request.user.account,
+        )

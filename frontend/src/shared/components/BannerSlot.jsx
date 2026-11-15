@@ -1,5 +1,6 @@
 /* Shows the live banners the admin set up in Admin › Content for one place.
-   Nothing renders when no banner is live. More than one rotates every 6 seconds. */
+   Nothing renders when no banner is live. More than one rotates every 6 seconds.
+   `viewer` says who is looking (see shared/content.js), so each person only sees banners meant for them. */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,13 +8,7 @@ import {
   trackBannerView,
   trackBannerClick,
 } from "../content";
-import "./BannerSlot.css";
-
-const RATIO = {
-  "Home hero": "16 / 6",
-  "Home strip": "16 / 2",
-  "Shop top": "16 / 4",
-};
+import BannerCard from "./BannerCard";
 
 export default function BannerSlot({ placement, viewer }) {
   const banners = useLiveBanners(placement, viewer);
@@ -34,7 +29,6 @@ export default function BannerSlot({ placement, viewer }) {
 
   if (!count) return null;
   const b = shown;
-  const strip = placement === "Home strip";
   const go = () => {
     if (!b.link) return;
     trackBannerClick(b.id);
@@ -43,22 +37,7 @@ export default function BannerSlot({ placement, viewer }) {
   };
 
   return (
-    <section
-      className={`bn-slot ${strip ? "strip" : ""}`}
-      aria-label="Promotions"
-      style={{ aspectRatio: RATIO[placement] }}
-    >
-      <img src={b.image} alt="" />
-      <div className="bn-shade" />
-      <div className="bn-copy">
-        <h3>{b.title}</h3>
-        {b.subtitle && <p>{b.subtitle}</p>}
-        {b.cta && b.link && (
-          <button type="button" onClick={go}>
-            {b.cta}
-          </button>
-        )}
-      </div>
+    <BannerCard banner={b} placement={placement} onCta={go}>
       {count > 1 && (
         <div className="bn-dots" role="tablist" aria-label="Choose a banner">
           {banners.map((x, i) => (
@@ -74,6 +53,6 @@ export default function BannerSlot({ placement, viewer }) {
           ))}
         </div>
       )}
-    </section>
+    </BannerCard>
   );
 }

@@ -13,7 +13,7 @@ import {
   userGoogleLogin,
 } from "../../../api/auth";
 import GoogleButton from "../../../shared/components/GoogleButton";
-import { saveSession } from "../../../api/session";
+import { saveSession, nextAfterLogin } from "../../../api/session";
 
 import "../../css/Auth.css";
 
@@ -153,7 +153,7 @@ export default function Auth() {
       setMessage(response.message || "Login successful.");
 
       setTimeout(() => {
-        navigate("/user-dashboard");
+        navigate(nextAfterLogin("user", "/user-dashboard"));
       }, 500);
     } catch (err) {
       setError(err?.data?.message || err?.message || "Google sign-in failed.");
@@ -186,7 +186,7 @@ export default function Auth() {
       setMessage(response.message || "Login successful.");
 
       setTimeout(() => {
-        navigate("/user-dashboard");
+        navigate(nextAfterLogin("user", "/user-dashboard"));
       }, 500);
     } catch (err) {
       setError(err?.data?.message || err?.message || "Unable to login.");
@@ -230,7 +230,7 @@ export default function Auth() {
       setMessage(response.message || "Registration successful.");
 
       setTimeout(() => {
-        navigate("/user-dashboard");
+        navigate(nextAfterLogin("user", "/user-dashboard"));
       }, 500);
     } catch (err) {
       setError(

@@ -6,11 +6,12 @@ import {
   SESSION_ENDED_EVENT,
 } from "../api/session";
 
+/* The chips filter by who is on the other end of the chat, from the viewer's side.
+   The keys match the backend's `kind` filter and the counts it returns. */
 export const USER_KINDS = [
   { key: "all", label: "All" },
   { key: "unread", label: "Unread" },
-  { key: "seller", label: "Sellers" },
-  { key: "buyer", label: "Buyers" },
+  { key: "user", label: "Users" },
   { key: "remaker", label: "ReMakers" },
   { key: "reorbit", label: "ReOrbit" },
 ];
@@ -23,7 +24,29 @@ export const REMAKER_KINDS = [
   { key: "reorbit", label: "ReOrbit" },
 ];
 
+export const ADMIN_KINDS = [
+  { key: "all", label: "All" },
+  { key: "unread", label: "Unread" },
+  { key: "customer", label: "Customers" },
+  { key: "remaker", label: "ReMakers" },
+];
+
+/* Name shown under each chat in the sidebar and in the chat header */
+export const ROLE_LABELS = {
+  user: "User",
+  customer: "Customer",
+  remaker: "ReMaker",
+  reorbit: "ReOrbit Support",
+  support: "Support",
+};
+
 export const QUICK_REPLIES = {
+  user: [
+    "Is this still available?",
+    "Can you share one more photo of the condition?",
+    "Is the price negotiable?",
+    "Can you deliver to my pincode?",
+  ],
   seller: [
     "Is this still available?",
     "Can you share one more photo of the condition?",
@@ -79,6 +102,10 @@ const createState = () => ({
   unreadCount: 0,
   serverTime: null,
   activeId: null,
+  detailErrors: new Map(),
+  prefetching: new Set(),
+  warmed: false,
+  version: 0,
 });
 
 const states = new Map();
@@ -92,34 +119,12 @@ const subscribe = (scope, listener) => {
   state.listeners.add(listener);
   return () => state.listeners.delete(listener);
 };
-function createSnapshot(state) {
-  return {
-    revision: state.snapshot?.revision || 0,
-    rows: state.rows,
-    unreadRows: state.unreadRows,
-    details: new Map(state.details),
-    loading: state.loading,
-    loadingMore: state.loadingMore,
-    detailLoading: new Set(state.detailLoading),
-    error: state.error,
-    hasMore: state.hasMore,
-    counts: state.counts,
-    unreadCount: state.unreadCount,
-    activeId: state.activeId,
-  };
-}
-
-const snapshot = (scope) => {
-  const state = stateFor(scope);
-  if (!state.snapshot) state.snapshot = createSnapshot(state);
-  return state.snapshot;
-};
-
+/* React only re-renders when the snapshot VALUE changes. The state object is
+   mutated in place, so its identity never changes; a number that goes up on
+   every emit is what tells React something new is there. */
+const snapshot = (scope) => stateFor(scope).version;
 const emit = (state) => {
-  // useSyncExternalStore requires a new, cached snapshot identity after every
-  // mutation. Returning the mutable store object itself suppresses React renders.
-  state.snapshot = createSnapshot(state);
-  state.snapshot.revision += 1;
+  state.version += 1;
   state.listeners.forEach((listener) => listener());
 };
 const currentScope = () => getAccountType() || "user";
@@ -135,22 +140,55 @@ function mergeMessages(existing = [], incoming = [], mode = "replace") {
   const all = mode === "prepend" ? [...incoming, ...existing] :
     mode === "append" ? [...existing, ...incoming] : [...incoming];
   const unique = new Map();
-  all.forEach((message) => unique.set(String(message.id), message));
+  all.forEach((message) => {
+    const known = unique.get(String(message.id));
+    unique.set(String(message.id), known?.image && !message.image ? { ...message, image: known.image } : message);
+  });
   return [...unique.values()].sort((a, b) => {
     const byDate = new Date(a.at).getTime() - new Date(b.at).getTime();
     return byDate || messageId(a) - messageId(b);
   });
 }
 
+const isPending = (message) => String(message?.id || "").startsWith("pending-");
+
+/* Newest message a row knows about. A message still being sent counts as newest. */
+function lastKey(row) {
+  const id = row?.last_message?.id;
+  if (isPending({ id })) return Infinity;
+  const value = Number(id);
+  return Number.isFinite(value) ? value : 0;
+}
+
+/* Last message the server has confirmed (never an unsent one). */
+function lastConfirmedId(conversation) {
+  const list = conversation?.messages || [];
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    if (!isPending(list[index])) return messageId(list[index]);
+  }
+  return 0;
+}
+
+/* A poll answer can be older than what this tab already knows (a message sent
+   while that request was in flight). Never let it roll the sidebar back. */
+function keepNewer(local, incoming) {
+  if (local && lastKey(local) > lastKey(incoming)) {
+    return { ...incoming, last_message: local.last_message, updated_at: local.updated_at };
+  }
+  return incoming;
+}
+
 function attachCachedDetail(state, row) {
   const cached = state.details.get(row.id);
-  return cached ? {
+  if (!cached) return row;
+  return keepNewer(cached, {
     ...cached,
     ...row,
     messages: cached.messages || [],
+    messages_loaded: cached.messages_loaded,
     has_more_messages: cached.has_more_messages,
     older_cursor: cached.older_cursor,
-  } : row;
+  });
 }
 
 function sortRows(rows) {
@@ -165,25 +203,30 @@ function setRows(state, rows) {
   state.rows = sortRows(rows.map((row) => attachCachedDetail(state, row)));
 }
 
-function mergeConversation(scope, conversation, mode = "replace") {
+function mergeConversation(scope, conversation, mode = "replace", { ensureRow = false, trust = false } = {}) {
   const state = stateFor(scope);
   const previous = state.details.get(conversation.id) ||
     state.rows.find((row) => row.id === conversation.id) || {};
-  const detail = {
+  const merged = {
     ...previous,
     ...conversation,
+    messages_loaded: Boolean(previous.messages_loaded || conversation.messages_loaded),
     has_more_messages: mode === "append"
       ? Boolean(previous.has_more_messages || conversation.has_more_messages)
       : conversation.has_more_messages,
     messages: mergeMessages(previous.messages || [], conversation.messages || [], mode),
   };
+  /* `trust` is for our own send result, which is the truth even though an
+     unsent copy of the message is still in the row. */
+  const detail = trust ? merged : keepNewer(previous, merged);
   state.details.set(detail.id, detail);
   const index = state.rows.findIndex((row) => row.id === detail.id);
   if (index >= 0) {
     const next = [...state.rows];
     next[index] = { ...next[index], ...detail };
     state.rows = sortRows(next);
-  } else if (state.activeId === detail.id) {
+  } else if (ensureRow || state.activeId === detail.id) {
+    /* A chat you just started or wrote in belongs in the sidebar straight away. */
     state.rows = sortRows([detail, ...state.rows]);
   }
   emit(state);
@@ -251,6 +294,13 @@ async function loadList(scope, view, { append = false, poll = false } = {}) {
       state.serverTime = page.server_time || state.serverTime;
       state.loaded = true;
       state.error = "";
+      if (!state.warmed && !poll && !append && !nextView.query && nextView.filter === "all") {
+        /* Load the top chats in the background so opening one is instant. */
+        state.warmed = true;
+        window.setTimeout(() => {
+          state.rows.slice(0, 4).forEach((row) => prefetchConversation(row.id, scope));
+        }, 200);
+      }
       return state.rows;
     })
     .catch((error) => {
@@ -272,22 +322,28 @@ async function loadList(scope, view, { append = false, poll = false } = {}) {
   return run;
 }
 
-async function loadDetail(scope, id, { before = null, after = null } = {}) {
+async function loadDetail(scope, id, { before = null, after = null, silent = false } = {}) {
   const state = stateFor(scope);
   if (!id || !isSignedIn(scope)) return null;
-  const requestKey = `${id}:${before || ""}:${after || ""}`;
+  const requestKey = `${id}:${before || ""}:${after || ""}${silent ? ":quiet" : ""}`;
   if (state.detailLoading.has(requestKey)) return null;
   state.detailLoading = new Set(state.detailLoading).add(requestKey);
-  state.error = "";
-  emit(state);
+  if (!silent) {
+    state.error = "";
+    emit(state);
+  }
   try {
     const query = before ? { before } : after ? { after } : {};
     const conversation = await messagingApi.get(id, query);
     const mode = before ? "prepend" : after ? "append" : "replace";
-    return mergeConversation(scope, conversation, mode);
+    state.detailErrors.delete(id);
+    return mergeConversation(scope, { ...conversation, messages_loaded: true }, mode);
   } catch (error) {
-    state.error = error.message || "This conversation could not be loaded.";
-    emit(state);
+    if (!silent) {
+      state.detailErrors.set(id, error);
+      state.error = error.message || "This conversation could not be loaded.";
+      emit(state);
+    }
     throw error;
   } finally {
     const pending = new Set(state.detailLoading);
@@ -295,6 +351,17 @@ async function loadDetail(scope, id, { before = null, after = null } = {}) {
     state.detailLoading = pending;
     emit(state);
   }
+}
+
+/* Start loading a chat before it is opened (hover, focus, first screenful). */
+export function prefetchConversation(id, scope = currentScope()) {
+  const state = stateFor(scope);
+  if (!id || !isSignedIn(scope)) return;
+  if (state.details.get(id)?.messages_loaded || state.prefetching.has(id)) return;
+  state.prefetching.add(id);
+  loadDetail(scope, id, { silent: true })
+    .catch(() => {})
+    .finally(() => state.prefetching.delete(id));
 }
 
 async function refresh(scope) {
@@ -308,11 +375,11 @@ async function refresh(scope) {
   const activeId = state.activeId;
   if (!activeId) return;
   const conversation = state.details.get(activeId) || state.rows.find((row) => row.id === activeId);
-  const last = conversation?.messages?.[conversation.messages.length - 1];
-  const currentId = messageId(last);
+  if (!conversation?.messages_loaded) return;
+  const currentId = lastConfirmedId(conversation);
   const wasUnread = Number(conversation?.unread) > 0;
   try {
-    const updated = await loadDetail(scope, activeId, { after: currentId || null });
+    const updated = await loadDetail(scope, activeId, { after: currentId || null, silent: true });
     if (updated?.messages?.length && wasUnread && isVisible()) {
       await markConversationRead(activeId, scope).catch(() => {});
     }
@@ -348,11 +415,12 @@ function usePolling(scope, enabled = true) {
 
 export function useConversations(query = "", filter = "all") {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   usePolling(scope);
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -364,44 +432,59 @@ export function useConversations(query = "", filter = "all") {
 }
 
 export function useConversation(id) {
+  return useConversationState(id).conversation;
+}
+
+/* The open chat plus what is happening to it: "loading", "ready", "missing" or "error".
+   "missing" is only reported after the server really said so, never while loading. */
+export function useConversationState(id) {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   usePolling(scope);
   useEffect(() => {
-    // useSyncExternalStore returns an immutable snapshot, not the mutable store.
-    // Keep activeId on the live store; emit() must always receive that store
-    // because snapshots deliberately do not expose the listeners collection.
-    const store = stateFor(scope);
-    store.activeId = id || null;
+    state.activeId = id || null;
     if (id) {
-      const entry = store.details.get(id) || store.rows.find((row) => row.id === id);
-      if (!entry?.messages?.length) loadDetail(scope, id).catch(() => {});
+      state.detailErrors.delete(id);
+      if (!state.details.get(id)?.messages_loaded) loadDetail(scope, id).catch(() => {});
     }
-    emit(store);
+    emit(state);
     return () => {
-      if (store.activeId === id) {
-        store.activeId = null;
-        emit(store);
-      }
+      if (state.activeId === id) state.activeId = null;
     };
   }, [scope, id]);
-  return state.details.get(id) || state.rows.find((row) => row.id === id) || null;
+  const conversation = id
+    ? state.details.get(id) || state.rows.find((row) => row.id === id) || null
+    : null;
+  const failure = id ? state.detailErrors.get(id) : null;
+  let status = "loading";
+  if (conversation?.messages_loaded) status = "ready";
+  else if (failure) status = failure.status === 404 ? "missing" : "error";
+  return {
+    conversation,
+    status,
+    error: failure?.message || "",
+    retry: () => loadDetail(scope, id).catch(() => {}),
+  };
 }
 
 export function useMessageStatus(id = null) {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   const isLoadingDetail = [...state.detailLoading].some((key) => key.startsWith(`${id}:`));
   return {
     loading: state.loading || isLoadingDetail,
+    listLoading: !state.loaded && state.loading,
+    loaded: state.loaded,
     error: state.error,
     hasMore: state.hasMore,
     loadingOlder: [...state.detailLoading].some((key) => key.startsWith(`${id}:`)),
@@ -411,33 +494,36 @@ export function useMessageStatus(id = null) {
 
 export function useConversationCounts() {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   usePolling(scope);
   return state.counts;
 }
 
 export function useTotalUnread(enabled = true) {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   usePolling(scope, enabled);
   return enabled ? state.unreadCount || state.rows.reduce((total, row) => total + Number(row.unread || 0), 0) : 0;
 }
 
 export function useUnreadConversations(enabled = true) {
   const scope = currentScope();
-  const state = useSyncExternalStore(
+  useSyncExternalStore(
     (listener) => subscribe(scope, listener),
     () => snapshot(scope),
     () => snapshot(scope),
   );
+  const state = stateFor(scope);
   usePolling(scope, enabled);
   return enabled ? state.unreadRows : [];
 }
@@ -495,7 +581,7 @@ export async function sendMessage(id, { text = "", image = "" } = {}) {
       from: "me",
     },
     updated_at: optimistic.at,
-  }, "append");
+  }, "append", { ensureRow: true });
 
   try {
     const message = await messagingApi.send(id, { text: text.trim(), image });
@@ -515,7 +601,7 @@ export async function sendMessage(id, { text = "", image = "" } = {}) {
         from: "me",
       },
       updated_at: message.at || new Date().toISOString(),
-    }, "replace");
+    }, "replace", { ensureRow: true, trust: true });
     return merged.messages.find((item) => String(item.id) === String(message.id)) || message;
   } catch (error) {
     const latest = state.details.get(id) || state.rows.find((row) => row.id === id) || previous;
@@ -527,9 +613,9 @@ export async function sendMessage(id, { text = "", image = "" } = {}) {
       id,
       messages: remaining,
       last_message: last
-        ? { id: last.id, text: last.text, image: last.image, at: last.at, from: last.from }
+        ? { id: last.id, text: last.text, image: last.image, has_image: last.has_image, at: last.at, from: last.from }
         : previous.last_message || null,
-    }, "replace");
+    }, "replace", { trust: true });
     throw error;
   }
 }
@@ -582,8 +668,9 @@ export async function deleteConversation(id) {
 
 export async function startConversation({ key, kind, name, subtitle, image = "", context = null }) {
   const [role, raw = ""] = String(key || "").split(":");
-  const targetType = role === "seller" ? "user" : role;
-  const targetId = raw.replace(/^(user|remaker|admin)-/, "");
+  const toSupport = ["reorbit", "admin", "support"].includes(role);
+  const targetType = toSupport ? "admin" : role === "seller" || role === "buyer" || role === "customer" ? "user" : role;
+  const targetId = toSupport ? "support" : raw.replace(/^(user|remaker|admin)-/, "");
   if (!["user", "remaker", "admin"].includes(targetType) || !targetId) {
     throw new Error("Choose a valid recipient.");
   }
@@ -595,7 +682,7 @@ export async function startConversation({ key, kind, name, subtitle, image = "",
     context: context || {},
     display: { name, subtitle, image },
   });
-  mergeConversation(currentScope(), conversation);
+  mergeConversation(currentScope(), { ...conversation, messages_loaded: true }, "replace", { ensureRow: true });
   return conversation.id;
 }
 
@@ -616,6 +703,9 @@ function clearMessages() {
     state.rows = [];
     state.unreadRows = [];
     state.details.clear();
+    state.detailErrors.clear();
+    state.prefetching.clear();
+    state.warmed = false;
     state.loaded = false;
     state.unreadCount = 0;
     state.error = "";
@@ -625,6 +715,9 @@ function clearMessages() {
 
 if (typeof window !== "undefined") {
   window.addEventListener(SESSION_ENDED_EVENT, clearMessages);
+  const catchUp = () => pollers.forEach((_, scope) => refresh(scope));
+  document.addEventListener("visibilitychange", catchUp);
+  window.addEventListener("online", catchUp);
 }
 
 export function clockLabel(iso) {

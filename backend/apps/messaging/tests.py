@@ -179,3 +179,123 @@ class MessagingFlowTests(APIBase):
         ).data["data"]["conversations"]]
         self.assertNotIn(private, support_only_ids)
         self.assertEqual(self.get(f"/api/messaging/admin/{private}/", as_=self.support_agent).status_code, 404)
+
+
+class InboxLabelsAndContextTests(APIBase):
+    """Sidebar labels, filters and the "About" card follow who is on the other end."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = self.make_user("label-user@example.com")
+        self.friend = self.make_user("label-friend@example.com")
+        self.maker = self.make_remaker()
+        self.make_admin("label-support@example.com", modules={"support": "edit"})
+
+    def start(self, who, target_type, target, **extra):
+        body = {"target_type": target_type, "target_id": target.public_id, **extra}
+        response = self.post("/api/messaging/me/", body, as_=who)
+        self.assertEqual(response.status_code, 201, response.data)
+        return response.data["data"]["conversation"]
+
+    def rows(self, who, query=""):
+        response = self.get(f"/api/messaging/me/{query}", as_=who)
+        self.assertEqual(response.status_code, 200, response.data)
+        return response.data["data"]
+
+    def test_labels_and_filters_use_the_other_person_not_the_starters_kind(self):
+        # The starter sends kind="seller"; that must not make the chat a "seller" for both people.
+        with_friend = self.start(self.user, "user", self.friend, kind="seller")["id"]
+        with_maker = self.start(self.user, "remaker", self.maker, kind="remaker")["id"]
+        by_kind = {row["id"]: row["kind"] for row in self.rows(self.user)["conversations"]}
+        self.assertEqual(by_kind[with_friend], "user")
+        self.assertEqual(by_kind[with_maker], "remaker")
+        self.assertIn("reorbit", by_kind.values())  # the shared support thread
+
+        # the friend sees the same chat as "user" too, not "buyer"
+        self.assertEqual(
+            {row["id"]: row["kind"] for row in self.rows(self.friend)["conversations"]}[with_friend], "user")
+        # the maker sees the user as a customer
+        self.assertEqual(
+            {row["id"]: row["kind"] for row in self.rows(self.maker)["conversations"]}[with_maker], "customer")
+
+        def ids(query):
+            return [row["id"] for row in self.rows(self.user, query)["conversations"]]
+
+        self.assertEqual(ids("?kind=user"), [with_friend])
+        self.assertEqual(ids("?kind=remaker"), [with_maker])
+        self.assertEqual(len(ids("?kind=reorbit")), 1)
+        self.assertEqual(len(ids("?kind=all")), 3)
+        self.assertEqual(ids("?kind=nonsense"), [])
+
+        counts = self.rows(self.user)["counts"]
+        self.assertEqual((counts["all"], counts["user"], counts["remaker"], counts["reorbit"]), (3, 1, 1, 1))
+
+    def test_unread_filter_and_kind_filter_combine(self):
+        chat = self.start(self.user, "user", self.friend)["id"]
+        self.post(f"/api/messaging/me/{chat}/", {"text": "hi"}, as_=self.user)
+        unread = self.rows(self.friend, "?filter=unread&kind=user")["conversations"]
+        self.assertEqual([row["id"] for row in unread], [chat])
+        self.assertEqual(self.rows(self.friend, "?filter=unread&kind=remaker")["conversations"], [])
+
+    def test_about_card_only_for_real_contexts_and_link_belongs_to_the_starter(self):
+        blank = self.start(self.user, "remaker", self.maker, context={})
+        self.assertIsNone(blank["context"])  # opened from a profile: no empty "About" box
+
+        about = self.start(self.friend, "remaker", self.maker, context={
+            "label": "Order ORD-1", "to": "/user-orders/ORD-1", "image": ""})
+        self.assertEqual(about["context"]["label"], "Order ORD-1")
+        self.assertTrue(about["context"]["mine"])
+        theirs = self.get(f"/api/messaging/me/{about['id']}/", as_=self.maker).data["data"]["conversation"]
+        self.assertFalse(theirs["context"]["mine"])  # the maker must not be sent to the buyer's order page
+
+        support = next(row for row in self.rows(self.user)["conversations"] if row["kind"] == "reorbit")
+        self.assertIsNone(support["context"])  # support threads never show "About"
+
+    def test_open_chat_reports_that_its_messages_are_loaded(self):
+        chat = self.start(self.user, "user", self.friend)["id"]
+        listed = next(row for row in self.rows(self.user)["conversations"] if row["id"] == chat)
+        self.assertFalse(listed["messages_loaded"])
+        opened = self.get(f"/api/messaging/me/{chat}/", as_=self.user).data["data"]["conversation"]
+        self.assertTrue(opened["messages_loaded"])
+
+
+class AdminLabelsAndPhotosTests(APIBase):
+    def setUp(self):
+        super().setUp()
+        self.user = self.make_user("photo-user@example.com")
+        self.friend = self.make_user("photo-friend@example.com")
+        self.stranger = self.make_user("photo-stranger@example.com")
+        self.agent = self.make_admin("photo-agent@example.com", modules={"support": "edit"})
+
+    def test_admin_sees_the_person_not_the_word_support(self):
+        self.get("/api/messaging/me/", as_=self.user)  # creates this member's support thread
+        inbox = self.get("/api/messaging/admin/", as_=self.agent).data["data"]
+        self.assertEqual([row["kind"] for row in inbox["conversations"]], ["customer"])
+        self.assertEqual(inbox["counts"]["customer"], 1)
+        self.assertEqual(inbox["counts"].get("remaker", 0), 0)
+        for kind, expected in (("customer", 1), ("remaker", 0)):
+            rows = self.get(f"/api/messaging/admin/?kind={kind}", as_=self.agent).data["data"]["conversations"]
+            self.assertEqual(len(rows), expected, kind)
+
+    def test_photos_are_not_sent_with_the_thread_but_can_be_fetched(self):
+        chat = self.post("/api/messaging/me/", {"target_type": "user", "target_id": self.friend.public_id},
+                         as_=self.user).data["data"]["conversation"]["id"]
+        photo = "data:image/png;base64,AAAA"
+        sent = self.post(f"/api/messaging/me/{chat}/", {"image": photo}, as_=self.user)
+        self.assertEqual(sent.status_code, 200, sent.data)
+
+        thread = self.get(f"/api/messaging/me/{chat}/", as_=self.friend).data["data"]["conversation"]
+        message = thread["messages"][-1]
+        self.assertEqual((message["image"], message["has_image"]), ("", True))
+        self.assertEqual(thread["last_message"]["image"], "")
+        self.assertTrue(thread["last_message"]["has_image"])
+
+        fetched = self.get(f"/api/messaging/me/{chat}/images/{message['id']}/", as_=self.friend)
+        self.assertEqual(fetched.status_code, 200)
+        self.assertEqual(fetched.data["data"]["image"], photo)
+        # someone who is not in the chat gets nothing
+        self.assertEqual(self.get(f"/api/messaging/me/{chat}/images/{message['id']}/", as_=self.stranger).status_code, 404)
+
+        listed = next(row for row in self.get("/api/messaging/me/", as_=self.friend).data["data"]["conversations"]
+                      if row["id"] == chat)
+        self.assertEqual((listed["last_message"]["image"], listed["last_message"]["has_image"]), ("", True))
