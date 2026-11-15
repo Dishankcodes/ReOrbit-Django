@@ -100,7 +100,7 @@ export default function OrderCard({ order }) {
       <footer className="ob-card-foot">
         <OrderStepper order={order} compact />
         <div className="ob-card-actions">
-          {order.stage >= 5 && !order.cancelled && !order.review && (
+          {order.stage >= 5 && !order.cancelled && !order.review && order.canReview && (
             <span className="ob-rate-hint">
               <Star size={13} /> Rate this order
             </span>

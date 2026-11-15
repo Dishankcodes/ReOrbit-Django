@@ -67,6 +67,9 @@ class SettingsAndPricingTests(APIBase):
         self.assertEqual(delivery_charge("user", 500, platform_pickup=True, settings=s), s.item_delivery)
         self.assertEqual(delivery_charge("remaker", 1499, settings=s), s.product_delivery)
         self.assertEqual(delivery_charge("remaker", 1500, settings=s), 0)
+        # a ReMaker who hands the parcel over themselves adds no ReOrbit delivery; "managed by ReOrbit" does
+        self.assertEqual(delivery_charge("remaker", 500, platform_pickup=False, settings=s), 0)
+        self.assertEqual(delivery_charge("remaker", 500, platform_pickup=True, settings=s), s.product_delivery)
 
     def test_cod_rules(self):
         s = PlatformSettings.load()

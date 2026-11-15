@@ -224,6 +224,7 @@ function fromApi(a) {
       a.suggestion_status === "Pending" ? Number(a.suggested_price) : null,
     suggestedMessage:
       a.suggestion_status === "Pending" ? a.suggested_note || "" : "",
+    suggestedAt: a.suggestion_status === "Pending" ? a.suggested_at || null : null,
     events,
   };
 }

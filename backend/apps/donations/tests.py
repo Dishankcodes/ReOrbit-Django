@@ -45,7 +45,11 @@ class DonationTests(OrderBase):
                       as_=self.buyer)
         self.assertEqual(r.status_code, 201, r.data)
         self.pickup_addr = r.data["data"]["address"]["id"]
-        self.partner = PickupPartner.objects.get(name="Pickup team A")  # seeded by migration 0003
+        for name, lead, phone in (("Pickup team A", "Ravi Kumar", "+91 98250 41011"),
+                                  ("Pickup team B", "Imran Qureshi", "+91 98251 52021"),
+                                  ("Pickup team C", "Sunita Devi", "+91 98252 63031")):
+            PickupPartner.objects.create(name=name, lead_name=lead, phone=phone)
+        self.partner = PickupPartner.objects.get(name="Pickup team A")
 
     # ---- helpers ------------------------------------------------------- #
     def donate(self, who=None, photos=1, **over):
@@ -216,6 +220,11 @@ class DonationTests(OrderBase):
         self.assertEqual((reward["points"], reward["voucher_amount"]), (60, 140))  # 1 Furniture item in good condition
         self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 60)
 
+        # the donated lot reaches Admin > Warehouse, and leaves it again when the donation is handed on
+        from apps.warehouse.models import WarehouseItem
+        lot = WarehouseItem.objects.get(donation__public_id=did)
+        self.assertEqual((lot.warehouse_status, lot.source_user_id, lot.quantity), ("Received", self.buyer.pk, 1))
+
         again = self.act(did, "received")  # a double click must not pay twice
         self.assertEqual((again.status_code, again.data["code"]), (409, "BAD_STATE"))
         self.assertEqual(Voucher.objects.count(), 1)
@@ -226,6 +235,8 @@ class DonationTests(OrderBase):
         self.assertEqual(r.status_code, 200, r.data)
         self.assertTrue(r.data["data"]["certificate"])
         self.assertEqual((r.data["data"]["distributed_quantity"], r.data["data"]["ngo"]), (1, "Helping Hands"))
+        lot.refresh_from_db()
+        self.assertEqual((lot.warehouse_status, lot.sale_status, lot.given_to), ("Released", "Donated", "Helping Hands"))
         pdf = self.get(f"/api/donations/me/{did}/certificate/", as_=self.buyer)
         self.assertEqual((pdf.status_code, bytes(pdf.content[:4])), (200, b"%PDF"))
         self.assertEqual(self.get(f"/api/donations/me/{did}/certificate/", as_=self.seller).status_code, 404)

@@ -1,6 +1,6 @@
 /* =========================================================
    Actions an admin can take on a pickup request.
-   Pickup_Requests status: Requested -> Scheduled -> Picked_Up -> Completed
+   Pickup status: Requested -> Scheduled -> Picked_Up -> Completed
    (or Cancelled). `fields` tells the modal what to ask for and is the
    same shape the Donations modal understands.
    ========================================================= */
@@ -80,19 +80,44 @@ const A = {
   },
 };
 
+/* Donation pickups carry the same checks as the Donations screen: the donor's handover code
+   proves who handed the item over, and the warehouse count decides the reward. */
+const DONATION = {
+  pickedUp: {
+    ...A.pickedUp,
+    fields: "code",
+    body: "Ask the donor to read out their 4-digit handover code and enter it below. This confirms the right item left with the right person.",
+  },
+  complete: {
+    ...A.complete,
+    fields: "receive",
+    title: "Mark this donation as received?",
+    body: "Record what actually reached the warehouse. The donor's points and voucher are based on it.",
+    confirmLabel: "Mark received",
+  },
+  reopen: {
+    ...A.reopen,
+    body: "It goes back to under review so it can be scheduled again.",
+  },
+};
+
 export const PICKUP_ACTION_LIST = A;
 
 export function getPickupActions(p) {
+  const donation = p.type === "Donation";
   switch (p.status) {
     case "Requested":
-      return p.type === "Donation"
-        ? [A.schedule, A.cancel]
-        : [A.schedule, A.cancel];
+      return [A.schedule, A.cancel];
     case "Scheduled":
-      return [A.pickedUp, A.reschedule, A.cancel];
+      /* a missed donation pickup can only be re-booked or called off */
+      if (donation && p.donationStatus === "Failed_Pickup")
+        return [A.reschedule, A.cancel];
+      return [donation ? DONATION.pickedUp : A.pickedUp, A.reschedule, A.cancel];
     case "Picked_Up":
-      return [A.complete];
+      return [donation ? DONATION.complete : A.complete];
     case "Cancelled":
+      /* only a donation the admin rejected can be brought back; the donor's own cancel is final */
+      if (donation) return p.donationStatus === "Rejected" ? [DONATION.reopen] : [];
       return [A.reopen];
     default:
       return [];

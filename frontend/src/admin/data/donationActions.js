@@ -12,11 +12,6 @@ export const SLOTS = [
 ];
 /* Old data stored “Pickup team A · Ravi Kumar”. Teams are now saved by name only. */
 export const teamNameOf = (s) => (s ? String(s).split(" · ")[0].trim() : null);
-export const PARTNERS = [
-  "Pickup team A · Ravi Kumar",
-  "Pickup team B · Imran Qureshi",
-  "Pickup team C · Sunita Devi",
-];
 export const NGOS = [
   "Asha Kiran Trust",
   "Nayi Disha Foundation",

@@ -208,33 +208,73 @@ export default function UserListingDetails() {
       {listing.suggestedPrice != null &&
         ["Live", "Draft", "Withdrawn"].includes(status) &&
         listing.suggestedPrice !== listing.price && (
-          <div className="dn-banner dn-banner--warn usl-banner">
-            <Tag size={20} />
-            <div>
-              <strong>
-                ReOrbit suggests {formatPrice(listing.suggestedPrice)}
-              </strong>
+          <section className="usl-offer" aria-label="Price suggestion from ReOrbit">
+            <header className="usl-offer-head">
+              <span className="usl-offer-ic">
+                <Tag size={18} />
+              </span>
+              <div>
+                <strong>ReOrbit suggests a new price</strong>
+                <small>
+                  {listing.suggestedAt
+                    ? `Sent ${formatDateTime(listing.suggestedAt)}`
+                    : "Waiting for your answer"}
+                </small>
+              </div>
+            </header>
+            <div className="usl-offer-prices">
+              <div>
+                <small>Your price</small>
+                <s>{formatPrice(listing.price)}</s>
+              </div>
+              <span className="usl-offer-arrow" aria-hidden="true">
+                →
+              </span>
+              <div className="new">
+                <small>Suggested</small>
+                <strong>{formatPrice(listing.suggestedPrice)}</strong>
+              </div>
+              {listing.price > 0 && (
+                <em
+                  className={
+                    listing.suggestedPrice < listing.price ? "down" : "up"
+                  }
+                >
+                  {listing.suggestedPrice < listing.price ? "−" : "+"}
+                  {Math.abs(
+                    Math.round(
+                      ((listing.suggestedPrice - listing.price) /
+                        listing.price) *
+                        100,
+                    ),
+                  )}
+                  %
+                </em>
+              )}
+            </div>
+            <p className="usl-offer-note">
               {listing.suggestedMessage ||
-                "Our team thinks this price will help it sell."}{" "}
+                "Our team thinks this price will help it sell."}
+            </p>
+            <div className="usl-offer-actions">
               <button
                 type="button"
-                className="dn-link"
+                className="usl-offer-yes"
                 disabled={answering}
                 onClick={() => answer(true)}
               >
-                Accept the new price
+                {answering ? "Saving…" : "Accept new price"}
               </button>
-              {" · "}
               <button
                 type="button"
-                className="dn-link"
+                className="usl-offer-no"
                 disabled={answering}
                 onClick={() => answer(false)}
               >
                 Keep my price
               </button>
             </div>
-          </div>
+          </section>
         )}
       {status === "Live" && (
         <div className="dn-banner usl-banner">

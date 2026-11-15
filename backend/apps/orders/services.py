@@ -325,7 +325,7 @@ def _plan(buyer, merged, s, lock):
             "public_id": pid, "kind": kind, "obj": obj, "qty": qty, "title": obj.title, "unit_price": unit,
             "line_total": unit * qty, "cover": covers[kind].get(obj.pk, ""),
         })
-        if kind == "item" and obj.pickup_preference == Item.Pickup.PLATFORM_PICKUP:
+        if kind in ("item", "remaker_product") and obj.pickup_preference == Item.Pickup.PLATFORM_PICKUP:
             g["platform_pickup"] = True
 
     out = list(groups.values())

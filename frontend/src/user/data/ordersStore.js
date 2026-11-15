@@ -148,6 +148,7 @@ function adapt(o) {
       : null,
     eta: null,
     deliveredAt: o.delivered_at || null,
+    canReview: o.can_review !== false,
     review: o.review ? { rating: o.review.rating, at: o.review.at } : null,
     reference: o.payment.id,
     note: o.note || "",

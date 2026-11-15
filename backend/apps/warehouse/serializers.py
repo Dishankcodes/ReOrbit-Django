@@ -9,7 +9,7 @@ from apps.social.models import WishlistEntry
 from . import services
 from .models import WarehouseItem
 
-PREFETCH = ("events", "donation__photos", "store_item__images")
+PREFETCH = ("events", "donation__images", "store_item__images")
 SELECT = (
     "donation", "order", "refurb_remaker", "store_item",
     "source_user__profile", "source_remaker__profile",
@@ -37,7 +37,7 @@ def _store(w):
 
 def _image(w, request):
     if w.donation_id:
-        photos = list(w.donation.photos.all())
+        photos = list(w.donation.images.all())
         if photos:
             return media_url(request, photos[0].image.name)
     store = _store(w)

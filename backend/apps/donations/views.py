@@ -167,6 +167,9 @@ class AdminPickupPartners(APIView):
         phone = " ".join(str(request.data.get("phone") or "").split())[:20]
         lead_name = " ".join(str(request.data.get("lead_name") or "").split())[:120]
         p = PickupPartner.objects.create(name=name, phone=phone, lead_name=lead_name)
+        if lead_name:  # the lead is also the first person on the crew shown in Admin > Pickup teams
+            from apps.pickups.models import PickupTeamMember
+            PickupTeamMember.objects.create(team=p, name=lead_name, phone=phone, role="Lead")
         return created({**pickup_partner_data(p), "token": p.token}, message="Pickup partner added.")
 
 

@@ -89,6 +89,8 @@ def order_data(o, request, *, events=False, buyer=False):
     data["review"] = (
         {"rating": revs[0].rating, "at": revs[0].created_at, "count": len(revs)} if revs else None
     )
+    # admins buy through the shop too, but only members and ReMakers can write reviews (reviews API answers 403 to admins)
+    data["can_review"] = o.status == Order.Status.DELIVERED and o.buyer_type in ("user", "remaker") and not revs
     rr = getattr(o, "return_request", None)
     data["return"] = return_data(rr, request) if rr else None
     data["can_return"] = rr is None and o.status == Order.Status.DELIVERED and returns.window_open(o)

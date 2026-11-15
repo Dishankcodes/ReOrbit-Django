@@ -127,12 +127,6 @@ export const SLOTS = [
   "3:00 PM – 6:00 PM",
 ];
 
-export const PARTNERS = [
-  { name: "Ravi Kumar", team: "Pickup team A", phone: "+91 98240 11122" },
-  { name: "Imran Qureshi", team: "Pickup team B", phone: "+91 98250 33445" },
-  { name: "Sunita Devi", team: "Pickup team C", phone: "+91 98790 55667" },
-];
-
 export const NGOS = [
   { name: "Asha Kiran Trust", city: "Ahmedabad" },
   { name: "Nayi Disha Foundation", city: "Gandhinagar" },

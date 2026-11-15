@@ -309,17 +309,44 @@ export default function AdminListingDetailLive() {
             <span>listing price</span>
           </div>
           {p.suggestion_status && p.suggested_price != null && (
-            <p className="aup-muted-note" style={{ marginTop: 8 }}>
-              Suggested price:{" "}
-              <strong>{formatINR(Number(p.suggested_price))}</strong>
-              {" · "}
-              {p.suggestion_status === "Pending"
-                ? "waiting for the seller"
-                : p.suggestion_status === "Accepted"
-                  ? "accepted by the seller"
-                  : "declined by the seller"}
-              {p.suggested_note ? ` · ${p.suggested_note}` : ""}
-            </p>
+            <div className={`apd-offer st-${p.suggestion_status.toLowerCase()}`}>
+              <div className="apd-offer-top">
+                <span className="apd-offer-label">Price suggestion</span>
+                <span className="apd-offer-pill">
+                  {p.suggestion_status === "Pending"
+                    ? "Waiting for the seller"
+                    : p.suggestion_status === "Accepted"
+                      ? "Seller accepted"
+                      : "Seller kept their price"}
+                </span>
+              </div>
+              <div className="apd-offer-prices">
+                <span>
+                  <small>
+                    {p.suggestion_status === "Accepted" ? "Was" : "Listing price"}
+                  </small>
+                  <s>
+                    {p.suggestion_status === "Accepted"
+                      ? "—"
+                      : p.listing_price != null
+                        ? formatINR(Number(p.listing_price))
+                        : "—"}
+                  </s>
+                </span>
+                <span className="new">
+                  <small>Suggested</small>
+                  <strong>{formatINR(Number(p.suggested_price))}</strong>
+                </span>
+              </div>
+              {(p.suggested_note || p.suggested_at) && (
+                <p>
+                  {p.suggested_note}
+                  {p.suggested_at && (
+                    <em> Sent {formatDateTime(p.suggested_at)}</em>
+                  )}
+                </p>
+              )}
+            </div>
           )}
 
           <dl className="apd-facts">

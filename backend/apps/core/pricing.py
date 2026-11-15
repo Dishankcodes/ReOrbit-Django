@@ -19,9 +19,13 @@ def platform_fee(subtotal, seller_type, settings=None):
 
 
 def delivery_charge(seller_type, subtotal, platform_pickup=False, settings=None):
+    """Delivery the buyer pays. It only exists when ReOrbit handles the delivery: a seller who hands the parcel
+    to the courier themselves adds nothing. `platform_pickup=None` means "not known" and keeps the ReMaker rate."""
     s = settings or PlatformSettings.load()
     if seller_type == "user":
         return s.item_delivery if platform_pickup else 0
+    if seller_type == "remaker" and platform_pickup is False:
+        return 0
     if seller_type == "platform":  # ReOrbit's own listings
         return 0 if subtotal >= s.admin_item_free_from else s.admin_item_delivery
     return 0 if subtotal >= s.free_delivery_from else s.product_delivery

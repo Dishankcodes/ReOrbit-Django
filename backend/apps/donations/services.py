@@ -434,6 +434,26 @@ def _failed(d, admin, p):
     return reason
 
 
+def _stock_in(d):
+    """The donated lot appears in Admin > Warehouse. A warehouse problem must never undo the
+    reward the donor has already earned, so it runs in its own savepoint and is logged."""
+    from apps.warehouse import services as warehouse
+    try:
+        with transaction.atomic():
+            warehouse.receive_donation(d)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("Could not stock donation %s in the warehouse", d.public_id)
+
+
+def _stock_out(d, ngo):
+    from apps.warehouse import services as warehouse
+    try:
+        with transaction.atomic():
+            warehouse.donation_completed(d, ngo)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("Could not release donation %s from the warehouse", d.public_id)
+
+
 def _received(d, admin, p):
     """The reward moment. Only a Picked_Up donation gets here, so it happens once. The reward is
     based on what the warehouse actually counted and the condition it actually found."""
@@ -479,6 +499,7 @@ def _received(d, admin, p):
                   f"and a \u20b9{voucher.amount} voucher: {voucher.code}.")
     if mismatch_bits:
         _notify_admins(d, "Mismatch at check-in", f"{d.public_id}: " + "; ".join(mismatch_bits) + ".")
+    _stock_in(d)
     return ""
 
 
@@ -496,6 +517,7 @@ def _complete(d, admin, p):
     _save(d, "certificate_file")
     event(d, "Completed, certificate issued", f"{qty} item(s) given to {ngo}. Certificate {d.certificate_id}.", "good", "admin")
     _notify_donor(d, "Your donation made a difference", f"{d.public_id} was given to {ngo}. Your certificate is ready.")
+    _stock_out(d, ngo)
     return ""
 
 

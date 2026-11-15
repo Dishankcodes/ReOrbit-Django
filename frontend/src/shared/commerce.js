@@ -37,6 +37,8 @@ export function deliveryFor(
   if (sellerType === "platform" || sellerType === "admin") {
     return num(subtotal) >= num(c.sellFreeFrom) ? 0 : num(c.sellDelivery);
   }
+  /* a ReMaker who hands the parcel to the courier themselves adds no ReOrbit delivery */
+  if (pickup === "self" || pickup === "seller") return 0;
   return num(subtotal) >= num(c.freeDeliveryFrom) ? 0 : num(c.productDelivery);
 }
 

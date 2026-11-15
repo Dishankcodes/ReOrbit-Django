@@ -35,7 +35,6 @@ import {
   updateTeam,
   setTeamStatus,
   removeTeam,
-  reassignPickups,
   addMember,
   updateMember,
   makeLead,
@@ -142,61 +141,79 @@ export default function AdminPickupTeams() {
       );
   }, [teams, query, filter]);
 
-  /* ---------- actions ---------- */
-  const saveTeam = (values) => {
-    if (teamForm.team) {
-      updateTeam(teamForm.team.id, values);
-      toast(`${teamForm.team.name} was updated.`);
-    } else {
-      createTeam(values);
-      toast(
-        `${values.name.trim()} was created with ${1 + (values.crew || []).filter((c) => c.name.trim()).length} people.`,
-      );
+  /* ---------- actions ----------
+     Each one waits for the server; if it says no, its message is shown and the form stays open. */
+  const attempt = async (work, success) => {
+    try {
+      await work();
+      if (success) toast(success);
+      return true;
+    } catch (e) {
+      const first = e.errors && Object.values(e.errors).flat()[0];
+      toast(first || e.message || "That didn't work. Please try again.");
+      return false;
     }
-    setTeamForm(null);
   };
-  const saveMember = (teamId, values) => {
+  const saveTeam = async (values) => {
+    const done = teamForm.team
+      ? await attempt(
+          () => updateTeam(teamForm.team.id, values),
+          `${teamForm.team.name} was updated.`,
+        )
+      : await attempt(
+          () => createTeam(values),
+          `${values.name.trim()} was created with ${1 + (values.crew || []).filter((c) => c.name.trim()).length} people.`,
+        );
+    if (done) setTeamForm(null);
+  };
+  const saveMember = async (teamId, values) => {
     const t = teams.find((x) => x.id === teamId);
-    if (memberForm.member) {
-      updateMember(teamId, memberForm.member.id, values);
-      toast(`${values.name.trim()} was updated.`);
-    } else {
-      addMember(teamId, values);
-      toast(`${values.name.trim()} joined ${t.name} as ${values.role}.`);
-    }
-    setMemberForm(null);
+    const done = memberForm.member
+      ? await attempt(
+          () => updateMember(teamId, memberForm.member.id, values),
+          `${values.name.trim()} was updated.`,
+        )
+      : await attempt(
+          () => addMember(teamId, values),
+          `${values.name.trim()} joined ${t.name} as ${values.role}.`,
+        );
+    if (done) setMemberForm(null);
   };
-  const doMove = (toId) => {
+  const doMove = async (toId) => {
     const dest = teams.find((t) => t.id === toId);
-    moveMember(moving.team.id, moving.member.id, toId);
-    toast(`${moving.member.name} moved to ${dest.name}.`);
-    setMoving(null);
+    const done = await attempt(
+      () => moveMember(moving.team.id, moving.member.id, toId),
+      `${moving.member.name} moved to ${dest.name}.`,
+    );
+    if (done) setMoving(null);
   };
-  const doRemoveMember = () => {
-    removeMember(removing.team.id, removing.member.id);
-    toast(`${removing.member.name} was removed from ${removing.team.name}.`);
-    setRemoving(null);
+  const doRemoveMember = async () => {
+    const done = await attempt(
+      () => removeMember(removing.team.id, removing.member.id),
+      `${removing.member.name} was removed from ${removing.team.name}.`,
+    );
+    if (done) setRemoving(null);
   };
-  const confirmStatus = ({ reason, moveTo }) => {
+  const confirmStatus = async ({ reason, moveTo }) => {
     const { mode, team } = status;
-    let moved = 0;
-    if (moveTo && team.movable.length) {
-      reassignPickups(team.movable, moveTo);
-      moved = team.movable.length;
-    }
-    if (mode === "pause") setTeamStatus(team.id, "Paused", reason);
-    if (mode === "resume") setTeamStatus(team.id, "Active");
-    if (mode === "remove") removeTeam(team.id);
+    const moved = moveTo ? team.movable.length : 0;
     const verb =
       mode === "pause"
         ? "was paused"
         : mode === "resume"
           ? "is active again"
           : "was removed";
-    toast(
+    const work =
+      mode === "pause"
+        ? () => setTeamStatus(team.id, "Paused", reason, moveTo)
+        : mode === "resume"
+          ? () => setTeamStatus(team.id, "Active")
+          : () => removeTeam(team.id);
+    const done = await attempt(
+      work,
       `${team.name} ${verb}${moved ? ` and ${moved} pickup${moved === 1 ? "" : "s"} moved to ${moveTo}` : ""}.`,
     );
-    setStatus(null);
+    if (done) setStatus(null);
   };
 
   const teamMenu = (t) => [
@@ -256,8 +273,10 @@ export default function AdminPickupTeams() {
             label: "Make team lead",
             icon: Crown,
             onClick: () => {
-              makeLead(t.id, m.id);
-              toast(`${m.name} is now the lead of ${t.name}.`);
+              attempt(
+                () => makeLead(t.id, m.id),
+                `${m.name} is now the lead of ${t.name}.`,
+              );
             },
           },
         ]
@@ -268,8 +287,10 @@ export default function AdminPickupTeams() {
           label: "Mark on leave",
           icon: UserMinus,
           onClick: () => {
-            setMemberStatus(t.id, m.id, "On leave");
-            toast(`${m.name} is on leave.`);
+            attempt(
+              () => setMemberStatus(t.id, m.id, "On leave"),
+              `${m.name} is on leave.`,
+            );
           },
         }
       : {
@@ -277,8 +298,10 @@ export default function AdminPickupTeams() {
           label: "Back on duty",
           icon: UserCheck,
           onClick: () => {
-            setMemberStatus(t.id, m.id, "Active");
-            toast(`${m.name} is back on duty.`);
+            attempt(
+              () => setMemberStatus(t.id, m.id, "Active"),
+              `${m.name} is back on duty.`,
+            );
           },
         },
     ...(teams.length > 1

@@ -120,7 +120,7 @@ export default function UserOrderDetails() {
               <MapPinned size={16} /> Track order
             </Link>
           )}
-          {delivered && !order.review && (
+          {delivered && !order.review && order.canReview && (
             <Link
               to={`/user-reviews?q=${encodeURIComponent(order.id)}`}
               className="dn-btn"

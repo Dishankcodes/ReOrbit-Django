@@ -482,6 +482,10 @@ const AdminReviews = page(
   () => import("./admin/pages/Reviews/AdminReviews"),
 );
 const AdminHelp = page("admin", () => import("./admin/pages/Help/AdminHelp"));
+const AdminMessages = page(
+  "admin",
+  () => import("./admin/pages/Messages/AdminMessages"),
+);
 const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
 const AdminSellForm = page(
   "admin",
@@ -877,6 +881,7 @@ export default function App() {
               path="/admin-shop/remaker/:artistId"
               element={<UserArtistProfile />}
             />
+            <Route path="/admin-shop/wishlist" element={<UserWishlist />} />
             <Route path="/admin-shop/cart" element={<UserCart />} />
             <Route path="/admin-shop/checkout" element={<UserShopCheckout />} />
             <Route
@@ -907,6 +912,8 @@ export default function App() {
             />
             {/* Keep older admin navigation destinations working. */}
             <Route path="/admin-profile" element={<AdminProfile />} />
+            <Route path="/admin-messages" element={<AdminMessages />} />
+            <Route path="/admin-messages/:id" element={<AdminMessages />} />
           </Route>
         </Route>
 

@@ -1,52 +1,27 @@
 /* =========================================================
-   Admin › Pickups data layer (UI only, in-memory).
+   Admin › Pickups data layer, backed by the server.
    Two kinds of pickup, both free for the customer:
-   - Donation pickups: derived live from the Donations store
-     (so scheduling here also updates the donation).
-   - Item pickups: items a user listed with "Managed by platform".
-   Backend later: replace with API calls to Pickup_Requests.
+   - Donation pickups: built live from the Donations store, so
+     scheduling here is the same action as on the Donations screen.
+   - Item pickups: listings a member published as "Managed by ReOrbit"
+     (/api/pickups/admin/requests/). The server creates one when the
+     listing goes live and checks every step.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
-import { useUsers } from "./usersStore";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { pickupApi } from "../../api/pickups";
+import { getAccount } from "../../api/session";
 import { useDonations, runDonationAction } from "./donationsStore";
-import { PARTNERS, teamNameOf } from "./donationActions";
-import { DEMO_TODAY } from "../utils/format";
-
-/* ---------- item-pickup changes made this session ---------- */
-let overlay = {}; // { [pickupId]: { status, date, slot, agent, events: [] } }
-const listeners = new Set();
-const subscribe = (l) => {
-  listeners.add(l);
-  return () => listeners.delete(l);
-};
-const getSnapshot = () => overlay;
-const emit = () => listeners.forEach((l) => l());
+import { teamNameOf } from "./donationActions";
 
 const DAY = 86400000;
-const hash = (t) => {
-  let h = 2166136261;
-  for (let i = 0; i < t.length; i += 1) {
-    h ^= t.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-};
 const dayStart = (d) => new Date(new Date(d).setHours(0, 0, 0, 0)).getTime();
-export const TODAY_START = dayStart(DEMO_TODAY);
-const atDay = (offset) =>
-  new Date(TODAY_START + offset * DAY + 9 * 3600000).toISOString();
-const capNow = (iso) =>
-  new Date(iso).getTime() > DEMO_TODAY.getTime()
-    ? DEMO_TODAY.toISOString()
-    : iso;
-const SLOTS = ["9:00 AM – 12:00 PM", "12:00 PM – 3:00 PM", "3:00 PM – 6:00 PM"];
-export const AGENTS = PARTNERS;
+export const TODAY_START = dayStart(new Date());
 
 /* "Today", "Tomorrow", "Overdue 2 days" … for an active pickup */
 export function dueInfo(p) {
   if (p.status !== "Scheduled" || !p.date) return null;
-  const diff = Math.round((dayStart(p.date) - TODAY_START) / DAY);
+  const diff = Math.round((dayStart(p.date) - dayStart(new Date())) / DAY);
   if (diff < 0)
     return {
       key: "overdue",
@@ -58,9 +33,103 @@ export function dueInfo(p) {
   return { key: "later", label: `In ${diff} days`, diff };
 }
 
+/* ---------- item pickups, from the server ---------- */
+const idle = { list: [], loaded: false, loading: false, error: "", owner: "" };
+let state = idle;
+const listeners = new Set();
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const getSnapshot = () => state;
+const setState = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+};
+const me = () => getAccount("admin")?.public_id || "";
+
+/* PKR-1004 -> PK-I1004 (donation pickups are PK-<donation number>, so the two never clash) */
+const itemId = (publicId) => `PK-I${String(publicId).split("-").pop()}`;
+
+function fromRequest(r) {
+  const c = r.customer;
+  return {
+    id: itemId(r.id),
+    request_id: r.id,
+    type: "Item",
+    ref_id: r.item.id,
+    ref_path: `/admin-products/${r.item.id}`,
+    ref_label: "Item listing",
+    title: r.item.title,
+    category: r.item.category,
+    image: r.item.image,
+    quantity: r.item.quantity,
+    customer: c,
+    address: c.address,
+    city: c.city,
+    state: c.state,
+    pincode: c.pincode,
+    status: r.status,
+    /* local time, so the booked day never shifts */
+    date: r.date ? `${r.date}T09:00:00` : null,
+    slot: r.slot,
+    agent: r.partner,
+    requested_at: r.requested_at,
+    cancel_reason: r.cancel_reason,
+    events: r.events.map((e) => ({ ...e })),
+  };
+}
+
+export async function loadItemPickups(force = false) {
+  const owner = me();
+  if (state.owner !== owner) state = { ...idle, owner };
+  if (state.loading || (state.loaded && !force)) return;
+  setState({ loading: true, error: "" });
+  try {
+    const r = await pickupApi.requests();
+    if (state.owner === owner)
+      setState({ list: r.results.map(fromRequest), loaded: true, loading: false });
+  } catch (e) {
+    setState({
+      loading: false,
+      error: e.message || "Could not load pickups.",
+    });
+  }
+}
+
+const put = (row) => {
+  const next = fromRequest(row);
+  const has = state.list.some((p) => p.id === next.id);
+  setState({
+    list: has
+      ? state.list.map((p) => (p.id === next.id ? next : p))
+      : [next, ...state.list],
+    loaded: true,
+  });
+  return next;
+};
+
+/* another account signing in on this tab must not see the previous list */
+if (typeof window !== "undefined")
+  window.addEventListener("reorbit:session-ended", () => {
+    state = idle;
+    listeners.forEach((l) => l());
+  });
+
+function useItemPickups() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    loadItemPickups();
+  }, []);
+  return s.owner === me() ? s : idle;
+}
+
+/* ---------- donation pickups, from the Donations store ---------- */
 const STATUS_FROM_DONATION = {
   Pending: "Requested",
   Scheduled: "Scheduled",
+  /* a missed collection still has its team and date; admin re-books it */
+  Failed_Pickup: "Scheduled",
   Picked_Up: "Picked_Up",
   Received: "Completed",
   Completed: "Completed",
@@ -69,9 +138,8 @@ const STATUS_FROM_DONATION = {
 };
 
 function fromDonation(d) {
-  const status = STATUS_FROM_DONATION[d.status];
   return {
-    id: `PK-${d.id.slice(3)}`,
+    id: `PK-${d.id.slice(4)}`,
     type: "Donation",
     ref_id: d.id,
     ref_path: `/admin-donations/${d.id}`,
@@ -85,7 +153,8 @@ function fromDonation(d) {
     city: d.donor.city,
     state: d.donor.state,
     pincode: d.donor.pincode,
-    status,
+    status: STATUS_FROM_DONATION[d.status] || "Requested",
+    donationStatus: d.status,
     date: d.pickup_date,
     slot: d.pickup_slot,
     agent: teamNameOf(d.partner),
@@ -95,140 +164,32 @@ function fromDonation(d) {
   };
 }
 
-function fromItem(user, item, index, ov) {
-  const id = `PK-${item.item_id.replace("ITM-", "I")}`;
-  let status;
-  let date = null;
-  let slot = null;
-  let agent = null;
-  /* A listing a member published after "today" has no pickup booked yet. */
-  if (new Date(item.created_at) > DEMO_TODAY) status = "Requested";
-  else {
-    const m = index % 6;
-    status = m < 2 ? "Scheduled" : m === 2 ? "Picked_Up" : "Completed";
-  }
-  const h = hash(id);
-  if (status === "Scheduled") {
-    const offs = [-2, 0, 0, 0, 1, 1, 2, 3];
-    date = atDay(offs[h % offs.length]);
-  }
-  if (status === "Picked_Up") date = atDay(-(h % 2));
-  if (status === "Completed") date = atDay(-(2 + (h % 12)));
-  if (date) {
-    slot = SLOTS[h % 3];
-    agent = AGENTS[h % AGENTS.length];
-  }
-  const requested = new Date(new Date(item.created_at).getTime()).toISOString();
-
-  const base = { status, date, slot, agent, cancel_reason: "" };
-  const cur = { ...base, ...(ov || {}) };
-
-  const events = [
-    {
-      id: "req",
-      label: "Pickup requested",
-      detail: `${user.full_name} chose “Managed by platform”`,
-      at: requested,
-      tone: "neutral",
-    },
-  ];
-  if (base.status === "Cancelled")
-    events.push({
-      id: "can",
-      label: "Pickup cancelled",
-      detail: base.cancel_reason,
-      at: capNow(new Date(new Date(requested).getTime() + DAY).toISOString()),
-      tone: "bad",
-    });
-  if (["Scheduled", "Picked_Up", "Completed"].includes(base.status))
-    events.push({
-      id: "sch",
-      label: "Pickup scheduled",
-      detail: `${base.slot} · ${base.agent}`,
-      at: capNow(new Date(new Date(requested).getTime() + DAY).toISOString()),
-      tone: "good",
-    });
-  if (["Picked_Up", "Completed"].includes(base.status))
-    events.push({
-      id: "pic",
-      label: "Picked up from customer",
-      detail: base.agent,
-      at: capNow(base.date),
-      tone: "info",
-    });
-  if (base.status === "Completed")
-    events.push({
-      id: "cmp",
-      label: "Delivered to warehouse",
-      detail: "Checked in and stored",
-      at: capNow(
-        new Date(new Date(base.date).getTime() + 4 * 3600000).toISOString(),
-      ),
-      tone: "good",
-    });
-
-  return {
-    id,
-    type: "Item",
-    ref_id: item.item_id,
-    ref_path: `/admin-products/${item.item_id}`,
-    ref_label: "Item listing",
-    title: item.title,
-    category: item.category,
-    image: item.image,
-    quantity: item.quantity,
-    customer: {
-      id: user.user_id,
-      name: user.full_name,
-      email: user.email,
-      image: user.profile.profile_image,
-      phone: user.profile.phone,
-      address: user.profile.address,
-      city: user.profile.city,
-      state: user.profile.state,
-      pincode: user.profile.pincode,
-      status: user.status,
-      path: `/admin-users/${user.user_id}`,
-    },
-    address: user.profile.address,
-    city: user.profile.city,
-    state: user.profile.state,
-    pincode: user.profile.pincode,
-    status: cur.status,
-    date: cur.date,
-    slot: cur.slot,
-    agent: teamNameOf(cur.agent),
-    requested_at: requested,
-    cancel_reason: cur.cancel_reason,
-    events: [...events, ...(ov?.events || [])],
-  };
-}
-
 export function usePickups() {
-  const users = useUsers();
   const donations = useDonations();
-  const ov = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const { list: items } = useItemPickups();
   return useMemo(() => {
-    const itemPickups = [];
-    let i = 0;
-    users.forEach((u) =>
-      u.items.forEach((item) => {
-        if (item.pickup_preference === "Self Pickup") return;
-        const id = `PK-${item.item_id.replace("ITM-", "I")}`;
-        itemPickups.push(fromItem(u, item, i, ov[id]));
-        i += 1;
-      }),
-    );
-    const all = [...donations.map(fromDonation), ...itemPickups];
+    const all = [...donations.map(fromDonation), ...items];
     return all.map((p) => ({ ...p, due: dueInfo(p) }));
-  }, [users, donations, ov]);
+  }, [donations, items]);
 }
 export function usePickup(id) {
   return usePickups().find((p) => p.id === id) || null;
 }
 
-/* payload: { date, slot, partner } | { reason } */
-export function runPickupAction(pickup, key, payload = {}) {
+/* { loading, error, reload } for the list pages */
+export function usePickupsStatus() {
+  const s = useItemPickups();
+  return {
+    loading: s.loading || !s.loaded,
+    error: s.error,
+    reload: () => loadItemPickups(true),
+  };
+}
+
+/* key: schedule | reschedule | pickedUp | complete | cancel | reopen
+   payload: { date, slot, partner } | { reason } | { code } | { received_quantity … }
+   Resolves when the server has accepted it, rejects with the server's message. */
+export async function runPickupAction(pickup, key, payload = {}) {
   if (pickup.type === "Donation") {
     const map = {
       schedule: "accept",
@@ -240,62 +201,5 @@ export function runPickupAction(pickup, key, payload = {}) {
     };
     return runDonationAction(pickup.ref_id, map[key], payload);
   }
-  const at = new Date().toISOString();
-  const cur = overlay[pickup.id] || { events: [] };
-  const next = { ...cur, events: [...cur.events] };
-  const when = payload.date
-    ? new Date(`${payload.date}T09:00:00`).toISOString()
-    : null;
-  const log = (label, detail, tone = "neutral") =>
-    next.events.push({
-      id: `x-${Date.now()}-${next.events.length}`,
-      label,
-      detail: `${detail ? detail + " · " : ""}Admin · You`,
-      at,
-      tone,
-    });
-  switch (key) {
-    case "schedule":
-      Object.assign(next, {
-        status: "Scheduled",
-        date: when,
-        slot: payload.slot,
-        agent: payload.partner,
-      });
-      log("Pickup scheduled", `${payload.slot} · ${payload.partner}`, "good");
-      break;
-    case "reschedule":
-      Object.assign(next, {
-        date: when,
-        slot: payload.slot,
-        agent: payload.partner,
-      });
-      log("Pickup rescheduled", `${payload.slot} · ${payload.partner}`, "wait");
-      break;
-    case "pickedUp":
-      next.status = "Picked_Up";
-      log("Picked up from customer", "", "info");
-      break;
-    case "complete":
-      next.status = "Completed";
-      log("Delivered to warehouse", "Checked in", "good");
-      break;
-    case "cancel":
-      Object.assign(next, {
-        status: "Cancelled",
-        date: null,
-        slot: null,
-        cancel_reason: payload.reason,
-      });
-      log("Pickup cancelled", payload.reason, "bad");
-      break;
-    case "reopen":
-      Object.assign(next, { status: "Requested", cancel_reason: "" });
-      log("Pickup reopened", "", "wait");
-      break;
-    default:
-      return;
-  }
-  overlay = { ...overlay, [pickup.id]: next };
-  emit();
+  return put(await pickupApi.act(pickup.request_id, key, payload));
 }

@@ -172,7 +172,7 @@ def _copy_photos(item, store):
     """A donated lot's photos become the listing's photos (the files are reused, not copied)."""
     if not item.donation_id or MediaImage.objects.filter(admin_item=store).exists():
         return
-    for n, photo in enumerate(item.donation.photos.all()[:8]):
+    for n, photo in enumerate(item.donation.images.all()[:8]):
         MediaImage.objects.create(
             admin_item=store, image=photo.image.name, display_order=n,
             image_type=MediaImage.Kind.COVER if n == 0 else MediaImage.Kind.GALLERY,
@@ -532,13 +532,17 @@ def _move_target(item, raw, errors):
 
 # ---------------------------------------------------------------- hooks from other apps
 def receive_donation(donation):
-    """A donated item reached the dock."""
-    condition = {"Good": "Good", "Medium": "Fair", "Worst": "Needs refurbishing"}.get(donation.condition, "Good")
-    user = donation.user
+    """A donated item reached the dock. Returns the stock lot, or None when nothing arrived."""
+    qty = donation.received_quantity if donation.received_quantity is not None else donation.effective_quantity
+    if not qty:
+        return None
+    condition = {"Good": "Good", "Medium": "Fair", "Worst": "Needs refurbishing"}.get(
+        donation.received_condition or donation.condition, "Good")
+    user = donation.donor
     item, created = WarehouseItem.objects.get_or_create(
         donation=donation,
         defaults=dict(
-            title=donation.title, category=donation.category, quantity=donation.quantity, condition=condition,
+            title=donation.title, category=donation.category, quantity=qty, condition=condition,
             weight_kg=donation.weight_kg, received_at=donation.received_at or timezone.now(),
             source_user=user, source_name=user.full_name, source_sub=user.email,
             source_city=getattr(getattr(user, "profile", None), "city", "") or "",

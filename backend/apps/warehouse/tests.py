@@ -529,8 +529,8 @@ class DonationFlowTests(WarehouseBase):
         from apps.donations.models import Donation
 
         d = Donation.objects.create(
-            user=self.user, title="Books", category="Books", description="Old books.", condition="Medium",
-            quantity=3, contact_name="A", contact_phone="9876543210", received_at=timezone.now())
+            donor=self.user, title="Books", category="Books", description="Old books.", condition="Medium",
+            quantity=3, contact_name="A", phone="9876543210", pickup_address={}, received_at=timezone.now())
         item = services.receive_donation(d)
         self.assertEqual((item.warehouse_status, item.condition, item.bin), (S.RECEIVED, "Fair", "DOCK-01"))
         self.assertEqual(services.receive_donation(d).pk, item.pk)  # once only

@@ -44,6 +44,7 @@
 .cm-tabs button.on {
   border-color: #0e3a2d;
   background: #0e3a2d;
+  color: #fff;
   box-shadow: 0 10px 26px rgba(8, 39, 31, 0.18);
 }
 .cm-tab-ic {

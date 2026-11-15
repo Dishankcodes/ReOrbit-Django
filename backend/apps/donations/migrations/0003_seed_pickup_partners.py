@@ -11,6 +11,10 @@ TEAMS = [
 
 
 def seed(apps, schema_editor):
+    # No longer seeds anything: the three made-up teams were placeholders from before Admin > Pickup teams
+    # could create real ones. Existing databases that already got them are cleaned up by
+    # pickups.0003_remove_unused_seed_teams. (Left as a no-op so migration history stays valid.)
+    return
     PickupPartner = apps.get_model("donations", "PickupPartner")
     # apps.get_model gives a historical model: neither the custom save() override nor
     # PublicIdModel's save() (which assigns public_id from the shared counter) run here, so

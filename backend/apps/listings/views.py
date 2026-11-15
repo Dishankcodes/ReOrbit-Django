@@ -354,6 +354,9 @@ class MyDetailView(MyBase):
         item.save()
         audit(request.user.account, "listing.update", "item", item.public_id,
               before=before, after=_snapshot(item), ip=IP(request))
+        if item.item_status == Item.Status.LISTED:  # switched to "Managed by ReOrbit" while live
+            from apps.pickups import services as pickups
+            pickups.request_for_item(item)
         return self.show(request, item, "Listing updated.")
 
     @transaction.atomic
@@ -397,6 +400,8 @@ class MyPublishView(MyBase):
         item.save(update_fields=["item_status", "updated_at"])
         audit(user, "listing.publish", "item", item.public_id,
               before=before, after=_snapshot(item), ip=IP(request))
+        from apps.pickups import services as pickups  # imported here: pickups imports listings' models
+        pickups.request_for_item(item)
         return self.show(request, item, "Your listing is live.")
 
 
