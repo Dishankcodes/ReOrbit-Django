@@ -28,6 +28,9 @@ import {
   LayoutTemplate,
   Heart,
   MessageSquareText,
+  Search,
+  ReceiptText,
+  BadgeIndianRupee,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
@@ -57,20 +60,62 @@ const mainMenu = [
     path: "/admin-products",
     icon: ShoppingBag,
   },
-  { key: "orders", label: "Orders", path: "/admin-orders", icon: Package },
+  {
+    key: "orders",
+    label: "Orders",
+    path: "/admin-orders",
+    icon: Package,
+    words: "all orders platform payments refunds",
+  },
+];
+
+/* What the signed-in admin buys and sells as the platform. */
+const shoppingMenu = [
   {
     key: "shop",
     label: "Buy Products",
     path: "/admin-shop",
     icon: ShoppingCart,
+    words: "shop marketplace buy",
   },
   {
     key: "shop",
     label: "Saved Items",
     path: "/admin-shop/wishlist",
     icon: Heart,
+    words: "wishlist favourites",
   },
-  { key: "sell", label: "Sell Products", path: "/admin-sell", icon: Store },
+  {
+    key: "shop",
+    label: "My Cart",
+    path: "/admin-shop/cart",
+    icon: ShoppingCart,
+    words: "cart basket checkout",
+  },
+  {
+    key: "shop",
+    label: "My Orders",
+    path: "/admin-shop/orders",
+    icon: ReceiptText,
+    words: "my order history purchases bought track",
+  },
+];
+
+const sellingMenu = [
+  {
+    key: "sell",
+    label: "Sell Products",
+    path: "/admin-sell",
+    icon: Store,
+    words: "sell list stock listings",
+  },
+  {
+    key: "sell",
+    label: "My Sales",
+    path: "/admin-sell/sales",
+    icon: BadgeIndianRupee,
+    words: "sold sales orders received",
+  },
 ];
 
 const operationsMenu = [
@@ -210,7 +255,44 @@ export default function AdminSidebar({
     }
   };
 
-  const onSavedPage = useLocation().pathname === "/admin-shop/wishlist";
+  const { pathname } = useLocation();
+  /* Pages that share a prefix (/admin-shop/orders is under /admin-shop) light up only their own link. */
+  const SUB = {
+    "/admin-shop": ["/admin-shop/wishlist", "/admin-shop/cart", "/admin-shop/checkout", "/admin-shop/orders"],
+    "/admin-sell": ["/admin-sell/sales"],
+  };
+  const isActive = (path) => {
+    if (path === "/admin-dashboard") return pathname === path;
+    if (SUB[path]?.some((p) => pathname === p || pathname.startsWith(p + "/")))
+      return false;
+    if (path === "/admin-shop/cart")
+      return pathname.startsWith("/admin-shop/cart") || pathname.startsWith("/admin-shop/checkout");
+    return pathname === path || pathname.startsWith(path + "/");
+  };
+
+  const [query, setQuery] = useState("");
+  const allItems = [
+    ...mainMenu,
+    ...shoppingMenu,
+    ...sellingMenu,
+    ...operationsMenu,
+    ...managementMenu,
+    ...supportMenu,
+  ];
+  const q = query.trim().toLowerCase();
+  const results = q
+    ? visible(allItems).filter((i) =>
+        `${i.label} ${i.words || ""}`.toLowerCase().includes(q),
+      )
+    : [];
+  const goFirst = (e) => {
+    if (e.key === "Escape") setQuery("");
+    if (e.key === "Enter" && results[0]) {
+      navigate(results[0].path);
+      setQuery("");
+      handleNavigation();
+    }
+  };
 
   const renderMenuItem = (item) => {
     const Icon = item.icon;
@@ -219,14 +301,11 @@ export default function AdminSidebar({
         key={item.path}
         to={item.path}
         end={item.path === "/admin-dashboard"}
-        className={({ isActive }) =>
-          `admin-sidebar-link ${
-            isActive && !(item.path === "/admin-shop" && onSavedPage)
-              ? "active"
-              : ""
-          }`
-        }
-        onClick={handleNavigation}
+        className={() => `admin-sidebar-link ${isActive(item.path) ? "active" : ""}`}
+        onClick={() => {
+          setQuery("");
+          handleNavigation();
+        }}
       >
         <Icon size={18} strokeWidth={1.8} className="admin-sidebar-link-icon" />
         <span className="admin-sidebar-link-text">{item.label}</span>
@@ -281,11 +360,49 @@ export default function AdminSidebar({
           <X size={18} />
         </button>
       </div>
+      <div className="admin-sidebar-search">
+        <Search size={15} aria-hidden="true" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={goFirst}
+          placeholder="Search menu…"
+          aria-label="Search the menu"
+        />
+      </div>
       <nav className="admin-sidebar-navigation">
+        {q ? (
+          <div className="admin-sidebar-section">
+            <span className="admin-sidebar-section-label">
+              {results.length ? "RESULTS" : "NO MATCHES"}
+            </span>
+            {results.map(renderMenuItem)}
+          </div>
+        ) : (
+          <>
         <div className="admin-sidebar-section">
           <span className="admin-sidebar-section-label">MAIN MENU</span>
           {visible(mainMenu).map(renderMenuItem)}
         </div>
+        {visible(shoppingMenu).length > 0 && (
+          <>
+            <div className="admin-sidebar-divider" />
+            <div className="admin-sidebar-section">
+              <span className="admin-sidebar-section-label">MY SHOPPING</span>
+              {visible(shoppingMenu).map(renderMenuItem)}
+            </div>
+          </>
+        )}
+        {visible(sellingMenu).length > 0 && (
+          <>
+            <div className="admin-sidebar-divider" />
+            <div className="admin-sidebar-section">
+              <span className="admin-sidebar-section-label">MY SELLING</span>
+              {visible(sellingMenu).map(renderMenuItem)}
+            </div>
+          </>
+        )}
         {visible(operationsMenu).length > 0 && (
           <>
             <div className="admin-sidebar-divider" />
@@ -321,6 +438,8 @@ export default function AdminSidebar({
             <span className="admin-sidebar-link-text">Logout</span>
           </button>
         </div>
+          </>
+        )}
       </nav>
       <button
         type="button"

@@ -434,3 +434,44 @@
 .admin-sidebar.collapsed .admin-sidebar-count {
   display: none;
 }
+
+/* Menu search, above the links */
+.admin-sidebar-search {
+  position: relative;
+  margin: 14px 13px 0;
+  color: rgba(173, 206, 193, 0.6);
+}
+.admin-sidebar-search svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.admin-sidebar-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 34px;
+  border: 1px solid rgba(173, 206, 193, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.admin-sidebar-search input::placeholder {
+  color: rgba(173, 206, 193, 0.55);
+}
+.admin-sidebar-search input:focus {
+  border-color: rgba(173, 206, 193, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+}
+.admin-sidebar.collapsed .admin-sidebar-search {
+  display: none;
+}
+@media (max-width: 900px) {
+  .admin-sidebar.collapsed .admin-sidebar-search {
+    display: block;
+  }
+}
