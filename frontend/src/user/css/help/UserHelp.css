@@ -571,3 +571,15 @@
     gap: 0;
   }
 }
+
+/* A line in the thread that records what happened (assigned, resolved...). */
+.uhp-event {
+  margin: 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--text-muted, #667a70);
+}
+.uhp-event time {
+  margin-left: 6px;
+  opacity: 0.75;
+}

@@ -440,9 +440,9 @@ const AdminSupport = page(
   "admin",
   () => import("./admin/pages/Support/AdminSupport"),
 );
-const AdminMessages = page(
+const AdminTicketDetails = page(
   "admin",
-  () => import("./admin/pages/Messages/AdminMessages"),
+  () => import("./admin/pages/Support/AdminTicketDetails"),
 );
 const AdminComplaintDetails = page(
   "admin",
@@ -840,8 +840,10 @@ export default function App() {
             />
             <Route path="/admin-complaints" element={<AdminComplaints />} />
             <Route path="/admin-support" element={<AdminSupport />} />
-            <Route path="/admin-messages" element={<AdminMessages />} />
-            <Route path="/admin-messages/:id" element={<AdminMessages />} />
+            <Route
+              path="/admin-support/:ticketId"
+              element={<AdminTicketDetails />}
+            />
             <Route
               path="/admin-complaints/:complaintId"
               element={<AdminComplaintDetails />}

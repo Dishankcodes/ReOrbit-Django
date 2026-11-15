@@ -27,7 +27,8 @@ class SupportTicketTests(APIBase):
         reply = self.post(f"/api/support/me/{ticket_id}/", {"message": "Thanks"}, as_=self.user)
         self.assertEqual(reply.status_code, 201, reply.data)
         self.assertEqual(reply.data["data"]["ticket"]["status"], SupportTicket.Status.OPEN)
-        self.assertEqual(len(reply.data["data"]["ticket"]["messages"]), 3)
+        spoken = [m for m in reply.data["data"]["ticket"]["messages"] if m["senderType"] != "system"]
+        self.assertEqual(len(spoken), 3)
         self.assertEqual(self.post(f"/api/support/me/{ticket_id}/", {"action": "close"}, as_=self.user).data["data"]["ticket"]["status"], SupportTicket.Status.RESOLVED)
 
     def test_admin_list_is_paged_filterable_and_summary_does_not_fetch_history(self):
@@ -137,3 +138,60 @@ class SupportTicketTests(APIBase):
         member_detail = self.get(f"/api/support/me/{ticket_id}/", as_=self.user).data["data"]["ticket"]
         self.assertFalse(member_detail["unread"])
         self.assertEqual(self.get("/api/support/me/", as_=self.user).data["data"]["unread_count"], 0)
+
+
+class TicketHistoryTests(APIBase):
+    """What the conversation records, and the rules around opening a second ticket."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = self.make_user("history-user@example.com")
+        self.agent = self.make_admin("history-agent@example.com", modules={"support": "edit"})
+        self.second = self.make_admin("history-second@example.com", modules={"support": "edit"})
+        made = self.post("/api/support/me/", {"subject": "Delivery is late", "message": "Where is my order?"}, as_=self.user)
+        self.assertEqual(made.status_code, 201, made.data)
+        self.tid = made.data["data"]["ticket"]["id"]
+
+    def notes(self, who=None):
+        t = self.get(f"/api/support/admin/{self.tid}/", as_=who or self.agent).data["data"]["ticket"]
+        return [m["text"] for m in t["messages"] if m["senderType"] == "system"], t
+
+    def test_assigning_changing_status_and_priority_leave_notes_both_sides_can_see(self):
+        self.post(f"/api/support/admin/{self.tid}/", {"action": "assign", "assignee_id": self.second.public_id}, as_=self.agent)
+        self.post(f"/api/support/admin/{self.tid}/", {"action": "in_progress", "priority": "High"}, as_=self.second)
+        self.post(f"/api/support/admin/{self.tid}/", {"action": "assign", "assignee_id": "none"}, as_=self.second)
+        notes, ticket = self.notes()
+        self.assertEqual(len(notes), 4)
+        self.assertIn("assigned this ticket to " + self.second.full_name, notes[0])
+        self.assertTrue(any("priority from Normal to High" in n for n in notes))
+        self.assertTrue(any("In progress" in n for n in notes))
+        self.assertIn("unassigned", notes[-1])
+        self.assertEqual(ticket["priority"], "High")
+        mine = self.get(f"/api/support/me/{self.tid}/", as_=self.user).data["data"]["ticket"]
+        self.assertEqual(sum(m["senderType"] == "system" for m in mine["messages"]), 4)
+
+    def test_priority_has_its_own_action_that_leaves_the_status_alone(self):
+        r = self.post(f"/api/support/admin/{self.tid}/", {"action": "priority", "priority": "Urgent"}, as_=self.agent)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual((r.data["data"]["ticket"]["priority"], r.data["data"]["ticket"]["status"]), ("Urgent", "Open"))
+        self.assertEqual(self.post(f"/api/support/admin/{self.tid}/", {"action": "priority"}, as_=self.agent).status_code, 400)
+        self.assertEqual(self.post(f"/api/support/admin/{self.tid}/", {"action": "priority", "priority": "Huge"}, as_=self.agent).status_code, 400)
+
+    def test_notes_do_not_count_as_messages_or_replace_the_last_message(self):
+        self.post(f"/api/support/admin/{self.tid}/", {"action": "assign"}, as_=self.agent)
+        row = self.get("/api/support/admin/", as_=self.agent).data["data"]["tickets"][0]
+        self.assertEqual(row["messageCount"], 1)
+        self.assertEqual(row["lastMessage"]["text"], "Where is my order?")
+        mine = self.get("/api/support/me/", as_=self.user).data["data"]["tickets"][0]
+        self.assertEqual(mine["messageCount"], 1)
+        self.assertFalse(mine["unread"])  # a note is not a reply
+
+    def test_a_plain_reply_adds_no_note_and_a_member_resolving_does(self):
+        self.post(f"/api/support/admin/{self.tid}/", {"action": "reply", "message": "On it."}, as_=self.agent)
+        self.assertEqual(self.notes()[0], [])
+        self.post(f"/api/support/me/{self.tid}/", {"action": "close"}, as_=self.user)
+        notes, ticket = self.notes()
+        self.assertEqual(ticket["status"], "Resolved")
+        self.assertIn("marked this ticket as resolved", notes[0])
+        self.post(f"/api/support/me/{self.tid}/", {"message": "It is still late."}, as_=self.user)
+        self.assertIn("reopened", self.notes()[0][-1])

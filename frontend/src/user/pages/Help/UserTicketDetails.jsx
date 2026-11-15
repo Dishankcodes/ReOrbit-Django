@@ -9,6 +9,7 @@ import Crumbs from "../../components/ui/Crumbs";
 import EmptyState from "../../components/ui/EmptyState";
 import useToast from "../../components/ui/useToast";
 import TicketBadge from "./components/TicketBadge";
+import TicketOrderCard, { orderLink } from "../../../shared/components/TicketOrderCard";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
@@ -73,14 +74,17 @@ export default function UserTicketDetails() {
             <b>{ticket.id}</b>
             <TicketBadge status={ticket.status} />
             {ticket.orderId && (
-              <Link to={`/user-orders/${ticket.orderId}`} className="dn-chip">
+              <Link to={orderLink("user", ticket.order) || `/user-orders/${ticket.orderId}`} className="dn-chip">
                 {ticket.orderId}
               </Link>
             )}
           </div>
           <h1>{ticket.subject}</h1>
           <p className="dn-muted">
-            {ticket.category} · opened {formatDateTime(ticket.createdAt)}
+            {ticket.category} · opened {formatDateTime(ticket.createdAt)} ·{" "}
+            {ticket.assignedTo
+              ? `handled by ${ticket.assignedTo.name}`
+              : "waiting for a team member to pick it up"}
           </p>
         </div>
         {ticket.status !== "Resolved" && (
@@ -123,9 +127,15 @@ export default function UserTicketDetails() {
         </ol>
       </section>
 
+      {ticket.order && <TicketOrderCard order={ticket.order} scope="user" />}
+
       <section className="dn-card uhp-thread">
         {(error || ticketStatus.error) && <p className="dn-error" role="alert">{error || ticketStatus.error}</p>}
-        {ticket.messages.map((m) => (
+        {ticket.messages.map((m) => m.from === "event" ? (
+          <p key={m.id} className="uhp-event">
+            {m.text} <time>{formatDateTime(m.at)}</time>
+          </p>
+        ) : (
           <article key={m.id} className={`uhp-msg ${m.from}`}>
             <span className="uhp-msg-av">
               {m.from === "user" ? "You" : "RO"}

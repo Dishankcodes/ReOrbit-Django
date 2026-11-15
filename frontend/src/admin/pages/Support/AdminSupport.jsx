@@ -5,7 +5,8 @@
    member's ticket right away.
    ========================================================= */
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   X,
@@ -15,22 +16,15 @@ import {
   CircleCheck,
   LifeBuoy,
   SearchX,
-  Send,
-  Paperclip,
   UserRound,
   Palette,
 } from "lucide-react";
 
 import {
   loadMoreSupportTickets,
-  replyToSupportTicket,
-  setSupportTicketAssignee,
-  setSupportTicketStatus,
   useSupportStatus,
-  useSupportTicketDetail,
   useSupportTickets,
 } from "../../../shared/supportTickets";
-import { useAccess } from "../../data/teamStore";
 
 import UserAvatar from "../../components/ui/UserAvatar";
 import EmptyState from "../../components/ui/EmptyState";
@@ -109,22 +103,20 @@ const CARDS = [
 ];
 
 export default function AdminSupport() {
-  const me = useAccess().me;
+  const navigate = useNavigate();
   const { toast, toastNode } = useToast();
 
   const [status, setStatus] = useState("All");
   const [source, setSource] = useState("all");
   const [priority, setPriority] = useState("all");
-  const [query, setQuery] = useState("");
+  const [urlParams] = useSearchParams();
+  const [query, setQuery] = useState(urlParams.get("q") || "");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [openKey, setOpenKey] = useState(null);
-  const filters = { query, status, priority, source };
+  const [assigned, setAssigned] = useState("all");
+  const filters = { query, status, priority, source, assigned };
   const tickets = useSupportTickets("admin", filters);
   const ticketState = useSupportStatus("admin", null, filters);
-  const openId = openKey ? openKey.slice(openKey.indexOf(":") + 1) : null;
-  const ticketDetail = useSupportTicketDetail("admin", openId);
-  const detailState = useSupportStatus("admin", openId);
 
   /* One server-backed inbox shape for User and ReMaker tickets. */
   const all = useMemo(() => {
@@ -175,31 +167,14 @@ export default function AdminSupport() {
 
   useEffect(() => {
     setPage(1);
-  }, [status, source, priority, query, pageSize]);
+  }, [status, source, priority, assigned, query, pageSize]);
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pages);
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const baseCurrent = all.find((t) => t.key === openKey) || null;
-  const current = baseCurrent && ticketDetail
-    ? { ...baseCurrent, assignedTo: ticketDetail.assignedTo || baseCurrent.assignedTo, messages: (ticketDetail.messages || []).map((m) => ({
-        id: m.id, team: m.from === "team", text: m.text, at: m.at, name: m.name,
-      })), photos: ticketDetail.photos || [] }
-    : baseCurrent;
   const filtersActive =
-    status !== "All" || source !== "all" || priority !== "all" || query;
+    status !== "All" || source !== "all" || priority !== "all" || assigned !== "all" || query;
 
-  const send = async (t, text, nextStatus) => {
-    await replyToSupportTicket("admin", t.id, text, nextStatus);
-    toast(`Reply sent to ${t.from.name}.`);
-  };
-  const setTo = async (t, next) => {
-    await setSupportTicketStatus("admin", t.id, next);
-    toast(`${t.id} is now ${label(next).toLowerCase()}.`);
-  };
-  const assign = async (t, assigneeId) => {
-    await setSupportTicketAssignee(t.id, assigneeId);
-    toast(assigneeId ? "Ticket assignment updated." : "Ticket is now unassigned.");
-  };
+  const open = (t) => navigate(`/admin-support/${t.id}`);
 
   return (
     <div className="au-page">
@@ -264,6 +239,14 @@ export default function AdminSupport() {
               </select>
             </label>
             <label className="au-select">
+              <span>Assigned</span>
+              <select value={assigned} onChange={(e) => setAssigned(e.target.value)}>
+                <option value="all">Anyone</option>
+                <option value="me">Me</option>
+                <option value="none">Unassigned</option>
+              </select>
+            </label>
+            <label className="au-select">
               <span>Priority</span>
               <select
                 value={priority}
@@ -287,6 +270,7 @@ export default function AdminSupport() {
                   <th>From</th>
                   <th>Category</th>
                   <th>Priority</th>
+                  <th>Assigned</th>
                   <th>Last update</th>
                   <th>Status</th>
                 </tr>
@@ -295,8 +279,8 @@ export default function AdminSupport() {
                 {rows.map((t) => (
                   <tr
                     key={t.key}
-                    onClick={() => setOpenKey(t.key)}
-                    onKeyDown={(e) => e.key === "Enter" && setOpenKey(t.key)}
+                    onClick={() => open(t)}
+                    onKeyDown={(e) => e.key === "Enter" && open(t)}
                     tabIndex={0}
                   >
                     <td>
@@ -331,6 +315,13 @@ export default function AdminSupport() {
                       >
                         {t.priority}
                       </span>
+                    </td>
+                    <td>
+                      {t.assignedTo ? (
+                        <span className="au-muted-strong">{t.assignedTo.name}</span>
+                      ) : (
+                        <span className="sp-sub">Unassigned</span>
+                      )}
                     </td>
                     <td>
                       <span className="au-muted-strong">
@@ -373,6 +364,7 @@ export default function AdminSupport() {
                   className="ad-btn ad-btn-ghost ad-btn-sm"
                   onClick={() => {
                     setStatus("All");
+                    setAssigned("all");
                     setSource("all");
                     setPriority("all");
                     setQuery("");
@@ -413,232 +405,7 @@ export default function AdminSupport() {
         )}
       </section>
 
-      {current && (
-        <TicketModal
-          ticket={current}
-          adminName={me?.name || "ReOrbit Support"}
-          onClose={() => setOpenKey(null)}
-          onSend={send}
-          onStatus={setTo}
-          onAssign={assign}
-          supportAgents={ticketState.supportAgents}
-          loading={detailState.loading}
-          detailError={detailState.error}
-        />
-      )}
       {toastNode}
-    </div>
-  );
-}
-
-function TicketModal({ ticket: t, onClose, onSend, onStatus, onAssign, supportAgents, loading, detailError }) {
-  const [text, setText] = useState("");
-  const [next, setNext] = useState("");
-  const [touched, setTouched] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const endRef = useRef(null);
-  const options = STATUS_OPTIONS[t.source];
-
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [t.messages.length]);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setTouched(true);
-    if (text.trim().length < 2 || busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      await onSend(t, text, next || (t.status === "Open" ? "In progress" : t.status));
-      setText("");
-      setNext("");
-      setTouched(false);
-    } catch (requestError) {
-      setError(requestError.message || "Your reply could not be sent.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const changeAssignee = async (event) => {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      await onAssign(t, event.target.value);
-    } catch (requestError) {
-      setError(requestError.message || "The ticket assignment could not be updated.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div
-      className="ad-modal-backdrop"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="ad-modal sp-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sp-title"
-      >
-        <button
-          type="button"
-          data-safe
-          className="ad-modal-close"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          <X size={16} />
-        </button>
-        <header className="sp-head">
-          <span className="aup-mono">{t.id}</span>
-          <h3 id="sp-title">{t.subject}</h3>
-          <div className="sp-head-meta">
-            <SourceChip source={t.source} />
-            <span>{t.from.name}</span>
-            <span>· {t.category}</span>
-            {t.order && <span>· Order {t.order}</span>}
-            <span className={`sp-pri ${String(t.priority).toLowerCase()}`}>
-              {t.priority}
-            </span>
-            <span className={`sp-status ${tone(t.status)}`}>
-              {label(t.status)}
-            </span>
-            {t.assignedTo && <span>· Assigned to {t.assignedTo.name}</span>}
-          </div>
-        </header>
-
-        <ol className="sp-thread" aria-label="Conversation">
-          {loading && t.messages.length === 0 && <li className="sp-sub">Loading conversation…</li>}
-          {t.messages.map((m) => (
-            <li key={m.id} className={m.team ? "team" : "member"}>
-              <div className="sp-bubble">
-                <header>
-                  <strong>{m.team ? "ReOrbit Support" : m.name}</strong>
-                  <time>{when(m.at)}</time>
-                </header>
-                <p>{m.text}</p>
-              </div>
-            </li>
-          ))}
-          {t.photos?.length > 0 && (
-            <li className="member">
-              <div className="sp-bubble">
-                <header>
-                  <strong>Photos attached</strong>
-                </header>
-                <div className="sp-photos">
-                  {t.photos.map((p, i) => (
-                    <img key={i} src={p} alt={`Attachment ${i + 1}`} />
-                  ))}
-                </div>
-              </div>
-            </li>
-          )}
-          <li ref={endRef} aria-hidden="true" />
-        </ol>
-
-        {detailError && <p className="ad-modal-error" role="alert">{detailError}</p>}
-        {error && <p className="ad-modal-error" role="alert">{error}</p>}
-
-        <form className="sp-reply" onSubmit={submit}>
-          <label className="ad-modal-field">
-            <span>Your reply</span>
-            <textarea
-              rows={3}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={`Write to ${t.from.name}`}
-            />
-            {touched && text.trim().length < 2 && (
-              <small className="ad-modal-error">Write a reply first.</small>
-            )}
-          </label>
-          <div className="sp-reply-row">
-            <label className="au-select">
-              <span>Assigned to</span>
-              <select value={t.assignedTo?.id || ""} onChange={changeAssignee} disabled={busy}>
-                <option value="">Unassigned</option>
-                {(supportAgents || []).map((agent) => (
-                  <option key={agent.id} value={agent.id}>{agent.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="au-select">
-              <span>Then set to</span>
-              <select value={next} onChange={(e) => setNext(e.target.value)}>
-                <option value="">
-                  {t.status === "Open"
-                    ? "In progress"
-                    : "Keep as " + label(t.status).toLowerCase()}
-                </option>
-                {options
-                  .filter(
-                    (o) =>
-                      o !== t.status &&
-                      !(o === "In progress" && t.status === "Open"),
-                  )
-                  .map((o) => (
-                    <option key={o} value={o}>
-                      {label(o)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <div className="sp-reply-actions">
-              {t.status !== "Resolved" && t.status !== "Closed" && (
-                <button
-                  type="button"
-                  className="ad-btn ad-btn-ghost"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    setError("");
-                    try { await onStatus(t, "Resolved"); }
-                    catch (requestError) { setError(requestError.message || "Status could not be changed."); }
-                    finally { setBusy(false); }
-                  }}
-                >
-                  Mark resolved
-                </button>
-              )}
-              {(t.status === "Resolved" || t.status === "Closed") && (
-                <button
-                  type="button"
-                  className="ad-btn ad-btn-ghost"
-                  disabled={busy}
-                  onClick={async () => {
-                    setBusy(true);
-                    setError("");
-                    try { await onStatus(t, "Open"); }
-                    catch (requestError) { setError(requestError.message || "Ticket could not be reopened."); }
-                    finally { setBusy(false); }
-                  }}
-                >
-                  Reopen
-                </button>
-              )}
-              <button type="submit" className="ad-btn ad-btn-primary" disabled={busy || t.status === "Closed"}>
-                <Send size={14} /> {busy ? "Sending…" : "Send reply"}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }

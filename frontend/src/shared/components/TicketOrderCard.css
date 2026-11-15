@@ -1,0 +1,65 @@
+.toc {
+  --toc-accent: var(--primary, #2a4d3a);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.09);
+  border-radius: 14px;
+  background: #fff;
+}
+.rm-page .toc,
+.rk .toc,
+.hlp .toc {
+  --toc-accent: #400808;
+}
+.toc header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.toc h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 14px;
+}
+.toc-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #edf0ee;
+  color: #4d5a53;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.toc-status.s-delivered { background: #e3f3e8; color: #1f6b3a; }
+.toc-status.s-shipped, .toc-status.s-packed, .toc-status.s-confirmed { background: #e6eef8; color: #2d5a94; }
+.toc-status.s-cancelled, .toc-status.s-delivery_failed, .toc-status.s-returned_to_origin { background: #fbe9e9; color: #a24545; }
+.toc-muted { margin: 0; color: #6b7a72; font-size: 13px; }
+.toc-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.toc-items li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.toc-items img, .toc-ph { width: 42px; height: 42px; flex: none; border-radius: 9px; object-fit: cover; background: #eef1ef; }
+.toc-items div { display: flex; flex-direction: column; min-width: 0; }
+.toc-items strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toc-items small, .toc-more { color: #6b7a72; font-size: 12px; }
+.toc-facts { margin: 0; display: grid; gap: 6px; }
+.toc-facts div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.toc-facts dt { color: #6b7a72; }
+.toc-facts dd { margin: 0; font-weight: 600; text-align: right; }
+.toc-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--toc-accent);
+  color: var(--toc-accent);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+}
+.toc-open:hover { background: var(--toc-accent); color: #fff; }

@@ -12,6 +12,7 @@ from apps.core import buyers
 from apps.core.responses import created, fail, ok
 from apps.admins.models import Admins
 from apps.orders.models import Order
+from apps.orders.serializers import media_url
 from .models import SupportTicket, SupportTicketAdminRead, TicketMessage
 
 ADMIN_PAGE_SIZE = 50
@@ -32,9 +33,9 @@ def _ticket_queryset(include_message_senders=True):
 
 
 def _with_message_summary(queryset, viewer=None):
-    latest = TicketMessage.objects.filter(ticket_id=OuterRef("pk")).order_by(
-        "-created_at", "-pk"
-    )
+    latest = TicketMessage.objects.filter(ticket_id=OuterRef("pk")).exclude(
+        sender_type="system"
+    ).order_by("-created_at", "-pk")
     latest_member = TicketMessage.objects.filter(
         ticket_id=OuterRef("pk"), sender_type__in=("user", "remaker")
     ).order_by("-created_at", "-pk")
@@ -42,7 +43,7 @@ def _with_message_summary(queryset, viewer=None):
         ticket_id=OuterRef("pk"), sender_type="admin"
     ).order_by("-created_at", "-pk")
     result = queryset.annotate(
-        _message_count=Count("messages", distinct=True),
+        _message_count=Count("messages", filter=~Q(messages__sender_type="system"), distinct=True),
         _last_message_text=Subquery(latest.values("text")[:1]),
         _last_message_at=Subquery(latest.values("created_at")[:1]),
         _last_message_sender=Subquery(latest.values("sender_type")[:1]),
@@ -102,18 +103,72 @@ def _support_agent_rows():
     ]
 
 
-def _ticket_row(ticket, include_messages=True, viewer=None):
+def _party(kind, user, remaker, admin=None):
+    account = user if kind == "user" else remaker if kind == "remaker" else admin
+    if account is None:
+        return {"type": "platform" if kind == "admin" or kind == "platform" else kind, "name": "ReOrbit", "id": ""}
+    return {"type": kind, "name": account.full_name, "id": account.public_id}
+
+
+def _order_summary(order_id, viewer=None, request=None):
+    """What a ticket's order looks like, so nobody has to look it up: status, money, items, who sold it."""
+    if not order_id:
+        return None
+    order = (
+        Order.objects.select_related(
+            "buyer_user", "buyer_remaker", "buyer_admin", "seller_user", "seller_remaker", "payment"
+        )
+        .prefetch_related("lines")
+        .filter(public_id=order_id)
+        .first()
+    )
+    if order is None:
+        return {"id": order_id, "missing": True}
+    role = ""
+    if viewer is not None and buyers.type_of(viewer) != "admin":
+        role = "buyer" if order.buyer_key == buyers.key_of(viewer) else "seller"
+    lines = list(order.lines.all())
+    ret = getattr(order, "return_request", None)
+    return {
+        "id": order.public_id,
+        "status": order.status,
+        "statusLabel": order.get_status_display(),
+        "paymentStatus": order.payment_status,
+        "paymentMethod": order.payment.method if order.payment_id else "",
+        "total": order.total,
+        "subtotal": order.subtotal,
+        "deliveryFee": order.delivery_fee,
+        "placedAt": order.created_at,
+        "deliveredAt": order.delivered_at,
+        "courier": order.courier_name,
+        "tracking": order.tracking_no,
+        "role": role,
+        "buyer": _party(order.buyer_type, order.buyer_user, order.buyer_remaker, order.buyer_admin),
+        "seller": _party(order.seller_type, order.seller_user, order.seller_remaker),
+        "itemCount": sum(line.qty for line in lines),
+        "items": [
+            {"title": line.title, "qty": line.qty, "price": line.unit_price,
+             "image": media_url(request, line.cover) if line.cover else None}
+            for line in lines[:4]
+        ],
+        "return": ({"id": ret.public_id, "status": ret.status} if ret is not None else None),
+    }
+
+
+def _ticket_row(ticket, include_messages=True, viewer=None, request=None):
     owner = ticket.user or ticket.remaker
     messages = list(ticket.messages.all()) if include_messages else None
     if include_messages:
-        last_message = messages[-1] if messages else None
-        message_count = len(messages)
+        spoken = [m for m in messages if m.sender_type != "system"]
+        last_message = spoken[-1] if spoken else None
+        message_count = len(spoken)
     elif hasattr(ticket, "_message_count"):
         last_message = None
         message_count = ticket._message_count
     else:
-        last_message = ticket.messages.order_by("-created_at", "-pk").first()
-        message_count = ticket.messages.count()
+        spoken = ticket.messages.exclude(sender_type="system")
+        last_message = spoken.order_by("-created_at", "-pk").first()
+        message_count = spoken.count()
     if not include_messages and hasattr(ticket, "_message_count"):
         last_text = ticket._last_message_text
         last_at = ticket._last_message_at
@@ -150,6 +205,8 @@ def _ticket_row(ticket, include_messages=True, viewer=None):
         "messages": [],
         "messagesLoaded": include_messages,
     }
+    if include_messages and ticket.order_id:
+        result["order"] = _order_summary(ticket.order_id, viewer, request)
     if viewer:
         viewer_type = buyers.type_of(viewer)
         result["unread"] = (
@@ -190,6 +247,15 @@ def _message(account, ticket, text, attachment=""):
     )
 
 
+def _event(ticket, text):
+    """A line in the conversation that records what happened (assigned, resolved...), for both sides."""
+    return TicketMessage.objects.create(ticket=ticket, sender_type="system", text=text[:500])
+
+
+def _agent_name(account):
+    return account.full_name if account is not None else "nobody"
+
+
 def _attachment(request):
     value = str(request.data.get("attachmentUrl") or "").strip()[:1000]
     if value:
@@ -207,7 +273,7 @@ def _validate_related_order(account, order_id):
     if kind == "remaker":
         query = query.filter(Q(buyer_key=buyers.key_of(account)) | Q(seller_remaker=account))
     else:
-        query = query.filter(buyer_key=buyers.key_of(account))
+        query = query.filter(Q(buyer_key=buyers.key_of(account)) | Q(seller_user=account))
     order = query.only("public_id").first()
     return order.public_id if order else None
 
@@ -232,7 +298,7 @@ class MyTickets(APIView):
         rows = _with_message_summary(
             _ticket_queryset(include_message_senders=False).filter(**owner), request.user.account
         )
-        tickets = [_ticket_row(ticket, include_messages=False, viewer=request.user.account) for ticket in rows]
+        tickets = [_ticket_row(ticket, include_messages=False, viewer=request.user.account, request=request) for ticket in rows]
         return ok({
             "tickets": tickets,
             "unread_count": sum(1 for ticket in tickets if ticket["unread"]),
@@ -262,6 +328,16 @@ class MyTickets(APIView):
         validated_order = _validate_related_order(request.user.account, order_id)
         if order_id and not validated_order:
             return fail("That order does not belong to your account.", status=404)
+        if validated_order:
+            open_one = SupportTicket.objects.filter(**owner, order_id=validated_order).exclude(
+                status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+            ).order_by("-created_at").first()
+            if open_one is not None:
+                return fail(
+                    f"You already have an open ticket for this order ({open_one.public_id}). "
+                    "Reply there and the team will pick it up.",
+                    status=409, code="ticket_exists", errors={"ticket_id": open_one.public_id},
+                )
         with transaction.atomic():
             ticket = SupportTicket.objects.create(
                 **owner,
@@ -273,7 +349,7 @@ class MyTickets(APIView):
             _message(request.user.account, ticket, text, attachment)
             ticket.member_last_read_at = timezone.now()
             ticket.save(update_fields=["member_last_read_at"])
-        return created({"ticket": _ticket_row(ticket, viewer=request.user.account)}, message="Support ticket created.")
+        return created({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)}, message="Support ticket created.")
 
 
 class MyTicketDetail(APIView):
@@ -291,7 +367,7 @@ class MyTicketDetail(APIView):
         if ticket is None:
             return fail("Support tickets are available to Users and ReMakers.", status=403)
         _mark_member_read(ticket)
-        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
 
     def post(self, request, public_id):
         ticket = self._get(request, public_id)
@@ -299,7 +375,7 @@ class MyTicketDetail(APIView):
             return fail("Support tickets are available to Users and ReMakers.", status=403)
         if request.data.get("action") == "read":
             _mark_member_read(ticket)
-            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
         if request.data.get("action") == "close":
             requested_status = request.data.get("status")
             status = (
@@ -307,17 +383,23 @@ class MyTicketDetail(APIView):
                 if ticket.remaker_id and requested_status == SupportTicket.Status.CLOSED
                 else SupportTicket.Status.RESOLVED
             )
-            _set_status(ticket, status)
-            ticket.save(update_fields=["status", "closed_at", "updated_at"])
+            if ticket.status != status:
+                _set_status(ticket, status)
+                ticket.save(update_fields=["status", "closed_at", "updated_at"])
+                _event(ticket, f"{request.user.account.full_name} marked this ticket as "
+                               f"{'closed' if status == SupportTicket.Status.CLOSED else 'resolved'}.")
             _mark_member_read(ticket)
-            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+            ticket = _ticket_queryset().get(pk=ticket.pk)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
 
         text = str(request.data.get("message") or request.data.get("text") or "").strip()
         if request.data.get("action") == "reopen" and not text:
             _set_status(ticket, SupportTicket.Status.OPEN)
             ticket.save(update_fields=["status", "closed_at", "updated_at"])
+            _event(ticket, f"{request.user.account.full_name} reopened this ticket.")
             _mark_member_read(ticket)
-            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+            ticket = _ticket_queryset().get(pk=ticket.pk)
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
         if len(text) < 1 or len(text) > 4000:
             return fail("Enter a reply message of up to 4,000 characters.")
         attachment = _attachment(request)
@@ -330,11 +412,12 @@ class MyTicketDetail(APIView):
             if ticket.status == SupportTicket.Status.RESOLVED:
                 _set_status(ticket, SupportTicket.Status.OPEN)
                 ticket.save(update_fields=["status", "closed_at", "updated_at"])
+                _event(ticket, "Ticket reopened by a new reply.")
             _message(request.user.account, ticket, text, attachment)
             ticket.member_last_read_at = timezone.now()
             ticket.save(update_fields=["member_last_read_at", "updated_at"])
         ticket.refresh_from_db()
-        return created({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+        return created({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
 
 
 class AdminTickets(APIView):
@@ -344,7 +427,7 @@ class AdminTickets(APIView):
         if public_id:
             ticket = get_object_or_404(_ticket_queryset(), public_id=public_id)
             _mark_admin_read(ticket, request.user.account)
-            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+            return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
 
         queryset = _with_message_summary(
             _ticket_queryset(include_message_senders=False), request.user.account
@@ -352,11 +435,18 @@ class AdminTickets(APIView):
         status = request.query_params.get("status")
         priority = request.query_params.get("priority")
         requester_type = request.query_params.get("requester")
+        assigned = request.query_params.get("assigned")
         search = " ".join(str(request.query_params.get("q") or "").split())[:100]
         if priority:
             if priority not in SupportTicket.Priority.values:
                 raise ValidationError("Unsupported ticket priority filter.")
             queryset = queryset.filter(priority=priority)
+        if assigned == "me":
+            queryset = queryset.filter(assigned_to=request.user.account)
+        elif assigned == "none":
+            queryset = queryset.filter(assigned_to__isnull=True)
+        elif assigned:
+            queryset = queryset.filter(assigned_to__public_id=assigned)
         if requester_type == "user":
             queryset = queryset.filter(user__isnull=False)
         elif requester_type == "remaker":
@@ -413,7 +503,7 @@ class AdminTickets(APIView):
         )
         return ok({
             "tickets": [
-                _ticket_row(ticket, include_messages=False, viewer=request.user.account)
+                _ticket_row(ticket, include_messages=False, viewer=request.user.account, request=request)
                 for ticket in tickets
             ],
             "counts": counts,
@@ -434,8 +524,12 @@ class AdminTickets(APIView):
                 public_id=public_id,
             )
             action = str(request.data.get("action") or "reply")
+            actor = request.user.account
             if "priority" in request.data and request.data["priority"] not in SupportTicket.Priority.values:
                 return fail("Unsupported priority.")
+            before_status = ticket.status
+            before_assignee = ticket.assigned_to
+            events = []
             if action == "reply":
                 if ticket.status == SupportTicket.Status.CLOSED:
                     return fail(
@@ -451,7 +545,9 @@ class AdminTickets(APIView):
                 if requested_status:
                     if requested_status not in SupportTicket.Status.values:
                         return fail("Unsupported ticket status.")
-                _message(request.user.account, ticket, text, attachment)
+                _message(actor, ticket, text, attachment)
+                if ticket.assigned_to_id is None:
+                    ticket.assigned_to = actor  # whoever answers first owns the ticket
                 if requested_status:
                     _set_status(ticket, requested_status)
                 elif ticket.status != SupportTicket.Status.IN_PROGRESS:
@@ -468,7 +564,7 @@ class AdminTickets(APIView):
             elif action == "assign":
                 assignee_id = str(request.data.get("assignee_id") or "").strip()
                 if not assignee_id:
-                    ticket.assigned_to = request.user.account
+                    ticket.assigned_to = actor
                 elif assignee_id.lower() in ("none", "unassigned"):
                     ticket.assigned_to = None
                 else:
@@ -478,15 +574,31 @@ class AdminTickets(APIView):
                     )
                     if ticket.assigned_to is None:
                         return fail("Choose an active support agent.")
+            elif action == "priority":
+                if "priority" not in request.data:
+                    return fail("Choose a priority.")
             elif action == "read":
-                _mark_admin_read(ticket, request.user.account)
-                return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+                _mark_admin_read(ticket, actor)
+                return ok({"ticket": _ticket_row(ticket, viewer=actor, request=request)})
             else:
                 return fail("Unsupported support action.")
-            if "priority" in request.data:
+            if "priority" in request.data and request.data["priority"] != ticket.priority:
+                events.append(f"{actor.full_name} changed the priority from {ticket.priority} to {request.data['priority']}.")
                 ticket.priority = request.data["priority"]
+            # A plain reply already says it all (who answered, what it is set to), so it adds no note.
+            if action != "reply" and ticket.assigned_to_id != (before_assignee.pk if before_assignee else None):
+                if ticket.assigned_to is None:
+                    events.append(f"{actor.full_name} unassigned this ticket.")
+                elif ticket.assigned_to_id == actor.pk:
+                    events.append(f"{actor.full_name} took this ticket.")
+                else:
+                    events.append(f"{actor.full_name} assigned this ticket to {_agent_name(ticket.assigned_to)}.")
+            if action != "reply" and ticket.status != before_status:
+                events.append(f"{actor.full_name} set the status to {ticket.status}.")
             ticket.save()
-            _mark_admin_read(ticket, request.user.account)
+            for line in events:
+                _event(ticket, line)
+            _mark_admin_read(ticket, actor)
         ticket.refresh_from_db()
         ticket = _ticket_queryset().get(pk=ticket.pk)
-        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account)})
+        return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})

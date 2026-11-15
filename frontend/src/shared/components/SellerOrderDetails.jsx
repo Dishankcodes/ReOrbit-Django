@@ -359,6 +359,19 @@ export default function SellerOrderDetails({
             {o.id} <Copyable text={o.id} />
           </h1>
           <p>Placed {when(o.created_at)}</p>
+          <Link
+            className="sod-btn ghost"
+            style={{ marginTop: 8 }}
+            to={
+              isAdmin
+                ? `/admin-support?q=${o.id}`
+                : role === "remaker"
+                  ? `/remaker-help/new?order=${o.id}`
+                  : `/user-help/contact?order=${o.id}`
+            }
+          >
+            {isAdmin ? "Support tickets for this order" : "Get help with this order"}
+          </Link>
         </div>
         <div className="sod-badges">
           <span className={`sod-badge s-${o.status}`}>

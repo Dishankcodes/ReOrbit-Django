@@ -231,3 +231,82 @@
 .sp-modal .sp-reply {
   width: 100%;
 }
+
+/* ---------- one ticket, as a page ---------- */
+.sp-crumbs { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px; margin-bottom: 16px; }
+.sp-top h2 { margin: 0 0 8px; font-size: 20px; color: #1f3d2d; }
+.sp-top-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.sp-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.sp-conv { padding: 18px; }
+.sp-conv .sp-thread { margin-top: 0; }
+.sp-thread-page { max-height: 56vh; }
+.sp-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sp-card { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.sp-card h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #5d6c64; }
+.sp-assignee { display: flex; align-items: center; gap: 7px; margin: 0; font-weight: 700; color: #1f3d2d; }
+.sp-assign { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.sp-status-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.sp-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid #d6dfd9; background: #fff; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.sp-chip.on { background: #0e3a2d; border-color: #0e3a2d; color: #fff; cursor: default; }
+.sp-chip:disabled:not(.on) { opacity: 0.55; }
+.sp-person { margin: 0; }
+.sp-mail { display: inline-flex; align-items: center; gap: 6px; color: #2f6c70; font-size: 13px; word-break: break-all; }
+@media (max-width: 980px) {
+  .sp-grid { grid-template-columns: minmax(0, 1fr); }
+  .sp-top { flex-direction: column; }
+}
+
+/* ---------- ticket page: history notes, order chip, links ---------- */
+.sp-thread li.event {
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #5b6f66;
+  text-align: center;
+}
+.sp-thread li.event span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f1f5f3;
+}
+.sp-thread li.event time {
+  opacity: 0.8;
+}
+.sp-orderchip,
+.sp-related {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0e3a2d;
+  text-decoration: none;
+}
+.sp-orderchip {
+  padding: 3px 10px;
+  border: 1px solid #cfe0d5;
+  border-radius: 999px;
+  background: #fff;
+}
+.sp-orderchip:hover,
+.sp-related:hover,
+.sp-reqlink:hover {
+  text-decoration: underline;
+}
+.sp-reqlink {
+  color: inherit;
+  font-weight: 600;
+}
+.sp-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.sp-crumbs {
+  flex-wrap: wrap;
+}

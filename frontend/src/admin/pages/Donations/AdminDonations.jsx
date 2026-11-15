@@ -33,7 +33,7 @@ import {
   getDonationActions,
   canApplyDonationAction,
 } from "../../data/donationActions";
-import { formatDate, timeAgo, DEMO_TODAY } from "../../utils/format";
+import { formatDate, timeAgo } from "../../utils/format";
 
 import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
@@ -174,8 +174,8 @@ export default function AdminDonations() {
   const overdueCount = queue.filter((d) => d.overdue).length;
 
   const kpi = useMemo(() => {
-    const weekEnd = DEMO_TODAY.getTime() + 7 * 86400000;
-    const dayStart = new Date(DEMO_TODAY).setHours(0, 0, 0, 0);
+    const weekEnd = Date.now() + 7 * 86400000;
+    const dayStart = new Date().setHours(0, 0, 0, 0);
     const pickups = donations.filter(
       (d) =>
         d.status === "Scheduled" &&
@@ -198,7 +198,7 @@ export default function AdminDonations() {
   const filtered = useMemo(() => {
     const text = query.trim().toLowerCase();
     const cutoff =
-      range === "all" ? 0 : DEMO_TODAY.getTime() - Number(range) * 86400000;
+      range === "all" ? 0 : Date.now() - Number(range) * 86400000;
     return donations
       .filter((d) => status === "All" || d.status === status)
       .filter((d) => category === "all" || d.category === category)

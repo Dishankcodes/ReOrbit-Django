@@ -24,6 +24,7 @@ const createState = () => ({
   request: null,
   requestKey: "",
   version: 0,
+  snap: null,
 });
 
 const states = new Map();
@@ -39,12 +40,24 @@ const subscribe = (scope, listener, filters = {}) => {
   state.listeners.add(listener);
   return () => state.listeners.delete(listener);
 };
-const snapshot = (scope, filters = {}) => stateFor(scope, filters);
-const emit = (state) => state.listeners.forEach((listener) => listener());
+/* React compares snapshots by identity, so a change must hand out a NEW object. Each emit drops the
+   cached copy, and the next read builds a fresh one. (Handing out the one mutable state object
+   meant the lists and tickets sometimes only appeared after something else re-rendered the page.) */
+const snapshot = (scope, filters = {}) => {
+  const state = stateFor(scope, filters);
+  if (!state.snap) state.snap = { ...state, snap: null };
+  return state.snap;
+};
+const emit = (state) => {
+  state.snap = null;
+  state.listeners.forEach((listener) => listener());
+};
 const signedInFor = (scope) => isSignedIn(scope);
 
 function normalizeMessage(message, scope) {
   const sender = message.senderType || message.from;
+  // A note the system wrote (assigned, resolved...): shown as a line in the thread, not a bubble.
+  if (sender === "system") return { ...message, from: "event", name: "ReOrbit" };
   if (scope === "user") {
     return {
       ...message,
@@ -107,7 +120,8 @@ function mergeTicket(scope, rawTicket, { keepMessages = true } = {}) {
     const hasListFilters = Boolean(
       filters.query || (filters.status && filters.status !== "All") ||
       (filters.priority && filters.priority !== "all") ||
-      (filters.source && filters.source !== "all"),
+      (filters.source && filters.source !== "all") ||
+      (filters.assigned && filters.assigned !== "all"),
     );
     const statusMatches = !filters.status || filters.status === "All" ||
       (filters.status === "Waiting" ? ticket.status === "Waiting for you" :
@@ -151,6 +165,7 @@ function listParams(scope, filters, offset) {
     requester: filters.source && filters.source !== "all"
       ? filters.source === "ReMaker" ? "remaker" : "user"
       : "",
+    assigned: filters.assigned && filters.assigned !== "all" ? filters.assigned : "",
     limit: PAGE_SIZE,
     offset,
   };
@@ -394,11 +409,26 @@ export async function setSupportTicketStatus(scope, id, status) {
   return normalized;
 }
 
+export async function setSupportTicketPriority(id, priority) {
+  const ticket = await supportApi.adminAction(id, { action: "priority", priority });
+  const normalized = mergeTicket("admin", ticket);
+  await refreshLoadedLists("admin");
+  return normalized;
+}
+
 export async function setSupportTicketAssignee(id, assigneeId) {
   const ticket = await supportApi.adminAction(id, {
     action: "assign",
     assignee_id: assigneeId || "none",
   });
+  const normalized = mergeTicket("admin", ticket);
+  await refreshLoadedLists("admin");
+  return normalized;
+}
+
+/* "Assign to me": the server uses the signed-in admin when no assignee is named. */
+export async function assignSupportTicketToMe(id) {
+  const ticket = await supportApi.adminAction(id, { action: "assign" });
   const normalized = mergeTicket("admin", ticket);
   await refreshLoadedLists("admin");
   return normalized;

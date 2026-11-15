@@ -1,3 +1,4 @@
+import TicketOrderCard, { orderLink } from "../../../shared/components/TicketOrderCard";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
@@ -118,7 +119,12 @@ function Thread({ ticket, ticketStatus }) {
       <div className="hlp-layout">
         <div className="hlp-thread">
           <ol className="hlp-messages" aria-label="Conversation">
-            {ticket.messages.map((message) => (
+            {ticket.messages.map((message) => message.from === "event" ? (
+              <li className="event" key={message.id}>
+                <span>{message.text}</span>
+                <time dateTime={message.at}>{timeLabel(message.at)}</time>
+              </li>
+            ) : (
               <li
                 className={message.from === "me" ? "me" : "them"}
                 key={message.id}
@@ -217,17 +223,15 @@ function Thread({ ticket, ticketStatus }) {
                 <dt>Last update</dt>
                 <dd>{timeLabel(ticket.updatedAt)}</dd>
               </div>
+              <div>
+                <dt>Handled by</dt>
+                <dd>{ticket.assignedTo ? ticket.assignedTo.name : "Not picked up yet"}</dd>
+              </div>
               {ticket.relatedOrder && (
                 <div>
                   <dt>Order</dt>
                   <dd>
-                    <Link
-                      to={
-                        ticket.relatedOrder.startsWith("SO-")
-                          ? `/remaker-sales/${ticket.relatedOrder}`
-                          : `/remaker-orders/${ticket.relatedOrder}`
-                      }
-                    >
+                    <Link to={orderLink("remaker", ticket.order) || `/remaker-orders/${ticket.relatedOrder}`}>
                       {ticket.relatedOrder}
                     </Link>
                   </dd>
@@ -243,6 +247,8 @@ function Thread({ ticket, ticketStatus }) {
               </div>
             )}
           </section>
+
+          {ticket.order && <TicketOrderCard order={ticket.order} scope="remaker" />}
 
           {resolved && (
             <section className="rk-card hlp-done">

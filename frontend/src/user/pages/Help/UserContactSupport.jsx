@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Clock, Mail, MessageSquare, Send } from "lucide-react";
 
 import { TICKET_CATEGORIES, createTicket } from "../../data/supportStore";
@@ -11,9 +11,12 @@ import "../../css/help/UserHelp.css";
 
 export default function UserContactSupport() {
   const orders = useOrders();
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const fromOrder = params.get("order") || "";
   const [f, setF] = useState({
-    category: "",
-    orderId: "",
+    category: fromOrder ? "Order or delivery" : "",
+    orderId: fromOrder,
     subject: "",
     message: "",
   });
@@ -46,6 +49,11 @@ export default function UserContactSupport() {
           orderId: aboutOrder ? f.orderId : "",
       }));
     } catch (problem) {
+      // Already asked about this order: carry on in that ticket instead of starting a second one.
+      if (problem.code === "ticket_exists" && problem.errors?.ticket_id) {
+        navigate(`/user-help/tickets/${problem.errors.ticket_id}`, { replace: true });
+        return;
+      }
       setError(problem.message || "Your request could not be sent. Please try again.");
     } finally {
       setBusy(false);

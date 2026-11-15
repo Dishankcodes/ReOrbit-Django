@@ -31,12 +31,13 @@ export function formatINR(value) {
   return `₹${number.toLocaleString("en-IN")}`;
 }
 
-/* "3 days ago" style text, measured against the demo "today". */
+/* Fixed "today" used only by the screens that still run on demo data. */
 export const DEMO_TODAY = new Date("2026-10-20T13:00:00");
 
+/* "3 days ago" style text, measured against the real current time. */
 export function timeAgo(value) {
   if (!value) return "—";
-  const diffMs = DEMO_TODAY.getTime() - new Date(value).getTime();
+  const diffMs = Date.now() - new Date(value).getTime();
   const minutes = Math.round(diffMs / 60000);
   if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes} min ago`;

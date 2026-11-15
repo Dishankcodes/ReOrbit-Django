@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { FAQS, TICKET_CATEGORIES, createTicket } from "../../data/helpStore";
 import { fileToDataUrl } from "../../data/portfolioStore";
@@ -19,9 +19,11 @@ export default function ReMakerNewTicket() {
   const purchases = useOrders();
   const sales = useSales();
 
-  const [category, setCategory] = useState("");
+  const [params] = useSearchParams();
+  const fromOrder = params.get("order") || "";
+  const [category, setCategory] = useState(fromOrder ? "Orders and shipping" : "");
   const [subject, setSubject] = useState("");
-  const [related, setRelated] = useState("");
+  const [related, setRelated] = useState(fromOrder);
   const [priority, setPriority] = useState("Normal");
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState([]);
@@ -108,6 +110,13 @@ export default function ReMakerNewTicket() {
         state: { notice: `Ticket ${ticket.id} created. We will reply soon.` },
       });
     } catch (error) {
+      if (error.code === "ticket_exists" && error.errors?.ticket_id) {
+        navigate(`/remaker-help/tickets/${error.errors.ticket_id}`, {
+          replace: true,
+          state: { notice: "You already have an open ticket for this order. Reply here and the team will pick it up." },
+        });
+        return;
+      }
       setSubmitError(error.message || "Your support ticket could not be created. Please try again.");
       setSaving(false);
     }

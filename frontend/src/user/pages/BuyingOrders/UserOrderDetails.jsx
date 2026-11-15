@@ -395,6 +395,10 @@ export default function UserOrderDetails() {
             <div>
               <strong>Need help with this order?</strong>
               <p>Delivery, returns or refunds, we're here to help.</p>
+              <Link to={`/user-help/contact?order=${order.id}`} className="dn-link">
+                Raise a ticket about this order →
+              </Link>
+              <br />
               <Link to="/user-help" className="dn-link">
                 Open Help & FAQ →
               </Link>
