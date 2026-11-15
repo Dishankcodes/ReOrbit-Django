@@ -64,6 +64,16 @@ def reviewer_of(r):
     return getattr(r, f"reviewer_{r.reviewer_type}")
 
 
+def _profile(account):
+    """The account's profile row (city, picture live there), or None when it has none yet."""
+    return getattr(account, "profile", None)
+
+
+def _picture(account):
+    prof = _profile(account)
+    return prof.profile_image.name if prof is not None and prof.profile_image else ""
+
+
 def first_name_initial(name):
     parts = (name or "").split()
     if not parts:
@@ -98,7 +108,7 @@ def received_data(r, request, mine=None):
         "photos": photos_of(r, request), "created_at": r.created_at, "edited_at": r.edited_at,
         "order_id": r.order.public_id, "product": target_of(r, request),
         "reviewer": {"type": r.reviewer_type, "id": reviewer.public_id, "name": reviewer.full_name,
-                     "city": reviewer.city or "", "image": media_url(request, reviewer.profile_image.name if reviewer.profile_image else "")},
+                     "city": (getattr(_profile(reviewer), "city", "") or ""), "image": media_url(request, _picture(reviewer))},
         "reply": _reply(r), "report": report_data(mine) if mine else None,
         "status": r.status, "hidden_reason": r.hidden_reason,
     }
@@ -109,7 +119,7 @@ def public_data(r, request):
     reviewer = reviewer_of(r)
     return {
         "id": r.public_id, "kind": kind_of(r), "rating": r.rating, "title": getattr(r, "title", ""), "body": r.body,
-        "name": first_name_initial(reviewer.full_name), "image": media_url(request, reviewer.profile_image.name if reviewer.profile_image else ""),
+        "name": first_name_initial(reviewer.full_name), "image": media_url(request, _picture(reviewer)),
         "date": r.created_at, "verified": True, "aspects": aspects_of(r), "photos": photos_of(r, request),
         "product": target_of(r, request), "reply": _reply(r),
     }

@@ -12,12 +12,27 @@ CATEGORY_CODE = {
 CONDITION_LABEL = {"Good": "Good", "Medium": "Fair", "Worst": "Needs refurbishing"}
 
 
+def _donors_available(schema_editor):
+    """True when the donations table really has its donor column.
+
+    A development database that was created from an older copy of the donations migration can be
+    missing it; the carry-over then just skips the donor details instead of stopping the migration.
+    """
+    conn = schema_editor.connection
+    with conn.cursor() as cur:
+        cols = {c.name for c in conn.introspection.get_table_description(cur, "donations")}
+    return "donor_id" in cols
+
+
 def carry_over(apps, schema_editor):
     """Stock the old table held (donated items) becomes inventory: still at the dock if it is
     in the warehouse, or released as a donation if it was given out."""
     Item = apps.get_model("warehouse", "WarehouseItem")
     Event = apps.get_model("warehouse", "WarehouseEvent")
-    for w in Item.objects.select_related("donation", "donation__donor").order_by("pk"):
+    with_donor = _donors_available(schema_editor)
+    rows = Item.objects.order_by("pk")
+    rows = rows.select_related("donation", "donation__donor") if with_donor else rows
+    for w in rows:
         given = w.status == "Given_Out"
         w.warehouse_status = "Released" if given else "Received"
         w.sale_status = "Donated" if given else "Not listed"
@@ -26,7 +41,7 @@ def carry_over(apps, schema_editor):
             w.released_at = w.given_at or w.received_at
         else:
             w.zone, w.rack, w.level = "DOCK", "01", 1
-        donor = getattr(w.donation, "donor", None) if w.donation_id else None
+        donor = getattr(w.donation, "donor", None) if with_donor and w.donation_id else None
         if donor is not None:
             w.source_user = donor
             w.source_name = donor.full_name

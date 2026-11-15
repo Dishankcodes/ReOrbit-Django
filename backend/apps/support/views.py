@@ -428,7 +428,7 @@ class AdminTickets(APIView):
     def post(self, request, public_id):
         with transaction.atomic():
             ticket = get_object_or_404(
-                SupportTicket.objects.select_for_update().select_related(
+                SupportTicket.objects.select_for_update(of=("self",)).select_related(
                     "user", "remaker", "assigned_to"
                 ).prefetch_related("messages__admin", "messages__user", "messages__remaker"),
                 public_id=public_id,

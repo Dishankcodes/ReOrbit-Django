@@ -149,3 +149,52 @@
   color: #6b7a73;
   font-size: 13px;
 }
+
+/* ReMaker composer: Photo and Quick replies as proper buttons, in a row above the box
+   (they were two underlined text links stacked beside it) */
+.rk .msg-composer-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: 10px;
+}
+.rk .msg-composer-tools {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 0;
+}
+.rk .msg-composer-tools .rk-textbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--rp-border, #e4dcd9);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rp-maroon, #2a0f0f);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.rk .msg-composer-tools .rk-textbtn svg {
+  flex: none;
+}
+.rk .msg-composer-tools .rk-textbtn:hover,
+.rk .msg-composer-tools .rk-textbtn.on {
+  background: #f6efec;
+  border-color: var(--rp-maroon, #2a0f0f);
+}
+.rk .msg-composer-tools .rk-textbtn:focus-visible {
+  outline: 2px solid var(--rp-maroon, #2a0f0f);
+  outline-offset: 2px;
+}
+.rk .msg-composer-row .rk-btn.primary {
+  align-self: end;
+  min-height: 46px;
+}

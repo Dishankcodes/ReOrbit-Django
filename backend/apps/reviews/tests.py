@@ -213,20 +213,20 @@ class ReviewFlowTests(ReviewBase):
     # ---- ratings
     def test_remaker_rating_follows_reviews_and_hiding(self):
         self.reviewed(self.table, rating=5)
-        self.maker.refresh_from_db()
-        self.assertEqual((float(self.maker.rating_average), self.maker.rating_count), (5.0, 2))
+        self.maker.profile.refresh_from_db()
+        self.assertEqual((float(self.maker.profile.rating_average), self.maker.profile.rating_count), (5.0, 2))
         oid, ref = self.delivered(self.table)
         self.rate_product(oid, ref, rating=2)
-        self.maker.refresh_from_db()
-        self.assertEqual(self.maker.rating_count, 3)
-        self.assertEqual(float(self.maker.rating_average), 4.0)
+        self.maker.profile.refresh_from_db()
+        self.assertEqual(self.maker.profile.rating_count, 3)
+        self.assertEqual(float(self.maker.profile.rating_average), 4.0)
         bad = next(r for r in self.received(self.maker) if r["rating"] == 2)
         self.post(f"/api/reviews/admin/{bad['id']}/hide/", {"reason": "Abusive language"}, as_=self.mod)
-        self.maker.refresh_from_db()
-        self.assertEqual((float(self.maker.rating_average), self.maker.rating_count), (5.0, 2))
+        self.maker.profile.refresh_from_db()
+        self.assertEqual((float(self.maker.profile.rating_average), self.maker.profile.rating_count), (5.0, 2))
         self.post(f"/api/reviews/admin/{bad['id']}/restore/", {}, as_=self.mod)
-        self.maker.refresh_from_db()
-        self.assertEqual(self.maker.rating_count, 3)
+        self.maker.profile.refresh_from_db()
+        self.assertEqual(self.maker.profile.rating_count, 3)
 
     # ---- public
     def test_public_pages_show_only_visible_reviews_with_first_name_and_initial(self):

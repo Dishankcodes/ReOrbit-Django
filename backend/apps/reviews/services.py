@@ -102,7 +102,11 @@ def refresh_rating(order):
     s = SellerReview.objects.filter(seller_remaker=acct, status=visible).aggregate(n=Count("pk"), a=Avg("rating"))
     n = (p["n"] or 0) + (s["n"] or 0)
     total = (p["a"] or 0) * (p["n"] or 0) + (s["a"] or 0) * (s["n"] or 0)
-    type(acct).objects.filter(pk=acct.pk).update(rating_average=round(total / n, 2) if n else 0, rating_count=n)
+    # The stored rating lives on the ReMaker's profile row (ReMakers itself has no rating columns).
+    profile = getattr(acct, "profile", None)
+    if profile is not None:
+        type(profile).objects.filter(pk=profile.pk).update(
+            rating_average=round(total / n, 2) if n else 0, rating_count=n)
 
 
 def _announce_new(review, order, what, title_text):
