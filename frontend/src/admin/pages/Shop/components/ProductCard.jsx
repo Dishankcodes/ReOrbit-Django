@@ -1,4 +1,5 @@
 import React from "react";
+import SoldOutTag, { soldOutClass } from "../../../../shared/components/SoldOutTag";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, Check, BadgeCheck, Sparkles } from "lucide-react";
 import ProductImg from "./ProductImg";
@@ -18,10 +19,11 @@ export default function ProductCard({ product: p, inCart, onAdded }) {
     <article className="sh-card">
       <Link
         to={`/admin-shop/product/${p.id}`}
-        className="sh-card-img"
+        className={`sh-card-img ${soldOutClass(p.available <= 0)}`}
         aria-label={`Open ${p.title}`}
       >
         <ProductImg src={p.image} alt={p.title} />
+        <SoldOutTag show={p.available <= 0} />
         <span className={`sh-tag ${isRm ? "rm" : "item"}`}>
           {isRm ? (
             <>

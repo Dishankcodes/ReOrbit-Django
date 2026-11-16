@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import { BackLink } from "../../../shared/backNav";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
@@ -172,8 +173,9 @@ export default function AdminShopProduct() {
 
       <div className="sh-detail">
         {/* ---------- photo ---------- */}
-        <div className="sh-photo">
+        <div className={`sh-photo ${soldOutClass(p.available <= 0)}`}>
           <ProductImg src={p.image} alt={p.title} />
+          <SoldOutTag size="lg" show={p.available <= 0} />
           <span className={`sh-tag lg ${isRm ? "rm" : "item"}`}>
             {isRm ? (
               <>

@@ -114,11 +114,11 @@ class AdminTargets(APIView):
         items = Item.objects.filter(item_status__in=("Listed", "Reserved")).select_related("user").order_by("-created_at")[:TARGET_LIMIT]
         rprods = RemakerProduct.objects.filter(status__in=("Listed", "Sold_Out")).select_related("remaker").order_by("-created_at")[:TARGET_LIMIT]
         aitems = AdminItem.objects.filter(status__in=("Listed", "Sold_Out")).order_by("-created_at")[:TARGET_LIMIT]
-        pr = ProductReview.objects.filter(status="Visible").select_related("reviewer_user", "reviewer_remaker", "order_item").order_by("-created_at")[:TARGET_LIMIT]
-        sr = SellerReview.objects.filter(status="Visible").select_related("reviewer_user", "reviewer_remaker").order_by("-created_at")[:TARGET_LIMIT]
+        pr = ProductReview.objects.filter(status="Visible").select_related("reviewer_user", "reviewer_remaker", "reviewer_admin", "order_item").order_by("-created_at")[:TARGET_LIMIT]
+        sr = SellerReview.objects.filter(status="Visible").select_related("reviewer_user", "reviewer_remaker", "reviewer_admin").order_by("-created_at")[:TARGET_LIMIT]
 
         def who(r):
-            a = r.reviewer_user or r.reviewer_remaker
+            a = r.reviewer_user or r.reviewer_remaker or r.reviewer_admin
             return a.full_name
 
         products = (

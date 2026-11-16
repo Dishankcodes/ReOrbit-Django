@@ -48,6 +48,7 @@ import {
 } from "../../../shared/hooks/usePublicReviews";
 import useWishlist from "../../hooks/useWishlist";
 
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import "../../css/ReMakerProductDetails.css";
 
 function sellerProfilePath(sellerId) {
@@ -205,11 +206,12 @@ function Details({ listing }) {
       <div className="rmd-hero">
         {/* GALLERY */}
         <div className="rmd-gallery">
-          <div className="rmd-stage">
+          <div className={`rmd-stage ${soldOutClass(outOfStock)}`}>
             <Photo
               src={listing.gallery[index]}
               alt={`${listing.title}, photo ${index + 1}`}
             />
+            <SoldOutTag size="lg" show={outOfStock} />
 
             <span className={`rmd-source ${listing.source}`}>
               {isRemaker ? <Palette size={13} /> : <Package size={13} />}

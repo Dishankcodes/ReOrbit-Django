@@ -10,7 +10,6 @@ import {
   Package,
   PartyPopper,
   Phone,
-  ShieldCheck,
   Truck,
   Warehouse,
   Home,
@@ -24,6 +23,7 @@ import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
 import OrderStepper from "./components/OrderStepper";
 import SellerCard from "./components/SellerCard";
+import OrderHelp from "./components/OrderHelp";
 import TrackTimeline from "./components/TrackTimeline";
 import { StatusBadge } from "./components/OrderBadges";
 import { inr } from "./components/OrderCard";
@@ -299,16 +299,12 @@ export default function UserOrderTrack() {
 
           <SellerCard order={order} compact />
 
-          <section className="dn-card dn-card-pad ob-help">
-            <ShieldCheck size={22} />
-            <div>
-              <strong>Something wrong with delivery?</strong>
-              <p>Tell us if the parcel is delayed or damaged.</p>
-              <Link to="/user-help" className="dn-link">
-                Get help →
-              </Link>
-            </div>
-          </section>
+          <OrderHelp
+            order={order}
+            icon="shield"
+            title="Something wrong with delivery?"
+            text="Tell us if the parcel is delayed or damaged."
+          />
 
           <Link
             to={`/user-orders/${order.id}`}

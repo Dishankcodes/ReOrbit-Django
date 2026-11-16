@@ -24,6 +24,7 @@ import {
   sortListings,
 } from "../../data/remakerMarketplaceData";
 import useWishlist from "../../hooks/useWishlist";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 
 import { useCategoryNames } from "../../../shared/catalog";
 import "../../css/ReMakerMarketplace.css";
@@ -303,8 +304,13 @@ export default function ReMakerMarketplace() {
                   }
                 }}
               >
-                <div className="rmk-media">
+                <div
+                  className={`rmk-media ${soldOutClass(Boolean(listing.soldOut) || listing.quantity < 1)}`}
+                >
                   <Photo src={listing.gallery[0]} alt="" />
+                  <SoldOutTag
+                    show={Boolean(listing.soldOut) || listing.quantity < 1}
+                  />
 
                   <span className={`rmk-tag ${listing.source}`}>
                     {listing.source === "remaker" ? (

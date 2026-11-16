@@ -15,6 +15,7 @@ SELECT = (
     "target_admin_item__category", "target_admin_item__admin",
     "target_product_review__order__seller_user__profile", "target_product_review__order__seller_remaker__profile",
     "target_product_review__order_item", "target_product_review__reviewer_user", "target_product_review__reviewer_remaker",
+    "target_product_review__reviewer_admin", "target_seller_review__reviewer_admin",
     "target_seller_review__order__seller_user__profile", "target_seller_review__order__seller_remaker__profile",
     "target_seller_review__reviewer_user", "target_seller_review__reviewer_remaker",
 )

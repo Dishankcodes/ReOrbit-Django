@@ -114,7 +114,8 @@ def owner_of(c):
 
 
 def reviewer_of(review):
-    return review.reviewer_user or review.reviewer_remaker
+    """A review is written by a member, a ReMaker or a ReOrbit admin shopping as the platform."""
+    return review.reviewer_user or review.reviewer_remaker or review.reviewer_admin
 
 
 def is_live(row):

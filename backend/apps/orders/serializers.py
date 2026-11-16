@@ -1,6 +1,8 @@
 """Plain dict builders. Faster than DRF serializers for lists and easy to read."""
 
+from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db.models import Avg, Count
 
 from datetime import timedelta
 
@@ -28,6 +30,56 @@ def seller_of(o):
         r = o.seller_remaker
         return {"type": "remaker", "id": r.public_id, "name": r.full_name, "username": r.username}
     return {"type": "platform", "id": "", "name": "ReOrbit"}
+
+
+def reorbit_store():
+    """ReOrbit's own details, for orders the platform sells itself."""
+    from apps.core.models import DEFAULT_SUPPORT_EMAIL, PlatformSettings
+
+    c = settings.REORBIT_STORE
+    return {
+        "name": c["name"], "phone": c["phone"],
+        "email": PlatformSettings.load().support_email or DEFAULT_SUPPORT_EMAIL,
+        "address": {"line1": c["address_line"], "city": c["city"], "state": c["state"], "pincode": c["pincode"]},
+    }
+
+
+def _image(request, profile):
+    f = getattr(profile, "profile_image", None) if profile else None
+    return media_url(request, f.name) if f else None
+
+
+def seller_card(o, request):
+    """The "Sold by" card on one order: who the seller really is. Used on the order detail only,
+    because it counts reviews. Fields the seller has not filled in come back empty, never made up."""
+    from apps.reviews.models import ProductReview, SellerReview
+
+    base = seller_of(o)
+    if base["type"] == "platform":
+        return {**base, **reorbit_store(), "verified": True}
+    visible = ProductReview.Status.VISIBLE
+    if base["type"] == "remaker":
+        r = o.seller_remaker
+        p = getattr(r, "profile", None)
+        return {
+            **base, "image": _image(request, p), "city": getattr(p, "city", "") or "",
+            "craft": (getattr(p, "speciality", "") or getattr(p, "studio_name", "") or ""),
+            "rating": float(getattr(p, "rating_average", 0) or 0), "totalReviews": getattr(p, "rating_count", 0) or 0,
+            "experience": getattr(p, "experience", "") or "",
+            "productsSold": getattr(p, "total_sales", 0) or 0,
+            "verified": r.email_verified_at is not None,
+        }
+    u = o.seller_user
+    p = getattr(u, "profile", None)
+    pr = ProductReview.objects.filter(order__seller_user=u, status=visible).aggregate(n=Count("pk"), a=Avg("rating"))
+    sr = SellerReview.objects.filter(seller_user=u, status=visible).aggregate(n=Count("pk"), a=Avg("rating"))
+    n = (pr["n"] or 0) + (sr["n"] or 0)
+    total = (pr["a"] or 0) * (pr["n"] or 0) + (sr["a"] or 0) * (sr["n"] or 0)
+    return {
+        **base, "image": _image(request, p), "city": getattr(p, "city", "") or "",
+        "rating": round(total / n, 1) if n else 0, "totalReviews": n,
+        "productsSold": getattr(p, "total_sales", 0) or 0,
+    }
 
 
 def return_data(rr, request):
@@ -133,6 +185,7 @@ def order_data(o, request, *, events=False, buyer=False):
             b.pop("email", None)  # sellers see who is buying, not their email
         data["buyer"] = b
     if events:
+        data["seller"] = seller_card(o, request)
         data["related"] = related_data(o, request, data)
         data["events"] = [
             {"label": e.label, "detail": e.detail, "actor": e.actor, "at": e.created_at} for e in o.events.all()

@@ -10,6 +10,12 @@ import { portalOf } from "../api/session";
 
 const MAPS = {
   remaker: [
+    /* help desk: raising a ticket, the ticket list and one ticket live under /remaker-help */
+    ["/user-help/contact", "/remaker-help/new"],
+    ["/user-help/tickets", "/remaker-help/tickets"],
+    ["/user-help", "/remaker-help"],
+    ["/user-sell", "/remaker-products"],
+    ["/user-remakers", "/remaker-marketplace"],
     ["/user-marketplace", "/remaker-marketplace"],
     ["/user-wishlist", "/remaker-saved"],
     ["/user-reviews", "/remaker-my-reviews"],
@@ -18,6 +24,9 @@ const MAPS = {
     ["/user-checkout", "/remaker-checkout"],
   ],
   admin: [
+    ["/user-help", "/admin-support"],
+    ["/user-sell", "/admin-sell"],
+    ["/user-remakers", "/admin-shop"],
     ["/user-marketplace", "/admin-shop"],
     ["/user-wishlist", "/admin-shop/wishlist"],
     ["/user-reviews", "/admin-shop/reviews"],
@@ -29,8 +38,12 @@ const MAPS = {
 
 export function portalPath(path) {
   if (typeof path !== "string" || !path.startsWith("/user-")) return path;
-  const map = MAPS[portalOf(window.location.pathname)];
+  const portal = portalOf(window.location.pathname);
+  const map = MAPS[portal];
   if (!map) return path;
+  /* the ticket list is a tab of the ReMaker help page, not a page of its own */
+  if (portal === "remaker" && /^\/user-help\/tickets\/?(\?|#|$)/.test(path))
+    return "/remaker-help?tab=tickets";
   for (const [from, to] of map) {
     if (
       path === from ||

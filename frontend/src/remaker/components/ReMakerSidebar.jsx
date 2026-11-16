@@ -26,8 +26,9 @@ import {
   MessageSquare,
 } from "lucide-react";
 
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 
+import { useSidebarSearch } from "../../shared/components/SidebarSearch";
 import "./ReMakerSidebar.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
 import { mediaUrl } from "../../api/profile";
@@ -47,6 +48,7 @@ const marketplaceMenu = [
 
   {
     label: "Saved items",
+    words: "wishlist favourites",
     path: "/remaker-saved",
     icon: Heart,
   },
@@ -69,11 +71,13 @@ const studioMenu = [
   },
   {
     label: "Products",
+    words: "listings stock catalogue",
     path: "/remaker-products",
     icon: ShoppingBag,
   },
   {
     label: "Add Product",
+    words: "sell new listing create upload",
     path: "/remaker-products/new",
     icon: PlusCircle,
   },
@@ -86,11 +90,13 @@ const studioMenu = [
 const ordersMenu = [
   {
     label: "Purchases",
+    words: "orders bought buying history",
     path: "/remaker-orders",
     icon: ShoppingBag,
   },
   {
     label: "Sales",
+    words: "orders selling sold customers",
     path: "/remaker-sales",
     icon: Package,
   },
@@ -101,6 +107,7 @@ const ordersMenu = [
   },
   {
     label: "Earnings",
+    words: "money payouts income wallet",
     path: "/remaker-earnings",
     icon: IndianRupee,
   },
@@ -124,11 +131,13 @@ const communityMenu = [
   },
   {
     label: "Reviews",
+    words: "ratings feedback customers",
     path: "/remaker-reviews",
     icon: Star,
   },
   {
     label: "My Reviews",
+    words: "ratings i wrote",
     path: "/remaker-my-reviews",
     icon: StarHalf,
   },
@@ -161,6 +170,7 @@ const toolsMenu = [
   },
   {
     label: "Help & Support",
+    words: "tickets contact complaint",
     path: "/remaker-help",
     icon: CircleHelp,
   },
@@ -253,6 +263,17 @@ export default function ReMakerSidebar({
       onCloseMobile();
     }
   };
+
+  const { pathname } = useLocation();
+  const search = useSidebarSearch(
+    [...marketplaceMenu, ...studioMenu, ...ordersMenu, ...communityMenu, ...toolsMenu],
+    {
+      storageKey: "reorbit_remaker_recent",
+      pathname,
+      navigate,
+      onPicked: handleNavigation,
+    },
+  );
 
   /* ====
      PROFILE
@@ -359,7 +380,18 @@ export default function ReMakerSidebar({
           NAVIGATION
            */}
 
+      {search.box}
+
       <nav className="remaker-sidebar-navigation">
+        {search.query ? (
+          <div className="remaker-sidebar-section">
+            <span className="remaker-sidebar-section-label">
+              {search.results.length ? "RESULTS" : "NO MATCHES"}
+            </span>
+            {search.results.map(renderMenuItem)}
+          </div>
+        ) : (
+          <>
         {/* MARKETPLACE */}
 
         <div className="remaker-sidebar-section">
@@ -421,6 +453,8 @@ export default function ReMakerSidebar({
             <span className="remaker-sidebar-link-text">Logout</span>
           </button>
         </div>
+          </>
+        )}
       </nav>
 
       {/* 

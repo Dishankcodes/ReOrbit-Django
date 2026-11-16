@@ -3,6 +3,8 @@ import { Link, useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
 import { fetchPublicRemaker } from "../../../api/remakers";
+import { getProductsBySeller } from "../../../data/marketplaceData";
+import { useLiveMarketplace } from "../../data/liveMarketplace";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { useFollowing } from "../../data/followStore";
@@ -15,6 +17,7 @@ export default function UserArtistProfile() {
   const [artist, setArtist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  useLiveMarketplace(); /* the catalogue, so this studio's products can be listed */
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
   const { reviews } = useSellerReviews("remaker", artistId);
@@ -67,7 +70,7 @@ export default function UserArtistProfile() {
     <ProfileShell
       person={artist}
       isMaker
-      products={[]}
+      products={getProductsBySeller(artistId)}
       reviews={reviews}
       portfolio={artist.portfolio || []}
       following={isFollowing(artist.id)}

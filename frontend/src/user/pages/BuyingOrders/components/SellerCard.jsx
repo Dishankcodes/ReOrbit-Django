@@ -7,6 +7,9 @@ import {
   Images,
   Star,
   MessageSquareText,
+  Phone,
+  Mail,
+  Clock3,
 } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { SellerTypeBadge } from "./OrderBadges";
@@ -16,6 +19,21 @@ import { Stars } from "../../../components/ui/Stars";
 export function SellerChip({ order }) {
   const { seller, sellerIsRemaker, sellerPath } = order;
   if (!seller) return null;
+  const inner = (
+    <>
+      <SafeImage src={seller.image} alt="" />
+      <span>
+        <small>{sellerIsRemaker ? "ReMaker" : "Seller"}</small>
+        <strong>{seller.name}</strong>
+      </span>
+      {(sellerIsRemaker || seller.type === "platform") && (
+        <BadgeCheck size={14} className="ob-chip-verified" />
+      )}
+      {sellerPath && <ChevronRight size={14} />}
+    </>
+  );
+  /* ReOrbit's own store has no profile page to open */
+  if (!sellerPath) return <span className="ob-chip">{inner}</span>;
   return (
     <Link
       to={sellerPath}
@@ -23,27 +41,37 @@ export function SellerChip({ order }) {
       onClick={(event) => event.stopPropagation()}
       title={`Open ${seller.name}'s profile`}
     >
-      <SafeImage src={seller.image} alt="" />
-      <span>
-        <small>{sellerIsRemaker ? "ReMaker" : "Seller"}</small>
-        <strong>{seller.name}</strong>
-      </span>
-      {sellerIsRemaker && <BadgeCheck size={14} className="ob-chip-verified" />}
-      <ChevronRight size={14} />
+      {inner}
     </Link>
   );
 }
 
-/* Full seller card for the details + tracking pages. */
+/* Full seller card for the details + tracking pages. Everything shown here comes from the
+   server: the seller's real numbers, and ReOrbit's own address when ReOrbit is the seller. */
 export default function SellerCard({ order, compact = false }) {
   const { seller, sellerIsRemaker, sellerPath } = order;
   if (!seller) return null;
+  const platform = seller.type === "platform";
+  const a = seller.address || {};
+  const where = [a.line1, [a.city, a.state].filter(Boolean).join(", "), a.pincode]
+    .filter(Boolean)
+    .join(" · ");
+  const reviews = seller.totalReviews || 0;
+  const subline = platform
+    ? "Official ReOrbit store"
+    : sellerIsRemaker
+      ? seller.craft || ""
+      : seller.city || "";
 
   return (
     <section className="dn-card dn-card-pad ob-seller">
       <div className="dn-card-head">
         <h3>{sellerIsRemaker ? "Made by" : "Sold by"}</h3>
-        <SellerTypeBadge remaker={sellerIsRemaker} />
+        {platform ? (
+          <span className="ob-type is-remaker">Official store</span>
+        ) : (
+          <SellerTypeBadge remaker={sellerIsRemaker} />
+        )}
       </div>
 
       <div className="ob-seller-main">
@@ -55,62 +83,91 @@ export default function SellerCard({ order, compact = false }) {
         <div>
           <strong>
             {seller.name}
-            {sellerIsRemaker && seller.verified && (
+            {(platform || (sellerIsRemaker && seller.verified)) && (
               <BadgeCheck size={16} className="ob-chip-verified" />
             )}
           </strong>
-          <p>{sellerIsRemaker ? seller.craft : `@${seller.username}`}</p>
-          <div className="ob-seller-rate">
-            <Stars value={seller.rating} />
-            <b>{seller.rating}</b>
-            <span>({seller.totalReviews} reviews)</span>
-          </div>
+          {subline && <p>{subline}</p>}
+          {!platform &&
+            (reviews > 0 ? (
+              <div className="ob-seller-rate">
+                <Stars value={seller.rating} />
+                <b>{Number(seller.rating).toFixed(1)}</b>
+                <span>
+                  ({reviews} {reviews === 1 ? "review" : "reviews"})
+                </span>
+              </div>
+            ) : (
+              <div className="ob-seller-rate">
+                <span>No reviews yet</span>
+              </div>
+            ))}
         </div>
       </div>
 
-      {!compact && (
+      {platform ? (
         <ul className="ob-seller-facts">
-          <li>
-            <MapPin size={14} /> {seller.city}
-          </li>
-          {sellerIsRemaker ? (
-            <>
-              <li>
-                <Images size={14} /> {seller.portfolio?.length || 0} portfolio
-                works
-              </li>
-              <li>
-                <Star size={14} /> {seller.yearsOfExperience} yrs experience
-              </li>
-            </>
-          ) : (
+          {where && (
             <li>
-              <Star size={14} /> {seller.productsSold} items sold
+              <MapPin size={14} /> {where}
             </li>
           )}
+          {seller.phone && (
+            <li>
+              <Phone size={14} /> {seller.phone}
+            </li>
+          )}
+          {seller.email && (
+            <li>
+              <Mail size={14} /> {seller.email}
+            </li>
+          )}
+          <li>
+            <Clock3 size={14} /> Packed and shipped by ReOrbit
+          </li>
         </ul>
+      ) : (
+        !compact && (
+          <ul className="ob-seller-facts">
+            {seller.city && (
+              <li>
+                <MapPin size={14} /> {seller.city}
+              </li>
+            )}
+            {sellerIsRemaker && seller.experience && (
+              <li>
+                <Star size={14} /> {seller.experience} experience
+              </li>
+            )}
+            <li>
+              <Images size={14} /> {seller.productsSold || 0} items sold
+            </li>
+          </ul>
+        )
       )}
 
-      <div className="ob-seller-actions">
-        <Link to={sellerPath} className="dn-btn dn-btn--sm">
-          View profile <ChevronRight size={14} />
-        </Link>
-        {sellerIsRemaker ? (
-          <Link
-            to={`${sellerPath}?tab=portfolio`}
-            className="dn-btn dn-btn--ghost dn-btn--sm"
-          >
-            <Images size={14} /> Portfolio
+      {sellerPath && (
+        <div className="ob-seller-actions">
+          <Link to={sellerPath} className="dn-btn dn-btn--sm">
+            View profile <ChevronRight size={14} />
           </Link>
-        ) : (
-          <Link
-            to={`${sellerPath}?tab=reviews`}
-            className="dn-btn dn-btn--ghost dn-btn--sm"
-          >
-            <MessageSquareText size={14} /> Reviews
-          </Link>
-        )}
-      </div>
+          {sellerIsRemaker ? (
+            <Link
+              to={`${sellerPath}?tab=portfolio`}
+              className="dn-btn dn-btn--ghost dn-btn--sm"
+            >
+              <Images size={14} /> Portfolio
+            </Link>
+          ) : (
+            <Link
+              to={`${sellerPath}?tab=reviews`}
+              className="dn-btn dn-btn--ghost dn-btn--sm"
+            >
+              <MessageSquareText size={14} /> Reviews
+            </Link>
+          )}
+        </div>
+      )}
     </section>
   );
 }

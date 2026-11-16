@@ -12,7 +12,14 @@ export default function BuyRedirect() {
   const id = encodeURIComponent(productId || "");
   const member = `/user-marketplace/product/${id}`;
   const maker = `/remaker-marketplace/product/${id}`;
-  const wantsMaker = q.get("as") === "remaker";
+  /* ?as=remaker says it outright; otherwise a visitor who came from a ReMaker page is a ReMaker. */
+  let fromMaker = false;
+  try {
+    fromMaker = /^\/remaker/.test(new URL(document.referrer).pathname);
+  } catch {
+    /* no referrer */
+  }
+  const wantsMaker = q.get("as") ? q.get("as") === "remaker" : fromMaker;
 
   if (wantsMaker ? has("remaker") : has("user")) {
     return <Navigate to={wantsMaker ? maker : member} replace />;

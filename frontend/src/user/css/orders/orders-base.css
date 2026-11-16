@@ -377,6 +377,23 @@
   color: var(--dn-muted);
   font-size: 12.5px;
 }
+.ob-help .ob-help-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  color: var(--dn-text);
+  font-weight: 600;
+}
+.ob-help .ob-help-open svg {
+  flex: 0 0 auto;
+  color: var(--dn-p);
+}
+.ob-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 @media (max-width: 1100px) {
   .ob-layout {

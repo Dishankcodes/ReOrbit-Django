@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import Q
 
 from apps.core.models import PublicIdModel, TimeStampedModel
+from apps.core.validators import validate_image
 
 
 class SupportTicket(PublicIdModel, TimeStampedModel):
@@ -65,6 +66,17 @@ class TicketMessage(TimeStampedModel):
             | Q(sender_type="admin", admin__isnull=False, user__isnull=True, remaker__isnull=True)
             | Q(sender_type="system", user__isnull=True, remaker__isnull=True, admin__isnull=True)
         ), name="ticket_message_one_sender"), models.CheckConstraint(condition=~Q(text="", attachment_url=""), name="ticket_message_has_content")]
+
+
+class TicketAttachment(TimeStampedModel):
+    """A photo sent with a ticket message (damage, packaging, a screenshot). Up to 3 per message."""
+
+    message = models.ForeignKey(TicketMessage, on_delete=models.CASCADE, related_name="attachments")
+    image = models.ImageField(upload_to="support/", validators=[validate_image])
+
+    class Meta:
+        db_table = "support_ticket_attachments"
+        ordering = ["id"]
 
 
 class SupportTicketAdminRead(TimeStampedModel):

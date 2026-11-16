@@ -146,6 +146,7 @@ export async function createTicket({
   priority,
   relatedOrder,
   description,
+  photos,
 }) {
   return createSupportTicket("remaker", {
     subject,
@@ -153,6 +154,7 @@ export async function createTicket({
     priority,
     relatedOrder,
     description,
+    photos,
   });
 }
 

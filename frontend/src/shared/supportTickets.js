@@ -81,16 +81,18 @@ function normalizeMessage(message, scope) {
 
 function normalizeTicket(ticket, scope) {
   const requesterType = ticket.requester?.type || (scope === "admin" ? "user" : scope);
+  const messages = Array.isArray(ticket.messages)
+    ? ticket.messages.map((message) => normalizeMessage(message, scope))
+    : [];
   return {
     ...ticket,
     id: String(ticket.id),
     orderId: ticket.orderId || "",
     relatedOrder: ticket.orderId || "",
     source: requesterType === "remaker" ? "ReMaker" : "User",
-    photos: [], // The existing base64 photo upload is deferred; ticket text/status/replies are persisted.
-    messages: Array.isArray(ticket.messages)
-      ? ticket.messages.map((message) => normalizeMessage(message, scope))
-      : [],
+    /* every photo sent on this ticket, oldest first (each message also carries its own) */
+    photos: messages.flatMap((message) => message.photos || []),
+    messages,
     messagesLoaded: ticket.messagesLoaded ?? Array.isArray(ticket.messages),
   };
 }
@@ -348,14 +350,37 @@ export function useSupportStatus(scope, id = null, filters = {}) {
   };
 }
 
+/* Photos arrive as File objects or as the data URLs the previews use; the server takes real files. */
+async function toFiles(photos) {
+  const out = [];
+  for (const [index, item] of (photos || []).entries()) {
+    if (typeof item === "string") {
+      const blob = await (await fetch(item)).blob();
+      const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+      out.push(new File([blob], `photo-${index + 1}.${ext}`, { type: blob.type || "image/jpeg" }));
+    } else if (item) {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
 export async function createSupportTicket(scope, payload) {
-  const body = {
+  const fields = {
     subject: payload.subject,
     category: payload.category,
     message: payload.message || payload.description,
     orderId: payload.orderId || payload.relatedOrder || "",
     priority: payload.priority || "Normal",
   };
+  /* with photos the request is a form upload; without, plain JSON as before */
+  const files = await toFiles(payload.photos);
+  let body = fields;
+  if (files.length) {
+    body = new FormData();
+    Object.entries(fields).forEach(([key, value]) => body.append(key, value ?? ""));
+    files.forEach((file) => body.append("photos", file));
+  }
   const ticket = await supportApi.create(body);
   const normalized = mergeTicket(scope, ticket);
   const state = stateFor(scope);

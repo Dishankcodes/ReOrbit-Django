@@ -9196,6 +9196,23 @@
   color: var(--dn-muted);
   font-size: 12.5px;
 }
+.remaker-page-content .ob-help .ob-help-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  color: var(--dn-text);
+  font-weight: 600;
+}
+.remaker-page-content .ob-help .ob-help-open svg {
+  flex: 0 0 auto;
+  color: var(--dn-p);
+}
+.remaker-page-content .ob-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 @media (max-width: 1100px) {
   .remaker-page-content .ob-layout {

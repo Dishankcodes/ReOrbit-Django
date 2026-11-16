@@ -741,6 +741,20 @@
   object-fit: cover;
 }
 
+.hlp-msg-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.hlp-msg-photos img {
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
 .hlp-done {
   background: #f1f6f3;
   border-color: #cfe0d6;

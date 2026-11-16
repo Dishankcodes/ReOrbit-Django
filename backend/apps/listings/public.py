@@ -2,6 +2,8 @@
 
   GET home/       {stats, categories, products, remakers}  (cached 5 minutes)
   GET remakers/   active ReMakers, paged. ?q=  ?category=<name>
+  GET top-selling/  the 9 best-selling live products (units sold, never cancelled orders); filled with the newest
+                    products when fewer than 9 have sold (cached 5 minutes)
 """
 
 from django.core.cache import cache
@@ -74,12 +76,63 @@ def _hero_cards(request):
     return (picked + rest)[:3]
 
 
+def _hero_row(c, boosted=False):
+    return {"id": c["id"], "kind": c["kind"], "title": c["title"], "category": c["category"]["name"],
+            "price": c["price"], "cover": c["cover"], "boosted": boosted, "sold_out": c["sold_out"]}
+
+
 def _remaker_hero(request):
-    """Pictures the team picked for the ReMaker Home hero (empty = the page keeps its own)."""
+    """Three pictures for the ReMaker Home hero: what the team picked first, then the newest ReMaker creations,
+    then anything newest. Fewer than three only when the store has fewer products (the page then keeps its own)."""
     from apps.content import spotlight
 
+    out = [_hero_row(c, True) for c in spotlight.picks_for("remaker", request) if c["cover"]]
+    have = {r["id"] for r in out}
+    latest = [c for c in _latest_cards(request, 12) if c["cover"] and c["id"] not in have]
+    latest.sort(key=lambda c: c["kind"] != "remaker")  # stable: ReMaker creations first, newest first within
+    out += [_hero_row(c) for c in latest]
+    return out[:3]
+
+
+def _featured(request, n=6):
+    """Newest live products for the ReMaker Home "featured" strip."""
     return [{"id": c["id"], "kind": c["kind"], "title": c["title"], "category": c["category"]["name"],
-             "price": c["price"], "cover": c["cover"]} for c in spotlight.picks_for("remaker", request) if c["cover"]]
+             "price": c["price"], "cover": c["cover"], "city": c.get("city", ""), "sold_out": c["sold_out"],
+             "seller": c["seller"]["name"]} for c in _latest_cards(request, n) if c["cover"]]
+
+
+def _top_selling(request, n=9):
+    """Best sellers by units on orders that were not cancelled or failed. Sold-out products stay (they sold out
+    because they sold well); a product that is no longer for sale is skipped."""
+    bad = (Order.Status.CANCELLED, Order.Status.DELIVERY_FAILED, Order.Status.RETURNED_TO_ORIGIN, Order.Status.PENDING_PAYMENT)
+    grouped = (OrderItem.objects.exclude(order__status__in=bad).order_by().values("kind", "ref_id")
+               .annotate(units=Sum("qty")).order_by("-units")[: n * 4])
+    wanted = {"item": [], "remaker_product": [], "admin_item": []}
+    units = {}
+    for g in grouped:
+        wanted[g["kind"]].append(g["ref_id"])
+        units[g["ref_id"]] = g["units"]
+    found = {}
+    for kind, qs, key in (("user", _user_qs().select_related("category", "user"), "item"),
+                          ("remaker", _remaker_qs().select_related("category", "remaker"), "remaker_product"),
+                          ("admin", _admin_qs().select_related("category", "admin"), "admin_item")):
+        if wanted[key]:
+            for o in qs.filter(public_id__in=wanted[key]).prefetch_related("images"):
+                found[o.public_id] = card(kind, o, request)
+    cards = []
+    for ref, u in sorted(units.items(), key=lambda kv: -kv[1]):
+        if ref in found and found[ref]["cover"]:
+            cards.append({**found[ref], "units_sold": u})
+        if len(cards) == n:
+            break
+    if len(cards) < n:  # not enough sales yet: fill with the newest so the section is never half empty
+        have = {c["id"] for c in cards}
+        for c in _latest_cards(request, n + len(cards)):
+            if c["id"] not in have and c["cover"]:
+                cards.append({**c, "units_sold": 0})
+            if len(cards) == n:
+                break
+    return cards
 
 
 def _build_home(request):
@@ -103,6 +156,7 @@ def _build_home(request):
                        for (n, s), c in sorted(counts.items(), key=lambda kv: -kv[1])[:6]],
         "products": _hero_cards(request),
         "remaker_hero": _remaker_hero(request),
+        "featured": _featured(request),
         "remakers": [_remaker_row(r, request, r.n) for r in top],
     }
 
@@ -151,3 +205,17 @@ class RemakersView(APIView):
                 main.setdefault(row["remaker_id"], row["category__name"])
         return pager.get_paginated_response(
             [_remaker_row(r, request, r.n, main.get(r.pk, "")) for r in page])
+
+
+class TopSellingView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @method_decorator(cache_control(max_age=60, public=True))
+    def get(self, request):
+        key = "public_top_selling:" + request.get_host()
+        data = cache.get(key)
+        if data is None:
+            data = {"products": _top_selling(request)}
+            cache.set(key, data, TTL)
+        return ok(data)

@@ -26,6 +26,7 @@ import { sellerPath } from "../../data/ordersStore";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import useToast from "../../components/ui/useToast";
 
 import "../../css/shared/ui-base.css";
@@ -47,15 +48,16 @@ function WishCard({ item, stock, onRemove, onAdded }) {
   return (
     <article className={`wl-card ${stock.purchasable ? "" : "is-off"}`}>
       <div
-        className="wl-media"
+        className={`wl-media ${soldOutClass(!stock.purchasable && !stock.own)}`}
         onClick={open}
         role="link"
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && open()}
       >
         <SafeImage src={item.image} alt={item.title} />
-        {!stock.purchasable && (
-          <span className="wl-off">{stock.own ? "Your listing" : "Sold"}</span>
+        <SoldOutTag show={!stock.purchasable && !stock.own} />
+        {!stock.purchasable && stock.own && (
+          <span className="wl-off">Your listing</span>
         )}
         {remaker && <span className="wl-tag">ReMaker</span>}
         <button

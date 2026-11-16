@@ -34,6 +34,7 @@ import { useNotifications } from "../data/notificationsStore";
 import { useCartCount } from "../data/shopStore";
 import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 
+import { useSidebarSearch } from "../../shared/components/SidebarSearch";
 import "./UserSidebar.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
 import { mediaUrl } from "../../api/profile";
@@ -46,6 +47,7 @@ const mainMenu = [
   },
   {
     label: "Marketplace",
+    words: "shop buy browse products",
     path: "/user-marketplace",
     icon: Store,
   },
@@ -61,6 +63,7 @@ const mainMenu = [
   },
   {
     label: "Wishlist",
+    words: "saved favourites",
     path: "/user-wishlist",
     icon: Heart,
   },
@@ -99,6 +102,7 @@ const communityMenu = [
 const sellingMenu = [
   {
     label: "Add Product / Sell Item",
+    words: "sell new listing create upload",
     path: "/user-sell/new",
     icon: PackagePlus,
   },
@@ -109,11 +113,13 @@ const sellingMenu = [
   },
   {
     label: "Selling Orders",
+    words: "sales sold orders received",
     path: "/user-sell/sales",
     icon: ClipboardList,
   },
   {
     label: "Wallet & Payouts",
+    words: "money earnings payout balance",
     path: "/user-wallet",
     icon: Wallet,
   },
@@ -252,6 +258,16 @@ export default function UserSidebar({
 
   const { pathname } = useLocation();
 
+  const search = useSidebarSearch(
+    [...mainMenu, ...communityMenu, ...sellingMenu, ...rewardMenu, ...supportMenu],
+    {
+      storageKey: "reorbit_user_recent",
+      pathname,
+      navigate,
+      onPicked: handleNavigation,
+    },
+  );
+
   /* Several menu items share a path prefix (My Listings / Add Product / Selling Orders,
      Orbit Points / Rewards & Vouchers). Only the closest one is highlighted. */
   const isItemActive = (item) => {
@@ -340,8 +356,19 @@ export default function UserSidebar({
         </button>
       </div>
 
+      {search.box}
+
       {/* Navigation */}
       <nav className="user-sidebar-navigation">
+        {search.query ? (
+          <div className="user-sidebar-section">
+            <span className="user-sidebar-section-label">
+              {search.results.length ? "RESULTS" : "NO MATCHES"}
+            </span>
+            {search.results.map(renderMenuItem)}
+          </div>
+        ) : (
+          <>
         <div className="user-sidebar-section">
           <span className="user-sidebar-section-label">MAIN MENU</span>
 
@@ -393,6 +420,8 @@ export default function UserSidebar({
             <span className="user-sidebar-link-text">Logout</span>
           </button>
         </div>
+          </>
+        )}
       </nav>
 
       {/* User Profile */}

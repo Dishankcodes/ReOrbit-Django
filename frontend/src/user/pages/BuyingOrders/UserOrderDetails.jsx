@@ -5,7 +5,6 @@ import { Link, useParams } from "../../../shared/portalRouter";
 import {
   Ban,
   CalendarDays,
-  CircleHelp,
   CreditCard,
   FileText,
   MapPin,
@@ -40,6 +39,7 @@ import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
 import CancelOrderModal from "./components/CancelOrderModal";
 import SellerCard from "./components/SellerCard";
+import OrderHelp from "./components/OrderHelp";
 import OrderStepper from "./components/OrderStepper";
 import { StatusBadge } from "./components/OrderBadges";
 import { Stars } from "../../components/ui/Stars";
@@ -393,20 +393,7 @@ export default function UserOrderDetails() {
             </section>
           )}
 
-          <section className="dn-card dn-card-pad ob-help">
-            <CircleHelp size={22} />
-            <div>
-              <strong>Need help with this order?</strong>
-              <p>Delivery, returns or refunds, we're here to help.</p>
-              <Link to={`/user-help/contact?order=${order.id}`} className="dn-link">
-                Raise a ticket about this order →
-              </Link>
-              <br />
-              <Link to="/user-help" className="dn-link">
-                Open Help & FAQ →
-              </Link>
-            </div>
-          </section>
+          <OrderHelp order={order} />
 
           <Link
             to="/user-orders"

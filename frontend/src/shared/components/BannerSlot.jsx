@@ -11,6 +11,11 @@ import {
 import BannerCard from "./BannerCard";
 
 export default function BannerSlot({ placement, viewer }) {
+  /* A "Buy now" link clicked on a ReMaker page must open the ReMaker side (and its login), whoever the banner is for. */
+  const forSide = (link) =>
+    /^\/buy\//.test(link) && /^ReMaker/.test(viewer || "") && !/[?&]as=/.test(link)
+      ? `${link}${link.includes("?") ? "&" : "?"}as=remaker`
+      : link;
   const banners = useLiveBanners(placement, viewer);
   const [index, setIndex] = useState(0);
   const navigate = useNavigate();
@@ -33,7 +38,7 @@ export default function BannerSlot({ placement, viewer }) {
     if (!b.link) return;
     trackBannerClick(b.id);
     if (/^https?:/.test(b.link)) window.open(b.link, "_blank", "noopener");
-    else navigate(b.link);
+    else navigate(forSide(b.link));
   };
 
   return (

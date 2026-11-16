@@ -1647,3 +1647,29 @@
   background: #400808;
   color: #fff;
 }
+
+
+/* Whole product card opens the product (through the login-and-return link) */
+.rm-product-image {
+  position: relative;
+}
+.rm-product-link {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+.rm-soldout {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #5d080b;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}

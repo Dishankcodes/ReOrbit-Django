@@ -1,4 +1,5 @@
 import { isSignedIn } from "../../../api/session";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
@@ -91,6 +92,7 @@ function useHomeData() {
     impact: "",
     category: p.category.name,
     image: p.cover,
+    soldOut: !!p.sold_out,
   }));
   const products = [...live, ...HERO_DEFAULT.slice(live.length)];
   const categories = real?.categories?.length
@@ -135,8 +137,9 @@ function Icon({ children, className = "" }) {
 function ProductCard({ product, className }) {
   return (
     <article className={`hero-product ${className}`}>
-      <div className="hero-product-image">
+      <div className={`hero-product-image ${soldOutClass(product.soldOut)}`}>
         <img src={product.image} alt={product.title} />
+        <SoldOutTag show={product.soldOut} size="sm" />
         <span className="price-chip">{product.price}</span>
         <span className="category-chip">{product.category}</span>
         {product.id && (

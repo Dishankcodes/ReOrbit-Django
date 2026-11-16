@@ -41,6 +41,7 @@ import {
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import MessageButton from "../../components/ui/MessageButton";
 import { sellerChat } from "../../data/messageTargets";
 
@@ -191,8 +192,14 @@ export default function UserProductDetails() {
       </nav>
 
       <section className="pd-hero">
-        <div className="pd-gallery">
+        <div
+          className={`pd-gallery ${soldOutClass(Boolean(item.soldOut) || stock?.available <= 0)}`}
+        >
           <SafeImage src={item.image} alt={item.title} />
+          <SoldOutTag
+            size="lg"
+            show={Boolean(item.soldOut) || stock?.available <= 0}
+          />
           <span className={`pd-type ${isMaker ? "maker" : ""}`}>
             {isMaker ? (
               <>

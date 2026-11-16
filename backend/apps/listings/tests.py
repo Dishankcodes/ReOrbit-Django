@@ -257,3 +257,17 @@ class DeliveryFeeRules(APIBase):
         self.assertEqual(values.get("delivery_fee"), 80)
         values, errors = clean_listing({"pickup_preference": Item.Pickup.SELLER_HANDOVER, "delivery_fee": "80"})
         self.assertIsNone(values.get("delivery_fee"))
+
+
+class PublicTopSellingTests(APIBase):
+    def test_top_selling_is_public_and_never_more_than_nine(self):
+        r = self.get("/api/public/top-selling/")
+        self.assertEqual(r.status_code, 200)
+        products = r.data["data"]["products"]
+        self.assertLessEqual(len(products), 9)
+
+    def test_home_gives_three_hero_pictures_and_a_featured_list(self):
+        r = self.get("/api/public/home/")
+        self.assertEqual(r.status_code, 200)
+        self.assertLessEqual(len(r.data["data"]["remaker_hero"]), 3)
+        self.assertIn("featured", r.data["data"])

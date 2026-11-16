@@ -135,6 +135,15 @@ function Thread({ ticket, ticketStatus }) {
                     <time dateTime={message.at}>{timeLabel(message.at)}</time>
                   </header>
                   <p>{message.text}</p>
+                  {(message.photos || []).length > 0 && (
+                    <div className="hlp-msg-photos">
+                      {message.photos.map((src, index) => (
+                        <a href={src} target="_blank" rel="noopener noreferrer" key={src}>
+                          <img src={src} alt={`Photo ${index + 1}`} />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

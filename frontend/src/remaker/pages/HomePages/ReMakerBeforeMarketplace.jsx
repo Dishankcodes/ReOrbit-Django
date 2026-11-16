@@ -1,171 +1,62 @@
 import React, { useMemo, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { usePublic, inr } from "../../../api/publicData";
 
-const materials = [
-  {
-    id: 1,
-    name: "Reclaimed Wooden Panels",
-    category: "Wood",
-    location: "Ahmedabad",
-    condition: "Good",
-    quantity: "24 pieces",
-    material: "Recovered timber",
-    description:
-      "Clean reclaimed wooden panels suitable for furniture, shelves, decor and small restoration projects.",
-    image:
-      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 2,
-    name: "Salvaged Chair Frames",
-    category: "Furniture",
-    location: "Pune",
-    condition: "Repairable",
-    quantity: "12 frames",
-    material: "Wood & metal",
-    description:
-      "Old chair frames available for repair, redesign and creative furniture projects.",
-    image:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 3,
-    name: "Glass Containers",
-    category: "Glass",
-    location: "Mumbai",
-    condition: "Good",
-    quantity: "60 pieces",
-    material: "Glass",
-    description:
-      "Reusable glass containers that can be transformed into lighting, storage and decorative pieces.",
-    image:
-      "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 4,
-    name: "Metal Hardware Collection",
-    category: "Metal",
-    location: "Bengaluru",
-    condition: "Good",
-    quantity: "150+ pieces",
-    material: "Mixed metal",
-    description:
-      "Recovered handles, brackets, hinges and other hardware for restoration and new creations.",
-    image:
-      "https://images.pexels.com/photos/9316208/pexels-photo-9316208.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 5,
-    name: "Fabric Offcuts",
-    category: "Textile",
-    location: "Jaipur",
-    condition: "Good",
-    quantity: "18 kg",
-    material: "Mixed fabric",
-    description:
-      "Fabric remnants suitable for cushions, bags, patchwork, soft furnishings and creative projects.",
-    image:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 6,
-    name: "Old Wooden Drawers",
-    category: "Wood",
-    location: "Delhi",
-    condition: "Repairable",
-    quantity: "18 drawers",
-    material: "Solid wood",
-    description:
-      "Recovered drawers that can become shelves, planters, storage units or decorative installations.",
-    image:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 7,
-    name: "Electronic Components",
-    category: "Electronics",
-    location: "Hyderabad",
-    condition: "Mixed",
-    quantity: "Various parts",
-    material: "Electronic components",
-    description:
-      "Recovered components and parts intended for repair, experimentation and creative reuse.",
-    image:
-      "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-  {
-    id: 8,
-    name: "Ceramic Pieces",
-    category: "Ceramic",
-    location: "Ahmedabad",
-    condition: "Mixed",
-    quantity: "35 pieces",
-    material: "Ceramic",
-    description:
-      "Recovered ceramic pieces that can be incorporated into mosaics, decor and artistic projects.",
-    image:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  },
-];
-
-const categories = [
-  "All",
-  "Wood",
-  "Furniture",
-  "Glass",
-  "Metal",
-  "Textile",
-  "Electronics",
-  "Ceramic",
-];
+/* Best sellers come from the backend: the 9 products with the most units sold (newest fill any gaps). */
+const KIND_LABEL = {
+  user: "Community listing",
+  remaker: "ReMaker creation",
+  admin: "ReOrbit refurbished",
+};
 
 export default function ReMakerBeforeMarketplace() {
+  const { data, loading } = usePublic("/top-selling/");
+  const { data: home } = usePublic("/home/");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [location, setLocation] = useState("All locations");
-  const [condition, setCondition] = useState("All conditions");
+
+  const products = useMemo(() => data?.products || [], [data]);
+  const categories = useMemo(
+    () => [
+      "All",
+      ...Array.from(new Set(products.map((p) => p.category?.name))).filter(
+        Boolean,
+      ),
+    ],
+    [products],
+  );
 
   const filteredMaterials = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
-
-    return materials.filter((item) => {
+    return products.filter((item) => {
       const matchesSearch =
         !searchValue ||
-        item.name.toLowerCase().includes(searchValue) ||
-        item.category.toLowerCase().includes(searchValue) ||
-        item.location.toLowerCase().includes(searchValue) ||
-        item.material.toLowerCase().includes(searchValue);
-
+        item.title.toLowerCase().includes(searchValue) ||
+        (item.category?.name || "").toLowerCase().includes(searchValue) ||
+        (item.city || "").toLowerCase().includes(searchValue) ||
+        (item.seller?.name || "").toLowerCase().includes(searchValue);
       const matchesCategory =
-        activeCategory === "All" || item.category === activeCategory;
-
-      const matchesLocation =
-        location === "All locations" || item.location === location;
-
-      const matchesCondition =
-        condition === "All conditions" || item.condition === condition;
-
-      return (
-        matchesSearch && matchesCategory && matchesLocation && matchesCondition
-      );
+        activeCategory === "All" || item.category?.name === activeCategory;
+      return matchesSearch && matchesCategory;
     });
-  }, [search, activeCategory, location, condition]);
+  }, [products, search, activeCategory]);
 
   const clearFilters = () => {
     setSearch("");
     setActiveCategory("All");
-    setLocation("All locations");
-    setCondition("All conditions");
   };
+
+  const stats = home?.stats;
+  const num = (n) => (stats ? Number(n || 0).toLocaleString("en-IN") : "—");
 
   return (
     <>
       <style>{`
         .remaker-before-marketplace {
           --rbm-maroon: #270809;
-          --rbm-green: #08271f;
-          --rbm-green-soft: #47645a;
+          --rbm-green: #400808;
+          --rbm-green-soft: #7a5658;
           --rbm-sage: #c1c8c4;
           --rbm-light: #e3e2e0;
           --rbm-background: #faf9f7;
@@ -500,7 +391,7 @@ export default function ReMakerBeforeMarketplace() {
         .remaker-before-marketplace .rbm-select:focus {
           border-color: var(--rbm-green);
           background: var(--rbm-white);
-          box-shadow: 0 0 0 3px rgba(8, 39, 31, 0.07);
+          box-shadow: 0 0 0 3px rgba(64, 8, 8, 0.08);
         }
 
         .remaker-before-marketplace .rbm-clear-search {
@@ -654,6 +545,15 @@ export default function ReMakerBeforeMarketplace() {
           color: var(--rbm-green);
         }
 
+        .remaker-before-marketplace .rbm-badge-soldout {
+          right: 12px;
+          top: 12px;
+          background: #5d080b;
+          color: #fff;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
         .remaker-before-marketplace .rbm-badge-condition {
           right: 14px;
           background: rgba(39, 8, 9, 0.9);
@@ -793,7 +693,7 @@ export default function ReMakerBeforeMarketplace() {
         }
 
         .remaker-before-marketplace .rbm-how-head .rbm-eyebrow {
-          color: var(--rbm-sage);
+          color: #e6d2d2;
         }
 
         .remaker-before-marketplace .rbm-how-head h2 {
@@ -824,7 +724,7 @@ export default function ReMakerBeforeMarketplace() {
         .remaker-before-marketplace .rbm-step {
           display: block;
           margin-bottom: 35px;
-          color: var(--rbm-sage);
+          color: #e6d2d2;
           font-size: 0.65rem;
           font-weight: 800;
           letter-spacing: 0.12em;
@@ -840,7 +740,7 @@ export default function ReMakerBeforeMarketplace() {
           border: 1px solid rgba(255, 255, 255, 0.18);
           border-radius: 13px;
           background: rgba(255, 255, 255, 0.05);
-          color: var(--rbm-sage);
+          color: #e6d2d2;
         }
 
         .remaker-before-marketplace .rbm-how-icon .material-symbols-outlined {
@@ -1137,14 +1037,14 @@ export default function ReMakerBeforeMarketplace() {
                   </h1>
 
                   <p className="rbm-hero-description">
-                    Browse rescued, reusable and overlooked materials available
-                    through the ReOrbit network. Find something useful for your
-                    next creation and give it another orbit.
+                    See what ReOrbit shoppers are buying most. Browse the
+                    best-selling pieces from members, ReMakers and the ReOrbit
+                    store, and find inspiration for your next creation.
                   </p>
 
                   <div className="rbm-hero-actions">
                     <a href="#materials" className="rbm-primary-button">
-                      Browse materials
+                      See best sellers
                       <span className="material-symbols-outlined rbm-button-icon">
                         arrow_downward
                       </span>
@@ -1159,8 +1059,11 @@ export default function ReMakerBeforeMarketplace() {
                 <div className="rbm-hero-image-wrap">
                   <div className="rbm-hero-image">
                     <img
-                      src="https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                      alt="Creative materials and reusable objects"
+                      src={
+                        products[0]?.cover ||
+                        "https://images.pexels.com/photos/7679454/pexels-photo-7679454.jpeg?auto=compress&cs=tinysrgb&w=1000"
+                      }
+                      alt={products[0]?.title || "Creative materials and reusable objects"}
                     />
                   </div>
 
@@ -1172,8 +1075,8 @@ export default function ReMakerBeforeMarketplace() {
                     </div>
 
                     <div>
-                      <strong>Materials in motion</strong>
-                      <span>Find something ready for another purpose.</span>
+                      <strong>Most loved right now</strong>
+                      <span>Top sellers across ReOrbit.</span>
                     </div>
                   </div>
                 </div>
@@ -1185,18 +1088,18 @@ export default function ReMakerBeforeMarketplace() {
             <div className="rbm-container">
               <div className="rbm-stats-grid">
                 <div className="rbm-stat">
-                  <strong>250+</strong>
-                  <span>Materials available</span>
+                  <strong>{num(stats?.live_products)}</strong>
+                  <span>Products available</span>
                 </div>
 
                 <div className="rbm-stat">
-                  <strong>18</strong>
-                  <span>Material categories</span>
+                  <strong>{num(stats?.remakers)}</strong>
+                  <span>Active ReMakers</span>
                 </div>
 
                 <div className="rbm-stat">
-                  <strong>25+</strong>
-                  <span>Pickup locations</span>
+                  <strong>{num(stats?.items_rescued)}</strong>
+                  <span>Items rescued</span>
                 </div>
 
                 <div className="rbm-stat">
@@ -1210,13 +1113,13 @@ export default function ReMakerBeforeMarketplace() {
           <section className="rbm-materials" id="materials">
             <div className="rbm-container">
               <div className="rbm-section-heading">
-                <span className="rbm-eyebrow">Explore the collection</span>
+                <span className="rbm-eyebrow">Top 9 best sellers</span>
 
-                <h2>Materials waiting for a new idea.</h2>
+                <h2>What everyone is buying.</h2>
 
                 <p>
-                  Search through available materials and discover what could
-                  become your next creation.
+                  The most-sold products on ReOrbit right now. Open one to see
+                  it in your ReMaker account; we will ask you to log in first.
                 </p>
               </div>
 
@@ -1227,7 +1130,7 @@ export default function ReMakerBeforeMarketplace() {
                   <input
                     type="text"
                     value={search}
-                    placeholder="Search materials, categories or locations..."
+                    placeholder="Search products, categories or sellers..."
                     onChange={(event) => setSearch(event.target.value)}
                   />
 
@@ -1242,59 +1145,31 @@ export default function ReMakerBeforeMarketplace() {
                     </button>
                   )}
                 </div>
-
-                <select
-                  className="rbm-select"
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                >
-                  <option>All locations</option>
-                  <option>Ahmedabad</option>
-                  <option>Pune</option>
-                  <option>Mumbai</option>
-                  <option>Bengaluru</option>
-                  <option>Jaipur</option>
-                  <option>Delhi</option>
-                  <option>Hyderabad</option>
-                </select>
-
-                <select
-                  className="rbm-select"
-                  value={condition}
-                  onChange={(event) => setCondition(event.target.value)}
-                >
-                  <option>All conditions</option>
-                  <option>Good</option>
-                  <option>Repairable</option>
-                  <option>Mixed</option>
-                </select>
               </div>
 
-              <div className="rbm-categories">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    className={`rbm-category ${
-                      activeCategory === category ? "active" : ""
-                    }`}
-                    onClick={() => setActiveCategory(category)}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+              {categories.length > 2 && (
+                <div className="rbm-categories">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      className={`rbm-category ${
+                        activeCategory === category ? "active" : ""
+                      }`}
+                      onClick={() => setActiveCategory(category)}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="rbm-results-bar">
                 <div className="rbm-result-count">
-                  <strong>{filteredMaterials.length}</strong> materials
-                  available
+                  <strong>{filteredMaterials.length}</strong> products
                 </div>
 
-                {(search ||
-                  activeCategory !== "All" ||
-                  location !== "All locations" ||
-                  condition !== "All conditions") && (
+                {(search || activeCategory !== "All") && (
                   <button
                     type="button"
                     className="rbm-reset"
@@ -1310,18 +1185,26 @@ export default function ReMakerBeforeMarketplace() {
 
               {filteredMaterials.length > 0 ? (
                 <div className="rbm-grid">
-                  {filteredMaterials.map((item) => (
+                  {filteredMaterials.map((item, i) => (
                     <article className="rbm-card" key={item.id}>
                       <div className="rbm-card-image">
-                        <img src={item.image} alt={item.name} />
+                        <img src={item.cover} alt={item.title} />
 
                         <span className="rbm-badge rbm-badge-category">
-                          {item.category}
+                          {item.category?.name}
                         </span>
 
-                        <span className="rbm-badge rbm-badge-condition">
-                          {item.condition}
-                        </span>
+                        {item.sold_out ? (
+                          <span className="rbm-badge rbm-badge-soldout">
+                            Sold out
+                          </span>
+                        ) : (
+                          item.units_sold > 0 && (
+                            <span className="rbm-badge rbm-badge-condition">
+                              #{i + 1} · {item.units_sold} sold
+                            </span>
+                          )
+                        )}
                       </div>
 
                       <div className="rbm-card-body">
@@ -1330,30 +1213,35 @@ export default function ReMakerBeforeMarketplace() {
                             <span className="material-symbols-outlined">
                               location_on
                             </span>
-                            {item.location}
+                            {item.city || "Gujarat"}
                           </span>
 
                           <span>
                             <span className="material-symbols-outlined">
                               inventory_2
                             </span>
-                            {item.quantity}
+                            {item.sold_out
+                              ? "Out of stock"
+                              : `${item.stock} in stock`}
                           </span>
                         </div>
 
-                        <h3>{item.name}</h3>
+                        <h3>{item.title}</h3>
 
-                        <p>{item.description}</p>
+                        <p>{item.summary || `${inr(item.price)}`}</p>
 
                         <div className="rbm-card-footer">
                           <span className="rbm-material-type">
                             <span className="material-symbols-outlined">
-                              recycling
+                              sell
                             </span>
-                            {item.material}
+                            {inr(item.price)} · {KIND_LABEL[item.kind]}
                           </span>
 
-                          <a href="/remakers-auth" className="rbm-view">
+                          <a
+                            href={`/buy/${encodeURIComponent(item.id)}?as=remaker`}
+                            className="rbm-view"
+                          >
                             View
                             <span className="material-symbols-outlined">
                               arrow_forward
@@ -1366,18 +1254,25 @@ export default function ReMakerBeforeMarketplace() {
                 </div>
               ) : (
                 <div className="rbm-empty">
-                  <span className="material-symbols-outlined">search_off</span>
+                  <span className="material-symbols-outlined">
+                    {loading ? "hourglass_top" : "search_off"}
+                  </span>
 
-                  <h3>No materials found</h3>
+                  <h3>{loading ? "Loading best sellers…" : "Nothing to show yet"}</h3>
 
                   <p>
-                    Try another search term or remove some filters to explore
-                    more available materials.
+                    {loading
+                      ? "One moment."
+                      : products.length
+                        ? "Try another search term or remove the filter."
+                        : "Best sellers will appear here as soon as products are live."}
                   </p>
 
-                  <button type="button" onClick={clearFilters}>
-                    Reset filters
-                  </button>
+                  {products.length > 0 && (
+                    <button type="button" onClick={clearFilters}>
+                      Reset filters
+                    </button>
+                  )}
                 </div>
               )}
             </div>

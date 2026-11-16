@@ -36,6 +36,7 @@ import BannerSlot from "../../../shared/components/BannerSlot";
 import { SkeletonCards } from "../../../shared/components/Skeleton";
 import { useLiveMarketplace } from "../../data/liveMarketplace";
 import SafeImage from "../../components/ui/SafeImage";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 
 import "../../css/shared/ui-base.css";
 import "../../../shared/components/Skeleton.css";
@@ -64,6 +65,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   const stock = useStockOf()(item);
   const inCart = useInCart(item.id);
   const isMaker = item.sellerType === "remaker";
+  const off = Boolean(item.soldOut) || stock.available <= 0;
 
   const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
   const openSeller = (e) => {
@@ -78,7 +80,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   return (
     <article className="mk-card">
       <div
-        className="mk-media"
+        className={`mk-media ${soldOutClass(off)}`}
         role="button"
         tabIndex={0}
         onClick={openProduct}
@@ -90,6 +92,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
         }}
       >
         <SafeImage src={item.image} alt={item.title} />
+        <SoldOutTag show={off} />
         <span className={`mk-type ${isMaker ? "maker" : ""}`}>
           {isMaker ? (
             <>
@@ -196,11 +199,7 @@ export default function UserMarketplace() {
   const base = useMemo(
     () =>
       ITEMS.filter(
-        (item) =>
-          /* ReOrbit's store is shared by every admin, so no admin hides it as "their own" */
-          item.sellerType === "admin" ||
-          !ownSellerId ||
-          String(item.sellerId) !== String(ownSellerId),
+        (item) => !ownSellerId || String(item.sellerId) !== String(ownSellerId),
       ),
     [live.version, ownSellerId],
   );

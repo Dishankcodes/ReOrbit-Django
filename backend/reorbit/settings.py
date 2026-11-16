@@ -461,3 +461,19 @@ LOGGING = {
         "level": os.getenv("LOG_LEVEL", "INFO"),
     },
 }
+
+
+# REORBIT'S OWN DETAILS
+# Shown on orders sold by ReOrbit itself (the "Sold by" card). Set these in .env for the
+# real company address; the defaults are the warehouse address used across the admin.
+
+REORBIT_STORE = {
+    "name": os.getenv("REORBIT_STORE_NAME", "ReOrbit").strip() or "ReOrbit",
+    "address_line": os.getenv(
+        "REORBIT_STORE_ADDRESS", "Plot 14, Orbit Industrial Park, Sarkhej"
+    ).strip(),
+    "city": os.getenv("REORBIT_STORE_CITY", "Ahmedabad").strip(),
+    "state": os.getenv("REORBIT_STORE_STATE", "Gujarat").strip(),
+    "pincode": os.getenv("REORBIT_STORE_PINCODE", "382210").strip(),
+    "phone": os.getenv("REORBIT_STORE_PHONE", "1800 000 1234").strip(),
+}

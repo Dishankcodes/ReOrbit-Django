@@ -1,9 +1,10 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import SoldOutTag from "../../../shared/components/SoldOutTag";
 import BannerSlot from "../../../shared/components/BannerSlot";
 import { isSignedIn } from "../../../api/session";
-import { usePublic } from "../../../api/publicData";
+import { usePublic, inr, initialsImage } from "../../../api/publicData";
 import "../../css/ReMakers.css";
 
 /* The three hero photos. Products the team boosts in Admin > Content replace these by position. */
@@ -170,8 +171,45 @@ export default function ReMakers() {
   const viewer = isSignedIn("remaker") ? "ReMakers" : "ReMaker visitors";
   const picks = (data?.remaker_hero || []).filter((p) => p.cover);
   const photos = HERO_PHOTOS.map((d, i) =>
-    picks[i] ? { src: picks[i].cover, alt: picks[i].title, id: picks[i].id } : d,
+    picks[i]
+      ? { src: picks[i].cover, alt: picks[i].title, id: picks[i].id, soldOut: picks[i].sold_out }
+      : d,
   );
+  /* Real products, ReMakers and numbers from the backend; the sample content stays only until there is data. */
+  const liveProducts = (data?.featured || []).map((f) => ({
+    id: f.id,
+    title: f.title,
+    category: f.category,
+    price: inr(f.price),
+    location: f.city || "Gujarat",
+    image: f.cover,
+    material: f.seller,
+    soldOut: f.sold_out,
+  }));
+  const shownProducts = liveProducts.length ? liveProducts : featuredProducts;
+  const liveMakers = (data?.remakers || []).map((r) => ({
+    name: r.name,
+    specialty: r.specialty || "ReMaker",
+    location: r.city || "Gujarat",
+    image: r.image || initialsImage(r.name),
+    quote: r.bio || `${r.creations} creation${r.creations === 1 ? "" : "s"} on ReOrbit.`,
+  }));
+  const shownMakers = liveMakers.length ? liveMakers : makers;
+  const st = data?.stats;
+  const n = (v) => Number(v || 0).toLocaleString("en-IN");
+  const statRows = st
+    ? [
+        [n(st.remakers), "ReMakers on ReOrbit"],
+        [n(st.items_rescued), "Items given another purpose"],
+        [n(st.live_products), "Products available right now"],
+        [n(st.members), "Members shopping on ReOrbit"],
+      ]
+    : [
+        ["1,200+", "ReMakers discovering new material"],
+        ["8.4k", "Items given another purpose"],
+        ["32k kg", "Material kept in circulation"],
+        ["4.9/5", "Average ReMaker community rating"],
+      ];
   return (
     <div className="remaker-page rm-page">
       <Navbar />
@@ -251,7 +289,8 @@ export default function ReMakers() {
                     className={`rm-photo ${i === 1 ? "rm-photo-raised" : ""}`}
                   >
                     <img src={p.src} alt={p.alt} />
-                    {p.id && (
+                    <SoldOutTag show={p.soldOut} size="sm" />
+                    {p.id && !p.soldOut && (
                       <a className="rm-photo-buy" href={`/buy/${p.id}?as=remaker`}>
                         Buy now
                       </a>
@@ -286,25 +325,12 @@ export default function ReMakers() {
         <section className="rm-stats">
           <div className="rm-container">
             <div className="rm-stats-grid">
-              <div className="rm-stat">
-                <strong>1,200+</strong>
-                <span>ReMakers discovering new material</span>
-              </div>
-
-              <div className="rm-stat">
-                <strong>8.4k</strong>
-                <span>Items given another purpose</span>
-              </div>
-
-              <div className="rm-stat">
-                <strong>32k kg</strong>
-                <span>Material kept in circulation</span>
-              </div>
-
-              <div className="rm-stat">
-                <strong>4.9/5</strong>
-                <span>Average ReMaker community rating</span>
-              </div>
+              {statRows.map(([value, label]) => (
+                <div className="rm-stat" key={label}>
+                  <strong>{value}</strong>
+                  <span>{label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -392,10 +418,10 @@ export default function ReMakers() {
             <div className="rm-products-track">
               {/* FIRST SET */}
 
-              {featuredProducts.map((product, index) => (
+              {shownProducts.map((product, index) => (
                 <article
                   className="rm-product-card"
-                  key={`${product.title}-${index}`}
+                  key={`${product.id || product.title}-${index}`}
                 >
                   <div className="rm-product-image">
                     <img src={product.image} alt={product.title} />
@@ -405,6 +431,19 @@ export default function ReMakers() {
                     </span>
 
                     <span className="rm-product-price">{product.price}</span>
+
+                    {product.soldOut && (
+                      <span className="rm-soldout">Sold out</span>
+                    )}
+
+                    {product.id && (
+                      <a
+                        className="rm-product-link"
+                        href={`/buy/${encodeURIComponent(product.id)}?as=remaker`}
+                        aria-label={`View ${product.title}`}
+                        tabIndex={product.id ? 0 : -1}
+                      />
+                    )}
                   </div>
 
                   <div className="rm-product-content">
@@ -431,10 +470,10 @@ export default function ReMakers() {
 
               {/* DUPLICATE SET FOR INFINITE LOOP */}
 
-              {featuredProducts.map((product, index) => (
+              {shownProducts.map((product, index) => (
                 <article
                   className="rm-product-card"
-                  key={`duplicate-${product.title}-${index}`}
+                  key={`duplicate-${product.id || product.title}-${index}`}
                   aria-hidden="true"
                 >
                   <div className="rm-product-image">
@@ -445,6 +484,19 @@ export default function ReMakers() {
                     </span>
 
                     <span className="rm-product-price">{product.price}</span>
+
+                    {product.soldOut && (
+                      <span className="rm-soldout">Sold out</span>
+                    )}
+
+                    {product.id && (
+                      <a
+                        className="rm-product-link"
+                        href={`/buy/${encodeURIComponent(product.id)}?as=remaker`}
+                        aria-label={`View ${product.title}`}
+                        tabIndex={-1}
+                      />
+                    )}
                   </div>
 
                   <div className="rm-product-content">
@@ -496,7 +548,7 @@ export default function ReMakers() {
             </div>
 
             <div className="rm-maker-grid">
-              {makers.map((maker) => (
+              {shownMakers.map((maker) => (
                 <article className="rm-maker-card" key={maker.name}>
                   <div className="rm-maker-image">
                     <img src={maker.image} alt={maker.name} />

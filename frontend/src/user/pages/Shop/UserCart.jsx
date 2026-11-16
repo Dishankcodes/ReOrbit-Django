@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "../../../shared/portalRouter";
 import {
   AlertTriangle,
@@ -30,6 +30,7 @@ import "../../../shared/components/Spinner.css";
 import { feeLabel } from "../../../shared/commerce";
 import { sellerPath } from "../../data/ordersStore";
 import { formatPrice } from "../../../data/marketplaceData";
+import ConfirmModal from "../../components/ui/ConfirmModal";
 import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
@@ -46,6 +47,8 @@ export default function UserCart() {
   const cart = useCart();
   const stored = useCartCount();
   const { toast, show } = useToast();
+  /* what is waiting for an "are you sure": {clear:true} or {item} */
+  const [ask, setAsk] = useState(null);
 
   /* Only real products can be bought; the sample pieces in the demo catalogue cannot. */
   const buyable = cart.lines.filter((l) => isLiveId(l.id));
@@ -108,10 +111,7 @@ export default function UserCart() {
         <button
           type="button"
           className="ushp-textbtn danger"
-          onClick={() => {
-            clearCart();
-            show("Cart cleared.");
-          }}
+          onClick={() => setAsk({ clear: true })}
         >
           <Trash2 size={15} /> Clear cart
         </button>
@@ -204,10 +204,7 @@ export default function UserCart() {
                       <button
                         type="button"
                         className="ushp-textbtn danger"
-                        onClick={() => {
-                          removeFromCart(item.id);
-                          show("Removed from cart.");
-                        }}
+                        onClick={() => setAsk({ item })}
                       >
                         <Trash2 size={14} /> Remove
                       </button>
@@ -225,7 +222,7 @@ export default function UserCart() {
                   <button
                     type="button"
                     className="ushp-textbtn danger ushp-line-remove"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => setAsk({ item })}
                   >
                     <Trash2 size={14} /> Remove
                   </button>
@@ -312,6 +309,32 @@ export default function UserCart() {
           </ul>
         </aside>
       </div>
+
+      {ask && (
+        <ConfirmModal
+          icon={Trash2}
+          title={ask.clear ? "Clear your whole cart?" : "Remove this item?"}
+          confirmLabel={ask.clear ? "Yes, clear cart" : "Yes, remove it"}
+          cancelLabel={ask.clear ? "Keep my cart" : "Keep it"}
+          onClose={() => setAsk(null)}
+          onConfirm={() => {
+            if (ask.clear) {
+              clearCart();
+              show("Cart cleared.");
+            } else {
+              removeFromCart(ask.item.id);
+              show("Removed from cart.");
+            }
+            setAsk(null);
+          }}
+        >
+          <p>
+            {ask.clear
+              ? `All ${cart.all.length} ${cart.all.length === 1 ? "piece" : "pieces"} will be taken out of your cart.`
+              : `“${ask.item.title}” will be taken out of your cart. You can add it again later if it's still available.`}
+          </p>
+        </ConfirmModal>
+      )}
 
       {toast}
     </div>

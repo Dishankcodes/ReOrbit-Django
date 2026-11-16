@@ -112,5 +112,6 @@ export function publicProduct(c) {
     condition: c.condition || (kind === "remaker" ? "Handmade" : "New"),
     material: c.category?.name || "",
     image: c.cover,
+    soldOut: Boolean(c.sold_out),
   };
 }

@@ -233,6 +233,19 @@
 }
 
 /* ---------- one ticket, as a page ---------- */
+.sp-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sp-photos img {
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
 .sp-crumbs { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .sp-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 20px; margin-bottom: 16px; }
 .sp-top h2 { margin: 0 0 8px; font-size: 20px; color: #1f3d2d; }

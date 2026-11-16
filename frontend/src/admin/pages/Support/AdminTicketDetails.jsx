@@ -170,6 +170,15 @@ export default function AdminTicketDetails() {
                       <time dateTime={m.at}>{when(m.at)}</time>
                     </header>
                     <p>{m.text}</p>
+                    {(m.photos || []).length > 0 && (
+                      <div className="sp-photos">
+                        {m.photos.map((src, i) => (
+                          <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                            <img src={src} alt={`Photo ${i + 1}`} />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                     {m.attachmentUrl && (
                       <a className="sp-attach" href={m.attachmentUrl} target="_blank" rel="noopener noreferrer">
                         <Paperclip size={12} /> Attachment

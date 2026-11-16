@@ -11,7 +11,6 @@ import {
   UserCheck,
   UserPlus,
   Users,
-  Recycle,
   Award,
 } from "lucide-react";
 
@@ -22,6 +21,7 @@ import { formatPrice } from "../../../data/marketplaceData";
 import SafeImage from "../../components/ui/SafeImage";
 import MessageButton from "../../components/ui/MessageButton";
 import PortfolioWorkModal from "../../../shared/components/PortfolioWorkModal";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 
 import "../../css/shared/ui-base.css";
 import "../../css/marketplace-css/UserMarketplaceV2.css";
@@ -77,7 +77,7 @@ export default function ProfileShell({
   const stats = isMaker
     ? [
         [Star, person.rating, `${person.totalReviews} reviews`],
-        [Recycle, person.itemsRescued, "items rescued"],
+        [Package, products.length, "products live"],
         [Users, person.followers?.toLocaleString("en-IN"), "followers"],
         [Award, `${person.yearsOfExperience} yrs`, "experience"],
       ]
@@ -100,7 +100,15 @@ export default function ProfileShell({
       </nav>
 
       <section className="ushp-card">
-        <div className="ushp-banner" aria-hidden="true" />
+        <div
+          className={`ushp-banner ${person.coverImage ? "has-cover" : ""}`}
+          style={
+            person.coverImage
+              ? { backgroundImage: `url("${person.coverImage}")` }
+              : undefined
+          }
+          aria-hidden="true"
+        />
         <div className="ushp-id">
           <SafeImage
             className="ushp-avatar"
@@ -109,7 +117,12 @@ export default function ProfileShell({
           />
           <div className="ushp-name">
             <h1>
-              {person.name} {isMaker && <BadgeCheck size={20} />}
+              {person.name}
+              {isMaker && (
+                <span className="ushp-verified" title="Verified ReMaker">
+                  <BadgeCheck size={14} /> Verified ReMaker
+                </span>
+              )}
             </h1>
             <p>
               <span className={`ushp-role ${isMaker ? "maker" : ""}`}>
@@ -151,8 +164,10 @@ export default function ProfileShell({
         <dl className="ushp-stats">
           {stats.map(([Icon, value, label]) => (
             <div key={label}>
-              <Icon size={17} />
-              <dd>{value}</dd>
+              <span className="ushp-stat-ic">
+                <Icon size={17} />
+              </span>
+              <dd>{value ?? "-"}</dd>
               <dt>{label}</dt>
             </div>
           ))}
@@ -176,12 +191,17 @@ export default function ProfileShell({
 
       {(tab === "studio" || tab === "about") && (
         <section className="ushp-about">
-          <h2>
-            {isMaker
-              ? "About the studio"
-              : `About ${person.name.split(" ")[0]}`}
-          </h2>
-          <p>{person.bio}</p>
+          <div className="ushp-about-text">
+            <h2>
+              {isMaker
+                ? "About the studio"
+                : `About ${person.name.split(" ")[0]}`}
+            </h2>
+            <p>
+              {person.bio ||
+                `${person.name.split(" ")[0]} hasn't added a story yet.`}
+            </p>
+          </div>
           <ul>
             <li>
               <MapPin size={15} /> {person.city}
@@ -189,7 +209,8 @@ export default function ProfileShell({
             </li>
             {isMaker ? (
               <li>
-                <Recycle size={15} /> {person.itemsRescued} items rescued so far
+                <Package size={15} /> {products.length} product
+                {products.length === 1 ? "" : "s"} live right now
               </li>
             ) : (
               <li>
@@ -233,7 +254,7 @@ export default function ProfileShell({
             {products.map((p) => (
               <article className="mk-card" key={p.id}>
                 <div
-                  className="mk-media"
+                  className={`mk-media ${soldOutClass(Boolean(p.soldOut) || p.quantity < 1)}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => navigate(`/user-marketplace/product/${p.id}`)}
@@ -243,6 +264,7 @@ export default function ProfileShell({
                   }}
                 >
                   <SafeImage src={p.image} alt={p.title} />
+                  <SoldOutTag show={Boolean(p.soldOut) || p.quantity < 1} />
                   <span className="mk-cond">{p.condition}</span>
                 </div>
                 <div className="mk-body">

@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404
@@ -12,8 +13,9 @@ from apps.core import buyers
 from apps.core.responses import created, fail, ok
 from apps.admins.models import Admins
 from apps.orders.models import Order
+from apps.core.validators import validate_image
 from apps.orders.serializers import media_url
-from .models import SupportTicket, SupportTicketAdminRead, TicketMessage
+from .models import SupportTicket, SupportTicketAdminRead, TicketAttachment, TicketMessage
 
 ADMIN_PAGE_SIZE = 50
 
@@ -28,7 +30,7 @@ def _owner(account):
 def _ticket_queryset(include_message_senders=True):
     queryset = SupportTicket.objects.select_related("user", "remaker", "assigned_to")
     if include_message_senders:
-        queryset = queryset.prefetch_related("messages__admin", "messages__user", "messages__remaker")
+        queryset = queryset.prefetch_related("messages__admin", "messages__user", "messages__remaker", "messages__attachments")
     return queryset
 
 
@@ -229,6 +231,7 @@ def _ticket_row(ticket, include_messages=True, viewer=None, request=None):
                 "text": message.text,
                 "at": message.created_at,
                 "attachmentUrl": message.attachment_url,
+                "photos": [media_url(request, a.image.name) for a in message.attachments.all()],
             }
             for message in messages
         ]
@@ -245,6 +248,27 @@ def _message(account, ticket, text, attachment=""):
         attachment_url=attachment,
         **kwargs,
     )
+
+
+MAX_PHOTOS = 3
+
+
+def _photos(request):
+    """(files, error). Up to 3 photos sent with a message; each is checked as a real JPEG, PNG or WebP of 5 MB or less."""
+    files = request.FILES.getlist("photos")
+    if len(files) > MAX_PHOTOS:
+        return None, f"You can attach up to {MAX_PHOTOS} photos."
+    for f in files:
+        try:
+            validate_image(f)
+        except DjangoValidationError as error:
+            return None, error.messages[0]
+    return files, ""
+
+
+def _attach(message, files):
+    for f in files:
+        TicketAttachment.objects.create(message=message, image=f)
 
 
 def _event(ticket, text):
@@ -325,6 +349,9 @@ class MyTickets(APIView):
             return fail("Add a subject and a message of 3 to 4,000 characters.")
         if priority not in SupportTicket.Priority.values:
             return fail("Choose a valid ticket priority.")
+        photos, photo_error = _photos(request)
+        if photo_error:
+            return fail(photo_error, errors={"photos": [photo_error]})
         validated_order = _validate_related_order(request.user.account, order_id)
         if order_id and not validated_order:
             return fail("That order does not belong to your account.", status=404)
@@ -346,7 +373,7 @@ class MyTickets(APIView):
                 order_id=validated_order or "",
                 priority=priority,
             )
-            _message(request.user.account, ticket, text, attachment)
+            _attach(_message(request.user.account, ticket, text, attachment), photos)
             ticket.member_last_read_at = timezone.now()
             ticket.save(update_fields=["member_last_read_at"])
         return created({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)}, message="Support ticket created.")
@@ -407,13 +434,16 @@ class MyTicketDetail(APIView):
             return fail("Attachments must use a secure HTTPS link.")
         if ticket.status == SupportTicket.Status.CLOSED:
             return fail("This ticket is closed. Create a new ticket to contact support.", status=409)
+        photos, photo_error = _photos(request)
+        if photo_error:
+            return fail(photo_error, errors={"photos": [photo_error]})
         with transaction.atomic():
             ticket = SupportTicket.objects.select_for_update().get(pk=ticket.pk)
             if ticket.status == SupportTicket.Status.RESOLVED:
                 _set_status(ticket, SupportTicket.Status.OPEN)
                 ticket.save(update_fields=["status", "closed_at", "updated_at"])
                 _event(ticket, "Ticket reopened by a new reply.")
-            _message(request.user.account, ticket, text, attachment)
+            _attach(_message(request.user.account, ticket, text, attachment), photos)
             ticket.member_last_read_at = timezone.now()
             ticket.save(update_fields=["member_last_read_at", "updated_at"])
         ticket.refresh_from_db()

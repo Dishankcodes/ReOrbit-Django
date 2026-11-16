@@ -6,4 +6,5 @@ from . import public as p
 urlpatterns = [
     path("home/", p.HomeView.as_view()),
     path("remakers/", p.RemakersView.as_view()),
+    path("top-selling/", p.TopSellingView.as_view()),
 ]

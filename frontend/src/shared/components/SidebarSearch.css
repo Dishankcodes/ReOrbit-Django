@@ -1,0 +1,104 @@
+.sbs {
+  position: relative;
+  margin: 14px 13px 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+.sbs > .sbs-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.sbs input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 34px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.sbs input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+.sbs input:focus {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.11);
+}
+.sbs-key {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  min-width: 20px;
+  padding: 1px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.65);
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+  pointer-events: none;
+}
+.sbs-recent {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 2px;
+  padding: 10px 8px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: var(--sbs-panel, #1d1d1d);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+.sbs-recent-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 6px 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+.sbs-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.sbs-recent-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+/* a collapsed (icon-only) sidebar has no room for the box */
+.user-sidebar.collapsed .sbs,
+.remaker-sidebar.collapsed .sbs {
+  display: none;
+}
+@media (max-width: 900px) {
+  .user-sidebar.collapsed .sbs,
+  .remaker-sidebar.collapsed .sbs {
+    display: block;
+  }
+}
+.user-sidebar {
+  --sbs-panel: #1e3d2f;
+}
+.remaker-sidebar {
+  --sbs-panel: #2d0b0d;
+}

@@ -282,18 +282,18 @@ export const sellerPath = (item) =>
 
 function decorate(o) {
   const order = adapt(o);
-  const seller =
-    o.seller?.type === "platform"
-      ? { name: "ReOrbit" }
-      : { name: o.seller?.name || "Seller", username: o.seller?.username };
+  /* everything the server knows about the seller (address and phone for ReOrbit itself) */
+  const seller = { ...(o.seller || {}), name: o.seller?.name || "Seller" };
+  const path = !o.seller?.id
+    ? null
+    : o.seller.type === "remaker"
+      ? `/user-marketplace/remaker/${o.seller.id}`
+      : `/user-marketplace/seller/${o.seller.id}`;
   return {
     ...order,
     seller,
     sellerIsRemaker: o.seller?.type === "remaker",
-    sellerPath:
-      o.seller?.type === "remaker" && o.seller.id
-        ? `/user-marketplace/remaker/${o.seller.id}`
-        : null,
+    sellerPath: path,
     status: statusOf(order),
   };
 }
