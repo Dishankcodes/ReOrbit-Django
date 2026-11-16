@@ -88,6 +88,15 @@ export function sellerOrdersApi(base) {
   };
 }
 export const salesApi = sellerOrdersApi("/orders/sales");
+
+/* People who bought from this member or ReMaker, built by the server from real orders. */
+export const customersApi = {
+  list: () => apiRequest("/orders/sales/customers/").then((r) => r.data),
+  get: (id) =>
+    apiRequest(`/orders/sales/customers/${encodeURIComponent(id)}/`).then(
+      (r) => r.data,
+    ),
+};
 export const adminOrdersApi = sellerOrdersApi("/orders/admin");
 
 /* Razorpay's Checkout.js, loaded once, only when someone pays online. */

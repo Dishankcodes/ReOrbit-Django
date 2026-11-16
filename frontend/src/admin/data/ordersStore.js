@@ -1,125 +1,187 @@
 /* =========================================================
-   In-memory store for the Orders pages (UI only).
-   Status changes survive moving between the list and a details
-   page and reset on refresh. Backend later: swap for API calls.
+   Every order on the platform, from the server (GET /api/orders/admin/report/).
+
+   The Orders and Sales screens open orders one at a time from the server. This store feeds the
+   screens that need the whole picture: Dashboard, Reports, Earnings, alerts and the Sell tab badge.
+   It keeps the older shape those screens already read (order_id, order_date, amount,
+   order_status, transaction, seller, buyer, ...) and fills it from the server's rows, so their
+   numbers are now real orders. It loads once, then refreshes every minute and whenever the tab
+   comes back into view.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
-import { INITIAL_ORDERS } from "./adminOrders";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { adminOrdersApi } from "../../api/orders";
 
-/* newest first */
-let orders = [...INITIAL_ORDERS].sort(
-  (a, b) => new Date(b.order_date) - new Date(a.order_date),
-);
+const PARTY = { platform: "Admin", remaker: "ReMaker", user: "User", admin: "Admin" };
+
+/* the server's order statuses -> the words the numbers screens use */
+function statusOf(o) {
+  switch (o.status) {
+    case "Pending_Payment":
+      return "Pending";
+    case "Delivered":
+      return o.payment_status === "Refunded" ? "Returned" : "Completed";
+    case "Cancelled":
+      return "Cancelled";
+    case "Returned_To_Origin":
+      return "Returned";
+    default:
+      return "Confirmed"; /* Confirmed, Packed, Shipped and Delivery_Failed are all still in progress */
+  }
+}
+
+/* payment: Success means money is in, Pending means it is expected, Failed means it never was */
+function paymentOf(o) {
+  switch (o.payment_status) {
+    case "Paid":
+    case "Refund_Pending":
+    case "Refund_Failed":
+      return "Success";
+    case "Refunded":
+      return "Refunded";
+    case "Void":
+      return "Failed";
+    default:
+      return "Pending"; /* Pending, COD_Due, COD_Collected: cash not with ReOrbit yet */
+  }
+}
+
+export function toLegacy(o) {
+  const items = o.items || [];
+  const quantity = items.reduce((n, i) => n + (i.qty || 0), 0);
+  const first = items[0];
+  const isCod = o.method === "COD";
+  return {
+    order_id: o.id,
+    order_date: o.created_at,
+    amount: o.total,
+    subtotal: o.subtotal,
+    platform_fee: o.platform_fee,
+    delivery_fee: o.delivery_fee,
+    discount: o.discount,
+    order_status: statusOf(o),
+    server_status: o.status,
+    cancel_reason: o.cancel_reason || "",
+    transaction: {
+      payment_status: paymentOf(o),
+      payment_method: isCod ? "COD" : "ONLINE",
+      transaction_date: o.cod_received_at || o.confirmed_at,
+    },
+    seller: { name: o.seller?.name || "ReOrbit", type: PARTY[o.seller?.type] || "Admin" },
+    buyer: { name: o.buyer?.name || "—", type: PARTY[o.buyer?.type] || "User" },
+    listing: {
+      title: first ? (items.length > 1 ? `${first.title} +${items.length - 1} more` : first.title) : "Order",
+      quantity: quantity || 1,
+    },
+    listing_ids: items.map((i) => i.ref),
+    shipment: o.shipped_at ? { shipped_at: o.shipped_at } : null,
+    /* the order screens read these too; the full timeline lives on the order's own page */
+    events: [],
+    refundDue: Boolean(o.refund_due),
+    isCod,
+  };
+}
+
+/* ---------- state ---------- */
+let state = { orders: [], loaded: false, error: "", truncated: false };
 const listeners = new Set();
-const emit = () => listeners.forEach((l) => l());
 const subscribe = (l) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
-const getSnapshot = () => orders;
+const getSnapshot = () => state;
+const set = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+};
 
-/* Add the derived fields the pages use. */
-function withDerived(order) {
-  const pay = order.transaction.payment_status;
-  return {
-    ...order,
-    refundDue:
-      ["Cancelled", "Returned"].includes(order.order_status) &&
-      pay === "Success",
-    isCod: order.transaction.payment_method === "COD",
-  };
+let inFlight = null;
+export function loadOrders({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+  inFlight = adminOrdersApi
+    .report()
+    .then((d) =>
+      set({
+        orders: d.orders.map(toLegacy),
+        truncated: Boolean(d.truncated),
+        loaded: true,
+        error: "",
+      }),
+    )
+    .catch((e) =>
+      /* an admin without the Orders permission simply has no order numbers */
+      set({
+        loaded: true,
+        error: e.status === 403 ? "" : e.message || "Could not load orders.",
+        orders: e.status === 403 ? [] : state.orders,
+      }),
+    )
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
 }
 
-/* New orders created by the admin Shop (admin is the buyer). */
-export function addOrders(newOrders) {
-  orders = [...newOrders, ...orders];
-  emit();
+/* one timer and one tab listener for the whole app, started by the first screen that needs orders */
+let started = false;
+function startRefreshing() {
+  if (started) return;
+  started = true;
+  window.setInterval(() => {
+    if (document.visibilityState === "visible" && state.loaded) loadOrders({ force: true });
+  }, 60000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && state.loaded) loadOrders({ force: true });
+  });
 }
 
-/* Change one order in place (used by the Sell module for shipping). */
-export function patchOrder(orderId, fn) {
-  orders = orders.map((o) => (o.order_id === orderId ? fn(o) : o));
-  emit();
+function useOrdersState() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    if (!state.loaded) loadOrders();
+    startRefreshing();
+  }, []);
+  return s;
 }
 
 export function useOrders() {
-  const raw = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  return useMemo(() => raw.map(withDerived), [raw]);
+  const { orders } = useOrdersState();
+  return useMemo(
+    () => [...orders].sort((a, b) => new Date(b.order_date) - new Date(a.order_date)),
+    [orders],
+  );
 }
 
 export function useOrder(orderId) {
   return useOrders().find((o) => o.order_id === orderId) || null;
 }
 
-/* Apply one action to one order. Writes the new status and adds a
-   line to the order's timeline. */
-export function runOrderAction(orderId, actionKey, reason = "") {
-  const at = new Date().toISOString();
-  const by = "Admin · You";
+/* loaded / error / retry, for screens that show a loading or error state */
+export function useOrdersStatus() {
+  const s = useOrdersState();
+  return {
+    loaded: s.loaded,
+    error: s.error,
+    truncated: s.truncated,
+    retry: () => loadOrders({ force: true }),
+  };
+}
 
-  orders = orders.map((order) => {
-    if (order.order_id !== orderId) return order;
-    const next = { ...order, transaction: { ...order.transaction } };
-    let label = "";
-    let tone = "neutral";
-    let detail = by;
+/* Orders change on the server (the order pages do that); this just asks for the fresh list. */
+export const refreshOrders = () => loadOrders({ force: true });
 
-    switch (actionKey) {
-      case "markPaid":
-        next.transaction.payment_status = "Success";
-        next.transaction.transaction_date = at;
-        label = "Payment marked as received";
-        tone = "good";
-        break;
-      case "confirm":
-        next.order_status = "Confirmed";
-        label = "Order confirmed";
-        tone = "info";
-        break;
-      case "complete":
-        next.order_status = "Completed";
-        if (
-          next.transaction.payment_method === "COD" &&
-          next.transaction.payment_status === "Pending"
-        ) {
-          next.transaction.payment_status = "Success";
-          next.transaction.transaction_date = at;
-        }
-        label = "Delivered & completed";
-        tone = "good";
-        break;
-      case "cancel":
-        next.order_status = "Cancelled";
-        next.cancel_reason = reason || "No reason provided.";
-        if (next.transaction.payment_status === "Pending")
-          next.transaction.payment_status = "Failed";
-        label = "Order cancelled";
-        tone = "bad";
-        detail = `${by} · “${next.cancel_reason}”`;
-        break;
-      case "return":
-        next.order_status = "Returned";
-        next.return_reason = reason || "No reason provided.";
-        label = "Order returned";
-        tone = "bad";
-        detail = `${by} · “${next.return_reason}”`;
-        break;
-      case "refund":
-        next.transaction.payment_status = "Refunded";
-        label = "Refund issued";
-        tone = "info";
-        detail = `${by} · ₹${next.amount.toLocaleString("en-IN")} returned to the buyer`;
-        break;
-      default:
-        return order;
-    }
+/* Kept so older callers still work: orders are created and changed on the server now. */
+export function addOrders() {
+  return refreshOrders();
+}
+export function patchOrder() {
+  return refreshOrders();
+}
 
-    next.events = [
-      { id: `${orderId}-${actionKey}-${Date.now()}`, label, detail, at, tone },
-      ...next.events,
-    ];
-    return next;
-  });
-  emit();
+/* Cancelling is the one action the old callers still use; the order pages offer the full set. */
+export async function runOrderAction(orderId, actionKey, reason = "") {
+  if (actionKey !== "cancel")
+    throw new Error("Open the order to do this. It has every action, with the rules the server checks.");
+  await adminOrdersApi.act(orderId, "cancel", { reason });
+  await refreshOrders();
 }

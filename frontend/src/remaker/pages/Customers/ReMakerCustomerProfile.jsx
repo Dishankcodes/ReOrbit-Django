@@ -1,17 +1,21 @@
 import React from "react";
 import { useGoBack } from "../../../shared/backNav";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
-import { SaleBadge } from "../Sales/SalesParts";
-import { formatPrice } from "../../data/remakerMarketplaceData";
-import { formatDate } from "../../data/ordersStore";
+import { PageLoader } from "../../../shared/components/Spinner";
+import OrderStatusBadge from "./components/OrderStatusBadge";
 import {
-  getCustomer,
-  netOf,
+  CustomerNotFound,
+  CustomersError,
+} from "./components/CustomersState";
+import { formatPrice } from "../../data/remakerMarketplaceData";
+import {
+  formatDay,
+  formatMonth,
   relativeTime,
-  useCustomers,
-} from "../../data/salesStore";
+  useCustomer,
+} from "../../data/customersStore";
 
 import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
@@ -19,39 +23,26 @@ import "../../css/ReMakerSales.css";
 export default function ReMakerCustomerProfile() {
   const { goBack } = useGoBack("/remaker-customers");
   const { customerId } = useParams();
-  const navigate = useNavigate();
-  const customers = useCustomers();
+  const { customer, orders, loading, error, notFound, reload } =
+    useCustomer(customerId);
 
-  const customer = getCustomer(customerId);
-  const entry = customers.find((item) => item.customer.id === customerId);
-
-  if (!customer || !entry) {
+  if (loading) {
     return (
       <section className="rod rsl">
-        <div className="rod-empty">
-          <div className="rod-empty-art single" aria-hidden="true">
-            <img className="a" src="/images/users/rohan-shah.jpg" alt="" />
-          </div>
-          <h2>We couldn&apos;t find that customer</h2>
-          <p>They may not have bought from you, or the link is out of date.</p>
-          <Link to="/remaker-customers" className="rod-btn primary">
-            Back to customers
-          </Link>
-        </div>
+        <PageLoader label="Loading customer…" />
       </section>
     );
   }
 
-  const { orders, spent, lastOrderAt } = entry;
-  const completed = orders.filter(
-    (order) => order.status === "Completed",
-  ).length;
-  const open = orders.filter(
-    (order) => order.status === "Pending" || order.status === "Confirmed",
-  ).length;
-  const earned = orders
-    .filter((order) => order.status === "Completed")
-    .reduce((total, order) => total + netOf(order), 0);
+  if (notFound) return <CustomerNotFound />;
+  if (error || !customer)
+    return <CustomersError message={error} onRetry={reload} />;
+
+  const completed = customer.delivered_orders;
+  const open = customer.open_orders;
+  const { spent, earned } = customer;
+  const phoneHref = customer.phone ? customer.phone.replace(/\s/g, "") : "";
+  const place = [customer.city, customer.state].filter(Boolean).join(", ");
 
   return (
     <section className="rod rsl">
@@ -76,36 +67,36 @@ export default function ReMakerCustomerProfile() {
             <div className="sls-hero-name">
               <h2>{customer.name}</h2>
               <span
-                className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}
+                className={`rod-chip ${customer.type === "remaker" ? "remaker" : ""}`}
               >
-                {customer.type === "ReMaker" ? "ReMaker" : "Customer"}
+                {customer.type === "remaker" ? "ReMaker" : "Customer"}
               </span>
-              {orders.length > 1 && (
+              {customer.orders_count > 1 && (
                 <span className="rod-chip repeat">Repeat buyer</span>
               )}
             </div>
             <p>
-              {customer.city}, {customer.state} · Member since {customer.joined}
+              {place || "Location not shared"}
+              {customer.joined ? ` · Member since ${formatMonth(customer.joined)}` : ""}
             </p>
           </div>
         </div>
 
         <div className="sls-hero-actions">
-          <a href={`mailto:${customer.email}`} className="rod-btn ghost">
-            Email
-          </a>
-          <a
-            href={`tel:${customer.phone.replace(/\s/g, "")}`}
-            className="rod-btn primary"
-          >
-            Call
-          </a>
+          <Link to="/remaker-sales" className="rod-btn ghost">
+            All orders
+          </Link>
+          {customer.phone && (
+            <a href={`tel:${phoneHref}`} className="rod-btn primary">
+              Call
+            </a>
+          )}
         </div>
       </header>
 
       <div className="sls-metrics">
         <div>
-          <strong>{orders.length}</strong>
+          <strong>{customer.orders_count}</strong>
           <span>Orders with you</span>
         </div>
         <div>
@@ -117,7 +108,7 @@ export default function ReMakerCustomerProfile() {
           <span>You earned</span>
         </div>
         <div>
-          <strong>{relativeTime(lastOrderAt)}</strong>
+          <strong>{relativeTime(customer.last_order_at)}</strong>
           <span>Last order</span>
         </div>
       </div>
@@ -133,26 +124,39 @@ export default function ReMakerCustomerProfile() {
           </div>
 
           <div className="sls-history">
-            {orders.map((order) => (
-              <Link
-                to={`/remaker-sales/${order.id}`}
-                className="sls-history-row"
-                key={order.id}
-              >
-                <img src={order.image} alt="" />
-                <div>
-                  <strong>{order.title}</strong>
-                  <small>
-                    {order.id} · {formatDate(order.createdAt)} · Qty{" "}
-                    {order.quantity}
-                  </small>
-                </div>
-                <div className="sls-history-end">
-                  <b>{formatPrice(order.unitPrice * order.quantity)}</b>
-                  <SaleBadge order={order} />
-                </div>
-              </Link>
-            ))}
+            {orders.map((order) => {
+              const first = order.items[0];
+              const extra = order.items.length - 1;
+              const qty = order.items.reduce((n, item) => n + item.qty, 0);
+
+              return (
+                <Link
+                  to={`/remaker-sales/${order.id}`}
+                  className="sls-history-row"
+                  key={order.id}
+                  aria-label={`Open order ${order.id}`}
+                >
+                  {first?.cover ? (
+                    <img src={first.cover} alt="" loading="lazy" />
+                  ) : (
+                    <img src="/images/default-avatar.png" alt="" />
+                  )}
+                  <div>
+                    <strong>
+                      {first?.title || "Order"}
+                      {extra > 0 ? ` + ${extra} more` : ""}
+                    </strong>
+                    <small>
+                      {order.id} · {formatDay(order.created_at)} · Qty {qty}
+                    </small>
+                  </div>
+                  <div className="sls-history-end">
+                    <b>{formatPrice(order.subtotal)}</b>
+                    <OrderStatusBadge order={order} />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -165,15 +169,11 @@ export default function ReMakerCustomerProfile() {
               <div>
                 <dt>Phone</dt>
                 <dd>
-                  <a href={`tel:${customer.phone.replace(/\s/g, "")}`}>
-                    {customer.phone}
-                  </a>
-                </dd>
-              </div>
-              <div>
-                <dt>Email</dt>
-                <dd>
-                  <a href={`mailto:${customer.email}`}>{customer.email}</a>
+                  {customer.phone ? (
+                    <a href={`tel:${phoneHref}`}>{customer.phone}</a>
+                  ) : (
+                    "Not shared"
+                  )}
                 </dd>
               </div>
             </dl>
@@ -185,14 +185,15 @@ export default function ReMakerCustomerProfile() {
           </section>
 
           <section className="rod-panel">
-            <h3>Delivery address</h3>
+            <h3>Latest delivery address</h3>
 
             <p className="sls-address">
-              <strong>{customer.name}</strong>
+              <strong>{customer.recipient}</strong>
               <br />
-              {customer.address}
+              {customer.address || "No street address"}
               <br />
-              {customer.city}, {customer.state} {customer.pincode}
+              {[customer.city, customer.state].filter(Boolean).join(", ")}{" "}
+              {customer.pincode}
             </p>
           </section>
         </aside>

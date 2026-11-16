@@ -17,8 +17,9 @@ import {
   syncPhotos,
 } from "../../api/products";
 import { fetchStoreStats } from "../../api/adminProducts";
+import { adminOrdersApi } from "../../api/orders";
 import { loadLiveMarketplace } from "../../user/data/liveMarketplace";
-import { useOrders, patchOrder } from "./ordersStore";
+import { useOrders, refreshOrders } from "./ordersStore";
 import { useStock } from "./warehouseStore";
 
 /* server status -> the words the Sell screens use */
@@ -136,6 +137,8 @@ function replace(row) {
   return row;
 }
 
+const COUNTED_OUT = ["Cancelled", "Returned"];
+
 /* ---------- sales (orders where the admin is the seller) ---------- */
 export function useSales() {
   const orders = useOrders();
@@ -151,15 +154,22 @@ export function useSale(orderId) {
 /* ---------- listings with their numbers ---------- */
 export function useSellListings() {
   const { listings, stats } = useSellState();
+  const sales = useSales();
   useEffect(() => {
     if (!state.loaded) loadSellListings();
   }, []);
   return useMemo(
     () =>
       listings
-        .map((l) => withStats(l, stats[l.id]))
+        .map((l) =>
+          withStats(
+            l,
+            stats[l.id],
+            sales.filter((o) => o.listing_ids.includes(l.id)),
+          ),
+        )
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
-    [listings, stats],
+    [listings, stats, sales],
   );
 }
 export function useSellListing(id) {
@@ -176,7 +186,7 @@ export function useSellListing(id) {
 }
 
 /* the numbers come from the server: sold units and revenue count real orders */
-function withStats(l, s = {}) {
+function withStats(l, s = {}, sales = []) {
   const sold = s.sold || 0;
   return {
     ...l,
@@ -188,7 +198,7 @@ function withStats(l, s = {}) {
     orderCount: s.orders || 0,
     toHandle: s.to_handle || 0,
     wishlisted: s.wishlisted || 0,
-    sales: [],
+    sales,
   };
 }
 
@@ -320,20 +330,10 @@ export async function removeListing(id) {
 }
 
 /* ---------- selling-order actions ---------- */
-export function shipSale(orderId, { courier, tracking }) {
-  const at = new Date().toISOString();
-  patchOrder(orderId, (o) => ({
-    ...o,
-    shipment: { courier, tracking, shipped_at: at },
-    events: [
-      {
-        id: `${orderId}-ship`,
-        label: "Shipped",
-        detail: `${courier} · ${tracking}`,
-        at,
-        tone: "info",
-      },
-      ...o.events,
-    ],
-  }));
+export async function shipSale(orderId, { courier, tracking }) {
+  await adminOrdersApi.act(orderId, "ship", {
+    courier_name: courier,
+    tracking_no: tracking,
+  });
+  await refreshOrders();
 }

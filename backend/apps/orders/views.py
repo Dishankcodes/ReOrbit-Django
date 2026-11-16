@@ -33,7 +33,7 @@ from apps.payments.models import Payment
 
 from . import returns, services
 from .models import Order
-from .serializers import address_data, order_data
+from .serializers import address_data, media_url, order_data
 
 MAX_ADDRESSES = 10
 
@@ -358,6 +358,95 @@ class SalesDetail(APIView):
         o = get_object_or_404(_order_qs().prefetch_related("events"), public_id=public_id,
                               pk__in=base.filter(confirmed_at__isnull=False).values("pk"))
         return ok({"order": order_data(o, request, events=True, buyer=True)})
+
+
+# ------------------------------------------------------------------ seller's customers
+OPEN_STATUSES = (Order.Status.CONFIRMED, Order.Status.PACKED, Order.Status.SHIPPED)
+MAX_CUSTOMERS = 500
+
+
+def _earns(o):
+    """A delivered order the buyer did not get fully refunded counts as money earned."""
+    rr = getattr(o, "return_request", None)
+    return o.status == Order.Status.DELIVERED and not (rr and rr.status == "Refunded")
+
+
+def _avatar(request, account):
+    p = getattr(account, "profile", None)
+    if p is not None and getattr(p, "profile_image", None):
+        return media_url(request, p.profile_image.name)
+    return None
+
+
+def _customer_data(key, orders, request):
+    """One buyer, worked out from all of their orders with this seller (newest first)."""
+    b = buyers.get(orders[0])
+    p = getattr(b, "profile", None)
+    addr = orders[0].address or {}
+    paid = [o for o in orders if _earns(o)]
+    street = ", ".join(x for x in (addr.get("address_line1"), addr.get("address_line2"), addr.get("landmark")) if x)
+    return {
+        "id": key, "type": orders[0].buyer_type, "account_id": b.public_id, "name": b.full_name,
+        "image": _avatar(request, b),
+        "phone": addr.get("phone") or (getattr(p, "phone", "") or ""),
+        "recipient": addr.get("recipient_name") or b.full_name,
+        "address": street,
+        "city": addr.get("city") or getattr(p, "city", "") or "",
+        "state": addr.get("state") or getattr(p, "state", "") or "",
+        "pincode": addr.get("pincode") or "",
+        "joined": getattr(b, "created_at", None),
+        "orders_count": len(orders),
+        "open_orders": sum(1 for o in orders if o.status in OPEN_STATUSES),
+        "delivered_orders": sum(1 for o in orders if o.status == Order.Status.DELIVERED),
+        "spent": sum(o.subtotal for o in paid),
+        "earned": sum(o.subtotal + o.delivery_fee for o in paid),
+        "last_order_at": orders[0].created_at,
+    }
+
+
+def _customer_base(request):
+    base = SalesList.scope(request)
+    if base is None:
+        return None
+    return base.filter(confirmed_at__isnull=False)
+
+
+class SalesCustomers(APIView):
+    """Everyone who has bought from this member or ReMaker, built from their real orders."""
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def get(self, request):
+        base = _customer_base(request)
+        if base is None:
+            return fail("Only members and ReMakers have customers.", status=403)
+        rows = (base.select_related("buyer_user__profile", "buyer_remaker__profile", "buyer_admin", "return_request")
+                .order_by("-created_at", "-pk"))
+        groups = {}
+        for o in rows:
+            groups.setdefault(f"{o.buyer_type}-{buyers.get(o).public_id}", []).append(o)
+        customers = [_customer_data(k, v, request) for k, v in groups.items()]
+        customers.sort(key=lambda c: (-c["spent"], -c["last_order_at"].timestamp()))
+        return ok({"customers": customers[:MAX_CUSTOMERS], "count": len(customers)})
+
+
+class SalesCustomerDetail(APIView):
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def get(self, request, key):
+        base = _customer_base(request)
+        if base is None:
+            return fail("Only members and ReMakers have customers.", status=403)
+        kind, _, pid = key.partition("-")
+        if kind not in buyers.BUYER_TYPES or not pid:
+            return fail("Customer not found.", status=404)
+        scoped = base.filter(**{"buyer_type": kind, f"buyer_{kind}__public_id": pid})
+        orders = list(_order_qs().filter(pk__in=scoped.values("pk")))
+        if not orders:
+            return fail("Customer not found.", status=404)
+        return ok({
+            "customer": _customer_data(key, orders, request),
+            "orders": [order_data(o, request) for o in orders],
+        })
 
 
 def _act(request, order, action, actor_kind):

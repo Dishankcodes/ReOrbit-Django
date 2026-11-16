@@ -31,8 +31,10 @@ export function formatINR(value) {
   return `₹${number.toLocaleString("en-IN")}`;
 }
 
-/* Fixed "today" used only by the screens that still run on demo data. */
-export const DEMO_TODAY = new Date("2026-10-20T13:00:00");
+/* "Now" for the numbers screens. It used to be a fixed demo date; orders are real now, so a
+   fixed date would put every new order in the future. (The name stays for the screens that
+   still use demo data for donations, pickups and stock.) */
+export const DEMO_TODAY = new Date();
 
 /* "3 days ago" style text, measured against the real current time. */
 export function timeAgo(value) {

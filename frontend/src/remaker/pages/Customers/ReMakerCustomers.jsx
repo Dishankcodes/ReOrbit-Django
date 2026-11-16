@@ -1,29 +1,29 @@
 import React, { useMemo, useState } from "react";
-import { useLoading, SkeletonRows } from "../../../shared/components/Skeleton";
+import { SkeletonRows } from "../../../shared/components/Skeleton";
 import { Link } from "react-router-dom";
 
 import { Avatar } from "../../pages-components/ReviewBlocks";
 import { formatPrice } from "../../data/remakerMarketplaceData";
-import { relativeTime, useCustomers } from "../../data/salesStore";
+import { relativeTime, useCustomers } from "../../data/customersStore";
+import { CustomersError, NoCustomers } from "./components/CustomersState";
 
 import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
 
 export default function ReMakerCustomers() {
-  const loading = useLoading(450);
-  const customers = useCustomers();
+  const { customers, loading, error, reload } = useCustomers();
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
 
   const visible = useMemo(() => {
     const text = query.trim().toLowerCase();
 
-    return customers.filter(({ customer }) => {
+    return customers.filter((customer) => {
       if (type === "repeat") return false;
       if (type !== "all" && customer.type !== type) return false;
       if (!text) return true;
 
-      return [customer.name, customer.city, customer.state, customer.email]
+      return [customer.name, customer.city, customer.state, customer.phone]
         .join(" ")
         .toLowerCase()
         .includes(text);
@@ -31,7 +31,7 @@ export default function ReMakerCustomers() {
   }, [customers, query, type]);
 
   const repeat = useMemo(
-    () => customers.filter((entry) => entry.orders.length > 1),
+    () => customers.filter((entry) => entry.orders_count > 1),
     [customers],
   );
   const list = type === "repeat" ? repeat : visible;
@@ -41,32 +41,19 @@ export default function ReMakerCustomers() {
     { key: "all", label: "All customers", count: customers.length },
     { key: "repeat", label: "Repeat buyers", count: repeat.length },
     {
-      key: "User",
+      key: "user",
       label: "Community",
-      count: customers.filter((c) => c.customer.type === "User").length,
+      count: customers.filter((c) => c.type === "user").length,
     },
     {
-      key: "ReMaker",
+      key: "remaker",
       label: "ReMakers",
-      count: customers.filter((c) => c.customer.type === "ReMaker").length,
+      count: customers.filter((c) => c.type === "remaker").length,
     },
   ];
 
-  if (customers.length === 0) {
-    return (
-      <section className="rod rsl">
-        <div className="rod-empty">
-          <div className="rod-empty-art single" aria-hidden="true">
-            <img className="a" src="/images/users/meera-iyer.jpg" alt="" />
-          </div>
-          <h2>No customers yet</h2>
-          <p>
-            People who buy from you will appear here, with their order history.
-          </p>
-        </div>
-      </section>
-    );
-  }
+  if (error) return <CustomersError message={error} onRetry={reload} />;
+  if (!loading && customers.length === 0) return <NoCustomers />;
 
   return (
     <section className="rod rsl">
@@ -74,9 +61,9 @@ export default function ReMakerCustomers() {
         <div>
           <h2>Your customers</h2>
           <p>
-            {customers.length}{" "}
-            {customers.length === 1 ? "person has" : "people have"} bought from
-            you. Together they spent {formatPrice(totalSpent)}.
+            {loading
+              ? "Loading the people who bought from you…"
+              : `${customers.length} ${customers.length === 1 ? "person has" : "people have"} bought from you. Together they spent ${formatPrice(totalSpent)}.`}
           </p>
         </div>
         <Link to="/remaker-sales" className="rod-btn ghost">
@@ -107,7 +94,7 @@ export default function ReMakerCustomers() {
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name, city or email"
+            placeholder="Search by name, city or phone"
           />
         </label>
       </div>
@@ -131,7 +118,7 @@ export default function ReMakerCustomers() {
         </div>
       ) : (
         <div className="sls-customers">
-          {list.map(({ customer, orders, spent, lastOrderAt }) => (
+          {list.map((customer) => (
             <article className="sls-ccard" key={customer.id}>
               <div className="sls-ccard-top">
                 <span className="sls-avatar big">
@@ -147,14 +134,15 @@ export default function ReMakerCustomers() {
                     </Link>
                   </h3>
                   <p>
-                    {customer.city}, {customer.state}
+                    {[customer.city, customer.state].filter(Boolean).join(", ") ||
+                      "Location not shared"}
                   </p>
                   <span
-                    className={`rod-chip ${customer.type === "ReMaker" ? "remaker" : ""}`}
+                    className={`rod-chip ${customer.type === "remaker" ? "remaker" : ""}`}
                   >
-                    {customer.type === "ReMaker" ? "ReMaker" : "Customer"}
+                    {customer.type === "remaker" ? "ReMaker" : "Customer"}
                   </span>
-                  {orders.length > 1 && (
+                  {customer.orders_count > 1 && (
                     <span className="rod-chip repeat">Repeat buyer</span>
                   )}
                 </div>
@@ -163,15 +151,15 @@ export default function ReMakerCustomers() {
               <dl className="sls-ccard-stats">
                 <div>
                   <dt>Orders</dt>
-                  <dd>{orders.length}</dd>
+                  <dd>{customer.orders_count}</dd>
                 </div>
                 <div>
                   <dt>Spent</dt>
-                  <dd>{formatPrice(spent)}</dd>
+                  <dd>{formatPrice(customer.spent)}</dd>
                 </div>
                 <div>
                   <dt>Last order</dt>
-                  <dd>{relativeTime(lastOrderAt)}</dd>
+                  <dd>{relativeTime(customer.last_order_at)}</dd>
                 </div>
               </dl>
             </article>

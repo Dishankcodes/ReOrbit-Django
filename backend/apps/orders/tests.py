@@ -541,3 +541,59 @@ class OtherBuyerTests(OrderBase):
                         "razorpay_signature": sign("order_ABC", "pay_1")}, as_=self.rmk)
         self.assertEqual(ok_.status_code, 200, ok_.data)
         self.assertEqual(Payment.objects.get().buyer_type, "remaker")
+
+
+class AdminReportTests(OrderBase):
+    """The light every-order list behind the admin Dashboard, Reports, Earnings and alerts."""
+
+    def place(self, items=None, method="COD"):
+        r = self.checkout(items or [{"id": self.tote.public_id, "qty": 1}], method=method)
+        self.assertEqual(r.status_code, 201, r.data)
+        return r.data["data"]["orders"][0]["id"]
+
+    def test_report_lists_every_confirmed_order_with_the_fields_the_numbers_need(self):
+        oid = self.place([{"id": self.tote.public_id, "qty": 2}])
+        d = self.get("/api/orders/admin/report/", as_=self.boss).data["data"]
+        self.assertFalse(d["truncated"])
+        row = next(r for r in d["orders"] if r["id"] == oid)
+        self.assertEqual(row["seller"]["type"], "platform")
+        self.assertEqual(row["buyer"]["type"], "user")
+        self.assertEqual(row["items"][0]["qty"], 2)
+        self.assertEqual(row["subtotal"], 1000)
+        self.assertEqual(row["total"], row["subtotal"] + row["platform_fee"] + row["delivery_fee"] - row["discount"])
+        self.assertFalse(row["refund_due"])
+        # slim on purpose: no timeline, address or reviews
+        for heavy in ("events", "address", "related", "review"):
+            self.assertNotIn(heavy, row)
+
+    def test_report_needs_the_orders_permission(self):
+        self.place([{"id": self.tote.public_id, "qty": 1}])
+        nobody = self.make_admin("rep-none@example.com", modules={"products": "edit"})
+        self.assertEqual(self.get("/api/orders/admin/report/", as_=nobody).status_code, 403)
+        viewer = self.make_admin("rep-view@example.com", modules={"orders": "view"})
+        self.assertEqual(self.get("/api/orders/admin/report/", as_=viewer).status_code, 200)
+        self.assertEqual(self.get("/api/orders/admin/report/", as_=self.buyer).status_code, 403)
+
+    def test_a_paid_cancelled_order_with_a_failed_refund_is_flagged_due(self):
+        with mock.patch.object(gateway, "create_order", return_value={"id": "order_RR"}):
+            self.checkout([{"id": self.tote.public_id, "qty": 1}], method="RAZORPAY")
+        self.post("/api/payments/verify/", {"razorpay_order_id": "order_RR", "razorpay_payment_id": "pay_RR",
+                                            "razorpay_signature": sign("order_RR", "pay_RR")}, as_=self.buyer)
+        oid = Order.objects.get().public_id
+        with mock.patch.object(gateway, "refund", side_effect=gateway.GatewayError("x")):
+            self.post(f"/api/orders/me/{oid}/cancel/", {}, as_=self.buyer)
+        row = next(r for r in self.get("/api/orders/admin/report/", as_=self.boss).data["data"]["orders"] if r["id"] == oid)
+        self.assertEqual((row["status"], row["payment_status"], row["refund_due"]), ("Cancelled", "Refund_Failed", True))
+
+    def test_report_query_count_does_not_grow_with_orders(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self.place([{"id": self.tote.public_id, "qty": 1}])
+        with CaptureQueriesContext(connection) as few:
+            self.get("/api/orders/admin/report/", as_=self.boss)
+        for _ in range(3):
+            self.place([{"id": self.tote.public_id, "qty": 1}])
+        with CaptureQueriesContext(connection) as many:
+            self.get("/api/orders/admin/report/", as_=self.boss)
+        self.assertLessEqual(len(many), len(few) + 1)
