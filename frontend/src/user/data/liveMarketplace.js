@@ -36,6 +36,12 @@ export function useLiveMarketplace() {
   const s = useSyncExternalStore(subscribe, snap, snap);
   useEffect(() => {
     loadLiveMarketplace();
+    /* coming back to the tab picks up anything listed meanwhile (at most once a minute) */
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadLiveMarketplace();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
   return s;
 }

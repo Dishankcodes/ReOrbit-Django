@@ -196,7 +196,11 @@ export default function UserMarketplace() {
   const base = useMemo(
     () =>
       ITEMS.filter(
-        (item) => !ownSellerId || String(item.sellerId) !== String(ownSellerId),
+        (item) =>
+          /* ReOrbit's store is shared by every admin, so no admin hides it as "their own" */
+          item.sellerType === "admin" ||
+          !ownSellerId ||
+          String(item.sellerId) !== String(ownSellerId),
       ),
     [live.version, ownSellerId],
   );

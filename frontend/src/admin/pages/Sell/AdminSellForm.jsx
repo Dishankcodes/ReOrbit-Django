@@ -18,10 +18,11 @@ import {
 import {
   useSellListing,
   useListableStock,
+  useSellCategories,
+  useSellStatus,
   saveListing,
 } from "../../data/sellStore";
 import { SELL_CONDITIONS, SELL_SOURCES } from "../../data/adminSell";
-import { useCategoryNames } from "../../../shared/catalog";
 import { formatINR } from "../../utils/format";
 import SellNav from "./components/SellNav";
 import PhotoUploader, {
@@ -97,7 +98,15 @@ export default function AdminSellForm() {
   const editing = useSellListing(id);
   const stock = useListableStock();
 
-  const categoryNames = useCategoryNames();
+  /* only categories that can hold a product: the server rejects any other */
+  const productCategories = useSellCategories();
+  const categoryNames = useMemo(
+    () => productCategories.map((c) => c.name),
+    [productCategories],
+  );
+  const { loaded: listingsLoaded } = useSellStatus();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState(EMPTY);
   const [step, setStep] = useState("basics");
   const [touched, setTouched] = useState({});
@@ -126,6 +135,17 @@ export default function AdminSellForm() {
   const idx = STEPS.findIndex((s) => s.key === step);
   const errs = useMemo(() => errorsFor(step, form), [step, form]);
   const show = (k) => touched[step] && errs[k];
+
+  if (id && !editing && !listingsLoaded) {
+    return (
+      <div className="au-page sh-page">
+        <SellNav />
+        <section className="au-panel" aria-busy="true">
+          <p style={{ padding: 24 }}>Loading the listing…</p>
+        </section>
+      </div>
+    );
+  }
 
   if (id && !editing) {
     return (
@@ -215,7 +235,8 @@ export default function AdminSellForm() {
       weight: form.specs.weight === "" ? "" : String(form.specs.weight),
     },
   });
-  const publish = (live) => {
+  const publish = async (live) => {
+    if (saving) return;
     const all = ["basics", "photos", "pricing"];
     for (const s of all) {
       if (Object.keys(errorsFor(s, form)).length) {
@@ -224,10 +245,18 @@ export default function AdminSellForm() {
         return;
       }
     }
-    const lid = saveListing(payload(), { publish: live });
-    navigate(`/admin-sell/listing/${lid}`, {
-      state: { saved: live ? (editing ? "updated" : "published") : "draft" },
-    });
+    setSaving(true);
+    setSaveError("");
+    try {
+      const lid = await saveListing(payload(), { publish: live });
+      navigate(`/admin-sell/listing/${lid}`, {
+        state: { saved: live ? (editing ? "updated" : "published") : "draft" },
+      });
+    } catch (e) {
+      const first = e.errors && Object.values(e.errors).flat()[0];
+      setSaveError(first || e.message || "Could not save the listing. Please try again.");
+      setSaving(false);
+    }
   };
 
   const field = (label, k, props = {}) => (
@@ -686,10 +715,16 @@ export default function AdminSellForm() {
                   Back
                 </button>
                 <div className="sl-final">
+                  {saveError && (
+                    <p role="alert" style={{ color: "#b3261e", margin: "0 0 8px", fontSize: 13 }}>
+                      {saveError}
+                    </p>
+                  )}
                   {(!editing || editing.rawStatus === "Draft") && (
                     <button
                       type="button"
                       className="ad-btn ad-btn-ghost"
+                      disabled={saving}
                       onClick={() => publish(false)}
                     >
                       Save as draft
@@ -698,11 +733,14 @@ export default function AdminSellForm() {
                   <button
                     type="button"
                     className="ad-btn ad-btn-primary sh-big"
+                    disabled={saving}
                     onClick={() => publish(true)}
                   >
-                    {editing && editing.rawStatus !== "Draft"
-                      ? "Save changes"
-                      : "Publish listing"}
+                    {saving
+                      ? "Saving…"
+                      : editing && editing.rawStatus !== "Draft"
+                        ? "Save changes"
+                        : "Publish listing"}
                   </button>
                 </div>
               </div>
