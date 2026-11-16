@@ -7,13 +7,14 @@ import ReMakerHeader from "./ReMakerHeader";
 import AccountGate from "../../shared/components/AccountGate";
 import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useRemakerAccountStatus } from "../../shared/accountStatus";
+import RouteErrorBoundary from "../../shared/status/RouteErrorBoundary";
 import AnnouncementSync from "../../shared/components/AnnouncementSync";
 import { syncAnnouncements } from "../data/notificationsStore";
 
 import "./ReMakerLayout.css";
 import "../css/remaker-buying-theme.css";
 
-export default function ReMakerLayout() {
+export default function ReMakerLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -101,7 +102,13 @@ export default function ReMakerLayout() {
           <MaintenanceGate>
             <AccountGate info={account} role="remaker">
               <Suspense fallback={<DelayedLoader minHeight={320} />}>
-                <div className="ro-route">{<Outlet />}</div>
+                <RouteErrorBoundary
+                  theme="remaker"
+                  home={{ to: "/remaker-dashboard", label: "Go to dashboard" }}
+                  resetKey={location.pathname}
+                >
+                  <div className="ro-route">{children ?? <Outlet />}</div>
+                </RouteErrorBoundary>
               </Suspense>
             </AccountGate>
           </MaintenanceGate>

@@ -5,6 +5,9 @@ import "./styles/theme.css";
 import { DelayedLoader } from "./shared/components/Spinner";
 import RouteEffects from "./shared/components/RouteEffects";
 import { page } from "./shared/lazyPage";
+import { isSignedIn, loginUrl } from "./api/session";
+import OfflineBanner from "./shared/status/OfflineBanner";
+import RouteErrorBoundary from "./shared/status/RouteErrorBoundary";
 
 /* Shared layouts */
 import UserLayout from "./user/components/UserLayout";
@@ -337,9 +340,13 @@ const ReMakerNotFound = page(
   "remaker",
   () => import("./remaker/pages/NotFound/ReMakerNotFound"),
 );
-const UnknownRoute = page(
-  "remaker",
-  () => import("./remaker/pages/NotFound/UnknownRoute"),
+const PublicNotFound = page(
+  "public",
+  () => import("./shared/status/PublicNotFound"),
+);
+const UserNotFound = page(
+  "user",
+  () => import("./shared/status/UserNotFound"),
 );
 
 /* Admin public pages and dashboard */
@@ -486,10 +493,6 @@ const AdminMessages = page(
   "admin",
   () => import("./admin/pages/Messages/AdminMessages"),
 );
-const AdminMyReviews = page(
-  "admin",
-  () => import("./admin/pages/Shop/AdminMyReviews"),
-);
 const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
 const AdminSellForm = page(
   "admin",
@@ -501,430 +504,461 @@ const AdminSellListing = page(
 );
 const AdminSales = page("admin", () => import("./admin/pages/Sell/AdminSales"));
 
+/* The last route: an address that matches nothing. Each side gets its own 404 inside its own
+   layout (so the sidebar stays), a visitor who is not signed in for that side is sent to its
+   login page like every other private address, and anything else gets the public 404. */
 function RouteFallback() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   if (pathname === "/admin" || pathname === "/admin/") {
     return <Navigate to="/admin-dashboard" replace />;
   }
 
-  if (pathname.startsWith("/admin")) {
+  const privateSide = pathname.startsWith("/admin")
+    ? "admin"
+    : pathname.startsWith("/remaker")
+      ? "remaker"
+      : pathname.startsWith("/user-")
+        ? "user"
+        : null;
+
+  if (privateSide && !isSignedIn(privateSide)) {
+    return <Navigate to={loginUrl(privateSide, pathname + search)} replace />;
+  }
+
+  if (privateSide === "admin") {
     return (
       <AdminLayout>
         <AdminNotFound />
       </AdminLayout>
     );
   }
+  if (privateSide === "remaker") {
+    return (
+      <ReMakerLayout>
+        <ReMakerNotFound />
+      </ReMakerLayout>
+    );
+  }
+  if (privateSide === "user") {
+    return (
+      <UserLayout>
+        <UserNotFound />
+      </UserLayout>
+    );
+  }
 
-  return <Navigate to="/" replace />;
+  return <PublicNotFound />;
 }
 
 export default function App() {
   useNavTracker();
+  const { pathname } = useLocation();
   return (
-    <Suspense fallback={<DelayedLoader minHeight={360} />}>
-      <RouteEffects />
-      <Routes>
-        {/* Public website */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/how-it-works" element={<HowItWorks />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        {/* Compatibility aliases used by older links */}
-        <Route path="/UserPrivacy" element={<Privacy />} />
-        <Route path="/UserTerms" element={<Terms />} />
-        <Route
-          path="/user-before-marketplace"
-          element={<UserBeforeMarketplace />}
-        />
-        <Route path="/buy/:productId" element={<BuyRedirect />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/login" element={<Auth />} />
-        <Route
-          path="/discover-marketplace"
-          element={<UserBeforeMarketplace />}
-        />
-        <Route path="/marketplace" element={<UserBeforeMarketplace />} />
-        <Route path="/discover-remakers" element={<ReMakerDiscover />} />
+    <RouteErrorBoundary theme="public" full resetKey={pathname}>
+      <Suspense fallback={<DelayedLoader minHeight={360} />}>
+        <RouteEffects />
+        <OfflineBanner />
+        <Routes>
+          {/* Public website */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          {/* Compatibility aliases used by older links */}
+          <Route path="/UserPrivacy" element={<Privacy />} />
+          <Route path="/UserTerms" element={<Terms />} />
+          <Route
+            path="/user-before-marketplace"
+            element={<UserBeforeMarketplace />}
+          />
+          <Route path="/buy/:productId" element={<BuyRedirect />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Auth />} />
+          <Route
+            path="/discover-marketplace"
+            element={<UserBeforeMarketplace />}
+          />
+          <Route path="/marketplace" element={<UserBeforeMarketplace />} />
+          <Route path="/discover-remakers" element={<ReMakerDiscover />} />
 
-        {/* User app */}
-        <Route element={<RequireAuth role="user" />}>
-          <Route element={<UserLayout />}>
-            <Route path="/user-dashboard" element={<UserDashboard />} />
-            <Route path="/user-marketplace" element={<UserMarketplace />} />
-            <Route
-              path="/user-marketplace/product/:productId"
-              element={<UserProductDetails />}
-            />
-            <Route
-              path="/user-marketplace/seller/:sellerId"
-              element={<UserSellerProfile />}
-            />
-            <Route
-              path="/user-seller-profile/:sellerId"
-              element={<UserSellerProfile />}
-            />
-            <Route
-              path="/user-marketplace/remaker/:artistId"
-              element={<UserArtistProfile />}
-            />
-            <Route
-              path="/user-artist-profile/:artistId"
-              element={<UserArtistProfile />}
-            />
+          {/* User app */}
+          <Route element={<RequireAuth role="user" />}>
+            <Route element={<UserLayout />}>
+              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route path="/user-marketplace" element={<UserMarketplace />} />
+              <Route
+                path="/user-marketplace/product/:productId"
+                element={<UserProductDetails />}
+              />
+              <Route
+                path="/user-marketplace/seller/:sellerId"
+                element={<UserSellerProfile />}
+              />
+              <Route
+                path="/user-seller-profile/:sellerId"
+                element={<UserSellerProfile />}
+              />
+              <Route
+                path="/user-marketplace/remaker/:artistId"
+                element={<UserArtistProfile />}
+              />
+              <Route
+                path="/user-artist-profile/:artistId"
+                element={<UserArtistProfile />}
+              />
 
-            <Route path="/user-orders" element={<UserOrders />} />
-            <Route
-              path="/user-orders/:orderId"
-              element={<UserOrderDetails />}
-            />
-            <Route
-              path="/user-orders/:orderId/track"
-              element={<UserOrderTrack />}
-            />
-            <Route path="/user-wishlist" element={<UserWishlist />} />
-            <Route path="/user-cart" element={<UserCart />} />
-            <Route path="/user-checkout" element={<UserShopCheckout />} />
-            <Route
-              path="/user-checkout/success/:ids"
-              element={<UserOrderSuccess />}
-            />
-            {/* Older checkout page retained for any legacy links; current shop flow uses /user-checkout. */}
-            <Route
-              path="/user-checkout-legacy"
-              element={<UserCheckoutLegacy />}
-            />
+              <Route path="/user-orders" element={<UserOrders />} />
+              <Route
+                path="/user-orders/:orderId"
+                element={<UserOrderDetails />}
+              />
+              <Route
+                path="/user-orders/:orderId/track"
+                element={<UserOrderTrack />}
+              />
+              <Route path="/user-wishlist" element={<UserWishlist />} />
+              <Route path="/user-cart" element={<UserCart />} />
+              <Route path="/user-checkout" element={<UserShopCheckout />} />
+              <Route
+                path="/user-checkout/success/:ids"
+                element={<UserOrderSuccess />}
+              />
+              {/* Older checkout page retained for any legacy links; current shop flow uses /user-checkout. */}
+              <Route
+                path="/user-checkout-legacy"
+                element={<UserCheckoutLegacy />}
+              />
 
-            <Route path="/user-donations" element={<UserDonations />} />
-            <Route path="/user-donations/new" element={<UserDonationNew />} />
-            <Route
-              path="/user-donations/history"
-              element={<UserDonationHistory />}
-            />
-            <Route
-              path="/user-donations/success/:donationId"
-              element={<UserDonationSuccess />}
-            />
-            <Route
-              path="/user-donations/:donationId/pickup"
-              element={<UserDonationPickup />}
-            />
-            <Route
-              path="/user-donations/:donationId/certificate"
-              element={<UserDonationCertificate />}
-            />
-            <Route
-              path="/user-donations/:donationId"
-              element={<UserDonationDetails />}
-            />
-            <Route path="/user-following" element={<UserFollowing />} />
-            <Route path="/user-remakers" element={<UserRemakers />} />
+              <Route path="/user-donations" element={<UserDonations />} />
+              <Route path="/user-donations/new" element={<UserDonationNew />} />
+              <Route
+                path="/user-donations/history"
+                element={<UserDonationHistory />}
+              />
+              <Route
+                path="/user-donations/success/:donationId"
+                element={<UserDonationSuccess />}
+              />
+              <Route
+                path="/user-donations/:donationId/pickup"
+                element={<UserDonationPickup />}
+              />
+              <Route
+                path="/user-donations/:donationId/certificate"
+                element={<UserDonationCertificate />}
+              />
+              <Route
+                path="/user-donations/:donationId"
+                element={<UserDonationDetails />}
+              />
+              <Route path="/user-following" element={<UserFollowing />} />
+              <Route path="/user-remakers" element={<UserRemakers />} />
 
-            <Route path="/user-profile" element={<UserProfile />} />
-            <Route path="/user-settings" element={<UserSettings />} />
-            <Route path="/user-addresses" element={<UserAddresses />} />
-            <Route path="/user-orbit-points" element={<UserOrbitPoints />} />
-            <Route
-              path="/user-orbit-points/history"
-              element={<UserPointsHistory />}
-            />
-            <Route
-              path="/user-orbit-points/earn"
-              element={<UserWaysToEarn />}
-            />
-            <Route
-              path="/user-orbit-points/vouchers"
-              element={<UserVouchers />}
-            />
-            <Route
-              path="/user-orbit-points/rewards/:voucherId"
-              element={<UserRewardDetail />}
-            />
-            <Route path="/user-badges" element={<UserBadges />} />
-            <Route path="/user-badges/:badgeId" element={<UserBadgeDetail />} />
+              <Route path="/user-profile" element={<UserProfile />} />
+              <Route path="/user-settings" element={<UserSettings />} />
+              <Route path="/user-addresses" element={<UserAddresses />} />
+              <Route path="/user-orbit-points" element={<UserOrbitPoints />} />
+              <Route
+                path="/user-orbit-points/history"
+                element={<UserPointsHistory />}
+              />
+              <Route
+                path="/user-orbit-points/earn"
+                element={<UserWaysToEarn />}
+              />
+              <Route
+                path="/user-orbit-points/vouchers"
+                element={<UserVouchers />}
+              />
+              <Route
+                path="/user-orbit-points/rewards/:voucherId"
+                element={<UserRewardDetail />}
+              />
+              <Route path="/user-badges" element={<UserBadges />} />
+              <Route path="/user-badges/:badgeId" element={<UserBadgeDetail />} />
 
-            <Route path="/user-notifications" element={<UserNotifications />} />
-            <Route path="/user-messages" element={<UserMessages />} />
-            <Route path="/user-messages/:id" element={<UserMessages />} />
-            <Route path="/user-sell" element={<UserSell />} />
-            <Route path="/user-sell/new" element={<UserSellForm />} />
-            <Route path="/user-reviews" element={<UserReviews />} />
-            <Route path="/user-sell/sales" element={<UserSales />} />
-            <Route path="/user-wallet" element={<UserWallet />} />
-            <Route
-              path="/user-sell/sales/:orderId"
-              element={<UserSaleDetails />}
-            />
-            <Route
-              path="/user-sell/:listingId/edit"
-              element={<UserSellForm />}
-            />
-            <Route
-              path="/user-sell/:listingId"
-              element={<UserListingDetails />}
-            />
+              <Route path="/user-notifications" element={<UserNotifications />} />
+              <Route path="/user-messages" element={<UserMessages />} />
+              <Route path="/user-messages/:id" element={<UserMessages />} />
+              <Route path="/user-sell" element={<UserSell />} />
+              <Route path="/user-sell/new" element={<UserSellForm />} />
+              <Route path="/user-reviews" element={<UserReviews />} />
+              <Route path="/user-sell/sales" element={<UserSales />} />
+              <Route path="/user-wallet" element={<UserWallet />} />
+              <Route
+                path="/user-sell/sales/:orderId"
+                element={<UserSaleDetails />}
+              />
+              <Route
+                path="/user-sell/:listingId/edit"
+                element={<UserSellForm />}
+              />
+              <Route
+                path="/user-sell/:listingId"
+                element={<UserListingDetails />}
+              />
 
-            <Route path="/user-help" element={<UserHelp />} />
-            <Route path="/user-help/contact" element={<UserContactSupport />} />
-            <Route path="/user-help/tickets" element={<UserTickets />} />
-            <Route
-              path="/user-help/tickets/:ticketId"
-              element={<UserTicketDetails />}
-            />
+              <Route path="/user-help" element={<UserHelp />} />
+              <Route path="/user-help/contact" element={<UserContactSupport />} />
+              <Route path="/user-help/tickets" element={<UserTickets />} />
+              <Route
+                path="/user-help/tickets/:ticketId"
+                element={<UserTicketDetails />}
+              />
+            </Route>
           </Route>
-        </Route>
 
-        {/* ReMaker public site */}
-        <Route path="/remakers" element={<ReMakersHome />} />
-        <Route path="/remakers-home" element={<ReMakersHome />} />
-        <Route path="/remakers-auth" element={<ReMakerAuth />} />
-        <Route path="/remakers/join" element={<ReMakerAuth />} />
-        <Route
-          path="/remakers/studio"
-          element={<Navigate to="/remaker-dashboard" replace />}
-        />
-        <Route path="/remakers-about" element={<ReMakerAbout />} />
-        <Route path="/remakers-faq" element={<ReMakerFAQ />} />
-        <Route path="/remakers-how-it-works" element={<ReMakerHowItWorks />} />
-        <Route path="/remakers-contact" element={<ReMakerContact />} />
-        <Route
-          path="/remakers-before-marketplace"
-          element={<ReMakerBeforeMarketplace />}
-        />
+          {/* ReMaker public site */}
+          <Route path="/remakers" element={<ReMakersHome />} />
+          <Route path="/remakers-home" element={<ReMakersHome />} />
+          <Route path="/remakers-auth" element={<ReMakerAuth />} />
+          <Route path="/remakers/join" element={<ReMakerAuth />} />
+          <Route
+            path="/remakers/studio"
+            element={<Navigate to="/remaker-dashboard" replace />}
+          />
+          <Route path="/remakers-about" element={<ReMakerAbout />} />
+          <Route path="/remakers-faq" element={<ReMakerFAQ />} />
+          <Route path="/remakers-how-it-works" element={<ReMakerHowItWorks />} />
+          <Route path="/remakers-contact" element={<ReMakerContact />} />
+          <Route
+            path="/remakers-before-marketplace"
+            element={<ReMakerBeforeMarketplace />}
+          />
 
-        {/* ReMaker studio */}
-        <Route element={<RequireAuth role="remaker" />}>
-          <Route element={<ReMakerLayout />}>
-            <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
-            <Route path="/remaker-profile" element={<ReMakerProfile />} />
-            {/* ReMakers buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
-            <Route path="/remaker-marketplace" element={<UserMarketplace />} />
-            <Route
-              path="/remaker-marketplace/product/:productId"
-              element={<UserProductDetails />}
-            />
-            <Route
-              path="/remaker-marketplace/seller/:sellerId"
-              element={<UserSellerProfile />}
-            />
-            <Route
-              path="/remaker-marketplace/remaker/:artistId"
-              element={<UserArtistProfile />}
-            />
-            <Route path="/remaker-cart" element={<UserCart />} />
-            <Route path="/remaker-checkout" element={<UserShopCheckout />} />
-            <Route
-              path="/remaker-checkout/success/:ids"
-              element={<UserOrderSuccess />}
-            />
-            <Route path="/remaker-orders" element={<UserOrders />} />
-            <Route
-              path="/remaker-orders/:orderId"
-              element={<UserOrderDetails />}
-            />
-            <Route
-              path="/remaker-orders/:orderId/track"
-              element={<UserOrderTrack />}
-            />
+          {/* ReMaker studio */}
+          <Route element={<RequireAuth role="remaker" />}>
+            <Route element={<ReMakerLayout />}>
+              <Route path="/remaker-dashboard" element={<ReMakerDashboard />} />
+              <Route path="/remaker-profile" element={<ReMakerProfile />} />
+              {/* ReMakers buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
+              <Route path="/remaker-marketplace" element={<UserMarketplace />} />
+              <Route
+                path="/remaker-marketplace/product/:productId"
+                element={<UserProductDetails />}
+              />
+              <Route
+                path="/remaker-marketplace/seller/:sellerId"
+                element={<UserSellerProfile />}
+              />
+              <Route
+                path="/remaker-marketplace/remaker/:artistId"
+                element={<UserArtistProfile />}
+              />
+              <Route path="/remaker-cart" element={<UserCart />} />
+              <Route path="/remaker-checkout" element={<UserShopCheckout />} />
+              <Route
+                path="/remaker-checkout/success/:ids"
+                element={<UserOrderSuccess />}
+              />
+              <Route path="/remaker-orders" element={<UserOrders />} />
+              <Route
+                path="/remaker-orders/:orderId"
+                element={<UserOrderDetails />}
+              />
+              <Route
+                path="/remaker-orders/:orderId/track"
+                element={<UserOrderTrack />}
+              />
 
-            <Route path="/remaker-sales" element={<ReMakerSales />} />
-            <Route
-              path="/remaker-sales/:orderId"
-              element={<ReMakerSaleDetails />}
-            />
-            <Route path="/remaker-customers" element={<ReMakerCustomers />} />
-            <Route
-              path="/remaker-customers/:customerId"
-              element={<ReMakerCustomerProfile />}
-            />
+              <Route path="/remaker-sales" element={<ReMakerSales />} />
+              <Route
+                path="/remaker-sales/:orderId"
+                element={<ReMakerSaleDetails />}
+              />
+              <Route path="/remaker-customers" element={<ReMakerCustomers />} />
+              <Route
+                path="/remaker-customers/:customerId"
+                element={<ReMakerCustomerProfile />}
+              />
 
-            <Route path="/remaker-earnings" element={<ReMakerEarnings />} />
-            <Route
-              path="/remaker-earnings/transactions"
-              element={<ReMakerTransactions />}
-            />
-            <Route
-              path="/remaker-earnings/payouts"
-              element={<ReMakerPayouts />}
-            />
-            <Route path="/remaker-analytics" element={<ReMakerAnalytics />} />
-            <Route path="/remaker-reviews" element={<ReMakerReviews />} />
-            <Route path="/remaker-my-reviews" element={<ReMakerMyReviews />} />
-            <Route path="/remaker-followers" element={<ReMakerFollowers />} />
-            <Route
-              path="/remaker-notifications"
-              element={<ReMakerNotifications />}
-            />
-            <Route path="/remaker-settings" element={<ReMakerSettings />} />
-            <Route path="/remaker-addresses" element={<UserAddresses />} />
+              <Route path="/remaker-earnings" element={<ReMakerEarnings />} />
+              <Route
+                path="/remaker-earnings/transactions"
+                element={<ReMakerTransactions />}
+              />
+              <Route
+                path="/remaker-earnings/payouts"
+                element={<ReMakerPayouts />}
+              />
+              <Route path="/remaker-analytics" element={<ReMakerAnalytics />} />
+              <Route path="/remaker-reviews" element={<ReMakerReviews />} />
+              <Route path="/remaker-my-reviews" element={<ReMakerMyReviews />} />
+              <Route path="/remaker-followers" element={<ReMakerFollowers />} />
+              <Route
+                path="/remaker-notifications"
+                element={<ReMakerNotifications />}
+              />
+              <Route path="/remaker-settings" element={<ReMakerSettings />} />
+              <Route path="/remaker-addresses" element={<UserAddresses />} />
 
-            <Route path="/remaker-portfolio" element={<ReMakerPortfolio />} />
-            <Route
-              path="/remaker-portfolio/new"
-              element={<ReMakerPortfolioAdd />}
-            />
-            <Route
-              path="/remaker-portfolio/:id/edit"
-              element={<ReMakerPortfolioEdit />}
-            />
-            <Route
-              path="/remaker-portfolio/:id"
-              element={<ReMakerPortfolioView />}
-            />
+              <Route path="/remaker-portfolio" element={<ReMakerPortfolio />} />
+              <Route
+                path="/remaker-portfolio/new"
+                element={<ReMakerPortfolioAdd />}
+              />
+              <Route
+                path="/remaker-portfolio/:id/edit"
+                element={<ReMakerPortfolioEdit />}
+              />
+              <Route
+                path="/remaker-portfolio/:id"
+                element={<ReMakerPortfolioView />}
+              />
 
-            <Route path="/remaker-products" element={<ReMakerProducts />} />
-            <Route
-              path="/remaker-products/new"
-              element={<ReMakerAddProduct />}
-            />
-            <Route
-              path="/remaker-products/marketplace"
-              element={<Navigate to="/remaker-marketplace" replace />}
-            />
-            <Route
-              path="/remaker-products/:id/edit"
-              element={<ReMakerEditProduct />}
-            />
+              <Route path="/remaker-products" element={<ReMakerProducts />} />
+              <Route
+                path="/remaker-products/new"
+                element={<ReMakerAddProduct />}
+              />
+              <Route
+                path="/remaker-products/marketplace"
+                element={<Navigate to="/remaker-marketplace" replace />}
+              />
+              <Route
+                path="/remaker-products/:id/edit"
+                element={<ReMakerEditProduct />}
+              />
 
-            <Route path="/remaker-help" element={<ReMakerHelp />} />
-            <Route path="/remaker-help/new" element={<ReMakerNewTicket />} />
-            <Route
-              path="/remaker-help/tickets/:ticketId"
-              element={<ReMakerTicket />}
-            />
-            <Route path="/remaker-messages" element={<ReMakerMessages />} />
-            <Route path="/remaker-messages/:id" element={<ReMakerMessages />} />
-            <Route path="/remaker-saved" element={<ReMakerSaved />} />
-            <Route path="/remaker-not-found" element={<ReMakerNotFound />} />
-            <Route path="/remaker-unknown-route" element={<UnknownRoute />} />
+              <Route path="/remaker-help" element={<ReMakerHelp />} />
+              <Route path="/remaker-help/new" element={<ReMakerNewTicket />} />
+              <Route
+                path="/remaker-help/tickets/:ticketId"
+                element={<ReMakerTicket />}
+              />
+              <Route path="/remaker-messages" element={<ReMakerMessages />} />
+              <Route path="/remaker-messages/:id" element={<ReMakerMessages />} />
+              <Route path="/remaker-saved" element={<ReMakerSaved />} />
+              <Route path="/remaker-not-found" element={<ReMakerNotFound />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Admin public pages */}
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin-home" element={<AdminHome />} />
-        <Route path="/admin-about" element={<AdminAbout />} />
-        <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
+          {/* Admin public pages */}
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin-home" element={<AdminHome />} />
+          <Route path="/admin-about" element={<AdminAbout />} />
+          <Route path="/admin-how-it-works" element={<AdminHowItWorks />} />
 
-        {/* Admin panel */}
-        <Route element={<RequireAuth role="admin" />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/admin-users" element={<AdminUsers />} />
-            <Route path="/admin-users/:userId" element={<AdminUserProfile />} />
-            <Route path="/admin-remakers" element={<AdminRemakers />} />
-            <Route
-              path="/admin-remakers/:remakerId"
-              element={<AdminRemakerProfile />}
-            />
-            <Route path="/admin-products" element={<AdminProducts />} />
-            <Route
-              path="/admin-products/:productId"
-              element={<AdminProductDetails />}
-            />
-            <Route path="/admin-orders" element={<AdminOrders />} />
-            <Route
-              path="/admin-orders/:orderId"
-              element={<AdminOrderDetails />}
-            />
-            <Route path="/admin-warehouse" element={<AdminWarehouse />} />
-            <Route
-              path="/admin-warehouse/:inventoryId"
-              element={<AdminWarehouseItem />}
-            />
-            <Route path="/admin-donations" element={<AdminDonations />} />
-            <Route
-              path="/admin-donations/:donationId"
-              element={<AdminDonationDetails />}
-            />
-            <Route path="/admin-pickups" element={<AdminPickups />} />
-            <Route path="/admin-pickups/teams" element={<AdminPickupTeams />} />
-            <Route
-              path="/admin-pickups/:pickupId"
-              element={<AdminPickupDetails />}
-            />
-            <Route path="/admin-complaints" element={<AdminComplaints />} />
-            <Route path="/admin-support" element={<AdminSupport />} />
-            <Route
-              path="/admin-support/:ticketId"
-              element={<AdminTicketDetails />}
-            />
-            <Route
-              path="/admin-complaints/:complaintId"
-              element={<AdminComplaintDetails />}
-            />
-            <Route path="/admin-rewards" element={<AdminRewards />} />
-            <Route path="/admin-reports" element={<AdminReports />} />
-            <Route path="/admin-settings" element={<AdminSettings />} />
-            <Route path="/admin-addresses" element={<UserAddresses />} />
-            <Route path="/admin-team" element={<AdminTeam />} />
-            <Route path="/admin-earnings" element={<AdminEarnings />} />
-            <Route
-              path="/admin-notifications"
-              element={<AdminNotifications />}
-            />
-            <Route path="/admin-content" element={<AdminContent />} />
-            <Route path="/admin-reviews" element={<AdminReviews />} />
-            <Route path="/admin-help" element={<AdminHelp />} />
-            <Route path="/admin-states" element={<AdminStates />} />
+          {/* Admin panel */}
+          <Route element={<RequireAuth role="admin" />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-users" element={<AdminUsers />} />
+              <Route path="/admin-users/:userId" element={<AdminUserProfile />} />
+              <Route path="/admin-remakers" element={<AdminRemakers />} />
+              <Route
+                path="/admin-remakers/:remakerId"
+                element={<AdminRemakerProfile />}
+              />
+              <Route path="/admin-products" element={<AdminProducts />} />
+              <Route
+                path="/admin-products/:productId"
+                element={<AdminProductDetails />}
+              />
+              <Route path="/admin-orders" element={<AdminOrders />} />
+              <Route
+                path="/admin-orders/:orderId"
+                element={<AdminOrderDetails />}
+              />
+              <Route path="/admin-warehouse" element={<AdminWarehouse />} />
+              <Route
+                path="/admin-warehouse/:inventoryId"
+                element={<AdminWarehouseItem />}
+              />
+              <Route path="/admin-donations" element={<AdminDonations />} />
+              <Route
+                path="/admin-donations/:donationId"
+                element={<AdminDonationDetails />}
+              />
+              <Route path="/admin-pickups" element={<AdminPickups />} />
+              <Route path="/admin-pickups/teams" element={<AdminPickupTeams />} />
+              <Route
+                path="/admin-pickups/:pickupId"
+                element={<AdminPickupDetails />}
+              />
+              <Route path="/admin-complaints" element={<AdminComplaints />} />
+              <Route path="/admin-support" element={<AdminSupport />} />
+              <Route
+                path="/admin-support/:ticketId"
+                element={<AdminTicketDetails />}
+              />
+              <Route
+                path="/admin-complaints/:complaintId"
+                element={<AdminComplaintDetails />}
+              />
+              <Route path="/admin-rewards" element={<AdminRewards />} />
+              <Route path="/admin-reports" element={<AdminReports />} />
+              <Route path="/admin-settings" element={<AdminSettings />} />
+              <Route path="/admin-addresses" element={<UserAddresses />} />
+              <Route path="/admin-team" element={<AdminTeam />} />
+              <Route path="/admin-earnings" element={<AdminEarnings />} />
+              <Route
+                path="/admin-notifications"
+                element={<AdminNotifications />}
+              />
+              <Route path="/admin-content" element={<AdminContent />} />
+              <Route path="/admin-reviews" element={<AdminReviews />} />
+              <Route path="/admin-help" element={<AdminHelp />} />
+              <Route path="/admin-states" element={<AdminStates />} />
 
-            {/* admins buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
-            <Route path="/admin-shop" element={<UserMarketplace />} />
-            <Route
-              path="/admin-shop/product/:productId"
-              element={<UserProductDetails />}
-            />
-            <Route
-              path="/admin-shop/seller/:sellerId"
-              element={<UserSellerProfile />}
-            />
-            <Route
-              path="/admin-shop/remaker/:artistId"
-              element={<UserArtistProfile />}
-            />
-            <Route path="/admin-shop/wishlist" element={<UserWishlist />} />
-            <Route path="/admin-shop/cart" element={<UserCart />} />
-            <Route path="/admin-shop/checkout" element={<UserShopCheckout />} />
-            <Route
-              path="/admin-shop/checkout/success/:ids"
-              element={<UserOrderSuccess />}
-            />
-            <Route path="/admin-shop/orders" element={<UserOrders />} />
-            <Route path="/admin-shop/reviews" element={<AdminMyReviews />} />
-            <Route
-              path="/admin-shop/orders/:orderId"
-              element={<UserOrderDetails />}
-            />
-            <Route
-              path="/admin-shop/orders/:orderId/track"
-              element={<UserOrderTrack />}
-            />
+              {/* admins buy with the same live pages as members (paths are mapped by shared/portalRouter) */}
+              <Route path="/admin-shop" element={<UserMarketplace />} />
+              <Route
+                path="/admin-shop/product/:productId"
+                element={<UserProductDetails />}
+              />
+              <Route
+                path="/admin-shop/seller/:sellerId"
+                element={<UserSellerProfile />}
+              />
+              <Route
+                path="/admin-shop/remaker/:artistId"
+                element={<UserArtistProfile />}
+              />
+              <Route path="/admin-shop/wishlist" element={<UserWishlist />} />
+              <Route path="/admin-shop/cart" element={<UserCart />} />
+              <Route path="/admin-shop/checkout" element={<UserShopCheckout />} />
+              <Route
+                path="/admin-shop/checkout/success/:ids"
+                element={<UserOrderSuccess />}
+              />
+              <Route path="/admin-shop/orders" element={<UserOrders />} />
+              <Route
+                path="/admin-shop/orders/:orderId"
+                element={<UserOrderDetails />}
+              />
+              <Route
+                path="/admin-shop/orders/:orderId/track"
+                element={<UserOrderTrack />}
+              />
 
-            <Route path="/admin-sell" element={<AdminSell />} />
-            <Route path="/admin-sell/new" element={<AdminSellForm />} />
-            <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
-            <Route
-              path="/admin-sell/listing/:id"
-              element={<AdminSellListing />}
-            />
-            <Route path="/admin-sell/sales" element={<AdminSales />} />
-            <Route
-              path="/admin-sell/sales/:orderId"
-              element={<AdminOrderDetails />}
-            />
-            {/* Keep older admin navigation destinations working. */}
-            <Route path="/admin-profile" element={<AdminProfile />} />
-            <Route path="/admin-messages" element={<AdminMessages />} />
-            <Route path="/admin-messages/:id" element={<AdminMessages />} />
+              <Route path="/admin-sell" element={<AdminSell />} />
+              <Route path="/admin-sell/new" element={<AdminSellForm />} />
+              <Route path="/admin-sell/edit/:id" element={<AdminSellForm />} />
+              <Route
+                path="/admin-sell/listing/:id"
+                element={<AdminSellListing />}
+              />
+              <Route path="/admin-sell/sales" element={<AdminSales />} />
+              <Route
+                path="/admin-sell/sales/:orderId"
+                element={<AdminOrderDetails />}
+              />
+              {/* Keep older admin navigation destinations working. */}
+              <Route path="/admin-profile" element={<AdminProfile />} />
+              <Route path="/admin-messages" element={<AdminMessages />} />
+              <Route path="/admin-messages/:id" element={<AdminMessages />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}
-        <Route path="*" element={<RouteFallback />} />
-      </Routes>
-    </Suspense>
+          {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}
+          <Route path="*" element={<RouteFallback />} />
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   );
 }

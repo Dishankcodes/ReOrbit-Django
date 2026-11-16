@@ -7,10 +7,11 @@ import UserHeader from "./UserHeader";
 import AccountGate from "../../shared/components/AccountGate";
 import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useUserAccountStatus } from "../../shared/accountStatus";
+import RouteErrorBoundary from "../../shared/status/RouteErrorBoundary";
 
 import "./UserLayout.css";
 
-export default function UserLayout() {
+export default function UserLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -78,7 +79,13 @@ export default function UserLayout() {
           <MaintenanceGate>
             <AccountGate info={account} role="user">
               <Suspense fallback={<DelayedLoader minHeight={320} />}>
-                <div className="ro-route">{<Outlet />}</div>
+                <RouteErrorBoundary
+                  theme="user"
+                  home={{ to: "/user-dashboard", label: "Go to dashboard" }}
+                  resetKey={location.pathname}
+                >
+                  <div className="ro-route">{children ?? <Outlet />}</div>
+                </RouteErrorBoundary>
               </Suspense>
             </AccountGate>
           </MaintenanceGate>
