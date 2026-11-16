@@ -332,7 +332,11 @@ def _plan(buyer, merged, s, lock):
     for g in out:
         g["subtotal"] = sum(ln["line_total"] for ln in g["lines"])
         g["platform_fee"] = platform_fee(g["subtotal"], g["seller"]["type"], s)
-        g["delivery_fee"] = delivery_charge(g["seller"]["type"], g["subtotal"], g["platform_pickup"], s)
+        # a seller who set their own delivery charge on a ReOrbit-managed product decides it; else the platform rate
+        own = [ln["obj"].delivery_fee for ln in g["lines"]
+               if ln["kind"] in ("item", "remaker_product") and ln["obj"].pickup_preference == Item.Pickup.PLATFORM_PICKUP
+               and ln["obj"].delivery_fee is not None]
+        g["delivery_fee"] = max(own) if own else delivery_charge(g["seller"]["type"], g["subtotal"], g["platform_pickup"], s)
         g["total"] = g["subtotal"] + g["platform_fee"] + g["delivery_fee"]
     return {"groups": out, "problems": problems}
 

@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
 import {
   BadgeCheck,
   Boxes,
+  ChevronRight,
   Eye,
   Heart,
   Leaf,
@@ -141,6 +142,23 @@ export default function UserProductDetails() {
   const sellerPath = isMaker
     ? `/user-marketplace/remaker/${item.sellerId}`
     : `/user-marketplace/seller/${item.sellerId}`;
+  /* Where the seller card goes: a ReMaker to their studio, a community seller to their
+     profile, and ReOrbit itself to everything ReOrbit sells. */
+  const sellerHref = isStore ? "/user-marketplace?source=admin" : sellerPath;
+  const sellerCta = isMaker
+    ? "View ReMaker profile"
+    : isStore
+      ? "See ReOrbit listings"
+      : "View seller profile";
+  const sellerLinked = isStore || Boolean(item.sellerId);
+  const SellerCard = sellerLinked ? Link : "section";
+  const sellerProps = sellerLinked
+    ? {
+        to: sellerHref,
+        className: "pd-seller pd-seller--link",
+        "aria-label": `${sellerCta}: ${item.seller}`,
+      }
+    : { className: "pd-seller" };
 
   const addCart = () => {
     addToCart(item.id, qty, stock.available);
@@ -314,7 +332,7 @@ export default function UserProductDetails() {
         </div>
       </section>
 
-      <section className="pd-seller">
+      <SellerCard {...sellerProps}>
         <SafeImage src={item.sellerImage} alt="" />
         <div className="pd-seller-id">
           <small>{sellerLabel}</small>
@@ -339,12 +357,12 @@ export default function UserProductDetails() {
             <dd>{listedOn}</dd>
           </div>
         </dl>
-        {!item.live && (
-          <Link to={sellerPath} className="dn-btn dn-btn--ghost">
-            View profile
-          </Link>
+        {sellerLinked && (
+          <span className="pd-seller-go">
+            {sellerCta} <ChevronRight size={15} aria-hidden="true" />
+          </span>
         )}
-      </section>
+      </SellerCard>
 
       <div className="pd-tabs" role="tablist">
         {[

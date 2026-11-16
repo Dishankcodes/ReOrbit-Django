@@ -38,6 +38,7 @@ from apps.core.images import delete_file, process_image
 from apps.core.models import AuditLog, Category, PlatformSettings
 from apps.core.pagination import StandardPagination
 from apps.core.responses import created, fail, ok
+from apps.admins.models import Admins
 from apps.core.services import audit, notify
 from apps.core.validators import validate_gujarat_pincode, validate_image
 
@@ -70,6 +71,24 @@ def _whole_rupees(value, field, errors, *, required):
         errors[field] = [f"Enter a whole-rupee price between 1 and {MAX_PRICE:,}."]
         return None
     return amount
+
+
+MAX_DELIVERY_FEE = 5000
+
+
+def _delivery_fee(value, errors, field="delivery_fee"):
+    """A whole-rupee delivery charge the buyer pays (0 = free delivery); blank means not set yet."""
+    if value in (None, ""):
+        return None
+    try:
+        amount = Decimal(str(value))
+    except InvalidOperation:
+        errors[field] = ["Enter the delivery charge as a number."]
+        return None
+    if amount != amount.to_integral_value() or amount < 0 or amount > MAX_DELIVERY_FEE:
+        errors[field] = [f"Enter a whole-rupee delivery charge between 0 and {MAX_DELIVERY_FEE:,}."]
+        return None
+    return int(amount)
 
 
 def clean_listing(data, *, existing=None):
@@ -138,6 +157,10 @@ def clean_listing(data, *, existing=None):
         elif p not in (None, ""):
             errors["pickup_preference"] = ["Choose how the item will be handed over."]
 
+    if "delivery_fee" in data or values.get("pickup_preference") == Item.Pickup.SELLER_HANDOVER:
+        values["delivery_fee"] = _delivery_fee(
+            data.get("delivery_fee") if values.get("pickup_preference") != Item.Pickup.SELLER_HANDOVER else None, errors)
+
     if "city" in data:
         raw = str(data.get("city") or "").strip()
         city = canonical_city(raw) if raw else ""
@@ -164,6 +187,8 @@ def readiness(item):
         errors["listing_price"] = ["Enter a price."]
     if not item.pickup_preference:
         errors["pickup_preference"] = ["Choose how the item will be handed over."]
+    if item.pickup_preference == Item.Pickup.PLATFORM_PICKUP and item.delivery_fee is None:
+        errors["delivery_fee"] = ["Enter the delivery charge (0 for free delivery)."]
     if not item.city:
         errors["city"] = ["Choose your city."]
     if not item.pincode:
@@ -620,4 +645,14 @@ class MyPriceSuggestionView(MyBase):
         item.save()
         audit(request.user.account, "listing.price_accepted" if accept else "listing.price_declined",
               "item", item.public_id, before=before, after=_snapshot(item), ip=IP(request))
+        # tell the admin who made the suggestion (or, if they have gone, whoever manages listings)
+        who = item.suggested_by if item.suggested_by_id and item.suggested_by.status == "Active" else None
+        admins = [who] if who else [a for a in Admins.objects.filter(status="Active") if a.has_module("products", "view")]
+        seller = request.user.account.full_name
+        for a in admins:
+            notify(a, "Price suggestion accepted" if accept else "Price suggestion declined",
+                   f"{seller} {'accepted' if accept else 'kept their price for'} “{item.title}”"
+                   + (f": now ₹{item.listing_price:,.0f}." if accept and item.listing_price is not None else "."),
+                   module="listings", target_url=f"/admin-products/{item.public_id}",
+                   ref_type="item", ref_id=item.public_id)
         return self.show(request, item, "Price updated." if accept else "Suggestion declined.")

@@ -4,15 +4,14 @@
    complaint lands in Admin › Complaints, in the same queue as the
    ones the team logs by hand.
 
-   `type` is what is being reported: "User", "ReMaker", "Product"
-   or "Review". The reported person or listing is sent as a small
-   snapshot (name, picture, owner), because the member apps and
-   the admin do not share ids yet. Backend later: send the id.
+   `type` is what is being reported: "User", "ReMaker" or "Product"
+   (reviews are reported through the Reviews flow). The report is
+   sent to the server with the id of the person or listing.
    ========================================================= */
 
 import { useCallback } from "react";
-import { logComplaint, CATEGORIES } from "../admin/data/complaintsStore";
-import { useMyRemakerAccount, useMyUserAccount } from "./identity";
+import { complaintsApi } from "../api/complaints";
+import { CATEGORIES } from "./complaintCategories";
 
 /* member wording → one of the admin categories for that type */
 const WORDS = [
@@ -76,80 +75,29 @@ export function categoryFor(type, reason) {
   return "Other";
 }
 
-const slug = (s) =>
-  String(s || "x")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-
-function snapshot(type, t) {
-  const owner = {
-    id: `ext-${slug(t.ownerName || t.name)}`,
-    name: t.ownerName || t.name,
-    role: t.ownerRole || (type === "User" ? "User" : "ReMaker"),
-    path: "/admin-complaints",
-    image: t.ownerImage || t.image || null,
-    status: "Active",
+/* file({ type, id, reason, description, ... }) → { id } of the new complaint.
+   Rejects with the server's message (own listing, duplicate, daily limit...). */
+function makeFiler() {
+  return async ({ type, id, reason, description }) => {
+    if (!id) throw new Error("We couldn't tell what you are reporting.");
+    try {
+      return await complaintsApi.file({
+        type,
+        target_id: id,
+        category: categoryFor(type, reason),
+        description: (description || reason || "").trim(),
+      });
+    } catch (e) {
+      const first = e?.errors && Object.values(e.errors).flat()[0];
+      throw new Error(first || e?.message || "We couldn't send your report.");
+    }
   };
-  const base = {
-    key: `${type}:ext:${slug(t.name)}:${slug(t.sub)}`,
-    type,
-    id: `ext-${slug(t.name)}`,
-    name: t.name,
-    image: t.image || null,
-    path: "/admin-complaints",
-    sub: t.sub || "",
-    external: true,
-  };
-  if (type === "Product")
-    return {
-      ...base,
-      status: "Live",
-      live: true,
-      price: t.price || 0,
-      category: t.category || "",
-      product: { title: t.name, image: t.image || null, price: t.price || 0 },
-      owner,
-    };
-  if (type === "Review")
-    return {
-      ...base,
-      status: "Visible",
-      live: true,
-      rating: t.rating || 0,
-      text: t.text || "",
-      reviewer: t.reviewer || "",
-      onProduct: t.onProduct || "",
-      at: t.at || "",
-      owner,
-    };
-  return { ...base, status: "Active", email: "", since: "" };
-}
-
-/* file({ type, name, sub, image, ownerName, ..., reason, description }) → complaint id */
-function makeFiler(reporterName, reporterRole) {
-  return ({ type, reason, description, ...target }) =>
-    logComplaint({
-      type,
-      targetId: `ext-${slug(target.name)}`,
-      category: categoryFor(type, reason),
-      description: (description || reason || "").trim(),
-      reporterName,
-      reporterRole,
-      by: reporterName,
-      target: snapshot(type, target),
-      source: "member",
-    });
 }
 
 export function useRemakerComplaintFiler() {
-  const me = useMyRemakerAccount();
-  const name = me?.full_name || "A ReMaker";
-  return useCallback((args) => makeFiler(name, "ReMaker")(args), [name]);
+  return useCallback((args) => makeFiler()(args), []);
 }
 
 export function useUserComplaintFiler() {
-  const me = useMyUserAccount();
-  const name = me?.full_name || "A member";
-  return useCallback((args) => makeFiler(name, "User")(args), [name]);
+  return useCallback((args) => makeFiler()(args), []);
 }

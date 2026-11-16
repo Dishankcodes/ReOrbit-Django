@@ -5135,6 +5135,21 @@
   border-radius: 50%;
   object-fit: cover;
 }
+.remaker-page-content a.pd-seller--link:hover {
+  border-color: #b9a19e;
+  box-shadow: 0 12px 28px rgba(41, 16, 17, 0.12);
+}
+.remaker-page-content a.pd-seller--link:focus-visible {
+  outline-color: #331618;
+}
+.remaker-page-content .pd-seller-go {
+  background: #f4ecea;
+  color: #331618;
+}
+.remaker-page-content a.pd-seller--link:hover .pd-seller-go {
+  background: #331618;
+  color: #fff;
+}
 .remaker-page-content .pd-seller-id {
   display: flex;
   flex-direction: column;

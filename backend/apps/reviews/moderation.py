@@ -71,7 +71,7 @@ def withdraw_report(account, review_id):
 # ------------------------------------------------------------------------- admin
 def _tell_reviewer_hidden(review, reason):
     reviewer = getattr(review, f"reviewer_{review.reviewer_type}")
-    url = "/remaker-my-reviews" if review.reviewer_type == "remaker" else "/user-reviews"
+    url = {"remaker": "/remaker-my-reviews", "admin": "/admin-shop/reviews"}.get(review.reviewer_type, "/user-reviews")
     notify(reviewer, "ReOrbit hid your review", f"It broke our review rules. {reason}".strip(),
            module="reviews", target_url=url, severity="warning", ref_type="review", ref_id=review.public_id)
 

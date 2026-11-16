@@ -52,6 +52,7 @@ export default function UserSellerProfile() {
       chat={personChat(seller, "seller")}
       reportType="User"
       reportTarget={{
+        id: sellerId,
         name: seller.name,
         sub: `Community seller · ${seller.city}`,
         image: seller.image,

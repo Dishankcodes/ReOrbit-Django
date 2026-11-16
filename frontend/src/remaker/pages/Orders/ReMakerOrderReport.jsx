@@ -283,7 +283,7 @@ function Report({ order }) {
         category: order.category,
         reason,
         description: `${description.trim()} (Order ${order.id})`,
-      });
+      }).catch(() => {});
     }
 
     navigate(`/remaker-orders/${order.id}`, {

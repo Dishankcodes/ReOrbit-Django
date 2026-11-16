@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { signOut } from "../../api/auth";
 import {
   LayoutDashboard,
@@ -29,6 +29,7 @@ import {
   Heart,
   MessageSquareText,
   Search,
+  History,
   ReceiptText,
   BadgeIndianRupee,
 } from "lucide-react";
@@ -98,6 +99,13 @@ const shoppingMenu = [
     path: "/admin-shop/orders",
     icon: ReceiptText,
     words: "my order history purchases bought track",
+  },
+  {
+    key: "shop",
+    label: "My Reviews",
+    path: "/admin-shop/reviews",
+    icon: Star,
+    words: "ratings feedback rate order reviews i wrote",
   },
 ];
 
@@ -258,7 +266,7 @@ export default function AdminSidebar({
   const { pathname } = useLocation();
   /* Pages that share a prefix (/admin-shop/orders is under /admin-shop) light up only their own link. */
   const SUB = {
-    "/admin-shop": ["/admin-shop/wishlist", "/admin-shop/cart", "/admin-shop/checkout", "/admin-shop/orders"],
+    "/admin-shop": ["/admin-shop/wishlist", "/admin-shop/cart", "/admin-shop/checkout", "/admin-shop/orders", "/admin-shop/reviews"],
     "/admin-sell": ["/admin-sell/sales"],
   };
   const isActive = (path) => {
@@ -271,6 +279,37 @@ export default function AdminSidebar({
   };
 
   const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const searchRef = useRef(null);
+  const RECENT_KEY = "reorbit_admin_recent";
+  const readRecent = () => {
+    try {
+      const v = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  };
+  const [recent, setRecent] = useState(readRecent);
+
+  /* "/" jumps to the menu search from anywhere, unless you are typing somewhere. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      const typing =
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable);
+      if (typing) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const allItems = [
     ...mainMenu,
     ...shoppingMenu,
@@ -279,6 +318,28 @@ export default function AdminSidebar({
     ...managementMenu,
     ...supportMenu,
   ];
+  /* remember the last few menu pages you opened */
+  useEffect(() => {
+    const hit = allItems
+      .filter((i) => pathname === i.path || pathname.startsWith(i.path + "/"))
+      .sort((a, b) => b.path.length - a.path.length)[0];
+    if (!hit) return;
+    setRecent((prev) => {
+      const next = [hit.path, ...prev.filter((p) => p !== hit.path)].slice(0, 6);
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        /* private mode: the list just won't persist */
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+  const recentItems = recent
+    .filter((p) => p !== pathname)
+    .map((p) => visible(allItems).find((i) => i.path === p))
+    .filter(Boolean)
+    .slice(0, 4);
   const q = query.trim().toLowerCase();
   const results = q
     ? visible(allItems).filter((i) =>
@@ -363,13 +424,43 @@ export default function AdminSidebar({
       <div className="admin-sidebar-search">
         <Search size={15} aria-hidden="true" />
         <input
+          ref={searchRef}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={goFirst}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="Search menu…"
           aria-label="Search the menu"
         />
+        {!query && !focused && <kbd className="admin-sidebar-search-key">/</kbd>}
+        {focused && !query && recentItems.length > 0 && (
+          <div className="admin-sidebar-recent" role="listbox" aria-label="Recent pages">
+            <span className="admin-sidebar-section-label">
+              <History size={11} /> RECENT
+            </span>
+            {recentItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  type="button"
+                  key={item.path}
+                  className="admin-sidebar-recent-item"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    navigate(item.path);
+                    searchRef.current?.blur();
+                    handleNavigation();
+                  }}
+                >
+                  <Icon size={15} strokeWidth={1.8} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       <nav className="admin-sidebar-navigation">
         {q ? (

@@ -154,6 +154,7 @@ function adapt(o) {
     note: o.note || "",
     events,
     eventsLoaded: !!o.events,
+    related: o.related || [],
     refund: refundOf(o),
     refunds: o.refunds || [],
     failed: o.failed || null,
@@ -218,7 +219,7 @@ export async function loadOrders(force = false) {
     const had = new Map(raw.map((o) => [o.id, o]));
     raw = rows.map((o) =>
       had.get(o.id)?.events && !o.events
-        ? { ...o, events: had.get(o.id).events }
+        ? { ...o, events: had.get(o.id).events, related: had.get(o.id).related }
         : o,
     );
     status = { loaded: true, loading: false, error: "", at: Date.now() };

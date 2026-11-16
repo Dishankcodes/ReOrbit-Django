@@ -54,8 +54,8 @@ def _text(data, key, limit, errors):
 
 def reviewer_fields(account):
     t = buyers.type_of(account)
-    if t not in ("user", "remaker"):
-        raise ReviewError("Only members and ReMakers can write reviews.", status=403)
+    if t not in ("user", "remaker", "admin"):
+        raise ReviewError("This account can't write reviews.", status=403)
     return {"reviewer_type": t, "reviewer_key": buyers.key_of(account), f"reviewer_{t}": account}
 
 
@@ -250,9 +250,12 @@ def _my_received(account, review_id):
     return review
 
 
+REVIEWS_URL = {"remaker": "/remaker-my-reviews", "admin": "/admin-shop/reviews"}
+
+
 def _notify_reviewer(review, title, body):
     reviewer = getattr(review, f"reviewer_{review.reviewer_type}")
-    url = "/remaker-my-reviews" if review.reviewer_type == "remaker" else "/user-reviews"
+    url = REVIEWS_URL.get(review.reviewer_type, "/user-reviews")
     notify(reviewer, title, body, module="reviews", target_url=url, ref_type="review", ref_id=review.public_id)
 
 

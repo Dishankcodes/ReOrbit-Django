@@ -30,6 +30,7 @@ function fromApi(p) {
     categoryId: p.category?.id || "",
     description: p.description || "",
     pickup: p.pickup_preference === "Platform_Pickup" ? "platform" : "self",
+    deliveryFee: p.delivery_fee == null ? null : Number(p.delivery_fee),
     price: Number(p.price) || 0,
     stock: p.stock,
     status: p.status,
@@ -132,6 +133,10 @@ const bodyOf = (v) => ({
   description: v.description,
   pickup_preference:
     v.pickup === "platform" ? "Platform_Pickup" : "Seller_Handover",
+  delivery_fee:
+    v.pickup === "platform" && v.deliveryFee !== ""
+      ? Number(v.deliveryFee)
+      : null,
   price: v.price === "" ? null : Number(v.price),
   stock: Number(v.stock) || 0,
   materials: (v.materials || []).join(", "),

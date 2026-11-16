@@ -4,7 +4,6 @@
    state it is already in (a suspended account cannot be
    suspended again, a removed listing cannot be removed).
    ========================================================= */
-import { canApplyProductAction } from "./productActions";
 import { isActive } from "./complaintsStore";
 
 export const COMPLAINT_ACTIONS = {
@@ -136,9 +135,7 @@ export function getDecisions(c) {
     if (!tooHard(t.status)) out.push(A.block);
   } else if (c.type === "Product") {
     out.push(A.warn);
-    const p = t.product;
-    if (canApplyProductAction(p, p.type === "item" ? "reject" : "deactivate"))
-      out.push(A.removeProduct);
+    if (t.canRemove) out.push(A.removeProduct); /* the server says if it can still come down */
     if (t.owner.status === "Active") out.push(A.suspend);
   } else {
     out.push(A.warn);

@@ -50,6 +50,11 @@ def _extra(data, values, errors, has):
             errors["pickup_preference"] = ["Choose a delivery method."]
         else:
             values["pickup_preference"] = pickup
+    if "delivery_fee" in data or values.get("pickup_preference") == RemakerProduct.Pickup.SELLER_HANDOVER:
+        from apps.listings.views import _delivery_fee
+        values["delivery_fee"] = _delivery_fee(
+            None if values.get("pickup_preference") == RemakerProduct.Pickup.SELLER_HANDOVER else data.get("delivery_fee"),
+            errors)
     if "customization_available" in data:
         values["customization_available"] = bool(data.get("customization_available"))
 

@@ -75,6 +75,7 @@ export default function UserArtistProfile() {
       chat={personChat(artist, "remaker")}
       reportType="ReMaker"
       reportTarget={{
+        id: artistId,
         name: artist.name,
         sub: `${artist.craft} · ${artist.city}`,
         image: artist.image,

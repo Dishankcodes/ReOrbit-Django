@@ -232,3 +232,28 @@ class ListingTests(APIBase):
         self.assertEqual(self.get("/api/listings/admin/?moderation=Disabled", as_=mod).data["data"]["results"], [])
         # a flagged listing stays on the marketplace
         self.assertEqual(len(self.client.get("/api/listings/").data["data"]["results"]), 1)
+
+
+class DeliveryFeeRules(APIBase):
+    """The delivery charge a seller types in when ReOrbit manages the delivery."""
+
+    def test_fee_validation(self):
+        from .views import _delivery_fee
+
+        errs = {}
+        self.assertEqual(_delivery_fee("120", errs), 120)
+        self.assertEqual(_delivery_fee(0, errs), 0)  # 0 = free delivery
+        self.assertIsNone(_delivery_fee("", errs))  # not set yet
+        self.assertEqual(errs, {})
+        for bad in ("-5", "12.5", "abc", "99999"):
+            errs = {}
+            self.assertIsNone(_delivery_fee(bad, errs))
+            self.assertIn("delivery_fee", errs, bad)
+
+    def test_seller_fee_is_used_and_handover_clears_it(self):
+        from .views import clean_listing
+
+        values, errors = clean_listing({"pickup_preference": Item.Pickup.PLATFORM_PICKUP, "delivery_fee": "80"})
+        self.assertEqual(values.get("delivery_fee"), 80)
+        values, errors = clean_listing({"pickup_preference": Item.Pickup.SELLER_HANDOVER, "delivery_fee": "80"})
+        self.assertIsNone(values.get("delivery_fee"))

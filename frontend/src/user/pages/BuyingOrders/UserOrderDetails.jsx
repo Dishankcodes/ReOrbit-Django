@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import ReturnPanel from "../../../shared/components/ReturnPanel";
+import OrderRelated from "../../../shared/components/OrderRelated";
 import {
   PAYMENT_LABEL,
   cancelOrder,
@@ -293,6 +294,8 @@ export default function UserOrderDetails() {
                 ))}
             </ul>
           </section>
+
+          <OrderRelated items={order.related} />
 
           {order.review && (
             <section className="dn-card dn-card-pad">

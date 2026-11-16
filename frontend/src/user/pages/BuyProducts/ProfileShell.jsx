@@ -21,6 +21,7 @@ import { reviewReportFiler } from "../../../shared/hooks/usePublicReviews";
 import { formatPrice } from "../../../data/marketplaceData";
 import SafeImage from "../../components/ui/SafeImage";
 import MessageButton from "../../components/ui/MessageButton";
+import PortfolioWorkModal from "../../../shared/components/PortfolioWorkModal";
 
 import "../../css/shared/ui-base.css";
 import "../../css/marketplace-css/UserMarketplaceV2.css";
@@ -55,6 +56,7 @@ export default function ProfileShell({
   initialTab,
 }) {
   const navigate = useNavigate();
+  const [openWork, setOpenWork] = useState(null); // the portfolio piece being viewed
   const { goBack, canGoBack, prevLabel } = useGoBack("/user-marketplace");
   const tabs = isMaker
     ? [
@@ -212,6 +214,12 @@ export default function ProfileShell({
                   <h3>{w.title}</h3>
                   <p>{w.description}</p>
                 </div>
+                <button
+                  type="button"
+                  className="ushp-work-open"
+                  onClick={() => setOpenWork(w)}
+                  aria-label={`Open ${w.title}: before and after`}
+                />
               </article>
             ))}
           </div>
@@ -314,6 +322,14 @@ export default function ProfileShell({
             <p className="pd-none">No reviews yet.</p>
           )}
         </section>
+      )}
+
+      {openWork && (
+        <PortfolioWorkModal
+          work={openWork}
+          onClose={() => setOpenWork(null)}
+          productHref={(product) => `/user-marketplace/product/${product.id}`}
+        />
       )}
     </div>
   );

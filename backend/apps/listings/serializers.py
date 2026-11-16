@@ -52,6 +52,7 @@ class ItemSerializer(serializers.ModelSerializer):
             "estimated_price",
             "listing_price",
             "pickup_preference",
+            "delivery_fee",
             "item_status",
             "moderation_status",
             "moderation_note",

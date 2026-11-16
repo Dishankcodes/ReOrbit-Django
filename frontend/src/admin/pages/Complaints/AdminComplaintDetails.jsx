@@ -246,7 +246,6 @@ export default function AdminComplaintDetails() {
       ),
     [members],
   );
-  const myName = access.me?.name || "Admin";
 
   if (!c) {
     return (
@@ -276,30 +275,38 @@ export default function AdminComplaintDetails() {
   const heroActions = actions.filter((a) => a.key !== "assign").slice(0, 3);
   const otherActive = c.others.filter(isActive);
 
+  const attempt = async (job, okMessage) => {
+    try {
+      await job();
+      toast(okMessage);
+      return true;
+    } catch (e) {
+      toast(e?.message || "That didn't work.");
+      return false;
+    }
+  };
   const run = (action) => {
     if (action.fields === "none") {
-      runComplaintAction(
-        c,
-        action.key,
-        { by: myName, assigneeId: access.me?.id },
-        all,
+      attempt(
+        () => runComplaintAction(c, action.key, { assigneeId: access.me?.id }),
+        `${c.id} ${action.toast}.`,
       );
-      toast(`${c.id} ${action.toast}.`);
       return;
     }
     setPending(action);
   };
-  const confirm = (payload) => {
-    runComplaintAction(c, pending.key, { ...payload, by: myName }, all);
-    toast(`${c.id} ${pending.toast}.`);
-    setPending(null);
+  const confirm = async (payload) => {
+    const ok = await attempt(
+      () => runComplaintAction(c, pending.key, payload),
+      `${c.id} ${pending.toast}.`,
+    );
+    if (ok) setPending(null);
   };
-  const saveNote = (e) => {
+  const saveNote = async (e) => {
     e.preventDefault();
     if (note.trim().length < 3) return;
-    addNote(c.id, note.trim(), myName);
-    setNote("");
-    toast("Note added.");
+    if (await attempt(() => addNote(c.id, note.trim()), "Note added."))
+      setNote("");
   };
 
   return (

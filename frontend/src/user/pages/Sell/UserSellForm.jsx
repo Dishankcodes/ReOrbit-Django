@@ -29,6 +29,7 @@ import { formatPrice } from "../../../data/marketplaceData";
 import Crumbs from "../../components/ui/Crumbs";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import EmptyState from "../../components/ui/EmptyState";
+import { getCommerce } from "../../../shared/commerce";
 import EarningsPreview, { earningsFor } from "./components/EarningsPreview";
 
 import "../../css/shared/ui-base.css";
@@ -54,6 +55,7 @@ const makeBlank = () => {
     city: savedProfile.city || "",
     pincode: savedProfile.pincode || "",
     pickup: "self",
+    deliveryFee: "",
     agree: false,
   };
 };
@@ -74,6 +76,7 @@ const toForm = (l) => ({
   city: l.city,
   pincode: l.pincode,
   pickup: l.pickup,
+  deliveryFee: l.deliveryFee == null ? "" : String(l.deliveryFee),
   agree: false,
 });
 
@@ -176,6 +179,16 @@ export default function UserSellForm() {
       const pinProblem = pincodeProblem(form.pincode);
       if (pinProblem) e.pincode = pinProblem;
       if (form.city.trim().length < 2) e.city = "Enter your city.";
+      if (form.pickup === "platform") {
+        const fee = Number(form.deliveryFee);
+        if (
+          form.deliveryFee === "" ||
+          !Number.isInteger(fee) ||
+          fee < 0 ||
+          fee > 5000
+        )
+          e.deliveryFee = "Enter a whole number from 0 to 5,000 (0 = free).";
+      }
     }
     if (index === 2 && !form.agree)
       e.agree = "Please confirm before submitting.";
@@ -242,7 +255,7 @@ export default function UserSellForm() {
           setLimitMsg(err.message);
         } else {
           const f = err.errors || {};
-          const map = { listing_price: "price" };
+          const map = { listing_price: "price", delivery_fee: "deliveryFee" };
           const next = {};
           Object.entries(f).forEach(([k, v]) => {
             next[map[k] || k] = Array.isArray(v) ? v[0] : v;
@@ -250,7 +263,7 @@ export default function UserSellForm() {
           if (Object.keys(next).length) {
             setErrors(next);
             setStep(
-              next.images || next.pincode || next.city || next.pickup_preference
+              next.images || next.pincode || next.city || next.pickup_preference || next.deliveryFee
                 ? 1
                 : 0,
             );
@@ -519,7 +532,11 @@ export default function UserSellForm() {
                       role="radio"
                       aria-checked={form.pickup === o.id}
                       className={form.pickup === o.id ? "on" : ""}
-                      onClick={() => set("pickup", o.id)}
+                      onClick={() => {
+                        set("pickup", o.id);
+                        if (o.id === "platform" && form.deliveryFee === "")
+                          set("deliveryFee", String(getCommerce().itemDelivery ?? ""));
+                      }}
                     >
                       <span className="usl-radio" aria-hidden="true" />
                       <div>
@@ -530,6 +547,22 @@ export default function UserSellForm() {
                   ))}
                 </div>
               </div>
+
+              {form.pickup === "platform" &&
+                field(
+                  "deliveryFee",
+                  "Delivery charge the buyer pays (₹)",
+                  <input
+                    className={`dn-input ${errors.deliveryFee ? "is-error" : ""}`}
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={form.deliveryFee}
+                    onChange={(e) =>
+                      set("deliveryFee", e.target.value.replace(/\D/g, ""))
+                    }
+                  />,
+                  "Added to the buyer's total at checkout. Enter 0 for free delivery.",
+                )}
             </div>
           )}
 
@@ -565,6 +598,8 @@ export default function UserSellForm() {
                       Handover{" "}
                       <b>
                         {PICKUP_OPTIONS.find((o) => o.id === form.pickup).label}
+                        {form.pickup === "platform" &&
+                          ` · delivery ₹${Number(form.deliveryFee || 0).toLocaleString("en-IN")}`}
                       </b>
                     </li>
                   </ul>

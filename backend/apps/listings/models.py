@@ -62,6 +62,8 @@ class Item(PublicIdModel, TimeStampedModel):
         max_digits=12, decimal_places=2, null=True, blank=True
     )
     pickup_preference = models.CharField(max_length=20, choices=Pickup.choices)
+    # What the buyer pays for delivery when ReOrbit manages it. The seller sets it when listing.
+    delivery_fee = models.PositiveIntegerField(null=True, blank=True)
     item_status = models.CharField(
         max_length=12, choices=Status.choices, default=Status.DRAFT
     )

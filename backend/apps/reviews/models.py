@@ -1,4 +1,4 @@
-"""Reviews written by buyers (a member or a ReMaker) once an order is delivered.
+"""Reviews written by buyers (a member, a ReMaker or a ReOrbit admin shopping as the platform) once an order is delivered.
 
 * ProductReview: one per delivered order line.
 * SellerReview:  one per order, only when a member or ReMaker sold it (never for ReOrbit's own store).
@@ -23,10 +23,11 @@ class _Review(PublicIdModel, TimeStampedModel):
         VISIBLE = "Visible", "Visible"
         HIDDEN = "Hidden", "Hidden"
 
-    reviewer_type = models.CharField(max_length=8)  # user | remaker
+    reviewer_type = models.CharField(max_length=8)  # user | remaker | admin
     reviewer_key = models.CharField(max_length=24, db_index=True)  # "user:5"
     reviewer_user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
     reviewer_remaker = models.ForeignKey("remakers.ReMakers", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
+    reviewer_admin = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.CASCADE, related_name="+")
     rating = stars()
     body = models.CharField(max_length=1000, blank=True)
     edited_at = models.DateTimeField(null=True, blank=True)
@@ -63,8 +64,9 @@ class ProductReview(_Review):
             models.CheckConstraint(condition=Q(rating__gte=1, rating__lte=5), name="prodrev_rating_1_5"),
             models.CheckConstraint(
                 condition=(
-                    Q(reviewer_type="user", reviewer_user__isnull=False, reviewer_remaker__isnull=True)
-                    | Q(reviewer_type="remaker", reviewer_remaker__isnull=False, reviewer_user__isnull=True)
+                    Q(reviewer_type="user", reviewer_user__isnull=False, reviewer_remaker__isnull=True, reviewer_admin__isnull=True)
+                    | Q(reviewer_type="remaker", reviewer_remaker__isnull=False, reviewer_user__isnull=True, reviewer_admin__isnull=True)
+                    | Q(reviewer_type="admin", reviewer_admin__isnull=False, reviewer_user__isnull=True, reviewer_remaker__isnull=True)
                 ),
                 name="prodrev_one_reviewer",
             ),
@@ -101,8 +103,9 @@ class SellerReview(_Review):
             models.CheckConstraint(condition=Q(rating__gte=1, rating__lte=5), name="sellrev_rating_1_5"),
             models.CheckConstraint(
                 condition=(
-                    Q(reviewer_type="user", reviewer_user__isnull=False, reviewer_remaker__isnull=True)
-                    | Q(reviewer_type="remaker", reviewer_remaker__isnull=False, reviewer_user__isnull=True)
+                    Q(reviewer_type="user", reviewer_user__isnull=False, reviewer_remaker__isnull=True, reviewer_admin__isnull=True)
+                    | Q(reviewer_type="remaker", reviewer_remaker__isnull=False, reviewer_user__isnull=True, reviewer_admin__isnull=True)
+                    | Q(reviewer_type="admin", reviewer_admin__isnull=False, reviewer_user__isnull=True, reviewer_remaker__isnull=True)
                 ),
                 name="sellrev_one_reviewer",
             ),

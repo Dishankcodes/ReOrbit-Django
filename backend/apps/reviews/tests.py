@@ -83,9 +83,16 @@ class ReviewTests(ReviewBase):
         self.assertEqual(self.rate_product(oid, ref, who=self.seller).status_code, 404)
         self.assertEqual(self.rate_product(oid, "NOPE-1").status_code, 404)
 
-    def test_admins_cannot_review(self):
+    def test_admins_can_review_what_they_bought(self):
+        # an admin who shops as the platform has their own (empty, to begin with) list of things to rate
         r = self.get("/api/reviews/me/", as_=self.boss)
-        self.assertEqual(r.status_code, 403)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data["data"]["results"], [])
+        # and the reviewer fields accept an admin account
+        from . import services
+        f = services.reviewer_fields(self.boss)
+        self.assertEqual(f["reviewer_type"], "admin")
+        self.assertEqual(f["reviewer_admin"], self.boss)
 
     def test_edit_window(self):
         oid, ref = self.delivered()

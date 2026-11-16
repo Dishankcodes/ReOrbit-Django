@@ -123,6 +123,8 @@ class RemakerProduct(SellableBase):
     pickup_preference = models.CharField(
         max_length=20, choices=Pickup.choices, default=Pickup.SELLER_HANDOVER
     )
+    # What the buyer pays for delivery when ReOrbit manages it. The ReMaker sets it per product.
+    delivery_fee = models.PositiveIntegerField(null=True, blank=True)
 
     remaker = models.ForeignKey(
         ReMakers, on_delete=models.PROTECT, related_name="products"

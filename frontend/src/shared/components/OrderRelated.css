@@ -1,0 +1,81 @@
+.orl {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid #e3e7e2;
+  border-radius: 16px;
+  background: #fff;
+}
+.orl h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.orl ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.orl-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #edf0ec;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.orl-link:hover {
+  border-color: #9cc0ad;
+  background: #f6faf7;
+}
+.orl-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8f1ec;
+  color: #1e5a40;
+}
+.orl-return {
+  background: #fdf1de;
+  color: #8a5a00;
+}
+.orl-refund {
+  background: #e6eefc;
+  color: #234a9a;
+}
+.orl-main {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.orl-main b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+.orl-main small,
+.orl-side time {
+  color: #7a8279;
+  font-size: 0.75rem;
+}
+.orl-side {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  flex: none;
+}
+.orl-side em {
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: #eef1ed;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+}

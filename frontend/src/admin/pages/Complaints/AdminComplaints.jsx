@@ -174,7 +174,6 @@ export default function AdminComplaints() {
       ),
     [members],
   );
-  const myName = access.me?.name || "Admin";
 
   /* ---------- numbers ---------- */
   const counts = useMemo(() => {
@@ -305,57 +304,58 @@ export default function AdminComplaints() {
   );
 
   /* ---------- actions ---------- */
-  const askAction = (action, ids) => {
+  /* Run one action over several complaints. The server decides each one, so a
+     failure is reported with its message and the rest still go through. */
+  const runMany = async (action, list, payload) => {
+    let done = 0;
+    let failed = "";
+    for (const c of list) {
+      try {
+        await runComplaintAction(c, action.key, payload);
+        done += 1;
+      } catch (e) {
+        failed = failed || e?.message || "That didn't work.";
+      }
+    }
+    if (done)
+      toast(
+        done === 1
+          ? `${list.find(Boolean).id} ${action.toast}.`
+          : `${done} complaints ${action.toast.replace(/^was /, "were ")}.`,
+      );
+    if (failed) toast(failed);
+    return done;
+  };
+  const askAction = async (action, ids) => {
     const eligible = all.filter(
       (c) => ids.includes(c.id) && canApplyComplaintAction(c, action.key),
     );
     if (!eligible.length) return;
     if (action.fields === "none") {
-      eligible.forEach((c) =>
-        runComplaintAction(
-          c,
-          action.key,
-          { by: myName, assigneeId: access.me?.id },
-          all,
-        ),
-      );
-      toast(
-        eligible.length === 1
-          ? `${eligible[0].id} ${action.toast}.`
-          : `${eligible.length} complaints ${action.toast.replace(/^was /, "were ")}.`,
-      );
+      await runMany(action, eligible, { assigneeId: access.me?.id });
       clearSelection();
       return;
     }
     setPending({ action, complaints: eligible });
   };
-  const confirmAction = (payload) => {
+  const confirmAction = async (payload) => {
     const { action, complaints } = pending;
-    complaints.forEach((c) =>
-      runComplaintAction(
-        c,
-        action.key,
-        {
-          ...payload,
-          by: myName,
-          alsoResolve: complaints.length === 1 && payload.alsoResolve,
-        },
-        all,
-      ),
-    );
-    toast(
-      complaints.length === 1
-        ? `${complaints[0].id} ${action.toast}.`
-        : `${complaints.length} complaints ${action.toast.replace(/^was /, "were ")}.`,
-    );
+    await runMany(action, complaints, {
+      ...payload,
+      alsoResolve: complaints.length === 1 && payload.alsoResolve,
+    });
     setPending(null);
     clearSelection();
   };
-  const saveLog = (values) => {
-    const id = logComplaint({ ...values, by: myName });
-    setLogging(false);
-    toast(`${id} was logged.`);
-    open(id);
+  const saveLog = async (values) => {
+    try {
+      const id = await logComplaint(values);
+      setLogging(false);
+      toast(`${id} was logged.`);
+      open(id);
+    } catch (e) {
+      toast(e?.message || "Could not log the complaint.");
+    }
   };
 
   const menuItems = (c) => [

@@ -113,6 +113,10 @@ const pageInformation = {
     title: "My Purchases",
     subtitle: "Everything you bought as the platform.",
   },
+  "/admin-shop/reviews": {
+    title: "My Reviews",
+    subtitle: "Ratings you gave on what you bought as the platform.",
+  },
   "/admin-notifications": {
     title: "Notifications",
     subtitle: "Manage system notifications and announcements.",

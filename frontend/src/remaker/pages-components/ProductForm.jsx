@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 
+import { getCommerce } from "../../shared/commerce";
 import { MATERIAL_SUGGESTIONS, formatPrice } from "../data/remakerProducts";
 
 import {
@@ -56,6 +57,8 @@ function buildInitial(product) {
     category: product?.category || "",
     description: product?.description || "",
     pickup: product?.pickup || "self",
+    deliveryFee:
+      product?.deliveryFee == null ? "" : String(product.deliveryFee),
     price: product?.price ? String(product.price) : "",
     stock: product ? product.stock : 1,
     materials: product?.materials || [],
@@ -140,6 +143,11 @@ export default function ProductForm({ mode = "add", product = null }) {
         ? `Write at least ${DESC_MIN} characters about how you made it.`
         : "",
     price: Number(values.price) > 0 ? "" : "Enter a price above ₹0.",
+    deliveryFee:
+      values.pickup !== "platform" ||
+      (values.deliveryFee !== "" && Number(values.deliveryFee) <= 5000)
+        ? ""
+        : "Enter the delivery charge, 0 to 5,000 (0 = free).",
   };
 
   const checklist = [
@@ -152,6 +160,9 @@ export default function ProductForm({ mode = "add", product = null }) {
     { key: "category", label: "Pick a category" },
     { key: "description", label: "Describe how you made it" },
     { key: "price", label: "Set a price" },
+    ...(values.pickup === "platform"
+      ? [{ key: "deliveryFee", label: "Set the delivery charge" }]
+      : []),
   ].map((item) => ({ ...item, done: !errors[item.key] }));
 
   const doneCount = checklist.filter((item) => item.done).length;
@@ -840,7 +851,14 @@ export default function ProductForm({ mode = "add", product = null }) {
                   aria-checked={values.pickup === option.id}
                   className={values.pickup === option.id ? "selected" : ""}
                   key={option.id}
-                  onClick={() => setField("pickup", option.id)}
+                  onClick={() => {
+                    setField("pickup", option.id);
+                    if (option.id === "platform" && values.deliveryFee === "")
+                      setField(
+                        "deliveryFee",
+                        String(getCommerce().productDelivery ?? ""),
+                      );
+                  }}
                 >
                   <span className="rpf-pickup-radio" aria-hidden="true" />
                   <span className="rpf-pickup-copy">
@@ -850,6 +868,38 @@ export default function ProductForm({ mode = "add", product = null }) {
                 </button>
               ))}
             </div>
+
+            {values.pickup === "platform" && (
+              <div className="rpf-field" style={{ marginTop: 14, maxWidth: 280 }}>
+                <label htmlFor="rpf-delivery">
+                  Delivery charge the buyer pays
+                </label>
+                <div
+                  className={`rpf-prefix ${show("deliveryFee") ? "has-error" : ""}`}
+                  data-invalid={show("deliveryFee") ? "true" : undefined}
+                >
+                  <span>₹</span>
+                  <input
+                    id="rpf-delivery"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={values.deliveryFee}
+                    placeholder="0"
+                    onChange={(e) =>
+                      setField("deliveryFee", e.target.value.replace(/\D/g, ""))
+                    }
+                  />
+                </div>
+                {show("deliveryFee") ? (
+                  <span className="rpf-error-inline">{show("deliveryFee")}</span>
+                ) : (
+                  <span className="rpf-hint">
+                    Added to the buyer's total. Enter 0 for free delivery.
+                  </span>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ORIGIN */}

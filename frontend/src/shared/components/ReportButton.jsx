@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Flag, X, CheckCircle2 } from "lucide-react";
-import { CATEGORIES } from "../../admin/data/complaintsStore";
+import { CATEGORIES } from "../complaintCategories";
 import "./ReportButton.css";
 
 const NOUN = {

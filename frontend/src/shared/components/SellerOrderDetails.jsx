@@ -18,6 +18,7 @@ import {
 
 import { orderOptionsApi } from "../../api/orders";
 import Spinner, { PageLoader } from "./Spinner";
+import OrderRelated from "./OrderRelated";
 import "./Spinner.css";
 import "./SellerOrderDetails.css";
 
@@ -1076,6 +1077,8 @@ export default function SellerOrderDetails({
               )}
             </section>
           )}
+
+          <OrderRelated items={o.related} />
 
           <section className="sod-card">
             <h3>Activity</h3>

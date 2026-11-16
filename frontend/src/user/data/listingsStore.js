@@ -205,6 +205,7 @@ function fromApi(a) {
     city: a.city,
     pincode: a.pincode,
     pickup: PICKUP_IN[a.pickup_preference] || "self",
+    deliveryFee: a.delivery_fee == null ? null : Number(a.delivery_fee),
     status,
     createdAt: a.created_at,
     views: 0,
@@ -319,6 +320,10 @@ const bodyOf = (form) => ({
   listing_price:
     form.price === "" || form.price == null ? null : Number(form.price),
   pickup_preference: PICKUP_OUT[form.pickup],
+  delivery_fee:
+    form.pickup === "platform" && form.deliveryFee !== ""
+      ? Number(form.deliveryFee)
+      : null,
   city: form.city,
   pincode: form.pincode,
 });

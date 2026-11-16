@@ -1,6 +1,6 @@
 """Reviews API (mounted at /api/reviews/).
 
-Buyer (member or ReMaker)
+Buyer (member, ReMaker or admin)
   GET  me/                                   delivered items with the state of their reviews
   POST me/orders/<order>/items/<line>/product/   multipart: rating, title, body, quality, as_described, value,
                                                  packaging, recommend, photos[], remove_photos[]   (create or edit)
@@ -47,8 +47,7 @@ def _ip(request):
 
 
 def _buyer_only(request):
-    if buyers.type_of(request.user.account) == "admin":
-        return fail("Only members and ReMakers can write reviews.", status=403)
+    """Members, ReMakers and admins shopping as the platform may review what they bought."""
     return None
 
 
@@ -102,9 +101,9 @@ class SellerReviewSave(APIView):
 def _received_qs(account):
     t = buyers.type_of(account)
     products = (ProductReview.objects.filter(order__seller_type=t, **{f"order__seller_{t}": account})
-                .select_related("order", "order_item", "reviewer_user", "reviewer_remaker").prefetch_related("photos"))
+                .select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "reviewer_admin").prefetch_related("photos"))
     sellers = (SellerReview.objects.filter(seller_type=t, **{f"seller_{t}": account})
-               .select_related("order", "reviewer_user", "reviewer_remaker"))
+               .select_related("order", "reviewer_user", "reviewer_remaker", "reviewer_admin"))
     return products, sellers
 
 
@@ -193,7 +192,7 @@ class _Public(APIView):
 class PublicProductReviews(_Public):
     def get(self, request, ref):
         qs = (ProductReview.objects.filter(order_item__ref_id=ref, status=ProductReview.Status.VISIBLE)
-              .select_related("order", "order_item", "reviewer_user", "reviewer_remaker").prefetch_related("photos"))
+              .select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "reviewer_admin").prefetch_related("photos"))
         return ok({"summary": summary_of([qs]), "results": [public_data(r, request) for r in qs[:50]]})
 
 
@@ -205,9 +204,9 @@ class PublicSellerReviews(_Public):
             return fail("We couldn't find that seller.", status=404)
         v = ProductReview.Status.VISIBLE
         products = (ProductReview.objects.filter(order__seller_type=seller_type, status=v, **{f"order__seller_{seller_type}": acct})
-                    .select_related("order", "order_item", "reviewer_user", "reviewer_remaker").prefetch_related("photos"))
+                    .select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "reviewer_admin").prefetch_related("photos"))
         sellers = (SellerReview.objects.filter(seller_type=seller_type, status=v, **{f"seller_{seller_type}": acct})
-                   .select_related("order", "reviewer_user", "reviewer_remaker"))
+                   .select_related("order", "reviewer_user", "reviewer_remaker", "reviewer_admin"))
         rows = sorted(chain(products[:100], sellers[:100]), key=lambda r: (r.created_at, r.pk), reverse=True)[:50]
         return ok({"summary": summary_of([products, sellers]), "results": [public_data(r, request) for r in rows]})
 
@@ -218,7 +217,7 @@ class _Admin(APIView):
 
 
 def _admin_row(review, request):
-    review = type(review).objects.select_related("order", "reviewer_user", "reviewer_remaker", "hidden_by").prefetch_related("reports").get(pk=review.pk)
+    review = type(review).objects.select_related("order", "reviewer_user", "reviewer_remaker", "reviewer_admin", "hidden_by").prefetch_related("reports").get(pk=review.pk)
     return admin_data(review, request)
 
 
@@ -226,8 +225,8 @@ class AdminReviews(_Admin):
     def get(self, request):
         q = request.query_params
         kind = q.get("kind")
-        prods = ProductReview.objects.select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "hidden_by").prefetch_related("photos", "reports__reporter_user", "reports__reporter_remaker")
-        sells = SellerReview.objects.select_related("order", "reviewer_user", "reviewer_remaker", "hidden_by").prefetch_related("reports__reporter_user", "reports__reporter_remaker")
+        prods = ProductReview.objects.select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "reviewer_admin", "hidden_by").prefetch_related("photos", "reports__reporter_user", "reports__reporter_remaker")
+        sells = SellerReview.objects.select_related("order", "reviewer_user", "reviewer_remaker", "reviewer_admin", "hidden_by").prefetch_related("reports__reporter_user", "reports__reporter_remaker")
         if q.get("status") in ("Visible", "Hidden"):
             prods, sells = prods.filter(status=q["status"]), sells.filter(status=q["status"])
         if q.get("reported") == "1":
@@ -241,14 +240,14 @@ class AdminReviews(_Admin):
             sells = sells.filter(Q(seller_user__public_id=sid) | Q(seller_remaker__public_id=sid))
         if q.get("reviewer"):
             rid = q["reviewer"]
-            prods = prods.filter(Q(reviewer_user__public_id=rid) | Q(reviewer_remaker__public_id=rid))
-            sells = sells.filter(Q(reviewer_user__public_id=rid) | Q(reviewer_remaker__public_id=rid))
+            prods = prods.filter(Q(reviewer_user__public_id=rid) | Q(reviewer_remaker__public_id=rid) | Q(reviewer_admin__public_id=rid))
+            sells = sells.filter(Q(reviewer_user__public_id=rid) | Q(reviewer_remaker__public_id=rid) | Q(reviewer_admin__public_id=rid))
         text = (q.get("q") or "").strip()
         if text:
             prods = prods.filter(Q(title__icontains=text) | Q(body__icontains=text) | Q(order__public_id__icontains=text) | Q(public_id__icontains=text)
-                                 | Q(order_item__title__icontains=text) | Q(reviewer_user__full_name__icontains=text) | Q(reviewer_remaker__full_name__icontains=text))
+                                 | Q(order_item__title__icontains=text) | Q(reviewer_user__full_name__icontains=text) | Q(reviewer_remaker__full_name__icontains=text) | Q(reviewer_admin__full_name__icontains=text))
             sells = sells.filter(Q(body__icontains=text) | Q(order__public_id__icontains=text) | Q(public_id__icontains=text)
-                                 | Q(reviewer_user__full_name__icontains=text) | Q(reviewer_remaker__full_name__icontains=text))
+                                 | Q(reviewer_user__full_name__icontains=text) | Q(reviewer_remaker__full_name__icontains=text) | Q(reviewer_admin__full_name__icontains=text))
         if kind == "product":
             sells = sells.none()
         elif kind == "seller":

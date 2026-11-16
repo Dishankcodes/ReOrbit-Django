@@ -486,6 +486,10 @@ const AdminMessages = page(
   "admin",
   () => import("./admin/pages/Messages/AdminMessages"),
 );
+const AdminMyReviews = page(
+  "admin",
+  () => import("./admin/pages/Shop/AdminMyReviews"),
+);
 const AdminSell = page("admin", () => import("./admin/pages/Sell/AdminSell"));
 const AdminSellForm = page(
   "admin",
@@ -889,6 +893,7 @@ export default function App() {
               element={<UserOrderSuccess />}
             />
             <Route path="/admin-shop/orders" element={<UserOrders />} />
+            <Route path="/admin-shop/reviews" element={<AdminMyReviews />} />
             <Route
               path="/admin-shop/orders/:orderId"
               element={<UserOrderDetails />}

@@ -52,6 +52,38 @@ def refund_data(r):
             "note": r.note, "reference": r.reference, "created_at": r.created_at, "processed_at": r.processed_at}
 
 
+TICKET_PATH = {"user": "/user-help/tickets/", "remaker": "/remaker-help/tickets/", "admin": "/admin-support/"}
+
+
+def related_data(o, request, data):
+    """Everything tied to this order besides its tracking events: support tickets, the return and refunds.
+    Newest first. Members and ReMakers only see tickets they opened themselves; admins see all of them."""
+    from apps.support.models import SupportTicket
+
+    acct = getattr(getattr(request, "user", None), "account", None)
+    kind = {"Users": "user", "ReMakers": "remaker", "Admins": "admin"}.get(type(acct).__name__, "")
+    tickets = SupportTicket.objects.filter(order_id=o.public_id)
+    if kind == "user":
+        tickets = tickets.filter(user=acct)
+    elif kind == "remaker":
+        tickets = tickets.filter(remaker=acct)
+    elif kind != "admin":
+        tickets = tickets.none()
+    rows = []
+    for t in tickets:
+        rows.append({"kind": "ticket", "id": t.public_id, "title": t.subject, "status": t.status, "detail": t.category,
+                     "at": t.created_at, "url": f"{TICKET_PATH[kind]}{t.public_id}" if kind else ""})
+    rr = data.get("return")
+    if rr:
+        rows.append({"kind": "return", "id": rr["id"], "title": "Return: " + rr["reason"]["label"], "status": rr["status"],
+                     "detail": rr["details"] or "", "at": rr["created_at"], "url": ""})
+    for rf in data.get("refunds", []):
+        rows.append({"kind": "refund", "id": rf["id"], "title": f"Refund of ₹{rf['amount']:,}", "status": rf["status"],
+                     "detail": rf["note"] or rf["reason"], "at": rf["processed_at"] or rf["created_at"], "url": ""})
+    rows.sort(key=lambda r: r["at"], reverse=True)
+    return rows
+
+
 def order_data(o, request, *, events=False, buyer=False):
     """`events` adds the tracking history; `buyer` adds who bought (sellers and admin need it)."""
     data = {
@@ -89,8 +121,8 @@ def order_data(o, request, *, events=False, buyer=False):
     data["review"] = (
         {"rating": revs[0].rating, "at": revs[0].created_at, "count": len(revs)} if revs else None
     )
-    # admins buy through the shop too, but only members and ReMakers can write reviews (reviews API answers 403 to admins)
-    data["can_review"] = o.status == Order.Status.DELIVERED and o.buyer_type in ("user", "remaker") and not revs
+    # the buyer (member, ReMaker or admin) can review once delivered, until it has been reviewed
+    data["can_review"] = o.status == Order.Status.DELIVERED and not revs
     rr = getattr(o, "return_request", None)
     data["return"] = return_data(rr, request) if rr else None
     data["can_return"] = rr is None and o.status == Order.Status.DELIVERED and returns.window_open(o)
@@ -101,6 +133,7 @@ def order_data(o, request, *, events=False, buyer=False):
             b.pop("email", None)  # sellers see who is buying, not their email
         data["buyer"] = b
     if events:
+        data["related"] = related_data(o, request, data)
         data["events"] = [
             {"label": e.label, "detail": e.detail, "actor": e.actor, "at": e.created_at} for e in o.events.all()
         ]

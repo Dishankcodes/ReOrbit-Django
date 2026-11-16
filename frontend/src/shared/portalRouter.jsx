@@ -12,6 +12,7 @@ const MAPS = {
   remaker: [
     ["/user-marketplace", "/remaker-marketplace"],
     ["/user-wishlist", "/remaker-saved"],
+    ["/user-reviews", "/remaker-my-reviews"],
     ["/user-orders", "/remaker-orders"],
     ["/user-cart", "/remaker-cart"],
     ["/user-checkout", "/remaker-checkout"],
@@ -19,6 +20,7 @@ const MAPS = {
   admin: [
     ["/user-marketplace", "/admin-shop"],
     ["/user-wishlist", "/admin-shop/wishlist"],
+    ["/user-reviews", "/admin-shop/reviews"],
     ["/user-orders", "/admin-shop/orders"],
     ["/user-cart", "/admin-shop/cart"],
     ["/user-checkout", "/admin-shop/checkout"],

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getAccount } from "../../../api/session";
-import { useNavigate } from "../../../shared/portalRouter";
+import { useNavigate, useSearchParams } from "../../../shared/portalRouter";
 import {
   Check,
   Heart,
@@ -164,13 +164,22 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   );
 }
 
+const SOURCE_KEYS = ["all", "user", "remaker", "admin"];
+
 export default function UserMarketplace() {
   const navigate = useNavigate();
   const categoryNames = useCategoryNames();
   const wish = useWishlist();
   const cartCount = useCartCount();
 
-  const [source, setSource] = useState("all");
+  /* /user-marketplace?source=admin opens straight on the ReOrbit store tab (used by the seller
+     card on a product page) */
+  const [params] = useSearchParams();
+  const wanted = params.get("source");
+  const [source, setSource] = useState(SOURCE_KEYS.includes(wanted) ? wanted : "all");
+  useEffect(() => {
+    if (SOURCE_KEYS.includes(wanted)) setSource(wanted);
+  }, [wanted]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [condition, setCondition] = useState("All");
@@ -200,6 +209,11 @@ export default function UserMarketplace() {
     }),
     [base],
   );
+
+  /* a tab with nothing in it (for example ?source=admin when ReOrbit lists nothing) falls back to All */
+  useEffect(() => {
+    if (live.ready && source !== "all" && counts[source] === 0) setSource("all");
+  }, [live.ready, counts, source]);
 
   const results = useMemo(() => {
     const q = search.trim().toLowerCase();
