@@ -16,6 +16,7 @@ export default function AdminOrders() {
       <SellerOrders
         api={adminOrdersApi}
         role="admin"
+        variant="admin"
         accent="#2a4d3a"
         detailPath={(id) => `/admin-orders/${id}`}
       />

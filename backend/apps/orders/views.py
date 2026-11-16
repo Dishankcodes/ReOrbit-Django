@@ -514,6 +514,23 @@ class AdminList(APIView):
         return resp
 
 
+REPORT_LIMIT = 5000
+
+
+class AdminReport(APIView):
+    """Every confirmed order, slim, in one call (newest first). Feeds the Dashboard, Reports, Earnings and alerts."""
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("orders")]
+
+    def get(self, request):
+        from .serializers import report_row
+
+        qs = (Order.objects.filter(confirmed_at__isnull=False)
+              .select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin")
+              .prefetch_related("lines").order_by("-created_at"))
+        rows = list(qs[:REPORT_LIMIT + 1])
+        return ok({"orders": [report_row(o) for o in rows[:REPORT_LIMIT]], "truncated": len(rows) > REPORT_LIMIT})
+
+
 class AdminDetail(APIView):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("orders")]
 

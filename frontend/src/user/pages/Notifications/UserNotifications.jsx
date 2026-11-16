@@ -3,19 +3,27 @@ import { useNavigate } from "react-router-dom";
 import {
   Bell,
   CheckCheck,
+  ChevronRight,
   Gift,
   HandHeart,
   LifeBuoy,
+  Megaphone,
+  MessageCircle,
   Settings,
   ShoppingBag,
   Star,
   Tag,
-  Megaphone,
-  MessageCircle,
+  Trash2,
+  Wallet,
+  X,
 } from "lucide-react";
 
 import {
   NOTIFICATION_TYPES,
+  clearRead,
+  dismiss,
+  loadMoreNotifications,
+  loadNotifications,
   markAllRead,
   markRead,
   useNotifications,
@@ -30,15 +38,24 @@ const ICON = {
   order: ShoppingBag,
   donation: HandHeart,
   sell: Tag,
+  earning: Wallet,
   support: LifeBuoy,
   message: MessageCircle,
   reward: Star,
   announcement: Megaphone,
 };
 
+/* Today, Yesterday, then older: the list reads like a timeline */
+const dayGroup = (iso) => {
+  const d = new Date(iso);
+  const start = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((start(new Date()) - start(d)) / 86400000);
+  return diff <= 0 ? "Today" : diff === 1 ? "Yesterday" : diff < 7 ? "This week" : "Earlier";
+};
+
 export default function UserNotifications() {
   const navigate = useNavigate();
-  const { items, unread } = useNotifications();
+  const { items, unread, loading, error, hasMore } = useNotifications();
   const [type, setType] = useState("all");
   const [onlyUnread, setOnlyUnread] = useState(false);
 
@@ -49,6 +66,20 @@ export default function UserNotifications() {
         .filter((n) => (onlyUnread ? !n.read : true)),
     [items, type, onlyUnread],
   );
+  const groups = useMemo(() => {
+    const out = [];
+    rows.forEach((n) => {
+      const g = dayGroup(n.at);
+      const last = out[out.length - 1];
+      if (last && last.name === g) last.rows.push(n);
+      else out.push({ name: g, rows: [n] });
+    });
+    return out;
+  }, [rows]);
+  const types = Object.entries(NOTIFICATION_TYPES).filter(([id]) =>
+    items.some((n) => n.type === id),
+  );
+  const anyRead = items.some((n) => n.read);
 
   const open = (n) => {
     markRead(n.id);
@@ -60,8 +91,9 @@ export default function UserNotifications() {
       <header className="unt-head">
         <div>
           <p className="dn-muted">
-            {unread > 0 ? `${unread} unread · ` : "You're all caught up · "}last
-            14 days
+            {unread > 0
+              ? `${unread} unread`
+              : "You're all caught up"}
           </p>
         </div>
         <div className="unt-head-actions">
@@ -74,9 +106,19 @@ export default function UserNotifications() {
           </button>
           <button
             type="button"
+            className="dn-btn dn-btn--ghost"
+            disabled={!anyRead}
+            onClick={clearRead}
+          >
+            <Trash2 size={15} /> Clear read
+          </button>
+          <button
+            type="button"
             className="dn-btn"
             disabled={unread === 0}
-            onClick={() => markAllRead(items.map((n) => n.id))}
+            onClick={() =>
+              markAllRead(items.filter((n) => !n.read).map((n) => n.id))
+            }
           >
             <CheckCheck size={15} /> Mark all read
           </button>
@@ -84,7 +126,7 @@ export default function UserNotifications() {
       </header>
 
       <div className="unt-tools">
-        <div className="unt-chips" role="tablist">
+        <div className="unt-chips" role="tablist" aria-label="Notification type">
           <button
             type="button"
             role="tab"
@@ -94,7 +136,7 @@ export default function UserNotifications() {
           >
             All <em>{items.length}</em>
           </button>
-          {Object.entries(NOTIFICATION_TYPES).map(([id, t]) => (
+          {types.map(([id, t]) => (
             <button
               key={id}
               type="button"
@@ -117,7 +159,22 @@ export default function UserNotifications() {
         </label>
       </div>
 
-      {rows.length === 0 ? (
+      {error && (
+        <p className="unt-error" role="alert">
+          {error}{" "}
+          <button type="button" onClick={() => loadNotifications({ force: true })}>
+            Try again
+          </button>
+        </p>
+      )}
+
+      {loading ? (
+        <div className="dn-card unt-list" aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div className="unt-skel" key={i} />
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={Bell}
           title="No notifications"
@@ -128,29 +185,65 @@ export default function UserNotifications() {
           }
         />
       ) : (
-        <div className="dn-card unt-list">
-          {rows.map((n) => {
-            const Icon = ICON[n.type] || Gift;
-            return (
-              <button
-                key={n.id}
-                type="button"
-                className={`unt-item ${n.read ? "" : "unread"}`}
-                onClick={() => open(n)}
-              >
-                <span className="unt-icon">
-                  <Icon size={18} />
-                </span>
-                <div>
-                  <strong>{n.title}</strong>
-                  <p>{n.message}</p>
-                </div>
-                <time title={formatDateTime(n.at)}>{relativeDay(n.at)}</time>
-                {!n.read && <i className="unt-dot" aria-label="Unread" />}
-              </button>
-            );
-          })}
-        </div>
+        <>
+          {groups.map((g) => (
+            <section key={g.name} className="unt-group">
+              <h2>{g.name}</h2>
+              <div className="dn-card unt-list">
+                {g.rows.map((n) => {
+                  const Icon = ICON[n.type] || Gift;
+                  return (
+                    <div
+                      key={n.id}
+                      className={`unt-row ${n.read ? "" : "unread"} sev-${n.severity || "info"}`}
+                    >
+                      <button
+                        type="button"
+                        className="unt-item"
+                        onClick={() => open(n)}
+                        aria-label={`${n.title}. Open`}
+                      >
+                        <span className="unt-icon">
+                          <Icon size={18} />
+                        </span>
+                        <div>
+                          <strong>{n.title}</strong>
+                          <p>{n.message}</p>
+                          <small>
+                            {NOTIFICATION_TYPES[n.type].label} ·{" "}
+                            <time title={formatDateTime(n.at)}>
+                              {relativeDay(n.at)}
+                            </time>
+                          </small>
+                        </div>
+                        {!n.read && <i className="unt-dot" aria-label="Unread" />}
+                        <ChevronRight size={16} className="unt-go" />
+                      </button>
+                      <button
+                        type="button"
+                        className="unt-x"
+                        aria-label={`Dismiss: ${n.title}`}
+                        title="Dismiss"
+                        onClick={() => dismiss(n.id)}
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+          {hasMore && (
+            <button
+              type="button"
+              className="dn-btn dn-btn--ghost unt-more"
+              onClick={loadMoreNotifications}
+            >
+              Load older
+            </button>
+          )}
+        </>
       )}
     </div>
   );

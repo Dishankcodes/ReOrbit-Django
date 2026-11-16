@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Search, X, MapPin, Truck, User, Check } from "lucide-react";
 import Spinner, { PageLoader } from "./Spinner";
 import "./Spinner.css";
 import "./SellerOrders.css";
@@ -44,6 +44,13 @@ const when = (v) =>
         minute: "2-digit",
       })
     : "";
+/* the four steps an order moves through, shown as a progress track on admin cards */
+const STEPS = [
+  ["Confirmed", "Placed"],
+  ["Packed", "Packed"],
+  ["Shipped", "Shipped"],
+  ["Delivered", "Delivered"],
+];
 const NEXT = {
   Confirmed: ["pack", "Mark as packed"],
   Packed: ["ship", "Mark as shipped"],
@@ -65,6 +72,7 @@ export default function SellerOrders({
   accent = "#2a4d3a",
   fixedType = "",
   detailPath,
+  variant = "",
 }) {
   const [tab, setTab] = useState("");
   const [type, setType] = useState(fixedType);
@@ -128,6 +136,7 @@ export default function SellerOrders({
     (n, [k, c]) => (STATUS_KEYS.has(k) ? n + c : n),
     0,
   );
+  const adm = variant === "admin";
   const tabs = [
     ...TABS,
     { key: "__returns", label: "Returns" },
@@ -135,7 +144,7 @@ export default function SellerOrders({
   ];
 
   return (
-    <div className="so" style={{ "--so-accent": accent }}>
+    <div className={`so${adm ? " so-admin" : ""}`} style={{ "--so-accent": accent }}>
       <div className="so-tools">
         <div className="so-tabs" role="tablist" aria-label="Order status">
           {tabs.map((t) => (
@@ -147,6 +156,7 @@ export default function SellerOrders({
               className={tab === t.key ? "on" : ""}
               onClick={() => setTab(t.key)}
             >
+              {adm && <i className={`so-dot d-${t.key || "all"}`} />}
               {t.label}{" "}
               <em>
                 {SPECIAL[t.key]
@@ -171,15 +181,23 @@ export default function SellerOrders({
               <option value="user">Members</option>
             </select>
           )}
-          <input
-            type="search"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={
-              role === "admin" ? "Order, product or buyer" : "Order or product"
-            }
-            aria-label="Search orders"
-          />
+          <label className="so-search">
+            {adm && <Search size={16} aria-hidden="true" />}
+            <input
+              type="search"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={
+                role === "admin" ? "Search order, product or buyer" : "Order or product"
+              }
+              aria-label="Search orders"
+            />
+            {adm && text && (
+              <button type="button" aria-label="Clear search" onClick={() => setText("")}>
+                <X size={14} />
+              </button>
+            )}
+          </label>
         </div>
       </div>
 
@@ -208,7 +226,7 @@ export default function SellerOrders({
       ) : (
         <div className="so-list" aria-busy={state.more}>
           {state.rows.map((o) => (
-            <OrderRow key={o.id} order={o} role={role} to={detailPath(o.id)} />
+            <OrderRow key={o.id} order={o} role={role} adm={adm} to={detailPath(o.id)} />
           ))}
           {state.page < state.pages && (
             <button
@@ -256,7 +274,7 @@ const payLabel = (o) => {
 };
 
 /* A summary card. Everything you can do with the order (pack, ship, cancel, returns...) is on its own page. */
-function OrderRow({ order: o, role, to }) {
+function OrderRow({ order: o, role, to, adm }) {
   const navigate = useNavigate();
   const isAdmin = role === "admin";
   const ret = o.return;
@@ -274,7 +292,7 @@ function OrderRow({ order: o, role, to }) {
     o.status === "Delivery_Failed";
 
   return (
-    <article className="so-card so-click" role="link" tabIndex={0}
+    <article className={`so-card so-click${adm ? ` so-c-${o.status}` : ""}`} role="link" tabIndex={0}
       aria-label={`Open order ${o.id}`} onClick={() => navigate(to)}
       onKeyDown={(event) => {
         if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
@@ -299,6 +317,8 @@ function OrderRow({ order: o, role, to }) {
         )}
         <time>{when(o.created_at)}</time>
       </header>
+
+      {adm && <Track status={o.status} />}
 
       <ul className="so-lines">
         {o.items.slice(0, 2).map((ln) => (
@@ -326,7 +346,8 @@ function OrderRow({ order: o, role, to }) {
       </ul>
 
       <div className="so-meta">
-        <span>
+        <span className="so-who">
+          {adm && <User size={14} aria-hidden="true" />}
           {o.buyer ? (
             <>
               Buyer: <b>{o.buyer.name}</b>
@@ -338,7 +359,7 @@ function OrderRow({ order: o, role, to }) {
           {a.city ? (
             <>
               {" "}
-              · {a.city} {a.pincode}
+              {adm ? <MapPin size={14} aria-hidden="true" /> : "·"} {a.city} {a.pincode}
             </>
           ) : null}
         </span>
@@ -357,6 +378,7 @@ function OrderRow({ order: o, role, to }) {
 
       {o.courier && (
         <p className="so-courier">
+          {adm && <Truck size={14} aria-hidden="true" />}{" "}
           {o.courier.name} · {o.courier.tracking_no}
         </p>
       )}
@@ -381,5 +403,21 @@ function OrderRow({ order: o, role, to }) {
         </Link>
       </div>
     </article>
+  );
+}
+
+/* Placed → Packed → Shipped → Delivered. Cancelled and failed orders show a note instead. */
+function Track({ status }) {
+  const at = STEPS.findIndex(([k]) => k === status);
+  if (at < 0) return null;
+  return (
+    <ol className="so-track" aria-label="Order progress">
+      {STEPS.map(([k, label], i) => (
+        <li key={k} className={i < at ? "done" : i === at ? "now" : ""}>
+          <span>{i < at || status === "Delivered" ? <Check size={11} /> : i + 1}</span>
+          {label}
+        </li>
+      ))}
+    </ol>
   );
 }

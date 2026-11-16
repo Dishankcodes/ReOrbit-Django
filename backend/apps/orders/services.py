@@ -202,14 +202,14 @@ def _notify_seller(order, title, body):
     try:
         with transaction.atomic():  # savepoint: a failed notification must not poison the order's transaction
             if order.seller_type == "user":
-                notify(order.seller_user, title, body, module="orders", target_url="/user-sales",
+                notify(order.seller_user, title, body, module="orders", target_url=f"/user-sell/sales/{order.public_id}",
                        ref_type="order", ref_id=order.public_id)
             elif order.seller_type == "remaker":
-                notify(order.seller_remaker, title, body, module="orders", target_url="/remaker-orders",
+                notify(order.seller_remaker, title, body, module="orders", target_url=f"/remaker-sales/{order.public_id}",
                        ref_type="order", ref_id=order.public_id)
             else:
                 for a in _admins_for_orders():
-                    notify(a, title, body, module="orders", target_url="/admin-orders",
+                    notify(a, title, body, module="orders", target_url=f"/admin-orders/{order.public_id}",
                            ref_type="order", ref_id=order.public_id)
     except Exception:  # a notification must never break an order
         log.exception("order notification failed")

@@ -20,6 +20,7 @@ urlpatterns = [
     path("sales/<str:public_id>/", v.SalesDetail.as_view()),
     path("sales/<str:public_id>/<str:action>/", v.SalesAction.as_view()),
     path("admin/", v.AdminList.as_view()),
+    path("admin/report/", v.AdminReport.as_view()),
     path("admin/<str:public_id>/", v.AdminDetail.as_view()),
     path("admin/<str:public_id>/<str:action>/", v.AdminAction.as_view()),
 ]

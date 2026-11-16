@@ -97,7 +97,11 @@ export const customersApi = {
       (r) => r.data,
     ),
 };
-export const adminOrdersApi = sellerOrdersApi("/orders/admin");
+export const adminOrdersApi = {
+  ...sellerOrdersApi("/orders/admin"),
+  /* every confirmed order, slim: { orders, truncated } */
+  report: () => apiRequest("/orders/admin/report/").then((r) => r.data),
+};
 
 /* Razorpay's Checkout.js, loaded once, only when someone pays online. */
 let scriptPromise;

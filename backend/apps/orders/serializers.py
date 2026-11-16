@@ -193,6 +193,24 @@ def order_data(o, request, *, events=False, buyer=False):
     return data
 
 
+def report_row(o):
+    """Slim row for the admin dashboard, reports and earnings: no timeline, address or reviews."""
+    return {
+        "id": o.public_id,
+        "status": o.status,
+        "payment_status": o.payment_status,
+        "method": o.payment.method,
+        "seller": seller_of(o),
+        "buyer": buyers.info(o, email=False),
+        "items": [{"ref": ln.ref_id, "kind": ln.kind, "title": ln.title, "qty": ln.qty} for ln in o.lines.all()],
+        "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee,
+        "discount": o.discount, "total": o.total,
+        "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,
+        "cancel_reason": o.cancel_reason, "cod_received_at": o.cod_received_at,
+        "refund_due": o.payment_status in ("Refund_Pending", "Refund_Failed"),
+    }
+
+
 def address_data(a):
     return {
         "id": a.public_id, "label": a.label, "name": a.recipient_name, "phone": a.phone,

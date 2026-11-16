@@ -14,6 +14,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./UserHeader.css";
 import { ACCOUNT_UPDATED_EVENT, getAccount } from "../../api/session";
 import { mediaUrl } from "../../api/profile";
+import {
+  markAllRead,
+  markRead,
+  useNotifications,
+} from "../data/notificationsStore";
+import { relativeDay } from "../utils/format";
 
 const pageInformation = {
   "/user-dashboard": {
@@ -266,27 +272,6 @@ function getOrderPage(pathname) {
   };
 }
 
-const notifications = [
-  {
-    id: 1,
-    title: "Order update",
-    message: "Your recent order has been confirmed.",
-    time: "10 min ago",
-  },
-  {
-    id: 2,
-    title: "New reward",
-    message: "You've earned new Orbit Points.",
-    time: "1 hour ago",
-  },
-  {
-    id: 3,
-    title: "Wishlist reminder",
-    message: "One of your saved items is still available.",
-    time: "3 hours ago",
-  },
-];
-
 function getStoredUser() {
   return getAccount("user") || {};
 }
@@ -318,6 +303,13 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
   const navigate = useNavigate();
 
   const notificationRef = useRef(null);
+  const inbox = useNotifications();
+  const recent = inbox.items.slice(0, 6);
+  const openNotification = (n) => {
+    markRead(n.id);
+    setNotificationsOpen(false);
+    navigate(n.to);
+  };
   const profileRef = useRef(null);
 
   const [user, setUser] = useState(() => getStoredUser());
@@ -458,7 +450,11 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
           >
             <Bell size={19} strokeWidth={1.8} />
 
-            <span className="user-notification-count">3</span>
+            {inbox.unread > 0 && (
+              <span className="user-notification-count">
+                {inbox.unread > 9 ? "9+" : inbox.unread}
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
@@ -467,20 +463,39 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
                 <div>
                   <strong>Notifications</strong>
 
-                  <span>You have 3 new updates</span>
+                  <span>
+                    {inbox.unread > 0
+                      ? `You have ${inbox.unread} new ${inbox.unread === 1 ? "update" : "updates"}`
+                      : "You're all caught up"}
+                  </span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setNotificationsOpen(false)}
+                  disabled={inbox.unread === 0}
+                  onClick={() =>
+                    markAllRead(
+                      inbox.items.filter((n) => !n.read).map((n) => n.id),
+                    )
+                  }
                 >
                   Mark all read
                 </button>
               </div>
 
               <div className="user-notification-list">
-                {notifications.map((notification) => (
-                  <div className="user-notification-item" key={notification.id}>
+                {recent.length === 0 && (
+                  <p className="user-notification-empty">
+                    {inbox.loading ? "Loading…" : "Nothing new yet."}
+                  </p>
+                )}
+                {recent.map((notification) => (
+                  <button
+                    type="button"
+                    className={`user-notification-item ${notification.read ? "is-read" : ""}`}
+                    key={notification.id}
+                    onClick={() => openNotification(notification)}
+                  >
                     <span className="user-notification-dot" />
 
                     <div>
@@ -488,9 +503,9 @@ export default function UserHeader({ onToggleSidebar, onCloseMobile }) {
 
                       <p>{notification.message}</p>
 
-                      <span>{notification.time}</span>
+                      <span>{relativeDay(notification.at)}</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
