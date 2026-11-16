@@ -3,7 +3,7 @@ import React from "react";
 import { fmtNumber } from "./format";
 
 export default function FunnelCard({ funnel }) {
-  const top = funnel[0].value || 1;
+  const top = Math.max(...funnel.map((step) => step.value), 1);
 
   return (
     <section className="ana-card">
@@ -16,9 +16,10 @@ export default function FunnelCard({ funnel }) {
 
       <ol className="ana-funnel">
         {funnel.map((step, index) => {
-          const previous = index === 0 ? null : funnel[index - 1].value;
-          const kept = previous ? (step.value / previous) * 100 : 100;
-          const width = Math.max((step.value / top) * 100, 4);
+          /* saves and orders are measured against views, completed orders against orders placed */
+          const base = index === 0 ? null : funnel[index === 3 ? 2 : 0].value;
+          const kept = base ? (step.value / base) * 100 : 0;
+          const width = step.value ? Math.max((step.value / top) * 100, 4) : 0;
 
           return (
             <li key={step.key}>
@@ -34,7 +35,7 @@ export default function FunnelCard({ funnel }) {
               <small>
                 {index === 0
                   ? "Everyone who opened a product"
-                  : `${kept.toFixed(kept < 10 ? 1 : 0)}% of the step before`}
+                  : `${kept.toFixed(kept < 10 ? 1 : 0)}% of ${index === 3 ? "orders placed" : "views"}`}
               </small>
             </li>
           );
@@ -42,8 +43,9 @@ export default function FunnelCard({ funnel }) {
       </ol>
 
       <p className="ana-foot">
-        {((funnel[2].value / top) * 100).toFixed(2)}% of views turn into an
-        order. Marketplace sellers usually see 1 to 3%.
+        {funnel[0].value
+          ? `${((funnel[2].value / funnel[0].value) * 100).toFixed(2)}% of views turn into an order.`
+          : "Once shoppers start viewing your products, you will see how many turn into orders."}
       </p>
     </section>
   );

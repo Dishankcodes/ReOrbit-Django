@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
+import { trackProductView } from "../../../shared/trafficSource";
 import {
   BadgeCheck,
   Boxes,
@@ -41,7 +42,6 @@ import {
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
-import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import MessageButton from "../../components/ui/MessageButton";
 import { sellerChat } from "../../data/messageTargets";
 
@@ -81,6 +81,11 @@ export default function UserProductDetails() {
     setQty(1);
     setTab("details");
   }, [productId]);
+
+  /* counts one view for the ReMaker's Analytics page (their own views are ignored by the server) */
+  useEffect(() => {
+    if (item?.id) trackProductView(item.id);
+  }, [item?.id]);
 
   const seller = useMemo(() => getSellerFromItem(item), [item]);
   const { reviews, summary: reviewSummary } = useProductReviews(item?.id);
@@ -192,14 +197,8 @@ export default function UserProductDetails() {
       </nav>
 
       <section className="pd-hero">
-        <div
-          className={`pd-gallery ${soldOutClass(Boolean(item.soldOut) || stock?.available <= 0)}`}
-        >
+        <div className="pd-gallery">
           <SafeImage src={item.image} alt={item.title} />
-          <SoldOutTag
-            size="lg"
-            show={Boolean(item.soldOut) || stock?.available <= 0}
-          />
           <span className={`pd-type ${isMaker ? "maker" : ""}`}>
             {isMaker ? (
               <>
@@ -326,6 +325,7 @@ export default function UserProductDetails() {
               label="Report this listing"
               file={fileComplaint}
               target={{
+                id: item.id,
                 name: item.title,
                 sub: `${item.seller} · ${isMaker ? "ReMaker" : "User"}`,
                 image: item.image,

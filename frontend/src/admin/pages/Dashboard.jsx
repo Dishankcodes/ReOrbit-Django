@@ -32,13 +32,10 @@ import {
 import { useNavigate } from "react-router-dom";
 
 import { useReport } from "../data/reportsStore";
-import { useUsers } from "../data/usersStore";
-import { useRemakers } from "../data/remakersStore";
-import { useProducts } from "../data/productsStore";
+import { useDashboard } from "../data/adminopsStore";
 import { useOrders } from "../data/ordersStore";
 import { useDonations } from "../data/donationsStore";
 import { usePickups } from "../data/pickupsStore";
-import { useNotifications } from "../data/notificationsStore";
 import { useComplaintCounts } from "../data/complaintsStore";
 import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
 import { useSettings } from "../data/settingsStore";
@@ -231,13 +228,10 @@ export default function AdminDashboard() {
   const firstName = (access.me?.name || adminName).trim().split(/\s+/)[0];
 
   const report = useReport("6m");
-  const users = useUsers();
-  const remakers = useRemakers();
-  const products = useProducts();
+  const dashboard = useDashboard();
   const orders = useOrders();
   const donations = useDonations();
   const pickups = usePickups();
-  const notifications = useNotifications();
   const complaintCounts = useComplaintCounts();
   useSupportTickets("admin", {}, access.canSee("support"));
   const supportStatus = useSupportStatus("admin");
@@ -258,9 +252,7 @@ export default function AdminDashboard() {
     const openPickups = pickups.filter((p) =>
       ["Requested", "Scheduled"].includes(p.status),
     );
-    const reported = products.filter((p) =>
-      (p.reports || []).some((r) => r.status === "Pending"),
-    ).length;
+    const reported = dashboard.operations.complaints?.reported_listings || 0;
     const overduePickups = report.donations.pk.kpi.overdue || 0;
     const tiles = [
       {
@@ -323,7 +315,7 @@ export default function AdminDashboard() {
     supportStatus.counts,
     donations,
     pickups,
-    products,
+    dashboard,
     complaintCounts,
     access,
     report,
@@ -332,32 +324,18 @@ export default function AdminDashboard() {
   const live = React.useMemo(() => {
     const o = report.orders.kpi;
     const dn = report.donations.kpi;
-    const activeUsers = users.filter((u) => u.status !== "Deleted").length;
-    const activeMakers = remakers.filter((r) => r.status !== "Deleted").length;
-    const liveProducts = products.filter((p) => p.state === "live").length;
+    const activeUsers = dashboard.users.total;
+    const activeMakers = dashboard.remakers.total;
+    const liveProducts = dashboard.products.live;
     const pendingPickups = pickups.filter((p) =>
       ["Requested", "Scheduled"].includes(p.status),
     ).length;
-    const items = donations.filter((d) =>
-      ["Picked_Up", "Received", "Completed"].includes(d.status),
-    );
-    const kg = Math.round(items.reduce((n, d) => n + (d.weight_kg || 0), 0));
-    const reused =
-      orders
-        .filter((x) => x.order_status === "Completed")
-        .reduce((n, x) => n + (x.listing?.quantity || 1), 0) +
-      items.reduce((n, d) => n + d.quantity, 0);
-    const co2 = Math.round(kg * 1.9 + reused * 4.2) / 1000;
+    const { kg, reused, co2_tonnes: co2 } = dashboard.impact;
     const newUsers = report.community.kpi.newInRange;
     const monthAgo = report.orders.trend;
     const cats = report.orders.categoryRows.slice(0, 5);
     const catTotal = cats.reduce((n, c) => n + c.value, 0) || 1;
-    const listed = {};
-    products
-      .filter((p) => p.state === "live")
-      .forEach((p) => {
-        listed[p.category] = (listed[p.category] || 0) + 1;
-      });
+    const listed = dashboard.products.by_category || {};
     return {
       stats: [
         {
@@ -372,7 +350,7 @@ export default function AdminDashboard() {
         {
           title: "ReMakers",
           value: num(activeMakers),
-          change: `${remakers.filter((r) => r.status === "Active").length} active`,
+          change: `${dashboard.remakers.active} active`,
           trend: "up",
           description: "creators on ReOrbit",
           icon: Palette,
@@ -381,7 +359,7 @@ export default function AdminDashboard() {
         {
           title: "Products",
           value: num(liveProducts),
-          change: `${products.filter((p) => p.state !== "live").length} off market`,
+          change: `${dashboard.products.off_market} off market`,
           trend: "down",
           description: "live listings",
           icon: ShoppingBag,
@@ -437,9 +415,9 @@ export default function AdminDashboard() {
         value: Math.round((c.value / catTotal) * 100),
         count: `${listed[c.label] || 0} live products · ${compactInr(c.value)}`,
       })),
-      approvals: notifications.filter((n) => n.needsAction).slice(0, 4),
-      pendingCount: notifications.filter((n) => n.needsAction).length,
-      activities: notifications.slice(0, 5),
+      approvals: dashboard.approvals,
+      pendingCount: dashboard.pending_count,
+      activities: dashboard.activities,
       recentOrders: orders.slice(0, 5),
       kg,
       reused,
@@ -447,16 +425,7 @@ export default function AdminDashboard() {
       activeUsers,
       trend: monthAgo,
     };
-  }, [
-    report,
-    users,
-    remakers,
-    products,
-    orders,
-    donations,
-    pickups,
-    notifications,
-  ]);
+  }, [report, dashboard, orders, donations, pickups]);
   const PATH_KEY = {
     "/admin-users": "users",
     "/admin-remakers": "remakers",

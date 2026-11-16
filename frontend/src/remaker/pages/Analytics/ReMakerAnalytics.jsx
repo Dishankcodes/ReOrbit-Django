@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getAnalytics } from "../../data/analyticsData";
+import { useAnalytics } from "../../data/analyticsData";
 
 import BarList from "./components/BarList";
 import DonutCard from "./components/DonutCard";
@@ -19,7 +19,39 @@ import "./ReMakerAnalytics.css";
 export default function ReMakerAnalytics() {
   const [range, setRange] = useState("30");
 
-  const data = useMemo(() => getAnalytics(range), [range]);
+  const { data, loading, refreshing, error, reload } = useAnalytics(range);
+
+  if (!data) {
+    return (
+      <section className="ana">
+        <header className="ana-top">
+          <div>
+            <h2>Studio analytics</h2>
+            <p>How your products, orders and shoppers are doing.</p>
+          </div>
+          <div className="ana-top-actions">
+            <RangeTabs value={range} onChange={setRange} />
+          </div>
+        </header>
+
+        {loading ? (
+          <div className="ana-state" role="status">
+            <span className="ana-spinner" aria-hidden="true" />
+            <strong>Loading your analytics…</strong>
+          </div>
+        ) : (
+          <div className="ana-state error" role="alert">
+            <strong>We couldn't load your analytics</strong>
+            <p>{error}</p>
+            <button type="button" className="ana-btn" onClick={reload}>
+              Try again
+            </button>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   const { current, deltas, series } = data;
 
   const spark = (key) => series.map((point) => point[key]);
@@ -57,7 +89,7 @@ export default function ReMakerAnalytics() {
           <p>
             {data.range.long}, compared with the{" "}
             {data.range.days === 365 ? "year" : `${data.range.days} days`}{" "}
-            before. These are sample numbers until your real data is connected.
+            before.{refreshing ? " Updating…" : ""}
           </p>
         </div>
 
@@ -69,13 +101,26 @@ export default function ReMakerAnalytics() {
         </div>
       </header>
 
+      {!data.hasData && (
+        <div className="ana-state" role="note">
+          <strong>No activity in this period yet</strong>
+          <p>
+            Orders, views and saves show up here as shoppers find your
+            products. Try a longer range, or add something new.
+          </p>
+          <Link to="/remaker-products/new" className="ana-btn">
+            Add a product
+          </Link>
+        </div>
+      )}
+
       {/* ================= KPIs ================= */}
       <div className="ana-kpis">
         <KpiCard
           tone="featured"
           label="Net earnings"
           value={formatPrice(current.revenue)}
-          hint="After the ReOrbit fee"
+          hint="Item prices you kept, delivered orders"
           delta={deltas.revenue}
           series={spark("revenue")}
         />

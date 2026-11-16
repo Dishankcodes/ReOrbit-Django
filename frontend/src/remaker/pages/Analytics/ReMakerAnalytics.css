@@ -162,7 +162,7 @@
 
 .ana-kpi header em.down {
   background: #f6e6e6;
-  color: var(--rp-danger);
+  color: var(--rp-danger, #9c2f2f);
 }
 
 .ana-kpi > strong {
@@ -483,7 +483,7 @@
 }
 
 .ana-funnel-bar .step-2 {
-  background: var(--rp-green);
+  background: var(--rp-maroon-soft);
 }
 
 .ana-funnel-bar .step-3 {
@@ -705,7 +705,7 @@
 
 .ana-chip.down {
   background: #f6e6e6;
-  color: var(--rp-danger);
+  color: var(--rp-danger, #9c2f2f);
 }
 
 /* ---------- bar lists ---------- */
@@ -751,7 +751,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--rp-green), #4f7d6a);
+  background: linear-gradient(90deg, var(--rp-maroon), #8a3a40);
   transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -766,7 +766,7 @@
   padding: 10px 16px;
   border-radius: 12px;
   background: var(--rp-sage-light);
-  color: var(--rp-green);
+  color: var(--rp-maroon);
 }
 
 .ana-best small {
@@ -806,10 +806,10 @@
   min-width: 56px;
   height: 46px;
   border-radius: 10px;
-  background: rgba(8, 39, 31, calc(0.06 + var(--level) * 0.94));
+  background: rgba(39, 8, 9, calc(0.06 + var(--level) * 0.94));
   font-size: 12px;
   font-weight: 700;
-  color: var(--rp-green);
+  color: var(--rp-maroon);
 }
 
 .ana-heat-cell.dark {
@@ -836,7 +836,7 @@
   width: 120px;
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(8, 39, 31, 0.08), rgba(8, 39, 31, 1));
+  background: linear-gradient(90deg, rgba(39, 8, 9, 0.08), rgba(39, 8, 9, 1));
 }
 
 /* ---------- insights ---------- */
@@ -869,7 +869,7 @@
   background: var(--rp-sage-light);
   font-size: 11.5px;
   font-weight: 700;
-  color: var(--rp-green);
+  color: var(--rp-maroon);
 }
 
 .ana-insight.warn > span {
@@ -922,7 +922,7 @@
   gap: 4px;
   padding: 18px 20px;
   border-radius: 16px;
-  background: var(--rp-green);
+  background: var(--rp-maroon);
   color: #fff;
   transition: transform 0.2s ease;
 }
@@ -1080,4 +1080,92 @@
   .ana * {
     transition: none !important;
   }
+}
+
+
+/* ---------- loading, error and empty states ---------- */
+
+.ana-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 22px 24px;
+  border: 1px solid var(--rp-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: var(--rp-shadow);
+}
+
+.ana-state strong {
+  font-size: 15px;
+  color: var(--rp-maroon);
+}
+
+.ana-state p {
+  margin: 0;
+  max-width: 560px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--rp-muted);
+}
+
+.ana-state.error {
+  border-color: rgba(156, 47, 47, 0.3);
+  background: #fbf3f3;
+}
+
+.ana-state.error strong {
+  color: var(--rp-danger, #9c2f2f);
+}
+
+.ana-state a.ana-btn {
+  text-decoration: none;
+}
+
+.ana-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--rp-sage-light);
+  border-top-color: var(--rp-maroon);
+  border-radius: 50%;
+  animation: ana-spin 0.8s linear infinite;
+}
+
+@keyframes ana-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ana-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.ana-product-cell .ph {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: var(--rp-sage-light);
+}
+
+.ana-note {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--rp-soft);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--rp-maroon);
+}
+
+.ana-empty-row {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--rp-muted);
 }

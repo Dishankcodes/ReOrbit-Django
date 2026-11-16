@@ -1,2 +1,9 @@
-# Mounted at /api/analytics/. Owner builds /me/... (user + remaker) and /admin/... here.
-urlpatterns = []
+# Mounted at /api/analytics/.
+from django.urls import path
+
+from .views import MyAnalytics, RecordView
+
+urlpatterns = [
+    path("me/", MyAnalytics.as_view()),
+    path("view/", RecordView.as_view()),
+]

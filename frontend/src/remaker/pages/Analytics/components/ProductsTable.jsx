@@ -11,6 +11,38 @@ const COLUMNS = [
   { key: "conv", label: "Conversion" },
 ];
 
+const STATUS_NOTE = { Sold_Out: "Sold out", Inactive: "Inactive", Draft: "Draft" };
+
+function ProductCell({ row, rank }) {
+  const note = row.removed ? "Removed" : STATUS_NOTE[row.status];
+  const body = (
+    <>
+      <b className="rank">{rank}</b>
+      {row.image ? (
+        <img src={row.image} alt="" />
+      ) : (
+        <span className="ph" aria-hidden="true" />
+      )}
+      <span>
+        <strong>{row.title}</strong>
+        <small>
+          {row.category} · {formatPrice(row.price)}
+          {note && <em className="ana-note">{note}</em>}
+        </small>
+      </span>
+    </>
+  );
+
+  /* a removed product has no edit page to open */
+  return row.removed ? (
+    <span className="ana-product-cell">{body}</span>
+  ) : (
+    <Link to={`/remaker-products/${row.id}/edit`} className="ana-product-cell">
+      {body}
+    </Link>
+  );
+}
+
 export default function ProductsTable({ products }) {
   const [sort, setSort] = useState("revenue");
 
@@ -58,22 +90,18 @@ export default function ProductsTable({ products }) {
           </thead>
 
           <tbody>
+            {!rows.length && (
+              <tr>
+                <td className="ana-empty-row" colSpan={COLUMNS.length + 2}>
+                  You have no products yet. Add one and it will show up here with
+                  its views, saves and orders.
+                </td>
+              </tr>
+            )}
             {rows.map((row, index) => (
               <tr key={row.id}>
                 <td data-label="Product">
-                  <Link
-                    to={`/remaker-products/${row.id}/edit`}
-                    className="ana-product-cell"
-                  >
-                    <b className="rank">{index + 1}</b>
-                    <img src={row.image} alt="" />
-                    <span>
-                      <strong>{row.title}</strong>
-                      <small>
-                        {row.category} · {formatPrice(row.price)}
-                      </small>
-                    </span>
-                  </Link>
+                  <ProductCell row={row} rank={index + 1} />
                 </td>
                 <td className="num strong" data-label="Earnings">
                   {formatPrice(row.revenue)}

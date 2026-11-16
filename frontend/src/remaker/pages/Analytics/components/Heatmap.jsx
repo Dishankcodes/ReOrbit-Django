@@ -13,9 +13,7 @@ export default function Heatmap({ heatmap }) {
 
         <div className="ana-best">
           <small>Busiest time</small>
-          <strong>
-            {best.day}, {best.block}
-          </strong>
+          <strong>{best ? `${best.day}, ${best.block}` : "Not enough orders yet"}</strong>
         </div>
       </header>
 
@@ -44,11 +42,11 @@ export default function Heatmap({ heatmap }) {
               return (
                 <span
                   className={`ana-heat-cell ${level > 0.62 ? "dark" : ""} ${
-                    best.day === day && best.block === block ? "best" : ""
+                    best && best.day === day && best.block === block ? "best" : ""
                   }`}
                   style={{ "--level": level.toFixed(2) }}
                   role="cell"
-                  title={`${day}, ${block}: about ${Math.round(value)} orders`}
+                  title={`${day}, ${block}: ${value} ${value === 1 ? "order" : "orders"}`}
                   key={block}
                 >
                   {value >= 1 ? Math.round(value) : ""}

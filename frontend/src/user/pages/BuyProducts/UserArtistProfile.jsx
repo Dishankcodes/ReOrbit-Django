@@ -3,13 +3,12 @@ import { Link, useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
 import { fetchPublicRemaker } from "../../../api/remakers";
-import { getProductsBySeller } from "../../../data/marketplaceData";
-import { useLiveMarketplace } from "../../data/liveMarketplace";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { useFollowing } from "../../data/followStore";
 import { personChat } from "../../data/messageTargets";
 import ProfileShell from "./ProfileShell";
+import { trackProfileView } from "../../../shared/trafficSource";
 
 export default function UserArtistProfile() {
   const { artistId } = useParams();
@@ -17,7 +16,6 @@ export default function UserArtistProfile() {
   const [artist, setArtist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  useLiveMarketplace(); /* the catalogue, so this studio's products can be listed */
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
   const { reviews } = useSellerReviews("remaker", artistId);
@@ -41,6 +39,10 @@ export default function UserArtistProfile() {
       active = false;
     };
   }, [artistId]);
+
+  useEffect(() => {
+    if (artist) trackProfileView(artistId);
+  }, [artist, artistId]);
 
   if (loading) {
     return (
@@ -70,7 +72,7 @@ export default function UserArtistProfile() {
     <ProfileShell
       person={artist}
       isMaker
-      products={getProductsBySeller(artistId)}
+      products={[]}
       reviews={reviews}
       portfolio={artist.portfolio || []}
       following={isFollowing(artist.id)}

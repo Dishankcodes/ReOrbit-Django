@@ -146,6 +146,11 @@ function previous(currentPath) {
   return prev;
 }
 
+/* The page the person was on just before this one, or null when they arrived directly. */
+export function cameFrom(currentPath) {
+  return previous(currentPath)?.path || null;
+}
+
 export function useGoBack(fallback) {
   const navigate = useNavigate();
   const loc = useLocation();

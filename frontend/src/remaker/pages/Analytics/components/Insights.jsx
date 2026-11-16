@@ -8,7 +8,7 @@ function buildInsights(data) {
   const list = [];
   const { products, heatmap, sources, cities, current } = data;
 
-  if (products.length) {
+  if (products.length && products[0].revenue > 0) {
     const best = products[0];
     const share = current.revenue ? (best.revenue / current.revenue) * 100 : 0;
 
@@ -22,35 +22,37 @@ function buildInsights(data) {
         to: `/remaker-products/${best.id}/edit`,
       },
     });
-
-    const gap = [...products]
-      .filter((item) => item.views > 0)
-      .sort((a, b) => b.views / (b.orders + 1) - a.views / (a.orders + 1))[0];
-
-    if (gap) {
-      list.push({
-        tone: "warn",
-        tag: "Room to grow",
-        title: `${gap.title} gets looked at but rarely bought`,
-        text: `${fmtNumber(gap.views)} people viewed it and only ${fmtPercent(gap.conv, 2)} ordered. A brighter cover photo, a clearer story or a small price change often helps.`,
-        action: {
-          label: "Improve listing",
-          to: `/remaker-products/${gap.id}/edit`,
-        },
-      });
-    }
   }
 
-  list.push({
-    tone: "info",
-    tag: "Timing",
-    title: `${heatmap.best.day} at ${heatmap.best.block} is your busiest time`,
-    text: "More customers order then. Publish new products and reply to messages just before this window to catch them.",
-    action: { label: "Add a product", to: "/remaker-products/new" },
-  });
+  const gap = [...products]
+    .filter((item) => item.views >= 5)
+    .sort((a, b) => b.views / (b.orders + 1) - a.views / (a.orders + 1))[0];
+
+  if (gap) {
+    list.push({
+      tone: "warn",
+      tag: "Room to grow",
+      title: `${gap.title} gets looked at but rarely bought`,
+      text: `${fmtNumber(gap.views)} people viewed it and ${gap.orders ? `only ${fmtPercent(gap.conv, 2)} ordered` : "nobody has ordered yet"}. A brighter cover photo, a clearer story or a small price change often helps.`,
+      action: {
+        label: "Improve listing",
+        to: `/remaker-products/${gap.id}/edit`,
+      },
+    });
+  }
+
+  if (heatmap.best) {
+    list.push({
+      tone: "info",
+      tag: "Timing",
+      title: `${heatmap.best.day} at ${heatmap.best.block} is your busiest time`,
+      text: "More customers order then. Publish new products and reply to messages just before this window to catch them.",
+      action: { label: "Add a product", to: "/remaker-products/new" },
+    });
+  }
 
   const feed = sources.find((item) => item.key === "feed");
-  if (feed) {
+  if (feed && feed.value > 0) {
     list.push({
       tone: "info",
       tag: "Followers",
@@ -60,7 +62,7 @@ function buildInsights(data) {
     });
   }
 
-  const city = cities[0];
+  const city = cities.find((item) => item.key !== "other" && item.orders > 0);
   if (city) {
     list.push({
       tone: "good",
@@ -68,6 +70,16 @@ function buildInsights(data) {
       title: `${city.city} is your biggest market`,
       text: `About ${fmtPercent(city.percent, 0)} of orders come from there. Mention local pickup in your descriptions to win more of them.`,
       action: { label: "See customers", to: "/remaker-customers" },
+    });
+  }
+
+  if (!list.length) {
+    list.push({
+      tone: "info",
+      tag: "Getting started",
+      title: "Your first insights appear after a few views and orders",
+      text: "Add clear photos and a short story to each product, and share your studio link. We will point out what is working here.",
+      action: { label: "Add a product", to: "/remaker-products/new" },
     });
   }
 

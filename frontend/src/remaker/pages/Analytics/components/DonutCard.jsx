@@ -2,7 +2,7 @@ import React from "react";
 
 import { fmtPercent, formatPrice } from "./format";
 
-const COLORS = ["#270809", "#08271f", "#7c9a8d", "#c1c8c4", "#a46d25"];
+const COLORS = ["#270809", "#6b2a30", "#a45a5f", "#c1c8c4", "#b9812d"];
 
 export default function DonutCard({ categories }) {
   const total = categories.reduce((sum, item) => sum + item.revenue, 0);
