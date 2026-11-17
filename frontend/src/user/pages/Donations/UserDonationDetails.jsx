@@ -206,7 +206,9 @@ export default function UserDonationDetails() {
           <div>
             <strong>
               {completed
-                ? `Delivered to ${donation.ngo?.name}. `
+                ? donation.ngo
+                  ? `Delivered to ${donation.ngo.name}. `
+                  : "Complete and in the ReOrbit warehouse. "
                 : "Received at our warehouse. "}
               You earned a ₹{voucher.amount} voucher
             </strong>
@@ -249,7 +251,7 @@ export default function UserDonationDetails() {
                 <small>
                   {closed
                     ? "This donation was closed."
-                    : "Follow your donation from your door to an NGO."}
+                    : "Follow your donation from your door to the ReOrbit warehouse."}
                 </small>
               </div>
             </div>
@@ -368,7 +370,7 @@ export default function UserDonationDetails() {
               <h3>Donation certificate</h3>
               <p>
                 {donation.certificateId} · issued for your gift to{" "}
-                {donation.ngo?.name}.
+                {donation.ngo?.name || "ReOrbit"}.
               </p>
               <Link
                 to={`/user-donations/${donation.id}/certificate`}

@@ -25,7 +25,7 @@ import {
 
 import { useOrders } from "../../data/ordersStore";
 import { useWishlist } from "../../data/wishlistStore";
-import { useDonations } from "../../data/donationsStore";
+import { useDonations, summarize } from "../../data/donationsStore";
 import { useRewards } from "../../data/rewardsStore";
 
 import CitySelect from "../../../shared/components/CitySelect";
@@ -69,26 +69,6 @@ const profileStats = [
   },
 ];
 
-const sustainabilityStats = [
-  {
-    label: "Items Reused",
-    value: "18",
-    description: "items given a second life",
-    icon: Leaf,
-  },
-  {
-    label: "Waste Saved",
-    value: "12.6 kg",
-    description: "estimated waste diverted",
-    icon: Package,
-  },
-  {
-    label: "Eco Impact",
-    value: "86%",
-    description: "sustainability contribution",
-    icon: Award,
-  },
-];
 
 export default function UserProfile() {
   /* the numbers come from the same stores as the dashboard, so they always agree */
@@ -102,6 +82,15 @@ export default function UserProfile() {
     { ...profileStats[2], value: String(myDonations.length) },
     { ...profileStats[3], value: rewards.balance.toLocaleString("en-IN") },
   ];
+  /* real impact: items bought second-hand + items donated, and what the warehouse weighed */
+  const impact = summarize(myDonations);
+  const reused = (rewards.counts.bought || 0) + (rewards.counts.donated || 0);
+  const sustainabilityStats = [
+    { label: "Items Reused", value: reused.toLocaleString("en-IN"), description: "bought second-hand or donated", icon: Leaf },
+    { label: "Waste Saved", value: `${(Math.round(impact.weight * 10) / 10).toLocaleString("en-IN")} kg`, description: "weighed at the ReOrbit warehouse", icon: Package },
+    { label: "CO₂ Saved", value: `${impact.co2.toLocaleString("en-IN")} kg`, description: "from what you donated", icon: Award },
+  ];
+  const levelProgress = Math.max(0, Math.min(100, Math.round(rewards.progress || 0)));
   const me = useMyProfile("user");
   const fileInput = useRef(null);
 
@@ -745,17 +734,20 @@ export default function UserProfile() {
 
           <div className="sustainability-footer">
             <div className="sustainability-progress-text">
-              <span>Eco Journey Progress</span>
-              <strong>72%</strong>
+              <span>
+                {rewards.next ? `Progress to ${rewards.next.name}` : `${rewards.level?.name || "Top"} level reached`}
+              </span>
+              <strong>{levelProgress}%</strong>
             </div>
 
             <div className="sustainability-progress">
-              <span />
+              <span style={{ width: `${levelProgress}%` }} />
             </div>
 
             <p>
-              Keep shopping consciously, donating and reusing to unlock your
-              next ReOrbit badge.
+              {rewards.next
+                ? `${rewards.toNext.toLocaleString("en-IN")} more Orbit Points to reach ${rewards.next.name}. You have ${rewards.earnedBadges} of ${rewards.badges.length} badges.`
+                : `You're at the top level, with ${rewards.earnedBadges} of ${rewards.badges.length} badges.`}
             </p>
           </div>
         </section>

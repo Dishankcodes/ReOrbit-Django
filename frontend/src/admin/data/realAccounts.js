@@ -166,10 +166,26 @@ function createStore({ path, map, idKey }) {
     return snap;
   };
 
-  function changeStatus(ids, newStatus, reason = "") {
-    const picked = new Set(Array.isArray(ids) ? ids : [ids]);
+  /* Saves the new status on the server (POST /adminops/admin/accounts/<id>/status/), then shows it.
+     Resolves to { done: [ids], failed: [{ id, message }] }. */
+  async function changeStatus(ids, newStatus, reason = "") {
+    const list = Array.isArray(ids) ? ids : [ids];
+    const results = await Promise.allSettled(
+      list.map((id) =>
+        apiRequest(`/adminops/admin/accounts/${id}/status/`, {
+          method: "POST",
+          body: { status: newStatus, reason },
+        }),
+      ),
+    );
+    const done = list.filter((_, i) => results[i].status === "fulfilled");
+    const failed = list
+      .map((id, i) => ({ id, r: results[i] }))
+      .filter((x) => x.r.status === "rejected")
+      .map((x) => ({ id: x.id, message: x.r.reason?.message || "Could not change this account." }));
+    const picked = new Set(done);
     const at = new Date().toISOString();
-    set({
+    if (done.length) set({
       rows: state.rows.map((row) =>
         !picked.has(row[idKey]) || row.status === newStatus
           ? row
@@ -190,6 +206,7 @@ function createStore({ path, map, idKey }) {
             },
       ),
     });
+    return { done, failed };
   }
 
   return { useSnapshot, changeStatus, reload: () => load(true) };

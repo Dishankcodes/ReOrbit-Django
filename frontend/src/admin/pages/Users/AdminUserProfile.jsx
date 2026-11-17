@@ -152,10 +152,11 @@ export default function AdminUserProfile() {
     },
   ];
 
-  const confirmAction = (reason) => {
-    changeUserStatus(user.user_id, pending.newStatus, reason);
-    toast(`${user.full_name} is now ${pending.newStatus.toLowerCase()}.`);
+  const confirmAction = async (reason) => {
+    const next = pending.newStatus;
     setPending(null);
+    const { failed } = await changeUserStatus(user.user_id, next, reason);
+    toast(failed.length ? `Not changed: ${failed[0].message}` : `${user.full_name} is now ${next.toLowerCase()}.`);
   };
 
   const onTabKey = (event, index) => {

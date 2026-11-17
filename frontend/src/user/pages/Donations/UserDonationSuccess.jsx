@@ -36,7 +36,7 @@ const NEXT = [
   {
     icon: Award,
     title: "You earn a voucher",
-    text: `Once we accept it, you get a marketplace voucher of at least ₹${VOUCHER_MIN} plus Orbit Points, credited when it reaches our warehouse. A certificate follows once an NGO receives it.`,
+    text: `Once we accept it, you get a marketplace voucher of at least ₹${VOUCHER_MIN} plus Orbit Points, credited when it reaches our warehouse. Your certificate follows once it's checked in.`,
   },
 ];
 

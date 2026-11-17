@@ -13,6 +13,7 @@ import {
 import { useRewards, useWaysToEarn } from "../../data/rewardsStore";
 import { useVoucherList } from "../../../shared/rewardRules";
 import { kg } from "../../utils/format";
+import { PageLoader } from "../../../shared/components/Spinner";
 import PointsHero from "./components/PointsHero";
 import PointsNav from "./components/PointsNav";
 import LedgerRow from "./components/LedgerRow";
@@ -28,9 +29,7 @@ export default function UserOrbitPoints() {
   const ways = useWaysToEarn();
   const { ledger, balance, levelIndex, badges, earnedBadges, lifetime } =
     rewards;
-  const spent = ledger
-    .filter((e) => e.points < 0)
-    .reduce((n, e) => n + Math.abs(e.points), 0);
+  const spent = rewards.spent;
   const claimable = vouchers
     .filter((v) => v.kind === "points" && v.left > 0 && !v.paused)
     .slice(0, 3);
@@ -38,6 +37,21 @@ export default function UserOrbitPoints() {
     .filter((b) => !b.earned)
     .sort((a, b) => b.value / b.target - a.value / a.target)
     .slice(0, 3);
+
+  if (!rewards.loaded) {
+    return (
+      <div className="dn rw">
+        <PointsNav />
+        {rewards.error ? (
+          <p className="dn-error" role="alert">
+            {rewards.error}
+          </p>
+        ) : (
+          <PageLoader label="Loading your Orbit Points…" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="dn rw">
@@ -100,6 +114,12 @@ export default function UserOrbitPoints() {
             {ledger.slice(0, 6).map((e) => (
               <LedgerRow key={e.id} entry={e} />
             ))}
+            {ledger.length === 0 && (
+              <p className="dn-muted">
+                No points yet. You earn them when an order is delivered, a donation is received, or you
+                review what you bought.
+              </p>
+            )}
           </div>
         </section>
 
@@ -164,6 +184,9 @@ export default function UserOrbitPoints() {
             />
           ))}
         </div>
+        {claimable.length === 0 && (
+          <p className="dn-muted">No rewards are on offer right now. New ones appear here when ReOrbit adds them.</p>
+        )}
       </section>
 
       <section className="urw-earn-strip">

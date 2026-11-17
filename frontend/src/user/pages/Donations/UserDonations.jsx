@@ -56,7 +56,7 @@ const STEPS = [
   {
     icon: Warehouse,
     title: "We check and sort it",
-    text: "Items are verified at our warehouse and matched with a partner NGO.",
+    text: "Items are checked in at the ReOrbit warehouse, where they get their next life.",
   },
   {
     icon: Award,

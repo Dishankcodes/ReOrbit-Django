@@ -216,15 +216,17 @@ export default function AdminRemakers() {
     if (eligible.length) setPending({ action, ids: eligible });
   };
 
-  const confirmAction = (reason) => {
+  const confirmAction = async (reason) => {
     const { action, ids } = pending;
-    changeRemakerStatus(ids, action.newStatus, reason);
-    toast(
-      ids.length === 1
-        ? `${remakers.find((r) => r.remaker_id === ids[0]).full_name} is now ${action.newStatus.toLowerCase()}.`
-        : `${ids.length} ReMakers set to ${action.newStatus.toLowerCase()}.`,
-    );
     setPending(null);
+    const { done, failed } = await changeRemakerStatus(ids, action.newStatus, reason);
+    toast(
+      failed.length && !done.length
+        ? `Not changed: ${failed[0].message}`
+        : ids.length === 1
+          ? `${remakers.find((r) => r.remaker_id === ids[0])?.full_name || ids[0]} is now ${action.newStatus.toLowerCase()}.`
+          : `${done.length} ReMakers set to ${action.newStatus.toLowerCase()}${failed.length ? `, ${failed.length} not changed` : ""}.`,
+    );
     clearSelection();
   };
 

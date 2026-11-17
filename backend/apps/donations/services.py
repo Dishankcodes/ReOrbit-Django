@@ -585,20 +585,22 @@ def _received(d, admin, p):
 
 
 def _complete(d, admin, p):
+    """The item has been checked and captured in ReOrbit's warehouse: the donation is complete.
+    It stays in Admin › Warehouse (stored, ready to be reused or sold); nothing goes to an NGO."""
     _need(d, S.RECEIVED)
-    ngo = _text(p.get("ngo"), 100)
-    if len(ngo) < 2:
-        raise _fix({"ngo": ["Say who this was handed on to."]})
+    note = _text(p.get("note"), 200)
+    _stock_in(d)  # the warehouse lot normally exists from "Received"; make sure it does
     qty = d.effective_quantity
-    d.status, d.ngo, d.completed_at = S.COMPLETED, ngo, timezone.now()
+    d.status, d.ngo, d.completed_at = S.COMPLETED, "", timezone.now()
     d.distributed_quantity, d.distributed_at = qty, d.completed_at
     d.certificate_id = f"ROC-{timezone.localdate().year}-{d.public_id.split('-')[-1]}"
     _save(d, "status", "ngo", "completed_at", "distributed_quantity", "distributed_at", "certificate_id")
     certificates.attach(d)
     _save(d, "certificate_file")
-    event(d, "Completed, certificate issued", f"{qty} item(s) given to {ngo}. Certificate {d.certificate_id}.", "good", "admin")
-    _notify_donor(d, "Your donation made a difference", f"{d.public_id} was given to {ngo}. Your certificate is ready.")
-    _stock_out(d, ngo)
+    detail = f"{qty} item(s) captured in the ReOrbit warehouse. Certificate {d.certificate_id}."
+    event(d, "Completed, in the ReOrbit warehouse", detail + (f" {note}" if note else ""), "good", "admin")
+    _notify_donor(d, "Your donation is complete",
+                  f"{d.public_id} is now in the ReOrbit warehouse, ready for its next life. Your certificate is ready.")
     return ""
 
 

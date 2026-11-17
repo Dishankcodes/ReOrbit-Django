@@ -207,6 +207,7 @@ export default function DonationActionModal({
       ...(showRewardChoice
         ? { points, voucher_amount: voucherAmount }
         : {}),
+      ...(action.fields === "warehouse" ? { note: receivedNote.trim() } : {}),
       ...(action.fields === "courier"
         ? { courier_name: courierName.trim(), tracking_no: trackingNo.trim() }
         : {}),
@@ -495,6 +496,21 @@ export default function DonationActionModal({
               </small>
             )}
           </div>
+        )}
+
+        {action.fields === "warehouse" && (
+          <label className="ad-modal-field">
+            <span>
+              Warehouse note <em>(optional, e.g. shelf or bin)</em>
+            </span>
+            <input
+              type="text"
+              maxLength={200}
+              value={receivedNote}
+              onChange={(e) => setReceivedNote(e.target.value)}
+              placeholder="e.g. Rack B · bin 12"
+            />
+          </label>
         )}
 
         {action.fields === "ngo" && (

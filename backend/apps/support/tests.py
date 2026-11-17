@@ -195,3 +195,24 @@ class TicketHistoryTests(APIBase):
         self.assertIn("marked this ticket as resolved", notes[0])
         self.post(f"/api/support/me/{self.tid}/", {"message": "It is still late."}, as_=self.user)
         self.assertIn("reopened", self.notes()[0][-1])
+
+
+class TicketRightsTests(SupportTicketTests):
+    """Super Admins, Support agents and the assigned admin can close a ticket; nobody else."""
+
+    def test_super_admin_agent_and_assignee_can_close(self):
+        from apps.admins.models import Admins
+        sup = self.make_admin("super@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN)
+        helper = self.make_admin("helper@example.com", modules={"support": "view"})
+        ids = [self.post("/api/support/me/", {"subject": f"Help {n}", "message": "Please help me with this."},
+                         as_=self.user).data["data"]["ticket"]["id"] for n in range(3)]
+        A = "/api/support/admin/{}/"
+        self.assertEqual(self.post(A.format(ids[0]), {"action": "close"}, as_=sup).status_code, 200)
+        self.assertEqual(self.post(A.format(ids[1]), {"action": "close"}, as_=self.agent).status_code, 200)
+        # a view-only admin can't touch a ticket that isn't theirs...
+        self.assertEqual(self.post(A.format(ids[2]), {"action": "close"}, as_=helper).status_code, 403)
+        r = self.post(A.format(ids[2]), {"action": "assign", "assignee_id": helper.public_id}, as_=self.agent)
+        self.assertEqual(r.status_code, 200, r.data)
+        # ...but can once it's assigned to them (still can't reassign it)
+        self.assertEqual(self.post(A.format(ids[2]), {"action": "close"}, as_=helper).status_code, 200)
+        self.assertEqual(self.post(A.format(ids[2]), {"action": "assign", "assignee_id": "none"}, as_=helper).status_code, 403)

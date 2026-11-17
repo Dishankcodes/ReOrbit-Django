@@ -288,10 +288,13 @@ class DonationTests(OrderBase):
         self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 120)
 
         # ---- 9. certificate download -------------------------------------- #
-        r = self.act(did, "complete", ngo="Helping Hands")
+        r = self.act(did, "complete")  # captured in the ReOrbit warehouse: no NGO
         self.assertEqual(r.status_code, 200, r.data)
         self.assertTrue(r.data["data"]["certificate"])
-        self.assertEqual((r.data["data"]["distributed_quantity"], r.data["data"]["ngo"]), (1, "Helping Hands"))
+        self.assertEqual((r.data["data"]["distributed_quantity"], r.data["data"]["ngo"] or ""), (1, ""))
+        from apps.warehouse.models import WarehouseItem
+        lot = WarehouseItem.objects.get(donation__public_id=did)
+        self.assertNotEqual(lot.warehouse_status, "Released")  # it stays in the warehouse
         pdf = self.get(f"/api/donations/me/{did}/certificate/", as_=self.buyer)
         self.assertEqual((pdf.status_code, b"".join(pdf.streaming_content)[:4]), (200, b"%PDF"))
         self.assertEqual(self.get(f"/api/donations/me/{did}/certificate/", as_=self.seller).status_code, 404)
@@ -341,10 +344,10 @@ class DonationTests(OrderBase):
     # ---- 10. donor tracking: a meaningful event at every stage -------------- #
     def test_donor_sees_an_event_for_every_stage(self):
         did = self.received_donation()
-        self.act(did, "complete", ngo="Helping Hands")
+        self.act(did, "complete")
         labels = [e["label"] for e in self.get(f"/api/donations/me/{did}/", as_=self.buyer).data["data"]["events"]]
         self.assertEqual(labels, ["Donation submitted", "Accepted, pickup scheduled", "Picked up",
-                                  "Received at the warehouse", "Completed, certificate issued"])
+                                  "Received at the warehouse", "Completed, in the ReOrbit warehouse"])
 
     # ---- the donor changes their mind ----------------------------------- #
     def test_donor_can_reschedule_twice_then_cancel(self):

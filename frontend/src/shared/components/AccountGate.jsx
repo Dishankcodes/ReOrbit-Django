@@ -4,10 +4,11 @@
    - Active     → renders the page as normal
    - Suspended  → banner on top; buttons that change things are blocked
    - Blocked / Deleted → a locked screen with the reason and an appeal link
-   Front-end guard only; the backend must enforce it later.
+   The server enforces the same rules (apps.accounts.permissions); this only explains them.
    ========================================================= */
 
 import { useEffect, useState } from "react";
+import { rememberBlock, resetAccountStatus } from "../liveAccountStatus";
 import { signOut } from "../../api/auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ShieldAlert, Lock, LogOut, LifeBuoy } from "lucide-react";
@@ -33,9 +34,21 @@ export default function AccountGate({ info, role, children }) {
   const [note, setNote] = useState("");
   const suspended = info.readOnly;
 
+  /* Support and contact pages keep working while suspended (raising and answering tickets). */
+  const supportPage = /(help|contact|support|ticket)/i.test(pathname);
+
+  /* Blocked or closed: sign out at once and show why, with a way to contact us. */
+  useEffect(() => {
+    if (!info.locked) return;
+    rememberBlock({ role, status: info.status, reason: info.reason, at: info.at });
+    signOut();
+    resetAccountStatus();
+    navigate(`/account-blocked?as=${role}`, { replace: true });
+  }, [info.locked, info.status, info.reason, info.at, role, navigate]);
+
   /* Suspended: stop clicks that would change data. */
   useEffect(() => {
-    if (!suspended) return undefined;
+    if (!suspended || supportPage) return undefined;
     let timer;
     const guard = (event) => {
       const btn = event.target.closest?.("button, [role=button]");
@@ -65,7 +78,7 @@ export default function AccountGate({ info, role, children }) {
       document.removeEventListener("click", guard, true);
       clearTimeout(timer);
     };
-  }, [suspended]);
+  }, [suspended, supportPage]);
 
   const logout = () => {
     signOut();

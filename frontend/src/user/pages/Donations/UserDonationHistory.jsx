@@ -186,7 +186,7 @@ export default function UserDonationHistory() {
             <Search size={16} />
             <input
               value={query}
-              placeholder="Search by name, ID or NGO"
+              placeholder="Search by name or ID"
               onChange={(event) => {
                 setQuery(event.target.value);
                 setVisible(PAGE_SIZE);

@@ -300,10 +300,12 @@ export function useRewards() {
       vouchersReady: sum?.vouchers_ready || 0,
       badges,
       earnedBadges: badges.filter((b) => b.earned).length,
+      spent: st.spent || 0,
       counts: {
         orders: st.delivered_orders || 0,
         delivered: st.delivered_orders || 0,
         donated: st.donated_items || 0,
+        bought: st.bought_items || 0,
         following: following.length,
         wishlist: st.wishlist || 0,
       },

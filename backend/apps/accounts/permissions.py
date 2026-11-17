@@ -23,6 +23,12 @@ def status_allows(request, view):
     return False  # Blocked / Deleted
 
 
+def _status_code(request):
+    """Sent as `code` with the 403 so the apps can react: suspended -> view-only, blocked -> sign out."""
+    status = getattr(request.user, "status", "")
+    return "ACCOUNT_SUSPENDED" if status == "Suspended" else "ACCOUNT_BLOCKED"
+
+
 def _status_message(request):
     status = getattr(request.user, "status", "")
     if status == "Suspended":
@@ -40,6 +46,7 @@ class _AccountPermission(BasePermission):
             return False
         if not status_allows(request, view):
             self.message = _status_message(request)
+            self.code = _status_code(request)
             return False
         return True
 
@@ -53,6 +60,7 @@ class IsReOrbitAuthenticated(BasePermission):
             return False
         if not status_allows(request, view):
             self.message = _status_message(request)
+            self.code = _status_code(request)
             return False
         return True
 

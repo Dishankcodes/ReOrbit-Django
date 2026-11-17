@@ -221,15 +221,17 @@ export default function AdminUsers() {
     setPending({ action, ids: eligible });
   };
 
-  const confirmAction = (reason) => {
+  const confirmAction = async (reason) => {
     const { action, ids } = pending;
-    changeUserStatus(ids, action.newStatus, reason);
-    toast(
-      ids.length === 1
-        ? `${users.find((u) => u.user_id === ids[0]).full_name} is now ${action.newStatus.toLowerCase()}.`
-        : `${ids.length} accounts set to ${action.newStatus.toLowerCase()}.`,
-    );
     setPending(null);
+    const { done, failed } = await changeUserStatus(ids, action.newStatus, reason);
+    toast(
+      failed.length && !done.length
+        ? `Not changed: ${failed[0].message}`
+        : ids.length === 1
+          ? `${users.find((u) => u.user_id === ids[0])?.full_name || ids[0]} is now ${action.newStatus.toLowerCase()}.`
+          : `${done.length} accounts set to ${action.newStatus.toLowerCase()}${failed.length ? `, ${failed.length} not changed` : ""}.`,
+    );
     clearSelection();
   };
 

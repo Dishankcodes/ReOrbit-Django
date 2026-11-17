@@ -583,6 +583,8 @@ def summary(user):
             Item.Status.LISTED, Item.Status.RESERVED, Item.Status.SOLD)).count(),
         "sold": Item.objects.filter(user=user, item_status=Item.Status.SOLD).count(),
         "wishlist": WishlistEntry.objects.filter(user=user).count(),
+        # every point ever spent on rewards (the ledger is paged, so the page can't add it up itself)
+        "spent": -(PointsEntry.objects.filter(user=user, points__lt=0).aggregate(n=Coalesce(Sum("points"), 0))["n"]),
     }
     return {
         "balance": balance, "lifetime": lifetime, "level": level_data(i), "level_index": i, "next": nxt,

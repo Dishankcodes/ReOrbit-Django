@@ -22,9 +22,9 @@ export function nextLine(donation) {
   if (status === "Picked_Up")
     return `Picked up ${relativeDay(pickup.date).toLowerCase()} · heading to warehouse`;
   if (status === "Received")
-    return "At our warehouse · being matched with an NGO";
+    return "At our warehouse · being checked";
   if (status === "Completed")
-    return `Given to ${donation.ngo?.name || "an NGO"}`;
+    return donation.ngo ? `Given to ${donation.ngo.name}` : "Complete · in the ReOrbit warehouse";
   if (status === "Rejected") return "Not accepted · see the reason";
   return "Cancelled by you";
 }

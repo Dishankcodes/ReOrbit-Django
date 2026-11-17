@@ -433,9 +433,9 @@ export default function AdminDonationDetails() {
                 </div>
                 <div>
                   <dt>
-                    <HeartHandshake size={13} /> Given to
+                    <HeartHandshake size={13} /> {d.ngo ? "Given to" : "Kept in"}
                   </dt>
-                  <dd>{d.ngo}</dd>
+                  <dd>{d.ngo || "ReOrbit warehouse"}</dd>
                 </div>
               </dl>
               <button

@@ -129,3 +129,19 @@
     padding: 28px 18px;
   }
 }
+
+/* public "you are blocked" page */
+.account-blocked-page {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  background: var(--background, #f7f5ee);
+}
+.account-blocked-page .account-gate-btn {
+  text-decoration: none;
+}
+.account-blocked-page .account-gate-btn.primary,
+.account-blocked-page .account-gate-btn.primary:visited {
+  color: #fff;
+}

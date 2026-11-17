@@ -100,6 +100,8 @@ export default function AdminTicketDetails() {
   const closed = t.status === "Closed";
   const done = t.status === "Resolved" || closed;
   const mine = t.assignedTo?.id && t.assignedTo.id === myId;
+  /* Super Admins and Support agents can work any ticket; anyone else only the one assigned to them */
+  const canWork = canEdit || !!mine;
 
   const send = (e) => {
     e.preventDefault();
@@ -194,7 +196,7 @@ export default function AdminTicketDetails() {
           {error && <p className="ad-modal-error" role="alert">{error}</p>}
           {loadError && <p className="ad-modal-error" role="alert">{loadError}</p>}
 
-          {canEdit ? (
+          {canWork ? (
             <form className="sp-reply" onSubmit={send}>
               <label className="ad-modal-field">
                 <span>Your reply</span>
@@ -226,7 +228,7 @@ export default function AdminTicketDetails() {
               </div>
             </form>
           ) : (
-            <p className="sp-sub">You can read this ticket, but replying needs Support edit access.</p>
+            <p className="sp-sub">You can read this ticket. Replying needs Support edit access, or the ticket being assigned to you.</p>
           )}
         </section>
 
@@ -270,7 +272,7 @@ export default function AdminTicketDetails() {
             )}
           </section>
 
-          {canEdit && (
+          {canWork && (
             <section className="au-panel sp-card">
               <h3>Priority</h3>
               <div className="sp-status-btns">
@@ -289,7 +291,7 @@ export default function AdminTicketDetails() {
             </section>
           )}
 
-          {canEdit && (
+          {canWork && (
             <section className="au-panel sp-card">
               <h3>Status</h3>
               <div className="sp-status-btns">

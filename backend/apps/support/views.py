@@ -91,11 +91,18 @@ def _mark_admin_read(ticket, admin):
 
 
 def _support_agents():
-    """Active admins who can actively work tickets, including Super Admins."""
+    """Active admins a ticket can be assigned to: Super Admins, Support agents (edit), and admins
+    with view access to Support (once a ticket is theirs they can work it, see _may_work)."""
     return [
         admin for admin in Admins.objects.filter(status=Admins.Status.ACTIVE).order_by("full_name", "admin_id")
-        if admin.has_module("support", "edit")
+        if admin.has_module("support", "view")
     ]
+
+
+def _may_work(admin, ticket):
+    """Reply, change status or close: Super Admins and Support agents always, and the admin the
+    ticket is assigned to. Reassigning someone else's ticket still needs Support edit access."""
+    return admin.has_module("support", "edit") or ticket.assigned_to_id == admin.pk
 
 
 def _support_agent_rows():
@@ -470,7 +477,8 @@ def _tell_owner(ticket, action, text, before_status):
 
 
 class AdminTickets(APIView):
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("support")]
+    # view access reaches it; post() checks _may_work so the assignee can act on their ticket
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("support", "view")]
 
     def get(self, request, public_id=None):
         if public_id:
@@ -574,6 +582,11 @@ class AdminTickets(APIView):
             )
             action = str(request.data.get("action") or "reply")
             actor = request.user.account
+            if not _may_work(actor, ticket):
+                return fail("Only Support agents, a Super Admin or the admin this ticket is assigned to can change it.",
+                            status=403, code="NO_ACCESS")
+            if action == "assign" and not actor.has_module("support", "edit"):
+                return fail("Reassigning tickets needs Support edit access.", status=403, code="NO_ACCESS")
             if "priority" in request.data and request.data["priority"] not in SupportTicket.Priority.values:
                 return fail("Unsupported priority.")
             before_status = ticket.status

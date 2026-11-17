@@ -376,12 +376,9 @@ def _a_penalty(c, admin, p, key):
         raise ComplaintError(f"This account is already {acct.status.lower()}.", code="BAD_STATE", status=409)
     if key == "block" and acct.status in ("Blocked", "Deleted"):
         raise ComplaintError(f"This account is already {acct.status.lower()}.", code="BAD_STATE", status=409)
-    before = acct.status
-    acct.status = nxt
-    acct.save(update_fields=["status", "updated_at"] if hasattr(acct, "updated_at") else ["status"])
-    audit(admin, f"account.{key}", "user" if isinstance(acct, Users) else "remaker", acct.public_id,
-          before={"status": before}, after={"status": nxt}, reason=reason)
-    _tell(acct, f"Your account was {nxt.lower()}", reason, severity="critical", ref=("complaint", c.public_id))
+    # same path as Admin › Users: saves the reason the member sees, audits and notifies them
+    from apps.adminops.account_status import set_status
+    set_status(acct, nxt, reason, admin, ref=("complaint", c.public_id))
     _finish(c, admin, p, Status.RESOLVED, "suspended" if key == "suspend" else "blocked",
             f"{acct.full_name} {nxt.lower()}. {reason}",
             "Account suspended" if key == "suspend" else "Account blocked", "bad")

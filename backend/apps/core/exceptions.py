@@ -47,6 +47,10 @@ def api_exception_handler(exc, context):
     if isinstance(exc, exceptions.ValidationError) and isinstance(data, dict):
         body["errors"] = data
         body["message"] = "Please correct the highlighted fields."
+    if isinstance(exc, exceptions.PermissionDenied):
+        code = getattr(exc.detail, "code", None)
+        if code and code != "permission_denied":
+            body["code"] = str(code)  # e.g. ACCOUNT_SUSPENDED / ACCOUNT_BLOCKED
     if isinstance(exc, exceptions.Throttled):
         body["code"] = "RATE_LIMITED"
         body["retry_after"] = exc.wait

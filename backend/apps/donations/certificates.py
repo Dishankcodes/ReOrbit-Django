@@ -40,7 +40,8 @@ def render(donation):
     body = f"donated {qty} item(s) of {donation.category} to ReOrbit,"
     c.drawCentredString(w / 2, h - 92 * mm, body)
     when = donation.distributed_at or donation.completed_at
-    tail = f"handed on {when.strftime('%d %B %Y')}" + (f" to {donation.ngo}." if donation.ngo else ".")
+    tail = (f"handed on {when.strftime('%d %B %Y')} to {donation.ngo}." if donation.ngo
+            else f"received into the ReOrbit warehouse on {when.strftime('%d %B %Y')}.")
     c.drawCentredString(w / 2, h - 100 * mm, tail)
 
     c.setFillColor(INK)

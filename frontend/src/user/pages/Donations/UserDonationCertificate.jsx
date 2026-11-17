@@ -45,7 +45,7 @@ export default function UserDonationCertificate() {
         <EmptyState
           icon={Lock}
           title="Certificate not ready yet"
-          text="Your certificate is issued once the donation reaches an NGO and is marked completed."
+          text="Your certificate is issued once the donation is checked into the ReOrbit warehouse and marked completed."
           actionLabel="Back to donation"
           to={`/user-donations/${donation.id}`}
         />
@@ -137,9 +137,15 @@ export default function UserDonationCertificate() {
             <strong>
               {donation.quantity} × {donation.title}
             </strong>{" "}
-            ({donation.category}), which has been delivered to{" "}
-            <strong>{donation.ngo?.name}</strong>, {donation.ngo?.city}, giving
-            these items a second life and keeping them out of landfill.
+            ({donation.category}),{" "}
+            {donation.ngo ? (
+              <>
+                which has been delivered to <strong>{donation.ngo.name}</strong>, {donation.ngo.city},
+              </>
+            ) : (
+              <>which has been received into the ReOrbit warehouse,</>
+            )}{" "}
+            giving these items a second life and keeping them out of landfill.
           </p>
 
           <div className="dn-cert-stats">

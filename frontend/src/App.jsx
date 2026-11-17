@@ -22,6 +22,7 @@ const Home = page("user", () => import("./user/pages/HomePages/Home"));
 const About = page("user", () => import("./user/pages/HomePages/About"));
 const FAQ = page("user", () => import("./user/pages/HomePages/FAQ"));
 const Contact = page("user", () => import("./user/pages/HomePages/Contact"));
+const AccountBlocked = page("user", () => import("./shared/components/AccountBlocked"));
 const HowItWorks = page(
   "user",
   () => import("./user/pages/HomePages/HowItWorks"),
@@ -570,6 +571,7 @@ export default function App() {
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/account-blocked" element={<AccountBlocked />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           {/* Compatibility aliases used by older links */}

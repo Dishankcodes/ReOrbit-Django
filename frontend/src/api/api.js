@@ -6,6 +6,8 @@ import {
   updateTokens,
 } from "./session";
 
+export const ACCOUNT_STATUS_EVENT = "reorbit:account-status";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
@@ -155,6 +157,14 @@ export async function apiRequest(endpoint, options = {}) {
       error.data = data;
       error.errors = data?.errors;
       error.code = data?.code;
+      /* the account was suspended or blocked while signed in: the apps re-read their status */
+      if (response.status === 403 && /^ACCOUNT_(SUSPENDED|BLOCKED)$/.test(data?.code || "")) {
+        try {
+          window.dispatchEvent(new CustomEvent(ACCOUNT_STATUS_EVENT, { detail: { code: data.code } }));
+        } catch {
+          /* no window (tests) */
+        }
+      }
       throw error;
     }
 

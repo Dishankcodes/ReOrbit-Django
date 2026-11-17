@@ -183,10 +183,11 @@ export default function AdminRemakerProfile() {
     },
   ];
 
-  const confirmAction = (reason) => {
-    changeRemakerStatus(remaker.remaker_id, pending.newStatus, reason);
-    toast(`${remaker.full_name} is now ${pending.newStatus.toLowerCase()}.`);
+  const confirmAction = async (reason) => {
+    const next = pending.newStatus;
     setPending(null);
+    const { failed } = await changeRemakerStatus(remaker.remaker_id, next, reason);
+    toast(failed.length ? `Not changed: ${failed[0].message}` : `${remaker.full_name} is now ${next.toLowerCase()}.`);
   };
 
   const onTabKey = (event, index) => {

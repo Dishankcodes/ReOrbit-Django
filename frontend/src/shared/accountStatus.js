@@ -1,43 +1,29 @@
 /* =========================================================
    Shared › Account status.
-   Admin sets Active / Suspended / Blocked / Deleted. Both apps
-   read it here:
+   Admin sets Active / Suspended / Blocked / Deleted (Admin › Users / ReMakers, or a complaint
+   decision). Both apps read the real value from the server here:
    - Active     → nothing changes
-   - Suspended  → can look around, cannot buy, sell, post or save
-   - Blocked / Deleted → locked out with the reason and a way to appeal
+   - Suspended  → can look around, cannot buy, sell, post or save (support still works)
+   - Blocked / Deleted → signed out and shown the reason with a way to contact us
    ========================================================= */
 
-import { useMyUserAccount, useMyRemakerAccount } from "./identity";
+import { useLiveAccountStatus } from "./liveAccountStatus";
 
 export const READ_ONLY = ["Suspended"];
 export const LOCKED = ["Blocked", "Deleted"];
 
-function summarise(account, kind) {
-  if (!account)
-    return {
-      status: "Active",
-      reason: "",
-      at: "",
-      readOnly: false,
-      locked: false,
-      account: null,
-      kind,
-    };
-  const last = (account.statusHistory || []).find(
-    (h) => h.action === account.status,
-  );
+function summarise(live, kind) {
+  const status = live?.status || "Active";
   return {
-    status: account.status,
-    reason:
-      last?.reason && last.reason !== "No reason provided." ? last.reason : "",
-    at: last?.at || account.updated_at || "",
-    readOnly: READ_ONLY.includes(account.status),
-    locked: LOCKED.includes(account.status),
-    account,
+    status,
+    reason: live?.reason || "",
+    at: live?.at || "",
+    readOnly: READ_ONLY.includes(status),
+    locked: LOCKED.includes(status),
+    account: live,
     kind,
   };
 }
 
-export const useUserAccountStatus = () => summarise(useMyUserAccount(), "user");
-export const useRemakerAccountStatus = () =>
-  summarise(useMyRemakerAccount(), "remaker");
+export const useUserAccountStatus = () => summarise(useLiveAccountStatus("user"), "user");
+export const useRemakerAccountStatus = () => summarise(useLiveAccountStatus("remaker"), "remaker");
