@@ -18,6 +18,7 @@ import {
   phoneOk,
   phoneTaken,
 } from "../../../data/pickupTeamsStore";
+import PhoneInput from "../../../../shared/components/PhoneInput";
 
 /* Shared frame: backdrop, Escape to close, scroll lock. */
 function Shell({
@@ -136,7 +137,7 @@ export function TeamFormModal({ open, team, onSave, onClose }) {
     leadPhone:
       !editing &&
       (!phoneOk(lead.phone)
-        ? "Enter a valid phone number."
+        ? "Enter a 10-digit mobile number."
         : phoneTaken(lead.phone)
           ? "This number belongs to someone already on a team."
           : ""),
@@ -144,7 +145,7 @@ export function TeamFormModal({ open, team, onSave, onClose }) {
   const crewErrs = crew.map((c) => {
     if (editing || (!c.name.trim() && !c.phone.trim())) return "";
     if (c.name.trim().length < 3) return "Enter a name, or clear this row.";
-    if (!phoneOk(c.phone)) return "Enter a valid phone number.";
+    if (!phoneOk(c.phone)) return "Enter a 10-digit mobile number.";
     if (
       phoneTaken(c.phone) ||
       (phoneTaken(lead.phone) && c.phone.trim() === lead.phone.trim())
@@ -259,12 +260,7 @@ export function TeamFormModal({ open, team, onSave, onClose }) {
             </label>
             <label className="ad-modal-field">
               <span>Lead’s phone</span>
-              <input
-                type="tel"
-                value={lead.phone}
-                onChange={(e) => setLead({ ...lead, phone: e.target.value })}
-                placeholder="+91 98XXX XXXXX"
-              />
+              <PhoneInput value={lead.phone} onValue={(phone) => setLead({ ...lead, phone })} />
               <Err show={touched}>{errs.leadPhone}</Err>
             </label>
 
@@ -286,17 +282,11 @@ export function TeamFormModal({ open, team, onSave, onClose }) {
                     )
                   }
                 />
-                <input
+                <PhoneInput
                   aria-label={`Crew member ${i + 1} phone`}
-                  type="tel"
-                  placeholder="Phone"
                   value={c.phone}
-                  onChange={(e) =>
-                    setCrew(
-                      crew.map((x, j) =>
-                        j === i ? { ...x, phone: e.target.value } : x,
-                      ),
-                    )
+                  onValue={(phone) =>
+                    setCrew(crew.map((x, j) => (j === i ? { ...x, phone } : x)))
                   }
                 />
                 <select
@@ -379,7 +369,7 @@ export function MemberFormModal({
   const errs = {
     name: f.name.trim().length < 3 ? "Enter the person’s name." : "",
     phone: !phoneOk(f.phone)
-      ? "Enter a valid phone number."
+      ? "Enter a 10-digit mobile number."
       : phoneTaken(f.phone, member?.id)
         ? "This number already belongs to someone on a team."
         : "",
@@ -438,12 +428,7 @@ export function MemberFormModal({
       </label>
       <label className="ad-modal-field">
         <span>Phone</span>
-        <input
-          type="tel"
-          value={f.phone}
-          onChange={(e) => setF({ ...f, phone: e.target.value })}
-          placeholder="+91 98XXX XXXXX"
-        />
+        <PhoneInput value={f.phone} onValue={(phone) => setF({ ...f, phone })} />
         <Err show={touched}>{errs.phone}</Err>
       </label>
       <div className="ad-modal-field">

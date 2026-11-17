@@ -33,6 +33,8 @@ import UserActionMenu from "./components/UserActionMenu";
 
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
+import { openChat } from "../../data/openChat";
+import { useAccess } from "../../data/teamStore";
 
 const STATUS_CARDS = [
   { key: "All", label: "Total users", icon: Users, tone: "all" },
@@ -122,6 +124,7 @@ function exportCsv(rows) {
 export default function AdminUsers() {
   const { loading, error, reload } = useUsersStatus();
   const navigate = useNavigate();
+  const canMessage = useAccess().can("messages", "edit");
   const users = useUsers();
   const { toast, toastNode } = useToast();
 
@@ -479,6 +482,11 @@ export default function AdminUsers() {
                   <td className="col-menu" onClick={(e) => e.stopPropagation()}>
                     <UserActionMenu
                       user={user}
+                      onMessage={
+                        canMessage
+                          ? () => openChat(navigate, { type: "user", id: user.user_id, name: user.full_name, image: user.profile?.profile_image || "" })
+                          : undefined
+                      }
                       onView={() => navigate(`/admin-users/${user.user_id}`)}
                       onAction={(action) => askAction(action, [user.user_id])}
                     />

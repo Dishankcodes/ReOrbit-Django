@@ -27,6 +27,7 @@ import WizardSummary from "./components/wizard/WizardSummary";
 
 import "../../css/shared/ui-base.css";
 import "../../css/donations/UserDonationNew.css";
+import { PHONE_ERROR, isPhone } from "../../../shared/phone";
 
 const STEPS = [
   { label: "Item details", icon: Package },
@@ -137,8 +138,7 @@ export default function UserDonationNew() {
         next.addressId = "We don't pick up from this address yet.";
       if (form.contactName.trim().length < 2)
         next.contactName = "Enter a contact name.";
-      if (form.phone.replace(/\D/g, "").slice(-10).length < 10)
-        next.phone = "Enter a valid 10-digit phone number.";
+      if (!isPhone(form.phone)) next.phone = PHONE_ERROR;
       if (!form.date || !form.slot)
         next.schedule = "Choose a pickup date and a time slot.";
     }

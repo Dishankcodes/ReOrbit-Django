@@ -29,6 +29,8 @@ import {
 } from "../../api/profile";
 
 import "../css/ReMakerProfile.css";
+import PhoneInput from "../../shared/components/PhoneInput";
+import { PHONE_ERROR, isPhone } from "../../shared/phone";
 
 /* ---------------------------------------------------------
    The profile lives on the server (ReMakers + ReMaker_Profile).
@@ -172,9 +174,7 @@ export default function ReMakerProfile() {
     username: draft.username.trim()
       ? ""
       : "Add the username buyers will know you by.",
-    phone: /^\+?[0-9][0-9 -]{9,17}$/.test(draft.phone.trim())
-      ? ""
-      : "Enter a valid phone number.",
+    phone: isPhone(draft.phone) ? "" : PHONE_ERROR,
     pincode: draft.pincode.trim()
       ? pincodeProblem(draft.pincode)
       : "Enter your 6-digit pincode.",
@@ -747,10 +747,12 @@ export default function ReMakerProfile() {
             {editing ? (
               <div className="rpp-form single">
                 <Field id="rpp-phone" label="Phone" error={err("phone")}>
-                  {textInput("rpp-phone", "phone", {
-                    inputMode: "tel",
-                    maxLength: 13,
-                  })}
+                  <PhoneInput
+                    id="rpp-phone"
+                    value={draft.phone}
+                    invalid={Boolean(err("phone"))}
+                    onValue={(phone) => setField("phone", phone)}
+                  />
                 </Field>
                 <div className="rpp-form-pair">
                   <Field id="rpp-city" label="City" error={err("city")}>

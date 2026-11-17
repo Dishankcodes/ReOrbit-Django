@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ChevronRight, Package, Scale } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { StatusBadge } from "./DonationBadges";
-import { CategoryGlyph } from "./categoryIcons";
+import { CategoryGlyph } from "./categoryIcons.jsx"; // explicit: an old categoryIcons.js may still exist
 import {
   formatDate,
   formatDayMonth,

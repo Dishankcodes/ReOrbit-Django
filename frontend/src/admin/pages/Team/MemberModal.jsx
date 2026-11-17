@@ -19,6 +19,8 @@ import {
   updateMember,
   emailTaken,
 } from "../../data/teamStore";
+import PhoneInput from "../../../shared/components/PhoneInput";
+import { PHONE_ERROR, isPhone } from "../../../shared/phone";
 
 const samePerms = (a, b) =>
   MODULES.every((m) => (a[m.key] || "none") === (b[m.key] || "none"));
@@ -76,8 +78,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
       e.email = "Enter a valid email address.";
     else if (emailTaken(v.email, member?.id))
       e.email = "Someone on the team already uses this email.";
-    if (v.phone.replace(/\D/g, "").length < 10)
-      e.phone = "Enter a valid phone number.";
+    if (!isPhone(v.phone)) e.phone = PHONE_ERROR;
     if (summarize(v.permissions).total === 0)
       e.permissions = "Give access to at least one module.";
     return e;
@@ -267,12 +268,7 @@ export default function MemberModal({ member, startRole, onClose, onDone }) {
           </label>
           <label className={`tm-field ${err.phone ? "bad" : ""}`}>
             <span>Phone</span>
-            <input
-              value={v.phone}
-              onChange={(e) => setV({ ...v, phone: e.target.value })}
-              placeholder="+91 98xxx xxxxx"
-              aria-invalid={!!err.phone}
-            />
+            <PhoneInput value={v.phone} onValue={(phone) => setV({ ...v, phone })} invalid={!!err.phone} />
             {err.phone && <small>{err.phone}</small>}
           </label>
           <label className="tm-field">

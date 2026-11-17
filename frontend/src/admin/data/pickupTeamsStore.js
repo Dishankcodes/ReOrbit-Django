@@ -224,7 +224,7 @@ export function useTeamNames() {
 }
 
 /* ---------- validation helpers (also used by the forms; the server checks them again) ---------- */
-export const phoneOk = (v) => /^[+\d][\d\s-]{8,16}$/.test(String(v).trim());
+export { isPhone as phoneOk } from "../../shared/phone"; // 10-digit Indian mobile, same rule as the server
 export const nameTaken = (name, exceptId) =>
   state.teams.some(
     (t) =>

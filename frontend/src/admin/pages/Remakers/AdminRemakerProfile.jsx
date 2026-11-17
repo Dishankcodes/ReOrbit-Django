@@ -49,6 +49,9 @@ import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
 import "../../css/users/AdminUserProfile.css";
 import "../../css/remakers/AdminRemakers.css";
+import { MessageCircle } from "lucide-react";
+import { openChat } from "../../data/openChat";
+import { useAccess } from "../../data/teamStore";
 
 const NOTICE_TEXT = {
   Suspended:
@@ -115,6 +118,7 @@ export default function AdminRemakerProfile() {
 
   const { profile } = remaker;
   const actions = getAvailableActions(remaker.status);
+  const canMessage = useAccess().can("messages", "edit");
   const latest = remaker.statusHistory[0];
 
   const tabs = [
@@ -243,6 +247,15 @@ export default function AdminRemakerProfile() {
           </div>
         </div>
         <div className="aup-hero-actions">
+          {canMessage && remaker.status === "Active" && (
+            <button
+              type="button"
+              className="aup-hero-btn tone-neutral"
+              onClick={() => openChat(navigate, { type: "remaker", id: remaker.remaker_id, name: remaker.full_name, image: remaker.profile?.profile_image || "" })}
+            >
+              <MessageCircle size={15} /> Message
+            </button>
+          )}
           {actions.map((action) => {
             const Icon = ACTION_ICONS[action.icon];
             return (

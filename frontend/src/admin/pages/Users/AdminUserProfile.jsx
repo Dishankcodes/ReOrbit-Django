@@ -47,6 +47,9 @@ import ActivityTab from "./tabs/ActivityTab";
 
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUserProfile.css";
+import { MessageCircle } from "lucide-react";
+import { openChat } from "../../data/openChat";
+import { useAccess } from "../../data/teamStore";
 
 const NOTICE_TEXT = {
   Suspended:
@@ -107,6 +110,7 @@ export default function AdminUserProfile() {
 
   const { profile } = user;
   const actions = getAvailableActions(user.status);
+  const canMessage = useAccess().can("messages", "edit");
   const latestReason = user.statusHistory[0];
 
   const tabs = [
@@ -213,6 +217,15 @@ export default function AdminUserProfile() {
         </div>
 
         <div className="aup-hero-actions">
+          {canMessage && user.status === "Active" && (
+            <button
+              type="button"
+              className="aup-hero-btn tone-neutral"
+              onClick={() => openChat(navigate, { type: "user", id: user.user_id, name: user.full_name, image: user.profile?.profile_image || "" })}
+            >
+              <MessageCircle size={15} /> Message
+            </button>
+          )}
           {actions.map((action) => {
             const Icon = ACTION_ICONS[action.icon];
             return (

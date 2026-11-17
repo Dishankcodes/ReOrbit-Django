@@ -14,6 +14,7 @@ Only Super Admins can use these. Super Admin accounts are never changed here.
 import re
 import secrets
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404
@@ -23,6 +24,7 @@ from apps.accounts.permissions import IsSuperAdmin
 from apps.core.models import AuditLog
 from apps.core.responses import created, fail, ok
 from apps.core.services import audit
+from apps.core.validators import validate_phone
 
 from .models import ADMIN_MODULES, MODULE_LEVELS, Admins
 from .serializers import TeamMemberSerializer
@@ -71,8 +73,10 @@ def _clean(data, *, existing=None):
 
     if existing is None or "phone" in data:
         phone = " ".join(str(data.get("phone") or "").split())
-        if len(re.sub(r"\D", "", phone)) < 10 or len(phone) > 20:
-            errors["phone"] = ["Enter a valid phone number."]
+        try:
+            validate_phone(phone)  # 10-digit Indian mobile, the same rule as everywhere else
+        except DjangoValidationError:
+            errors["phone"] = ["Enter a 10-digit mobile number."]
         else:
             values["phone"] = phone
 

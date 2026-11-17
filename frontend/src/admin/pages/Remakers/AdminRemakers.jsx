@@ -40,6 +40,8 @@ import UserActionMenu from "../Users/components/UserActionMenu";
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
 import "../../css/remakers/AdminRemakers.css";
+import { openChat } from "../../data/openChat";
+import { useAccess } from "../../data/teamStore";
 
 const STATUS_CARDS = [
   { key: "All", label: "Total ReMakers", icon: Palette, tone: "all" },
@@ -121,6 +123,9 @@ function exportCsv(rows) {
 export default function AdminRemakers() {
   const { loading, error, reload } = useRemakersStatus();
   const navigate = useNavigate();
+  const canMessage = useAccess().can("messages", "edit");
+  const messageRemaker = (r) =>
+    openChat(navigate, { type: "remaker", id: r.remaker_id, name: r.full_name, image: r.profile?.profile_image || "" });
   const remakers = useRemakers();
   const { toast, toastNode } = useToast();
 
@@ -391,6 +396,7 @@ export default function AdminRemakers() {
                   />
                   <UserActionMenu
                     user={r}
+                    onMessage={canMessage ? () => messageRemaker(r) : undefined}
                     onView={() => open(r.remaker_id)}
                     onAction={(a) => askAction(a, [r.remaker_id])}
                   />
@@ -577,6 +583,7 @@ export default function AdminRemakers() {
                     >
                       <UserActionMenu
                         user={r}
+                        onMessage={canMessage ? () => messageRemaker(r) : undefined}
                         onView={() => open(r.remaker_id)}
                         onAction={(a) => askAction(a, [r.remaker_id])}
                       />

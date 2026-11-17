@@ -5,8 +5,10 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 
 validate_pincode = RegexValidator(r"^\d{6}$", "Enter a valid 6-digit pincode.")
+# An Indian mobile: 10 digits starting 6-9, optionally after +91 / 91 / 0 (spaces and dashes allowed).
+# Same rule as frontend/src/shared/phone.js, which saves "+91 98765 43210".
 validate_phone = RegexValidator(
-    r"^\+?\d[\d\s-]{6,18}$", "Enter a valid phone number."
+    r"^(?:(?:\+?91)[\s-]?|0)?[6-9](?:[\s-]?\d){9}$", "Enter a 10-digit mobile number."
 )
 
 

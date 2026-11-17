@@ -39,6 +39,8 @@ import {
 } from "../../../api/profile";
 
 import "../../css/UserProfile-css/UserProfile.css";
+import PhoneInput from "../../../shared/components/PhoneInput";
+import { PHONE_ERROR, isPhone } from "../../../shared/phone";
 
 const profileStats = [
   {
@@ -171,6 +173,11 @@ export default function UserProfile() {
   const handleSaveProfile = async (event) => {
     event.preventDefault();
     const pinError = pincodeProblem(formData.pincode);
+    if (formData.phone && !isPhone(formData.phone)) {
+      setFieldErrors({ phone: [PHONE_ERROR] });
+      notify("Please correct the highlighted fields.", true);
+      return;
+    }
     if (pinError) {
       setFieldErrors({ pincode: [pinError] });
       notify("Please correct the highlighted fields.", true);
@@ -495,6 +502,7 @@ export default function UserProfile() {
                   disabled={!isEditing}
                   onChange={handleInputChange}
                   error={fieldErrors.phone}
+                  phone
                 />
 
                 <div className="profile-field">
@@ -807,6 +815,7 @@ function ProfileField({
   onChange,
   helper,
   error,
+  phone = false,
 }) {
   return (
     <div className="profile-field">
@@ -815,13 +824,17 @@ function ProfileField({
       <div className={`profile-input-wrapper ${disabled ? "is-disabled" : ""}`}>
         <Icon size={17} />
 
-        <input
-          id={name}
-          name={name}
-          value={value || ""}
-          disabled={disabled}
-          onChange={onChange}
-        />
+        {phone ? (
+          <PhoneInput id={name} name={name} value={value} disabled={disabled} onChange={onChange} invalid={!!error} />
+        ) : (
+          <input
+            id={name}
+            name={name}
+            value={value || ""}
+            disabled={disabled}
+            onChange={onChange}
+          />
+        )}
       </div>
 
       {error && <small className="profile-field-error">{error[0]}</small>}

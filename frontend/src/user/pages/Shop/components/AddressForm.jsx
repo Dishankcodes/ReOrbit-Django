@@ -3,6 +3,8 @@ import CitySelect from "../../../../shared/components/CitySelect";
 import "../../../../shared/components/CitySelect.css";
 import { pincodeProblem } from "../../../../api/profile";
 import { getAccount } from "../../../../api/session";
+import PhoneInput from "../../../../shared/components/PhoneInput";
+import { PHONE_ERROR, isPhone, localDigits } from "../../../../shared/phone";
 
 const account = getAccount() || {};
 const profileName =
@@ -43,7 +45,7 @@ export default function AddressForm({
 
   const err = {
     name: f.name.trim().length < 3,
-    phone: !/^\d{10}$/.test(digitsOnly(f.phone)),
+    phone: !isPhone(f.phone),
     line: f.line.trim().length < 6,
     city: !f.city,
     pincode: !!pincodeProblem(f.pincode.trim()),
@@ -91,21 +93,14 @@ export default function AddressForm({
         {field("name", "Full name", "Enter the receiver's name.")}
         <label className="dn-field">
           <span className="dn-label">Phone</span>
-          <div className="dn-phone-input">
-            <span aria-label="Country code">+91</span>
-            <input
-              className={`dn-input ${touched && err.phone ? "is-error" : ""}`}
-              value={f.phone}
-              onChange={(event) => set("phone", digitsOnly(event.target.value))}
-              inputMode="numeric"
-              type="tel"
-              maxLength={10}
-              placeholder="98765 43210"
-              aria-label="10-digit phone number"
-            />
-          </div>
+          <PhoneInput
+            inputClassName={`dn-input ${touched && err.phone ? "is-error" : ""}`}
+            value={f.phone}
+            invalid={touched && !!err.phone}
+            onValue={(phone) => set("phone", localDigits(phone))}
+          />
           {touched && err.phone && (
-            <span className="dn-error">Enter a 10-digit phone number.</span>
+            <span className="dn-error">{PHONE_ERROR}</span>
           )}
           {!(touched && err.phone) && serverMsg("phone") && (
             <span className="dn-error">{serverMsg("phone")}</span>

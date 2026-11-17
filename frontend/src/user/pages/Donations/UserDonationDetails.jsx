@@ -47,7 +47,7 @@ import DonationTimeline from "../../components/ui/Timeline";
 import ProgressTracker from "./components/ProgressTracker";
 import useToast from "../../components/ui/useToast";
 import { ConditionBadge, StatusBadge } from "./components/DonationBadges";
-import { CategoryGlyph } from "./components/categoryIcons";
+import { CategoryGlyph } from "./components/categoryIcons.jsx"; // explicit: an old categoryIcons.js may still exist
 
 import "../../css/shared/ui-base.css";
 import "../../css/donations/UserDonationDetails.css";

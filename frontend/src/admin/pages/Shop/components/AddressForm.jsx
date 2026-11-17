@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import PhoneInput from "../../../../shared/components/PhoneInput";
+import { PHONE_ERROR, isPhone } from "../../../../shared/phone";
 
 const EMPTY = {
   label: "Other",
@@ -17,7 +19,7 @@ export default function AddressForm({ onSave, onCancel }) {
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   const err = {
     name: f.name.trim().length < 3,
-    phone: !/^\+?[\d\s-]{10,14}$/.test(f.phone.trim()),
+    phone: !isPhone(f.phone),
     address: f.address.trim().length < 6,
     city: f.city.trim().length < 2,
     state: f.state.trim().length < 2,
@@ -55,10 +57,11 @@ export default function AddressForm({ onSave, onCancel }) {
       <h4>New delivery address</h4>
       <div className="sh-form-grid">
         {field("name", "Full name", { msg: "Enter the receiver's name." })}
-        {field("phone", "Phone", {
-          msg: "Enter a valid phone number.",
-          input: { inputMode: "tel", placeholder: "+91 98765 43210" },
-        })}
+        <label className="sh-field">
+          <span>Phone</span>
+          <PhoneInput value={f.phone} onValue={(phone) => set("phone", phone)} invalid={touched && !!err.phone} />
+          {touched && err.phone && <small>{PHONE_ERROR}</small>}
+        </label>
         {field("address", "Address", {
           wide: true,
           msg: "Add the street and building.",

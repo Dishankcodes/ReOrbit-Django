@@ -1,12 +1,13 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MoreHorizontal, Eye } from "lucide-react";
+import { MoreHorizontal, Eye, MessageCircle } from "lucide-react";
 import { getAvailableActions } from "../../../data/userActions";
 import { ACTION_ICONS } from "../../../components/ui/actionIcons";
 
 /* "…" menu on every row. It is drawn in a portal so the table's
    scroll area never clips it. */
-export default function UserActionMenu({ user, onView, onAction }) {
+/* onMessage (optional): adds "Message" to open a direct chat with this account. */
+export default function UserActionMenu({ user, onView, onAction, onMessage }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
@@ -88,6 +89,19 @@ export default function UserActionMenu({ user, onView, onAction }) {
             >
               <Eye size={15} /> View profile
             </button>
+            {onMessage && user.status === "Active" && (
+              <button
+                type="button"
+                role="menuitem"
+                className="au-menu-item"
+                onClick={() => {
+                  setOpen(false);
+                  onMessage();
+                }}
+              >
+                <MessageCircle size={15} /> Message
+              </button>
+            )}
             <div className="au-menu-sep" />
             {actions.map((action) => {
               const Icon = ACTION_ICONS[action.icon];

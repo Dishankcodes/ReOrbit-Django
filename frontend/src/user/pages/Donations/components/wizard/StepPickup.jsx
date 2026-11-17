@@ -11,6 +11,7 @@ import { checkPincode } from "../../../../data/donationsStore";
 import { createAddress } from "../../../../data/checkoutStore";
 import AddressForm from "../../../Shop/components/AddressForm";
 import DateSlotPicker from "../DateSlotPicker";
+import PhoneInput from "../../../../../shared/components/PhoneInput";
 
 export default function StepPickup({
   form,
@@ -157,12 +158,11 @@ export default function StepPickup({
           <span className="dn-label">
             Phone number <em>*</em>
           </span>
-          <input
-            className={`dn-input ${errors.phone ? "is-error" : ""}`}
+          <PhoneInput
+            inputClassName={`dn-input ${errors.phone ? "is-error" : ""}`}
             value={form.phone}
-            inputMode="tel"
-            placeholder="+91 98xxx xxxxx"
-            onChange={(event) => set("phone", event.target.value)}
+            invalid={!!errors.phone}
+            onValue={(phone) => set("phone", phone)}
           />
           {errors.phone && <span className="dn-error">{errors.phone}</span>}
         </label>

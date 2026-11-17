@@ -7,12 +7,14 @@ this module covers the people on each team and the pickups of listed items.
 import logging
 import re
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
 from apps.admins.models import Admins
 from apps.core.services import audit, notify
+from apps.core.validators import validate_phone
 from apps.donations import services as donation_services
 from apps.donations.models import Donation, PickupPartner
 
@@ -49,8 +51,10 @@ def _digits(phone):
 
 def _phone(raw, field="phone"):
     value = _text(raw, 20)
-    if not re.fullmatch(r"[+\d][\d\s-]{8,16}", value):
-        raise _fix({field: ["Enter a valid phone number."]})
+    try:
+        validate_phone(value)  # 10-digit Indian mobile, the same rule as everywhere else
+    except ValidationError:
+        raise _fix({field: ["Enter a 10-digit mobile number."]})
     return value
 
 
