@@ -25,7 +25,7 @@ from django.utils import timezone
 from apps.admins.models import Admins, AdminItem
 from apps.core import buyers as buyer_kit
 from apps.core.models import Notification, PlatformSettings, SavedAddress
-from apps.core.pricing import cod_block_reason, delivery_charge, platform_fee
+from apps.core.pricing import cod_block_reason, delivery_charge, maintenance_block_reason, platform_fee
 from apps.core.services import audit, notify
 from apps.listings.models import Item, MediaImage
 from apps.listings.sellables import settle_status
@@ -192,6 +192,10 @@ def _restock(order):
             obj.stock += ln.took_stock
             settle_status(obj)
             obj.save(update_fields=["stock", "status", "updated_at"])
+            if ln.kind == "admin_item":
+                from apps.warehouse import services as warehouse  # local import: warehouse reads orders too
+
+                warehouse.on_store_restock(obj, order)  # a warehouse lot this order had claimed is for sale again
 
 
 def _admins_for_orders():
@@ -241,6 +245,11 @@ def split_discount(discount, totals):
     return shares
 
 
+def _has_remaker(plan):
+    """A ReMaker-only coupon needs at least one ReMaker product in the cart."""
+    return any(g["seller"]["type"] == "remaker" for g in plan["groups"])
+
+
 def quote(buyer, raw_lines, method=None, voucher_code=None):
     """Price a cart without touching stock. Same maths as create_checkout.
     A bad voucher never fails the quote: it is explained in `voucher_error` and takes nothing off."""
@@ -252,8 +261,8 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
     discount, applied, voucher_error = 0, None, ""
     if str(voucher_code or "").strip():
         try:
-            v = vouchers.check(buyer, voucher_code, goods)
-            discount, applied = vouchers.discount_for(v, grand), vouchers.brief(v)
+            v, discount = vouchers.check(buyer, voucher_code, goods, has_remaker=_has_remaker(plan))
+            discount, applied = min(discount, max(0, grand - 1)), vouchers.brief(v)
         except VoucherError as e:
             voucher_error = e.message
     payable = grand - discount
@@ -361,6 +370,12 @@ def create_checkout(buyer, data, key=None):
     if prior:
         return _replay(prior)
 
+    # Maintenance mode stops members placing new orders; ReOrbit's own admins can still buy.
+    if type(buyer)._meta.label != "admins.Admins":
+        reason = maintenance_block_reason()
+        if reason:
+            raise CheckoutError(reason, code="MAINTENANCE", status=503)
+
     method = str(data.get("method") or "").upper()
     if method not in (Payment.Method.RAZORPAY, Payment.Method.COD):
         raise CheckoutError("Choose how you want to pay.", {"method": ["Choose how you want to pay."]})
@@ -398,10 +413,11 @@ def create_checkout(buyer, data, key=None):
             voucher, discount = None, 0
             if voucher_code:
                 try:  # locked: two checkouts can never both spend it
-                    voucher = vouchers.check(buyer, voucher_code, sum(g["subtotal"] for g in plan["groups"]), lock=True)
+                    voucher, discount = vouchers.check(buyer, voucher_code, sum(g["subtotal"] for g in plan["groups"]),
+                                                       lock=True, has_remaker=_has_remaker(plan))
                 except VoucherError as e:
                     raise CheckoutError(e.message, code=e.code)
-                discount = vouchers.discount_for(voucher, grand)
+                discount = min(discount, max(0, grand - 1))  # an order always keeps at least ₹1 to pay
             payable = grand - discount
             if cod:
                 reason = cod_block_reason(payable, s)
@@ -434,6 +450,10 @@ def create_checkout(buyer, data, key=None):
                         took_stock=took, closed_lot=closed,
                         **{{"item": "item", "remaker_product": "remaker_product", "admin_item": "admin_item"}[ln["kind"]]: ln["obj"]},
                     )
+                    if ln["kind"] == "admin_item":
+                        from apps.warehouse import services as warehouse  # local import: warehouse reads orders too
+
+                        warehouse.on_store_sale(ln["obj"], order)  # the last unit sold: the lot is ready to dispatch
                 detail = "Pay on delivery" if cod else "Complete the payment to confirm this order"
                 if share:
                     detail += f" · voucher {voucher.code} took off ₹{share:,}"
@@ -688,6 +708,7 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             from apps.payments import wallet  # local import: wallet imports core, not orders
 
             wallet.credit_delivered_order(o)  # the seller earns the item subtotal (held for the return window)
+            vouchers.on_order_delivered(o)  # the buyer's Orbit Points; never fails the delivery
         if actor_kind == "admin":
             audit(actor, f"order.{action}", "order", o.public_id, before={"status": before}, after={"status": to}, ip=ip)
         _notify_buyer(o, f"Order {to.lower()}", f"{o.public_id} is {to.lower()}." + (f" {detail}" if to == "Shipped" else ""))

@@ -5,7 +5,7 @@ import { Boxes, MoreVertical, Ban, Tag, ExternalLink, X } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import ConfirmActionModal from "../../../components/ui/ConfirmActionModal";
-import { updateUserItem } from "../../../data/usersStore";
+import { disableListing, suggestPrice } from "../../../data/realAccounts";
 import { formatDate, formatINR } from "../../../utils/format";
 
 const DISABLE_ACTION = {
@@ -63,13 +63,10 @@ export default function ItemsTab({ user, toast }) {
       return;
     }
 
-    updateUserItem(user.user_id, pricing.item_id, {
-      suggested_price: price,
-      suggested_price_message: priceMessage.trim(),
-      suggested_price_at: new Date().toISOString(),
-    });
-
-    notify(`Suggested price saved for "${pricing.title}".`);
+    const target = pricing;
+    suggestPrice(user.user_id, target.item_id, price, priceMessage.trim())
+      .then(() => notify(`Suggested price sent for "${target.title}".`))
+      .catch((e) => notify(e.message || "Could not save the suggested price."));
     setPricing(null);
   };
 
@@ -113,16 +110,10 @@ export default function ItemsTab({ user, toast }) {
         targets={liveItems.map((i) => i.title)}
         onClose={() => setDisablingAll(false)}
         onConfirm={(reason) => {
-          liveItems.forEach((i) =>
-            updateUserItem(user.user_id, i.item_id, {
-              is_disabled: true,
-              disabled_reason: reason,
-              disabled_at: new Date().toISOString(),
-            }),
-          );
-          notify(
-            `${liveItems.length} listing${liveItems.length === 1 ? "" : "s"} turned off.`,
-          );
+          const n = liveItems.length;
+          Promise.all(liveItems.map((i) => disableListing(user.user_id, i.item_id, reason)))
+            .then(() => notify(`${n} listing${n === 1 ? "" : "s"} turned off.`))
+            .catch((e) => notify(e.message || "Some listings could not be turned off."));
           setDisablingAll(false);
         }}
       />
@@ -294,13 +285,10 @@ export default function ItemsTab({ user, toast }) {
         targets={disabling ? [disabling.title] : []}
         onClose={() => setDisabling(null)}
         onConfirm={(reason) => {
-          updateUserItem(user.user_id, disabling.item_id, {
-            is_disabled: true,
-            disabled_reason: reason,
-            disabled_at: new Date().toISOString(),
-          });
-
-          notify(`"${disabling.title}" has been disabled.`);
+          const target = disabling;
+          disableListing(user.user_id, target.item_id, reason)
+            .then(() => notify(`"${target.title}" has been turned off.`))
+            .catch((e) => notify(e.message || "Could not turn this listing off."));
           setDisabling(null);
         }}
       />

@@ -1,41 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Package,
-  Plus,
-  Store,
-  UserRound,
-} from "lucide-react";
+import { House, Package, Plus, ReceiptText, Store, UserRound } from "lucide-react";
 
 import "./MobileBottomNav.css";
 
-/* The phone menu shown after login: four tabs with a raised "+" in the middle.
+/* The phone menu shown after login: two tabs, a raised "+" in the middle, two tabs.
    The sidebar is still there (the menu button in the header); this is the quick way
    to the places people use most. It only exists on screens up to 900px wide. */
 const SIDES = {
   user: {
     items: [
-      { label: "Dashboard", to: "/user-dashboard", icon: LayoutDashboard },
+      { label: "Home", to: "/user-dashboard", icon: House },
       { label: "Marketplace", to: "/user-marketplace", icon: Store },
       { label: "Sell", to: "/user-sell/new", icon: Plus, add: true, label2: "Add a product" },
-      { label: "You", to: "/user-profile", icon: UserRound, also: ["/user-settings"] },
+      { label: "Orders", to: "/user-orders", icon: ReceiptText },
+      { label: "Profile", to: "/user-profile", icon: UserRound, also: ["/user-settings"] },
     ],
   },
   remaker: {
     items: [
-      { label: "Dashboard", to: "/remaker-dashboard", icon: LayoutDashboard },
+      { label: "Home", to: "/remaker-dashboard", icon: House },
       { label: "Marketplace", to: "/remaker-marketplace", icon: Store },
       { label: "Add", to: "/remaker-products/new", icon: Plus, add: true, label2: "Add a product" },
-      { label: "You", to: "/remaker-profile", icon: UserRound, also: ["/remaker-settings"] },
+      { label: "Sales", to: "/remaker-sales", icon: ReceiptText, also: ["/remaker-orders"] },
+      { label: "Profile", to: "/remaker-profile", icon: UserRound, also: ["/remaker-settings"] },
     ],
   },
   admin: {
     items: [
-      { label: "Dashboard", to: "/admin-dashboard", icon: LayoutDashboard },
-      { label: "Orders", to: "/admin-orders", icon: Package },
+      { label: "Home", to: "/admin-dashboard", icon: House },
+      { label: "Orders", to: "/admin-orders", icon: ReceiptText },
       { label: "List", to: "/admin-sell/new", icon: Plus, add: true, label2: "List a product" },
-      { label: "You", to: "/admin-profile", icon: UserRound, also: ["/admin-settings"] },
+      { label: "Products", to: "/admin-products", icon: Package },
+      { label: "Profile", to: "/admin-profile", icon: UserRound, also: ["/admin-settings"] },
     ],
   },
 };
@@ -96,7 +93,12 @@ export default function MobileBottomNav({ side = "user" }) {
             aria-label={item.label2 || item.label}
           >
             <span className="mbn-icon">
-              <Icon size={item.add ? 26 : 22} strokeWidth={item.add ? 2.4 : 1.9} />
+              <Icon
+                size={item.add ? 26 : 22}
+                strokeWidth={item.add ? 2.4 : active ? 2.3 : 1.8}
+                fill={active && !item.add ? "currentColor" : "none"}
+                fillOpacity={active && !item.add ? 0.14 : 0}
+              />
             </span>
             {!item.add && <span className="mbn-label">{item.label}</span>}
           </NavLink>

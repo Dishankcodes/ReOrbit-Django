@@ -11,6 +11,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.mail import send_mail
 import requests
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -63,6 +64,52 @@ def get_email_details(purpose):
     raise ValueError("Invalid OTP purpose.")
 
 
+def _mailjet_configured():
+    return bool(
+        settings.MAILJET_API_KEY
+        and settings.MAILJET_SECRET_KEY
+        and settings.MAILJET_SENDER_EMAIL
+    )
+
+
+def _send_via_mailjet(email, subject, text, html):
+    payload = {
+        "Messages": [
+            {
+                "From": {"Email": settings.MAILJET_SENDER_EMAIL, "Name": "ReOrbit"},
+                "To": [{"Email": email}],
+                "Subject": subject,
+                "TextPart": text,
+                "HTMLPart": html,
+            }
+        ]
+    }
+    response = requests.post(
+        settings.MAILJET_API_URL,
+        auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
+        json=payload,
+        timeout=(5, 20),
+    )
+    response.raise_for_status()
+    messages = response.json().get("Messages", [])
+    if not messages or messages[0].get("Status") != "success":
+        raise RuntimeError("Mailjet did not accept the OTP email.")
+    logger.info("OTP email accepted by Mailjet for %s", email)
+
+
+def _deliver(email, subject, text, html):
+    """Mailjet when its keys are set (production). Otherwise Django's EMAIL_BACKEND:
+    the console backend prints the code in the terminal locally, and tests read
+    it from mail.outbox."""
+    if _mailjet_configured():
+        _send_via_mailjet(email, subject, text, html)
+        return
+    send_mail(
+        subject, text, settings.DEFAULT_FROM_EMAIL, [email],
+        html_message=html, fail_silently=False,
+    )
+
+
 def create_and_send_otp(email, purpose, account_type):
     """Create a code, email it, return {"message", "expires_in_minutes"}.
 
@@ -105,46 +152,8 @@ def create_and_send_otp(email, purpose, account_type):
         "If you did not request this code, you can safely ignore this email."
     )
     try:
-        if not settings.MAILJET_API_KEY or not settings.MAILJET_SECRET_KEY:
-            raise RuntimeError("Mailjet API credentials are not configured.")
-
-        if not settings.MAILJET_SENDER_EMAIL:
-            raise RuntimeError("Mailjet sender email is not configured.")
-
         html = render_to_string(template_name, context)
-        payload = {
-            "Messages": [
-                {
-                    "From": {
-                        "Email": settings.MAILJET_SENDER_EMAIL,
-                        "Name": "ReOrbit",
-                    },
-                    "To": [{"Email": email}],
-                    "Subject": subject,
-                    "TextPart": text,
-                    "HTMLPart": html,
-                }
-            ]
-        }
-
-        response = requests.post(
-            settings.MAILJET_API_URL,
-            auth=(
-                settings.MAILJET_API_KEY,
-                settings.MAILJET_SECRET_KEY,
-            ),
-            json=payload,
-            timeout=(5, 20),
-        )
-        response.raise_for_status()
-
-        result = response.json()
-        messages = result.get("Messages", [])
-        if not messages or messages[0].get("Status") != "success":
-            raise RuntimeError("Mailjet did not accept the OTP email.")
-
-        logger.info("OTP email accepted by Mailjet for %s", email)
-
+        _deliver(email, subject, text, html)
     except Exception as exc:
         logger.exception("Could not send OTP email to %s: %s", email, exc)
         record.delete()

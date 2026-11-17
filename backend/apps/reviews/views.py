@@ -14,7 +14,7 @@ Public (no sign-in)
   GET    public/product/<ref>/               reviews of one product (LST-/RPR-/ADI-…) + rating summary
   GET    public/seller/<user|remaker>/<id>/  reviews a member or ReMaker has received + rating summary
 ReOrbit team (module "complaints")
-  GET    admin/                              ?kind=&status=&reported=1&rating=&q=&seller=&reviewer=&page=
+  GET    admin/                              ?kind=&status=&reported=1&rating=&q=&seller=&reviewer=&product=&page=
   POST   admin/<review>/hide/   {reason}  ·  POST admin/<review>/restore/
   POST   admin/reports/<report>/resolve/   {action: uphold|dismiss, note}
 """
@@ -238,6 +238,8 @@ class AdminReviews(_Admin):
             sid = q["seller"]
             prods = prods.filter(Q(order__seller_user__public_id=sid) | Q(order__seller_remaker__public_id=sid))
             sells = sells.filter(Q(seller_user__public_id=sid) | Q(seller_remaker__public_id=sid))
+        if q.get("product"):  # every review of one product (LST-/RPR-/ADI-…); seller reviews are not about a product
+            prods, sells = prods.filter(order_item__ref_id=q["product"]), sells.none()
         if q.get("reviewer"):
             rid = q["reviewer"]
             prods = prods.filter(Q(reviewer_user__public_id=rid) | Q(reviewer_remaker__public_id=rid) | Q(reviewer_admin__public_id=rid))
@@ -260,6 +262,8 @@ class AdminReviews(_Admin):
         paginator = Paginator(rows, size)
         page = paginator.get_page(q.get("page") or 1)
         counts = {
+            "product": ProductReview.objects.count(),
+            "seller": SellerReview.objects.count(),
             "all": ProductReview.objects.count() + SellerReview.objects.count(),
             "hidden": ProductReview.objects.filter(status="Hidden").count() + SellerReview.objects.filter(status="Hidden").count(),
             "reported": ProductReview.objects.filter(reports__status="Pending").distinct().count()

@@ -7,7 +7,10 @@ export default function TicketList({ tickets }) {
   return (
     <div className="hlp-tickets">
       {tickets.map((ticket) => {
-        const last = ticket.messages[ticket.messages.length - 1];
+        /* The list sends a short `lastMessage`; a ticket opened in full also has its messages. */
+        const loaded = (ticket.messages || []).filter((m) => m.from !== "event");
+        const last = loaded[loaded.length - 1] || ticket.lastMessage || null;
+        const mine = last && (last.from === "me" || last.from === "remaker");
 
         return (
           <Link
@@ -23,10 +26,12 @@ export default function TicketList({ tickets }) {
                 {ticket.priority === "Urgent" && <em>Urgent</em>}
               </div>
               <strong>{ticket.subject}</strong>
-              <p>
-                <b>{last.from === "me" ? "You: " : "Support: "}</b>
-                {last.text}
-              </p>
+              {last && (
+                <p>
+                  <b>{mine ? "You: " : "Support: "}</b>
+                  {last.text || "Sent a photo"}
+                </p>
+              )}
             </div>
 
             <div className="hlp-ticket-side">

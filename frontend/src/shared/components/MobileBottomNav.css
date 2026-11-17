@@ -12,8 +12,8 @@
   display: none;
   align-items: stretch;
   justify-content: space-around;
-  height: calc(64px + env(safe-area-inset-bottom, 0px));
-  padding: 0 6px env(safe-area-inset-bottom, 0px);
+  height: calc(62px + env(safe-area-inset-bottom, 0px));
+  padding: 0 4px env(safe-area-inset-bottom, 0px);
   background: rgba(255, 255, 255, 0.97);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.07);
@@ -60,16 +60,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 28px;
+  width: 40px;
+  height: 26px;
   border-radius: 14px;
   transition: background 0.18s ease, color 0.18s ease;
 }
 .mbn-item.active {
   color: var(--mbn-accent);
 }
-.mbn-item.active .mbn-icon {
-  background: var(--mbn-soft);
+.mbn-item.active .mbn-label {
+  font-weight: 700;
 }
 .mbn-label {
   max-width: 100%;
@@ -83,15 +83,18 @@
   border-radius: 12px;
 }
 
-/* the raised + in the middle */
+/* the raised + in the middle: half above the bar, with a white ring so it never blends into the page */
+.mbn-add {
+  flex: 0 0 72px;
+}
 .mbn-add .mbn-icon {
-  width: 54px;
-  height: 54px;
-  margin-top: -22px;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
   border-radius: 50%;
   background: var(--mbn-accent);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22), 0 0 0 5px #fff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2), 0 0 0 4px #fff;
 }
 .mbn-add.active .mbn-icon {
   background: var(--mbn-accent);

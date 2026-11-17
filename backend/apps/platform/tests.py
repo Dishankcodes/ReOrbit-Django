@@ -21,6 +21,17 @@ class SettingsBase(APIBase):
     def save(self, body, as_=None):
         return self.patch(URL, body, as_=as_ or self.admin)
 
+    def bad(self, body, group, key=None):
+        r = self.save(body)
+        self.assertEqual(r.status_code, 400, (body, r.data))
+        errors = r.data["errors"]
+        self.assertIn(group, errors)
+        if key:
+            self.assertIn(key, errors[group])
+        # and nothing was saved
+        self.assertEqual(PlatformSettings.load().cod_limit, 20000)
+        self.assertEqual(AuditLog.objects.filter(action="platform.settings.update").count(), 0)
+
     def rules(self):
         return self.client.get(PUBLIC).data["data"]
 
@@ -137,16 +148,6 @@ class SaveTests(SettingsBase):
 
 
 class ValidationTests(SettingsBase):
-    def bad(self, body, group, key=None):
-        r = self.save(body)
-        self.assertEqual(r.status_code, 400, (body, r.data))
-        errors = r.data["errors"]
-        self.assertIn(group, errors)
-        if key:
-            self.assertIn(key, errors[group])
-        # and nothing was saved
-        self.assertEqual(PlatformSettings.load().cod_limit, 20000)
-        self.assertEqual(AuditLog.objects.filter(action="platform.settings.update").count(), 0)
 
     def test_commerce_rules(self):
         for key, value in (("platformFeePct", 31), ("platformFeePct", -1), ("platformFeePct", "abc"),
@@ -223,10 +224,10 @@ class RulesReachTheRestOfTheAppTests(SettingsBase):
     def test_minimum_donation_size(self):
         self.save({"platform": {"minDonationItems": 3}})
         with self.assertRaises(donation_services.DonationError) as ctx:
-            donation_services.create(self.user, {"quantity": 2}, [])
+            donation_services.create_donation(self.user, {"quantity": 2}, [])
         self.assertIn("at least 3", ctx.exception.errors["quantity"][0])
         with self.assertRaises(donation_services.DonationError) as ctx:
-            donation_services.create(self.user, {"quantity": 3}, [])
+            donation_services.create_donation(self.user, {"quantity": 3}, [])
         self.assertNotIn("quantity", ctx.exception.errors)  # other fields still fail, quantity is fine
 
     def test_donation_co2_rate_follows_the_settings(self):
@@ -271,7 +272,7 @@ class MaintenanceTests(SettingsBase):
 
     def test_members_cannot_donate(self):
         with self.assertRaises(donation_services.DonationError) as ctx:
-            donation_services.create(self.user, {}, [])
+            donation_services.create_donation(self.user, {}, [])
         self.assertEqual((ctx.exception.code, ctx.exception.status), ("MAINTENANCE", 503))
 
     def test_members_cannot_publish_a_listing(self):

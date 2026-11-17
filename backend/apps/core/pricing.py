@@ -18,7 +18,7 @@ def platform_fee(subtotal, seller_type, settings=None):
     return int(fee.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def delivery_charge(seller_type, subtotal, platform_pickup=False, settings=None):
+def delivery_charge(seller_type, subtotal, platform_pickup=None, settings=None):
     """Delivery the buyer pays. It only exists when ReOrbit handles the delivery: a seller who hands the parcel
     to the courier themselves adds nothing. `platform_pickup=None` means "not known" and keeps the ReMaker rate."""
     s = settings or PlatformSettings.load()

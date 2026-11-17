@@ -38,3 +38,83 @@
   .arv-list > li { padding: 16px 14px; }
   .arv-list header small { margin-left: 0; width: 100%; }
 }
+
+/* ---------- product / seller tabs, view chips ---------- */
+.arv-views .cm-tab-t strong { display: inline-flex; align-items: center; gap: 6px; }
+.arv-views .cm-tab-t small { display: block; margin-top: 2px; color: #7a8780; font-size: 11.5px; font-weight: 500; }
+.arv-chips { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid #e0e8e3; border-radius: 12px; background: #f6f9f7; }
+.arv-chips button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 0; border-radius: 9px; background: none; color: #4a5a52; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.arv-chips button em { padding: 0 6px; border-radius: 999px; background: #e3ebe6; font-size: 11px; font-style: normal; }
+.arv-chips button.on { background: #fff; color: #0e3d2c; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+
+/* ---------- review cards ---------- */
+.arv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; padding: 4px 22px 18px; }
+.arv-grid.is-busy { opacity: 0.6; }
+.arv-card { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; width: 100%; padding: 12px; border: 1px solid #e3ebe6; border-radius: 16px; background: #fff; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.arv-card:hover { border-color: #b9d1c4; box-shadow: 0 8px 22px rgba(18, 52, 38, 0.08); transform: translateY(-1px); }
+.arv-card:focus-visible { outline: 2px solid #1e3d2f; outline-offset: 2px; }
+.arv-card.is-hidden { background: #fcf8f6; }
+.arv-card.is-reported { border-color: #f0dfa8; }
+.arv-card-media { position: relative; display: grid; place-items: center; width: 92px; height: 92px; overflow: hidden; border-radius: 12px; background: #eef3f0; color: #7a8780; }
+.arv-card-media img { width: 100%; height: 100%; object-fit: cover; }
+.arv-card-photos { position: absolute; right: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 10.5px; font-style: normal; font-weight: 700; }
+.arv-avatar { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #1e3d2f; color: #fff; font-size: 18px; font-weight: 800; }
+.arv-card-body { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.arv-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.arv-card-badges { display: inline-flex; gap: 4px; }
+.arv-card-title { overflow: hidden; color: #17251e; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.arv-card-sub { overflow: hidden; color: #7a8780; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.arv-card-text { display: -webkit-box; overflow: hidden; color: #4a5a52; font-size: 12.5px; line-height: 1.45; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.arv-card-text.muted, .arv-body.muted { color: #9aa59f; font-style: italic; }
+.arv-card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 2px; color: #7a8780; font-size: 11.5px; }
+.arv-card-foot span { display: inline-flex; align-items: center; gap: 3px; }
+.arv-card-foot b { color: #26352e; font-weight: 600; }
+.arv-card-foot time { margin-left: auto; }
+.arv-tag.good { background: #e3f3ea; color: #1d6b45; }
+
+/* ---------- side panel ---------- */
+.arv-drawer-wrap { position: fixed; inset: 0; z-index: 960; display: flex; justify-content: flex-end; background: rgba(15, 25, 20, 0.35); }
+.arv-drawer { display: flex; flex-direction: column; width: min(480px, 100%); height: 100%; background: #fff; box-shadow: -12px 0 32px rgba(0, 0, 0, 0.12); animation: arv-in 0.18s ease-out; }
+@keyframes arv-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.arv-drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid #e6eee9; }
+.arv-drawer-head > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.arv-drawer-head small { width: 100%; color: #7a8780; font-size: 11.5px; }
+.arv-x { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #e0e8e3; border-radius: 10px; background: #fff; color: #4a5a52; cursor: pointer; }
+.arv-drawer-body { display: grid; align-content: start; gap: 14px; flex: 1; overflow-y: auto; padding: 18px 20px; }
+.arv-product { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid #e3ebe6; border-radius: 14px; color: inherit; text-decoration: none; }
+.arv-product:hover { border-color: #b9d1c4; }
+.arv-product img, .arv-product > span { display: grid; place-items: center; flex: 0 0 64px; width: 64px; height: 64px; border-radius: 10px; background: #eef3f0; object-fit: cover; color: #7a8780; }
+.arv-product strong { display: block; color: #17251e; font-size: 14px; }
+.arv-product small { display: inline-flex; align-items: center; gap: 4px; color: #0e5a43; font-size: 12px; }
+.arv-rating-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.arv-rating-row b { color: #17251e; font-size: 15px; }
+.arv-drawer-title { margin: 0; color: #17251e; font-size: 17px; }
+.arv-aspects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
+.arv-aspects dt { color: #7a8780; font-size: 11.5px; text-transform: capitalize; }
+.arv-aspects dd { margin: 0; }
+.arv-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.arv-drawer .arv-photos img { width: 92px; height: 92px; }
+.arv-drawer .arv-meta { display: grid; gap: 12px; padding: 12px; border-radius: 12px; background: #f6f9f7; }
+.arv-meta dd a { color: #0e5a43; font-weight: 600; text-decoration: none; }
+.arv-meta dd a:hover { text-decoration: underline; }
+.arv-section-title { margin: 0 0 8px; color: #17251e; font-size: 13px; }
+.arv-drawer-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e6eee9; }
+
+@media (max-width: 640px) {
+  .arv-grid { grid-template-columns: 1fr; padding: 4px 14px 14px; }
+  .arv-card { grid-template-columns: 72px minmax(0, 1fr); }
+  .arv-card-media { width: 72px; height: 72px; }
+  .arv-chips { width: 100%; overflow-x: auto; }
+}
+
+/* ---------- reviews panel on product / ReMaker pages ---------- */
+.arv-under-product { padding: 0 24px 32px; }
+.arv-panel { margin-top: 18px; border: 1px solid #e3ebe6; border-radius: 18px; background: #fff; }
+.arv-panel .arv-grid { padding: 4px 18px 18px; }
+.arv-panel-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 18px 12px; }
+.arv-panel-head h3 { margin: 0 0 4px; color: #17251e; font-size: 16px; }
+.arv-panel-head p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; color: #66726b; font-size: 12.5px; }
+.arv-panel-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+@media (max-width: 640px) {
+  .arv-under-product { padding: 0 14px 24px; }
+}

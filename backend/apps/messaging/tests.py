@@ -34,7 +34,10 @@ class MessagingFlowTests(APIBase):
 
 
     def test_incremental_inbox_sync_uses_model_attributes_and_role_filters_match_peers(self):
-        other_maker = self.make_remaker(email="second-maker@example.com")
+        other_maker = self.make_remaker(email="second-maker@example.com", username="Maker Two")  # usernames are unique
+        # The poll asks "what changed since my last look", so the cursor is taken before the chats change.
+        from django.utils import timezone
+        since = timezone.now().isoformat()
         direct = self.post("/api/messaging/me/", {
             "target_type": "remaker", "target_id": self.maker.public_id,
         }, as_=self.user).data["data"]["conversation"]["id"]
@@ -43,9 +46,7 @@ class MessagingFlowTests(APIBase):
         }, as_=self.maker).data["data"]["conversation"]["id"]
 
         # This is the incremental request shape used by the live sidebar poll.
-        from django.utils import timezone
-        since = timezone.now().isoformat()
-        user_sync = self.get(f"/api/messaging/me/?since={since}", as_=self.user)
+        user_sync = self.get("/api/messaging/me/", as_=self.user, data={"since": since})  # encoded, like URLSearchParams
         self.assertEqual(user_sync.status_code, 200, user_sync.data)
         self.assertIn(direct, [row["id"] for row in user_sync.data["data"]["conversations"]])
 
@@ -57,9 +58,9 @@ class MessagingFlowTests(APIBase):
         )
         maker_customer_filter = self.get("/api/messaging/me/?kind=customer", as_=self.maker)
         self.assertEqual(maker_customer_filter.status_code, 200, maker_customer_filter.data)
-        self.assertEqual(
+        self.assertEqual(  # the chat a member started with this ReMaker is one of their customer chats
             [row["id"] for row in maker_customer_filter.data["data"]["conversations"]],
-            [],
+            [direct],
         )
 
     def test_direct_conversation_start_is_idempotent(self):
@@ -282,7 +283,7 @@ class AdminLabelsAndPhotosTests(APIBase):
                          as_=self.user).data["data"]["conversation"]["id"]
         photo = "data:image/png;base64,AAAA"
         sent = self.post(f"/api/messaging/me/{chat}/", {"image": photo}, as_=self.user)
-        self.assertEqual(sent.status_code, 200, sent.data)
+        self.assertEqual(sent.status_code, 201, sent.data)  # sending a message creates it (same as text messages)
 
         thread = self.get(f"/api/messaging/me/{chat}/", as_=self.friend).data["data"]["conversation"]
         message = thread["messages"][-1]

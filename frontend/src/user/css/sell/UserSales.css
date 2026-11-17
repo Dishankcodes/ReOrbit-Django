@@ -227,3 +227,18 @@
     grid-column: 2;
   }
 }
+
+/* breadcrumb and "My listings" on one slim row (the page header carries the title) */
+.usl-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.usl-bar > nav,
+.usl-bar > ol,
+.usl-bar > div:first-child {
+  margin: 0;
+}

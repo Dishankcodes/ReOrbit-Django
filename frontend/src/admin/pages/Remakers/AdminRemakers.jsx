@@ -412,7 +412,11 @@ export default function AdminRemakers() {
                   </span>
                   <span className="rm-rating">
                     <Star size={13} fill="currentColor" />{" "}
-                    {r.rating ? r.rating.toFixed(1) : "New"}
+                    {r.rating
+                      ? `${r.rating.toFixed(1)} (${r.rating_count})`
+                      : r.is_new
+                        ? "New"
+                        : "No reviews"}
                   </span>
                 </div>
                 <div className="rm-skills">
@@ -538,7 +542,11 @@ export default function AdminRemakers() {
                     <td className="col-method">
                       <span className="rm-rating">
                         <Star size={14} fill="currentColor" />{" "}
-                        {r.rating ? r.rating.toFixed(1) : "New"}
+                        {r.rating
+                      ? `${r.rating.toFixed(1)} (${r.rating_count})`
+                      : r.is_new
+                        ? "New"
+                        : "No reviews"}
                       </span>
                     </td>
                     <td className="col-activity">

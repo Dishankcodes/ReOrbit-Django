@@ -1,18 +1,18 @@
 /* =========================================================
    Real members for the admin "Manage users" and "Manage ReMakers"
    pages. Read from the server (GET /api/users/admin/ and
-   /api/remakers/admin/) and shaped like the older dummy records,
-   so the pages and their tabs keep working. Parts that have no
-   backend yet (orders, items, donations, reviews ...) are empty.
-
-   Suspend / block / reactivate only change this in-memory copy for now;
-   they reset on refresh until the status endpoints are built.
+   /api/remakers/admin/). Opening one profile also loads
+   GET /api/adminops/admin/accounts/<id>/, which fills every tab
+   (listings / products, orders, donations, wishlist, reviews, reports,
+   activity and totals) with real data.
    ========================================================= */
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { apiRequest } from "../../api/api";
 import { mediaUrl } from "../../api/profile";
 import { fetchAdminWorks } from "../../api/portfolio";
+import { moderateListing, suggestListingPrice } from "../../api/listings";
+import { deactivateRemakerProduct, reactivateRemakerProduct } from "../../api/adminProducts";
 
 const splitList = (text, sep) =>
   String(text || "")
@@ -89,10 +89,17 @@ export function mapRemaker(row) {
     updated_at: row.updated_at,
     last_active: row.last_login_at || row.created_at,
     email_verified_at: row.email_verified_at,
-    followers: 0,
+    followers: row.followers_count ?? 0,
     rating: p.rating_count ? Number(p.rating_average) : 0,
+    rating_count: p.rating_count || 0,
+    products_count: row.products_count ?? 0,
+    sales_count: row.sales_count ?? 0,
+    /* "New" is only for the first 30 days; after that a ReMaker with no reviews shows "No reviews" */
+    is_new: Date.now() - new Date(row.created_at).getTime() < 30 * 86400000,
     profile: {
       ...baseProfile(p),
+      total_uploads: row.products_count ?? p.total_uploads ?? 0,
+      total_sales: row.sales_count ?? p.total_sales ?? 0,
       cover_image: mediaUrl(p.cover_image) || null,
       studio_name: p.studio_name || "",
       speciality: p.speciality || "",
@@ -195,14 +202,96 @@ const remakers = createStore({ path: "/remakers/admin/", map: mapRemaker, idKey:
 export const useUsers = () => users.useSnapshot().rows;
 export const useRemakers = () => remakers.useSnapshot().rows;
 
+/* ---------- one profile's tabs: GET /api/adminops/admin/accounts/<id>/ ---------- */
+const details = new Map(); // id -> { data, loading, error }
+const detailListeners = new Set();
+const emitDetails = () => detailListeners.forEach((l) => l());
+const subscribeDetails = (l) => {
+  detailListeners.add(l);
+  return () => detailListeners.delete(l);
+};
+
+export function refreshAccount(id) {
+  if (!id) return Promise.resolve();
+  details.set(id, { ...(details.get(id) || {}), loading: true });
+  emitDetails();
+  return apiRequest(`/adminops/admin/accounts/${encodeURIComponent(id)}/`)
+    .then((r) => details.set(id, { data: r.data, loading: false, error: "" }))
+    .catch((e) =>
+      details.set(id, { data: details.get(id)?.data || null, loading: false, error: e.message || "Could not load this profile." }),
+    )
+    .finally(emitDetails);
+}
+
+function useAccountDetail(id) {
+  const entry = useSyncExternalStore(subscribeDetails, () => details.get(id), () => details.get(id));
+  useEffect(() => {
+    if (id && !details.get(id)) refreshAccount(id);
+  }, [id]);
+  return entry || { data: null, loading: true, error: "" };
+}
+
+/* the profile's tabs come from the detail; the account row from the list */
+const withDetail = (record, data) => {
+  if (!record || !data) return record;
+  const merged = { ...record, ...data, totals: data.totals || record.totals };
+  if (data.activity?.length) merged.activity = data.activity;
+  if (typeof data.followers === "number") merged.followers = data.followers;
+  return merged;
+};
+
 /* one record: { record, loading, error, reload } */
 export function useUser(id) {
   const s = users.useSnapshot();
-  return { record: s.rows.find((r) => r.user_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: users.reload };
+  const detail = useAccountDetail(id);
+  const record = s.rows.find((r) => r.user_id === id) || null;
+  return {
+    record: withDetail(record, detail.data),
+    loading: s.loading || !s.loaded,
+    detailLoading: detail.loading,
+    error: s.error || detail.error,
+    reload: () => {
+      users.reload();
+      refreshAccount(id);
+    },
+  };
 }
 export function useRemaker(id) {
   const s = remakers.useSnapshot();
-  return { record: s.rows.find((r) => r.remaker_id === id) || null, loading: s.loading || !s.loaded, error: s.error, reload: remakers.reload };
+  const detail = useAccountDetail(id);
+  const record = s.rows.find((r) => r.remaker_id === id) || null;
+  return {
+    record: withDetail(record, detail.data),
+    loading: s.loading || !s.loaded,
+    detailLoading: detail.loading,
+    error: s.error || detail.error,
+    reload: () => {
+      remakers.reload();
+      refreshAccount(id);
+    },
+  };
+}
+
+/* ---------- moderation from a profile (real endpoints), then refresh that profile ---------- */
+export async function disableListing(accountId, itemId, reason) {
+  await moderateListing(itemId, "Disabled", reason);
+  await refreshAccount(accountId);
+}
+export async function enableListing(accountId, itemId) {
+  await moderateListing(itemId, "Normal", "");
+  await refreshAccount(accountId);
+}
+export async function suggestPrice(accountId, itemId, price, note) {
+  await suggestListingPrice(itemId, price, note);
+  await refreshAccount(accountId);
+}
+export async function disableProduct(accountId, productId, reason) {
+  await deactivateRemakerProduct(productId, reason);
+  await refreshAccount(accountId);
+}
+export async function enableProduct(accountId, productId) {
+  await reactivateRemakerProduct(productId);
+  await refreshAccount(accountId);
 }
 
 /* One ReMaker's portfolio, read from /api/portfolio/admin/<id>/ when the profile opens.

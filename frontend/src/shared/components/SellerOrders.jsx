@@ -142,64 +142,106 @@ export default function SellerOrders({
     { key: "__returns", label: "Returns" },
     ...(role === "admin" ? [{ key: "__cod", label: "COD cash" }] : []),
   ];
+  const countOf = (key) =>
+    SPECIAL[key] ? state.counts[SPECIAL[key][2]] || 0 : key ? state.counts[key] || 0 : total;
+  const MAIN_TABS = tabs.slice(0, 5); // All, To pack, To ship, On the way, Delivered
+  const MORE_TABS = tabs.slice(5); // Not delivered, Cancelled, Returns
 
   return (
     <div className={`so${adm ? " so-admin" : ""}`} style={{ "--so-accent": accent }}>
-      <div className="so-tools">
-        <div className="so-tabs" role="tablist" aria-label="Order status">
-          {tabs.map((t) => (
-            <button
-              key={t.key || "all"}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.key}
-              className={tab === t.key ? "on" : ""}
-              onClick={() => setTab(t.key)}
-            >
-              {adm && <i className={`so-dot d-${t.key || "all"}`} />}
-              {t.label}{" "}
-              <em>
-                {SPECIAL[t.key]
-                  ? state.counts[SPECIAL[t.key][2]] || 0
-                  : t.key
-                    ? state.counts[t.key] || 0
-                    : total}
-              </em>
-            </button>
-          ))}
-        </div>
-        <div className="so-filters">
-          {role === "admin" && !fixedType && (
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              aria-label="Seller type"
-            >
-              <option value="">All sellers</option>
-              <option value="platform">ReOrbit store</option>
-              <option value="remaker">ReMakers</option>
-              <option value="user">Members</option>
-            </select>
-          )}
-          <label className="so-search">
-            {adm && <Search size={16} aria-hidden="true" />}
-            <input
-              type="search"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={
-                role === "admin" ? "Search order, product or buyer" : "Order or product"
-              }
-              aria-label="Search orders"
-            />
-            {adm && text && (
-              <button type="button" aria-label="Clear search" onClick={() => setText("")}>
-                <X size={14} />
+      {adm ? (
+        <div className="so-tools">
+          <div className="so-tabs" role="tablist" aria-label="Order status">
+            {tabs.map((t) => (
+              <button
+                key={t.key || "all"}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                className={tab === t.key ? "on" : ""}
+                onClick={() => setTab(t.key)}
+              >
+                <i className={`so-dot d-${t.key || "all"}`} />
+                {t.label} <em>{countOf(t.key)}</em>
               </button>
+            ))}
+          </div>
+          <div className="so-filters">
+            {role === "admin" && !fixedType && (
+              <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Seller type">
+                <option value="">All sellers</option>
+                <option value="platform">ReOrbit store</option>
+                <option value="remaker">ReMakers</option>
+                <option value="user">Members</option>
+              </select>
             )}
-          </label>
+            <label className="so-search">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Search order, product or buyer"
+                aria-label="Search orders"
+              />
+              {text && (
+                <button type="button" aria-label="Clear search" onClick={() => setText("")}>
+                  <X size={14} />
+                </button>
+              )}
+            </label>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Members and ReMakers: the everyday stages as one segmented control, the rarer ones under "More". */
+        <div className="so-bar">
+          <div className="so-seg" role="tablist" aria-label="Order status">
+            {MAIN_TABS.map((t) => (
+              <button
+                key={t.key || "all"}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.key}
+                className={tab === t.key ? "on" : ""}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+                <em>{countOf(t.key)}</em>
+              </button>
+            ))}
+          </div>
+          <div className="so-bar-right">
+            <select
+              className={`so-more ${MORE_TABS.some((t) => t.key === tab) ? "on" : ""}`}
+              value={MORE_TABS.some((t) => t.key === tab) ? tab : ""}
+              onChange={(e) => setTab(e.target.value)}
+              aria-label="More order states"
+            >
+              <option value="">More…</option>
+              {MORE_TABS.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label} ({countOf(t.key)})
+                </option>
+              ))}
+            </select>
+            <label className="so-search so-search-member">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Search order or product"
+                aria-label="Search orders"
+              />
+              {text && (
+                <button type="button" aria-label="Clear search" onClick={() => setText("")}>
+                  <X size={14} />
+                </button>
+              )}
+            </label>
+          </div>
+        </div>
+      )}
 
       {state.error && (
         <p className="so-error" role="alert">

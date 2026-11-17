@@ -72,7 +72,8 @@ def _hero_cards(request):
     for c in picked:
         c["boosted"] = True
     ids = {c["id"] for c in picked}
-    rest = [c for c in _latest_cards(request, 3 + len(picked)) if c["id"] not in ids]
+    # the hero never points at something that cannot be bought: sold-out products don't fill a slot
+    rest = [c for c in _latest_cards(request, 3 + len(picked) + 6) if c["id"] not in ids and not c["sold_out"]]
     return (picked + rest)[:3]
 
 

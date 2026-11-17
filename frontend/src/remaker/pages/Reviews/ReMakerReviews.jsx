@@ -24,8 +24,21 @@ import "./ReviewsPage.css";
 const PAGE_SIZE = 6;
 
 export default function ReMakerReviews() {
-  const reviews = useReviews();
+  const allReviews = useReviews();
   const { status, error } = useReviewsStatus();
+  /* product reviews (about an item) and seller reviews (about your service) are kept apart */
+  const [kind, setKind] = useState("product");
+  const reviews = useMemo(
+    () => allReviews.filter((review) => (review.kind === "seller") === (kind === "seller")),
+    [allReviews, kind],
+  );
+  const kindCount = useMemo(
+    () => ({
+      product: allReviews.filter((review) => review.kind !== "seller").length,
+      seller: allReviews.filter((review) => review.kind === "seller").length,
+    }),
+    [allReviews],
+  );
 
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -175,6 +188,28 @@ export default function ReMakerReviews() {
       {/* ================= LIST + SIDE ================= */}
       <div className="rvp-layout">
         <div className="rvp-main">
+          <div className="rvp-kinds" role="tablist" aria-label="Review type">
+            {[
+              ["product", "Product reviews"],
+              ["seller", "Seller reviews"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={kind === key}
+                className={kind === key ? "active" : ""}
+                onClick={() => {
+                  setKind(key);
+                  setProduct("all");
+                  setTab("all");
+                  setShown(PAGE_SIZE);
+                }}
+              >
+                {label} <span>{kindCount[key]}</span>
+              </button>
+            ))}
+          </div>
           <ReviewToolbar
             tab={tab}
             onTab={change(setTab)}

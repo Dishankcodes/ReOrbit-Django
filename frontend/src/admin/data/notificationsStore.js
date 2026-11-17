@@ -1,28 +1,16 @@
-import { adminActor } from "./actor";
 /* =========================================================
-   Admin › Notifications (UI only, in-memory).
-   One inbox for the whole admin side. Most notifications are
-   DERIVED live from the other modules (warehouse, donations,
-   pickups, orders, products, rewards), so they appear when
-   something needs attention and disappear once it is dealt with.
-   Read / dismissed state lives here. Announcements are saved on the server
-   and delivered to every member / ReMaker inbox.
+   Admin › Notifications.
+   One inbox for the whole admin side, from the server
+   (GET /api/notifications/admin/): orders, donations, pickups, complaints,
+   support, products, rewards and the warehouse notify the admins whose access
+   lets them act. Unread conversations are added from the live messaging data.
+   Announcements are saved on the server and delivered to every member / ReMaker
+   inbox. Nothing here is sample data.
    ========================================================= */
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { adminAnnouncementsApi } from "../../api/notifications";
-import { useWarehouseAlerts, useStock } from "./warehouseStore";
-import { useDonations } from "./donationsStore";
-import { usePickups } from "./pickupsStore";
-import { useOrders } from "./ordersStore";
-import { useProducts } from "./productsStore";
-import { useVouchers } from "./rewardsStore";
-import { useSales } from "./sellStore";
-import { useUsers } from "./usersStore";
-import { useRemakers } from "./remakersStore";
+import { adminAnnouncementsApi, adminNotificationsApi } from "../../api/notifications";
 import { useAccess } from "./teamStore";
-import { useComplaints, isActive } from "./complaintsStore";
-import { usePickupTeams } from "./pickupTeamsStore";
 import {
   lastMessage,
   markConversationRead,
@@ -30,31 +18,80 @@ import {
   useUnreadConversations,
 } from "../../shared/messagingStore";
 
-const PERM_OF = {
-  Warehouse: "warehouse",
-  Donations: "donations",
-  Pickups: "pickups",
-  Orders: "orders",
-  Products: "products",
-  Rewards: "rewards",
-  Sales: "sell",
-  Users: "users",
-  Complaints: "complaints",
-  Messages: "messages",
+const PAGE = 50;
+const POLL_MS = 60000;
+const UNREAD_KEY = "reorbit_admin_notif_unread";
+
+export const MODULES = {
+  Warehouse: { label: "Warehouse", path: "/admin-warehouse" },
+  Donations: { label: "Donations", path: "/admin-donations" },
+  Pickups: { label: "Pickups", path: "/admin-pickups" },
+  Orders: { label: "Orders", path: "/admin-orders" },
+  Products: { label: "Products", path: "/admin-products" },
+  Reviews: { label: "Reviews", path: "/admin-reviews" },
+  Rewards: { label: "Rewards", path: "/admin-rewards" },
+  Sales: { label: "Sales", path: "/admin-sell/sales" },
+  Users: { label: "Users", path: "/admin-users" },
+  Complaints: { label: "Complaints", path: "/admin-complaints" },
+  Support: { label: "Support", path: "/admin-support" },
+  Messages: { label: "Messages", path: "/admin-messages" },
+  System: { label: "System", path: "" },
 };
-import { DEMO_TODAY } from "../utils/format";
 
-const HOUR = 3600000;
-const ago = (h) => new Date(DEMO_TODAY.getTime() - h * HOUR).toISOString();
-const capNow = (iso) =>
-  new Date(iso).getTime() > DEMO_TODAY.getTime()
-    ? DEMO_TODAY.toISOString()
-    : iso;
+/* server module -> inbox section */
+const MODULE_OF = {
+  warehouse: "Warehouse",
+  donations: "Donations",
+  pickups: "Pickups",
+  orders: "Orders",
+  payments: "Orders",
+  products: "Products",
+  listings: "Products",
+  reviews: "Reviews",
+  rewards: "Rewards",
+  sell: "Sales",
+  users: "Users",
+  remakers: "Users",
+  account: "Users",
+  complaints: "Complaints",
+  support: "Support",
+  messages: "Messages",
+};
 
-/* ---------- read / dismissed / announcements ---------- */
+const ACTION_LABEL = {
+  Orders: "Open order",
+  Donations: "Review donation",
+  Pickups: "Open pickup",
+  Complaints: "Decide",
+  Support: "Reply",
+  Products: "Open product",
+  Reviews: "Review",
+  Warehouse: "Open warehouse",
+};
+
+/* ---------- "mark as unread" stays on this device (the server only records reads) ---------- */
+const loadUnread = () => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(UNREAD_KEY) || "[]");
+    return new Set(Array.isArray(v) ? v : []);
+  } catch {
+    return new Set();
+  }
+};
+const saveUnread = (set) => {
+  try {
+    window.localStorage.setItem(UNREAD_KEY, JSON.stringify([...set].slice(-300)));
+  } catch {
+    /* ignore */
+  }
+};
+
+/* ---------- state ---------- */
 let state = {
-  read: new Set(),
-  unread: new Set(), // marked unread again by the admin
+  server: [],
+  loaded: false,
+  error: "",
+  unread: loadUnread(), // marked unread again by the admin
   dismissed: new Set(),
   announcements: [], // loaded from /api/notifications/admin/announcements/
   announcementsLoaded: false,
@@ -71,51 +108,64 @@ const set = (patch) => {
 };
 const useNs = () => useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-export const MODULES = {
-  Warehouse: { label: "Warehouse", path: "/admin-warehouse" },
-  Donations: { label: "Donations", path: "/admin-donations" },
-  Pickups: { label: "Pickups", path: "/admin-pickups" },
-  Orders: { label: "Orders", path: "/admin-orders" },
-  Products: { label: "Products", path: "/admin-products" },
-  Rewards: { label: "Rewards", path: "/admin-rewards" },
-  Sales: { label: "Sales", path: "/admin-sell/sales" },
-  Users: { label: "Users", path: "/admin-users" },
-  Complaints: { label: "Complaints", path: "/admin-complaints" },
-  Messages: { label: "Messages", path: "/admin-messages" },
-  System: { label: "System", path: "" },
-};
+let inFlight = null;
+export function loadNotifications({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+  inFlight = adminNotificationsApi
+    .list(`?page_size=${PAGE}`)
+    .then((d) => set({ server: d.results || [], loaded: true, error: "" }))
+    .catch((e) =>
+      set({ loaded: true, error: e.status === 403 ? "" : e.message || "Could not load notifications." }),
+    )
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
+}
+
+let started = false;
+function start() {
+  if (started || typeof window === "undefined") return;
+  started = true;
+  loadNotifications();
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") loadNotifications({ force: true });
+  }, POLL_MS);
+  window.addEventListener("reorbit:session-ended", () => set({ server: [], loaded: false }));
+}
+
+function fromServer(n, unread) {
+  const module = MODULE_OF[n.module] || "System";
+  const path = n.target_url && n.target_url.startsWith("/") ? n.target_url : MODULES[module]?.path || "";
+  return {
+    id: n.id,
+    module,
+    severity: n.severity || "info",
+    needsAction: !n.is_read && n.severity !== "info",
+    title: n.title,
+    message: n.body,
+    at: n.created_at,
+    path,
+    actionLabel: path ? ACTION_LABEL[module] || "Open" : "",
+    read: n.is_read && !unread.has(n.id),
+  };
+}
 
 /* ---------- build the inbox ---------- */
 export function useNotifications() {
-  const alerts = useWarehouseAlerts();
-  const stock = useStock();
-  const donations = useDonations();
-  const pickups = usePickups();
-  const complaints = useComplaints();
-  const pickupTeams = usePickupTeams();
-  const orders = useOrders();
-  const products = useProducts();
-  const vouchers = useVouchers();
-  const users = useUsers();
-  const remakers = useRemakers();
-  const sales = useSales();
-  const { read, unread, dismissed } = useNs();
+  const { server, unread, dismissed } = useNs();
   const access = useAccess();
   const unreadConversations = useUnreadConversations(access.canSee("messages"));
 
-  return useMemo(() => {
-    const out = [];
-    const add = (n) =>
-      out.push({
-        severity: "info",
-        needsAction: false,
-        actionLabel: "Open",
-        ...n,
-      });
+  useEffect(() => {
+    start();
+  }, []);
 
+  return useMemo(() => {
+    const out = server.filter((n) => !dismissed.has(n.id)).map((n) => fromServer(n, unread));
     unreadConversations.forEach((conversation) => {
       const message = lastMessage(conversation);
-      add({
+      out.push({
         id: `message:${conversation.id}`,
         module: "Messages",
         severity: "info",
@@ -125,484 +175,58 @@ export function useNotifications() {
         at: message.at || conversation.updated_at || conversation.updatedAt,
         path: `/admin-messages/${conversation.id}`,
         actionLabel: "Reply",
+        read: false,
       });
     });
-
-    /* Warehouse */
-    const lvl = (k) => alerts.filter((a) => a.alert.key === k);
-    const dead = lvl("dead");
-    const slow = lvl("slow");
-    const watch = lvl("watch");
-    if (dead.length)
-      add({
-        id: "wh-dead",
-        module: "Warehouse",
-        severity: "critical",
-        needsAction: true,
-        title: `${dead.length} products are dead stock`,
-        message: `${dead[0].title} and ${dead.length - 1 > 0 ? `${dead.length - 1} more` : "others"} have been unsold for 30+ days. Refurbish, cut the price or donate them.`,
-        at: ago(2),
-        path: "/admin-warehouse",
-        actionLabel: "Review stock",
-      });
-    if (slow.length)
-      add({
-        id: "wh-slow",
-        module: "Warehouse",
-        severity: "warning",
-        needsAction: true,
-        title: `${slow.length} products are moving slowly`,
-        message: `Unsold for 14+ days, starting with ${slow[0].title}. A price cut or promotion usually helps.`,
-        at: ago(7),
-        path: "/admin-warehouse",
-        actionLabel: "Review stock",
-      });
-    if (watch.length)
-      add({
-        id: "wh-watch",
-        module: "Warehouse",
-        severity: "warning",
-        needsAction: true,
-        title: `${watch.length} products have not sold in 7 days`,
-        message: `The 7-day unsold alert fired for ${watch
-          .map((w) => w.title)
-          .slice(0, 2)
-          .join(" and ")}${watch.length > 2 ? " and more" : ""}.`,
-        at: ago(11),
-        path: "/admin-warehouse",
-        actionLabel: "Review stock",
-      });
-    const dock = stock.filter((s) => s.warehouse_status === "Received");
-    if (dock.length)
-      add({
-        id: "wh-dock",
-        module: "Warehouse",
-        severity: "info",
-        needsAction: true,
-        title: `${dock.length} items waiting at the receiving dock`,
-        message:
-          "Check them against the purchase orders and put them away on a rack.",
-        at: ago(5),
-        path: "/admin-warehouse",
-        actionLabel: "Open warehouse",
-      });
-
-    /* Donations */
-    donations
-      .filter((d) => d.status === "Pending")
-      .sort((a, b) => new Date(b.donation_date) - new Date(a.donation_date))
-      .slice(0, 5)
-      .forEach((d) =>
-        add({
-          id: `don-${d.id}`,
-          module: "Donations",
-          severity: d.overdue ? "warning" : "info",
-          needsAction: true,
-          title: `New donation: ${d.title}`,
-          message: `${d.donor.name} from ${d.donor.city} offered ${d.quantity} item${d.quantity > 1 ? "s" : ""}. ${d.waitingDays > 0 ? `Waiting ${d.waitingDays} day${d.waitingDays === 1 ? "" : "s"} for a decision.` : "Needs a decision."}`,
-          at: capNow(d.donation_date),
-          path: `/admin-donations/${d.id}`,
-          actionLabel: "Review donation",
-        }),
-      );
-    const pend = donations.filter((d) => d.status === "Pending").length;
-    if (pend > 5)
-      add({
-        id: "don-more",
-        module: "Donations",
-        severity: "warning",
-        needsAction: true,
-        title: `${pend - 5} more donations waiting for review`,
-        message: "Accept to schedule a free pickup, or reject with a reason.",
-        at: ago(20),
-        path: "/admin-donations",
-        actionLabel: "Open donations",
-      });
-    donations
-      .filter((d) => d.status === "Completed")
-      .sort(
-        (a, b) => new Date(b.events.at(-1).at) - new Date(a.events.at(-1).at),
-      )
-      .slice(0, 2)
-      .forEach((d) =>
-        add({
-          id: `don-done-${d.id}`,
-          module: "Donations",
-          severity: "success",
-          title: "Donation completed",
-          message: `${d.title} was given to ${d.ngo}. The certificate was issued to ${d.donor.name}.`,
-          at: capNow(d.events.at(-1).at),
-          path: `/admin-donations/${d.id}`,
-          actionLabel: "View",
-        }),
-      );
-
-    /* Pickups */
-    pickups
-      .filter((p) => p.due?.key === "overdue")
-      .slice(0, 4)
-      .forEach((p) =>
-        add({
-          id: `pk-${p.id}`,
-          module: "Pickups",
-          severity: "critical",
-          needsAction: true,
-          title: `Pickup overdue: ${p.title}`,
-          message: `${p.customer.name} in ${p.city} is still waiting. It was due ${p.due.label.replace("Overdue ", "")} ago.`,
-          at: capNow(p.date),
-          path: `/admin-pickups/${p.id}`,
-          actionLabel: "Reschedule",
-        }),
-      );
-    const today = pickups.filter((p) => p.due?.key === "today").length;
-    if (today)
-      add({
-        id: "pk-today",
-        module: "Pickups",
-        severity: "info",
-        title: `${today} pickups scheduled for today`,
-        message: "Your three pickup teams have their route for the day.",
-        at: ago(4),
-        path: "/admin-pickups",
-        actionLabel: "View route",
-      });
-    const unsched = pickups.filter(
-      (p) => p.status === "Requested" && p.type === "Item",
-    ).length;
-    if (unsched)
-      add({
-        id: "pk-req",
-        module: "Pickups",
-        severity: "warning",
-        needsAction: true,
-        title: `${unsched} item pickups need scheduling`,
-        message:
-          "Users chose “Managed by platform” and are waiting for a date.",
-        at: ago(9),
-        path: "/admin-pickups",
-        actionLabel: "Schedule",
-      });
-
-    /* Orders */
-    const refunds = orders.filter((o) => o.refundDue);
-    if (refunds.length)
-      add({
-        id: "ord-refund",
-        module: "Orders",
-        severity: "critical",
-        needsAction: true,
-        title: `${refunds.length} refunds are due`,
-        message:
-          "Cancelled or returned orders that were paid but not refunded yet.",
-        at: ago(3),
-        path: "/admin-orders",
-        actionLabel: "Review orders",
-      });
-    const awaiting = orders.filter(
-      (o) =>
-        o.order_status === "Pending" &&
-        o.transaction.payment_status === "Pending" &&
-        !o.isCod,
-    ).length;
-    if (awaiting)
-      add({
-        id: "ord-pay",
-        module: "Orders",
-        severity: "warning",
-        needsAction: true,
-        title: `${awaiting} orders are waiting for payment`,
-        message:
-          "Mark payments as received once the money arrives, or cancel stale orders.",
-        at: ago(13),
-        path: "/admin-orders",
-        actionLabel: "Review orders",
-      });
-
-    /* Products */
-    const reported = products.filter((p) =>
-      (p.reports || []).some((r) => r.status === "Pending"),
-    ).length;
-    if (reported)
-      add({
-        id: "prd-report",
-        module: "Products",
-        severity: "critical",
-        needsAction: true,
-        title: `${reported} listings were reported`,
-        message:
-          "Users flagged these listings. Check them and take action if needed.",
-        at: ago(15),
-        path: "/admin-products",
-        actionLabel: "Open products",
-      });
-
-    /* Sales (the admin as a seller) */
-    const newSales = sales.filter(
-      (o) =>
-        o.order_status === "Pending" &&
-        o.transaction.payment_status !== "Failed",
-    ).length;
-    if (newSales)
-      add({
-        id: "sale-new",
-        module: "Sales",
-        severity: "warning",
-        needsAction: true,
-        title: `${newSales} new sales order${newSales === 1 ? "" : "s"} to accept`,
-        message:
-          "Buyers are waiting for you to accept their orders for your products.",
-        at: ago(1),
-        path: "/admin-sell/sales",
-        actionLabel: "Open sales",
-      });
-    const toShip = sales.filter(
-      (o) => o.order_status === "Confirmed" && !o.shipment,
-    ).length;
-    if (toShip)
-      add({
-        id: "sale-ship",
-        module: "Sales",
-        severity: "info",
-        needsAction: true,
-        title: `${toShip} sales order${toShip === 1 ? "" : "s"} ready to ship`,
-        message: "Hand them to a courier and add the tracking number.",
-        at: ago(4),
-        path: "/admin-sell/sales",
-        actionLabel: "Ship orders",
-      });
-
-    pickupTeams
-      .filter((t) => t.status === "Active" && t.noLead)
-      .forEach((t) =>
-        add({
-          id: `pt-nolead-${t.id}`,
-          module: "Pickups",
-          severity: "warning",
-          needsAction: true,
-          title: `${t.name} has no lead`,
-          message:
-            "A team needs an active lead before it can take new pickups. Make someone the lead.",
-          at: ago(6),
-          path: "/admin-pickups/teams",
-          actionLabel: "Open teams",
-        }),
-      );
-    pickupTeams
-      .filter((t) => t.status === "Paused" && t.movable.length > 0)
-      .forEach((t) =>
-        add({
-          id: `pt-paused-${t.id}`,
-          module: "Pickups",
-          severity: "warning",
-          needsAction: true,
-          title: `${t.name} is paused but has ${t.movable.length} pickup${t.movable.length === 1 ? "" : "s"}`,
-          message:
-            "Move the scheduled pickups to another team so customers are not left waiting.",
-          at: ago(8),
-          path: "/admin-pickups/teams",
-          actionLabel: "Open teams",
-        }),
-      );
-
-    /* Rewards */
-    vouchers
-      .filter((v) => v.expiringSoon)
-      .forEach((v) =>
-        add({
-          id: `rw-end-${v.id}`,
-          module: "Rewards",
-          severity: "info",
-          title: `Coupon ${v.code} ends in ${v.daysLeft} day${v.daysLeft === 1 ? "" : "s"}`,
-          message: `${v.title} has been used ${v.usagePct}% so far. Extend it or let it end.`,
-          at: ago(18),
-          path: "/admin-rewards",
-          actionLabel: "Open rewards",
-        }),
-      );
-    vouchers
-      .filter((v) => v.status === "Active" && v.usagePct >= 90)
-      .forEach((v) =>
-        add({
-          id: `rw-full-${v.id}`,
-          module: "Rewards",
-          severity: "warning",
-          needsAction: true,
-          title: `${v.code} is almost used up`,
-          message: `${v.used} of ${v.usage_limit} uses are gone. Raise the limit if you want it to keep running.`,
-          at: ago(10),
-          path: "/admin-rewards",
-          actionLabel: "Open rewards",
-        }),
-      );
-
-    /* Users / ReMakers */
-    const susp = remakers.filter((r) => r.status === "Suspended").length;
-    if (susp)
-      add({
-        id: "rm-susp",
-        module: "Users",
-        severity: "info",
-        title: `${susp} ReMakers are suspended`,
-        message: "Review whether any suspension should be lifted.",
-        at: ago(30),
-        path: "/admin-remakers",
-        actionLabel: "Open ReMakers",
-      });
-    const reports = users.reduce(
-      (n, u) =>
-        n + (u.reports || []).filter((r) => r.status === "Pending").length,
-      0,
-    );
-    if (reports)
-      add({
-        id: "usr-reports",
-        module: "Users",
-        severity: "warning",
-        needsAction: true,
-        title: `${reports} user reports are pending`,
-        message:
-          "Reports about users or their listings are waiting for a decision.",
-        at: ago(22),
-        path: "/admin-users",
-        actionLabel: "Open users",
-      });
-
-    /* Complaints */
-    const cpActive = complaints.filter(isActive);
-    cpActive
-      .filter((c) => c.sla?.overdue)
-      .slice(0, 3)
-      .forEach((c) =>
-        add({
-          id: `cp-late-${c.id}`,
-          module: "Complaints",
-          severity: "critical",
-          needsAction: true,
-          title: `Complaint past response time: ${c.category}`,
-          message: `${c.target.name} was reported ${c.sla.overdueH} h ago past the ${c.priority.toLowerCase()}-priority limit. ${c.status === "Open" ? "Nobody has picked it up yet." : "It is still under review."}`,
-          at: ago(Math.max(1, c.sla.ageH - c.sla.limit)),
-          path: `/admin-complaints/${c.id}`,
-          actionLabel: "Decide",
-        }),
-      );
-    const cpHigh = cpActive.filter(
-      (c) => c.priority === "High" && !c.sla?.overdue && c.status === "Open",
-    );
-    if (cpHigh.length)
-      add({
-        id: "cp-high",
-        module: "Complaints",
-        severity: "warning",
-        needsAction: true,
-        title: `${cpHigh.length} high-priority complaint${cpHigh.length === 1 ? "" : "s"} waiting`,
-        message: `${cpHigh[0].category} on ${cpHigh[0].target.name}${cpHigh.length > 1 ? " and others" : ""}. Scams and unsafe items should be looked at first.`,
-        at: ago(3),
-        path: "/admin-complaints",
-        actionLabel: "Open complaints",
-      });
-
-    /* System */
-    add({
-      id: "sys-report",
-      module: "System",
-      severity: "success",
-      title: "Weekly report is ready",
-      message:
-        "Orders, donations, pickups and rewards for last week are summarised in Reports.",
-      at: ago(26),
-      path: "/admin-reports",
-      actionLabel: "Open reports",
-    });
-    add({
-      id: "sys-login",
-      module: "System",
-      severity: "info",
-      title: "New sign-in to your admin account",
-      message:
-        "Chrome on Windows · Ahmedabad, India. If this was not you, change your password.",
-      at: ago(34),
-      path: "/admin-profile",
-      actionLabel: "Review",
-    });
-    add({
-      id: "sys-backup",
-      module: "System",
-      severity: "success",
-      title: "Nightly backup completed",
-      message: "All marketplace data was backed up successfully at 2:00 AM.",
-      at: ago(40),
-      path: "",
-      actionLabel: "",
-    });
-
-    return out
-      .filter((n) => !dismissed.has(n.id))
-      .filter((n) => !PERM_OF[n.module] || access.canSee(PERM_OF[n.module]))
-      .map((n) => ({
-        ...n,
-        read:
-          n.severity === "success" && !unread.has(n.id)
-            ? true
-            : read.has(n.id) && !unread.has(n.id),
-      }))
-      .sort((a, b) => new Date(b.at) - new Date(a.at));
-  }, [
-    alerts,
-    stock,
-    donations,
-    pickups,
-    complaints,
-    pickupTeams,
-    orders,
-    products,
-    vouchers,
-    users,
-    remakers,
-    sales,
-    unreadConversations,
-    read,
-    unread,
-    dismissed,
-    access,
-  ]);
+    return out.sort((a, b) => new Date(b.at) - new Date(a.at));
+  }, [server, unread, dismissed, unreadConversations]);
 }
 
 export function markRead(ids) {
-  const r = new Set(state.read);
-  const u = new Set(state.unread);
-  ids.forEach((id) => {
+  const list = Array.isArray(ids) ? ids : [ids];
+  const unread = new Set(state.unread);
+  const serverIds = [];
+  list.forEach((id) => {
     if (String(id).startsWith("message:")) {
       markConversationRead(String(id).slice("message:".length), "admin").catch(() => {});
       return;
     }
-    r.add(id);
-    u.delete(id);
+    unread.delete(id);
+    serverIds.push(id);
   });
-  set({ read: r, unread: u });
+  saveUnread(unread);
+  set({
+    unread,
+    server: state.server.map((n) => (serverIds.includes(n.id) ? { ...n, is_read: true } : n)),
+  });
+  serverIds.forEach((id) => adminNotificationsApi.markRead(id).catch(() => loadNotifications({ force: true })));
 }
 export function markUnread(id) {
   if (String(id).startsWith("message:")) {
     markConversationUnread(String(id).slice("message:".length), "admin").catch(() => {});
     return;
   }
-  const u = new Set(state.unread);
-  u.add(id);
-  set({ unread: u });
+  const unread = new Set(state.unread);
+  unread.add(id);
+  saveUnread(unread);
+  set({ unread });
 }
 export function dismiss(ids) {
+  const list = Array.isArray(ids) ? ids : [ids];
   const d = new Set(state.dismissed);
-  ids.forEach((id) => {
+  list.forEach((id) => {
     if (String(id).startsWith("message:")) {
       markConversationRead(String(id).slice("message:".length), "admin").catch(() => {});
     } else {
       d.add(id);
+      adminNotificationsApi.dismiss(id).catch(() => {});
     }
   });
   set({ dismissed: d });
 }
 
 /* ---------- announcements ---------- */
-const fromServer = (a) => ({ ...a, at: a.at });
+const announcementFromServer = (a) => ({ ...a, at: a.at });
 
 let loadingAnnouncements = false;
 export function loadAnnouncements() {
@@ -610,7 +234,7 @@ export function loadAnnouncements() {
   loadingAnnouncements = true;
   adminAnnouncementsApi
     .list()
-    .then((rows) => set({ announcements: rows.map(fromServer), announcementsLoaded: true }))
+    .then((rows) => set({ announcements: rows.map(announcementFromServer), announcementsLoaded: true }))
     .catch(() => set({ announcementsLoaded: true }))
     .finally(() => {
       loadingAnnouncements = false;
@@ -658,7 +282,7 @@ export async function sendAnnouncement({
     link: link || "",
     scheduleAt: scheduleAt ? new Date(scheduleAt).toISOString() : "",
   });
-  set({ announcements: [fromServer(a), ...state.announcements] });
+  set({ announcements: [announcementFromServer(a), ...state.announcements] });
   return a;
 }
 
@@ -685,9 +309,9 @@ export function realAgo(iso) {
   return `${d} day${d === 1 ? "" : "s"} ago`;
 }
 
-/* "5 min ago", "3 h ago", "2 days ago" relative to the demo clock */
+/* "5 min ago", "3 h ago", "2 days ago" */
 export function timeAgo(iso) {
-  const diff = DEMO_TODAY.getTime() - new Date(iso).getTime();
+  const diff = Date.now() - new Date(iso).getTime();
   if (diff < 0) return "Scheduled";
   const m = Math.floor(diff / 60000);
   if (m < 1) return "Just now";

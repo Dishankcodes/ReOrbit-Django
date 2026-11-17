@@ -112,8 +112,8 @@ class EarningTests(RewardsBase):
 
 class DonationPointsTests(RewardsBase):
     def donation(self, qty=3, status="Received"):
-        return Donation.objects.create(user=self.buyer, title="Books", category="Furniture", description="Old books to give away",
-                                       condition="Good", quantity=qty, weight_kg=6, address={}, contact_name="A", contact_phone="9876543210",
+        return Donation.objects.create(donor=self.buyer, title="Books", category="Furniture", description="Old books to give away",
+                                       condition="Good", quantity=qty, weight_kg=6, pickup_address={}, contact_name="A", phone="9876543210",
                                        status=status, received_at=timezone.now())
 
     def test_a_donation_pays_once(self):

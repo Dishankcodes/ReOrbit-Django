@@ -61,25 +61,18 @@ export default function UserSales() {
 
   return (
     <div className="dn sl">
-      <Crumbs
-        items={[
-          { label: "Sell", to: "/user-sell" },
-          { label: "Sales & orders" },
-        ]}
-      />
-
-      <header className="usl-head">
-        <div>
-          <span className="dn-eyebrow">Your sales</span>
-          <h1>Sales &amp; orders</h1>
-          <p className="dn-muted">
-            Pack each order, add the courier details, and mark it delivered.
-          </p>
-        </div>
+      {/* The page header already says "Sales & Payouts", so no second title here. */}
+      <div className="usl-bar">
+        <Crumbs
+          items={[
+            { label: "Sell", to: "/user-sell" },
+            { label: "Sales & orders" },
+          ]}
+        />
         <Link to="/user-sell" className="dn-btn dn-btn--ghost">
           My listings
         </Link>
-      </header>
+      </div>
 
       <section className="usl-stats">
         {cards.map((c) => {

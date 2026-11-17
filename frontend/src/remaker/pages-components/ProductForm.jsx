@@ -471,7 +471,14 @@ export default function ProductForm({ mode = "add", product = null }) {
             <p>
               It stays hidden from buyers until the team turns it back on. Fix
               what was flagged, then{" "}
-              <Link to="/remakers-contact">write to support</Link>.
+              <Link
+                to={`/remaker-help/new?product=${encodeURIComponent(product?.id || "")}&subject=${encodeURIComponent(
+                  `Please review deactivated product ${product?.id || ""}${product?.title ? ` (${product.title})` : ""}`,
+                )}`}
+              >
+                raise a support ticket
+              </Link>
+              .
             </p>
           </div>
         </div>

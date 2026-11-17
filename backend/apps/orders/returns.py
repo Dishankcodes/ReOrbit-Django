@@ -228,6 +228,9 @@ def mark_received(rr_pk, *, actor_kind, actor=None, ip=None):
         event(o, "Return received", f"Refund of ₹{amount:,}", actor_kind)
         refund = make_refund(o.payment, amount, "return", order=o, note=f"{rr.public_id}: {REASONS[rr.reason_code][0]}", send=False)
         wallet.reverse_earning(o, earning_taken_back(o, rr.fault), note=f"{o.public_id} returned ({rr.public_id})")
+        from apps.rewards import services as rewards  # local import: rewards reads orders lazily too
+
+        rewards.on_order_returned(o, amount)  # take back the points that order earned
         if actor_kind == "admin":
             audit(actor, "return.received", "return", rr.public_id, after={"refund": amount}, ip=ip)
         _notify_buyer(o, "Return received", f"{o.public_id}: your refund of ₹{amount:,} is being made.")

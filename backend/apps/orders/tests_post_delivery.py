@@ -108,7 +108,7 @@ class TrackingTests(PostDeliveryBase):
         self.assertEqual(self.act(oid, self.table, "update", {"text": "Out for delivery today"}).status_code, 200)
         order = self.get(f"/api/orders/me/{oid}/", as_=self.buyer).data["data"]["order"]
         self.assertEqual(order["events"][-1]["label"], "Update")
-        note = self.get("/api/notifications/", as_=self.buyer)
+        note = self.get("/api/notifications/me/", as_=self.buyer)
         self.assertIn("Out for delivery today", str(note.data))
 
     def test_options_lists_couriers_and_reasons(self):

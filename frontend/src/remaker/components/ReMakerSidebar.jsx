@@ -315,9 +315,11 @@ export default function ReMakerSidebar({
         key={item.path}
         to={item.path}
         end={item.path === "/remaker-dashboard"}
-        className={({ isActive }) =>
-          `remaker-sidebar-link ${isActive ? "active" : ""}`
-        }
+        className={({ isActive }) => {
+          /* "Products" covers its sub-pages, except "Add Product", which has its own item. */
+          const sub = pathname.startsWith("/remaker-products/new");
+          return `remaker-sidebar-link ${isActive && !(item.path === "/remaker-products" && sub) ? "active" : ""}`;
+        }}
         onClick={handleNavigation}
       >
         <Icon

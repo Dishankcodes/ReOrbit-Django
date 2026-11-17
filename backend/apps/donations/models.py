@@ -32,6 +32,11 @@ class PickupPartner(PublicIdModel, TimeStampedModel):
     phone = models.CharField(max_length=20, blank=True)
     token = models.CharField(max_length=40, unique=True, editable=False)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    area = models.CharField(max_length=120, blank=True)
+    vehicle = models.CharField(max_length=60, blank=True)
+    capacity = models.PositiveSmallIntegerField(default=5, help_text="Pickups a day this team can take")
+    note = models.CharField(max_length=300, blank=True)
+    paused_reason = models.CharField(max_length=200, blank=True)
 
     class Meta:
         db_table = "pickup_partners"

@@ -8,8 +8,6 @@ import AccountGate from "../../shared/components/AccountGate";
 import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useRemakerAccountStatus } from "../../shared/accountStatus";
 import RouteErrorBoundary from "../../shared/status/RouteErrorBoundary";
-import AnnouncementSync from "../../shared/components/AnnouncementSync";
-import { syncAnnouncements } from "../data/notificationsStore";
 
 import MobileBottomNav from "../../shared/components/MobileBottomNav";
 import "./ReMakerLayout.css";
@@ -77,7 +75,6 @@ export default function ReMakerLayout({ children }) {
         sidebarCollapsed ? "sidebar-collapsed" : ""
       } ${mobileSidebarOpen ? "mobile-sidebar-open" : ""}`}
     >
-      <AnnouncementSync audience="remakers" onSync={syncAnnouncements} />
       <ReMakerSidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileSidebarOpen}

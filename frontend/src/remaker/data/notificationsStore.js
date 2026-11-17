@@ -1,24 +1,22 @@
 /* =========================================================
-   REMAKER NOTIFICATIONS - UI STORE (no backend yet)
-   One list of notifications for the whole ReMaker side. The header
-   bell and the Notifications page both read from here, so reading
-   something in one place updates the other.
+   ReMaker › Notifications.
+   The inbox lives on the server (GET /api/notifications/me/): sales, purchases,
+   reviews, followers, payouts, products, support and ReOrbit announcements all
+   create their notification there. The header bell and the Notifications page both
+   read this one store, so reading something in one place updates the other.
 
-   Saved in localStorage so read / deleted state survives a refresh.
-   Swap the functions below for API calls later.
+   Unread conversations are added on the browser from the live messaging data
+   (chat has its own table). Nothing here is sample data.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { notificationsApi } from "../../api/notifications";
 import {
   lastMessage,
   markConversationRead,
   markConversationUnread,
   useUnreadConversations,
 } from "./messagesStore";
-
-const KEY = "reorbit_remaker_notifications_v1";
-const NOW = Date.now();
-const ago = (hours) => new Date(NOW - hours * 3600000).toISOString();
 
 export const CATEGORIES = [
   { key: "messages", label: "Messages", note: "Unread conversations" },
@@ -28,350 +26,166 @@ export const CATEGORIES = [
   { key: "followers", label: "Followers", note: "People who follow you" },
   { key: "payouts", label: "Payouts", note: "Money and withdrawals" },
   { key: "products", label: "Products", note: "Stock and listings" },
-  { key: "system", label: "ReOrbit", note: "News and security" },
+  { key: "system", label: "ReOrbit", note: "News, support and security" },
 ];
 
-const P = "/images/portfolio/";
-const U = "/images/users/";
+const PAGE = 50;
+const POLL_MS = 60000;
+const UNDO_MS = 6000; // a deleted notification can be brought back for a few seconds
+const UNREAD_KEY = "reorbit_remaker_notif_unread";
 
-/* [category, title, text, hoursAgo, read, link, label, image] */
-const RAW = [
-  [
-    "orders",
-    "New order from Meera Iyer",
-    "Teak Door Console Table for ₹12,500. Accept it within 24 hours to keep it.",
-    1,
-    false,
-    "/remaker-sales/SO-31084",
-    "Accept order",
-    "https://images.pexels.com/photos/11112739/pexels-photo-11112739.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "followers",
-    "Ishita Joshi started following you",
-    "She saw your Teak Door Console in the marketplace.",
-    2,
-    false,
-    "/remaker-followers",
-    "See followers",
-    "",
-  ],
-  [
-    "purchases",
-    "Your order is out for delivery",
-    "RO-48213, the Vintage reading chair, should reach you today.",
-    3,
-    false,
-    "/remaker-orders/RO-48213/track",
-    "Track order",
-    "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "payouts",
-    "₹5,106 is ready to withdraw",
-    "Your earnings from the Denim Patchwork Tote order have cleared.",
-    5,
-    false,
-    "/remaker-earnings/payouts",
-    "Withdraw",
-    "",
-  ],
-  [
-    "purchases",
-    "Your order is ready for pickup",
-    "RO-47990, the Handmade ceramic table lamp, is waiting for you. Use code 4821.",
-    4,
-    false,
-    "/remaker-orders/RO-47990",
-    "View order",
-    "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "orders",
-    "Pack Rohan Shah's order",
-    "2 × Reclaimed Wood Floor Lamp is accepted. Pack it so ReOrbit can collect it.",
-    7,
-    false,
-    "/remaker-sales/SO-31079",
-    "Mark as packed",
-    "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "reviews",
-    "New 5-star review from Meera Iyer",
-    "\u201CThe light is gorgeous. You can see every knot in the wood.\u201D Reply to say thanks.",
-    30,
-    false,
-    "/remaker-reviews",
-    "Reply",
-    U + "meera-iyer.jpg",
-  ],
-  [
-    "products",
-    "Teak Door Console Table: only 2 left",
-    "Stock is running low. Add more or switch the product off to avoid missed orders.",
-    26,
-    false,
-    "/remaker-products/rp-1001/edit",
-    "Update stock",
-    "https://images.pexels.com/photos/12277213/pexels-photo-12277213.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "orders",
-    "Order SO-31040 is on its way",
-    "ReOrbit collected the Floor Lamp for Kabir Verma. It is now in transit.",
-    30,
-    true,
-    "/remaker-sales/SO-31040",
-    "View order",
-    "https://images.pexels.com/photos/8263851/pexels-photo-8263851.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "followers",
-    "Aarav Patel started following you",
-    "Aarav is also one of your customers.",
-    90,
-    true,
-    "/remaker-followers",
-    "See followers",
-    U + "aarav-patel.jpg",
-  ],
-  [
-    "system",
-    "New: Analytics for your studio",
-    "See views, orders, buyer cities and the best time to post. Open Analytics from the sidebar.",
-    48,
-    false,
-    "/remaker-analytics",
-    "Open analytics",
-    "",
-  ],
-  [
-    "reviews",
-    "New 2-star review needs your attention",
-    "Dev Malhotra said the strap seam came apart. A kind reply helps future buyers.",
-    60,
-    false,
-    "/remaker-reviews",
-    "Reply",
-    "",
-  ],
-  [
-    "products",
-    "3 people saved the Denim Patchwork Tote",
-    "Your tote is being added to wishlists. A small price drop can turn saves into orders.",
-    52,
-    true,
-    "/remaker-products/rp-1003/edit",
-    "View product",
-    "https://images.pexels.com/photos/3185223/pexels-photo-3185223.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "system",
-    "New sign-in to your account",
-    "Chrome on Windows, Ahmedabad. If this was not you, change your password.",
-    100,
-    true,
-    "/remaker-settings?section=security",
-    "Review security",
-    "",
-  ],
-  [
-    "orders",
-    "Order SO-31011 was delivered",
-    "Meera Iyer received the Reclaimed Wood Floor Lamp. Earnings clear in 3 days.",
-    40,
-    true,
-    "/remaker-sales/SO-31011",
-    "View order",
-    U + "meera-iyer.jpg",
-  ],
-  [
-    "followers",
-    "Anaya Singh and 4 others started following you",
-    "Your portfolio post brought new followers this week.",
-    130,
-    true,
-    "/remaker-followers",
-    "See followers",
-    U + "anaya-singh.jpg",
-  ],
-  [
-    "payouts",
-    "Payout PO-2203 was paid",
-    "₹15,364 was sent to your State Bank of India account ending 6209.",
-    480,
-    true,
-    "/remaker-earnings/payouts",
-    "View payouts",
-    "",
-  ],
-  [
-    "products",
-    "Your product was approved",
-    "Reclaimed Wood Floor Lamp passed the quality check and is live in the marketplace.",
-    150,
-    true,
-    "/remaker-products/rp-1002/edit",
-    "View product",
-    "https://images.pexels.com/photos/1122530/pexels-photo-1122530.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "reviews",
-    "Tara Bose reviewed Iron Grille Wall Shelf",
-    "5 stars. \u201CThe wire brushing and sealing is very clean.\u201D",
-    190,
-    true,
-    "/remaker-reviews",
-    "Read review",
-    "/images/remakers/tara-bose.jpg",
-  ],
-  [
-    "orders",
-    "Order SO-30901 was cancelled",
-    "Isha Kapoor cancelled the Floor Lamp. She was refunded and you were not charged.",
-    285,
-    true,
-    "/remaker-sales/SO-30901",
-    "View order",
-    "",
-  ],
-  [
-    "purchases",
-    "Your report RP-30211 was resolved",
-    "We refunded the Classic novel collection to your wallet.",
-    740,
-    true,
-    "/remaker-orders/RO-47544/report",
-    "See outcome",
-    "",
-  ],
-  [
-    "system",
-    "You keep the full price of every sale",
-    "The platform fee is paid by the buyer on top of your price. Nothing is deducted from your earnings.",
-    800,
-    true,
-    "/remaker-earnings",
-    "How you get paid",
-    "",
-  ],
-  [
-    "followers",
-    "Tara Bose follows you back",
-    "Fellow ReMakers who follow you can see your new portfolio work first.",
-    4200,
-    true,
-    "/remaker-followers",
-    "See followers",
-    "/images/remakers/tara-bose.jpg",
-  ],
-  [
-    "products",
-    "Add a before and after to your portfolio",
-    "Products with portfolio proof get more followers and saves.",
-    1000,
-    true,
-    "/remaker-portfolio/new",
-    "Add work",
-    "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
-  ],
-  [
-    "system",
-    "Scheduled maintenance on Sunday",
-    "Payouts may take a few extra hours between 2 and 4 am. Nothing is needed from you.",
-    1500,
-    true,
-    "",
-    "",
-    "",
-  ],
-  [
-    "payouts",
-    "Payout PO-2187 was paid",
-    "₹3,542 reached your bank account.",
-    940,
-    true,
-    "/remaker-earnings/payouts",
-    "View payouts",
-    "",
-  ],
-  [
-    "orders",
-    "Order SO-30991 was delivered",
-    "Aarav Patel received 3 Denim Patchwork Totes.",
-    150,
-    true,
-    "/remaker-sales/SO-30991",
-    "View order",
-    U + "aarav-patel.jpg",
-  ],
-];
+/* Which tab a server notification belongs in. Orders are split by where the link goes:
+   /remaker-sales is something a customer bought from you, /remaker-orders something you bought. */
+function categoryOf(n) {
+  const to = n.target_url || "";
+  switch (n.module) {
+    case "orders":
+      return to.startsWith("/remaker-orders") ? "purchases" : "orders";
+    case "reviews":
+      return "reviews";
+    case "social":
+      return "followers";
+    case "earnings":
+    case "wallet":
+    case "payouts":
+      return "payouts";
+    case "products":
+    case "listings":
+    case "portfolio":
+      return "products";
+    default:
+      return "system"; // announcements, support, complaints, account
+  }
+}
 
-function seed() {
-  return RAW.map((row, index) => {
-    const [category, title, text, hours, read, to, label, image] = row;
+const LINK_LABEL = {
+  orders: "View order",
+  purchases: "View order",
+  reviews: "Read review",
+  followers: "See followers",
+  payouts: "View payouts",
+  products: "View product",
+  system: "Open",
+};
 
-    return {
-      id: `nt-${2000 + index}`,
-      category,
-      title,
-      text,
-      createdAt: ago(hours),
-      read,
-      link: to ? { to, label } : null,
-      image,
-    };
+function fromServer(n, unreadIds) {
+  const category = categoryOf(n);
+  const to = n.target_url && n.target_url.startsWith("/") && !n.target_url.startsWith("/admin") ? n.target_url : "";
+  return {
+    id: n.id,
+    category,
+    title: n.title,
+    text: n.body,
+    createdAt: n.created_at,
+    read: n.is_read && !unreadIds.includes(n.id),
+    link: to ? { to, label: LINK_LABEL[category] } : null,
+    image: "",
+    severity: n.severity,
+  };
+}
+
+/* ---------- "mark as unread" is kept on this device (the server only records reads) ---------- */
+const loadUnread = () => {
+  try {
+    const v = JSON.parse(window.localStorage.getItem(UNREAD_KEY) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+};
+const saveUnread = (v) => {
+  try {
+    window.localStorage.setItem(UNREAD_KEY, JSON.stringify(v.slice(-300)));
+  } catch {
+    /* ignore */
+  }
+};
+
+/* ---------- state ---------- */
+let state = {
+  server: [],
+  page: 0,
+  pages: 1,
+  loaded: false,
+  loading: false,
+  error: "",
+  unreadIds: loadUnread(),
+  hidden: [], // deleted here, waiting out the undo window before the server is told
+};
+const listeners = new Set();
+const subscribe = (l) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+const getSnapshot = () => state;
+const set = (patch) => {
+  state = { ...state, ...patch };
+  listeners.forEach((l) => l());
+};
+
+/* ---------- server calls ---------- */
+let inFlight = null;
+export function loadNotifications({ force = false } = {}) {
+  if (inFlight && !force) return inFlight;
+  set({ loading: !state.loaded });
+  inFlight = notificationsApi
+    .list(`?page_size=${PAGE}`)
+    .then((d) =>
+      set({ server: d.results, page: d.page, pages: d.total_pages, loaded: true, loading: false, error: "" }),
+    )
+    .catch((e) => set({ loaded: true, loading: false, error: e.message || "Could not load notifications." }))
+    .finally(() => {
+      inFlight = null;
+    });
+  return inFlight;
+}
+
+export async function loadMoreNotifications() {
+  if (state.page >= state.pages) return;
+  try {
+    const d = await notificationsApi.list(`?page_size=${PAGE}&page=${state.page + 1}`);
+    const have = new Set(state.server.map((n) => n.id));
+    set({
+      server: [...state.server, ...d.results.filter((n) => !have.has(n.id))],
+      page: d.page,
+      pages: d.total_pages,
+    });
+  } catch (e) {
+    set({ error: e.message || "Could not load more." });
+  }
+}
+
+let started = false;
+function start() {
+  if (started || typeof window === "undefined") return;
+  started = true;
+  loadNotifications();
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") loadNotifications({ force: true });
+  }, POLL_MS);
+  window.addEventListener("reorbit:session-ended", () => {
+    set({ server: [], loaded: false, page: 0, pages: 1 });
   });
 }
 
-/* ---------- store ---------- */
-
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-
-    if (raw) {
-      const value = JSON.parse(raw);
-      if (Array.isArray(value)) return value;
-    }
-  } catch {
-    /* fall back to the seed */
-  }
-
-  return seed();
-}
-
-let items = load();
-const listeners = new Set();
-
-function commit(next) {
-  items = next;
-
-  try {
-    localStorage.setItem(KEY, JSON.stringify(items));
-  } catch {
-    /* storage full or blocked: the change still lives for this session */
-  }
-
-  listeners.forEach((listener) => listener());
-}
-
-const subscribe = (listener) => {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-};
-
-const getSnapshot = () => items;
+/* ---------- hooks ---------- */
+let liveMessageIds = [];
 
 export function useNotifications() {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const unreadConversations = useUnreadConversations();
   liveMessageIds = unreadConversations.map((conversation) => conversation.id);
 
-  return useMemo(
-    () => {
-      const messageItems = unreadConversations.map((conversation) => {
+  useEffect(() => {
+    start();
+  }, []);
+
+  return useMemo(() => {
+    const hidden = new Set(s.hidden);
+    const serverItems = s.server.filter((n) => !hidden.has(n.id)).map((n) => fromServer(n, s.unreadIds));
+    const messageItems = unreadConversations
+      .filter((conversation) => !hidden.has(`message:${conversation.id}`))
+      .map((conversation) => {
         const last = lastMessage(conversation);
         return {
           id: `message:${conversation.id}`,
@@ -384,139 +198,121 @@ export function useNotifications() {
           image: conversation.image || "",
         };
       });
-      return [...list, ...messageItems].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    },
-    [list, unreadConversations],
-  );
+    return [...serverItems, ...messageItems].sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt)),
+    );
+  }, [s.server, s.hidden, s.unreadIds, unreadConversations]);
 }
 
 export function useUnreadCount() {
-  const list = useSyncExternalStore(subscribe, getSnapshot);
-  const unreadConversations = useUnreadConversations();
+  const list = useNotifications();
+  return useMemo(() => list.filter((item) => !item.read).length, [list]);
+}
 
-  return useMemo(
-    () => list.filter((item) => !item.read).length + unreadConversations.length,
-    [list, unreadConversations],
-  );
+export function useNotificationsStatus() {
+  const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return { loaded: s.loaded, loading: s.loading, error: s.error, hasMore: s.page < s.pages };
 }
 
 /* ---------- actions ---------- */
+const asList = (ids) => (Array.isArray(ids) ? ids : [ids]).map(String);
+const isMessage = (id) => String(id).startsWith("message:");
 
 export function markRead(ids) {
-  const values = Array.isArray(ids) ? ids : [ids];
-  values.filter((id) => String(id).startsWith("message:")).forEach((id) => {
-    markConversationRead(String(id).slice("message:".length)).catch(() => {});
+  const values = asList(ids);
+  values.filter(isMessage).forEach((id) => markConversationRead(id.slice("message:".length)).catch(() => {}));
+  const serverIds = values.filter((id) => !isMessage(id));
+  if (!serverIds.length) return;
+  const unreadIds = state.unreadIds.filter((id) => !serverIds.includes(id));
+  saveUnread(unreadIds);
+  set({
+    unreadIds,
+    server: state.server.map((n) => (serverIds.includes(n.id) ? { ...n, is_read: true } : n)),
   });
-  const set = new Set(Array.isArray(ids) ? ids : [ids]);
-  commit(
-    items.map((item) => (set.has(item.id) ? { ...item, read: true } : item)),
-  );
+  serverIds.forEach((id) => notificationsApi.markRead(id).catch(() => loadNotifications({ force: true })));
 }
 
 export function markUnread(ids) {
-  const values = Array.isArray(ids) ? ids : [ids];
-  values.filter((id) => String(id).startsWith("message:")).forEach((id) => {
-    markConversationUnread(String(id).slice("message:".length)).catch(() => {});
-  });
-  const set = new Set(Array.isArray(ids) ? ids : [ids]);
-  commit(
-    items.map((item) => (set.has(item.id) ? { ...item, read: false } : item)),
-  );
+  const values = asList(ids);
+  values.filter(isMessage).forEach((id) => markConversationUnread(id.slice("message:".length)).catch(() => {}));
+  const serverIds = values.filter((id) => !isMessage(id));
+  if (!serverIds.length) return;
+  const unreadIds = [...new Set([...state.unreadIds, ...serverIds])];
+  saveUnread(unreadIds);
+  set({ unreadIds });
 }
 
 export function markAllRead(category = "all") {
   if (category === "all" || category === "messages") {
     liveMessageIds.forEach((id) => markConversationRead(id).catch(() => {}));
   }
-  commit(
-    items.map((item) =>
-      category === "all" || item.category === category
-        ? { ...item, read: true }
-        : item,
-    ),
-  );
+  if (category === "messages") return;
+  const ids = state.server
+    .filter((n) => category === "all" || categoryOf(n) === category)
+    .map((n) => n.id);
+  const unreadIds = state.unreadIds.filter((id) => !ids.includes(id));
+  saveUnread(unreadIds);
+  set({ unreadIds, server: state.server.map((n) => (ids.includes(n.id) ? { ...n, is_read: true } : n)) });
+  if (category === "all") {
+    notificationsApi.markAllRead().catch(() => loadNotifications({ force: true }));
+  } else {
+    ids.forEach((id) => notificationsApi.markRead(id).catch(() => {}));
+  }
 }
 
-let liveMessageIds = [];
+/* Announcements now arrive as real server notifications, so the layout has nothing to push.
+   Kept as a no-op so older layouts that still call it keep working. */
+export function syncAnnouncements() {}
 
-/* ---------- admin announcements ---------- */
-
-const GONE_KEY = "reorbit_remaker_ann_gone_v1";
-const loadGone = () => {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(GONE_KEY) || "[]"));
-  } catch {
-    return new Set();
-  }
-};
-const saveGone = (set) => {
-  try {
-    localStorage.setItem(GONE_KEY, JSON.stringify([...set]));
-  } catch {
-    /* ignore */
-  }
-};
-
-/* Adds announcements the admin sent to ReMakers (audience everyone or
-   remakers). Ones the ReMaker deleted stay deleted. */
-export function syncAnnouncements(list) {
-  const gone = loadGone();
-  const have = new Set(items.map((item) => item.id));
-  const add = list
-    .filter((a) => !have.has(a.id) && !gone.has(a.id))
-    .map((a) => ({
-      id: a.id,
-      category: "system",
-      title: a.title,
-      text: a.message,
-      createdAt: a.at,
-      read: false,
-      link:
-        a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
-          ? { to: a.link, label: "Open" }
-          : null,
-      image: "",
-    }));
-
-  if (add.length) commit([...items, ...add]);
-}
-
-/* Returns what was removed so the UI can offer Undo */
+/* Hides at once and tells the server after the undo window. Returns what was removed
+   so the UI can offer Undo (restoreNotifications). */
+const pending = new Map();
 export function removeNotifications(ids) {
-  const set = new Set(Array.isArray(ids) ? ids : [ids]);
-  const removed = items.filter((item) => set.has(item.id));
-
-  const annGone = removed.filter((item) => String(item.id).startsWith("ann-"));
-  if (annGone.length) {
-    const gone = loadGone();
-    annGone.forEach((item) => gone.add(item.id));
-    saveGone(gone);
-  }
-
-  if (removed.length) commit(items.filter((item) => !set.has(item.id)));
-
-  return removed;
+  const values = asList(ids);
+  const list = currentList().filter((item) => values.includes(String(item.id)));
+  if (!list.length) return [];
+  set({ hidden: [...new Set([...state.hidden, ...values])] });
+  values.forEach((id) => {
+    if (isMessage(id)) {
+      markConversationRead(id.slice("message:".length)).catch(() => {});
+      return;
+    }
+    clearTimeout(pending.get(id));
+    pending.set(
+      id,
+      setTimeout(() => {
+        pending.delete(id);
+        notificationsApi
+          .dismiss(id)
+          .then(() => set({ server: state.server.filter((n) => n.id !== id), hidden: state.hidden.filter((h) => h !== id) }))
+          .catch(() => set({ hidden: state.hidden.filter((h) => h !== id) }));
+      }, UNDO_MS),
+    );
+  });
+  return list;
 }
 
 export function restoreNotifications(list) {
-  const existing = new Set(items.map((item) => item.id));
-  const back = list.filter((item) => !existing.has(item.id));
-  const gone = loadGone();
-  let changed = false;
-  back.forEach((item) => {
-    if (gone.delete(item.id)) changed = true;
+  const ids = (list || []).map((item) => String(item.id));
+  ids.forEach((id) => {
+    clearTimeout(pending.get(id));
+    pending.delete(id);
   });
-  if (changed) saveGone(gone);
+  set({ hidden: state.hidden.filter((id) => !ids.includes(id)) });
+}
 
-  if (back.length) commit([...items, ...back]);
+/* Builds the current list outside React (used by removeNotifications for Undo). */
+function currentList() {
+  const hidden = new Set(state.hidden);
+  return state.server.filter((n) => !hidden.has(n.id)).map((n) => fromServer(n, state.unreadIds))
+    .concat(liveMessageIds.map((id) => ({ id: `message:${id}`, category: "messages" })));
 }
 
 export function resetNotifications() {
-  commit(seed());
+  loadNotifications({ force: true });
 }
 
 /* ---------- display helpers ---------- */
-
 export function categoryLabel(key) {
   return CATEGORIES.find((item) => item.key === key)?.label || key;
 }
@@ -534,10 +330,7 @@ export function timeLabel(iso) {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} ${days === 1 ? "day" : "days"} ago`;
 
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-  });
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
 /* Group a sorted list into Today / Yesterday / This week / Earlier */
@@ -556,7 +349,6 @@ export function groupByDay(list) {
 
   list.forEach((item) => {
     const time = new Date(item.createdAt).getTime();
-
     if (time >= today) groups[0].items.push(item);
     else if (time >= today - day) groups[1].items.push(item);
     else if (time >= today - 6 * day) groups[2].items.push(item);

@@ -32,6 +32,7 @@ from django.utils import timezone
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
+from apps.core.pricing import maintenance_block_reason
 from apps.accounts.permissions import HasAdminModule, IsReOrbitUser
 from apps.core.gujarat import canonical_city
 from apps.core.images import delete_file, process_image
@@ -133,7 +134,8 @@ def clean_listing(data, *, existing=None):
 
     if "quantity" in data:
         try:
-            q = int(data.get("quantity") or 1)
+            raw_q = data.get("quantity")
+            q = 1 if raw_q in (None, "") else int(raw_q)  # a typed 0 must be refused, not turned into 1
         except (TypeError, ValueError):
             q = 0
         if not 1 <= q <= 999:
@@ -402,6 +404,9 @@ class MyPublishView(MyBase):
         item = self.mine(request, public_id)
         if item.item_status == Item.Status.LISTED:
             return self.show(request, item, "Already live.")
+        reason = maintenance_block_reason()
+        if reason:
+            return fail(reason, status=503, code="MAINTENANCE")
         if item.item_status not in (Item.Status.DRAFT, Item.Status.WITHDRAWN):
             return fail(f"A {item.item_status.lower()} listing can't be published.", status=409)
         if item.moderation_status == Item.Moderation.DISABLED:
@@ -427,6 +432,9 @@ class MyPublishView(MyBase):
               before=before, after=_snapshot(item), ip=IP(request))
         from apps.pickups import services as pickups  # imported here: pickups imports listings' models
         pickups.request_for_item(item)
+        from apps.rewards import services as rewards  # local import: rewards reads listings lazily too
+
+        rewards.on_listing_published(user, item)  # once per listing (re-publishing earns nothing more)
         return self.show(request, item, "Your listing is live.")
 
 

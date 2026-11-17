@@ -96,8 +96,10 @@ function StarInput({ value, onChange, label, big = false }) {
 function ReviewModal({ entry, start, options, onClose, onChanged }) {
   const pr = entry.product_review;
   const sr = entry.seller_review;
-  const twoSteps = entry.can_review_seller;
-  const [step, setStep] = useState(start === "seller" && twoSteps ? 2 : 1);
+  /* Product and seller reviews are written separately (each from its own tab), so the dialog
+     shows one of them: step 1 is the product, step 2 the seller. */
+  const twoSteps = false;
+  const [step, setStep] = useState(start === "seller" && entry.can_review_seller ? 2 : 1);
   const [productDone, setProductDone] = useState(!!pr);
 
   const [p, setP] = useState({
@@ -271,11 +273,13 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
             </>
           )}
         </p>
-        <div className="rv-steps" aria-hidden="true">
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={i < step ? "on" : ""} />
-          ))}
-        </div>
+        {total > 1 && (
+          <div className="rv-steps" aria-hidden="true">
+            {Array.from({ length: total }, (_, i) => (
+              <span key={i} className={i < step ? "on" : ""} />
+            ))}
+          </div>
+        )}
 
         {error && (
           <p className="rv-error" role="alert">
@@ -388,7 +392,7 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
           </div>
         ) : (
           <div className="rv-form">
-            <h4>2 · The seller</h4>
+            <h4>The seller</h4>
             <StarInput
               big
               label="Seller rating"
@@ -443,24 +447,10 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
 
         <footer>
           <span className="rv-step-label">
-            Step {step} of {total}
+            {total > 1 ? `Step ${step} of ${total}` : step === 1 ? "Product review" : "Seller review"}
           </span>
           <span className="rv-footbtns">
-            {step === 2 && (
-              <button
-                type="button"
-                className="rv-btn ghost"
-                disabled={busy}
-                onClick={
-                  productDone
-                    ? () => onChanged("Thanks, your review is saved.")
-                    : () => setStep(1)
-                }
-              >
-                {productDone ? "Skip seller" : "Back"}
-              </button>
-            )}
-            {step === 1 && (
+            {(
               <button
                 type="button"
                 className="rv-btn ghost"
@@ -499,7 +489,7 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
                 ) : sr ? (
                   "Save changes"
                 ) : (
-                  "Submit reviews"
+                  "Submit review"
                 )}
               </button>
             )}
@@ -513,44 +503,10 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
 /* ------------------------------------------------------------------- tile */
 const stillEditable = (r) => r && new Date(r.edit_until) > new Date();
 
-function Tile({ entry, orderPath, onOpen }) {
+function ProductTile({ entry, orderPath, onOpen }) {
   const pr = entry.product_review;
-  const sr = entry.seller_review;
   const sellerKind = entry.seller.type;
-  const canEditProduct = !pr || (stillEditable(pr) && pr.status !== "Hidden");
-  const canEditSeller = !sr || (stillEditable(sr) && sr.status !== "Hidden");
-
-  let action = null;
-  if (!pr)
-    action = (
-      <button
-        type="button"
-        className="rv-btn"
-        onClick={() => onOpen(entry, "product")}
-      >
-        Write review
-      </button>
-    );
-  else if (entry.can_review_seller && !sr)
-    action = (
-      <button
-        type="button"
-        className="rv-btn ghost"
-        onClick={() => onOpen(entry, "seller")}
-      >
-        Rate seller
-      </button>
-    );
-  else if (canEditProduct || (sr && canEditSeller))
-    action = (
-      <button
-        type="button"
-        className="rv-btn ghost"
-        onClick={() => onOpen(entry, "product")}
-      >
-        Edit review
-      </button>
-    );
+  const canEdit = !pr || (stillEditable(pr) && pr.status !== "Hidden");
 
   return (
     <article className="rv-tile">
@@ -569,54 +525,95 @@ function Tile({ entry, orderPath, onOpen }) {
         </h3>
         <p className="rv-seller">
           <Store size={13} />{" "}
-          {sellerKind === "platform" ? (
-            "Sold by ReOrbit"
-          ) : (
-            <>
-              {entry.seller.name} · {SELLER_KIND[sellerKind]}
-            </>
-          )}
+          {sellerKind === "platform" ? "Sold by ReOrbit" : <>{entry.seller.name} · {SELLER_KIND[sellerKind]}</>}
         </p>
 
         <div className="rv-mini">
           <div>
-            <small>Product</small>
+            <small>Your rating</small>
             <Stars value={pr?.rating || 0} size={16} />
-          </div>
-          <div>
-            <small>Seller</small>
-            {entry.can_review_seller ? (
-              <Stars value={sr?.rating || 0} size={16} />
-            ) : (
-              <span className="rv-na">Not reviewable</span>
-            )}
           </div>
         </div>
 
-        {(pr?.status === "Hidden" || sr?.status === "Hidden") && (
-          <p className="rv-na">
-            ReOrbit hid {pr?.status === "Hidden" ? "your product review" : "your seller review"}:{" "}
-            {(pr?.status === "Hidden" ? pr : sr).hidden_reason || "it broke our review rules."}
-          </p>
+        {pr?.status === "Hidden" && (
+          <p className="rv-na">ReOrbit hid this review: {pr.hidden_reason || "it broke our review rules."}</p>
         )}
+        {pr?.title && <p className="rv-quote"><b>{pr.title}</b></p>}
         {pr?.body && <p className="rv-quote">“{pr.body}”</p>}
         {pr?.reply && (
           <p className="rv-reply">
             <MessageSquareQuote size={13} /> <b>Seller reply:</b> {pr.reply}
           </p>
         )}
+        {pr && !canEdit && <p className="rv-na">Reviews are locked after 30 days.</p>}
+
+        <div className="rv-actions">
+          {(!pr || canEdit) && (
+            <button type="button" className={`rv-btn ${pr ? "ghost" : ""}`} onClick={() => onOpen(entry, "product")}>
+              {pr ? "Edit review" : "Write review"}
+            </button>
+          )}
+          <Link to={orderPath(entry.order_id)} className="rv-link">
+            View order
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* One card per order: the seller's service (packing, dispatch, communication) is rated once per order. */
+function SellerTile({ group, orderPath, onOpen }) {
+  const entry = group.entries[0];
+  const sr = entry.seller_review;
+  const canEdit = !sr || (stillEditable(sr) && sr.status !== "Hidden");
+  const name = entry.seller.name || "Seller";
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+
+  return (
+    <article className="rv-tile rv-tile-seller">
+      <div className="rv-photo rv-photo-seller">
+        <span className="rv-seller-avatar" aria-hidden="true">{initials}</span>
+        <span className="rv-badge">Order {entry.order_id}</span>
+      </div>
+      <div className="rv-in">
+        <h3>{name}</h3>
+        <p className="rv-seller">
+          <Store size={13} /> {SELLER_KIND[entry.seller.type]} · delivered {day(entry.delivered_at)}
+        </p>
+        <p className="rv-items">
+          {group.entries.map((e) => e.item.title).join(" · ")}
+        </p>
+
+        <div className="rv-mini">
+          <div>
+            <small>Seller rating</small>
+            <Stars value={sr?.rating || 0} size={16} />
+          </div>
+        </div>
+
+        {sr?.status === "Hidden" && (
+          <p className="rv-na">ReOrbit hid this review: {sr.hidden_reason || "it broke our review rules."}</p>
+        )}
+        {sr?.body && <p className="rv-quote">“{sr.body}”</p>}
         {sr?.reply && (
           <p className="rv-reply">
             <MessageSquareQuote size={13} /> <b>Seller reply:</b> {sr.reply}
           </p>
         )}
-        {pr &&
-          !canEditProduct &&
-          (!entry.can_review_seller || !sr || !canEditSeller) &&
-          !action && <p className="rv-na">Reviews are locked after 30 days.</p>}
+        {sr && !canEdit && <p className="rv-na">Reviews are locked after 30 days.</p>}
 
         <div className="rv-actions">
-          {action}
+          {(!sr || canEdit) && (
+            <button type="button" className={`rv-btn ${sr ? "ghost" : ""}`} onClick={() => onOpen(entry, "seller")}>
+              {sr ? "Edit seller review" : "Rate seller"}
+            </button>
+          )}
           <Link to={orderPath(entry.order_id)} className="rv-link">
             View order
           </Link>
@@ -631,6 +628,10 @@ const FILTERS = [
   ["waiting", "Waiting for review"],
   ["done", "Reviewed"],
   ["all", "All"],
+];
+const KINDS = [
+  ["product", "Product reviews"],
+  ["seller", "Seller reviews"],
 ];
 
 export default function MyReviews({
@@ -649,6 +650,9 @@ export default function MyReviews({
     new URLSearchParams(window.location.search).get("q") || "",
   ).current;
   const [filter, setFilter] = useState(startText ? "all" : "waiting");
+  const [kind, setKind] = useState(
+    new URLSearchParams(window.location.search).get("kind") === "seller" ? "seller" : "product",
+  );
   const [text, setText] = useState(startText);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
@@ -670,7 +674,7 @@ export default function MyReviews({
       });
       if (first.current) {
         first.current = false;
-        if (d.counts.waiting === 0 && d.counts.done > 0) setFilter("done");
+        if (!d.results.some((r) => !r.product_review) && d.results.length) setFilter("done");
       }
     } catch (e) {
       setState((s) => ({
@@ -689,11 +693,51 @@ export default function MyReviews({
     return () => clearTimeout(t);
   }, [toast]);
 
+  /* Seller reviews are one per order: group the delivered lines by order. */
+  const sellerGroups = useMemo(() => {
+    const by = new Map();
+    state.rows.forEach((r) => {
+      if (!r.can_review_seller) return;
+      if (!by.has(r.order_id)) by.set(r.order_id, { order_id: r.order_id, entries: [] });
+      by.get(r.order_id).entries.push(r);
+    });
+    return [...by.values()];
+  }, [state.rows]);
+
+  const counts = useMemo(
+    () => ({
+      product: {
+        waiting: state.rows.filter((r) => !r.product_review).length,
+        done: state.rows.filter((r) => r.product_review).length,
+        all: state.rows.length,
+      },
+      seller: {
+        waiting: sellerGroups.filter((g) => !g.entries[0].seller_review).length,
+        done: sellerGroups.filter((g) => g.entries[0].seller_review).length,
+        all: sellerGroups.length,
+      },
+    }),
+    [state.rows, sellerGroups],
+  );
+
   const rows = useMemo(() => {
     const q = text.trim().toLowerCase();
+    if (kind === "seller") {
+      return sellerGroups.filter((g) => {
+        const done = !!g.entries[0].seller_review;
+        if (filter === "waiting" && done) return false;
+        if (filter === "done" && !done) return false;
+        return (
+          !q ||
+          g.order_id.toLowerCase().includes(q) ||
+          g.entries[0].seller.name.toLowerCase().includes(q) ||
+          g.entries.some((e) => e.item.title.toLowerCase().includes(q))
+        );
+      });
+    }
     return state.rows.filter((r) => {
-      if (filter === "waiting" && r.complete) return false;
-      if (filter === "done" && !r.complete) return false;
+      if (filter === "waiting" && r.product_review) return false;
+      if (filter === "done" && !r.product_review) return false;
       return (
         !q ||
         r.item.title.toLowerCase().includes(q) ||
@@ -701,7 +745,7 @@ export default function MyReviews({
         r.seller.name.toLowerCase().includes(q)
       );
     });
-  }, [state.rows, filter, text]);
+  }, [state.rows, sellerGroups, kind, filter, text]);
 
   const rated = state.rows
     .filter((r) => r.product_review)
@@ -745,6 +789,22 @@ export default function MyReviews({
         </p>
       )}
 
+      <div className="rv-kinds" role="tablist" aria-label="Review type">
+        {KINDS.map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={kind === k}
+            className={kind === k ? "on" : ""}
+            onClick={() => setKind(k)}
+          >
+            {label}
+            {counts[k].waiting > 0 && <em>{counts[k].waiting} to write</em>}
+          </button>
+        ))}
+      </div>
+
       <div className="rv-tools">
         <div className="rv-pills" role="tablist" aria-label="Filter reviews">
           {FILTERS.map(([k, label]) => (
@@ -757,11 +817,7 @@ export default function MyReviews({
               onClick={() => setFilter(k)}
             >
               {label}
-              {k !== "all" ? (
-                <em>{state.counts[k]}</em>
-              ) : (
-                <em>{state.rows.length}</em>
-              )}
+              <em>{counts[kind][k]}</em>
             </button>
           ))}
         </div>
@@ -771,7 +827,7 @@ export default function MyReviews({
             type="search"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Search product, seller or order"
+            placeholder={kind === "seller" ? "Search seller, product or order" : "Search product, seller or order"}
             aria-label="Search reviews"
           />
         </label>
@@ -802,24 +858,37 @@ export default function MyReviews({
               ? "Nothing to review yet"
               : filter === "waiting"
                 ? "You're all caught up"
-                : "No reviews match"}
+                : kind === "seller" && sellerGroups.length === 0
+                  ? "No sellers to rate"
+                  : "No reviews match"}
           </strong>
           <span>
             {state.rows.length === 0
               ? "Once an order is delivered, you can review the product and its seller here."
-              : "Try another filter or search."}
+              : kind === "seller" && sellerGroups.length === 0
+                ? "Items ReOrbit sold itself have no separate seller review."
+                : "Try another filter or search."}
           </span>
         </div>
       ) : (
         <div className="rv-grid">
-          {rows.map((r) => (
-            <Tile
-              key={`${r.order_id}-${r.line_id}`}
-              entry={r}
-              orderPath={orderPath}
-              onOpen={(entry, start) => setModal({ entry, start })}
-            />
-          ))}
+          {kind === "seller"
+            ? rows.map((g) => (
+                <SellerTile
+                  key={g.order_id}
+                  group={g}
+                  orderPath={orderPath}
+                  onOpen={(entry, start) => setModal({ entry, start })}
+                />
+              ))
+            : rows.map((r) => (
+                <ProductTile
+                  key={`${r.order_id}-${r.line_id}`}
+                  entry={r}
+                  orderPath={orderPath}
+                  onOpen={(entry, start) => setModal({ entry, start })}
+                />
+              ))}
         </div>
       )}
 

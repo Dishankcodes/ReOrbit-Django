@@ -14,7 +14,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import ConfirmActionModal from "../../../components/ui/ConfirmActionModal";
 
-import { updateRemakerProduct } from "../../../data/remakersStore";
+import { disableProduct as disableOnServer } from "../../../data/realAccounts";
 import { formatDate, formatINR } from "../../../utils/format";
 
 const DISABLE_ACTION = {
@@ -63,18 +63,7 @@ export default function ProductsTab({ remaker, toast }) {
       return;
     }
 
-    const saved = updateRemakerProduct(remaker.remaker_id, pricing.product_id, {
-      suggested_price: price,
-      suggested_price_message: priceMessage.trim(),
-      suggested_price_at: new Date().toISOString(),
-    });
-
-    if (!saved) {
-      notify("Could not find this product. Please refresh and try again.");
-      return;
-    }
-
-    notify(`Suggested price saved for "${pricing.title}".`);
+    notify("Price suggestions are available for member listings only.");
     setPricing(null);
   };
 
@@ -88,22 +77,11 @@ export default function ProductsTab({ remaker, toast }) {
       return;
     }
 
-    const saved = updateRemakerProduct(
-      remaker.remaker_id,
-      disabling.product_id,
-      {
-        is_disabled: true,
-        disabled_reason: cleanReason,
-        disabled_at: new Date().toISOString(),
-      },
-    );
+    const target = disabling;
+    disableOnServer(remaker.remaker_id, target.product_id, cleanReason)
+      .then(() => notify(`"${target.title}" has been disabled.`))
+      .catch((e) => notify(e.message || "Could not disable this product."));
 
-    if (!saved) {
-      notify("Could not find this product. Please refresh and try again.");
-      return;
-    }
-
-    notify(`"${disabling.title}" has been disabled.`);
     setDisabling(null);
   };
 
@@ -227,16 +205,6 @@ export default function ProductsTab({ remaker, toast }) {
                       </>
                     )}
 
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="au-menu-item"
-                      style={{ width: "100%" }}
-                      onClick={() => openPriceForm(product)}
-                    >
-                      <Tag size={15} />
-                      Suggest a new price
-                    </button>
                   </div>
                 )}
               </div>

@@ -272,9 +272,9 @@ class ReviewFlowTests(ReviewBase):
     def test_admin_queue_uphold_and_dismiss(self):
         self.reviewed(self.table, seller=False)
         oid2, ref2 = self.delivered(self.table)
-        self.rate_product(oid2, ref2, rating=1, body="Awful.")
+        b = self.rate_product(oid2, ref2, rating=1, body="Awful.").data["data"]["review"]["id"]
         rows = self.received(self.maker)
-        a, b = rows[0]["id"], rows[1]["id"]
+        a = next(r["id"] for r in rows if r["id"] != b)  # the list is newest first, so pick by id
         for rid in (a, b):
             self.post(f"/api/reviews/{rid}/report/", {"reason": "Looks fake or paid for"}, as_=self.maker)
         q = self.get("/api/reviews/admin/?reported=1", as_=self.viewer).data["data"]

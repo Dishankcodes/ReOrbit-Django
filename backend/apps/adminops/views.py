@@ -97,13 +97,18 @@ def _people():
 
 
 def _products():
-    live = (Item.objects.filter(status="Listed").count() + RemakerProduct.objects.filter(status="Listed").count()
-            + AdminItem.objects.filter(status="Listed").count())
-    not_draft = (Item.objects.exclude(status="Draft").count() + RemakerProduct.objects.exclude(status="Draft").count()
-                 + AdminItem.objects.exclude(status="Draft").count())
+    # A member listing keeps its lifecycle in `item_status`; ReMaker and ReOrbit products use `status`.
+    status_field = {Item: "item_status", RemakerProduct: "status", AdminItem: "status"}
+
+    def where(model, value):
+        return {status_field[model]: value}
+
+    models = (Item, RemakerProduct, AdminItem)
+    live = sum(m.objects.filter(**where(m, "Listed")).count() for m in models)
+    not_draft = sum(m.objects.exclude(**where(m, "Draft")).count() for m in models)
     by_category = {}
-    for model in (Item, RemakerProduct, AdminItem):
-        for r in model.objects.filter(status="Listed").values("category__name").annotate(n=Count("pk")):
+    for model in models:
+        for r in model.objects.filter(**where(model, "Listed")).values("category__name").annotate(n=Count("pk")):
             by_category[r["category__name"]] = by_category.get(r["category__name"], 0) + r["n"]
     return {"live": live, "off_market": max(0, not_draft - live), "by_category": by_category}
 

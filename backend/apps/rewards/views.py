@@ -1,177 +1,298 @@
 """Rewards API (mounted at /api/rewards/).
 
 Member
-  GET  me/vouchers/   the signed-in member's vouchers (donation-earned and points-redeemed):
-                      {vouchers: [...], ready: n}
-  GET  me/summary/    points balance, level and the stats the badges are built from
-  GET  me/ledger/     paginated history of every points change (?page=&page_size=)
-  GET  me/rules/      {rules: [...]} how points are earned
-  GET  me/offers/     {offers: [...]} what points can be redeemed for, with this member's
-                      eligibility already worked out (claimed_by_me, can_redeem, reason)
-
-Redeeming an offer, and the admin screens for rules/offers/redemptions/adjustments, are not
-built yet — see the handover notes.
+  GET  me/summary/             balance, level, progress, stats for badges
+  GET  me/ledger/              points history (paged)
+  GET  me/rules/               what each action earns
+  GET  me/offers/              rewards to spend points on and public coupons
+  POST me/offers/<id>/redeem/  spend points, get a voucher
+  GET  me/vouchers/            vouchers I hold
+Admin (module "rewards")
+  GET  admin/rules/   PATCH admin/rules/<key>/  {points, active}
+  GET/POST admin/offers/   GET/PATCH/DELETE admin/offers/<id>/
+  GET  admin/redemptions/  POST admin/redemptions/<voucher>/cancel/
+  GET  admin/users/        POST admin/users/<id>/adjust/   GET admin/users/<id>/ledger/
+  GET  admin/donation-rewards/   POST admin/donation-rewards/<donation>/revoke|restore/
 """
 
-from datetime import date
-
-from django.db.models import Sum
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import Coalesce
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsReOrbitUser
+from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitUser
 from apps.core.pagination import StandardPagination
-from apps.core.responses import ok
+from apps.core.responses import created, fail, ok
+from apps.core.services import audit
 
+from . import services
 from .models import PointsEntry, RewardOffer, RewardRule, Voucher
-from .services import voucher_data
 
-# Mirrors frontend/src/user/data/rewardsStore.js's LEVELS thresholds. Keep the two in sync.
-LEVEL_THRESHOLDS = (0, 500, 1500, 3000, 5000)
+IP = lambda r: r.META.get("REMOTE_ADDR")  # noqa: E731
 
 
-def level_info(lifetime):
-    """(level_index, progress 0..1, points to the next level, or 0 at the top level)."""
-    li = 0
-    for i, t in enumerate(LEVEL_THRESHOLDS):
-        if lifetime >= t:
-            li = i
-    if li + 1 >= len(LEVEL_THRESHOLDS):
-        return li, 1.0, 0
-    lo, hi = LEVEL_THRESHOLDS[li], LEVEL_THRESHOLDS[li + 1]
-    return li, round((lifetime - lo) / (hi - lo), 4), max(0, hi - lifetime)
+def _err(e):
+    return fail(e.message, errors=e.errors, status=e.status, code=e.code)
 
 
-class MyVouchers(APIView):
-    permission_classes = [IsReOrbitUser]  # vouchers belong to member accounts
-
-    def get(self, request):
-        rows = list(Voucher.objects.filter(owner=request.user.account))
-        data = [voucher_data(v) for v in rows]
-        return ok({"vouchers": data, "ready": sum(1 for v in data if v["status"] == "Active")})
-
-
+# --------------------------------------------------------------------------- member
 class MySummary(APIView):
     permission_classes = [IsReOrbitUser]
 
     def get(self, request):
-        from apps.donations.models import Donation
-        from apps.orders.models import Order, OrderItem
-        from apps.reviews.models import ProductReview
-        from apps.listings.models import Item
-        from apps.social.models import WishlistEntry
-
-        user = request.user.account
-        entries = PointsEntry.objects.filter(user=user)
-        lifetime = entries.filter(points__gt=0).aggregate(s=Sum("points"))["s"] or 0
-        balance = entries.aggregate(s=Sum("points"))["s"] or 0
-        li, progress, to_next = level_info(lifetime)
-
-        delivered = Order.objects.filter(buyer_user=user, status=Order.Status.DELIVERED)
-        bought_items = OrderItem.objects.filter(order__in=delivered).aggregate(s=Sum("qty"))["s"] or 0
-        completed_donations = Donation.objects.filter(donor=user, status=Donation.Status.COMPLETED)
-        donated_items = sum(d.effective_quantity for d in completed_donations)
-        vouchers_ready = Voucher.objects.filter(owner=user, status=Voucher.Status.ACTIVE,
-                                                expires_at__gt=timezone.now()).count()
-
-        stats = {
-            "delivered_orders": delivered.count(),
-            "bought_items": bought_items,
-            "donations_completed": completed_donations.count(),
-            "donated_items": donated_items,
-            "reviews": ProductReview.objects.filter(reviewer_user=user).count(),
-            "listed": Item.objects.filter(user=user).count(),
-            "sold": Item.objects.filter(user=user, status=Item.Status.SOLD).count(),
-            "wishlist": WishlistEntry.objects.filter(user=user).count(),
-        }
-        return ok({
-            "balance": balance, "lifetime": lifetime, "level_index": li, "progress": progress,
-            "to_next": to_next, "vouchers_ready": vouchers_ready, "stats": stats,
-        })
+        return ok(services.summary(request.user.account))
 
 
 class MyLedger(APIView):
     permission_classes = [IsReOrbitUser]
-    pagination_class = StandardPagination
 
     def get(self, request):
-        rows = PointsEntry.objects.filter(user=request.user.account).order_by("-created_at", "-pk")
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(rows, request, view=self)
-        data = [{
-            "id": e.pk, "kind": e.kind, "title": e.title, "detail": e.detail, "points": e.points,
-            "at": e.created_at, "ref": {"type": e.ref_type, "id": e.ref_id} if e.ref_type else None,
-        } for e in page]
-        return paginator.get_paginated_response(data)
+        pager = StandardPagination()
+        page = pager.paginate_queryset(PointsEntry.objects.filter(user=request.user.account), request)
+        return pager.get_paginated_response([services.entry_data(e) for e in page])
 
 
 class MyRules(APIView):
     permission_classes = [IsReOrbitUser]
 
     def get(self, request):
-        rows = RewardRule.objects.filter(active=True)
-        return ok({"rules": [{
-            "id": r.key, "group": r.group, "title": r.title, "description": r.description,
-            "points": r.points, "unit": r.unit, "active": r.active, "live": True,
-        } for r in rows]})
-
-
-def _offer_status(o, today):
-    if o.draft:
-        return "Draft"
-    if o.paused:
-        return "Paused"
-    if today < o.valid_from or today > o.valid_to:
-        return "Expired"
-    return None  # decided against redemption counts by the caller (needs a query)
+        return ok({"rules": [services.rule_data(r) for r in RewardRule.objects.all()]})
 
 
 class MyOffers(APIView):
     permission_classes = [IsReOrbitUser]
 
     def get(self, request):
-        from apps.orders.models import Order  # local: orders doesn't need to import rewards
+        return ok({"offers": services.member_offers(request.user.account)})
 
-        user = request.user.account
-        today = date.today()
-        offers = list(RewardOffer.objects.all())
-        balance = PointsEntry.objects.filter(user=user).aggregate(s=Sum("points"))["s"] or 0
-        li, _, _ = level_info(
-            PointsEntry.objects.filter(user=user, points__gt=0).aggregate(s=Sum("points"))["s"] or 0
+
+class MyRedeem(APIView):
+    permission_classes = [IsReOrbitUser]
+
+    def post(self, request, offer_id):
+        try:
+            v = services.redeem(request.user.account, offer_id)
+        except services.RewardError as e:
+            return _err(e)
+        return created({"voucher": services.voucher_data(v), "balance": services.totals(request.user.account)[0]}, "Reward redeemed.")
+
+
+class MyVouchers(APIView):
+    """GET /api/rewards/me/vouchers/  the member's vouchers, ready ones first (cancelled ones hidden)."""
+    permission_classes = [IsReOrbitUser]
+
+    def get(self, request):
+        qs = Voucher.objects.filter(owner=request.user.account).exclude(status=Voucher.Status.VOID).select_related("offer")
+        rows = [services.voucher_data(v) for v in qs]
+        order = {"Active": 0, "Used": 1, "Expired": 2}
+        rows.sort(key=lambda r: order.get(r["status"], 3))
+        return ok({"vouchers": rows, "ready": sum(1 for r in rows if r["status"] == "Active")})
+
+
+# --------------------------------------------------------------------------- admin
+class _Admin(APIView):
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("rewards")]
+
+
+class AdminRules(_Admin):
+    def get(self, request):
+        return ok({"rules": [services.rule_data(r) for r in RewardRule.objects.all()]})
+
+
+class AdminRule(_Admin):
+    def patch(self, request, key):
+        rule = get_object_or_404(RewardRule, key=key)
+        before = {"points": rule.points, "active": rule.active}
+        try:
+            services.save_rule(rule, request.data, request.user.account)
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.rule", "reward_rule", rule.key, before=before,
+              after={"points": rule.points, "active": rule.active}, ip=IP(request))
+        return ok({"rule": services.rule_data(rule)}, "Rule saved.")
+
+
+class AdminOffers(_Admin):
+    def get(self, request):
+        rows = RewardOffer.objects.annotate(used_n=Count("vouchers", filter=~Q(vouchers__status=Voucher.Status.VOID)))
+        return ok({"offers": [services.offer_data(o, o.used_n) for o in rows]})
+
+    def post(self, request):
+        try:
+            o = services.save_offer(request.data, request.user.account)
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.offer.create", "reward_offer", o.public_id, after={"code": o.code}, ip=IP(request))
+        return created({"offer": services.offer_data(o)}, "Voucher created.")
+
+
+class AdminOffer(_Admin):
+    def get(self, request, public_id):
+        return ok({"offer": services.offer_data(get_object_or_404(RewardOffer, public_id=public_id))})
+
+    def patch(self, request, public_id):
+        o = get_object_or_404(RewardOffer, public_id=public_id)
+        merged = {**services.offer_data(o), **request.data}  # a PATCH may send just {paused: true}
+        try:
+            services.save_offer(merged, request.user.account, offer=o)
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.offer.update", "reward_offer", o.public_id, after={"code": o.code, "paused": o.paused, "draft": o.draft}, ip=IP(request))
+        return ok({"offer": services.offer_data(o)}, "Voucher saved.")
+
+    def delete(self, request, public_id):
+        o = get_object_or_404(RewardOffer, public_id=public_id)
+        try:
+            services.delete_offer(o)
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.offer.delete", "reward_offer", public_id, ip=IP(request))
+        return ok({}, "Voucher deleted.")
+
+
+def _owner(v):
+    u = v.owner
+    return {"id": u.public_id, "name": u.full_name, "email": u.email, "status": u.status, "path": f"/admin-users/{u.public_id}"}
+
+
+class AdminRedemptions(_Admin):
+    """Vouchers members bought with points."""
+
+    def get(self, request):
+        qs = Voucher.objects.filter(source_type="points").select_related("owner", "offer")
+        st = request.query_params.get("status")
+        if st in ("Active", "Used", "Void"):
+            qs = qs.filter(status=st)
+        elif st == "Expired":
+            qs = qs.filter(status="Active", expires_at__lte=timezone.now())
+        q = (request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(Q(code__icontains=q) | Q(title__icontains=q) | Q(owner__full_name__icontains=q) | Q(owner__email__icontains=q))
+        pager = StandardPagination()
+        page = pager.paginate_queryset(qs, request)
+        rows = [{**services.voucher_data(v), "owner": _owner(v), "offer": v.offer.public_id if v.offer_id else None} for v in page]
+        return pager.get_paginated_response(rows)
+
+
+class AdminRedemptionCancel(_Admin):
+    def post(self, request, public_id):
+        v = get_object_or_404(Voucher, public_id=public_id)
+        try:
+            services.cancel_redemption(v, request.user.account, request.data.get("reason"))
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.redemption.cancel", "voucher", v.public_id, reason=str(request.data.get("reason") or "")[:255], ip=IP(request))
+        v.refresh_from_db()
+        return ok({"voucher": services.voucher_data(v)}, "Voucher cancelled and points returned.")
+
+
+class AdminUsers(_Admin):
+    """Members and their points, biggest first."""
+
+    def get(self, request):
+        from apps.users.models import Users
+
+        qs = Users.objects.exclude(status="Deleted").annotate(
+            balance=Coalesce(Sum("points__points"), 0),
+            lifetime=Coalesce(Sum("points__points", filter=Q(points__kind__in=services.LIFETIME_KINDS) | Q(points__kind="adjust", points__points__gt=0)), 0),
         )
-
-        data = []
-        for o in offers:
-            total_redeemed = Voucher.objects.filter(offer=o).count()
-            my_redeemed = Voucher.objects.filter(offer=o, owner=user).count()
-            left = max(0, o.usage_limit - total_redeemed)
-            status = _offer_status(o, today) or ("Used_Up" if left <= 0 else "Active")
-            claimed_by_me = my_redeemed >= o.per_user
-
-            reason = None
-            can_redeem = True
-            if o.remaker_only:
-                can_redeem, reason = False, "This reward is for ReMakers."
-            elif status != "Active":
-                can_redeem, reason = False, {"Draft": "Not yet available.", "Paused": "Currently paused.",
-                                             "Expired": "No longer available.", "Used_Up": "Fully claimed."}[status]
-            elif claimed_by_me:
-                can_redeem, reason = False, "You've already claimed this."
-            elif o.audience == "new" and Order.objects.filter(
-                buyer_user=user, status__in=("Delivered", "Confirmed", "Packed", "Shipped")
-            ).exists():
-                can_redeem, reason = False, "For new members only."
-            elif li < o.min_level:
-                can_redeem, reason = False, "Reach a higher level to unlock this."
-            elif balance < o.points_cost:
-                can_redeem, reason = False, "Not enough Orbit Points yet."
-
-            data.append({
-                "id": o.public_id, "code": o.code, "title": o.title, "description": o.description,
-                "kind": o.kind, "discount_type": o.discount_type, "value": o.value, "min_order": o.min_order,
-                "max_discount": o.max_discount, "points_cost": o.points_cost, "left": left,
-                "valid_to": o.valid_to.isoformat(), "per_user": o.per_user, "audience": o.audience,
-                "min_level": o.min_level, "remaker_only": o.remaker_only, "paused": o.paused,
-                "status": status, "claimed_by_me": claimed_by_me, "can_redeem": can_redeem, "reason": reason,
+        q = (request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(Q(full_name__icontains=q) | Q(email__icontains=q) | Q(public_id__icontains=q))
+        qs = qs.order_by("-lifetime", "pk")
+        pager = StandardPagination()
+        page = pager.paginate_queryset(qs, request)
+        ids = [u.pk for u in page]
+        kinds = {}
+        for r in PointsEntry.objects.filter(user_id__in=ids).values("user_id", "kind").annotate(n=Sum("points")):
+            kinds.setdefault(r["user_id"], {})[r["kind"]] = r["n"]
+        rows = []
+        for u in page:
+            k = kinds.get(u.pk, {})
+            lifetime = max(0, u.lifetime)
+            rows.append({
+                "id": u.public_id, "name": u.full_name, "email": u.email, "status": u.status, "path": f"/admin-users/{u.public_id}",
+                "balance": u.balance, "lifetime": lifetime, "level": services.level_data(services.level_index(lifetime)),
+                "by_kind": k, "purchases": k.get("purchase", 0) + k.get("firstOrder", 0) + k.get("reversal", 0),
+                "reviews": k.get("review", 0), "listings": k.get("listing", 0), "donated": k.get("donation", 0) + k.get("revoke", 0),
+                "spent": -k.get("spend", 0),
             })
-        return ok({"offers": data})
+        return pager.get_paginated_response(rows)
+
+
+class AdminUserAdjust(_Admin):
+    def post(self, request, public_id):
+        from apps.users.models import Users
+
+        u = get_object_or_404(Users, public_id=public_id)
+        try:
+            e = services.adjust(request.user.account, u, request.data.get("amount"), request.data.get("reason"))
+        except services.RewardError as err:
+            return _err(err)
+        audit(request.user.account, "rewards.adjust", "user", u.public_id, after={"points": e.points}, reason=e.detail, ip=IP(request))
+        return ok({"entry": services.entry_data(e), "balance": services.totals(u)[0]}, "Points updated.")
+
+
+class AdminUserLedger(_Admin):
+    def get(self, request, public_id):
+        from apps.users.models import Users
+
+        u = get_object_or_404(Users, public_id=public_id)
+        pager = StandardPagination()
+        page = pager.paginate_queryset(PointsEntry.objects.filter(user=u).select_related("admin"), request)
+        rows = [{**services.entry_data(e), "admin": e.admin.full_name if e.admin_id else None} for e in page]
+        return pager.get_paginated_response(rows)
+
+
+class AdminDonationRewards(_Admin):
+    """What each donation paid (or will pay) its donor."""
+
+    def get(self, request):
+        from apps.donations.models import Donation
+
+        qs = (Donation.objects.filter(status__in=("Picked_Up", "Received", "Completed"))
+              .select_related("donor", "reward_voucher").order_by("-created_at")[:500])
+        paid = {e.ref_id: e for e in PointsEntry.objects.filter(kind="donation", ref_id__in=[d.public_id for d in qs])}
+        revoked = set(PointsEntry.objects.filter(kind="revoke", ref_id__in=list(paid)).values_list("ref_id", flat=True))
+        rows = []
+        for d in qs:
+            e = paid.get(d.public_id)
+            status = "Revoked" if d.public_id in revoked else "Credited" if e else "Pending"
+            rows.append({
+                "id": d.public_id, "title": d.title, "quantity": d.quantity, "status_of_donation": d.status,
+                "donor": {"id": d.donor.public_id, "name": d.donor.full_name, "email": d.donor.email,
+                          "path": f"/admin-users/{d.donor.public_id}"},
+                "points": e.points if e else (d.admin_points if d.admin_points is not None
+                                              else services.reward_points(d.effective_quantity)),
+                "voucher": ({"code": d.reward_voucher.code, "amount": d.reward_voucher.amount,
+                             "status": services.effective_status(d.reward_voucher)} if d.reward_voucher_id else None),
+                "status": status, "at": d.received_at or d.picked_up_at or d.created_at,
+            })
+        return ok({"results": rows})
+
+
+class AdminDonationRewardRevoke(_Admin):
+    def post(self, request, public_id):
+        from apps.donations.models import Donation
+
+        d = get_object_or_404(Donation.objects.select_related("donor"), public_id=public_id)
+        try:
+            services.revoke_donation_reward(d, request.user.account, request.data.get("reason"))
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.donation.revoke", "donation", d.public_id, reason=str(request.data.get("reason") or "")[:255], ip=IP(request))
+        return ok({}, "Reward taken back.")
+
+
+class AdminDonationRewardRestore(_Admin):
+    def post(self, request, public_id):
+        from apps.donations.models import Donation
+
+        d = get_object_or_404(Donation.objects.select_related("donor"), public_id=public_id)
+        try:
+            services.restore_donation_reward(d, request.user.account)
+        except services.RewardError as e:
+            return _err(e)
+        audit(request.user.account, "rewards.donation.restore", "donation", d.public_id, ip=IP(request))
+        return ok({}, "Reward restored.")

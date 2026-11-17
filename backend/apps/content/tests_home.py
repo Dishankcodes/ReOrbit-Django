@@ -117,6 +117,12 @@ class SpotlightTests(HomeBase):
         self.assertEqual(self.home()["remaker_hero"], [])
 
     def test_remaker_home_gets_its_own_pictures(self):
+        from unittest import mock
+
+        # The ReMaker hero only shows products that have a photo; these fixtures have none, so give them one.
+        patcher = mock.patch("apps.listings.marketplace._cover", return_value="https://example.com/p.jpg")
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.pick("remaker", [self.tote.public_id, self.table.public_id, self.lamp.public_id])
         hero = self.home()["remaker_hero"]
         self.assertEqual([c["id"] for c in hero], [self.tote.public_id, self.table.public_id, self.lamp.public_id])

@@ -69,6 +69,20 @@ class ReMakerSerializer(serializers.ModelSerializer):
 
 
 class AdminReMakerSerializer(ReMakerSerializer):
+    # filled by the admin list/detail querysets (see remakers.views._with_counts)
+    products_count = serializers.SerializerMethodField()
+    sales_count = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField()
+
     class Meta(ReMakerSerializer.Meta):
-        fields = ReMakerSerializer.Meta.fields + ["status_changed_at"]
+        fields = ReMakerSerializer.Meta.fields + ["status_changed_at", "products_count", "sales_count", "followers_count"]
         read_only_fields = fields
+
+    def get_products_count(self, obj):
+        return getattr(obj, "products_count", 0)
+
+    def get_sales_count(self, obj):
+        return getattr(obj, "sales_count", 0)
+
+    def get_followers_count(self, obj):
+        return getattr(obj, "followers_count", 0)

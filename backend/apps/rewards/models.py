@@ -61,9 +61,9 @@ class Voucher(PublicIdModel, TimeStampedModel):
 
     @property
     def effective_status(self):
-        """Active, Used or Expired. Expiry is worked out from the date, so nothing has to run to flip it."""
-        if self.status == self.Status.USED:
-            return "Used"
+        """Active, Used, Expired or Void. Expiry is worked out from the date, so nothing has to run to flip it."""
+        if self.status in (self.Status.USED, self.Status.VOID):
+            return self.status
         return "Expired" if self.is_expired else "Active"
 
     def __str__(self):

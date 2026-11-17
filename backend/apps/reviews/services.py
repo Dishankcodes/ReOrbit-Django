@@ -121,6 +121,9 @@ def _announce_new(review, order, what, title_text):
         notify(acct, f"New {review.rating}-star review", f"{stars} {what}{title_text}.",
                module="reviews", target_url=url, ref_type="review", ref_id=review.public_id)
     reviewer = getattr(review, f"reviewer_{review.reviewer_type}")
+    from apps.rewards import services as rewards  # local import: rewards reads reviews lazily too
+
+    rewards.on_review(reviewer, review)  # Orbit Points for a new review (not for edits); never fails the review
     emit(review_posted, type(review), review_public_id=review.public_id, reviewer_ref=reviewer.public_id,
          seller_ref=acct.public_id if acct is not None else "")
 

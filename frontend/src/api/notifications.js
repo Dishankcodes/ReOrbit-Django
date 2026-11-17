@@ -22,6 +22,18 @@ export const notificationsApi = {
   dismissRead: () => post("/notifications/me/dismiss-read/").then((r) => r.data),
 };
 
+/* An admin's own inbox (orders, donations, complaints, support... notify the admins who can act). */
+export const adminNotificationsApi = {
+  list: (params = "") =>
+    apiRequest(`/notifications/admin/${params}`).then((r) => r.data),
+  markRead: (id) => post(`/notifications/admin/${id}/read/`).then((r) => r.data),
+  markAllRead: () => post("/notifications/admin/read-all/").then((r) => r.data),
+  dismiss: (id) =>
+    apiRequest(`/notifications/admin/${id}/`, { method: "DELETE" }).then(
+      (r) => r.data,
+    ),
+};
+
 /* Admin › Notifications › Announcements (sent to every member / ReMaker inbox) */
 export const adminAnnouncementsApi = {
   list: () =>

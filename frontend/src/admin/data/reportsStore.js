@@ -189,7 +189,19 @@ export function useReport(rangeKey) {
   }
 
   const range = RANGES.find((r) => r.key === key) || RANGES[1];
-  return { ...version.data, range, loading: false, error: version.error || "", retry };
+  /* Fill any section the server left out with zeros, so a partial answer never crashes a page. */
+  const data = withDefaults(emptyReport(key), version.data);
+  return { ...data, range, loading: false, error: version.error || "", retry };
+}
+
+const isPlain = (v) => v && typeof v === "object" && !Array.isArray(v);
+function withDefaults(base, got) {
+  if (!isPlain(got)) return base;
+  const out = { ...base };
+  Object.keys(got).forEach((k) => {
+    out[k] = isPlain(base[k]) && isPlain(got[k]) ? withDefaults(base[k], got[k]) : got[k] ?? base[k];
+  });
+  return out;
 }
 
 /* ---------- CSV ---------- */

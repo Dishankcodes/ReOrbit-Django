@@ -117,7 +117,7 @@ class AnnouncementTests(APIBase):
 
     def setUp(self):
         super().setUp()
-        self.admin = self.make_admin()
+        self.admin = self.make_admin(modules={"notifications": "edit"})
         self.user = self.make_user()
         self.blocked = self.make_user("blocked@example.com", status="Blocked")
         self.maker = self.make_remaker()

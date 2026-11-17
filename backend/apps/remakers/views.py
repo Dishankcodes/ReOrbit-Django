@@ -368,11 +368,34 @@ class ProfileCoverView(BaseImageView):
     label = "Cover image"
 
 
+def _with_counts(qs):
+    """Products listed, orders delivered and followers, as subqueries (one row per ReMaker, no joins)."""
+    from django.db.models import Count, IntegerField, OuterRef, Subquery
+    from django.db.models.functions import Coalesce
+
+    from apps.orders.models import Order
+    from apps.social.models import Follow
+
+    from .models import RemakerProduct
+
+    def counted(model_qs):
+        return Coalesce(Subquery(model_qs.order_by().values("n")[:1], output_field=IntegerField()), 0)
+
+    products = RemakerProduct.objects.filter(remaker=OuterRef("pk")).exclude(status="Draft").values("remaker").annotate(n=Count("pk"))
+    sales = Order.objects.filter(seller_remaker=OuterRef("pk"), status=Order.Status.DELIVERED).values("seller_remaker").annotate(n=Count("pk"))
+    followers = Follow.objects.filter(target=OuterRef("pk")).values("target").annotate(n=Count("pk"))
+    return qs.annotate(products_count=counted(products), sales_count=counted(sales), followers_count=counted(followers))
+
+
 class AdminReMakerList(AdminAccountList):
-    """GET /api/remakers/admin/  (admin with the "remakers" module, view level)."""
+    """GET /api/remakers/admin/  (admin with the "remakers" module, view level).
+    Each row also carries products_count, sales_count (delivered orders) and followers_count."""
 
     permission_classes = [IsReOrbitAdmin, HasAdminModule("remakers")]
     queryset = ReMakers.objects.all()
+
+    def get_queryset(self):
+        return _with_counts(super().get_queryset())
     serializer_class = AdminReMakerSerializer
     search_fields = (
         "username",
@@ -390,4 +413,7 @@ class AdminReMakerDetail(AdminAccountDetail):
 
     permission_classes = [IsReOrbitAdmin, HasAdminModule("remakers")]
     queryset = ReMakers.objects.all()
+
+    def get_queryset(self):
+        return _with_counts(super().get_queryset())
     serializer_class = AdminReMakerSerializer

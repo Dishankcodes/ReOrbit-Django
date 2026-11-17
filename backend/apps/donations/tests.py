@@ -45,7 +45,10 @@ class DonationTests(OrderBase):
                       as_=self.buyer)
         self.assertEqual(r.status_code, 201, r.data)
         self.pickup_addr = r.data["data"]["address"]["id"]
-        self.partner = PickupPartner.objects.get(name="Pickup team A")  # seeded by migration 0003
+        # Real teams are created in Admin > Pickup teams (the old seeded teams were removed), so make two here.
+        self.partner = PickupPartner.objects.create(name="Pickup team A", lead_name="Ravi Kumar", phone="+91 98250 41011")
+        PickupPartner.objects.create(name="Pickup team B", lead_name="Imran Qureshi", phone="+91 98251 52021")
+        PickupPartner.objects.create(name="Pickup team C", lead_name="Sunita Devi", phone="+91 98252 63031")
 
     # ---- helpers ------------------------------------------------------- #
     def donate(self, who=None, photos=1, **over):
@@ -268,7 +271,7 @@ class DonationTests(OrderBase):
         self.assertTrue(r.data["data"]["certificate"])
         self.assertEqual((r.data["data"]["distributed_quantity"], r.data["data"]["ngo"]), (1, "Helping Hands"))
         pdf = self.get(f"/api/donations/me/{did}/certificate/", as_=self.buyer)
-        self.assertEqual((pdf.status_code, bytes(pdf.content[:4])), (200, b"%PDF"))
+        self.assertEqual((pdf.status_code, b"".join(pdf.streaming_content)[:4]), (200, b"%PDF"))
         self.assertEqual(self.get(f"/api/donations/me/{did}/certificate/", as_=self.seller).status_code, 404)
 
     def test_my_vouchers_are_private_to_members(self):

@@ -116,7 +116,7 @@ class ReMakerProfileTests(APIBase):
         remaker = self.make_remaker()
         r = self.patch(
             "/api/remakers/profile/",
-            {"studio_name": "Nova Studio", "speciality": "Furniture", "social_links": {"instagram": "@nova"}},
+            {"studio_name": "Nova Studio", "speciality": "Furniture", "social_links": {"instagram": "https://instagram.com/nova"}},
             as_=remaker,
         )
         self.assertEqual(r.status_code, 200)
