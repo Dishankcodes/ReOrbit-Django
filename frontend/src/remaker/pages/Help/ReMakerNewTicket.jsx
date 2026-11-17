@@ -18,21 +18,11 @@ export default function ReMakerNewTicket() {
   const navigate = useNavigate();
   const purchases = useOrders();
   const [sales, setSales] = useState([]);
-
-  /* the orders this ReMaker sold, from the server, so a ticket can point at one */
   useEffect(() => {
     let alive = true;
     salesApi
-      .list("?page_size=100")
-      .then((d) => {
-        if (alive)
-          setSales(
-            (d.results || []).map((o) => ({
-              id: o.id,
-              title: o.lines?.[0]?.title || "Order",
-            })),
-          );
-      })
+      .list("?page_size=50")
+      .then((d) => alive && setSales(d.results || []))
       .catch(() => {});
     return () => {
       alive = false;
@@ -222,7 +212,7 @@ export default function ReMakerNewTicket() {
                   <optgroup label="Orders you sold">
                     {sales.map((order) => (
                       <option key={order.id} value={order.id}>
-                        {order.id}, {order.title}
+                        {order.id}, {order.lines?.[0]?.title || "Order"}
                       </option>
                     ))}
                   </optgroup>

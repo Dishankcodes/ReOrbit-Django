@@ -48,8 +48,8 @@ def _live_counts():
     """{category name: live product count} across the three sellers (3 grouped queries)."""
     out = {}
     for qs in (_user_qs(), _remaker_qs(), _admin_qs()):
-        for row in qs.order_by().values("category__name", "category__slug").annotate(n=Count("pk")):
-            key = (row["category__name"], row["category__slug"])
+        for row in qs.order_by().values("category__name", "category__slug", "category__icon").annotate(n=Count("pk")):
+            key = (row["category__name"], row["category__slug"], row["category__icon"] or "Package")
             out[key] = out.get(key, 0) + row["n"]
     return out
 
@@ -152,8 +152,8 @@ def _build_home(request):
             "items_rescued": rescued,
             "co2_tonnes": round(float(kg) / 1000, 1),
         },
-        "categories": [{"name": n, "slug": s, "live": c}
-                       for (n, s), c in sorted(counts.items(), key=lambda kv: -kv[1])[:6]],
+        "categories": [{"name": n, "slug": s, "icon": i, "live": c}
+                       for (n, s, i), c in sorted(counts.items(), key=lambda kv: -kv[1])[:6]],
         "products": _hero_cards(request),
         "remaker_hero": _remaker_hero(request),
         "featured": _featured(request),

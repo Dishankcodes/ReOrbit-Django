@@ -271,6 +271,7 @@ class ForgotPasswordResetView(APIView):
             user.set_password(new_password)
             user.save(update_fields=["password", "updated_at"])
             consume_otp(record)
+            _tell_password(user)
 
         return ok(message="Password reset successfully. Please login again.")
 
@@ -329,6 +330,7 @@ class ChangePasswordView(APIView):
             )
         user.set_password(new)
         user.save(update_fields=["password", "updated_at"])
+        _tell_password(user)
         return ok(message="Password updated successfully.")
 
 
@@ -347,3 +349,11 @@ class AdminUserDetail(AdminAccountDetail):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("users")]
     queryset = Users.objects.all()
     serializer_class = AdminUserSerializer
+
+
+def _tell_password(user):
+    """A security notice: if it wasn't them, they can see it straight away."""
+    from apps.core.services import notify
+
+    notify(user, "Your password was changed", "If this wasn't you, reset it now and contact support.",
+           module="account", target_url="/user-settings", severity="warning", ref_type="account", ref_id=user.public_id)

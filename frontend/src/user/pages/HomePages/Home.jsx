@@ -6,6 +6,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import BannerSlot from "../../../shared/components/BannerSlot";
 import { inr, initialsImage, usePublic } from "../../../api/publicData";
+import { CategoryIcon } from "../../../shared/categoryIcons";
 import "../../css/Home.css";
 
 /* The three cards on the right of the hero. Real listings replace them as they appear. */
@@ -62,20 +63,6 @@ const testimonials = [
   },
 ];
 
-const CATEGORY_ICON = [
-  [/furnit|chair|table/i, "chair"],
-  [/textile|cloth|fabric/i, "styler"],
-  [/electron|appliance/i, "cable"],
-  [/glass|ceramic|pottery/i, "local_cafe"],
-  [/wood|metal|tool/i, "carpenter"],
-  [/book|paper|stationer/i, "menu_book"],
-  [/decor|home|living|lamp|light/i, "home"],
-  [/art|craft/i, "palette"],
-  [/toy|kid/i, "toys"],
-];
-const iconFor = (name) =>
-  (CATEGORY_ICON.find(([re]) => re.test(name)) || [0, "category"])[1];
-
 /* Real data only. Nothing invented is shown: with no products or ReMakers yet, those
    blocks are simply left out, and the counts read zero. */
 function useHomeData() {
@@ -96,7 +83,7 @@ function useHomeData() {
   }));
   const products = [...live, ...HERO_DEFAULT.slice(live.length)];
   const categories = real?.categories?.length
-    ? real.categories.map((c) => [iconFor(c.name), c.name, `${c.live} live`])
+    ? real.categories.map((c) => [c.icon || "Package", c.name, `${c.live} live`])
     : [];
   const remakers = real?.remakers?.length
     ? real.remakers.map((r) => ({
@@ -298,7 +285,7 @@ export default function Home() {
                 key={name}
               >
                 <div className="category-icon">
-                  <Icon>{icon}</Icon>
+                  <CategoryIcon name={icon} size={24} />
                 </div>
                 <h3>{name}</h3>
                 <span>{count}</span>

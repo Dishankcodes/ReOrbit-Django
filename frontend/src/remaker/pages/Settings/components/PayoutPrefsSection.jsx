@@ -1,106 +1,104 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { formatPrice } from "../../../data/remakerMarketplaceData";
+import { AccountModal, inr } from "../../../../shared/components/WalletParts";
 import { useWallet } from "../../../../shared/data/walletStore";
-import { saveSection } from "../../../data/settingsStore";
-import { Card, Row, SaveBar, Segmented, Toggle, useDraft } from "./Controls";
+import { Card } from "./Controls";
 
-export default function PayoutPrefsSection({ settings, onDirty, notify }) {
-  const { draft, set, dirty, reset } = useDraft(
-    settings.payouts,
-    "payouts",
-    onDirty,
-  );
-  const { summary } = useWallet();
-  const bank = summary?.account || null;
-  const balances = summary?.balances || {
-    available: 0,
-    pending: 0,
-    in_review: 0,
-  };
-  const CLEARING_DAYS = summary?.rules?.payout_hold_days ?? 7;
-  const MIN_PAYOUT = summary?.rules?.payout_min_amount ?? 0;
+/* Everything here comes from the server: the saved bank or UPI details, the
+   balances, and the rules the admin set (hold days, smallest payout, automatic
+   payouts). Nothing is kept in the browser. */
+const where = (a) =>
+  a.method === "upi"
+    ? { label: "UPI", main: a.upi_id || "UPI id saved" }
+    : {
+        label: a.bank_name || "Bank account",
+        main: a.account_number || "Account saved",
+      };
 
-  const save = () => {
-    saveSection("payouts", draft);
-    notify("Payout settings saved.");
-  };
+export default function PayoutPrefsSection({ notify }) {
+  const { summary, error, reload, loading } = useWallet();
+  const [editing, setEditing] = useState(false);
+
+  if (loading) return <p className="set-note">Loading your payout details…</p>;
+  if (!summary)
+    return (
+      <div className="set-stack">
+        <Card title="Payout details">
+          <p className="set-note">{error || "Could not load."}</p>
+          <button type="button" className="set-btn ghost" onClick={reload}>
+            Try again
+          </button>
+        </Card>
+      </div>
+    );
+
+  const { balances: b, rules, account } = summary;
+  const w = account ? where(account) : null;
 
   return (
     <div className="set-stack">
       <Card
         title="Where your money goes"
-        note="Payouts are sent to this bank account."
+        note="Payouts are sent to this account by ReOrbit."
       >
         <div className="set-bank">
-          {bank ? (
+          {account ? (
             <div>
-              <small>
-                {bank.method === "UPI" ? "UPI" : bank.bank_name || "Bank account"}
-              </small>
-              <strong>
-                {bank.method === "UPI" ? bank.upi_id : bank.account_number}
-              </strong>
-              <span>{bank.holder_name}</span>
+              <small>{w.label}</small>
+              <strong>{w.main}</strong>
+              <span>{account.holder_name}</span>
             </div>
           ) : (
             <div>
-              <small>No payout details yet</small>
-              <strong>Add where we should send your money</strong>
+              <strong>No account added yet</strong>
+              <span>Add a bank account or UPI id to be able to withdraw.</span>
             </div>
           )}
-          <Link to="/remaker-earnings/payouts" className="set-btn ghost">
-            {bank ? "Change bank account" : "Add bank account"}
-          </Link>
+          <button
+            type="button"
+            className="set-btn ghost"
+            onClick={() => setEditing(true)}
+          >
+            {account ? "Change account" : "Add account"}
+          </button>
         </div>
 
         <dl className="set-facts">
           <div>
             <dt>Available to withdraw</dt>
-            <dd>{formatPrice(balances.available)}</dd>
+            <dd>{inr(b.available)}</dd>
           </div>
           <div>
             <dt>Still clearing</dt>
-            <dd>{formatPrice(balances.pending + balances.in_review)}</dd>
+            <dd>{inr(b.pending)}</dd>
           </div>
         </dl>
       </Card>
 
       <Card
-        title="Automatic payouts"
-        note={`We can send what has cleared to your bank for you, once it reaches ${formatPrice(MIN_PAYOUT)}.`}
+        title="Payout rules"
+        note="These are set by ReOrbit and apply to every seller."
       >
-        <Row
-          title="Pay me automatically"
-          note="You can still withdraw by hand whenever you like."
-        >
-          <Toggle
-            checked={draft.auto}
-            onChange={(value) => set("auto", value)}
-            label="Automatic payouts"
-          />
-        </Row>
-
-        {draft.auto && (
-          <div className="set-reveal">
-            <span className="set-label">How often</span>
-            <Segmented
-              label="Payout schedule"
-              value={draft.schedule}
-              onChange={(value) => set("schedule", value)}
-              options={[
-                { value: "weekly", label: "Every Monday" },
-                { value: "biweekly", label: "Every 2 weeks" },
-                { value: "monthly", label: "1st of the month" },
-              ]}
-            />
-            <p className="set-note">
-              If less than {formatPrice(MIN_PAYOUT)} has cleared on the day, we
-              wait for the next one.
-            </p>
+        <dl className="set-facts">
+          <div>
+            <dt>Money clears after</dt>
+            <dd>{rules.payout_hold_days} days</dd>
           </div>
-        )}
+          <div>
+            <dt>Smallest payout</dt>
+            <dd>{inr(rules.payout_min_amount)}</dd>
+          </div>
+          <div>
+            <dt>Automatic payouts</dt>
+            <dd>{rules.payout_auto ? "On" : "Off"}</dd>
+          </div>
+        </dl>
+        <p className="set-note">
+          {rules.payout_auto
+            ? "Anything that has cleared is paid out for you. You can also withdraw by hand."
+            : "Withdraw from the Payouts page whenever you have cleared money."}
+        </p>
       </Card>
 
       <Card title="Good to know">
@@ -110,17 +108,30 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
             delivery on top.
           </li>
           <li>
-            Money clears {CLEARING_DAYS} days after delivery, to give buyers
-            time to report a problem.
+            Money clears {rules.payout_hold_days} days after delivery, to give
+            buyers time to report a problem.
           </li>
-          <li>Payouts reach your bank in 1 to 2 working days.</li>
+          <li>
+            Your full account number is stored encrypted and only the last
+            digits are shown here.
+          </li>
         </ul>
         <Link to="/remaker-earnings" className="set-link">
           See your earnings →
         </Link>
       </Card>
 
-      <SaveBar dirty={dirty} onSave={save} onReset={reset} />
+      {editing && (
+        <AccountModal
+          account={account}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            reload();
+            notify?.("Payout account saved.");
+          }}
+        />
+      )}
     </div>
   );
 }

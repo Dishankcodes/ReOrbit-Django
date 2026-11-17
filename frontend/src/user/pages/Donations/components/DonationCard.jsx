@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ChevronRight, Package, Scale } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { StatusBadge } from "./DonationBadges";
-import { categoryIcon } from "./categoryIcons";
+import { CategoryGlyph } from "./categoryIcons";
 import {
   formatDate,
   formatDayMonth,
@@ -29,7 +29,6 @@ export function nextLine(donation) {
 }
 
 export default function DonationCard({ donation, variant = "row" }) {
-  const Icon = categoryIcon(donation.category);
 
   if (variant === "grid") {
     return (
@@ -49,7 +48,7 @@ export default function DonationCard({ donation, variant = "row" }) {
           <p>{nextLine(donation)}</p>
           <div className="dn-dcard-meta">
             <span>
-              <Icon size={13} /> {donation.category}
+              <CategoryGlyph name={donation.category} size={13} /> {donation.category}
             </span>
             <span>
               <Package size={13} /> {donation.quantity}
@@ -85,7 +84,7 @@ export default function DonationCard({ donation, variant = "row" }) {
         <p>{nextLine(donation)}</p>
         <div className="dn-dcard-meta">
           <span>
-            <Icon size={13} /> {donation.category}
+            <CategoryGlyph name={donation.category} size={13} /> {donation.category}
           </span>
           <span>
             <Package size={13} /> {donation.quantity}{" "}

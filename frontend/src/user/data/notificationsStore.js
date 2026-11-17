@@ -5,17 +5,15 @@
    notification there. This store loads it, keeps the unread count for
    the bell and the sidebar, and sends mark-read / mark-all-read / dismiss.
 
-   Three things have no server row, so they are added on the browser from
-   live data: unread conversations, rewards and announcements from ReOrbit.
-   Their read / dismissed state is kept in localStorage.
+   Only unread conversations are added on the browser, from the live
+   messaging data (chat has its own table). Their read / dismissed state is
+   kept in localStorage. Nothing here is sample data.
    Types follow the switches in Settings › Notifications.
    ========================================================= */
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { notificationsApi } from "../../api/notifications";
-import { useRewards } from "./rewardsStore";
 import { useSettings } from "./settingsStore";
-import { useMyAnnouncements } from "../../shared/announcements";
 import { lastMessage, useUnreadConversations } from "./messagesStore";
 
 const KEY = "reorbit_user_notif_read";
@@ -114,7 +112,7 @@ export async function loadMoreNotifications() {
   }
 }
 
-const isLocal = (id) => /^(message|ann|pts)-/.test(id);
+const isLocal = (id) => /^message-/.test(id);
 
 /* Read, optimistically; the server's number replaces ours when it answers. */
 export async function markRead(id) {
@@ -210,6 +208,7 @@ export const NOTIFICATION_TYPES = {
   support: { label: "Support", pref: null, to: "/user-help/tickets" },
   message: { label: "Messages", pref: null, to: "/user-messages" },
   reward: { label: "Rewards", pref: "rewards", to: "/user-orbit-points/history" },
+  account: { label: "Account", pref: null, to: "/user-settings" },
   announcement: { label: "From ReOrbit", pref: null, to: "/user-notifications" },
 };
 
@@ -224,6 +223,7 @@ const MODULE_TYPE = {
   complaints: "support",
   support: "support",
   rewards: "reward",
+  account: "account",
 };
 
 const fromServer = (n) => {
@@ -242,9 +242,7 @@ const fromServer = (n) => {
 
 export function useNotifications() {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  const { ledger } = useRewards();
   const settings = useSettings();
-  const announcements = useMyAnnouncements("users");
   const unreadConversations = useUnreadConversations();
 
   useEffect(() => {
@@ -268,32 +266,6 @@ export function useNotifications() {
         to: `/user-messages/${conversation.id}`,
       });
     });
-    announcements.forEach((a) => {
-      local.push({
-        id: a.id,
-        type: "announcement",
-        title: a.title,
-        message: a.message,
-        at: a.at,
-        to:
-          a.link && a.link.startsWith("/") && !a.link.startsWith("/admin")
-            ? a.link
-            : "/user-notifications",
-      });
-    });
-    ledger
-      .filter((e) => e.points >= 100)
-      .slice(0, 4)
-      .forEach((e) => {
-        local.push({
-          id: `pts-${e.id}`,
-          type: "reward",
-          title: `+${e.points} Orbit Points`,
-          message: e.title,
-          at: e.at,
-          to: "/user-orbit-points/history",
-        });
-      });
 
     const prefs = settings.prefs.notifications;
     const allowed = (n) => {
@@ -322,5 +294,5 @@ export function useNotifications() {
       error: s.error,
       hasMore: s.page < s.pages,
     };
-  }, [s, ledger, settings, announcements, unreadConversations]);
+  }, [s, settings, unreadConversations]);
 }

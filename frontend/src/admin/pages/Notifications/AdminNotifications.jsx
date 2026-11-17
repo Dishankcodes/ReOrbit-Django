@@ -33,9 +33,9 @@ import {
   AUDIENCE_LABEL,
   ANNOUNCE_TYPES,
   timeAgo,
+  realAgo,
+  useAnnouncementReach,
 } from "../../data/notificationsStore";
-import { useUsers } from "../../data/usersStore";
-import { useRemakers } from "../../data/remakersStore";
 import useToast from "../../components/ui/useToast";
 import EmptyState from "../../components/ui/EmptyState";
 import AnnounceModal from "./AnnounceModal";
@@ -70,8 +70,6 @@ export default function AdminNotifications() {
 
   const items = useNotifications();
   const announcements = useAnnouncements();
-  const users = useUsers();
-  const remakers = useRemakers();
 
   const [filter, setFilter] = useState("all");
   const [module, setModule] = useState("all");
@@ -88,16 +86,7 @@ export default function AdminNotifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
 
-  const reach = useMemo(
-    () => ({
-      users: users.filter((u) => u.status === "Active").length * 24,
-      remakers: remakers.filter((r) => r.status === "Active").length * 24,
-      get everyone() {
-        return this.users + this.remakers;
-      },
-    }),
-    [users, remakers],
-  );
+  const reach = useAnnouncementReach();
 
   const stats = useMemo(
     () => ({
@@ -146,15 +135,19 @@ export default function AdminNotifications() {
     );
   };
   const closeComposer = () => setComposer({ open: false, prefill: null });
-  const send = (data) => {
-    sendAnnouncement(data);
-    closeComposer();
-    setParams({ tab: "announcements" }, { replace: true });
-    toast(
-      data.scheduleAt
-        ? "Announcement scheduled"
-        : `Announcement sent to ${AUDIENCE_LABEL[data.audience].toLowerCase()}`,
-    );
+  const send = async (data) => {
+    try {
+      const a = await sendAnnouncement(data);
+      closeComposer();
+      setParams({ tab: "announcements" }, { replace: true });
+      toast(
+        data.scheduleAt
+          ? "Announcement scheduled"
+          : `Announcement sent to ${a.recipients} ${a.recipients === 1 ? "person" : "people"} (${AUDIENCE_LABEL[data.audience].toLowerCase()})`,
+      );
+    } catch (e) {
+      toast(e.message || "The announcement could not be sent.");
+    }
   };
   const goTab = (k) =>
     setParams(k === "inbox" ? {} : { tab: k }, { replace: true });
@@ -431,12 +424,9 @@ export default function AdminNotifications() {
                     {ANNOUNCE_TYPES[a.type]}
                   </span>
                   <span
-                    className={`nt-ann-status ${a.scheduled && new Date(a.at) > new Date("2026-10-20T13:00") ? "sched" : "sent"}`}
+                    className={`nt-ann-status ${a.scheduled ? "sched" : "sent"}`}
                   >
-                    {a.scheduled &&
-                    new Date(a.at) > new Date("2026-10-20T13:00")
-                      ? "Scheduled"
-                      : "Sent"}
+                    {a.scheduled ? "Scheduled" : "Sent"}
                   </span>
                 </header>
                 <h4>{a.title}</h4>
@@ -447,15 +437,15 @@ export default function AdminNotifications() {
                   </span>
                   <span>
                     <Clock size={13} />{" "}
-                    {a.scheduled &&
-                    new Date(a.at) > new Date("2026-10-20T13:00")
+                    {a.scheduled
                       ? new Date(a.at).toLocaleString("en-IN", {
                           day: "numeric",
                           month: "short",
                           hour: "numeric",
                           minute: "2-digit",
                         })
-                      : timeAgo(a.at)}
+                      : realAgo(a.at)}
+                    {!a.scheduled && a.recipients > 0 && ` · ${a.recipients} reached`}
                   </span>
                   <span className="nt-by">{a.by}</span>
                 </footer>

@@ -47,7 +47,7 @@ import DonationTimeline from "../../components/ui/Timeline";
 import ProgressTracker from "./components/ProgressTracker";
 import useToast from "../../components/ui/useToast";
 import { ConditionBadge, StatusBadge } from "./components/DonationBadges";
-import { categoryIcon } from "./components/categoryIcons";
+import { CategoryGlyph } from "./components/categoryIcons";
 
 import "../../css/shared/ui-base.css";
 import "../../css/donations/UserDonationDetails.css";
@@ -65,7 +65,6 @@ export default function UserDonationDetails() {
   if (!donation) return <DonationNotFound />;
 
   const { pickup, status } = donation;
-  const Icon = categoryIcon(donation.category);
   const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
   const rewarded = ["Received", "Completed"].includes(status);
   const points = rewarded
@@ -268,7 +267,7 @@ export default function UserDonationDetails() {
             <dl className="dn-det-facts">
               <div>
                 <dt>
-                  <Icon size={15} /> Category
+                  <CategoryGlyph name={donation.category} size={15} /> Category
                 </dt>
                 <dd>{donation.category}</dd>
               </div>

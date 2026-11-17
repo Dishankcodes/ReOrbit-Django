@@ -5,11 +5,12 @@ import { adminActor } from "./actor";
    DERIVED live from the other modules (warehouse, donations,
    pickups, orders, products, rewards), so they appear when
    something needs attention and disappear once it is dealt with.
-   Read / dismissed state and sent announcements live here.
-   Backend later: replace with a Notifications API.
+   Read / dismissed state lives here. Announcements are saved on the server
+   and delivered to every member / ReMaker inbox.
    ========================================================= */
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { adminAnnouncementsApi } from "../../api/notifications";
 import { useWarehouseAlerts, useStock } from "./warehouseStore";
 import { useDonations } from "./donationsStore";
 import { usePickups } from "./pickupsStore";
@@ -55,41 +56,8 @@ let state = {
   read: new Set(),
   unread: new Set(), // marked unread again by the admin
   dismissed: new Set(),
-  announcements: [
-    {
-      id: "AN-1003",
-      title: "Diwali Green Sale starts soon",
-      message:
-        "Use DIWALI15 for 15% off upcycled products from 23 Oct. Happy Diwali from ReOrbit!",
-      audience: "everyone",
-      type: "offer",
-      link: "/",
-      at: ago(30),
-      by: adminActor(),
-    },
-    {
-      id: "AN-1002",
-      title: "Scheduled maintenance on Sunday",
-      message:
-        "The marketplace will be unavailable from 2:00 AM to 4:00 AM on Sunday while we upgrade our servers.",
-      audience: "everyone",
-      type: "maintenance",
-      link: "",
-      at: ago(24 * 6),
-      by: adminActor(),
-    },
-    {
-      id: "AN-1001",
-      title: "New: earn Orbit Points for donating",
-      message:
-        "Every completed donation now earns Orbit Points. Check your points page to see your balance.",
-      audience: "users",
-      type: "update",
-      link: "/user-orbit-points",
-      at: ago(24 * 15),
-      by: "Admin · You",
-    },
-  ],
+  announcements: [], // loaded from /api/notifications/admin/announcements/
+  announcementsLoaded: false,
 };
 const listeners = new Set();
 const subscribe = (l) => {
@@ -634,8 +602,47 @@ export function dismiss(ids) {
 }
 
 /* ---------- announcements ---------- */
-export const useAnnouncements = () => useNs().announcements;
-export function sendAnnouncement({
+const fromServer = (a) => ({ ...a, at: a.at });
+
+let loadingAnnouncements = false;
+export function loadAnnouncements() {
+  if (loadingAnnouncements) return;
+  loadingAnnouncements = true;
+  adminAnnouncementsApi
+    .list()
+    .then((rows) => set({ announcements: rows.map(fromServer), announcementsLoaded: true }))
+    .catch(() => set({ announcementsLoaded: true }))
+    .finally(() => {
+      loadingAnnouncements = false;
+    });
+}
+
+export function useAnnouncements() {
+  const ns = useNs();
+  useEffect(() => {
+    if (!ns.announcementsLoaded) loadAnnouncements();
+  }, [ns.announcementsLoaded]);
+  return ns.announcements;
+}
+
+/* How many people each audience would reach (real, from the server) */
+export function useAnnouncementReach() {
+  const [reach, setReach] = useState({ users: 0, remakers: 0, everyone: 0 });
+  useEffect(() => {
+    let live = true;
+    adminAnnouncementsApi
+      .reach()
+      .then((r) => live && setReach(r))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  return reach;
+}
+
+/* Sends now, or schedules when `scheduleAt` is set. Rejects with the server's message. */
+export async function sendAnnouncement({
   title,
   message,
   audience,
@@ -643,20 +650,15 @@ export function sendAnnouncement({
   link,
   scheduleAt,
 }) {
-  const a = {
-    id: `AN-${1000 + state.announcements.length + 1}`,
+  const a = await adminAnnouncementsApi.send({
     title,
     message,
     audience,
     type,
-    link,
-    at: scheduleAt
-      ? new Date(scheduleAt).toISOString()
-      : DEMO_TODAY.toISOString(),
-    scheduled: !!scheduleAt,
-    by: "Admin · You",
-  };
-  set({ announcements: [a, ...state.announcements] });
+    link: link || "",
+    scheduleAt: scheduleAt ? new Date(scheduleAt).toISOString() : "",
+  });
+  set({ announcements: [fromServer(a), ...state.announcements] });
   return a;
 }
 
@@ -671,6 +673,17 @@ export const ANNOUNCE_TYPES = {
   maintenance: "Maintenance",
   reminder: "Reminder",
 };
+
+/* the same, against the real clock: for things the server timestamped */
+export function realAgo(iso) {
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return "Just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} h ago`;
+  const d = Math.floor(h / 24);
+  return `${d} day${d === 1 ? "" : "s"} ago`;
+}
 
 /* "5 min ago", "3 h ago", "2 days ago" relative to the demo clock */
 export function timeAgo(iso) {

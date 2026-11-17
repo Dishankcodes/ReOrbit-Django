@@ -76,3 +76,25 @@ class CategoryAdminTests(APIBase):
         self.post(f"{URL}{a}/move/", {"dir": 1}, as_=self.boss)  # cannot pass Other
         self.assertEqual(self.names(), ["B1", "A1", "Other"])
         self.assertEqual(self.post(f"{URL}{a}/move/", {"dir": 5}, as_=self.boss).status_code, 400)
+
+
+class CategoryIconLibraryTests(APIBase):
+    """The server only takes icons from the shared library the admin picker shows."""
+
+    def setUp(self):
+        super().setUp()
+        self.boss = self.make_admin("boss@example.com", modules={"content": "edit"})
+
+    def test_new_library_icons_are_accepted_and_unknown_ones_refused(self):
+        for key in ("Sofa", "Blocks", "Sprout", "Sparkles", "Package"):  # old and new
+            r = self.post(URL, {"name": f"Cat {key}", "icon": key}, as_=self.boss)
+            self.assertEqual(r.status_code, 201, (key, r.data))
+        bad = self.post(URL, {"name": "Weird", "icon": "NotAnIcon"}, as_=self.boss)
+        self.assertEqual(bad.status_code, 400)
+
+    def test_every_icon_the_old_picker_offered_is_still_valid(self):
+        from apps.core.category_admin import ICONS
+
+        for key in ("Armchair", "Home", "CookingPot", "Shirt", "Smartphone", "BookOpen", "Dumbbell", "Lamp", "Gem",
+                    "Baby", "Bike", "Music", "Camera", "Watch", "Flower2", "Hammer", "Gamepad2", "Backpack", "Package"):
+            self.assertIn(key, ICONS)

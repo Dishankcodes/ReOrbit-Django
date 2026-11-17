@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   X,
   Tags,
@@ -10,9 +10,9 @@ import {
   RotateCcw,
   Check,
   AlertTriangle,
+  Search,
 } from "lucide-react";
 import {
-  CATEGORY_ICON_KEYS,
   BANNER_PLACEMENTS,
   BANNER_AUDIENCES,
   BANNER_IMAGES,
@@ -20,6 +20,11 @@ import {
   categoryNameTaken,
 } from "../../../data/contentStore";
 import { CategoryIcon } from "./contentBits";
+import {
+  ICON_GROUPS,
+  iconLabel,
+  suggestIcons,
+} from "../../../../shared/categoryIcons";
 import BannerCard, { BANNER_RATIO } from "../../../../shared/components/BannerCard";
 import { ImageUploader, LinkSuggestions } from "./BannerFormParts";
 import { formatDate } from "../../../utils/format";
@@ -82,6 +87,88 @@ export function Shell({
 }
 const Err = ({ show, children }) =>
   show ? <small className="ad-modal-error">{children}</small> : null;
+
+/* ======================= category icon picker ======================= */
+/* Every icon has a visible name on hover / keyboard focus. The picked icon is named next to
+   a live preview, "Suggested" follows what the admin types as the name, and there is a search. */
+function IconPicker({ value, name, onChange }) {
+  const [q, setQ] = useState("");
+  const suggested = useMemo(() => suggestIcons(name), [name]);
+  const groups = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return ICON_GROUPS;
+    return ICON_GROUPS.map((g) => ({
+      ...g,
+      icons: g.icons.filter((i) => `${i.label} ${i.words} ${g.group}`.toLowerCase().includes(t)),
+    })).filter((g) => g.icons.length);
+  }, [q]);
+  const btn = (i) => (
+    <button
+      key={i.key}
+      type="button"
+      role="radio"
+      aria-checked={value === i.key}
+      aria-label={i.label}
+      data-tip={i.label}
+      className={value === i.key ? "on" : ""}
+      onClick={() => onChange(i.key)}
+    >
+      <CategoryIcon name={i.key} size={18} />
+    </button>
+  );
+  return (
+    <div className="ad-modal-field cm-picker">
+      <span>Icon</span>
+      <p className="cm-help">
+        Members see this icon beside the category on the marketplace, the
+        donate page and the home page. Pick the one that shows at a glance
+        what belongs here. Hover an icon to see its name.
+      </p>
+      <div className="cm-picked" aria-live="polite">
+        <i>
+          <CategoryIcon name={value} size={22} />
+        </i>
+        <div>
+          <strong>{iconLabel(value)}</strong>
+          <small>
+            {name.trim() ? `Shown next to “${name.trim()}”` : "Your chosen icon"}
+          </small>
+        </div>
+      </div>
+      {suggested.length > 0 && !q && (
+        <div className="cm-suggest">
+          <em>Suggested for this name</em>
+          <div className="cm-icons" role="radiogroup" aria-label="Suggested icons">
+            {suggested.map(btn)}
+          </div>
+        </div>
+      )}
+      <label className="cm-iconsearch">
+        <Search size={14} />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search icons: chair, toys, books…"
+          aria-label="Search icons"
+        />
+      </label>
+      <div className="cm-iconscroll">
+        {groups.length === 0 && (
+          <p className="cm-help">No icon matches “{q}”. Try a simpler word.</p>
+        )}
+        {groups.map((g) => (
+          <div key={g.group} className="cm-icongroup">
+            <em>{g.group}</em>
+            <div className="cm-icons" role="radiogroup" aria-label={g.group}>
+              {g.icons.map(btn)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ======================= category ======================= */
 export function CategoryModal({ open, category, onSave, onClose }) {
@@ -162,24 +249,11 @@ export function CategoryModal({ open, category, onSave, onClose }) {
         />
         <Err show={touched && err.blurb}>{err.blurb}</Err>
       </label>
-      <div className="ad-modal-field">
-        <span>Icon</span>
-        <div className="cm-icons" role="radiogroup" aria-label="Icon">
-          {CATEGORY_ICON_KEYS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="radio"
-              aria-checked={f.icon === k}
-              aria-label={k}
-              className={f.icon === k ? "on" : ""}
-              onClick={() => setF({ ...f, icon: k })}
-            >
-              <CategoryIcon name={k} size={18} />
-            </button>
-          ))}
-        </div>
-      </div>
+      <IconPicker
+        value={f.icon}
+        name={f.name}
+        onChange={(icon) => setF({ ...f, icon })}
+      />
       <div className="ad-modal-actions">
         <button type="button" className="ad-btn ad-btn-ghost" onClick={onClose}>
           Cancel

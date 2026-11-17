@@ -350,6 +350,7 @@
 }
 
 .category-icon {
+  color: var(--primary);
   width: 55px;
   height: 55px;
   border-radius: 50%;

@@ -21,3 +21,22 @@ export const notificationsApi = {
     ),
   dismissRead: () => post("/notifications/me/dismiss-read/").then((r) => r.data),
 };
+
+/* Admin › Notifications › Announcements (sent to every member / ReMaker inbox) */
+export const adminAnnouncementsApi = {
+  list: () =>
+    apiRequest("/notifications/admin/announcements/").then(
+      (r) => r.data.announcements,
+    ),
+  reach: () =>
+    apiRequest("/notifications/admin/announcements/reach/").then((r) => r.data),
+  send: (body) =>
+    apiRequest("/notifications/admin/announcements/", {
+      method: "POST",
+      body,
+    }).then((r) => r.data.announcement),
+  cancel: (id) =>
+    apiRequest(`/notifications/admin/announcements/${id}/`, {
+      method: "DELETE",
+    }),
+};

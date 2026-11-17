@@ -27,6 +27,7 @@ import EmptyState from "../../../components/ui/EmptyState";
 import RowActionMenu from "../../../components/ui/RowActionMenu";
 import { CategoryModal, ConfirmModal } from "./ContentModals";
 import { CategoryIcon } from "./contentBits";
+import { SUGGESTED_CATEGORIES, iconLabel } from "../../../../shared/categoryIcons";
 
 export default function CategoriesTab({ canEdit, by, toast }) {
   const cats = useCategories();
@@ -176,6 +177,20 @@ export default function CategoriesTab({ canEdit, by, toast }) {
           </div>
         </div>
 
+        {canEdit && status === "ready" && (
+          <SuggestedCategories
+            cats={cats}
+            busy={busy}
+            onAdd={(sg) =>
+              run(
+                () =>
+                  createCategory({ name: sg.name, blurb: sg.blurb, icon: sg.icon }),
+                `${sg.name} was added.`,
+              )
+            }
+          />
+        )}
+
         {shown.length > 0 ? (
           <ul className="cm-cats">
             {shown.map((c, i) => (
@@ -202,7 +217,7 @@ export default function CategoriesTab({ canEdit, by, toast }) {
                     </button>
                   </span>
                 )}
-                <span className="cm-cat-icon">
+                <span className="cm-cat-icon" data-tip={iconLabel(c.icon)}>
                   <CategoryIcon name={c.icon} size={20} />
                 </span>
                 <div className="cm-cat-main">
@@ -320,5 +335,60 @@ export default function CategoriesTab({ canEdit, by, toast }) {
         onClose={() => setHiding(null)}
       />
     </>
+  );
+}
+
+/* One-click starter categories that fit ReOrbit (donations, resale and ReMaker creations).
+   Nothing is created until the admin clicks; ones already added are not shown. */
+function SuggestedCategories({ cats, busy, onAdd }) {
+  const [all, setAll] = useState(false);
+  const have = new Set(cats.map((c) => c.name.trim().toLowerCase()));
+  const left = SUGGESTED_CATEGORIES.filter(
+    (s) => !have.has(s.name.toLowerCase()),
+  );
+  if (!left.length) return null;
+  const shown = all ? left : left.slice(0, 6);
+  return (
+    <div className="cm-sugg">
+      <header>
+        <div>
+          <h3>Suggested for ReOrbit</h3>
+          <p>
+            Categories that fit what members donate, resell and ReMakers
+            create. Tap one to add it with its icon; you can edit it later.
+          </p>
+        </div>
+      </header>
+      <div className="cm-sugg-list">
+        {shown.map((s) => (
+          <button
+            key={s.name}
+            type="button"
+            className="cm-sugg-chip"
+            disabled={busy}
+            onClick={() => onAdd(s)}
+            title={`Add ${s.name}`}
+          >
+            <i data-tip={iconLabel(s.icon)}>
+              <CategoryIcon name={s.icon} size={18} />
+            </i>
+            <span>
+              <b>{s.name}</b>
+              <small>{s.blurb}</small>
+              <em className="cm-why">{s.why}</em>
+            </span>
+          </button>
+        ))}
+      </div>
+      {left.length > 6 && (
+        <button
+          type="button"
+          className="cm-sugg-more"
+          onClick={() => setAll((v) => !v)}
+        >
+          {all ? "Show fewer" : `Show ${left.length - 6} more suggestions`}
+        </button>
+      )}
+    </div>
   );
 }

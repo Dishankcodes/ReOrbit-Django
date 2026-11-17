@@ -362,6 +362,7 @@
   gap: 8px;
 }
 .cm-icons button {
+  position: relative;
   height: 42px;
   display: flex;
   align-items: center;
@@ -1794,4 +1795,271 @@
 }
 .cm-form {
   row-gap: 14px;
+}
+
+/* ---------- category icon picker ---------- */
+.cm-help {
+  margin: 0 0 10px;
+  color: #5d6c65;
+  font-size: 12.5px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.cm-picked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d8e4de;
+  border-radius: 14px;
+  background: #f6faf8;
+}
+.cm-picked i {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #0e3a2d;
+  color: #fff;
+}
+.cm-picked strong {
+  display: block;
+  color: #13221b;
+  font-size: 14px;
+}
+.cm-picked small {
+  color: #66726b;
+  font-size: 12px;
+}
+.cm-suggest {
+  margin-bottom: 12px;
+}
+.cm-suggest em,
+.cm-icongroup em {
+  display: block;
+  margin: 0 0 6px;
+  color: #66726b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cm-iconsearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  margin-bottom: 10px;
+  padding: 0 12px;
+  border: 1px solid #d8e4de;
+  border-radius: 11px;
+  background: #fff;
+  color: #66726b;
+}
+.cm-iconsearch:focus-within {
+  border-color: #0e3a2d;
+}
+.cm-iconsearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+}
+.cm-iconscroll {
+  max-height: 232px;
+  overflow-y: auto;
+  padding: 30px 4px 4px;
+  margin-top: -22px;
+}
+.cm-icongroup + .cm-icongroup {
+  margin-top: 14px;
+}
+/* the name of an icon, on hover and on keyboard focus */
+.cm-icons button[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 5;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: #13221b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 3px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.cm-icons button[data-tip]:hover::after,
+.cm-icons button[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.cm-icons button:focus-visible {
+  outline: 2px solid #0e3a2d;
+  outline-offset: 2px;
+}
+
+/* ---------- suggested categories ---------- */
+.cm-sugg {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px dashed #b9d3c8;
+  border-radius: 16px;
+  background: #f6faf8;
+}
+.cm-sugg header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.cm-sugg h3 {
+  margin: 0;
+  color: #13221b;
+  font-size: 14.5px;
+}
+.cm-sugg header p {
+  margin: 2px 0 0;
+  color: #5d6c65;
+  font-size: 12.5px;
+}
+.cm-sugg-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 8px;
+}
+.cm-sugg-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid #d8e4de;
+  border-radius: 13px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cm-sugg-chip:hover:not(:disabled) {
+  border-color: #0e3a2d;
+  box-shadow: 0 4px 14px rgba(14, 58, 45, 0.08);
+}
+.cm-sugg-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.cm-sugg-chip i {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e8f1ed;
+  color: #0e3a2d;
+}
+.cm-sugg-chip b {
+  display: block;
+  color: #13221b;
+  font-size: 13.5px;
+}
+.cm-sugg-chip small {
+  display: block;
+  color: #66726b;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.cm-sugg-chip .cm-why {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 8px;
+  font-style: normal;
+  border-radius: 999px;
+  background: #eef4f1;
+  color: #3d6252;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.cm-sugg-more {
+  margin-top: 10px;
+  border: 0;
+  background: none;
+  color: #0e3a2d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cm-cat-icon[data-tip],
+.cm-sugg-chip i[data-tip] {
+  position: relative;
+}
+.cm-cat-icon[data-tip]::after,
+.cm-sugg-chip i[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: #13221b;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.cm-cat-icon[data-tip]:hover::after,
+.cm-sugg-chip:hover i[data-tip]::after {
+  opacity: 1;
+}
+
+/* picker: fixed 7 columns so the first and last column tooltips can open inward */
+.cm-picker .cm-icons {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.cm-picker .cm-icons button:nth-child(7n + 1)::after,
+.cm-picker .cm-icons button:nth-child(7n + 2)::after {
+  left: 0;
+  transform: translate(0, 3px);
+}
+.cm-picker .cm-icons button:nth-child(7n + 1):hover::after,
+.cm-picker .cm-icons button:nth-child(7n + 1):focus-visible::after,
+.cm-picker .cm-icons button:nth-child(7n + 2):hover::after,
+.cm-picker .cm-icons button:nth-child(7n + 2):focus-visible::after {
+  transform: translate(0, 0);
+}
+.cm-picker .cm-icons button:nth-child(7n)::after,
+.cm-picker .cm-icons button:nth-child(7n - 1)::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, 3px);
+}
+.cm-picker .cm-icons button:nth-child(7n):hover::after,
+.cm-picker .cm-icons button:nth-child(7n):focus-visible::after,
+.cm-picker .cm-icons button:nth-child(7n - 1):hover::after,
+.cm-picker .cm-icons button:nth-child(7n - 1):focus-visible::after {
+  transform: translate(0, 0);
 }

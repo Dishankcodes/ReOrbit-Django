@@ -18,11 +18,16 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsReOrbitAdmin, IsReOrbitAuthenticated
+from django.utils.dateparse import parse_datetime
+
+from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitAuthenticated
 from apps.core.models import Notification
 from apps.core.pagination import StandardPagination
 from apps.core.responses import fail, ok
 from apps.core.services import mark_read
+
+from . import announcements as ann
+from .models import Announcement
 
 FIELD = {"user": "user", "remaker": "remaker", "admin": "admin"}
 
@@ -74,6 +79,7 @@ class _Inbox(APIView):
 
 class InboxList(_Inbox):
     def get(self, request):
+        ann.deliver_due()  # a scheduled announcement lands the first time anyone looks
         base = _mine(request)
         pager = StandardPagination()
         page = pager.paginate_queryset(_filtered(request, base), request)
@@ -88,6 +94,7 @@ class InboxList(_Inbox):
 
 class UnreadCount(_Inbox):
     def get(self, request):
+        ann.deliver_due()
         return ok({"unread_count": _mine(request).filter(is_read=False).count()})
 
 
@@ -148,3 +155,94 @@ MeDetail, AdminDetail = _pair(InboxDetail)
 MeRead, AdminRead = _pair(MarkOneRead)
 MeReadAll, AdminReadAll = _pair(MarkAllRead)
 MeDismissRead, AdminDismissRead = _pair(DismissRead)
+
+
+# --------------------------------------------------------------------------- #
+# Admin announcements: one message to every member and/or ReMaker
+# --------------------------------------------------------------------------- #
+def announcement_data(a):
+    return {
+        "id": a.public_id,
+        "title": a.title,
+        "message": a.message,
+        "audience": a.audience,
+        "type": a.kind,
+        "link": a.link,
+        "at": a.sent_at or a.scheduled_at or a.created_at,
+        "scheduled": a.sent_at is None,
+        "recipients": a.recipients,
+        "by": a.sent_by_name,
+    }
+
+
+class AnnouncementList(APIView):
+    """GET the history (newest first). POST sends now, or schedules with `scheduleAt`."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+
+    def get(self, request):
+        ann.deliver_due()
+        rows = Announcement.objects.all()[:200]
+        return ok({"announcements": [announcement_data(a) for a in rows]})
+
+    def post(self, request):
+        d = request.data
+        title = str(d.get("title") or "").strip()
+        message = str(d.get("message") or "").strip()
+        audience = d.get("audience")
+        kind = d.get("type") or Announcement.Kind.UPDATE
+        link = str(d.get("link") or "").strip()
+        errors = {}
+        if not title or len(title) > 150:
+            errors["title"] = ["Enter a title of up to 150 characters."]
+        if not message or len(message) > 1000:
+            errors["message"] = ["Enter a message of up to 1,000 characters."]
+        if audience not in Announcement.Audience.values:
+            errors["audience"] = ["Choose who receives it."]
+        if kind not in Announcement.Kind.values:
+            errors["type"] = ["Choose a valid type."]
+        if link and ann.safe_link(link) != link:
+            errors["link"] = ["Use a page inside ReOrbit, like /user-marketplace."]
+        when = None
+        if d.get("scheduleAt"):
+            when = parse_datetime(str(d["scheduleAt"]))
+            if when is None:
+                errors["scheduleAt"] = ["That date is not valid."]
+            elif timezone.is_naive(when):
+                when = timezone.make_aware(when)
+            if when is not None and when <= timezone.now():
+                errors["scheduleAt"] = ["Pick a time in the future."]
+        if errors:
+            return fail("Check the announcement and try again.", errors=errors)
+        admin = request.user.account
+        a = Announcement.objects.create(
+            title=title, message=message, kind=kind, audience=audience, link=link,
+            scheduled_at=when, sent_by=admin, sent_by_name=f"Admin · {admin.full_name}",
+        )
+        if when is None:
+            ann.deliver(a.pk)
+            a.refresh_from_db()
+        return ok({"announcement": announcement_data(a)}, "Scheduled." if when else "Sent.")
+
+
+class AnnouncementReach(APIView):
+    """How many inboxes each audience would reach right now (Active accounts only)."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+
+    def get(self, request):
+        counts = {a: sum(qs.count() for _, qs in ann._targets(a)) for a in Announcement.Audience.values}
+        return ok(counts)
+
+
+class AnnouncementDetail(APIView):
+    """DELETE cancels an announcement that has not been sent yet. Sent ones stay as a record."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+
+    def delete(self, request, public_id):
+        a = get_object_or_404(Announcement, public_id=public_id)
+        if a.sent_at:
+            return fail("This announcement was already sent.", status=409)
+        a.delete()
+        return ok(message="Cancelled.")

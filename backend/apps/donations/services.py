@@ -27,13 +27,11 @@ from django.utils import timezone
 from apps.admins.models import Admins
 from apps.core import buyers as buyer_kit
 from apps.core.images import process_image
-from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, Category, PlatformSettings, SavedAddress
+from apps.core.models import Category, SavedAddress
 from apps.core.services import audit, notify
 from apps.core.validators import validate_image, validate_phone
 from apps.rewards import services as rewards
-from apps.rewards.models import PointsEntry
 from apps.users.models import User_Profile
-from apps.warehouse import services as warehouse
 
 from . import certificates
 from .models import Donation, DonationEvent, DonationImage, PickupPartner
@@ -192,9 +190,8 @@ def create_donation(donor, data, files):
         quantity = int(str(1 if raw_quantity in (None, "") else raw_quantity).strip())
     except ValueError:
         quantity = 0
-    min_items = PlatformSettings.load().min_donation_items
-    if not min_items <= quantity <= 99:
-        errors["quantity"] = [f"Quantity must be between {min_items} and 99."]
+    if not 1 <= quantity <= 99:
+        errors["quantity"] = ["Quantity must be between 1 and 99."]
 
     files = list(files or [])
     if not files:
@@ -322,50 +319,12 @@ def _reason(payload, minimum=5, field="reason"):
     return reason
 
 
-def _reward_choice(p):
-    """An admin's optional points + voucher amount for this donation, from the Accept form.
-    Both are optional: leaving either blank means "work it out automatically at Received time"
-    (apps/rewards.services reward_points / voucher_amount). A voucher amount, when given, must
-    be one of the admin-configured tiers (Settings > Platform > donationVoucherTiers) — it's a
-    select, not a free-typed number, so a stray value here means stale options on the form."""
-    errors = {}
-    points = None
-    raw_points = p.get("points")
-    if raw_points not in (None, ""):
-        try:
-            points = int(str(raw_points).strip())
-        except ValueError:
-            points = -1
-        if points < 0:
-            errors["points"] = ["Enter a whole number, 0 or more."]
-
-    voucher_amount = None
-    raw_voucher = p.get("voucher_amount")
-    if raw_voucher not in (None, ""):
-        try:
-            voucher_amount = int(str(raw_voucher).strip())
-        except ValueError:
-            voucher_amount = None
-        tiers = PlatformSettings.load().donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS)
-        if voucher_amount not in tiers:
-            rupee = "\u20b9"
-            labels = ", ".join(rupee + str(t) for t in tiers)
-            errors["voucher_amount"] = [f"Choose one of: {labels}."]
-
-    if errors:
-        raise _fix(errors)
-    return points, voucher_amount
-
-
 def _accept(d, admin, p):
     """Schedule the pickup. If `accepted_quantity` is less than what was donated, the rest is
-    turned away now (partial acceptance) with its own reason, instead of all-or-nothing.
-    The admin can also set the points and/or voucher the donor will get once it's received,
-    overriding the automatic calculation (see _reward_choice)."""
+    turned away now (partial acceptance) with its own reason, instead of all-or-nothing."""
     _need(d, S.PENDING)
     day, slot = parse_schedule(p.get("date"), p.get("slot"), admin=True)
     partner = _partner(p.get("partner"))
-    points, voucher_amount = _reward_choice(p)
 
     raw_accept = p.get("accepted_quantity")
     accepted = d.quantity if raw_accept in (None, "") else None
@@ -382,24 +341,18 @@ def _accept(d, admin, p):
     d.status, d.pickup_date, d.pickup_slot, d.assigned_partner = S.SCHEDULED, day, slot, partner
     d.accepted_quantity = accepted if partial else None
     d.partial_reject_reason = partial_reason
-    d.admin_points, d.admin_voucher_amount = points, voucher_amount
     d.handover_code = f"{secrets.randbelow(9000) + 1000}"  # 4 digits: shown to the donor, entered by the partner
     _save(d, "status", "pickup_date", "pickup_slot", "assigned_partner", "accepted_quantity",
-          "partial_reject_reason", "admin_points", "admin_voucher_amount", "handover_code")
-    reward_note = ""
-    if points is not None or voucher_amount is not None:
-        bits = [f"{points} points" if points is not None else "", f"\u20b9{voucher_amount} voucher" if voucher_amount is not None else ""]
-        reward_note = " We'll give you " + " and ".join(b for b in bits if b) + " once it's received."
+          "partial_reject_reason", "handover_code")
     if partial:
         event(d, f"Partially accepted ({accepted} of {d.quantity})",
               f"{partial_reason} \u00b7 {when(day, slot)} \u00b7 {partner.name}", "good", "admin")
         _notify_donor(d, "Donation partially accepted",
                       f"{d.public_id}: we can take {accepted} of your {d.quantity} item(s). {partial_reason} "
-                      f"Pickup on {when(day, slot)}.{reward_note}")
+                      f"Pickup on {when(day, slot)}.")
     else:
         event(d, "Accepted, pickup scheduled", f"{when(day, slot)} \u00b7 {partner.name}", "good", "admin")
-        _notify_donor(d, "Donation accepted",
-                      f"{d.public_id} was accepted. Free pickup on {when(day, slot)}.{reward_note}")
+        _notify_donor(d, "Donation accepted", f"{d.public_id} was accepted. Free pickup on {when(day, slot)}.")
     return ""
 
 
@@ -481,13 +434,29 @@ def _failed(d, admin, p):
     return reason
 
 
-def _received(d, admin, p):
-    """The reward moment. Only a Picked_Up donation gets here, so it happens once.
+def _stock_in(d):
+    """The donated lot appears in Admin > Warehouse. A warehouse problem must never undo the
+    reward the donor has already earned, so it runs in its own savepoint and is logged."""
+    from apps.warehouse import services as warehouse
+    try:
+        with transaction.atomic():
+            warehouse.receive_donation(d)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("Could not stock donation %s in the warehouse", d.public_id)
 
-    What the donor gets, in order of priority: a points/voucher value typed in right here (a
-    last-minute correction), else what the admin already decided at Accept time
-    (d.admin_points / d.admin_voucher_amount), else worked out automatically from what the
-    warehouse actually counted and the condition it actually found."""
+
+def _stock_out(d, ngo):
+    from apps.warehouse import services as warehouse
+    try:
+        with transaction.atomic():
+            warehouse.donation_completed(d, ngo)
+    except Exception:  # noqa: BLE001
+        logging.getLogger(__name__).exception("Could not release donation %s from the warehouse", d.public_id)
+
+
+def _received(d, admin, p):
+    """The reward moment. Only a Picked_Up donation gets here, so it happens once. The reward is
+    based on what the warehouse actually counted and the condition it actually found."""
     _need(d, S.PICKED_UP)
     base_qty = d.accepted_quantity or d.quantity
     raw_qty = p.get("received_quantity")
@@ -503,16 +472,9 @@ def _received(d, admin, p):
     if received_condition not in Donation.Condition.values:
         raise _fix({"received_condition": ["Select the condition that actually arrived."]})
     note = _text(p.get("note"), 255)
-    override_points, override_voucher = _reward_choice(p)
 
-    chosen_voucher_amount = override_voucher if override_voucher is not None else d.admin_voucher_amount
-    voucher = rewards.issue_for_donation(d, amount=chosen_voucher_amount)  # one per donation, also a database rule
-    if override_points is not None:
-        points = override_points
-    elif d.admin_points is not None:
-        points = d.admin_points
-    else:
-        points = rewards.reward_points(received_qty) if received_qty else 0
+    voucher = rewards.issue_for_donation(d)  # one voucher per donation, also enforced by the database
+    points = rewards.reward_points(received_qty) if received_qty else 0
     weight = rewards.weight_kg(d.category, received_qty) if received_qty else 0
     d.status, d.received_at = S.RECEIVED, timezone.now()
     d.received_quantity, d.received_condition, d.received_note = received_qty, received_condition, note
@@ -521,17 +483,8 @@ def _received(d, admin, p):
           "reward_points", "reward_voucher", "weight_kg")
     User_Profile.objects.filter(user_id=d.donor_id).update(
         orbit_points=F("orbit_points") + points, environmental_impact=F("environmental_impact") + rewards.co2_saved(weight))
-    if points:
-        # Feeds the Orbit Points ledger/summary (apps/rewards), alongside the running counter
-        # above. get_or_create: a retried request must not double-credit.
-        PointsEntry.objects.get_or_create(
-            user_id=d.donor_id, kind="donation", ref_type="donation", ref_id=d.public_id,
-            defaults=dict(points=points, title="Donation received",
-                          detail=f"{d.title} ({received_qty} item(s)) reached the warehouse."))
-    try:
-        warehouse.receive_donation(d)  # creates the warehouse lot this donation becomes
-    except Exception:
-        log.exception("warehouse intake failed for donation %s", d.public_id)
+
+    _tell_rewards(d, points, voucher)
 
     mismatch_bits = []
     if d.quantity_mismatch:
@@ -548,6 +501,7 @@ def _received(d, admin, p):
                   f"and a \u20b9{voucher.amount} voucher: {voucher.code}.")
     if mismatch_bits:
         _notify_admins(d, "Mismatch at check-in", f"{d.public_id}: " + "; ".join(mismatch_bits) + ".")
+    _stock_in(d)
     return ""
 
 
@@ -561,14 +515,11 @@ def _complete(d, admin, p):
     d.distributed_quantity, d.distributed_at = qty, d.completed_at
     d.certificate_id = f"ROC-{timezone.localdate().year}-{d.public_id.split('-')[-1]}"
     _save(d, "status", "ngo", "completed_at", "distributed_quantity", "distributed_at", "certificate_id")
-    try:
-        warehouse.donation_completed(d, ngo)  # releases the matching warehouse lot as donated
-    except Exception:
-        log.exception("warehouse release failed for donation %s", d.public_id)
     certificates.attach(d)
     _save(d, "certificate_file")
     event(d, "Completed, certificate issued", f"{qty} item(s) given to {ngo}. Certificate {d.certificate_id}.", "good", "admin")
     _notify_donor(d, "Your donation made a difference", f"{d.public_id} was given to {ngo}. Your certificate is ready.")
+    _stock_out(d, ngo)
     return ""
 
 
@@ -577,9 +528,8 @@ def _reopen(d, admin, p):
     d.status, d.reject_reason = S.PENDING, ""
     d.pickup_date, d.pickup_slot, d.assigned_partner, d.handover_code = None, "", None, ""
     d.accepted_quantity, d.partial_reject_reason = None, ""
-    d.admin_points, d.admin_voucher_amount = None, None
     _save(d, "status", "reject_reason", "pickup_date", "pickup_slot", "assigned_partner", "handover_code",
-          "accepted_quantity", "partial_reject_reason", "admin_points", "admin_voucher_amount")
+          "accepted_quantity", "partial_reject_reason")
     event(d, "Back under review", "ReOrbit is looking at this donation again.", "wait", "admin")
     _notify_donor(d, "Donation under review again", f"{d.public_id} is being reviewed again.")
     return ""
@@ -646,3 +596,15 @@ def partner_mark_failed(pk, partner, reason):
         _mark_failed(d, reason, "partner")
         audit(None, "donation.partner_failed", "donation", d.public_id, after={"status": d.status}, reason=reason)
     return d
+
+
+def _tell_rewards(d, points, voucher):
+    """Orbit Points and the voucher a donor earned, in their notifications."""
+    from apps.core.services import notify
+
+    if points:
+        notify(d.donor, f"+{points} Orbit Points", f"Earned for donating {d.public_id}.",
+               module="rewards", target_url="/user-orbit-points/history", ref_type="donation", ref_id=d.public_id)
+    if voucher:
+        notify(d.donor, "Your voucher is ready", f"{voucher.title}. Use it at checkout.",
+               module="rewards", target_url="/user-orbit-points/vouchers", ref_type="voucher", ref_id=voucher.code)

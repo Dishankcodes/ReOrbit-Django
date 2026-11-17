@@ -1,77 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import {
-  EARNING_TONE,
-  buildSaleTimeline,
-  describeSale,
-  earningStatus,
-  stepIndex,
-  stepsOf,
-} from "../../data/salesStore";
-import { formatDateTime } from "../.././data/ordersStore";
-
 import "../../css/ReMakerOrders.css";
 import "../../css/ReMakerSales.css";
-
-export function SaleBadge({ order }) {
-  const status = describeSale(order);
-
-  return <span className={`rod-badge ${status.tone}`}>{status.label}</span>;
-}
-
-export function EarningBadge({ order, payouts }) {
-  const status = earningStatus(order, payouts);
-
-  return <span className={`sls-earn ${EARNING_TONE[status]}`}>{status}</span>;
-}
-
-export function SaleProgress({ order }) {
-  const steps = stepsOf(order);
-  const status = describeSale(order);
-  let percent = (stepIndex(order) / (steps.length - 1)) * 100;
-
-  if (order.status === "Pending") percent = 6;
-  if (order.status === "Cancelled" || order.status === "Returned")
-    percent = 100;
-
-  return (
-    <div
-      className={`rod-progress ${status.tone}`}
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(percent)}
-      aria-label={`Order progress: ${status.label}`}
-    >
-      <span style={{ width: `${percent}%` }} />
-    </div>
-  );
-}
-
-export function SaleTimeline({ order }) {
-  const steps = buildSaleTimeline(order);
-
-  return (
-    <ol className="rod-timeline">
-      {steps.map((step) => (
-        <li className={step.state} key={step.key}>
-          <span className="rod-dot" aria-hidden="true" />
-          <div>
-            <strong>{step.label}</strong>
-            <small>
-              {step.time
-                ? formatDateTime(step.time)
-                : step.state === "upcoming"
-                  ? "Expected next"
-                  : ""}
-            </small>
-            {step.note && <p>{step.note}</p>}
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 /* One confirm dialog for every seller action. Pass `reasons` to ask why. */
 export function ActionModal({

@@ -450,6 +450,25 @@ class MyTicketDetail(APIView):
         return created({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})
 
 
+def _tell_owner(ticket, action, text, before_status):
+    """Put a staff reply or a status change in the ticket owner's notifications."""
+    from apps.core.services import notify
+
+    owner = ticket.user or ticket.remaker
+    if owner is None:
+        return
+    base = "/remaker-help/tickets/" if ticket.remaker_id else "/user-help/tickets/"
+    url = f"{base}{ticket.public_id}"
+    ref = dict(module="complaints", target_url=url, ref_type="ticket", ref_id=ticket.public_id)
+    if action == "reply":
+        notify(owner, "Support replied to your ticket", f"{ticket.subject}: {text[:140]}", **ref)
+    elif ticket.status != before_status and ticket.status in (
+        SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED, SupportTicket.Status.OPEN,
+    ):
+        word = {"Resolved": "resolved", "Closed": "closed", "Open": "reopened"}[ticket.status]
+        notify(owner, f"Your ticket was {word}", ticket.subject, **ref)
+
+
 class AdminTickets(APIView):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("support")]
 
@@ -629,6 +648,7 @@ class AdminTickets(APIView):
             for line in events:
                 _event(ticket, line)
             _mark_admin_read(ticket, actor)
+            _tell_owner(ticket, action, text if action == "reply" else "", before_status)
         ticket.refresh_from_db()
         ticket = _ticket_queryset().get(pk=ticket.pk)
         return ok({"ticket": _ticket_row(ticket, viewer=request.user.account, request=request)})

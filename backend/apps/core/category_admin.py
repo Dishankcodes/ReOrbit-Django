@@ -23,8 +23,14 @@ from .models import Category
 from .responses import created, fail, ok
 from .services import audit
 
-ICONS = ("Armchair", "Home", "CookingPot", "Shirt", "Smartphone", "BookOpen", "Dumbbell", "Lamp", "Gem", "Baby",
-         "Bike", "Music", "Camera", "Watch", "Flower2", "Hammer", "Gamepad2", "Backpack", "Package")
+# Must match frontend/src/shared/categoryIcons.jsx
+ICONS = ("Armchair", "Sofa", "BedDouble", "Lamp", "LampDesk", "Frame", "Home", "DoorOpen", "CookingPot",
+         "UtensilsCrossed", "Refrigerator", "Bath", "Shirt", "Footprints", "Watch", "Gem", "Glasses",
+         "Backpack", "ShoppingBag", "Scissors", "Smartphone", "Laptop", "Headphones", "Speaker", "Camera",
+         "Tv", "Gamepad2", "Plug", "Palette", "Brush", "Sparkles", "Flower2", "Hammer", "Wrench", "Ruler",
+         "Recycle", "Baby", "Blocks", "Puzzle", "BookOpen", "Library", "NotebookPen", "PenTool",
+         "GraduationCap", "Newspaper", "Dumbbell", "Bike", "Trophy", "Tent", "Music", "Guitar", "Car",
+         "Sprout", "TreePine", "Leaf", "PawPrint", "Package", "Boxes", "Gift", "Tag", "HeartHandshake")
 LOCKED_SLUG = "other"
 
 

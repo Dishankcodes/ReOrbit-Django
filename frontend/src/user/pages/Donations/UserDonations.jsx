@@ -36,7 +36,7 @@ import DonationCard from "./components/DonationCard";
 import SafeImage from "../../components/ui/SafeImage";
 import ProgressTracker from "./components/ProgressTracker";
 import { StatusBadge } from "./components/DonationBadges";
-import { categoryIcon } from "./components/categoryIcons";
+import { CategoryGlyph } from "./components/categoryIcons";
 
 import "../../css/shared/ui-base.css";
 import "../../css/donations/DonationCard.css";
@@ -304,7 +304,6 @@ export default function UserDonations() {
 
         <div className="dn-cats">
           {categories.map((cat) => {
-            const Icon = categoryIcon(cat.id);
             return (
               <button
                 type="button"
@@ -317,7 +316,7 @@ export default function UserDonations() {
                 }
               >
                 <span className="dn-cat-icon">
-                  <Icon size={22} />
+                  <CategoryGlyph name={cat.id} size={22} />
                 </span>
                 <strong>{cat.label}</strong>
                 <small>{cat.hint}</small>

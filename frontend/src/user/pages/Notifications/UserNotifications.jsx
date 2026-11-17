@@ -10,6 +10,7 @@ import {
   Megaphone,
   MessageCircle,
   Settings,
+  ShieldCheck,
   ShoppingBag,
   Star,
   Tag,
@@ -42,6 +43,7 @@ const ICON = {
   support: LifeBuoy,
   message: MessageCircle,
   reward: Star,
+  account: ShieldCheck,
   announcement: Megaphone,
 };
 

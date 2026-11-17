@@ -139,7 +139,7 @@ export function LedgerList({ kind = "" }) {
 }
 
 /* ---------------------------------------------------------------- account */
-function AccountModal({ account, onSaved, onClose }) {
+export function AccountModal({ account, onSaved, onClose }) {
   const [method, setMethod] = useState(account?.method || "bank");
   const [f, setF] = useState({
     holder_name: account?.holder_name || "",

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { formatPrice } from "../../../data/remakerMarketplaceData";
+import { salesApi } from "../../../../api/orders";
+import { inr as formatPrice } from "../../../../shared/components/WalletParts";
 import { useWallet } from "../../../../shared/data/walletStore";
-import { useDashboard } from "../../../data/dashboardData";
 import { Card } from "./Controls";
 import ConfirmModal from "./ConfirmModal";
 
@@ -11,15 +11,24 @@ import ConfirmModal from "./ConfirmModal";
    earnings are shown first, and deleting needs a typed confirmation. */
 export default function DangerSection({ notify }) {
   const { summary } = useWallet();
-  const { data } = useDashboard();
+  const [counts, setCounts] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    salesApi
+      .list("?page_size=1")
+      .then((d) => alive && setCounts(d.counts || {}))
+      .catch(() => alive && setCounts({}));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const [modal, setModal] = useState(null); /* "deactivate" | "delete" */
   const [typed, setTyped] = useState("");
 
-  /* new + packed + shipped orders still need you; money is anything not yet paid to you */
-  const openOrders = data.pipeline
-    .filter((step) => step.key !== "delivered")
-    .reduce((n, step) => n + step.value, 0);
+  const c = counts || {};
+  const openOrders = (c.Confirmed || 0) + (c.Packed || 0) + (c.Shipped || 0);
   const b = summary?.balances;
   const money = b ? b.available + b.pending + b.in_review : 0;
   const blocked = openOrders > 0 || money > 0;

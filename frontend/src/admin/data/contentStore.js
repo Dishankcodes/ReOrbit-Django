@@ -12,27 +12,7 @@ import { adminCategoryApi } from "../../api/adminCategories";
 import { adminContentApi } from "../../api/adminContent";
 import { refreshCategories } from "../../shared/catalog";
 
-export const CATEGORY_ICON_KEYS = [
-  "Armchair",
-  "Home",
-  "CookingPot",
-  "Shirt",
-  "Smartphone",
-  "BookOpen",
-  "Dumbbell",
-  "Lamp",
-  "Gem",
-  "Baby",
-  "Bike",
-  "Music",
-  "Camera",
-  "Watch",
-  "Flower2",
-  "Hammer",
-  "Gamepad2",
-  "Backpack",
-  "Package",
-];
+export { ICON_KEYS as CATEGORY_ICON_KEYS } from "../../shared/categoryIcons";
 
 export const BANNER_PLACEMENTS = [
   {

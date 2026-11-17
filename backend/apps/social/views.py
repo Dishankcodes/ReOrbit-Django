@@ -195,7 +195,12 @@ class FollowView(APIView):
         actor = buyers.type_of(account)
         if actor == "remaker" and account.pk == target.pk:
             return fail("You cannot follow yourself.")
-        row, _ = Follow.objects.get_or_create(follower_type=actor, target=target, **buyers.owner(account))
+        row, is_new = Follow.objects.get_or_create(follower_type=actor, target=target, **buyers.owner(account))
+        if is_new:
+            from apps.core.services import notify
+
+            notify(target, "New follower", f"{account.full_name} started following you.",
+                   module="social", target_url="/remaker-followers", ref_type="follow", ref_id=row.pk)
         return created({"following": True, "id": target.public_id, "followedAt": row.created_at})
 
 
