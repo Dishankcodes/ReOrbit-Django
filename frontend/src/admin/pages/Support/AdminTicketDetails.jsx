@@ -28,7 +28,7 @@ import "../../css/AdminUI.css";
 import "../../css/support/AdminSupport.css";
 
 const STATUS_OPTIONS = {
-  User: ["Open", "In progress", "Resolved"],
+  User: ["Open", "In progress", "Resolved", "Closed"],
   ReMaker: ["Open", "In progress", "Waiting for you", "Resolved", "Closed"],
 };
 const LABEL = { "Waiting for you": "Waiting for member" };

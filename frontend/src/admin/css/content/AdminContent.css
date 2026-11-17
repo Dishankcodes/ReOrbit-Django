@@ -1996,15 +1996,32 @@
   font-weight: 700;
 }
 .cm-sugg-more {
-  margin-top: 10px;
-  border: 0;
-  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 38px;
+  margin: 14px auto 0;
+  padding: 0 18px;
+  border: 1px solid #cfe0d6;
+  border-radius: 999px;
+  background: #fff;
   color: #0e3a2d;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  text-decoration: underline;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.cm-sugg-more:hover {
+  border-color: #0e3a2d;
+  background: #f1f7f3;
+  box-shadow: 0 4px 12px rgba(14, 58, 45, 0.08);
+}
+.cm-sugg-more:focus-visible {
+  outline: 2px solid #0e3a2d;
+  outline-offset: 2px;
 }
 
 .cm-cat-icon[data-tip],

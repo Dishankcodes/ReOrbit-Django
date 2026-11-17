@@ -333,6 +333,7 @@ export function setLiveItems(cards) {
       sellerImage: "",
       quantity: c.stock,
       soldOut: c.sold_out,
+      returnable: c.returnable !== false,
       views: 0,
       likes: 0,
       listedDate: c.created_at,

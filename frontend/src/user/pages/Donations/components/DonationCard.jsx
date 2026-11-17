@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, ChevronRight, Package, Scale } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { StatusBadge } from "./DonationBadges";
+import { isMeasured } from "../../../data/donationsStore";
 import { CategoryGlyph } from "./categoryIcons.jsx"; // explicit: an old categoryIcons.js may still exist
 import {
   formatDate,
@@ -53,9 +54,11 @@ export default function DonationCard({ donation, variant = "row" }) {
             <span>
               <Package size={13} /> {donation.quantity}
             </span>
-            <span>
-              <Scale size={13} /> {kg(donation.weightKg)}
-            </span>
+            {isMeasured(donation) && (
+              <span>
+                <Scale size={13} /> {kg(donation.weightKg)}
+              </span>
+            )}
           </div>
         </div>
       </Link>
@@ -90,9 +93,11 @@ export default function DonationCard({ donation, variant = "row" }) {
             <Package size={13} /> {donation.quantity}{" "}
             {donation.quantity === 1 ? "item" : "items"}
           </span>
-          <span>
-            <Scale size={13} /> {kg(donation.weightKg)}
-          </span>
+          {isMeasured(donation) && (
+            <span title="Weighed at our warehouse">
+              <Scale size={13} /> {kg(donation.weightKg)}
+            </span>
+          )}
         </div>
       </div>
 

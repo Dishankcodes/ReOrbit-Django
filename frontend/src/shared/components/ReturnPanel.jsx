@@ -219,6 +219,13 @@ export default function ReturnPanel({ order }) {
         </section>
       )}
 
+      {!rr && order.returnsAccepted === false && order.apiStatus === "Delivered" && (
+        <p className="dn-muted" style={{ margin: "0 0 16px", fontSize: 13 }}>
+          This product was sold without returns, so it can't be sent back. If something is wrong with it,
+          raise a ticket from Get help and our team will look into it.
+        </p>
+      )}
+
       {!rr && order.canReturn && (
         <section className="dn-card dn-card-pad" style={{ marginBottom: 16 }}>
           <div className="dn-card-head">

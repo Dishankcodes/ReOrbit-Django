@@ -29,6 +29,7 @@ from apps.core.pagination import StandardPagination
 from apps.core.responses import created, fail, ok
 from apps.core.validators import validate_gujarat_pincode, validate_phone
 from apps.payments import gateway
+from apps.payments.wallet import seller_amount
 from apps.payments.models import Payment
 
 from . import returns, services
@@ -400,7 +401,9 @@ def _customer_data(key, orders, request):
         "open_orders": sum(1 for o in orders if o.status in OPEN_STATUSES),
         "delivered_orders": sum(1 for o in orders if o.status == Order.Status.DELIVERED),
         "spent": sum(o.subtotal for o in paid),
-        "earned": sum(o.subtotal + o.delivery_fee for o in paid),
+        # what the seller keeps: the delivery fee only when they delivered it themselves
+        # ("Managed by ReOrbit" delivery fees are ReOrbit's)
+        "earned": sum(seller_amount(o) for o in paid),
         "last_order_at": orders[0].created_at,
     }
 

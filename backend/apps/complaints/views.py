@@ -82,10 +82,21 @@ class AdminComplaints(APIView):
         return created(_one(request, c.public_id), message="Complaint logged.")
 
 
+def _may_change(request, public_id):
+    c = queryset().filter(public_id=public_id).first()
+    if c is not None and not services.can_act(request.user.account, c):
+        return fail("Only someone with Complaints edit access, or the admin it is assigned to, can change it.",
+                    status=403, code="NO_ACCESS")
+    return None
+
+
 class AdminAction(APIView):
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("complaints")]
+    # view access is enough to reach it; _may_change lets the assignee act on their own complaint
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("complaints", "view")]
 
     def post(self, request, public_id, action):
+        if (denied := _may_change(request, public_id)):
+            return denied
         try:
             services.run_action(public_id, action, request.user.account, request.data, ip=_ip(request))
         except services.ComplaintError as e:
@@ -94,9 +105,11 @@ class AdminAction(APIView):
 
 
 class AdminNotes(APIView):
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("complaints")]
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("complaints", "view")]
 
     def post(self, request, public_id):
+        if (denied := _may_change(request, public_id)):
+            return denied
         try:
             services.add_note(public_id, request.user.account, request.data.get("text"))
         except services.ComplaintError as e:

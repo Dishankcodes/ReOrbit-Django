@@ -20,6 +20,7 @@ import {
   useDonationCategories,
   summarize,
   useDonations,
+  isMeasured,
 } from "../../data/donationsStore";
 import Crumbs from "../../components/ui/Crumbs";
 import DonationCard from "./components/DonationCard";
@@ -60,7 +61,11 @@ const SORTS = {
     fn: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
   },
   items: { label: "Most items", fn: (a, b) => b.quantity - a.quantity },
-  weight: { label: "Heaviest", fn: (a, b) => b.weightKg - a.weightKg },
+  /* weight is only known once the warehouse has weighed it */
+  weight: {
+    label: "Heaviest (weighed)",
+    fn: (a, b) => (isMeasured(b) ? b.weightKg : -1) - (isMeasured(a) ? a.weightKg : -1),
+  },
 };
 
 export default function UserDonationHistory() {

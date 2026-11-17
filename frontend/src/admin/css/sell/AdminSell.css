@@ -938,3 +938,23 @@
     gap: 6px;
   }
 }
+
+/* delivery on the sell form: ReOrbit's rate from Settings, not editable here */
+.sh-field input:disabled {
+  background: #f3f6f4;
+  color: #44544c;
+  cursor: not-allowed;
+}
+.sh-field-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--ad-muted, #5c6b64);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.sh-field-hint a {
+  color: var(--ad-green, #0e3a2d);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

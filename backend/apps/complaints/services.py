@@ -322,6 +322,20 @@ def _a_dismiss(c, admin, p):
     _tell_reporter(c, "Your report was reviewed", f"{c.public_id}: we didn't find a rule was broken. {reason}")
 
 
+def _a_resolve(c, admin, p):
+    """Close a complaint as handled without a penalty (e.g. sorted out with the people involved)."""
+    _need_active(c)
+    note = _reason(p)
+    _finish(c, admin, p, Status.RESOLVED, "resolved", note, "Resolved", "good")
+    _tell_reporter(c, "Your report was handled", f"{c.public_id}: our team looked into it and closed it. {note}")
+
+
+def can_act(admin, c):
+    """Who may change a complaint: anyone with Complaints edit access (Super Admins always),
+    and the admin it is assigned to, even with view-only access."""
+    return admin.has_module("complaints", "edit") or (c is not None and c.assignee_id == admin.pk)
+
+
 def _warn_recipient(c):
     if c.target_type == Type.REVIEW:
         return reviewer_of(target_row(c))
@@ -430,7 +444,8 @@ def _a_remove_review(c, admin, p):
 
 
 HANDLERS = {
-    "start": _a_start, "assign": _a_assign, "reopen": _a_reopen, "dismiss": _a_dismiss, "warn": _a_warn,
+    "start": _a_start, "assign": _a_assign, "reopen": _a_reopen, "dismiss": _a_dismiss, "resolve": _a_resolve,
+    "warn": _a_warn,
     "suspend": lambda c, a, p: _a_penalty(c, a, p, "suspend"),
     "block": lambda c, a, p: _a_penalty(c, a, p, "block"),
     "removeProduct": _a_remove_product, "removeReview": _a_remove_review,

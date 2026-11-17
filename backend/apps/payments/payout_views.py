@@ -12,7 +12,9 @@ Admin (module "earnings")
   POST  admin/payouts/<id>/reject/ {reason}
   POST  admin/payouts/run-auto/    create payouts now (same as the daily command)
   GET/PATCH admin/rules/           payout_hold_days, payout_min_amount, payout_auto
-  GET   admin/summary/             money owed to sellers
+  GET   admin/summary/             money owed to sellers (+ overdue / due today / next release)
+  GET   admin/payouts/<id>/statement/  what one payout pays for (orders and refunds)
+  GET   admin/payouts/upcoming/    money becoming available, by date, and sellers ready to be paid
 """
 
 from django.db.models import Count, Q, Sum
@@ -26,7 +28,7 @@ from apps.core.pagination import StandardPagination
 from apps.core.responses import fail, ok
 from apps.core.services import audit
 
-from . import wallet
+from . import schedule, wallet
 from .models import Payout, WalletEntry
 
 
@@ -50,6 +52,7 @@ def payout_data(p, *, full=False, seller=False):
     if seller:
         s = p.seller_user or p.seller_remaker
         d["seller"] = {"type": "user" if p.seller_user_id else "remaker", "id": s.public_id, "name": s.full_name, "email": s.email}
+    d["schedule"] = schedule.due_info(p)  # pay-by date (admin) / expected date (seller)
     return d
 
 
@@ -143,6 +146,8 @@ class AdminPayouts(_AdminView):
         st = request.query_params.get("status")
         if st in ("Pending", "Paid", "Rejected"):
             qs = qs.filter(status=st)
+        if st == "Pending":
+            qs = qs.order_by("created_at", "pk")  # oldest first: the most urgent transfer is on top
         t = (request.query_params.get("q") or "").strip()
         if t:
             qs = qs.filter(Q(public_id__icontains=t) | Q(reference__icontains=t) | Q(seller_user__full_name__icontains=t)
@@ -154,6 +159,23 @@ class AdminPayouts(_AdminView):
         counts = {r["status"]: r["n"] for r in Payout.objects.order_by().values("status").annotate(n=Count("pk"))}
         resp.data["data"]["counts"] = counts
         return resp
+
+
+class AdminPayoutStatement(_AdminView):
+    def get(self, request, public_id):
+        p = get_object_or_404(Payout.objects.select_related("seller_user", "seller_remaker"), public_id=public_id)
+        return ok({"payout": payout_data(p, full=True, seller=True), "statement": schedule.statement(p)})
+
+
+class AdminPayoutUpcoming(_AdminView):
+    def get(self, request):
+        try:
+            days = max(1, min(90, int(request.query_params.get("days") or 30)))
+        except ValueError:
+            days = 30
+        s = PlatformSettings.load()
+        return ok({**schedule.upcoming(days), "ready": schedule.ready_sellers(s.payout_min_amount),
+                   "min_amount": s.payout_min_amount, "auto": s.payout_auto})
 
 
 class AdminPayoutDetails(APIView):
@@ -267,7 +289,8 @@ class AdminSummary(_AdminView):
         )
         return ok({"pending": a["pending"] or 0, "available": a["available"] or 0,
                    "awaiting_payment": p["awaiting"] or 0, "paid_total": p["paid"] or 0,
-                   "cod_to_collect": cod["amount"] or 0, "cod_orders": cod["n"] or 0, "refunds_open": refunds_open, "rules": _rules(PlatformSettings.load())})
+                   "cod_to_collect": cod["amount"] or 0, "cod_orders": cod["n"] or 0, "refunds_open": refunds_open,
+                   "due": schedule.due_counts(now), "rules": _rules(PlatformSettings.load())})
 
 
 # ------------------------------------------------------------------ refunds (admin)

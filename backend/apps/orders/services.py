@@ -447,6 +447,8 @@ def create_checkout(buyer, data, key=None):
                         order=order, kind=ln["kind"], ref_id=ln["public_id"], title=ln["title"], cover=ln["cover"],
                         unit_price=ln["unit_price"], qty=ln["qty"], line_total=ln["line_total"],
                         took_stock=took, closed_lot=closed,
+                        # the listing's return policy at the moment of purchase
+                        returnable=bool(getattr(ln["obj"], "returnable", True)),
                         **{{"item": "item", "remaker_product": "remaker_product", "admin_item": "admin_item"}[ln["kind"]]: ln["obj"]},
                     )
                     if ln["kind"] == "admin_item":

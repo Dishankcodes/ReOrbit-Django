@@ -132,8 +132,9 @@ function adapt(o) {
     subtotal: o.subtotal,
     shipping: o.delivery_fee,
     platformFee: o.platform_fee,
-    discount: 0,
+    discount: o.discount || 0,
     total: o.total,
+    managedDelivery: !!o.managed_delivery,
     placedAt: o.created_at,
     stage: STAGE_OF[o.status] ?? 0,
     cancelled,
@@ -160,6 +161,7 @@ function adapt(o) {
     failed: o.failed || null,
     returnReq: o.return || null,
     canReturn: !!o.can_return,
+    returnsAccepted: o.returns_accepted !== false,
     returnUntil: o.return_until || null,
     codCollected: o.payment.status === "COD_Collected",
     address: {

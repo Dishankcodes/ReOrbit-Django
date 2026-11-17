@@ -50,8 +50,14 @@ def window_open(order, now=None):
     return bool(order.delivered_at) and now < order.delivered_at + timedelta(days=RETURN_DAYS)
 
 
+def accepts_returns(order):
+    """False when something in the order was sold as "no returns" (a ReOrbit store listing with
+    "Accept returns within 7 days" switched off when it was bought)."""
+    return not order.lines.filter(returnable=False).exists()
+
+
 def can_request(order):
-    return (order.status == Order.Status.DELIVERED and window_open(order)
+    return (order.status == Order.Status.DELIVERED and window_open(order) and accepts_returns(order)
             and not ReturnRequest.objects.filter(order=order).exists())
 
 
@@ -98,6 +104,9 @@ def request_return(order_pk, buyer, reason_code, details, files):
             raise CheckoutError("You can ask for a return after the order is delivered.", code="BAD_STATE", status=409)
         if not window_open(o):
             raise CheckoutError(f"The {RETURN_DAYS}-day return window for this order has closed.", code="WINDOW_CLOSED", status=409)
+        if not accepts_returns(o):
+            raise CheckoutError("This product was sold without returns, so a return can't be requested.",
+                                code="NO_RETURNS", status=409)
         if ReturnRequest.objects.filter(order=o).exists():
             raise CheckoutError("A return was already requested for this order.", code="DUPLICATE", status=409)
         rr = ReturnRequest.objects.create(order=o, reason_code=reason_code, details=details, fault=REASONS[reason_code][1])

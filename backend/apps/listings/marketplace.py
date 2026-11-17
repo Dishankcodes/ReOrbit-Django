@@ -88,6 +88,8 @@ def card(kind, o, request):
         "summary": " ".join((o.description or "").split())[:140],
         "category": {"name": o.category.name, "slug": o.category.slug},
         "cover": _cover(o, request), "created_at": o.created_at,
+        # ReOrbit store listings can be sold without returns ("Accept returns within 7 days" off)
+        "returnable": bool(getattr(o, "returnable", True)),
     }
     if kind == "user":
         return {**base, "price": o.listing_price, "stock": o.quantity, "sold_out": False,

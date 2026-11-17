@@ -277,9 +277,9 @@ export default function UserDonationDetails() {
               </div>
               <div>
                 <dt>
-                  <Scale size={15} /> Est. weight
+                  <Scale size={15} /> Weight
                 </dt>
-                <dd>{kg(donation.weightKg)}</dd>
+                <dd>{rewarded ? kg(donation.weightKg) : "Weighed at our warehouse"}</dd>
               </div>
               <div>
                 <dt>

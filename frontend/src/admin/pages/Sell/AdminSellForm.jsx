@@ -24,6 +24,7 @@ import {
 } from "../../data/sellStore";
 import { SELL_CONDITIONS, SELL_SOURCES } from "../../data/adminSell";
 import { formatINR } from "../../utils/format";
+import { useCommerce } from "../../../shared/commerce";
 import SellNav from "./components/SellNav";
 import PhotoUploader, {
   MIN_PHOTOS,
@@ -108,6 +109,12 @@ export default function AdminSellForm() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState(EMPTY);
+  const commerce = useCommerce();
+  const sellFee = Number(commerce.sellDelivery) || 0;
+  const sellFree = Number(commerce.sellFreeFrom) || 0;
+  const deliveryText = !sellFee
+    ? "Free delivery"
+    : `${formatINR(sellFee)}${sellFree ? `, free on orders of ${formatINR(sellFree)} or more` : ""}`;
   const [step, setStep] = useState("basics");
   const [touched, setTouched] = useState({});
   const [loaded, setLoaded] = useState(false);
@@ -565,16 +572,15 @@ export default function AdminSellForm() {
                     inputMode: "numeric",
                   },
                 })}
-                <label className="sh-field">
+                <div className="sh-field">
                   <span>Delivery</span>
-                  <select
-                    value={form.delivery}
-                    onChange={(e) => set("delivery", e.target.value)}
-                  >
-                    <option value="free">Free delivery</option>
-                    <option value="flat">₹149, free above ₹5,000</option>
-                  </select>
-                </label>
+                  {/* the buyer always pays ReOrbit's own rate from Admin › Settings › Commerce */}
+                  <input value={deliveryText} disabled readOnly aria-label="Delivery charge" />
+                  <small className="sh-field-hint">
+                    Set for all ReOrbit listings in{" "}
+                    <Link to="/admin-settings?section=commerce">Settings › Commerce</Link>. Change it there.
+                  </small>
+                </div>
                 <label className="sh-field">
                   <span>
                     Material <em>(optional)</em>
@@ -691,9 +697,7 @@ export default function AdminSellForm() {
                     ["Units", form.quantity],
                     [
                       "Delivery",
-                      form.delivery === "free"
-                        ? "Free"
-                        : "₹149, free above ₹5,000",
+                      deliveryText,
                     ],
                     ["Returns", form.returnable ? "7 days" : "Not accepted"],
                     ["Warranty", form.specs.warranty],

@@ -65,6 +65,9 @@ class ManagedDeliveryTests(PostDeliveryBase):
         self.assertEqual(earning.amount, o.subtotal)
         sale = self.get(f"/api/orders/sales/{oid}/", as_=self.maker).data["data"]["order"]
         self.assertEqual((sale["seller_earning"], sale["managed_delivery"]), (o.subtotal, True))
+        # and the customer page counts the same: no delivery fee in "You earned"
+        cust = self.get("/api/orders/sales/customers/", as_=self.maker).data["data"]["customers"][0]
+        self.assertEqual(cust["earned"], o.subtotal)
 
     def test_cancelled_pickup_lets_the_seller_ask_again(self):
         oid = self.place(self.table)

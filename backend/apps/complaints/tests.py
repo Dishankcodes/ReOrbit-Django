@@ -216,3 +216,26 @@ class WorkflowTests(ComplaintBase):
         self.act(c, "suspend", reason="Selling unsafe goods")
         self.seller.refresh_from_db()
         self.assertEqual(self.seller.status, Users.Status.SUSPENDED)
+
+
+class CloseRightsTests(ComplaintBase):
+    """Super Admins, anyone with Complaints edit access, and the assignee can close a complaint."""
+
+    def test_mark_resolved_without_a_penalty(self):
+        c = self.filed()
+        self.assertEqual(self.act(c, "resolve").status_code, 400)  # a note is needed
+        r = self.act(c, "resolve", reason="Spoke to both sides, refund agreed.")
+        self.assertEqual(r.status_code, 200, r.data)
+        c.refresh_from_db()
+        self.assertEqual((c.status, c.resolution_action), ("Resolved", "resolved"))
+
+    def test_super_admin_and_the_assignee_can_act(self):
+        from apps.admins.models import Admins
+        sup = self.make_admin("super@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN)
+        c = self.filed()
+        self.assertEqual(self.act(c, "resolve", as_=self.viewer, reason="Handled it").status_code, 403)
+        self.assertEqual(self.act(c, "assign", assigneeId=self.viewer.public_id).status_code, 200)
+        r = self.act(c, "resolve", as_=self.viewer, reason="Handled it by phone")
+        self.assertEqual(r.status_code, 200, r.data)
+        c2 = self.filed(type="Product", target_id=self.item.public_id, category="Unrealistic price")
+        self.assertEqual(self.act(c2, "resolve", as_=sup, reason="Checked and closed").status_code, 200)

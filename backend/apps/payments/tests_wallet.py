@@ -214,3 +214,52 @@ class PayoutTests(WalletBase):
         second = self.post("/api/payments/payouts/request/", {}, as_=self.maker)
         self.assertEqual((first.status_code, second.status_code), (200, 409))
         self.assertEqual(Payout.objects.count(), 1)
+
+
+class PayoutScheduleTests(WalletBase):
+    """Admin › Payouts: pay-by dates, what a payout covers, and money still on its way."""
+
+    ready = PayoutTests.ready
+
+    def test_working_days(self):
+        from datetime import date
+        from .schedule import add_working_days, working_days_between
+        self.assertEqual(add_working_days(date(2026, 11, 20), 2), date(2026, 11, 24))  # Fri + 2 = Tue
+        self.assertEqual(add_working_days(date(2026, 11, 16), 2), date(2026, 11, 18))  # Mon + 2 = Wed
+        self.assertEqual(working_days_between(date(2026, 11, 20), date(2026, 11, 24)), 2)
+
+    def test_pay_by_date_statement_and_summary(self):
+        self.ready(2)
+        oid = Order.objects.get().public_id
+        pid = self.post("/api/payments/payouts/request/", {}, as_=self.maker).data["data"]["payout"]["id"]
+        row = self.get("/api/payments/admin/payouts/?status=Pending", as_=self.boss).data["data"]["results"][0]
+        self.assertIn(row["schedule"]["state"], ("ok", "soon", "today"))
+        self.assertTrue(row["schedule"]["due_by"])
+
+        st = self.get(f"/api/payments/admin/payouts/{pid}/statement/", as_=self.boss).data["data"]["statement"]
+        self.assertEqual([r["order"] for r in st["rows"]], [oid])
+        self.assertEqual((st["covered"], st["carried"]), (4800, 0))
+
+        # three working days later it is overdue
+        Payout.objects.filter(public_id=pid).update(created_at=timezone.now() - timedelta(days=7))
+        row = self.get("/api/payments/admin/payouts/?status=Pending", as_=self.boss).data["data"]["results"][0]
+        self.assertEqual(row["schedule"]["state"], "overdue")
+        due = self.get("/api/payments/admin/summary/", as_=self.boss).data["data"]["due"]
+        self.assertEqual((due["overdue"], due["overdue_amount"]), (1, 4800))
+
+        paid = self.post(f"/api/payments/admin/payouts/{pid}/pay/", {"reference": "UTR5544"}, as_=self.boss)
+        self.assertFalse(paid.data["data"]["payout"]["schedule"]["paid_on_time"])
+
+    def test_upcoming_and_ready_sellers(self):
+        self.deliver()  # clearing for 7 days
+        self.save_account()
+        up = self.get("/api/payments/admin/payouts/upcoming/", as_=self.boss).data["data"]
+        self.assertEqual(up["total"], 2400)
+        self.assertEqual(up["schedule"][0]["rows"][0]["seller"]["id"], self.maker.public_id)
+        self.assertEqual(up["ready"], [])
+        self.age()
+        up = self.get("/api/payments/admin/payouts/upcoming/", as_=self.boss).data["data"]
+        self.assertEqual(up["total"], 0)
+        self.assertEqual((up["ready"][0]["available"], up["ready"][0]["has_account"], up["ready"][0]["meets_minimum"]),
+                         (2400, True, True))
+        self.assertEqual(self.get("/api/payments/admin/payouts/upcoming/", as_=self.buyer).status_code, 403)

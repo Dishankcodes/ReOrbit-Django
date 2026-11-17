@@ -17,6 +17,8 @@ import {
   Zap,
   PackageX,
   Sparkles,
+  RotateCcw,
+  Ban,
 } from "lucide-react";
 
 import { useGoBack } from "../../../shared/backNav";
@@ -261,6 +263,22 @@ export default function UserProductDetails() {
                 · arrange delivery after purchase
               </span>
             </li>
+            {item.live &&
+              (item.returnable === false ? (
+                <li className="pd-noreturn">
+                  <Ban size={16} />
+                  <span>
+                    <b>Returns not accepted</b> for this product. Check the photos and details before you buy.
+                  </span>
+                </li>
+              ) : (
+                <li>
+                  <RotateCcw size={16} />
+                  <span>
+                    <b>7-day returns</b> if it arrives damaged or not as described
+                  </span>
+                </li>
+              ))}
           </ul>
 
           {!buyable && stock?.reason && (

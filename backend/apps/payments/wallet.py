@@ -2,16 +2,16 @@
 
 How the money flows (read this first)
   1. A buyer pays ReOrbit (Razorpay) or pays cash on delivery. ReOrbit holds it.
-  2. When an order is DELIVERED the seller earns the item subtotal plus the delivery fee (the
-     seller ships). The buyer's platform fee is ReOrbit's only cut and is never taken from the
+  2. When an order is DELIVERED the seller earns the item subtotal, plus the delivery fee when
+     they shipped it themselves ("Managed by ReOrbit" delivery fees are ReOrbit's). The buyer's platform fee is ReOrbit's only cut and is never taken from the
      seller. The earning is PENDING for `payout_hold_days` (the return window), then AVAILABLE.
      Cash on delivery: the courier hands the cash to ReOrbit, and the hold only starts when an
      admin confirms it arrived. While a return is open the earning stays frozen; if the return is
      refunded the earning is taken back out (a Reversal entry).
   3. The seller (or the automatic run, if switched on) creates a payout for the available
      balance. That takes the money out of the wallet at once (so it cannot be paid twice).
-  4. An admin sends the bank/UPI transfer outside the app and marks the payout PAID with the
-     transfer reference. If the admin REJECTS it, the money goes back to the wallet.
+  4. An admin sends the bank/UPI transfer outside the app within schedule.PAYOUT_SLA_DAYS working
+     days ("pay by" on Admin > Payouts) and marks the payout PAID with the transfer reference. If the admin REJECTS it, the money goes back to the wallet.
 
 Everything is an append-only ledger (WalletEntry); balances are sums, never a stored number
 that could drift. Platform (ReOrbit store) orders earn nothing for a seller.

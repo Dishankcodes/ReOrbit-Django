@@ -1,0 +1,366 @@
+/* "Add more products" on the checkout page. Colours come from the portal theme (--dn-*). */
+.ckp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 28, 23, 0.5);
+  backdrop-filter: blur(3px);
+}
+.ckp {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  width: min(1040px, 100%);
+  height: min(780px, calc(100vh - 48px));
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--dn-card, #fff);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  color: var(--dn-text, #1f2923);
+}
+.ckp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 12px;
+}
+.ckp-head h2 {
+  margin: 0;
+  color: var(--dn-p);
+  font-size: 22px;
+}
+.ckp-head p {
+  margin: 4px 0 0;
+  color: var(--dn-muted);
+  font-size: 13px;
+}
+.ckp-x {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--dn-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--dn-text);
+  cursor: pointer;
+}
+
+.ckp-tools {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 12px;
+}
+.ckp-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--dn-border);
+  border-radius: 12px;
+  background: #fbfcfb;
+  color: var(--dn-muted);
+}
+.ckp-search:focus-within {
+  border-color: var(--dn-p);
+}
+.ckp-search input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 14px;
+}
+.ckp-search button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--dn-muted);
+  cursor: pointer;
+}
+.ckp-tools select {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--dn-border);
+  border-radius: 12px;
+  background: #fbfcfb;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.ckp-cats {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ckp-cats button {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border: 1px solid var(--dn-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ckp-cats button.on {
+  border-color: var(--dn-p);
+  background: var(--dn-p);
+  color: #fff;
+}
+
+.ckp-body {
+  min-height: 0;
+  padding: 4px 24px 20px;
+  overflow-y: auto;
+  border-top: 1px solid var(--dn-border);
+  background: var(--dn-bg, #f7f5ee);
+}
+.ckp-count {
+  margin: 12px 0 10px;
+  color: var(--dn-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ckp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ckp-grid li {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--dn-border);
+  border-radius: 16px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ckp-grid li:hover {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+}
+.ckp-grid li.in {
+  border-color: var(--dn-p);
+}
+.ckp-img {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #eef2ee;
+}
+.ckp-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ckp-img i {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--dn-p);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.ckp-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.ckp-info strong {
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ckp-info span {
+  overflow: hidden;
+  color: var(--dn-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ckp-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+}
+.ckp-price b {
+  color: var(--dn-p);
+  font-size: 15px;
+}
+.ckp-price em {
+  color: #b5602a;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.ckp-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  border: 1px solid var(--dn-p);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--dn-p);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ckp-add:hover {
+  background: var(--dn-p);
+  color: #fff;
+}
+
+/* quantity stepper: also used in the checkout summary */
+.ckp-step {
+  display: inline-grid;
+  grid-template-columns: 34px minmax(28px, auto) 34px;
+  align-items: center;
+  height: 38px;
+  overflow: hidden;
+  border: 1px solid var(--dn-p);
+  border-radius: 11px;
+  background: #fff;
+}
+.ckp-step button {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border: 0;
+  background: var(--dn-soft, #e4ede7);
+  color: var(--dn-p);
+  cursor: pointer;
+}
+.ckp-step button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ckp-step span {
+  color: var(--dn-text);
+  font-size: 13.5px;
+  font-weight: 800;
+  text-align: center;
+}
+.ckp-step.sm {
+  grid-template-columns: 28px minmax(24px, auto) 28px;
+  height: 30px;
+  border-radius: 9px;
+}
+.ckp-step.sm span {
+  font-size: 12.5px;
+}
+
+.ckp-more {
+  display: block;
+  margin: 18px auto 0;
+  padding: 10px 20px;
+  border: 1px solid var(--dn-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--dn-p);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ckp-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 60px 20px;
+  color: var(--dn-muted);
+  text-align: center;
+}
+.ckp-empty strong {
+  color: var(--dn-text);
+}
+
+.ckp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--dn-border);
+  background: #fff;
+}
+.ckp-browse {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: none;
+  color: var(--dn-p);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ckp-browse:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .ckp-backdrop {
+    padding: 0;
+    place-items: end stretch;
+  }
+  .ckp {
+    width: 100%;
+    height: 92vh;
+    border-radius: 20px 20px 0 0;
+  }
+  .ckp-head,
+  .ckp-tools,
+  .ckp-cats,
+  .ckp-body,
+  .ckp-foot {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .ckp-tools {
+    flex-wrap: wrap;
+  }
+  .ckp-tools select {
+    width: 100%;
+  }
+  .ckp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .ckp-foot {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .ckp-foot .dn-btn {
+    justify-content: center;
+  }
+}

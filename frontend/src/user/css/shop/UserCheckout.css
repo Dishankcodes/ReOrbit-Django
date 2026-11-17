@@ -451,3 +451,88 @@
 .ushp-summary .save dd {
   color: #2a7a4f;
 }
+
+/* ---------- editable order summary ---------- */
+.ushp-sum-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ushp-sum-head span {
+  color: var(--dn-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.ushp-summary .ushp-sum-items.editable li {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: start;
+}
+.ushp-summary .ushp-sum-items.editable .ushp-sum-img img {
+  width: 56px;
+  height: 56px;
+}
+.ushp-sum-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ushp-sum-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ushp-sum-remove {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--dn-border);
+  border-radius: 9px;
+  background: #fff;
+  color: #a8433a;
+  cursor: pointer;
+}
+.ushp-sum-remove:hover:not(:disabled) {
+  border-color: #a8433a;
+  background: #fbefed;
+}
+.ushp-sum-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ushp-sum-max {
+  color: #b5602a;
+  font-size: 11px;
+  font-weight: 600;
+}
+.ushp-addmore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: 1.5px dashed var(--dn-p);
+  border-radius: 12px;
+  background: var(--dn-soft, #e4ede7);
+  color: var(--dn-p);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ushp-addmore:hover:not(:disabled) {
+  background: #fff;
+}
+.ushp-addmore:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ushp-center-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}

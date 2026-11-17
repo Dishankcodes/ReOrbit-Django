@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlarmClock, CalendarClock, CheckCircle2, ChevronRight, Search, Truck, X } from "lucide-react";
 
 import { adminPayoutApi } from "../../../api/payouts";
 import { useAccess } from "../../data/teamStore";
@@ -28,6 +29,76 @@ const where = (a) =>
         ["Account", a.account_number],
         ["IFSC", a.ifsc],
       ];
+
+/* "Mon, 24 Nov" */
+const day = (v) =>
+  v ? new Date(String(v).length === 10 ? `${v}T00:00:00` : v).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }) : "—";
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
+/* When a payout has to be sent, and how urgent it is */
+function PayBy({ p }) {
+  const sc = p.schedule || {};
+  if (p.status === "Pending") {
+    const left = sc.days_left ?? 0;
+    const label =
+      sc.state === "overdue"
+        ? `Overdue by ${plural(-left, "day")}`
+        : sc.state === "today"
+          ? "Due today"
+          : sc.state === "soon"
+            ? "Due tomorrow"
+            : `In ${plural(left, "day")}`;
+    return (
+      <div className="pyo-payby">
+        <b>{day(sc.due_by)}</b>
+        <span className={`pyo-due ${sc.state}`}>{label}</span>
+      </div>
+    );
+  }
+  if (p.status === "Paid")
+    return (
+      <div className="pyo-payby">
+        <b>Paid {day(p.paid_at)}</b>
+        <span className={`pyo-due ${sc.paid_on_time === false ? "late" : "done"}`}>
+          {sc.paid_on_time === false ? `Late · took ${plural(sc.took_days, "working day")}` : "On time"}
+        </span>
+      </div>
+    );
+  return <span className="pyo-muted">—</span>;
+}
+
+/* Overdue / due today / next money clearing: what needs doing today */
+function DueStrip({ due }) {
+  if (!due) return null;
+  if (due.overdue || due.due_today)
+    return (
+      <div className={`pyo-strip ${due.overdue ? "bad" : "warn"}`}>
+        <AlarmClock size={18} />
+        <div>
+          <b>
+            {due.overdue ? `${plural(due.overdue, "payout")} overdue (${formatINR(due.overdue_amount)})` : ""}
+            {due.overdue && due.due_today ? " · " : ""}
+            {due.due_today ? `${plural(due.due_today, "payout")} due today (${formatINR(due.due_today_amount)})` : ""}
+          </b>
+          <span>Sellers are promised their transfer within {plural(due.sla_days, "working day")} of asking. Oldest first below.</span>
+        </div>
+      </div>
+    );
+  return (
+    <div className="pyo-strip ok">
+      <CheckCircle2 size={18} />
+      <div>
+        <b>Every payout is on schedule.</b>
+        <span>
+          {due.next_release_at
+            ? `Next seller money clears ${day(due.next_release_at)} · ${formatINR(due.releasing_7d)} clears in the next 7 days.`
+            : "No seller money is clearing right now."}{" "}
+          Transfers are due within {plural(due.sla_days, "working day")} of a request.
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function Summary({ s }) {
   const cards = [
@@ -193,6 +264,320 @@ function Rules({ rules, canEdit, onSaved, toast }) {
   );
 }
 
+/* What one payout pays for */
+function StatementDrawer({ payout, canEdit, onClose, onAct }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let alive = true;
+    adminPayoutApi
+      .statement(payout.id)
+      .then((d) => alive && setData(d))
+      .catch((e) => alive && setError(e.message || "Could not load the statement."));
+    const onKey = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => {
+      alive = false;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [payout.id, onClose]);
+  const p = data?.payout || payout;
+  const st = data?.statement;
+  const sellerPath = p.seller.type === "remaker" ? `/admin-remakers/${p.seller.id}` : `/admin-users/${p.seller.id}`;
+  return (
+    <div className="pyo-drawer-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <aside className="pyo-drawer" role="dialog" aria-modal="true" aria-label={`Payout ${p.id}`}>
+        <header>
+          <div>
+            <small>{p.id}</small>
+            <h3>{formatINR(p.amount)}</h3>
+            <span className={`pyo-badge ${p.status}`}>{STATUS[p.status]}</span>
+          </div>
+          <button type="button" className="pyo-x" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </header>
+
+        <dl className="pyo-facts">
+          <div>
+            <dt>Seller</dt>
+            <dd>
+              <Link to={sellerPath}>{p.seller.name}</Link>
+              <small>
+                {p.seller.type === "remaker" ? "ReMaker" : "Member"} · {p.seller.email}
+              </small>
+            </dd>
+          </div>
+          <div>
+            <dt>Requested</dt>
+            <dd>
+              {formatDate(p.created_at)}
+              <small>{p.source === "auto" ? "Created by the automatic run" : "Asked by the seller"}</small>
+            </dd>
+          </div>
+          <div>
+            <dt>{p.status === "Paid" ? "Paid" : "Pay by"}</dt>
+            <dd>
+              <PayBy p={p} />
+            </dd>
+          </div>
+          <div>
+            <dt>Send to</dt>
+            <dd>
+              {p.account.method === "upi" ? `UPI ${p.account.upi_id}` : `${p.account.bank_name || "Bank"} ${p.account.account_number}`}
+              {p.account.holder_name && <small>{p.account.holder_name}{p.account.ifsc ? ` · ${p.account.ifsc}` : ""}</small>}
+            </dd>
+          </div>
+          {p.reference && (
+            <div>
+              <dt>Reference</dt>
+              <dd>{p.reference}</dd>
+            </div>
+          )}
+          {p.reject_reason && (
+            <div>
+              <dt>Rejected</dt>
+              <dd>{p.reject_reason}</dd>
+            </div>
+          )}
+        </dl>
+
+        <h4 className="pyo-sub">What this payout covers</h4>
+        {error ? (
+          <p className="apr-note">{error}</p>
+        ) : !st ? (
+          <SkeletonRows count={3} />
+        ) : (
+          <>
+            <p className="pyo-muted">
+              Earnings that cleared {st.period_from ? `after the previous payout (${formatDate(st.period_from)})` : "since the seller started selling"} and
+              before {formatDate(st.period_to)}.
+            </p>
+            {st.rows.length === 0 ? (
+              <p className="pyo-muted">No single order matches: this is balance left over from earlier.</p>
+            ) : (
+              <ul className="pyo-lines">
+                {st.rows.map((r, i) => (
+                  <li key={`${r.order}-${r.kind}-${i}`}>
+                    <div>
+                      {r.order ? <Link to={`/admin-orders/${r.order}`}>{r.order}</Link> : <b>{r.note}</b>}
+                      <small>
+                        {r.kind === "Reversal" ? "Refunded to the buyer · " : r.delivered_at ? `Delivered ${formatDate(r.delivered_at)} · ` : ""}
+                        cleared {formatDate(r.available_at)}
+                        {r.managed_delivery && (
+                          <em>
+                            <Truck size={11} /> ReOrbit delivered (fee not included)
+                          </em>
+                        )}
+                      </small>
+                    </div>
+                    <b className={r.amount < 0 ? "neg" : ""}>
+                      {r.amount < 0 ? "− " : ""}
+                      {formatINR(Math.abs(r.amount))}
+                    </b>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <dl className="pyo-total">
+              <div>
+                <dt>Orders above</dt>
+                <dd>{formatINR(st.covered)}</dd>
+              </div>
+              {st.carried !== 0 && (
+                <div>
+                  <dt>{st.carried > 0 ? "Earlier balance" : "Left in the wallet"}</dt>
+                  <dd>
+                    {st.carried < 0 ? "− " : ""}
+                    {formatINR(Math.abs(st.carried))}
+                  </dd>
+                </div>
+              )}
+              <div className="grand">
+                <dt>Payout</dt>
+                <dd>{formatINR(p.amount)}</dd>
+              </div>
+            </dl>
+          </>
+        )}
+
+        {canEdit && p.status === "Pending" && (
+          <footer>
+            <button type="button" className="ad-btn ad-btn-ghost" onClick={() => onAct(p, "reject")}>
+              Reject
+            </button>
+            <button type="button" className="ad-btn ad-btn-primary" onClick={() => onAct(p, "pay")}>
+              Mark paid
+            </button>
+          </footer>
+        )}
+      </aside>
+    </div>
+  );
+}
+
+/* Seller money on its way: by the day it clears, and who could be paid right now */
+function Upcoming({ refreshKey }) {
+  const [tab, setTab] = useState("schedule");
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    adminPayoutApi
+      .upcoming(30)
+      .then((d) => alive && setData(d))
+      .catch((e) => alive && setError(e.message || "Could not load."));
+    return () => {
+      alive = false;
+    };
+  }, [refreshKey]);
+
+  const ready = data?.ready || [];
+  return (
+    <section className="au-panel pyo-up">
+      <div className="pyo-up-head">
+        <div>
+          <h3>
+            <CalendarClock size={17} /> Upcoming money
+          </h3>
+          <p>When seller earnings become payable. Earnings clear after the hold days set in the rules above.</p>
+        </div>
+        <div className="arv-chips" role="tablist" aria-label="Upcoming view">
+          <button type="button" className={tab === "schedule" ? "on" : ""} onClick={() => setTab("schedule")}>
+            Clearing soon{data ? <em>{formatINR(data.total)}</em> : null}
+          </button>
+          <button type="button" className={tab === "ready" ? "on" : ""} onClick={() => setTab("ready")}>
+            Ready to pay{data ? <em>{ready.length}</em> : null}
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <p className="apr-note">{error}</p>
+      ) : !data ? (
+        <SkeletonRows count={3} />
+      ) : tab === "schedule" ? (
+        <>
+          <div className="pyo-up-facts">
+            <span>
+              <b>{formatINR(data.total)}</b> clears in the next {data.days} days
+            </span>
+            {data.later.amount > 0 && (
+              <span>
+                <b>{formatINR(data.later.amount)}</b> later
+              </span>
+            )}
+            {data.held_by_returns.amount !== 0 && (
+              <span>
+                <b>{formatINR(data.held_by_returns.amount)}</b> frozen by {plural(data.held_by_returns.count, "open return")}
+              </span>
+            )}
+            {data.waiting_for_cod_cash.amount !== 0 && (
+              <span>
+                <b>{formatINR(data.waiting_for_cod_cash.amount)}</b> waiting for COD cash ({plural(data.waiting_for_cod_cash.count, "order")})
+              </span>
+            )}
+          </div>
+          {data.schedule.length === 0 ? (
+            <p className="apr-empty">Nothing clears in the next {data.days} days.</p>
+          ) : (
+            <ul className="pyo-days">
+              {data.schedule.map((d) => (
+                <li key={d.date} className={open === d.date ? "open" : ""}>
+                  <button type="button" onClick={() => setOpen(open === d.date ? null : d.date)} aria-expanded={open === d.date}>
+                    <span className="pyo-day">{day(d.date)}</span>
+                    <span className="pyo-muted">
+                      {plural(new Set(d.rows.map((r) => r.seller.id)).size, "seller")} · {plural(d.rows.length, "order")}
+                    </span>
+                    <b>{formatINR(d.amount)}</b>
+                    <ChevronRight size={15} className="pyo-chev" />
+                  </button>
+                  {open === d.date && (
+                    <table className="apr-table pyo-day-rows">
+                      <tbody>
+                        {d.rows.map((r, i) => (
+                          <tr key={`${r.order}-${i}`}>
+                            <td>
+                              <Link to={r.seller.type === "remaker" ? `/admin-remakers/${r.seller.id}` : `/admin-users/${r.seller.id}`}>
+                                {r.seller.name}
+                              </Link>
+                              <br />
+                              <small>{r.seller.type === "remaker" ? "ReMaker" : "Member"}</small>
+                            </td>
+                            <td>{r.order ? <Link to={`/admin-orders/${r.order}`}>{r.order}</Link> : "—"}</td>
+                            <td className="pyo-r">
+                              <b>
+                                {r.amount < 0 ? "− " : ""}
+                                {formatINR(Math.abs(r.amount))}
+                              </b>
+                              {r.kind === "Reversal" && <small> refund</small>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : ready.length === 0 ? (
+        <p className="apr-empty">No seller has cleared money waiting right now.</p>
+      ) : (
+        <>
+          <p className="pyo-muted" style={{ marginTop: 0 }}>
+            Money that has cleared and has no payout yet.{" "}
+            {data.auto
+              ? `The automatic run creates a payout for anyone at ${formatINR(data.min_amount)} or more with saved details.`
+              : `Automatic payouts are off: these sellers can ask for a payout once they reach ${formatINR(data.min_amount)}.`}
+          </p>
+          <table className="apr-table">
+            <thead>
+              <tr>
+                <th>Seller</th>
+                <th>Cleared since</th>
+                <th>Last paid</th>
+                <th>Payout details</th>
+                <th className="pyo-r">Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ready.map((r) => (
+                <tr key={`${r.seller.type}-${r.seller.id}`}>
+                  <td>
+                    <Link to={r.seller.type === "remaker" ? `/admin-remakers/${r.seller.id}` : `/admin-users/${r.seller.id}`}>
+                      {r.seller.name}
+                    </Link>
+                    <br />
+                    <small>
+                      {r.seller.type === "remaker" ? "ReMaker" : "Member"} · {r.seller.email}
+                    </small>
+                  </td>
+                  <td>{formatDate(r.available_since)}</td>
+                  <td>{r.last_paid_at ? formatDate(r.last_paid_at) : <span className="pyo-muted">Never</span>}</td>
+                  <td>
+                    {r.has_account ? (
+                      <span className="pyo-due done">Saved</span>
+                    ) : (
+                      <span className="pyo-due overdue">Missing</span>
+                    )}
+                  </td>
+                  <td className="pyo-r">
+                    <b>{formatINR(r.available)}</b>
+                    {!r.meets_minimum && <small className="pyo-muted"> below minimum</small>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </section>
+  );
+}
+
 function PayModal({ payout, mode, canReveal, onClose, onDone }) {
   const [text, setText] = useState("");
   const [full, setFull] = useState(null);
@@ -352,6 +737,9 @@ export default function PayoutsLive({ toast }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [pending, setPending] = useState(null); // { payout, mode }
+  const [viewing, setViewing] = useState(null); // payout shown in the statement drawer
+  const [refreshKey, setRefreshKey] = useState(0);
+  const closeView = useCallback(() => setViewing(null), []);
 
   const loadSummary = useCallback(
     () =>
@@ -388,12 +776,15 @@ export default function PayoutsLive({ toast }) {
         ? `${row.id} marked as paid.`
         : `${row.id} rejected. The money is back in the wallet.`,
     );
+    setViewing(null);
     load();
     loadSummary();
+    setRefreshKey((k) => k + 1);
   };
 
   return (
     <>
+      {summary && <DueStrip due={summary.due} />}
       {summary ? <Summary s={summary} /> : <SkeletonRows count={1} />}
       {summary && (
         <Rules
@@ -463,18 +854,21 @@ export default function PayoutsLive({ toast }) {
                   <th>Seller</th>
                   <th>Send to</th>
                   <th>Amount</th>
+                  <th>Pay by</th>
                   <th>Status</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {data.results.map((p) => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className={p.schedule?.state === "overdue" ? "pyo-row-late" : ""}>
                     <td>
-                      <b>{p.id}</b>
+                      <button type="button" className="pyo-link" onClick={() => setViewing(p)}>
+                        {p.id}
+                      </button>
                       <br />
                       <small>
-                        {formatDate(p.created_at)}
+                        Asked {formatDate(p.created_at)}
                         {p.source === "auto" ? " · automatic" : ""}
                       </small>
                     </td>
@@ -497,6 +891,9 @@ export default function PayoutsLive({ toast }) {
                       <b>{formatINR(p.amount)}</b>
                     </td>
                     <td>
+                      <PayBy p={p} />
+                    </td>
+                    <td>
                       <span className={`pyo-badge ${p.status}`}>
                         {STATUS[p.status]}
                       </span>
@@ -508,6 +905,11 @@ export default function PayoutsLive({ toast }) {
                       )}
                     </td>
                     <td>
+                      <div className="apr-actions">
+                        <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={() => setViewing(p)}>
+                          Details
+                        </button>
+                      </div>
                       {canEdit && p.status === "Pending" && (
                         <div className="apr-actions">
                           <button
@@ -548,6 +950,15 @@ export default function PayoutsLive({ toast }) {
           </>
         )}
       </section>
+      <Upcoming refreshKey={refreshKey} />
+      {viewing && (
+        <StatementDrawer
+          payout={viewing}
+          canEdit={canEdit}
+          onClose={closeView}
+          onAct={(payout, mode) => setPending({ payout, mode })}
+        />
+      )}
       {pending && (
         <PayModal
           payout={pending.payout}

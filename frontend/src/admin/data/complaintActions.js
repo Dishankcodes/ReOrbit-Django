@@ -107,6 +107,19 @@ export const COMPLAINT_ACTIONS = {
     toast: "was resolved: review removed",
     reasonHint: "kept in the complaint history",
   },
+  resolve: {
+    key: "resolve",
+    label: "Mark resolved",
+    short: "Resolve",
+    tone: "positive",
+    icon: "check",
+    fields: "reason",
+    title: "Close this complaint as resolved?",
+    body: "Use this when it was sorted out without a warning or a penalty. The person who reported it is told it was handled.",
+    confirmLabel: "Mark resolved",
+    toast: "was resolved",
+    reasonHint: "what was done (shown to the reporter)",
+  },
   reopen: {
     key: "reopen",
     label: "Reopen complaint",
@@ -128,7 +141,7 @@ export function getDecisions(c) {
   if (!isActive(c)) return [];
   const A = COMPLAINT_ACTIONS;
   const t = c.target;
-  const out = [A.dismiss];
+  const out = [A.resolve, A.dismiss];
   if (c.type === "User" || c.type === "ReMaker") {
     out.push(A.warn);
     if (t.status === "Active") out.push(A.suspend);

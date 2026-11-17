@@ -164,7 +164,7 @@ def order_data(o, request, *, events=False, buyer=False):
             {
                 "id": ln.ref_id, "kind": ln.kind, "title": ln.title, "qty": ln.qty,
                 "unit_price": ln.unit_price, "line_total": ln.line_total,
-                "cover": media_url(request, ln.cover),
+                "cover": media_url(request, ln.cover), "returnable": ln.returnable,
             }
             for ln in o.lines.all()
         ],
@@ -192,7 +192,10 @@ def order_data(o, request, *, events=False, buyer=False):
     data["can_review"] = o.status == Order.Status.DELIVERED and not revs
     rr = getattr(o, "return_request", None)
     data["return"] = return_data(rr, request) if rr else None
-    data["can_return"] = rr is None and o.status == Order.Status.DELIVERED and returns.window_open(o)
+    no_returns = any(not ln.returnable for ln in o.lines.all())
+    data["returns_accepted"] = not no_returns
+    data["can_return"] = (rr is None and not no_returns and o.status == Order.Status.DELIVERED
+                          and returns.window_open(o))
     data["return_until"] = (o.delivered_at + timedelta(days=returns.RETURN_DAYS)) if o.delivered_at else None
     if buyer:
         b = buyers.info(o)

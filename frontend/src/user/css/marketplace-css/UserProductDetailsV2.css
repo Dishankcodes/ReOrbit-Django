@@ -578,3 +578,12 @@ a.pd-seller--link:hover .pd-seller-go {
   background: #f3f8f4;
   font-size: 14px;
 }
+
+/* "Returns not accepted" on a ReOrbit store listing sold without returns */
+.pd-facts li.pd-noreturn {
+  color: #8f3a2e;
+}
+.pd-facts li.pd-noreturn svg,
+.pd-facts li.pd-noreturn b {
+  color: #a8433a;
+}

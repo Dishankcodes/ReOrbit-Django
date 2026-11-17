@@ -384,9 +384,18 @@ function SuggestedCategories({ cats, busy, onAdd }) {
         <button
           type="button"
           className="cm-sugg-more"
+          aria-expanded={all}
           onClick={() => setAll((v) => !v)}
         >
-          {all ? "Show fewer" : `Show ${left.length - 6} more suggestions`}
+          {all ? (
+            <>
+              <ChevronUp size={15} /> Show fewer
+            </>
+          ) : (
+            <>
+              <ChevronDown size={15} /> Show {left.length - 6} more suggestions
+            </>
+          )}
         </button>
       )}
     </div>

@@ -11,6 +11,8 @@ import {
   Leaf,
   Lock,
   MapPin,
+  Minus,
+  PackagePlus,
   Pencil,
   Plus,
   ShieldCheck,
@@ -18,7 +20,12 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { removeFromCart, useCheckoutLines } from "../../data/shopStore";
+import {
+  removeFromCart,
+  removeFromCheckout,
+  setCheckoutQty,
+  useCheckoutLines,
+} from "../../data/shopStore";
 import {
   createAddress,
   deleteAddress,
@@ -45,6 +52,7 @@ import "../../../shared/components/Spinner.css";
 import AddressForm from "./components/AddressForm";
 import PaymentOverlay from "./components/PaymentOverlay";
 import ShopNav from "./components/ShopNav";
+import CheckoutPicker from "./components/CheckoutPicker";
 
 import "../../css/shared/ui-base.css";
 import "../../css/shop/shop-base.css";
@@ -96,6 +104,7 @@ export default function UserCheckout() {
   const [cfg, setCfg] =
     useState(null); /* { enabled } : is online payment set up? */
   const [pay, setPay] = useState({ state: null, error: "" });
+  const [picking, setPicking] = useState(false); /* the "Add more products" panel */
   const attempt = useRef(null);
 
   useEffect(() => {
@@ -160,6 +169,12 @@ export default function UserCheckout() {
           actionLabel="Browse marketplace"
           to="/user-marketplace"
         />
+        <div className="ushp-center-row">
+          <button type="button" className="dn-btn dn-btn--ghost" onClick={() => setPicking(true)}>
+            <PackagePlus size={15} /> Pick products here
+          </button>
+        </div>
+        <CheckoutPicker open={picking} onClose={() => setPicking(false)} />
       </div>
     );
   }
@@ -723,22 +738,74 @@ export default function UserCheckout() {
           aria-label="Order summary"
           aria-busy={q.loading}
         >
-          <h3>Order summary</h3>
-          <ul className="ushp-sum-items">
-            {buyable.map((l) => (
-              <li key={l.id}>
-                <div className="ushp-sum-img">
-                  <SafeImage src={l.item.image} alt="" />
-                  <i>{l.qty}</i>
-                </div>
-                <div>
-                  <strong>{l.item.title}</strong>
-                  <span>{l.item.seller}</span>
-                </div>
-                <b>{formatPrice(l.item.price * l.qty)}</b>
-              </li>
-            ))}
+          <div className="ushp-sum-head">
+            <h3>Order summary</h3>
+            <span>
+              {buyable.reduce((n, l) => n + l.qty, 0)} item
+              {buyable.reduce((n, l) => n + l.qty, 0) === 1 ? "" : "s"}
+            </span>
+          </div>
+          <ul className="ushp-sum-items editable">
+            {buyable.map((l) => {
+              const busy = pay.state === "processing" || pay.state === "paying";
+              return (
+                <li key={l.id}>
+                  <div className="ushp-sum-img">
+                    <SafeImage src={l.item.image} alt="" />
+                  </div>
+                  <div className="ushp-sum-text">
+                    <strong title={l.item.title}>{l.item.title}</strong>
+                    <span>
+                      {formatPrice(l.item.price)} · {l.item.seller}
+                    </span>
+                    <div className="ushp-sum-ctrl">
+                      <div className="ckp-step sm" aria-label={`Quantity of ${l.item.title}`}>
+                        <button
+                          type="button"
+                          disabled={busy || l.qty <= 1}
+                          onClick={() => setCheckoutQty(l.id, l.qty - 1, l.item.available)}
+                          aria-label="One less"
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span>{l.qty}</span>
+                        <button
+                          type="button"
+                          disabled={busy || l.qty >= l.item.available}
+                          onClick={() => setCheckoutQty(l.id, l.qty + 1, l.item.available)}
+                          aria-label="One more"
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="ushp-sum-remove"
+                        disabled={busy}
+                        onClick={() => removeFromCheckout(l.id)}
+                        aria-label={`Remove ${l.item.title}`}
+                        title="Remove"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    {l.qty >= l.item.available && l.item.available > 1 && (
+                      <small className="ushp-sum-max">All {l.item.available} available are in your order</small>
+                    )}
+                  </div>
+                  <b>{formatPrice(l.item.price * l.qty)}</b>
+                </li>
+              );
+            })}
           </ul>
+          <button
+            type="button"
+            className="ushp-addmore"
+            onClick={() => setPicking(true)}
+            disabled={pay.state === "processing" || pay.state === "paying"}
+          >
+            <PackagePlus size={16} /> Add more products
+          </button>
           {q.error && (
             <p className="dn-error" role="alert">
               {q.error}{" "}
@@ -801,6 +868,8 @@ export default function UserCheckout() {
           )}
         </aside>
       </div>
+
+      <CheckoutPicker open={picking} onClose={() => setPicking(false)} />
 
       <PaymentOverlay
         state={pay.state}

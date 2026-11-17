@@ -375,7 +375,7 @@ export function PayoutsPanel({ summary, reload }) {
       const r = await walletApi.request();
       setModal(null);
       setNotice(
-        `Payout ${r.payout.id} requested. ReOrbit will send it to your account.`,
+        `Payout ${r.payout.id} requested. ReOrbit will send it to your account${r.payout.schedule?.due_by ? ` by ${fmtDate(`${r.payout.schedule.due_by}T00:00:00`)}` : ""}.`,
       );
       await Promise.all([reload(), list.reload()]);
     } catch (e) {
@@ -460,6 +460,12 @@ export function PayoutsPanel({ summary, reload }) {
                         </span>
                         <span className="sls-payout-meta">
                           to {destination(p.account)}
+                          {p.status === "Pending" && p.schedule?.due_by && (
+                            <>
+                              <br />
+                              <small>Expected by {fmtDate(`${p.schedule.due_by}T00:00:00`)}</small>
+                            </>
+                          )}
                         </span>
                         <span className="sls-payout-amount">
                           {inr(p.amount)}

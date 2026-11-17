@@ -145,6 +145,8 @@ class OrderItem(models.Model):
     # how stock was taken, so cancelling puts back exactly what was taken
     took_stock = models.PositiveIntegerField(default=0)
     closed_lot = models.BooleanField(default=False, help_text="Member item: the whole listing was sold out by this line")
+    returnable = models.BooleanField(
+        default=True, help_text="Could be returned when bought (a ReOrbit store listing can say no returns)")
 
     class Meta:
         db_table = "order_items"

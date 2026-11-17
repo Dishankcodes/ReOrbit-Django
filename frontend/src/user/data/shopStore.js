@@ -205,6 +205,57 @@ export const clearCart = () => set({ cart: [] });
 export const startCheckout = (lines, source = "cart") =>
   set({ checkout: { lines, source } });
 
+/* ---------- editing the checkout itself ----------
+   A "buy now" checkout has its own lines; a cart checkout mirrors the cart. Changes made on the
+   checkout page go to whichever one is being paid for (and to the cart for a cart checkout), so
+   going back to the cart shows the same thing. */
+const fromCart = () => !state.checkout || state.checkout.source === "cart";
+
+export function setCheckoutQty(id, qty, max = 99) {
+  const clamp = (q) => Math.max(1, Math.min(max, q));
+  const patch = {};
+  if (state.checkout)
+    patch.checkout = {
+      ...state.checkout,
+      lines: state.checkout.lines.map((l) => (l.id === id ? { ...l, qty: clamp(qty) } : l)),
+    };
+  if (fromCart() && state.cart.some((c) => c.id === id))
+    patch.cart = state.cart.map((c) => (c.id === id ? { ...c, qty: clamp(qty) } : c));
+  set(patch);
+}
+
+export function addToCheckout(id, qty = 1, max = 99) {
+  const patch = {};
+  const add = (list) => {
+    const i = list.findIndex((l) => l.id === id);
+    if (i >= 0) return list.map((l, n) => (n === i ? { ...l, qty: Math.min(max, l.qty + qty) } : l));
+    return [...list, { id, qty: Math.min(max, qty) }];
+  };
+  if (state.checkout) patch.checkout = { ...state.checkout, lines: add(state.checkout.lines) };
+  if (fromCart()) patch.cart = add(state.cart);
+  set(patch);
+}
+
+export function removeFromCheckout(id) {
+  const patch = {};
+  if (state.checkout)
+    patch.checkout = { ...state.checkout, lines: state.checkout.lines.filter((l) => l.id !== id) };
+  if (fromCart()) patch.cart = state.cart.filter((c) => c.id !== id);
+  set(patch);
+}
+
+/* qty of an item in the checkout being paid for (0 = not in it) */
+export const useCheckoutQty = () => {
+  const snap = useShopState();
+  return useMemo(() => {
+    const m = {};
+    (snap.checkout ? snap.checkout.lines : snap.cart).forEach((l) => {
+      m[l.id] = l.qty;
+    });
+    return m;
+  }, [snap.checkout, snap.cart]);
+};
+
 /* The lines being paid for, priced. Falls back to the cart. */
 export function useCheckoutLines() {
   const { checkout, cart, sold } = useShopState();

@@ -971,3 +971,18 @@
     display: none !important;
   }
 }
+
+/* A solid button rendered as a link (<a class="dn-btn">: Track order, View profile, Raise a
+   ticket…) keeps white text and icons. Link colour rules from other loaded stylesheets were
+   turning them black. Ghost, soft and danger buttons keep their own colours. */
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger),
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):visited,
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):hover,
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):focus {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+}
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger) svg {
+  color: #fff;
+  stroke: #fff;
+}

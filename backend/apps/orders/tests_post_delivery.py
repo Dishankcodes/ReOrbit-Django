@@ -342,6 +342,20 @@ class ReturnTests(PostDeliveryBase):
         self.assertEqual(ReturnRequest.objects.get().status, "Closed")
         self.assertEqual(self.act(oid, item, "return-approve").status_code, 409)
 
+    def test_store_listing_sold_without_returns_cannot_be_returned(self):
+        self.tote.returnable = False  # "Accept returns within 7 days" switched off
+        self.tote.save()
+        card = self.get(f"/api/marketplace/{self.tote.public_id}/").data["data"]["product"]
+        self.assertFalse(card["returnable"])
+        oid, _ = self.delivered(self.tote)
+        self.tote.returnable = True  # switching it back later doesn't change what was sold
+        self.tote.save()
+        o = self.get(f"/api/orders/me/{oid}/", as_=self.buyer).data["data"]
+        o = o.get("order", o)
+        self.assertEqual((o["returns_accepted"], o["can_return"]), (False, False))
+        r = self.ask_return(oid)
+        self.assertEqual((r.status_code, r.data["code"]), (409, "NO_RETURNS"))
+
     def test_store_order_returns_are_handled_by_admin(self):
         oid, _ = self.delivered(self.tote)  # ReOrbit store item: the seller is the platform
         self.assertEqual(self.ask_return(oid, who=self.buyer).status_code, 201)

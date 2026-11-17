@@ -37,6 +37,12 @@ export const adminPayoutApi = {
     apiRequest(`/payments/admin/payouts/${id}/details/`).then(
       (r) => r.data.account,
     ),
+  /* what one payout pays for: orders and refunds since the seller's previous payout */
+  statement: (id) =>
+    apiRequest(`/payments/admin/payouts/${id}/statement/`).then((r) => r.data),
+  /* money becoming available by date, and sellers who could be paid right now */
+  upcoming: (days = 30) =>
+    apiRequest(`/payments/admin/payouts/upcoming/?days=${days}`).then((r) => r.data),
   runAuto: () =>
     apiRequest("/payments/admin/payouts/run-auto/", {
       method: "POST",

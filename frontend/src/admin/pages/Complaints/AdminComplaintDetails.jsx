@@ -74,6 +74,7 @@ const STEPS = [
 const HINTS = {
   start: "Take it on so the team knows someone is looking.",
   assign: "Hand it to a teammate.",
+  resolve: "Sorted out without a penalty. The reporter is told it was handled.",
   dismiss: "No rule was broken. The reporter is told why.",
   warn: "Send a written warning and close the complaint.",
   suspend: "Lock the account until it is reactivated.",
@@ -84,6 +85,7 @@ const HINTS = {
 };
 
 const RESULT_LABEL = {
+  resolved: "Resolved",
   dismissed: "Dismissed",
   warned: "Warning sent",
   suspended: "Account suspended",

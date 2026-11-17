@@ -26,6 +26,7 @@ import {
 } from "../../data/sellStore";
 import { SELL_SOURCES } from "../../data/adminSell";
 import { formatDate, formatINR } from "../../utils/format";
+import { useCommerce } from "../../../shared/commerce";
 import SellNav from "./components/SellNav";
 import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
@@ -49,6 +50,7 @@ export default function AdminSellListing() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const commerce = useCommerce();
   const l = useSellListing(id);
   const { toast, toastNode } = useToast();
   const [photo, setPhoto] = useState(0);
@@ -233,7 +235,12 @@ export default function AdminSellListing() {
             <div>
               <dt>Delivery</dt>
               <dd>
-                {l.delivery === "free" ? "Free" : "₹149, free above ₹5,000"}
+                {Number(commerce.sellDelivery)
+                  ? `${formatINR(Number(commerce.sellDelivery))}${Number(commerce.sellFreeFrom) ? `, free from ${formatINR(Number(commerce.sellFreeFrom))}` : ""}`
+                  : "Free"}{" "}
+                <Link to="/admin-settings?section=commerce" className="dn-link">
+                  (Settings)
+                </Link>
               </dd>
             </div>
             <div>
