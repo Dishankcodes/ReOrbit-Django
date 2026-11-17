@@ -109,11 +109,19 @@ def balances(owner):
     }
 
 
+def seller_amount(order):
+    """What the seller earns for an order (before any refund)."""
+    if order.seller_type == "platform":
+        return 0
+    return order.subtotal + (0 if order.managed_delivery else order.delivery_fee)
+
+
 def credit_delivered_order(order):
     """Called inside the delivery transaction. Safe to call twice (one earning per order).
-    The seller earns the subtotal plus the delivery fee. A cash-on-delivery order has no
-    clearing date until ReOrbit has the cash (release_cod)."""
-    amount = order.subtotal + order.delivery_fee
+    The seller earns the subtotal plus the delivery fee when they shipped it themselves; on a
+    "Managed by ReOrbit" order ReOrbit did the delivery, so the delivery fee is ReOrbit's.
+    A cash-on-delivery order has no clearing date until ReOrbit has the cash (release_cod)."""
+    amount = seller_amount(order)
     if order.seller_type == "platform" or amount <= 0:
         return None
     owner = {"seller_user": order.seller_user} if order.seller_type == "user" else {"seller_remaker": order.seller_remaker}

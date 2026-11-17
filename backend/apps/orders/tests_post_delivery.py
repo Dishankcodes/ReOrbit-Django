@@ -50,14 +50,21 @@ class PostDeliveryBase(OrderBase):
     def seller_of(self, item):
         return self.seller if item is self.lamp else self.maker
 
+    MANAGED_ADMIN_STEPS = ("ship", "deliver", "fail", "retry", "returned")
+
     def act(self, oid, item, action, body=None, who=None):
-        if item is self.tote:  # ReOrbit's own store: an admin fulfils it
+        managed = Order.objects.filter(public_id=oid, managed_delivery=True).exists()
+        if item is self.tote or (who is None and managed and action in self.MANAGED_ADMIN_STEPS):
+            # ReOrbit's own store, or a "Managed by ReOrbit" order after the pickup: an admin handles it
             return self.post(f"/api/orders/admin/{oid}/{action}/", body or {}, as_=who or self.boss)
         return self.post(f"/api/orders/sales/{oid}/{action}/", body or {}, as_=who or self.seller_of(item))
 
     def ship(self, oid, item):
         PostDeliveryBase._n += 1
         self.assertEqual(self.act(oid, item, "pack").status_code, 200)
+        if Order.objects.filter(public_id=oid, managed_delivery=True).exists():
+            # the seller asks ReOrbit to collect it; ReOrbit enters the courier when it ships
+            self.assertEqual(self.act(oid, item, "pickup").status_code, 200)
         r = self.act(oid, item, "ship", {"courier_name": "Delhivery", "tracking_no": f"98765{PostDeliveryBase._n:06d}"})
         self.assertEqual(r.status_code, 200, r.data)
 
@@ -197,12 +204,13 @@ class CodReconciliationTests(PostDeliveryBase):
         from apps.core.models import AuditLog
         self.assertTrue(AuditLog.objects.filter(action="order.cod_received", entity_id=oid).exists())
 
-    def test_seller_earning_includes_the_delivery_fee(self):
+    def test_managed_delivery_fee_is_reorbits_not_the_sellers(self):
+        # the lamp is "Managed by ReOrbit": ReOrbit delivered it, so the seller earns the item price only (₹1000, not ₹1000)
         oid = self.place(self.lamp)  # 1000 + 149 delivery; platform fee 30 stays with ReOrbit
         self.deliver(oid, self.lamp)
-        self.assertEqual(self.entries("Earning").get().amount, 1149)
+        self.assertEqual(self.entries("Earning").get().amount, 1000)
         o = self.get(f"/api/orders/sales/{oid}/", as_=self.seller).data["data"]["order"]
-        self.assertEqual(o["seller_earning"], 1149)
+        self.assertEqual(o["seller_earning"], 1000)
 
 
 class ReturnTests(PostDeliveryBase):
@@ -242,11 +250,11 @@ class ReturnTests(PostDeliveryBase):
         oid, item = self.delivered(self.lamp, method="RAZORPAY")  # 1179 paid
         self.ask_return(oid)
         w = self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]
-        self.assertEqual(w["pending"], 1149)
+        self.assertEqual(w["pending"], 1000)
         # frozen while the return is open, even after the hold days pass
         WalletEntry.objects.filter(kind="Earning").update(available_at=timezone.now() - timedelta(days=1))
         w = self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]
-        self.assertEqual((w["available"], w["pending"]), (0, 1149))
+        self.assertEqual((w["available"], w["pending"]), (0, 1000))
         self.assertEqual(self.act(oid, item, "return-received").status_code, 409)  # approve first
         self.assertEqual(self.act(oid, item, "return-reject", {"note": "x"}).status_code, 400)  # reasons are needed
         self.assertEqual(self.act(oid, item, "return-approve").status_code, 200)
@@ -257,7 +265,7 @@ class ReturnTests(PostDeliveryBase):
         self.assertEqual((o["return"]["status"], o["return"]["refund_amount"], o["payment"]["status"]), ("Refunded", 1179, "Refunded"))
         w = self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]
         self.assertEqual((w["available"], w["pending"]), (0, 0))  # earning taken back
-        self.assertEqual(self.entries("Reversal").get().amount, -1149)
+        self.assertEqual(self.entries("Reversal").get().amount, -1000)
         self.assertEqual(self.act(oid, item, "return-received").status_code, 409)  # not twice
 
     def test_buyer_choice_keeps_the_delivery_fee_and_seller_keeps_it_too(self):
@@ -315,7 +323,7 @@ class ReturnTests(PostDeliveryBase):
         r = self.post(f"/api/orders/admin/{oid}/return-decide/", {"approve": False, "note": "No damage visible"}, as_=self.boss)
         self.assertEqual(r.data["data"]["order"]["return"]["status"], "Closed")
         WalletEntry.objects.filter(kind="Earning").update(available_at=timezone.now() - timedelta(days=1))
-        self.assertEqual(self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]["available"], 1149)
+        self.assertEqual(self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]["available"], 1000)
         self.assertEqual(Refund.objects.count(), 0)
 
     def test_rejection_window_ends(self):
@@ -325,7 +333,7 @@ class ReturnTests(PostDeliveryBase):
         ReturnRequest.objects.update(escalate_until=timezone.now() - timedelta(hours=1))
         self.assertEqual(self.post(f"/api/orders/me/{oid}/return/escalate/", {}, as_=self.buyer).status_code, 409)
         WalletEntry.objects.filter(kind="Earning").update(available_at=timezone.now() - timedelta(days=1))
-        self.assertEqual(self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]["available"], 1149)
+        self.assertEqual(self.get("/api/payments/wallet/", as_=self.seller).data["data"]["balances"]["available"], 1000)
 
     def test_buyer_can_withdraw_before_an_answer(self):
         oid, item = self.delivered(self.lamp)

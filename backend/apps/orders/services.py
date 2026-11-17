@@ -341,11 +341,9 @@ def _plan(buyer, merged, s, lock):
     for g in out:
         g["subtotal"] = sum(ln["line_total"] for ln in g["lines"])
         g["platform_fee"] = platform_fee(g["subtotal"], g["seller"]["type"], s)
-        # a seller who set their own delivery charge on a ReOrbit-managed product decides it; else the platform rate
-        own = [ln["obj"].delivery_fee for ln in g["lines"]
-               if ln["kind"] in ("item", "remaker_product") and ln["obj"].pickup_preference == Item.Pickup.PLATFORM_PICKUP
-               and ln["obj"].delivery_fee is not None]
-        g["delivery_fee"] = max(own) if own else delivery_charge(g["seller"]["type"], g["subtotal"], g["platform_pickup"], s)
+        # ReOrbit delivers "Managed by ReOrbit" orders and keeps the fee, so it is always the platform rate
+        # (Admin > Settings); a seller who ships it themselves adds no delivery charge.
+        g["delivery_fee"] = delivery_charge(g["seller"]["type"], g["subtotal"], g["platform_pickup"], s)
         g["total"] = g["subtotal"] + g["platform_fee"] + g["delivery_fee"]
     return {"groups": out, "problems": problems}
 
@@ -439,6 +437,7 @@ def create_checkout(buyer, data, key=None):
                     status=Order.Status.CONFIRMED if cod else Order.Status.PENDING_PAYMENT,
                     payment_status=Order.PayStatus.COD_DUE if cod else Order.PayStatus.PENDING,
                     subtotal=g["subtotal"], platform_fee=g["platform_fee"], delivery_fee=g["delivery_fee"],
+                    managed_delivery=bool(g["platform_pickup"]) and g["seller"]["type"] != "platform",
                     discount=share, total=g["total"] - share, address=snapshot, note=note,
                     confirmed_at=now if cod else None,
                 )
@@ -622,6 +621,9 @@ def confirm_paid(payment_pk, razorpay_payment_id):
 # status changes
 # --------------------------------------------------------------------------- #
 FLOW = {"pack": ("Confirmed", "Packed"), "ship": ("Packed", "Shipped"), "deliver": ("Shipped", "Delivered")}
+# On a "Managed by ReOrbit" order the seller packs and asks for a pickup; everything after that is ReOrbit's.
+MANAGED_SELLER_BLOCKED = {"ship", "deliver", "fail", "retry", "returned"}
+MANAGED_COURIER = "ReOrbit Delivery"
 LABEL = {"Packed": "Packed", "Shipped": "Shipped", "Delivered": "Delivered"}
 
 # The seller (or ReOrbit, for its own store) books the courier and pays for shipping; the
@@ -635,6 +637,7 @@ COURIERS = {
     "Ecom Express": r"^\d{9,12}$",
     "Xpressbees": r"^\d{12,16}$",
     "Shadowfax": r"^[A-Z0-9]{8,20}$",
+    "ReOrbit Delivery": r"^[A-Z0-9-]{4,20}$",  # ReOrbit's own pickup team (managed delivery)
 }
 _GENERIC_TRACKING = re.compile(r"^[A-Za-z0-9\-/]{5,30}$")
 
@@ -712,6 +715,27 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
         if actor_kind == "admin":
             audit(actor, f"order.{action}", "order", o.public_id, before={"status": before}, after={"status": to}, ip=ip)
         _notify_buyer(o, f"Order {to.lower()}", f"{o.public_id} is {to.lower()}." + (f" {detail}" if to == "Shipped" else ""))
+    return o
+
+
+def request_pickup(order_pk, *, actor, ip=None):
+    """"Managed by ReOrbit": the seller has packed the parcel and asks ReOrbit to collect it.
+    Creates the pickup in Admin > Pickups. Safe to press twice."""
+    from apps.pickups import services as pickups  # local import: pickups reads orders too
+
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).select_related(
+            "seller_user", "seller_remaker").get(pk=order_pk)
+        if not o.managed_delivery:
+            raise CheckoutError("You ship this order yourself, so there is no ReOrbit pickup.", code="NOT_MANAGED", status=409)
+        if o.status != Order.Status.PACKED:
+            raise CheckoutError("Pack the order first, then ask ReOrbit to pick it up.", code="BAD_STATE", status=409)
+        if o.pickup_requested_at:
+            return o
+        o.pickup_requested_at = timezone.now()
+        o.save(update_fields=["pickup_requested_at", "updated_at"])
+        pickups.request_for_order(o)
+        event(o, "Ready for pickup", "The seller packed it; ReOrbit will collect it.", "seller")
     return o
 
 

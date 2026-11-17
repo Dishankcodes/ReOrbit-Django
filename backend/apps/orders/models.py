@@ -63,6 +63,10 @@ class Order(PublicIdModel, TimeStampedModel):
 
     courier_name = models.CharField(max_length=60, blank=True)
     tracking_no = models.CharField(max_length=60, blank=True)
+    # "Managed by ReOrbit": ReOrbit picks the parcel up from the seller and delivers it. The seller only
+    # packs it and asks for the pickup; the delivery fee the buyer paid is ReOrbit's, not the seller's.
+    managed_delivery = models.BooleanField(default=False)
+    pickup_requested_at = models.DateTimeField(null=True, blank=True)
 
     confirmed_at = models.DateTimeField(null=True, blank=True)
     shipped_at = models.DateTimeField(null=True, blank=True)

@@ -25,7 +25,7 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from apps.core import buyers as buyer_kit
-from apps.core.models import PlatformSettings
+from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, PlatformSettings
 
 from .models import PointsEntry, RewardOffer, RewardRule, Voucher
 
@@ -49,7 +49,8 @@ DEFAULT_FACTOR = Decimal("0.7")
 # and PlatformSettings.donation_co2_per_kg.
 DEFAULT_DONATION_BASE_POINTS, DEFAULT_DONATION_ITEM_POINTS = 100, 20
 DEFAULT_CO2_PER_KG = Decimal("1.9")
-VOUCHER_MIN, VOUCHER_MAX = 50, 500
+# An accepted donation always earns at least a ₹100 voucher; more for bigger or better items.
+VOUCHER_MIN, VOUCHER_MAX = 100, 500
 
 LEVELS = (("seedling", "Seedling", 0), ("sprout", "Sprout", 500), ("orbiter", "Orbiter", 1500),
           ("guardian", "Guardian", 3000), ("champion", "Champion", 5000))
@@ -229,6 +230,14 @@ def co2_saved(weight):
     return _round_half_up(Decimal(weight) * rate, "0.01")
 
 
+def donation_voucher_tiers():
+    """The voucher amounts an admin can give for a donation (Settings > Platform), never below
+    the ₹100 minimum."""
+    raw = PlatformSettings.load().donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS)
+    tiers = sorted({int(t) for t in raw if str(t).isdigit() and int(t) >= VOUCHER_MIN})
+    return tiers or [VOUCHER_MIN]
+
+
 def voucher_amount(category, quantity, condition):
     kg = WEIGHT_PER_ITEM.get(category, DEFAULT_WEIGHT) * max(1, int(quantity or 1))
     worth = int(_round_half_up(kg * 12 * CONDITION_FACTOR.get(condition, DEFAULT_FACTOR) / 10, "1")) * 10
@@ -252,7 +261,7 @@ def issue_for_donation(donation, amount=None):
     existing = Voucher.objects.filter(source_type="donation", source_id=donation.public_id).first()
     if existing:
         return existing
-    amount = amount or voucher_amount(donation.category, donation.quantity, donation.condition)
+    amount = max(VOUCHER_MIN, int(amount or voucher_amount(donation.category, donation.quantity, donation.condition)))
     return Voucher.objects.create(
         owner=donation.donor, code=new_code(), title=f"₹{amount} marketplace voucher", amount=amount,
         min_order=amount * MIN_ORDER_MULTIPLE, expires_at=timezone.now() + timedelta(days=VOUCHER_DAYS),

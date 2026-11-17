@@ -179,16 +179,7 @@ export default function UserSellForm() {
       const pinProblem = pincodeProblem(form.pincode);
       if (pinProblem) e.pincode = pinProblem;
       if (form.city.trim().length < 2) e.city = "Enter your city.";
-      if (form.pickup === "platform") {
-        const fee = Number(form.deliveryFee);
-        if (
-          form.deliveryFee === "" ||
-          !Number.isInteger(fee) ||
-          fee < 0 ||
-          fee > 5000
-        )
-          e.deliveryFee = "Enter a whole number from 0 to 5,000 (0 = free).";
-      }
+
     }
     if (index === 2 && !form.agree)
       e.agree = "Please confirm before submitting.";
@@ -532,11 +523,7 @@ export default function UserSellForm() {
                       role="radio"
                       aria-checked={form.pickup === o.id}
                       className={form.pickup === o.id ? "on" : ""}
-                      onClick={() => {
-                        set("pickup", o.id);
-                        if (o.id === "platform" && form.deliveryFee === "")
-                          set("deliveryFee", String(getCommerce().itemDelivery ?? ""));
-                      }}
+                      onClick={() => set("pickup", o.id)}
                     >
                       <span className="usl-radio" aria-hidden="true" />
                       <div>
@@ -548,21 +535,13 @@ export default function UserSellForm() {
                 </div>
               </div>
 
-              {form.pickup === "platform" &&
-                field(
-                  "deliveryFee",
-                  "Delivery charge the buyer pays (₹)",
-                  <input
-                    className={`dn-input ${errors.deliveryFee ? "is-error" : ""}`}
-                    inputMode="numeric"
-                    maxLength={4}
-                    value={form.deliveryFee}
-                    onChange={(e) =>
-                      set("deliveryFee", e.target.value.replace(/\D/g, ""))
-                    }
-                  />,
-                  "Added to the buyer's total at checkout. Enter 0 for free delivery.",
-                )}
+              {form.pickup === "platform" && (
+                <p className="usl-managed-note">
+                  Delivery fee <b>₹{Number(getCommerce().itemDelivery ?? 0).toLocaleString("en-IN")}</b>, set by
+                  ReOrbit. The buyer pays it at checkout and it goes to ReOrbit, because ReOrbit picks the parcel up
+                  from you and delivers it. You earn the full item price.
+                </p>
+              )}
             </div>
           )}
 
@@ -599,7 +578,7 @@ export default function UserSellForm() {
                       <b>
                         {PICKUP_OPTIONS.find((o) => o.id === form.pickup).label}
                         {form.pickup === "platform" &&
-                          ` · delivery ₹${Number(form.deliveryFee || 0).toLocaleString("en-IN")}`}
+                          ` · delivery ₹${Number(getCommerce().itemDelivery ?? 0).toLocaleString("en-IN")} (paid to ReOrbit)`}
                       </b>
                     </li>
                   </ul>

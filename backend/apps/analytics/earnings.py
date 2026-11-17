@@ -3,6 +3,7 @@
 Income
   Platform fee   added to every order a member or ReMaker places. Orders the platform buys carry none.
   Product sales  the item price (and the delivery charge) of ReOrbit's own store products.
+  Delivery       the delivery fee of "Managed by ReOrbit" orders (ReOrbit picks up and delivers them).
 Money out
   Refunds        the fee and the sales given back on refunded orders.
   Purchases      what the platform spends when an admin buys something.
@@ -52,7 +53,8 @@ def _rows(since, until):
         own_buy = o.buyer_type == "admin"
         fee = 0 if own_buy else o.platform_fee
         sale = o.subtotal if own_sale else 0
-        delivery = o.delivery_fee if own_sale else 0
+        # ReOrbit keeps the delivery fee when it delivered: its own store, and "Managed by ReOrbit" orders
+        delivery = o.delivery_fee if own_sale or o.managed_delivery else 0
         rows.append({
             "id": o.public_id, "at": o.created_at,
             "earned": pay == "Success" and status in ("Confirmed", "Completed"),

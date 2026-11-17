@@ -13,7 +13,6 @@ import {
 import { getAccount } from "../../../api/session";
 import { donationApi } from "../../../api/donations";
 import {
-  estimatePoints,
   REWARD_RULES,
   useDonation,
 } from "../../data/donationsStore";
@@ -153,7 +152,7 @@ export default function UserDonationCertificate() {
               <span>CO₂ saved</span>
             </div>
             <div>
-              <strong>{estimatePoints(donation.quantity)}</strong>
+              <strong>{donation.reward?.points || 0}</strong>
               <span>Orbit Points</span>
             </div>
           </div>

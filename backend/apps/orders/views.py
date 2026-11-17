@@ -48,7 +48,8 @@ def _checkout_fail(e):
 
 def _order_qs():
     return (Order.objects
-            .select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin", "return_request")
+            .select_related("payment", "seller_user", "seller_remaker", "buyer_user", "buyer_remaker", "buyer_admin", "return_request",
+                            "delivery_pickup", "delivery_pickup__assigned_partner")
             .prefetch_related("lines", "refunds", "return_request__photos", "product_reviews"))
 
 
@@ -286,7 +287,7 @@ class OptionsView(APIView):
 
 
 # ------------------------------------------------------------------ seller + admin
-ACTIONS = ("pack", "ship", "deliver", "cancel", "update", "fail", "retry", "returned",
+ACTIONS = ("pack", "ship", "deliver", "pickup", "cancel", "update", "fail", "retry", "returned",
            "return-approve", "return-reject", "return-received")
 ADMIN_ONLY = ("cod-received", "return-decide")
 
@@ -459,7 +460,14 @@ def _act(request, order, action, actor_kind):
             if action in ("cod-received", "return-received", "return-decide") and not me.has_module("finance", "edit"):
                 raise services.CheckoutError("This needs the Payout details (finance) permission.", code="FORBIDDEN", status=403)
         rr = getattr(order, "return_request", None)
-        if action == "cancel":
+        if order.managed_delivery and who == "seller" and action in services.MANAGED_SELLER_BLOCKED:
+            raise services.CheckoutError("ReOrbit picks up and delivers this order. Pack it, then ask ReOrbit to pick it up.",
+                                         code="MANAGED_DELIVERY", status=409)
+        if action == "pickup":
+            if who != "seller":
+                raise services.CheckoutError("Only the seller asks for a pickup.", code="FORBIDDEN", status=403)
+            services.request_pickup(order.pk, actor=me, ip=ip)
+        elif action == "cancel":
             services.cancel_order(order.pk, by=actor_kind, actor=me, reason=str(d.get("reason") or ""), ip=ip)
         elif action == "update":
             services.post_update(order.pk, d.get("text"), actor_kind=who, actor=me, ip=ip)

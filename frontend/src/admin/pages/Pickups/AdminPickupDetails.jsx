@@ -226,7 +226,7 @@ export default function AdminPickupDetails() {
           <header className="aup-card-head">
             <div>
               <h3>Pickup progress</h3>
-              <p>From the request to the warehouse door.</p>
+              <p>{p.type === "Order" ? "From the seller's door to the buyer." : "From the request to the warehouse door."}</p>
             </div>
           </header>
           <Stepper status={p.status} />
@@ -243,7 +243,7 @@ export default function AdminPickupDetails() {
                 <p>The item for this pickup.</p>
               </div>
               <Link to={p.ref_path} className="aup-link">
-                View {isDonation ? "donation" : "listing"}{" "}
+                View {isDonation ? "donation" : p.type === "Order" ? "order" : "listing"}{" "}
                 <ArrowRight size={14} />
               </Link>
             </header>
@@ -256,7 +256,11 @@ export default function AdminPickupDetails() {
                   <span className="aup-mono">{p.ref_id}</span> · {p.category} ·
                   Qty {p.quantity}
                 </p>
-                <p>Free pickup, handled by the ReOrbit platform.</p>
+                <p>
+                  {p.type === "Order"
+                    ? `Managed by ReOrbit: collect from the seller and deliver to the buyer. Delivery fee ₹${Number(p.order?.delivery_fee || 0).toLocaleString("en-IN")} goes to ReOrbit.`
+                    : "Free pickup, handled by the ReOrbit platform."}
+                </p>
               </div>
             </div>
           </section>
@@ -264,7 +268,7 @@ export default function AdminPickupDetails() {
           <section className="aup-card">
             <header className="aup-card-head">
               <div>
-                <h3>{isDonation ? "Donor" : "Customer"}</h3>
+                <h3>{isDonation ? "Donor" : p.type === "Order" ? "Seller" : "Customer"}</h3>
                 <p>Who the pickup team will meet.</p>
               </div>
             </header>
@@ -296,6 +300,38 @@ export default function AdminPickupDetails() {
               </li>
             </ul>
           </section>
+
+          {p.type === "Order" && p.order && (
+            <section className="aup-card">
+              <header className="aup-card-head">
+                <div>
+                  <h3>Deliver to</h3>
+                  <p>The buyer of order {p.order.id}.</p>
+                </div>
+                <Link to={p.order.path} className="aup-link">
+                  View order <ArrowRight size={14} />
+                </Link>
+              </header>
+              <ul className="dn-contact">
+                <li>
+                  <strong>{p.order.buyer.name}</strong>
+                </li>
+                {p.order.buyer.phone && (
+                  <li>
+                    <Phone size={14} /> {p.order.buyer.phone}
+                  </li>
+                )}
+                <li>
+                  {[p.order.buyer.address, p.order.buyer.city, p.order.buyer.pincode].filter(Boolean).join(", ")}
+                </li>
+                {p.order.courier && (
+                  <li>
+                    Tracking: {p.order.courier.name} · <span className="aup-mono">{p.order.courier.tracking_no}</span>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
         </div>
 
         {/* ---------- right ---------- */}

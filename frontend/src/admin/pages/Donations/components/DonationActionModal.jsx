@@ -40,8 +40,12 @@ export default function DonationActionModal({
   const [receivedQty, setReceivedQty] = useState("");
   const [receivedCondition, setReceivedCondition] = useState("");
   const [receivedNote, setReceivedNote] = useState("");
+  const [weightKg, setWeightKg] = useState("");
   const [points, setPoints] = useState("");
   const [voucherAmount, setVoucherAmount] = useState("");
+  /* order pickups ("Managed by ReOrbit"): an optional partner courier and its tracking number */
+  const [courierName, setCourierName] = useState("");
+  const [trackingNo, setTrackingNo] = useState("");
   const voucherTiers = useRewardOptions();
   const [touched, setTouched] = useState(false);
 
@@ -58,8 +62,11 @@ export default function DonationActionModal({
     setReceivedQty("");
     setReceivedCondition("");
     setReceivedNote("");
+    setWeightKg("");
     setPoints("");
     setVoucherAmount("");
+    setCourierName("");
+    setTrackingNo("");
     setTouched(false);
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -100,13 +107,69 @@ export default function DonationActionModal({
     acceptedQty !== "" &&
     (Number(acceptedQty) < 1 || Number(acceptedQty) > donation.quantity);
   const partialReasonMissing = partialWanted && partialReason.trim().length < 5;
-  /* What the donor gets is decided here, at Accept — not guessed later. Leaving a field blank
-     means "work it out automatically when the item is received", same as before this existed. */
-  const showRewardChoice = action.key === "accept" && !many;
+  /* What the donor gets is decided by ReOrbit: at Accept, or at the warehouse when it's
+     received (that one wins). Blank = worked out from what actually arrived, never below ₹100. */
+  const showRewardChoice = (action.key === "accept" || action.key === "received") && !many;
+  const weightInvalid =
+    action.fields === "receive" && weightKg !== "" && !(Number(weightKg) > 0 && Number(weightKg) < 10000);
   const pointsInvalid =
     showRewardChoice && points !== "" && (!/^\d+$/.test(points) || Number(points) < 0);
   const voucherAmountInvalid =
     showRewardChoice && voucherAmount !== "" && !voucherTiers.includes(Number(voucherAmount));
+
+  const promised = donation?.admin_voucher_amount != null || donation?.admin_points != null;
+  const autoLabel =
+    action.key === "received" && promised
+      ? `As set at accept (${donation.admin_voucher_amount != null ? `₹${donation.admin_voucher_amount}` : "automatic"})`
+      : donation?.suggested_voucher_amount != null
+        ? `Automatic (about ₹${Math.max(100, donation.suggested_voucher_amount)})`
+        : "Automatic (at least ₹100)";
+  const rewardFields = showRewardChoice && (
+    <div className="dn-fields dn-wide">
+      <label className="ad-modal-field">
+        <span>
+          Orbit Points <em>(blank = {action.key === "received" && donation?.admin_points != null ? `${donation.admin_points}, as set at accept` : "automatic"})</em>
+        </span>
+        <input
+          type="number"
+          min={0}
+          value={points}
+          placeholder={
+            action.key === "received" && donation?.admin_points != null
+              ? String(donation.admin_points)
+              : donation?.suggested_points != null
+                ? `Suggested: ${donation.suggested_points}`
+                : ""
+          }
+          onChange={(e) => setPoints(e.target.value)}
+        />
+        {touched && pointsInvalid && (
+          <small className="ad-modal-error">Enter a whole number, 0 or more.</small>
+        )}
+      </label>
+      <label className="ad-modal-field">
+        <span>
+          Voucher <em>(at least ₹100)</em>
+        </span>
+        <select value={voucherAmount} onChange={(e) => setVoucherAmount(e.target.value)}>
+          <option value="">{autoLabel}</option>
+          {voucherTiers.map((t) => (
+            <option key={t} value={t}>
+              ₹{t}
+            </option>
+          ))}
+        </select>
+        {touched && voucherAmountInvalid && (
+          <small className="ad-modal-error">Choose one of the listed amounts.</small>
+        )}
+      </label>
+      <small className="dn-wide dn-reward-hint">
+        {action.key === "accept"
+          ? "The donor sees this as soon as you accept. You can still change it when the item reaches the warehouse."
+          : "Credited to the donor now. Set it from what you actually received."}
+      </small>
+    </div>
+  );
 
   const submit = (e) => {
     e.preventDefault();
@@ -119,7 +182,8 @@ export default function DonationActionModal({
       acceptedQtyInvalid ||
       partialReasonMissing ||
       pointsInvalid ||
-      voucherAmountInvalid
+      voucherAmountInvalid ||
+      weightInvalid
     )
       return;
     onConfirm({
@@ -136,11 +200,15 @@ export default function DonationActionModal({
         ? {
             received_quantity: receivedQty,
             received_condition: receivedCondition,
+            weight_kg: weightKg,
             note: receivedNote.trim(),
           }
         : {}),
       ...(showRewardChoice
         ? { points, voucher_amount: voucherAmount }
+        : {}),
+      ...(action.fields === "courier"
+        ? { courier_name: courierName.trim(), tracking_no: trackingNo.trim() }
         : {}),
     });
   };
@@ -278,53 +346,38 @@ export default function DonationActionModal({
               </label>
             )}
 
-            {showRewardChoice && (
-              <div className="dn-fields">
-                <label className="ad-modal-field">
-                  <span>
-                    Orbit Points <em>(blank = work it out automatically)</em>
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={points}
-                    placeholder={
-                      donation?.suggested_points != null
-                        ? `Suggested: ${donation.suggested_points}`
-                        : ""
-                    }
-                    onChange={(e) => setPoints(e.target.value)}
-                  />
-                  {touched && pointsInvalid && (
-                    <small className="ad-modal-error">Enter a whole number, 0 or more.</small>
-                  )}
-                </label>
-                <label className="ad-modal-field">
-                  <span>
-                    Voucher <em>(blank = work it out automatically)</em>
-                  </span>
-                  <select
-                    value={voucherAmount}
-                    onChange={(e) => setVoucherAmount(e.target.value)}
-                  >
-                    <option value="">
-                      {donation?.suggested_voucher_amount != null
-                        ? `Automatic (₹${donation.suggested_voucher_amount})`
-                        : "Automatic"}
-                    </option>
-                    {voucherTiers.map((t) => (
-                      <option key={t} value={t}>
-                        ₹{t}
-                      </option>
-                    ))}
-                  </select>
-                  {touched && voucherAmountInvalid && (
-                    <small className="ad-modal-error">Choose one of the listed amounts.</small>
-                  )}
-                </label>
-              </div>
-            )}
+            {rewardFields}
           </div>
+        )}
+
+        {action.fields === "courier" && (
+          <>
+            <label className="ad-modal-field">
+              <span>
+                Courier <em>(optional)</em>
+              </span>
+              <select value={courierName} onChange={(e) => setCourierName(e.target.value)}>
+                <option value="">ReOrbit Delivery (our own team)</option>
+                {["Delhivery", "Blue Dart", "DTDC", "India Post", "Ecom Express", "Xpressbees", "Shadowfax"].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="ad-modal-field">
+              <span>
+                Tracking number <em>(optional)</em>
+              </span>
+              <input
+                type="text"
+                value={trackingNo}
+                onChange={(e) => setTrackingNo(e.target.value.toUpperCase())}
+                placeholder="Leave empty to use the pickup number"
+              />
+              <small>The buyer sees this on their order.</small>
+            </label>
+          </>
         )}
 
         {action.fields === "code" && (
@@ -381,6 +434,24 @@ export default function DonationActionModal({
                 ))}
               </select>
             </label>
+            <label className="ad-modal-field">
+              <span>
+                Measured weight <em>(kg, blank = estimate)</em>
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={weightKg}
+                onChange={(e) => setWeightKg(e.target.value)}
+                placeholder={donation?.weight_kg ? `About ${donation.weight_kg}` : "e.g. 12.5"}
+              />
+              {touched && weightInvalid && (
+                <small className="ad-modal-error">Enter the weight in kg, e.g. 12.5.</small>
+              )}
+              <small>The donor's impact (waste diverted, CO₂ saved) uses this.</small>
+            </label>
+            {rewardFields}
             <label className="ad-modal-field dn-wide">
               <span>Note (optional)</span>
               <textarea
@@ -456,7 +527,8 @@ export default function DonationActionModal({
                   acceptedQtyInvalid ||
                   partialReasonMissing ||
                   pointsInvalid ||
-                  voucherAmountInvalid))
+                  voucherAmountInvalid ||
+                  weightInvalid))
             }
             className={`ad-btn ad-btn-${action.tone === "positive" ? "primary" : action.tone}`}
           >

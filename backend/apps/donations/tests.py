@@ -235,8 +235,30 @@ class DonationTests(OrderBase):
 
     def test_voucher_tiers_come_from_platform_settings(self):
         r = self.get("/api/donations/admin/reward-options/", as_=self.ops)
-        self.assertEqual(r.data["data"]["voucher_tiers"], [50, 100, 150, 200, 300, 500])
+        self.assertEqual(r.data["data"]["voucher_tiers"], [100, 150, 200, 300, 500])
+        self.assertEqual(r.data["data"]["voucher_min"], 100)
         self.assertEqual(self.get("/api/donations/admin/reward-options/", as_=self.buyer).status_code, 403)
+
+    def test_tiers_below_the_minimum_are_never_offered(self):
+        from apps.core.models import PlatformSettings
+        s = PlatformSettings.load()
+        s.donation_voucher_tiers = [50, 100, 250]
+        s.save()
+        r = self.get("/api/donations/admin/reward-options/", as_=self.ops)
+        self.assertEqual(r.data["data"]["voucher_tiers"], [100, 250])
+        did = self.donate().data["data"]["id"]
+        self.assertIn("voucher_amount", self.accept(did, voucher_amount="50").data["errors"])
+
+    def test_the_warehouse_can_enter_the_measured_weight(self):
+        did = self.donate().data["data"]["id"]
+        self.accept(did)
+        code = self.handover_code(did)
+        self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": code})
+        self.assertIn("weight_kg", self.act(did, "received", weight_kg="-3").data["errors"])
+        r = self.act(did, "received", weight_kg="18.25")
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["weight_kg"], 18.2)
+        self.assertGreaterEqual(r.data["data"]["reward"]["voucher_amount"], 100)
 
     # ---- the reward, the voucher, and spending it at checkout -------------- #
     def test_full_journey_earns_points_and_one_voucher(self):
@@ -313,7 +335,7 @@ class DonationTests(OrderBase):
         self.assertEqual(rewards.reward_points(1), 120)  # 100 base + 20 for 1 item
         self.assertEqual(rewards.reward_points(3), 160)  # 100 base + 20 * 3 items
         self.assertEqual(rewards.voucher_amount("Furniture", 1, "Good"), 140)
-        self.assertEqual(rewards.voucher_amount("Books", 1, "Worst"), 50)  # never below the minimum
+        self.assertEqual(rewards.voucher_amount("Books", 1, "Worst"), 100)  # never below the ₹100 minimum
         self.assertEqual(rewards.voucher_amount("Furniture", 9, "Good"), 500)  # never above the maximum
 
     # ---- 10. donor tracking: a meaningful event at every stage -------------- #

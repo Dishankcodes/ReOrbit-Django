@@ -29,7 +29,6 @@ import {
   canCancel,
   canReschedule,
   cancelDonation,
-  estimatePoints,
   useDonation,
 } from "../../data/donationsStore";
 import {
@@ -42,6 +41,7 @@ import {
 import Crumbs from "../../components/ui/Crumbs";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import SafeImage from "../../components/ui/SafeImage";
+import RewardNote from "./components/RewardNote";
 import DonationNotFound from "./components/DonationNotFound";
 import DonationTimeline from "../../components/ui/Timeline";
 import ProgressTracker from "./components/ProgressTracker";
@@ -67,9 +67,7 @@ export default function UserDonationDetails() {
   const { pickup, status } = donation;
   const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
   const rewarded = ["Received", "Completed"].includes(status);
-  const points = rewarded
-    ? donation.reward.points
-    : estimatePoints(donation.quantity);
+  const points = rewarded ? donation.reward.points : 0;
   const voucher = donation.reward.voucher;
   const completed = status === "Completed";
   const closed = status === "Rejected" || status === "Cancelled";
@@ -398,37 +396,40 @@ export default function UserDonationDetails() {
             </section>
           )}
 
-          <section className="dn-card dn-card-pad">
-            <div className="dn-card-head">
-              <h3>Impact</h3>
-              {!rewarded && !closed && (
-                <span className="dn-chip">Estimated</span>
+          {!closed && (
+            <section className="dn-card dn-card-pad">
+              <div className="dn-card-head">
+                <h3>Reward and impact</h3>
+                {!rewarded && <span className="dn-chip">Measured at warehouse</span>}
+              </div>
+              {rewarded && (
+                <div className="dn-det-impact">
+                  <div>
+                    <Star size={17} />
+                    <strong>{points}</strong>
+                    <span>Points credited</span>
+                  </div>
+                  <div>
+                    <Scale size={17} />
+                    <strong>{kg(donation.weightKg)}</strong>
+                    <span>Waste diverted</span>
+                  </div>
+                  <div>
+                    <Wind size={17} />
+                    <strong>{`${co2} kg`}</strong>
+                    <span>CO₂ saved</span>
+                  </div>
+                </div>
               )}
-            </div>
-            <div className="dn-det-impact">
-              <div>
-                <Star size={17} />
-                <strong>{closed ? 0 : points}</strong>
-                <span>{rewarded ? "Points credited" : "Orbit Points"}</span>
-              </div>
-              <div>
-                <Scale size={17} />
-                <strong>{closed ? "0 kg" : kg(donation.weightKg)}</strong>
-                <span>Waste diverted</span>
-              </div>
-              <div>
-                <Wind size={17} />
-                <strong>{closed ? "0 kg" : `${co2} kg`}</strong>
-                <span>CO₂ saved</span>
-              </div>
-            </div>
-            {!rewarded && !closed && (
-              <p className="dn-hint" style={{ marginTop: 12 }}>
-                Your voucher and points are issued when the item reaches our
-                warehouse.
-              </p>
-            )}
-          </section>
+              <RewardNote donation={donation} className={rewarded ? "dn-det-reward" : ""} />
+              {!rewarded && (
+                <p className="dn-hint" style={{ marginTop: 12 }}>
+                  We weigh your item when it reaches our warehouse. Your impact
+                  (waste diverted and CO₂ saved) shows here after that.
+                </p>
+              )}
+            </section>
+          )}
 
           <section className="dn-card dn-card-pad dn-det-help">
             <CircleHelp size={22} />

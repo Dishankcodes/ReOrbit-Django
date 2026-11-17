@@ -297,11 +297,20 @@ export default function SellerOrderDetails({
   const a = o.address || {};
   const ret = o.return;
   const platform = o.seller.type === "platform";
-  const next = {
-    Confirmed: ["pack", "Mark as packed"],
-    Packed: ["ship", "Mark as shipped"],
-    Shipped: ["deliver", "Mark as delivered"],
-  }[o.status];
+  /* "Managed by ReOrbit": the seller packs and asks for a pickup; ReOrbit ships and delivers it. */
+  const managed = !!o.managed_delivery;
+  const reorbitHands = managed && !isAdmin;
+  const pickup = o.pickup || null;
+  const next = reorbitHands
+    ? {
+        Confirmed: ["pack", "Mark as packed"],
+        Packed: pickup?.requested ? null : ["pickup", "Ask ReOrbit to pick up"],
+      }[o.status]
+    : {
+        Confirmed: ["pack", "Mark as packed"],
+        Packed: ["ship", "Mark as shipped"],
+        Shipped: ["deliver", "Mark as delivered"],
+      }[o.status];
   const courierValue =
     vals.courier_name === "Other" ? vals.other : vals.courier_name;
   const failFault = opts?.fail_reasons?.find(
@@ -323,8 +332,8 @@ export default function SellerOrderDetails({
   const hasActions =
     next ||
     o.can_cancel ||
-    o.status === "Shipped" ||
-    o.status === "Delivery_Failed" ||
+    (o.status === "Shipped" && !reorbitHands) ||
+    (o.status === "Delivery_Failed" && !reorbitHands) ||
     codWaiting ||
     (mine && ret?.status === "Requested") ||
     (ret?.status === "Approved" && (mine || isAdmin)) ||
@@ -348,6 +357,24 @@ export default function SellerOrderDetails({
     Delivery_Failed:
       "The parcel couldn't be delivered. Try again, or mark it as back with the seller.",
   }[o.status];
+  const managedHint = reorbitHands
+    ? {
+        Confirmed:
+          "Pack the item safely, then mark it as packed. ReOrbit picks it up from you and delivers it.",
+        Packed: pickup?.requested
+          ? "Keep the parcel ready. ReOrbit's pickup team will collect it."
+          : "Ask ReOrbit to pick it up. Its team collects the parcel and delivers it, so there is nothing to book.",
+        Shipped: "ReOrbit is delivering it. You'll be told when it arrives.",
+        Delivery_Failed: "ReOrbit couldn't deliver it and is sorting it out. You'll be told what happens next.",
+      }[o.status]
+    : null;
+  const PICKUP_TEXT = {
+    Requested: "Waiting for ReOrbit to schedule the pickup",
+    Scheduled: `Pickup ${pickup?.date ? `on ${when(pickup.date)}` : "scheduled"}${pickup?.slot ? `, ${pickup.slot}` : ""}${pickup?.team ? ` · ${pickup.team}` : ""}`,
+    Picked_Up: "Picked up by ReOrbit, on its way to the buyer",
+    Completed: "Delivered by ReOrbit",
+    Cancelled: `ReOrbit cancelled the pickup${pickup?.cancel_reason ? `: ${pickup.cancel_reason}` : ""}. Ask again when it's ready.`,
+  };
 
   return wrap(
     <>
@@ -379,6 +406,7 @@ export default function SellerOrderDetails({
             {STATUS_TEXT[o.status] || o.status}
           </span>
           <span className="sod-badge pay">{payLabel(o)}</span>
+          {managed && <span className="sod-badge managed">Managed by ReOrbit</span>}
           {ret && (
             <span className="sod-badge ret">
               Return: {RETURN_TEXT[ret.status] || ret.status}
@@ -427,7 +455,21 @@ export default function SellerOrderDetails({
                 has been told.
               </p>
             )}
-            {hint && <p className="sod-hint">{hint}</p>}
+            {(managedHint || hint) && <p className="sod-hint">{managedHint || hint}</p>}
+            {managed && pickup?.status && (
+              <p className={`sod-pickup st-${pickup.status}`}>
+                <Truck size={15} /> {PICKUP_TEXT[pickup.status] || pickup.status}
+                {isAdmin && pickup.id && (
+                  <Link to={`/admin-pickups/${pickup.id}`}> · Open pickup {pickup.id}</Link>
+                )}
+              </p>
+            )}
+            {managed && isAdmin && !pickup?.status && ["Confirmed", "Packed"].includes(o.status) && (
+              <p className="sod-pickup">
+                <Truck size={15} /> Managed by ReOrbit: the seller packs it and asks for a pickup; it then appears in
+                Pickups.
+              </p>
+            )}
             {isAdmin && codWaiting && (
               <p className="sod-hint">
                 Cash of {inr(o.total)} is with the courier. Confirm it once it
@@ -812,7 +854,7 @@ export default function SellerOrderDetails({
                     Cancel order
                   </button>
                 )}
-                {o.status === "Shipped" && (
+                {o.status === "Shipped" && !reorbitHands && (
                   <>
                     <button
                       type="button"
@@ -832,7 +874,7 @@ export default function SellerOrderDetails({
                     </button>
                   </>
                 )}
-                {o.status === "Delivery_Failed" && (
+                {o.status === "Delivery_Failed" && !reorbitHands && (
                   <>
                     <button
                       type="button"
@@ -957,7 +999,9 @@ export default function SellerOrderDetails({
                             {},
                             next[0] === "pack"
                               ? "Marked as packed."
-                              : "Marked as delivered.",
+                              : next[0] === "pickup"
+                                ? "ReOrbit has been asked to pick it up."
+                                : "Marked as delivered.",
                           )
                     }
                   >

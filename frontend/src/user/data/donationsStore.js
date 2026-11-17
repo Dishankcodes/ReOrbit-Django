@@ -136,6 +136,10 @@ export const NGOS = [
 /* Same numbers the server uses to pay the reward (apps/rewards/services.py), so the estimate
    the donor sees is what they get. CO2 per kg is a fixed estimate. */
 export const REWARD_RULES = { co2PerKg: 1.9, base: 50, perItem: 10 };
+/* An accepted donation always earns at least this voucher (apps/rewards VOUCHER_MIN). */
+export const VOUCHER_MIN = 100;
+/* Impact (weight, CO2) and the reward are only real once the item is checked at the warehouse. */
+export const isMeasured = (d) => ["Received", "Completed"].includes(d?.status);
 
 /* Rough weight per item (kg) and voucher value, as worked out on the server. */
 const SERVER_WEIGHT = {
@@ -306,6 +310,9 @@ const adapt = (d) => ({
   rejectReason: d.reject_reason || "",
   cancelReason: d.cancel_reason || "",
   reward: d.reward || { points: 0, voucher: null },
+  /* what ReOrbit set at accept time (points and/or voucher), if anything */
+  promised: d.promised || null,
+  voucherMin: d.voucher_min || VOUCHER_MIN,
   events: (d.events || []).map((e) => ({
     id: e.id,
     label: e.label,
@@ -489,9 +496,8 @@ export const estimateWeight = (category, quantity) => {
 };
 
 export function summarize(list) {
-  const counted = list.filter((d) =>
-    ["Picked_Up", "Received", "Completed"].includes(d.status),
-  );
+  /* weight and CO2 count once the warehouse has checked the item, not from the donor's guess */
+  const counted = list.filter(isMeasured);
   const completed = list.filter((d) => d.status === "Completed");
   const weight = counted.reduce((sum, d) => sum + d.weightKg, 0);
   const earned = list.filter((d) =>
@@ -506,8 +512,9 @@ export function summarize(list) {
     co2: Math.round(weight * REWARD_RULES.co2PerKg * 10) / 10,
     /* points are paid when the item reaches the warehouse */
     points: earned.reduce((sum, d) => sum + (d.reward?.points || 0), 0),
+    /* only what ReOrbit has already promised at accept time */
     pendingPoints: list
-      .filter((d) => ["Pending", "Scheduled", "Picked_Up"].includes(d.status))
-      .reduce((sum, d) => sum + estimatePoints(d.quantity), 0),
+      .filter((d) => ["Scheduled", "Failed_Pickup", "Picked_Up"].includes(d.status))
+      .reduce((sum, d) => sum + (d.promised?.points || 0), 0),
   };
 }

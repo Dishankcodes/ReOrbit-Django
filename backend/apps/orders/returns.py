@@ -63,7 +63,8 @@ def refund_amount(order, fault):
 
 
 def earning_taken_back(order, fault):
-    return order.subtotal + (order.delivery_fee if fault == "seller" else 0)
+    # the delivery fee was never the seller's on a "Managed by ReOrbit" order
+    return order.subtotal + (order.delivery_fee if fault == "seller" and not order.managed_delivery else 0)
 
 
 def _text(v, n):

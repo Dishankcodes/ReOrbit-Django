@@ -761,18 +761,25 @@
   flex: 1 1 260px;
   justify-content: flex-end;
 }
-.so-more {
+/* "More…" dropdown (not .so-more: that is the "Show more" button) */
+.so-bar .so-more-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 132px;
   height: 38px;
-  padding: 0 10px;
+  margin: 0;
+  padding: 0 32px 0 12px;
   border: 1px solid var(--so-line);
   border-radius: 11px;
-  background: #fff;
+  background-color: #fff;
   color: var(--so-muted);
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
 }
-.so-more.on {
+.so-bar .so-more-select.on {
   border-color: var(--so-accent);
   color: var(--so-accent);
 }
@@ -816,4 +823,25 @@
   .so-search-member {
     max-width: none;
   }
+}
+
+/* solid buttons are links too: keep their text white whatever the page theme does to links */
+.so-card .so-actions a.so-btn:not(.ghost),
+.so-card .so-actions a.so-btn:not(.ghost):visited,
+.so-card .so-actions a.so-btn:not(.ghost):hover {
+  color: #fff !important;
+}
+.so-bar .so-search-member input {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
+  min-height: 0;
+}
+
+.so-badge.managed {
+  background: #e6f0fb;
+  color: #1f4f86;
 }

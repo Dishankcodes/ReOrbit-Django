@@ -34,7 +34,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitUser
-from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, PlatformSettings
+from apps.rewards import services as rewards
 from apps.core.responses import created, fail, ok
 
 from . import services
@@ -157,8 +157,7 @@ class AdminRewardOptions(APIView):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]
 
     def get(self, request):
-        tiers = PlatformSettings.load().donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS)
-        return ok({"voucher_tiers": tiers})
+        return ok({"voucher_tiers": rewards.donation_voucher_tiers(), "voucher_min": rewards.VOUCHER_MIN})
 
 
 class AdminPickupPartners(APIView):

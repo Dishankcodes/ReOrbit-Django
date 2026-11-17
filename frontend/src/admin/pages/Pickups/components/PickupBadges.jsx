@@ -5,10 +5,11 @@ import {
   AlarmClock,
   CalendarCheck2,
   CalendarClock,
+  Truck,
 } from "lucide-react";
 
 export function TypeChip({ type }) {
-  const Icon = type === "Donation" ? Gift : Package;
+  const Icon = type === "Donation" ? Gift : type === "Order" ? Truck : Package;
   return (
     <span className={`pk-type ${type.toLowerCase()}`}>
       <Icon size={11} /> {type}

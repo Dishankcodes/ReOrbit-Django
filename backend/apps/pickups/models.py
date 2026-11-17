@@ -1,7 +1,9 @@
 """Pickups. Two kinds, both free for the customer:
 
   - donation pickups live on the Donation itself (apps.donations), the way they always have;
-  - item pickups: a listing set to "Managed by ReOrbit" gets one PickupRequest when it goes live.
+  - item pickups: a listing set to "Managed by ReOrbit" gets one PickupRequest when it goes live;
+  - order pickups: a sold "Managed by ReOrbit" order, once the seller (member or ReMaker) packed it and asked
+    ReOrbit to collect it. Picked up = the order is on its way; completed = delivered to the buyer.
 
   Requested -> Scheduled -> Picked_Up -> Completed      (or Cancelled; a cancelled one can be reopened)
 
@@ -46,7 +48,7 @@ class PickupTeamMember(TimeStampedModel):
 
 
 class PickupRequest(PublicIdModel, TimeStampedModel):
-    """A platform-managed pickup of a listed item."""
+    """A platform-managed pickup: of a listed item (`item`) or of a sold order to deliver (`order`)."""
 
     public_id_prefix = "PKR"
 
@@ -57,8 +59,14 @@ class PickupRequest(PublicIdModel, TimeStampedModel):
         COMPLETED = "Completed", "Completed"
         CANCELLED = "Cancelled", "Cancelled"
 
-    item = models.OneToOneField("listings.Item", on_delete=models.PROTECT, related_name="pickup_request")
-    user = models.ForeignKey("users.Users", on_delete=models.PROTECT, related_name="item_pickups")
+    item = models.OneToOneField("listings.Item", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="pickup_request")
+    order = models.OneToOneField("orders.Order", null=True, blank=True, on_delete=models.PROTECT,
+                                 related_name="delivery_pickup")
+    # who hands the parcel over: a member, or (order pickups only) a ReMaker
+    user = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.PROTECT, related_name="item_pickups")
+    remaker = models.ForeignKey("remakers.ReMakers", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="order_pickups")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.REQUESTED)
     pickup_date = models.DateField(null=True, blank=True)
     pickup_slot = models.CharField(max_length=30, blank=True)
@@ -79,6 +87,10 @@ class PickupRequest(PublicIdModel, TimeStampedModel):
 
     def __str__(self):
         return f"{self.public_id} {self.status}"
+
+    @property
+    def seller(self):
+        return self.user or self.remaker
 
 
 class PickupEvent(models.Model):

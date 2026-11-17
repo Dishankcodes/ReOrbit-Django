@@ -492,3 +492,7 @@
 .ao-item .pk-type {
   align-self: flex-start;
 }
+.pk-type.order {
+  background: #e6f0fb;
+  color: #1f4f86;
+}

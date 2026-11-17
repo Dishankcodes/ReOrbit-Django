@@ -189,8 +189,7 @@ def readiness(item):
         errors["listing_price"] = ["Enter a price."]
     if not item.pickup_preference:
         errors["pickup_preference"] = ["Choose how the item will be handed over."]
-    if item.pickup_preference == Item.Pickup.PLATFORM_PICKUP and item.delivery_fee is None:
-        errors["delivery_fee"] = ["Enter the delivery charge (0 for free delivery)."]
+    # "Managed by ReOrbit": ReOrbit sets the delivery fee (Admin > Settings), so the seller enters none
     if not item.city:
         errors["city"] = ["Choose your city."]
     if not item.pincode:

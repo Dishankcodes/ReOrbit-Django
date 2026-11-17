@@ -1274,3 +1274,14 @@
   outline: 2px solid var(--rp-maroon);
   outline-offset: 3px;
 }
+
+/* what "Managed by ReOrbit" means for the delivery fee */
+.rpf-managed-note {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f5ece9;
+  color: #4a1d1a;
+  font-size: 13px;
+  line-height: 1.5;
+}

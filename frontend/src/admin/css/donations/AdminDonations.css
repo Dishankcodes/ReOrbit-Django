@@ -460,3 +460,10 @@
     animation: none;
   }
 }
+.dn-reward-hint {
+  display: block;
+  margin: -4px 0 12px;
+  color: #5f7069;
+  font-size: 12px;
+  line-height: 1.45;
+}

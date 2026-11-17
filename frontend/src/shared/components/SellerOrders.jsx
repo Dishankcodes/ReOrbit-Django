@@ -212,7 +212,7 @@ export default function SellerOrders({
           </div>
           <div className="so-bar-right">
             <select
-              className={`so-more ${MORE_TABS.some((t) => t.key === tab) ? "on" : ""}`}
+              className={`so-more-select ${MORE_TABS.some((t) => t.key === tab) ? "on" : ""}`}
               value={MORE_TABS.some((t) => t.key === tab) ? tab : ""}
               onChange={(e) => setTab(e.target.value)}
               aria-label="More order states"
@@ -322,16 +322,20 @@ function OrderRow({ order: o, role, to, adm }) {
   const ret = o.return;
   const a = o.address || {};
   const platform = o.seller.type === "platform";
-  const nextLabel = {
-    Confirmed: "Pack it",
-    Packed: "Ship it",
-    Shipped: "Mark delivered",
-  }[o.status];
+  /* "Managed by ReOrbit": the seller packs and asks for a pickup; ReOrbit does the rest */
+  const reorbitHands = o.managed_delivery && !isAdmin;
+  const nextLabel = reorbitHands
+    ? { Confirmed: "Pack it", Packed: o.pickup?.requested ? null : "Ask for pickup" }[o.status]
+    : {
+        Confirmed: "Pack it",
+        Packed: "Ship it",
+        Shipped: "Mark delivered",
+      }[o.status];
   const needsYou =
     nextLabel ||
     ret?.status === "Requested" ||
     ret?.status === "Approved" ||
-    o.status === "Delivery_Failed";
+    (o.status === "Delivery_Failed" && !reorbitHands);
 
   return (
     <article className={`so-card so-click${adm ? ` so-c-${o.status}` : ""}`} role="link" tabIndex={0}
@@ -347,6 +351,11 @@ function OrderRow({ order: o, role, to, adm }) {
           {STATUS_TEXT[o.status] || o.status}
         </span>
         <span className="so-badge pay">{payLabel(o)}</span>
+        {o.managed_delivery && (
+          <span className="so-badge managed">
+            {o.status === "Packed" && o.pickup?.requested ? "Waiting for ReOrbit pickup" : "Managed by ReOrbit"}
+          </span>
+        )}
         {ret && (
           <span className="so-badge ret">
             Return: {RETURN_TEXT[ret.status] || ret.status}

@@ -384,3 +384,14 @@
 .usl-head-actions > .dn-btn:not(.dn-btn--ghost):visited,
 .usl-head-actions > .dn-btn:not(.dn-btn--ghost):hover,
 .usl-head-actions > .dn-btn:not(.dn-btn--ghost):focus { color: #fff; -webkit-text-fill-color: #fff; }
+
+/* sell form: what "Managed by ReOrbit" means for the delivery fee */
+.usl-managed-note {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eef4fb;
+  color: #1f4f86;
+  font-size: 13px;
+  line-height: 1.5;
+}

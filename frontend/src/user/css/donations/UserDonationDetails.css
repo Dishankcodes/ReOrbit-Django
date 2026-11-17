@@ -289,3 +289,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* the reward line under the received numbers */
+.dn-det-reward {
+  margin-top: 14px;
+}

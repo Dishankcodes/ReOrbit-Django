@@ -166,7 +166,8 @@ export default function AdminDonationDetails() {
                 ({timeAgo(d.donation_date)})
               </li>
               <li>
-                <Scale size={14} /> About {d.weight_kg} kg
+                <Scale size={14} />{" "}
+                {["Received", "Completed"].includes(d.status) ? `${d.weight_kg} kg received` : `About ${d.weight_kg} kg`}
               </li>
             </ul>
           </div>
@@ -263,7 +264,7 @@ export default function AdminDonationDetails() {
                 </dd>
               </div>
               <div>
-                <dt>Approx. weight</dt>
+                <dt>{["Received", "Completed"].includes(d.status) ? "Weight received" : "Approx. weight"}</dt>
                 <dd>{d.weight_kg} kg</dd>
               </div>
               <div>
@@ -385,6 +386,36 @@ export default function AdminDonationDetails() {
                 </dl>
               </section>
             )}
+
+          {["Scheduled", "Failed_Pickup", "Picked_Up"].includes(d.status) && (
+            <section className="aup-card">
+              <header className="aup-card-head">
+                <div>
+                  <h3>Donor reward</h3>
+                  <p>Credited when you mark it received. You can change it then.</p>
+                </div>
+                <Award size={20} />
+              </header>
+              <dl className="ao-txn" style={{ margin: 0 }}>
+                <div>
+                  <dt>Voucher</dt>
+                  <dd>
+                    {d.admin_voucher_amount != null
+                      ? `₹${d.admin_voucher_amount} (set at accept)`
+                      : `Automatic, about ₹${Math.max(100, d.suggested_voucher_amount || 0)} (at least ₹100)`}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Orbit Points</dt>
+                  <dd>
+                    {d.admin_points != null
+                      ? `${d.admin_points} (set at accept)`
+                      : `Automatic, about ${d.suggested_points ?? 0}`}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          )}
 
           {d.status === "Completed" && (
             <section className="aup-card adn-cert">

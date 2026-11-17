@@ -136,6 +136,19 @@ def related_data(o, request, data):
     return rows
 
 
+def pickup_of(o):
+    """The ReOrbit pickup of a "Managed by ReOrbit" order, once the seller asked for it."""
+    if not o.managed_delivery:
+        return None
+    r = getattr(o, "delivery_pickup", None)
+    if r is None:
+        return {"requested": bool(o.pickup_requested_at), "status": None}
+    # after ReOrbit cancels a pickup the seller can ask again (requested goes back to False)
+    return {"requested": bool(o.pickup_requested_at), "id": r.public_id, "status": r.status, "date": r.pickup_date,
+            "slot": r.pickup_slot, "team": r.assigned_partner.name if r.assigned_partner_id else None,
+            "cancel_reason": r.cancel_reason, "requested_at": o.pickup_requested_at}
+
+
 def order_data(o, request, *, events=False, buyer=False):
     """`events` adds the tracking history; `buyer` adds who bought (sellers and admin need it)."""
     data = {
@@ -162,7 +175,9 @@ def order_data(o, request, *, events=False, buyer=False):
         "delivered_at": o.delivered_at, "cancelled_at": o.cancelled_at,
         "cancel_reason": o.cancel_reason, "cancelled_by": o.cancelled_by,
         "can_cancel": o.status in (Order.Status.CONFIRMED, Order.Status.PACKED),
-        "seller_earning": 0 if o.seller_type == "platform" else o.subtotal + o.delivery_fee,
+        "seller_earning": 0 if o.seller_type == "platform" else o.subtotal + (0 if o.managed_delivery else o.delivery_fee),
+        "managed_delivery": o.managed_delivery,
+        "pickup": pickup_of(o),
         "cod_received_at": o.cod_received_at,
         "failed": {"reason": o.fail_reason, "label": FAIL_REASONS.get(o.fail_reason, (o.fail_reason, ""))[0],
                    "note": o.fail_note, "fault": o.fail_fault, "at": o.failed_at} if o.fail_reason else None,
@@ -204,6 +219,7 @@ def report_row(o):
         "buyer": buyers.info(o, email=False),
         "items": [{"ref": ln.ref_id, "kind": ln.kind, "title": ln.title, "qty": ln.qty} for ln in o.lines.all()],
         "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee,
+        "managed_delivery": o.managed_delivery,
         "discount": o.discount, "total": o.total,
         "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,
         "cancel_reason": o.cancel_reason, "cod_received_at": o.cod_received_at,

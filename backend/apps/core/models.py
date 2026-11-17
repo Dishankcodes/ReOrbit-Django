@@ -67,7 +67,7 @@ class Category(PublicIdModel, TimeStampedModel):
 # Platform settings: exactly one row (pk = 1)
 # --------------------------------------------------------------------------- #
 DEFAULT_SUPPORT_EMAIL = "support@reorbit.in"
-DEFAULT_DONATION_VOUCHER_TIERS = [50, 100, 150, 200, 300, 500]
+DEFAULT_DONATION_VOUCHER_TIERS = [100, 150, 200, 300, 500]  # donation vouchers start at ₹100
 
 
 class PlatformSettings(TimeStampedModel):

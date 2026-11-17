@@ -5,9 +5,6 @@ import {
   CalendarDays,
   MapPin,
   Phone,
-  Star,
-  Scale,
-  Wind,
   ClipboardList,
   Truck,
   Award,
@@ -15,12 +12,9 @@ import {
   Plus,
 } from "lucide-react";
 
-import {
-  REWARD_RULES,
-  estimatePoints,
-  useDonation,
-} from "../../data/donationsStore";
-import { formatLongDate, kg } from "../../utils/format";
+import { VOUCHER_MIN, useDonation } from "../../data/donationsStore";
+import { formatLongDate } from "../../utils/format";
+import RewardNote from "./components/RewardNote";
 import SafeImage from "../../components/ui/SafeImage";
 import DonationNotFound from "./components/DonationNotFound";
 import { StatusBadge } from "./components/DonationBadges";
@@ -42,7 +36,7 @@ const NEXT = [
   {
     icon: Award,
     title: "You earn a voucher",
-    text: "When it reaches our warehouse you get a marketplace voucher and Orbit Points. A certificate follows once an NGO receives it.",
+    text: `Once we accept it, you get a marketplace voucher of at least ₹${VOUCHER_MIN} plus Orbit Points, credited when it reaches our warehouse. A certificate follows once an NGO receives it.`,
   },
 ];
 
@@ -53,7 +47,6 @@ export default function UserDonationSuccess() {
   if (!donation) return <DonationNotFound />;
 
   const { pickup } = donation;
-  const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
 
   return (
     <div className="dn dn-success">
@@ -157,21 +150,12 @@ export default function UserDonationSuccess() {
           </article>
 
           <article className="dn-card dn-card-pad dn-success-impact">
-            <h3>Your impact once we receive it</h3>
-            <div>
-              <span>
-                <Star size={16} />{" "}
-                <strong>{estimatePoints(donation.quantity)}</strong> Orbit
-                Points
-              </span>
-              <span>
-                <Scale size={16} /> <strong>{kg(donation.weightKg)}</strong>{" "}
-                diverted
-              </span>
-              <span>
-                <Wind size={16} /> <strong>{co2} kg</strong> CO₂ saved
-              </span>
-            </div>
+            <h3>Your reward and impact</h3>
+            <RewardNote donation={donation} />
+            <p className="dn-hint">
+              We weigh your item when it reaches our warehouse. Your impact
+              (waste diverted and CO₂ saved) is worked out from that.
+            </p>
           </article>
         </div>
       </div>

@@ -268,6 +268,10 @@ const ReMakerAnalytics = page(
   "remaker",
   () => import("./remaker/pages/Analytics/ReMakerAnalytics"),
 );
+const AdminMyReviews = page(
+  "admin",
+  () => import("./admin/pages/Shop/AdminMyReviews"),
+);
 const ReMakerMyReviews = page(
   "remaker",
   () => import("./remaker/pages/MyReviews/ReMakerMyReviews"),
@@ -935,6 +939,7 @@ export default function App() {
                 path="/admin-shop/orders/:orderId/track"
                 element={<UserOrderTrack />}
               />
+              <Route path="/admin-shop/reviews" element={<AdminMyReviews />} />
 
               <Route path="/admin-sell" element={<AdminSell />} />
               <Route path="/admin-sell/new" element={<AdminSellForm />} />

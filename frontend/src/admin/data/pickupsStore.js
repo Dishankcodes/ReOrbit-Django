@@ -53,13 +53,15 @@ const itemId = (publicId) => `PK-I${String(publicId).split("-").pop()}`;
 
 function fromRequest(r) {
   const c = r.customer;
+  const isOrder = r.kind === "order";
   return {
-    id: itemId(r.id),
+    id: isOrder ? r.id : itemId(r.id),
     request_id: r.id,
-    type: "Item",
+    type: isOrder ? "Order" : "Item",
     ref_id: r.item.id,
-    ref_path: `/admin-products/${r.item.id}`,
-    ref_label: "Item listing",
+    ref_path: isOrder ? r.order.path : `/admin-products/${r.item.id}`,
+    ref_label: isOrder ? "Order" : "Item listing",
+    order: r.order || null, // order pickups: the order, its buyer and where it goes
     title: r.item.title,
     category: r.item.category,
     image: r.item.image,

@@ -78,6 +78,7 @@ def donation_data(d, request):
         "certificate_url": media_url(request, d.certificate_file.name) if d.certificate_file else None,
         "reject_reason": d.reject_reason, "cancel_reason": d.cancel_reason,
         "reward": {"points": d.reward_points, "voucher": voucher_brief(d.reward_voucher)},
+        "voucher_min": rewards.VOUCHER_MIN,  # an accepted donation earns at least this voucher
         "events": _events(d),
     }
 

@@ -49,7 +49,7 @@ export const PICKUP_OPTIONS = [
   {
     id: "platform",
     label: "Managed by ReOrbit",
-    help: "We collect, check and deliver it for you. It's free for you, and the buyer pays for delivery.",
+    help: "When it sells, you pack it and ReOrbit picks it up and delivers it. The buyer pays ReOrbit's delivery fee.",
   },
 ];
 
@@ -320,10 +320,7 @@ const bodyOf = (form) => ({
   listing_price:
     form.price === "" || form.price == null ? null : Number(form.price),
   pickup_preference: PICKUP_OUT[form.pickup],
-  delivery_fee:
-    form.pickup === "platform" && form.deliveryFee !== ""
-      ? Number(form.deliveryFee)
-      : null,
+  delivery_fee: null, // ReOrbit sets the delivery fee for managed delivery (Admin > Settings) and keeps it
   city: form.city,
   pincode: form.pincode,
 });

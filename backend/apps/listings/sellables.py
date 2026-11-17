@@ -112,8 +112,6 @@ def readiness(obj):
         errors["images"] = ["Add at least one photo."]
     if obj.category.status != Category.Status.ACTIVE:
         errors["category"] = ["This category is no longer available. Choose another."]
-    if getattr(obj, "pickup_preference", "") == "Platform_Pickup" and getattr(obj, "delivery_fee", 0) is None:
-        errors["delivery_fee"] = ["Enter the delivery charge (0 for free delivery)."]
     return errors
 
 

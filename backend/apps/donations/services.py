@@ -18,6 +18,7 @@ import logging
 import re
 import secrets
 from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
@@ -27,7 +28,7 @@ from django.utils import timezone
 from apps.admins.models import Admins
 from apps.core import buyers as buyer_kit
 from apps.core.images import process_image
-from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, Category, PlatformSettings, SavedAddress
+from apps.core.models import Category, PlatformSettings, SavedAddress
 from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
 from apps.core.validators import validate_image, validate_phone
@@ -348,7 +349,7 @@ def _reward_choice(p):
             voucher_amount = int(str(raw_voucher).strip())
         except ValueError:
             voucher_amount = None
-        tiers = PlatformSettings.load().donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS)
+        tiers = rewards.donation_voucher_tiers()
         if voucher_amount not in tiers:
             rupee = "\u20b9"
             labels = ", ".join(rupee + str(t) for t in tiers)
@@ -525,9 +526,23 @@ def _received(d, admin, p):
     if received_condition not in Donation.Condition.values:
         raise _fix({"received_condition": ["Select the condition that actually arrived."]})
     note = _text(p.get("note"), 255)
+    # the weight the warehouse put on the scale; blank = worked out from the items counted
+    measured = None
+    raw_weight = p.get("weight_kg")
+    if raw_weight not in (None, ""):
+        try:
+            measured = Decimal(str(raw_weight).strip()).quantize(Decimal("0.1"))
+        except (InvalidOperation, ValueError):
+            measured = None
+        if measured is None or measured <= 0 or measured > 9999:
+            raise _fix({"weight_kg": ["Enter the weight in kg, e.g. 12.5."]})
     override_points, override_voucher = _reward_choice(p)
 
+    # The voucher: what the admin chose (here or at Accept), else worked out from what actually
+    # arrived. Always at least the ₹100 minimum (rewards.VOUCHER_MIN).
     chosen_voucher_amount = override_voucher if override_voucher is not None else d.admin_voucher_amount
+    if chosen_voucher_amount is None:
+        chosen_voucher_amount = rewards.voucher_amount(d.category, received_qty or base_qty, received_condition)
     voucher = rewards.issue_for_donation(d, amount=chosen_voucher_amount)  # one per donation, also a database rule
     if override_points is not None:
         points = override_points
@@ -535,7 +550,7 @@ def _received(d, admin, p):
         points = d.admin_points
     else:
         points = rewards.reward_points(received_qty) if received_qty else 0
-    weight = rewards.weight_kg(d.category, received_qty) if received_qty else 0
+    weight = measured if measured is not None else (rewards.weight_kg(d.category, received_qty) if received_qty else 0)
     d.status, d.received_at = S.RECEIVED, timezone.now()
     d.received_quantity, d.received_condition, d.received_note = received_qty, received_condition, note
     d.reward_points, d.reward_voucher, d.weight_kg = points, voucher, weight

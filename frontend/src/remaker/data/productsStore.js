@@ -18,7 +18,7 @@ export const PICKUP_OPTIONS = [
   {
     id: "platform",
     label: "Managed by ReOrbit",
-    help: "We collect, check and deliver it for you. It\u0027s free for you, and the buyer pays for delivery.",
+    help: "When it sells, you pack it and ReOrbit picks it up and delivers it. The buyer pays ReOrbit\u0027s delivery fee.",
   },
 ];
 
@@ -133,10 +133,7 @@ const bodyOf = (v) => ({
   description: v.description,
   pickup_preference:
     v.pickup === "platform" ? "Platform_Pickup" : "Seller_Handover",
-  delivery_fee:
-    v.pickup === "platform" && v.deliveryFee !== ""
-      ? Number(v.deliveryFee)
-      : null,
+  delivery_fee: null, // ReOrbit sets the delivery fee for managed delivery (Admin > Settings) and keeps it
   price: v.price === "" ? null : Number(v.price),
   stock: Number(v.stock) || 0,
   materials: (v.materials || []).join(", "),

@@ -25,7 +25,7 @@ import {
 import {
   ACTIVE_STATUSES,
   useDonationCategories,
-  REWARD_RULES,
+  VOUCHER_MIN,
   WHAT_WE_ACCEPT,
   WHAT_WE_SKIP,
   summarize,
@@ -400,10 +400,11 @@ export default function UserDonations() {
         </article>
         <article className="dn-card dn-card-pad dn-guide-reward">
           <Star size={26} />
-          <h3>Earn {REWARD_RULES.base} Orbit Points</h3>
+          <h3>Earn a ₹{VOUCHER_MIN}+ voucher</h3>
           <p>
-            Plus {REWARD_RULES.perItem} for every item, and a marketplace
-            voucher, once your item reaches our warehouse.
+            Every accepted donation earns a marketplace voucher of at least ₹
+            {VOUCHER_MIN} plus Orbit Points. ReOrbit sets the final amount once
+            your item reaches our warehouse.
           </p>
           <Link to="/user-orbit-points" className="dn-link">
             View Orbit Points <ChevronRight size={15} />

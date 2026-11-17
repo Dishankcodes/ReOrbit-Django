@@ -366,10 +366,40 @@ def request_for_item(item):
     return r
 
 
+def request_for_order(order):
+    """A "Managed by ReOrbit" order the seller packed: ReOrbit collects it from them and delivers it.
+    One pickup per order (called inside the order's transaction)."""
+    seller = order.seller_user or order.seller_remaker
+    kind = "user" if order.seller_user_id else "remaker"
+    r, created = PickupRequest.objects.get_or_create(
+        order=order, defaults={kind: seller, "address_snapshot": _snapshot(seller)})
+    if r.status == R.CANCELLED:  # asked again after ReOrbit cancelled a pickup
+        r.status, r.cancel_reason, r.assigned_partner = R.REQUESTED, "", None
+        r.save(update_fields=["status", "cancel_reason", "assigned_partner", "updated_at"])
+        _event(r, "Pickup requested again", seller.full_name, "wait", kind)
+    if created:
+        _event(r, "Pickup requested", f"{seller.full_name} packed order {order.public_id}", "neutral", kind)
+        try:
+            with transaction.atomic():
+                for a in Admins.objects.filter(status="Active"):
+                    if a.has_module("pickups", "view"):
+                        notify(a, "Order ready for pickup", f"{order.public_id} is packed and waiting for a pickup.",
+                               module="pickups", target_url=f"/admin-pickups/{r.public_id}",
+                               ref_type="pickup", ref_id=r.public_id)
+        except Exception:  # noqa: BLE001
+            log.exception("pickup notification failed")
+    return r
+
+
+def _what(r):
+    """What is being picked up, for messages."""
+    return f"Order {r.order.public_id}" if r.order_id else r.item.title
+
+
 def _lock_request(public_id):
     try:
         return PickupRequest.objects.select_for_update(of=("self",)).select_related(
-            "user", "assigned_partner", "item").get(public_id=public_id)
+            "user", "remaker", "assigned_partner", "item", "order").get(public_id=public_id)
     except PickupRequest.DoesNotExist:
         raise PickupError("That pickup no longer exists.", code="NOT_FOUND", status=404)
 
@@ -381,9 +411,13 @@ def _need(r, *statuses):
 
 
 def _notify_seller(r, title, body):
+    if r.order_id:
+        to = (f"/user-sell/sales/{r.order.public_id}" if r.user_id else f"/remaker-sales/{r.order.public_id}")
+    else:
+        to = "/user-sell"
     try:
         with transaction.atomic():
-            notify(r.user, title, body, module="pickups", target_url="/user-sell",
+            notify(r.seller, title, body, module="orders" if r.order_id else "pickups", target_url=to,
                    ref_type="pickup", ref_id=r.public_id)
     except Exception:  # noqa: BLE001
         log.exception("pickup notification failed")
@@ -404,22 +438,45 @@ def _schedule(r, admin, p, *, again=False):
     detail = f"{donation_services.when(day, slot)} · {partner.name}"
     _event(r, label, detail, "wait" if again else "good", "admin")
     _notify_seller(r, "Pickup scheduled" if not again else "Pickup rescheduled",
-                   f"{r.item.title}: {donation_services.when(day, slot)}, team {partner.name}.")
+                   f"{_what(r)}: {donation_services.when(day, slot)}, team {partner.name}.")
+
+
+def _order_step(r, admin, action, courier="", tracking=""):
+    """Move the pickup's order along with it (shipped when picked up, delivered when completed)."""
+    from apps.orders import services as orders  # local import: orders imports this app too
+
+    try:
+        orders.advance_order(r.order_id, action, actor_kind="admin", actor=admin, courier_name=courier, tracking_no=tracking)
+    except orders.CheckoutError as e:
+        raise PickupError(e.message, e.errors, e.code, e.status)
 
 
 def _picked_up(r, admin, p):
     _need(r, R.SCHEDULED)
+    if r.order_id:
+        # ReOrbit is the courier now. The admin can enter a partner courier's number; else the pickup id tracks it.
+        courier = _text(p.get("courier_name"), 40) or "ReOrbit Delivery"
+        tracking = _text(p.get("tracking_no"), 30) or r.public_id
+        _order_step(r, admin, "ship", courier, tracking)
     r.status = R.PICKED_UP
     r.save(update_fields=["status", "updated_at"])
-    _event(r, "Picked up from customer", r.assigned_partner.name if r.assigned_partner else "", "info", "admin")
-    _notify_seller(r, "Item picked up", f"{r.item.title} was collected.")
+    _event(r, "Picked up from customer" if not r.order_id else "Picked up from seller",
+           r.assigned_partner.name if r.assigned_partner else "", "info", "admin")
+    _notify_seller(r, "Picked up", f"{_what(r)} was collected by ReOrbit." +
+                   (" It is on its way to the buyer." if r.order_id else ""))
 
 
 def _complete(r, admin, p):
     _need(r, R.PICKED_UP)
+    if r.order_id:
+        _order_step(r, admin, "deliver")
     r.status, r.completed_at = R.COMPLETED, timezone.now()
     r.save(update_fields=["status", "completed_at", "updated_at"])
-    _event(r, "Delivered to warehouse", "Checked in and stored", "good", "admin")
+    if r.order_id:
+        _event(r, "Delivered to buyer", r.order.public_id, "good", "admin")
+        _notify_seller(r, "Delivered", f"{_what(r)} reached the buyer.")
+    else:
+        _event(r, "Delivered to warehouse", "Checked in and stored", "good", "admin")
 
 
 def _cancel(r, admin, p):
@@ -430,14 +487,22 @@ def _cancel(r, admin, p):
     r.status, r.pickup_date, r.pickup_slot, r.cancel_reason = R.CANCELLED, None, "", reason
     r.save(update_fields=["status", "pickup_date", "pickup_slot", "cancel_reason", "updated_at"])
     _event(r, "Pickup cancelled", reason, "bad", "admin")
-    _notify_seller(r, "Pickup cancelled", f"{r.item.title}: {reason}")
+    if r.order_id:  # the seller can ask again once the problem is sorted
+        r.order.pickup_requested_at = None
+        r.order.save(update_fields=["pickup_requested_at", "updated_at"])
+    _notify_seller(r, "Pickup cancelled", f"{_what(r)}: {reason}")
 
 
 def _reopen(r, admin, p):
     _need(r, R.CANCELLED)
+    if r.order_id and r.order.status != "Packed":
+        raise PickupError("This order is no longer waiting to be picked up.", code="BAD_STATE", status=409)
     r.status, r.cancel_reason = R.REQUESTED, ""
     r.assigned_partner = None
     r.save(update_fields=["status", "cancel_reason", "assigned_partner", "updated_at"])
+    if r.order_id:
+        r.order.pickup_requested_at = timezone.now()
+        r.order.save(update_fields=["pickup_requested_at", "updated_at"])
     _event(r, "Pickup reopened", "", "wait", "admin")
 
 

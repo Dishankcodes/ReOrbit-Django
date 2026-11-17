@@ -511,3 +511,33 @@
     font-size: 22px;
   }
 }
+
+/* "Managed by ReOrbit": pickup status on the order */
+.sod-badge.managed {
+  background: #e6f0fb;
+  color: #1f4f86;
+}
+.sod-pickup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eef4fb;
+  color: #1f4f86;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.sod-pickup a {
+  color: inherit;
+}
+.sod-pickup.st-Completed {
+  background: #e6f4ec;
+  color: #1d6b45;
+}
+.sod-pickup.st-Cancelled {
+  background: #fbeceb;
+  color: #9b2c24;
+}

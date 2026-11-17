@@ -101,10 +101,33 @@ const DONATION = {
   },
 };
 
+/* Order pickups ("Managed by ReOrbit"): collected from the seller and delivered to the buyer.
+   Picked up ships the order; completing it marks the order delivered. */
+const ORDER = {
+  pickedUp: {
+    ...A.pickedUp,
+    label: "Mark picked up from seller",
+    fields: "courier",
+    title: "Picked up from the seller?",
+    body: "The order is marked as shipped and the buyer is told. Add a partner courier's tracking number if you handed it on.",
+    toast: "marked as picked up · order shipped",
+  },
+  complete: {
+    ...A.complete,
+    label: "Mark delivered to buyer",
+    icon: "check",
+    title: "Delivered to the buyer?",
+    body: "The order is marked as delivered. The seller's earning starts clearing; the delivery fee stays with ReOrbit.",
+    confirmLabel: "Mark delivered",
+    toast: "completed · order delivered",
+  },
+};
+
 export const PICKUP_ACTION_LIST = A;
 
 export function getPickupActions(p) {
   const donation = p.type === "Donation";
+  const order = p.type === "Order";
   switch (p.status) {
     case "Requested":
       return [A.schedule, A.cancel];
@@ -112,9 +135,9 @@ export function getPickupActions(p) {
       /* a missed donation pickup can only be re-booked or called off */
       if (donation && p.donationStatus === "Failed_Pickup")
         return [A.reschedule, A.cancel];
-      return [donation ? DONATION.pickedUp : A.pickedUp, A.reschedule, A.cancel];
+      return [donation ? DONATION.pickedUp : order ? ORDER.pickedUp : A.pickedUp, A.reschedule, A.cancel];
     case "Picked_Up":
-      return [donation ? DONATION.complete : A.complete];
+      return [donation ? DONATION.complete : order ? ORDER.complete : A.complete];
     case "Cancelled":
       /* only a donation the admin rejected can be brought back; the donor's own cancel is final */
       if (donation) return p.donationStatus === "Rejected" ? [DONATION.reopen] : [];

@@ -356,13 +356,13 @@ export default function AdminPickups() {
     },
     {
       key: "cust",
-      label: p.type === "Donation" ? "View donor" : "View user",
+      label: p.type === "Donation" ? "View donor" : p.type === "Order" ? "View seller" : "View user",
       icon: UserRound,
       onClick: () => navigate(p.customer.path),
     },
     {
       key: "ref",
-      label: `View ${p.type === "Donation" ? "donation" : "item"}`,
+      label: `View ${p.type === "Donation" ? "donation" : p.type === "Order" ? "order" : "item"}`,
       icon: ExternalLink,
       onClick: () => navigate(p.ref_path),
     },
@@ -682,6 +682,7 @@ export default function AdminPickups() {
                   <option value="all">All</option>
                   <option value="Donation">Donation</option>
                   <option value="Item">Item</option>
+                  <option value="Order">Order delivery</option>
                 </select>
               </label>
               <label className="au-select">

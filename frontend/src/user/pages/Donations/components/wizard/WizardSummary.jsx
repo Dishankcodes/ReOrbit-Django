@@ -1,18 +1,12 @@
 import React from "react";
-import { Leaf, Scale, Star, Wind, CalendarDays, Sparkles } from "lucide-react";
-import {
-  REWARD_RULES,
-  estimatePoints,
-  estimateWeight,
-} from "../../../../data/donationsStore";
-import { formatDayMonth, kg } from "../../../../utils/format";
+import { Leaf, Scale, Star, Ticket, CalendarDays, Sparkles } from "lucide-react";
+import { VOUCHER_MIN } from "../../../../data/donationsStore";
+import { formatDayMonth } from "../../../../utils/format";
 
-/* Live side card: what's been entered so far + the impact of this donation. */
+/* Live side card: what's been entered so far, and what happens after. The reward and the
+   impact (weight, CO2) aren't guessed here: ReOrbit sets the reward, and the impact is
+   measured when the item reaches the warehouse. */
 export default function WizardSummary({ form }) {
-  const weight = form.category
-    ? estimateWeight(form.category, form.quantity)
-    : 0;
-  const co2 = Math.round(weight * REWARD_RULES.co2PerKg * 10) / 10;
   const cover = form.images[0]?.url;
 
   return (
@@ -46,21 +40,16 @@ export default function WizardSummary({ form }) {
       </div>
 
       <div className="dn-sum-impact">
-        <h4>Estimated impact</h4>
+        <h4>What you get</h4>
         <div className="dn-sum-grid">
           <div>
-            <Scale size={16} />
-            <strong>{kg(weight)}</strong>
-            <span>Waste diverted</span>
-          </div>
-          <div>
-            <Wind size={16} />
-            <strong>{co2} kg</strong>
-            <span>CO₂ saved</span>
+            <Ticket size={16} />
+            <strong>₹{VOUCHER_MIN}+</strong>
+            <span>Voucher once accepted</span>
           </div>
           <div>
             <Star size={16} />
-            <strong>{estimatePoints(form.quantity)}</strong>
+            <strong>Set by ReOrbit</strong>
             <span>Orbit Points</span>
           </div>
           <div>
@@ -68,7 +57,16 @@ export default function WizardSummary({ form }) {
             <strong>₹0</strong>
             <span>Pickup cost</span>
           </div>
+          <div>
+            <Scale size={16} />
+            <strong>At warehouse</strong>
+            <span>Impact measured</span>
+          </div>
         </div>
+        <p className="dn-sum-note">
+          We weigh your item when it reaches our warehouse. Your impact (waste
+          diverted and CO₂ saved) and the final reward are worked out from that.
+        </p>
       </div>
     </aside>
   );
