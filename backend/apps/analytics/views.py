@@ -4,11 +4,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from apps.accounts.authentication import ReOrbitJWTAuthentication
-from apps.accounts.permissions import IsReOrbitReMaker
+from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitReMaker
 from apps.core.responses import fail, ok
 from apps.remakers.models import RemakerProduct, ReMakers
 
-from . import services
+from . import aggregate, dashboard, earnings, services
 
 
 class OptionalAuth(ReOrbitJWTAuthentication):
@@ -32,6 +32,45 @@ class MyAnalytics(APIView):
         if key not in services.RANGES:
             return fail("Choose 7, 30, 90 or 365 days.", errors={"range": ["Choose 7, 30, 90 or 365 days."]})
         return ok(services.report(request.user.account, key, request))
+
+
+class MyDashboard(APIView):
+    """GET /api/analytics/me/dashboard/: the numbers on the signed-in ReMaker's home screen."""
+
+    permission_classes = [IsReOrbitReMaker]
+
+    def get(self, request):
+        return ok(dashboard.dashboard(request.user.account))
+
+
+def _admin_range(request):
+    key = str(request.query_params.get("range", aggregate.DEFAULT_RANGE))
+    return key if key in aggregate.RANGES else None
+
+
+class AdminReport(APIView):
+    """GET /api/analytics/admin/report/?range=30d|90d|6m|12m|all: orders, donations, pickups, warehouse,
+    community and payouts for the admin Reports and Dashboard."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("reports")]
+
+    def get(self, request):
+        key = _admin_range(request)
+        if key is None:
+            return fail("Choose 30d, 90d, 6m, 12m or all.", errors={"range": ["Not a range we know."]})
+        return ok(aggregate.build_report(key))
+
+
+class AdminEarnings(APIView):
+    """GET /api/analytics/admin/earnings/?range=...: what ReOrbit itself earns and spends."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("earnings")]
+
+    def get(self, request):
+        key = _admin_range(request)
+        if key is None:
+            return fail("Choose 30d, 90d, 6m, 12m or all.", errors={"range": ["Not a range we know."]})
+        return ok(earnings.build_earnings(key))
 
 
 class RecordView(APIView):

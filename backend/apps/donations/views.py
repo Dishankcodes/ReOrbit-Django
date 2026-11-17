@@ -34,6 +34,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitUser
+from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, PlatformSettings
 from apps.core.responses import created, fail, ok
 
 from . import services
@@ -150,6 +151,16 @@ class AdminDonationAction(APIView):
         return ok(admin_donation_data(_qs().get(pk=d.pk), request), message="Donation updated.")
 
 
+class AdminRewardOptions(APIView):
+    """The voucher amounts an admin can choose from at Accept time (Settings > Platform >
+    donationVoucherTiers) — a plain list, for a <select> on the accept form."""
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]
+
+    def get(self, request):
+        tiers = PlatformSettings.load().donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS)
+        return ok({"voucher_tiers": tiers})
+
+
 class AdminPickupPartners(APIView):
     """Pickup partners have no ReOrbit login: admin hands their token to the driver directly."""
     permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]
@@ -167,9 +178,6 @@ class AdminPickupPartners(APIView):
         phone = " ".join(str(request.data.get("phone") or "").split())[:20]
         lead_name = " ".join(str(request.data.get("lead_name") or "").split())[:120]
         p = PickupPartner.objects.create(name=name, phone=phone, lead_name=lead_name)
-        if lead_name:  # the lead is also the first person on the crew shown in Admin > Pickup teams
-            from apps.pickups.models import PickupTeamMember
-            PickupTeamMember.objects.create(team=p, name=lead_name, phone=phone, role="Lead")
         return created({**pickup_partner_data(p), "token": p.token}, message="Pickup partner added.")
 
 

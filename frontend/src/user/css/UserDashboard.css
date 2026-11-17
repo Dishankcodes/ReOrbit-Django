@@ -1051,3 +1051,12 @@
     transition: none !important;
   }
 }
+
+.user-dashboard-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7770;
+}

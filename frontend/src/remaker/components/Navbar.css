@@ -397,3 +397,65 @@
     font-size: 26px;
   }
 }
+
+/* =========================================================
+   PHONE MENU: buttons, scrim, scrolling
+========================================================= */
+
+.remaker-page .remaker-navbar-mobile-actions,
+.remaker-page .remaker-navbar-scrim {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  .remaker-page .remaker-navbar-links {
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 2;
+  }
+
+  .remaker-page .remaker-navbar-mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rm-border);
+  }
+
+  .remaker-page .remaker-navbar-mobile-actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 999px;
+    text-align: center;
+  }
+
+  .remaker-page .remaker-navbar-mobile-actions .remaker-back-user {
+    border: 1px solid var(--rm-border);
+    background: #fff;
+  }
+
+  .remaker-page .remaker-navbar-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(39, 8, 9, 0.28);
+    cursor: default;
+  }
+
+  .remaker-page .remaker-navbar-inner {
+    position: relative;
+    z-index: 2;
+  }
+}

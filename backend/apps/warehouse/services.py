@@ -532,17 +532,15 @@ def _move_target(item, raw, errors):
 
 # ---------------------------------------------------------------- hooks from other apps
 def receive_donation(donation):
-    """A donated item reached the dock. Returns the stock lot, or None when nothing arrived."""
-    qty = donation.received_quantity if donation.received_quantity is not None else donation.effective_quantity
-    if not qty:
-        return None
+    """A donated item reached the dock."""
     condition = {"Good": "Good", "Medium": "Fair", "Worst": "Needs refurbishing"}.get(
         donation.received_condition or donation.condition, "Good")
     user = donation.donor
+    quantity = donation.received_quantity if donation.received_quantity is not None else donation.quantity
     item, created = WarehouseItem.objects.get_or_create(
         donation=donation,
         defaults=dict(
-            title=donation.title, category=donation.category, quantity=qty, condition=condition,
+            title=donation.title, category=donation.category, quantity=max(1, quantity), condition=condition,
             weight_kg=donation.weight_kg, received_at=donation.received_at or timezone.now(),
             source_user=user, source_name=user.full_name, source_sub=user.email,
             source_city=getattr(getattr(user, "profile", None), "city", "") or "",

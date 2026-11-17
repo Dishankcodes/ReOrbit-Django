@@ -14,6 +14,7 @@ import {
 import useToast from "./ui/useToast";
 import AdminErrorBoundary from "./AdminErrorBoundary";
 import { PageSkeleton, variantForPath } from "./ui/Skeleton";
+import MobileBottomNav from "../../shared/components/MobileBottomNav";
 import "./AdminLayout.css";
 
 /* Buttons that change data. In view-only mode these are blocked (and dimmed by CSS).
@@ -273,6 +274,8 @@ export default function AdminLayout({ children }) {
           )}
         </main>
       </div>
+
+      <MobileBottomNav side="admin" />
 
       {toastNode}
     </div>

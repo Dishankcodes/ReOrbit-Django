@@ -466,3 +466,53 @@
     white-space: normal;
   }
 }
+
+/* ---------- status line above server numbers ---------- */
+.rp-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border: 1px solid var(--rp-line, #e3ece7);
+  border-radius: 12px;
+  background: var(--rp-surface, #fff);
+  font-size: 13px;
+  color: var(--rp-ink2, #4d6459);
+}
+.rp-note.error {
+  border-color: #e7c3c3;
+  background: #fbf3f3;
+  color: #8a2c2c;
+}
+.rp-note.error button {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+.rp-note-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--rp-line, #e3ece7);
+  border-top-color: var(--rp-c3, #1baf7a);
+  border-radius: 50%;
+  animation: rp-note-spin 0.8s linear infinite;
+}
+@keyframes rp-note-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rp-note.error {
+    border-color: #6b3434;
+    background: #2a1a1a;
+    color: #f0b5b5;
+  }
+}

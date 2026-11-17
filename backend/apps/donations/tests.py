@@ -45,11 +45,7 @@ class DonationTests(OrderBase):
                       as_=self.buyer)
         self.assertEqual(r.status_code, 201, r.data)
         self.pickup_addr = r.data["data"]["address"]["id"]
-        for name, lead, phone in (("Pickup team A", "Ravi Kumar", "+91 98250 41011"),
-                                  ("Pickup team B", "Imran Qureshi", "+91 98251 52021"),
-                                  ("Pickup team C", "Sunita Devi", "+91 98252 63031")):
-            PickupPartner.objects.create(name=name, lead_name=lead, phone=phone)
-        self.partner = PickupPartner.objects.get(name="Pickup team A")
+        self.partner = PickupPartner.objects.get(name="Pickup team A")  # seeded by migration 0003
 
     # ---- helpers ------------------------------------------------------- #
     def donate(self, who=None, photos=1, **over):
@@ -198,6 +194,47 @@ class DonationTests(OrderBase):
         self.assertIn("accepted_quantity", self.accept(did2, accepted_quantity="6").data["errors"])
         self.assertIn("accepted_quantity", self.accept(did2, accepted_quantity="0").data["errors"])
 
+    # ---- admin decides the reward at Accept time ---------------------------- #
+    def test_admin_can_choose_points_and_voucher_at_accept(self):
+        did = self.donate().data["data"]["id"]
+        r = self.accept(did, voucher_amount="999")  # not one of the configured tiers
+        self.assertIn("voucher_amount", r.data["errors"])
+        r = self.accept(did, points="150", voucher_amount="100")
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual((r.data["data"]["admin_points"], r.data["data"]["admin_voucher_amount"]), (150, 100))
+        mine = self.get(f"/api/donations/me/{did}/", as_=self.buyer).data["data"]
+        self.assertEqual(mine["promised"], {"points": 150, "voucher_amount": 100})
+
+        code = self.handover_code(did)
+        self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": code})
+        r = self.act(did, "received")  # no override here: the admin's Accept-time choice wins
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual((r.data["data"]["reward"]["points"], r.data["data"]["reward"]["voucher_amount"]), (150, 100))
+        self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 150)
+
+    def test_a_received_time_override_beats_the_accept_time_choice(self):
+        did = self.donate().data["data"]["id"]
+        self.accept(did, points="150", voucher_amount="100")
+        code = self.handover_code(did)
+        self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": code})
+        r = self.act(did, "received", points="200", voucher_amount="300")
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual((r.data["data"]["reward"]["points"], r.data["data"]["reward"]["voucher_amount"]), (200, 300))
+
+    def test_without_an_admin_choice_the_system_still_works_it_out(self):
+        did = self.donate().data["data"]["id"]
+        r = self.accept(did)  # no points/voucher_amount given
+        self.assertIsNone(r.data["data"]["admin_points"])
+        code = self.handover_code(did)
+        self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": code})
+        r = self.act(did, "received")
+        self.assertEqual((r.data["data"]["reward"]["points"], r.data["data"]["reward"]["voucher_amount"]), (120, 140))
+
+    def test_voucher_tiers_come_from_platform_settings(self):
+        r = self.get("/api/donations/admin/reward-options/", as_=self.ops)
+        self.assertEqual(r.data["data"]["voucher_tiers"], [50, 100, 150, 200, 300, 500])
+        self.assertEqual(self.get("/api/donations/admin/reward-options/", as_=self.buyer).status_code, 403)
+
     # ---- the reward, the voucher, and spending it at checkout -------------- #
     def test_full_journey_earns_points_and_one_voucher(self):
         did = self.donate().data["data"]["id"]
@@ -217,26 +254,19 @@ class DonationTests(OrderBase):
         r = self.act(did, "received")
         self.assertEqual(r.status_code, 200, r.data)
         reward = r.data["data"]["reward"]
-        self.assertEqual((reward["points"], reward["voucher_amount"]), (60, 140))  # 1 Furniture item in good condition
-        self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 60)
-
-        # the donated lot reaches Admin > Warehouse, and leaves it again when the donation is handed on
-        from apps.warehouse.models import WarehouseItem
-        lot = WarehouseItem.objects.get(donation__public_id=did)
-        self.assertEqual((lot.warehouse_status, lot.source_user_id, lot.quantity), ("Received", self.buyer.pk, 1))
+        self.assertEqual((reward["points"], reward["voucher_amount"]), (120, 140))  # 100 base + 20 for 1 item
+        self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 120)
 
         again = self.act(did, "received")  # a double click must not pay twice
         self.assertEqual((again.status_code, again.data["code"]), (409, "BAD_STATE"))
         self.assertEqual(Voucher.objects.count(), 1)
-        self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 60)
+        self.assertEqual(User_Profile.objects.get(user=self.buyer).orbit_points, 120)
 
         # ---- 9. certificate download -------------------------------------- #
         r = self.act(did, "complete", ngo="Helping Hands")
         self.assertEqual(r.status_code, 200, r.data)
         self.assertTrue(r.data["data"]["certificate"])
         self.assertEqual((r.data["data"]["distributed_quantity"], r.data["data"]["ngo"]), (1, "Helping Hands"))
-        lot.refresh_from_db()
-        self.assertEqual((lot.warehouse_status, lot.sale_status, lot.given_to), ("Released", "Donated", "Helping Hands"))
         pdf = self.get(f"/api/donations/me/{did}/certificate/", as_=self.buyer)
         self.assertEqual((pdf.status_code, bytes(pdf.content[:4])), (200, b"%PDF"))
         self.assertEqual(self.get(f"/api/donations/me/{did}/certificate/", as_=self.seller).status_code, 404)
@@ -275,8 +305,10 @@ class DonationTests(OrderBase):
         self.assertEqual(self.checkout([{"id": self.table.public_id, "qty": 1}], voucher_code=code).status_code, 201)
 
     def test_reward_rules_match_the_app(self):
-        self.assertEqual(rewards.reward_points(1), 60)
-        self.assertEqual(rewards.reward_points(3), 80)
+        # The "donationBase"/"donationItem" RewardRule rows (seeded by rewards/migrations/0003)
+        # are the single source of truth; this just confirms reward_points() is reading them.
+        self.assertEqual(rewards.reward_points(1), 120)  # 100 base + 20 for 1 item
+        self.assertEqual(rewards.reward_points(3), 160)  # 100 base + 20 * 3 items
         self.assertEqual(rewards.voucher_amount("Furniture", 1, "Good"), 140)
         self.assertEqual(rewards.voucher_amount("Books", 1, "Worst"), 50)  # never below the minimum
         self.assertEqual(rewards.voucher_amount("Furniture", 9, "Good"), 500)  # never above the maximum

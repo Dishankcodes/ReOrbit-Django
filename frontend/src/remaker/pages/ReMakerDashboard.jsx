@@ -19,11 +19,16 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { followerStats, useFollowers } from "../data/followersStore";
+
+import { formatPrice } from "../data/remakerMarketplaceData";
 import {
-  followedLabel,
-  followerStats,
-  useFollowers,
-} from "../data/followersStore";
+  changeLabel,
+  niceCeil,
+  shortMoney,
+  useDashboard,
+  whenLabel,
+} from "../data/dashboardData";
 
 import "../css/ReMakerDashboard.css";
 
@@ -44,28 +49,31 @@ export default function ReMakerDashboard() {
     storedRemaker?.businessName ||
     "ReMaker";
 
+  const { data, loaded, loading, error, reload } = useDashboard();
+  const { stats: figures, revenue, pipeline, performance, impact } = data;
+
   const stats = [
     {
       title: "Total Sales",
-      value: "₹84,650",
-      change: "+18.6%",
+      value: formatPrice(figures.sales.value),
+      change: changeLabel(figures.sales.change),
       label: "vs last month",
       icon: CircleDollarSign,
       type: "sales",
     },
     {
       title: "Orders",
-      value: "126",
-      change: "+12.4%",
-      label: "this month",
+      value: figures.orders.value.toLocaleString("en-IN"),
+      change: changeLabel(figures.orders.change),
+      label: "vs last month",
       icon: ShoppingBag,
       type: "orders",
     },
     {
       title: "Products",
-      value: "38",
-      change: "+4",
-      label: "active listings",
+      value: figures.products.value.toLocaleString("en-IN"),
+      change: `+${figures.products.new}`,
+      label: "new in 30 days",
       icon: Package,
       type: "products",
     },
@@ -79,99 +87,41 @@ export default function ReMakerDashboard() {
     },
   ];
 
-  const recentOrders = [
-    {
-      id: "#RO-10482",
-      product: "Reclaimed Wooden Lamp",
-      customer: "Aarav Shah",
-      amount: "₹2,450",
-      status: "Processing",
-      date: "Today",
-    },
-    {
-      id: "#RO-10477",
-      product: "Upcycled Denim Tote",
-      customer: "Meera Patel",
-      amount: "₹1,850",
-      status: "Shipped",
-      date: "Yesterday",
-    },
-    {
-      id: "#RO-10471",
-      product: "Bottle Glass Planter",
-      customer: "Riya Mehta",
-      amount: "₹950",
-      status: "Delivered",
-      date: "12 Sep",
-    },
-    {
-      id: "#RO-10465",
-      product: "Vintage Fabric Cushion",
-      customer: "Kabir Joshi",
-      amount: "₹1,250",
-      status: "Delivered",
-      date: "11 Sep",
-    },
-  ];
+  const recentOrders = data.recentOrders.map((order) => ({
+    ...order,
+    amount: formatPrice(order.amount),
+    date: whenLabel(order.at),
+  }));
 
-  const topProducts = [
-    {
-      name: "Reclaimed Wooden Lamp",
-      category: "Home Decor",
-      sales: 42,
-      revenue: "₹18,900",
-      rating: "4.9",
-    },
-    {
-      name: "Upcycled Denim Tote",
-      category: "Accessories",
-      sales: 36,
-      revenue: "₹14,800",
-      rating: "4.8",
-    },
-    {
-      name: "Bottle Glass Planter",
-      category: "Garden",
-      sales: 29,
-      revenue: "₹9,570",
-      rating: "4.9",
-    },
-  ];
+  const topProducts = data.topProducts.map((product) => ({
+    ...product,
+    revenue: formatPrice(product.revenue),
+    rating: product.rating ? product.rating.toFixed(1) : "–",
+  }));
 
-  const activities = [
-    {
-      icon: ShoppingBag,
-      title: "New order received",
-      description: "Order #RO-10482 has been placed.",
-      time: "18 min ago",
-    },
-    {
-      icon: Star,
-      title: "New 5-star review",
-      description: "A customer reviewed your wooden lamp.",
-      time: "2 hrs ago",
-    },
-    ...(followers.length
-      ? [
-          {
-            icon: Users,
-            title: "New follower",
-            description: `${followers[0].name} started following you.`,
-            time: followedLabel(followers[0].followedAt),
-          },
-        ]
-      : []),
-    {
-      icon: CheckCircle2,
-      title: "Product approved",
-      description: "Your recycled glass planter is live.",
-      time: "Yesterday",
-    },
-  ];
+  const ACTIVITY_ICON = {
+    order: ShoppingBag,
+    review: Star,
+    follow: Users,
+    return: Package,
+  };
+  const activities = data.activity.map((item) => ({
+    icon: ACTIVITY_ICON[item.kind] || CheckCircle2,
+    title: item.title,
+    description: item.text,
+    time: whenLabel(item.at),
+  }));
 
-  const chartData = [38, 48, 42, 61, 56, 72, 68, 84, 76, 91, 87, 96];
-
-  const maxChartValue = Math.max(...chartData);
+  const chartData = revenue.series.map((point) => point.value);
+  const chartTop = niceCeil(Math.max(...chartData, 0));
+  const maxChartValue = chartTop;
+  const pipelineMax = Math.max(...pipeline.map((step) => step.value), 1);
+  const PIPE_ICON = {
+    pending: Clock3,
+    processing: Package,
+    shipped: ShoppingBag,
+    delivered: CheckCircle2,
+  };
 
   return (
     <section className="remaker-dashboard">
@@ -200,6 +150,21 @@ export default function ReMakerDashboard() {
           Add Product
         </button>
       </div>
+
+      {error && (
+        <div className="remaker-dash-note" role="alert">
+          <span>We could not load your numbers. {error}</span>
+          <button type="button" onClick={reload}>
+            Try again
+          </button>
+        </div>
+      )}
+      {loading && !loaded && (
+        <div className="remaker-dash-note" role="status">
+          <span className="remaker-dash-spin" aria-hidden="true" />
+          <span>Loading your studio numbers…</span>
+        </div>
+      )}
 
       {/* STAT CARDS */}
       <div className="remaker-stat-grid">
@@ -261,23 +226,25 @@ export default function ReMakerDashboard() {
           <div className="remaker-sales-summary">
             <div>
               <span>Total Revenue</span>
-              <strong>₹84,650</strong>
+              <strong>{formatPrice(revenue.total)}</strong>
             </div>
 
             <div className="remaker-sales-growth">
               <TrendingUp size={15} />
-              <span>18.6%</span>
-              <small>growth</small>
+              <span>
+                {revenue.change === null
+                  ? "New"
+                  : `${revenue.change >= 0 ? "+" : ""}${revenue.change}%`}
+              </span>
+              <small>vs the 12 months before</small>
             </div>
           </div>
 
           <div className="remaker-chart">
             <div className="remaker-chart-y">
-              <span>₹10k</span>
-              <span>₹7.5k</span>
-              <span>₹5k</span>
-              <span>₹2.5k</span>
-              <span>₹0</span>
+              {[1, 0.75, 0.5, 0.25, 0].map((part) => (
+                <span key={part}>{shortMoney(chartTop * part)}</span>
+              ))}
             </div>
 
             <div className="remaker-chart-area">
@@ -364,18 +331,9 @@ export default function ReMakerDashboard() {
               </div>
 
               <div className="remaker-chart-months">
-                <span>Oct</span>
-                <span>Nov</span>
-                <span>Dec</span>
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
-                <span>Apr</span>
-                <span>May</span>
-                <span>Jun</span>
-                <span>Jul</span>
-                <span>Aug</span>
-                <span>Sep</span>
+                {revenue.series.map((point, index) => (
+                  <span key={`${point.label}-${index}`}>{point.label}</span>
+                ))}
               </div>
             </div>
           </div>
@@ -400,65 +358,28 @@ export default function ReMakerDashboard() {
           </div>
 
           <div className="remaker-pipeline">
-            <div className="remaker-pipeline-item">
-              <div className="remaker-pipeline-icon pending">
-                <Clock3 size={19} />
-              </div>
+            {pipeline.map((step) => {
+              const Icon = PIPE_ICON[step.key] || Package;
 
-              <div>
-                <strong>12</strong>
-                <span>Pending</span>
-              </div>
+              return (
+                <div className="remaker-pipeline-item" key={step.key}>
+                  <div className={`remaker-pipeline-icon ${step.key}`}>
+                    <Icon size={19} />
+                  </div>
 
-              <div className="remaker-pipeline-bar">
-                <span style={{ width: "48%" }} />
-              </div>
-            </div>
+                  <div>
+                    <strong>{step.value.toLocaleString("en-IN")}</strong>
+                    <span>{step.label}</span>
+                  </div>
 
-            <div className="remaker-pipeline-item">
-              <div className="remaker-pipeline-icon processing">
-                <Package size={19} />
-              </div>
-
-              <div>
-                <strong>18</strong>
-                <span>Processing</span>
-              </div>
-
-              <div className="remaker-pipeline-bar">
-                <span style={{ width: "68%" }} />
-              </div>
-            </div>
-
-            <div className="remaker-pipeline-item">
-              <div className="remaker-pipeline-icon shipped">
-                <ShoppingBag size={19} />
-              </div>
-
-              <div>
-                <strong>9</strong>
-                <span>Shipped</span>
-              </div>
-
-              <div className="remaker-pipeline-bar">
-                <span style={{ width: "38%" }} />
-              </div>
-            </div>
-
-            <div className="remaker-pipeline-item">
-              <div className="remaker-pipeline-icon delivered">
-                <CheckCircle2 size={19} />
-              </div>
-
-              <div>
-                <strong>87</strong>
-                <span>Delivered</span>
-              </div>
-
-              <div className="remaker-pipeline-bar">
-                <span style={{ width: "88%" }} />
-              </div>
-            </div>
+                  <div className="remaker-pipeline-bar">
+                    <span
+                      style={{ width: `${(step.value / pipelineMax) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <button
@@ -493,8 +414,13 @@ export default function ReMakerDashboard() {
           </div>
 
           <div className="remaker-products-list">
+            {!topProducts.length && (
+              <p className="remaker-dash-empty">
+                Your best sellers show up here after your first delivered order.
+              </p>
+            )}
             {topProducts.map((product, index) => (
-              <div className="remaker-product-row" key={product.name}>
+              <div className="remaker-product-row" key={product.id}>
                 <div className="remaker-product-number">0{index + 1}</div>
 
                 <div className="remaker-product-placeholder">
@@ -543,6 +469,11 @@ export default function ReMakerDashboard() {
           </div>
 
           <div className="remaker-orders-list">
+            {!recentOrders.length && (
+              <p className="remaker-dash-empty">
+                New orders from customers will appear here.
+              </p>
+            )}
             {recentOrders.map((order) => (
               <div className="remaker-order-row" key={order.id}>
                 <div className="remaker-order-icon">
@@ -596,6 +527,11 @@ export default function ReMakerDashboard() {
           </div>
 
           <div className="remaker-activity-list">
+            {!activities.length && (
+              <p className="remaker-dash-empty">
+                Orders, reviews and new followers will appear here.
+              </p>
+            )}
             {activities.map((activity, index) => {
               const Icon = activity.icon;
 
@@ -631,14 +567,18 @@ export default function ReMakerDashboard() {
           <div className="remaker-performance-score">
             <div className="remaker-score-circle">
               <div>
-                <strong>92</strong>
+                <strong>{performance.score ?? "–"}</strong>
                 <span>/100</span>
               </div>
             </div>
 
             <div>
-              <strong>Excellent</strong>
-              <p>Your studio is performing better than 86% of ReMakers.</p>
+              <strong>{performance.grade || "Not scored yet"}</strong>
+              <p>
+                {performance.score === null
+                  ? "Your score appears after your first review or delivered order."
+                  : "Based on your buyer ratings and how many deliveries arrived."}
+              </p>
             </div>
           </div>
 
@@ -648,7 +588,7 @@ export default function ReMakerDashboard() {
                 <Eye size={15} />
                 Product Views
               </span>
-              <strong>18.4K</strong>
+              <strong>{performance.views.toLocaleString("en-IN")}</strong>
             </div>
 
             <div>
@@ -656,7 +596,7 @@ export default function ReMakerDashboard() {
                 <Heart size={15} />
                 Wishlist Adds
               </span>
-              <strong>486</strong>
+              <strong>{performance.saves.toLocaleString("en-IN")}</strong>
             </div>
 
             <div>
@@ -664,7 +604,9 @@ export default function ReMakerDashboard() {
                 <Star size={15} />
                 Average Rating
               </span>
-              <strong>4.9</strong>
+              <strong>
+                {performance.ratingCount ? performance.rating.toFixed(1) : "–"}
+              </strong>
             </div>
 
             <div>
@@ -672,7 +614,7 @@ export default function ReMakerDashboard() {
                 <Wallet size={15} />
                 Avg. Order Value
               </span>
-              <strong>₹1,980</strong>
+              <strong>{performance.aov ? formatPrice(performance.aov) : "–"}</strong>
             </div>
           </div>
         </section>
@@ -753,25 +695,22 @@ export default function ReMakerDashboard() {
           <div>
             <span>Your sustainability impact</span>
             <strong>
-              You&apos;ve given <b>386 kg</b> of materials a second life.
+              {impact.items
+                ? <>You&apos;ve given <b>{impact.items.toLocaleString("en-IN")}</b> {impact.items === 1 ? "item" : "items"} a second life.</>
+                : <>Every item you sell gives something a second life.</>}
             </strong>
           </div>
         </div>
 
         <div className="remaker-impact-stats">
           <div>
-            <strong>386 kg</strong>
-            <span>Materials reused</span>
-          </div>
-
-          <div>
-            <strong>1,248 kg</strong>
-            <span>CO₂ avoided</span>
-          </div>
-
-          <div>
-            <strong>94</strong>
+            <strong>{impact.items.toLocaleString("en-IN")}</strong>
             <span>Items transformed</span>
+          </div>
+
+          <div>
+            <strong>{impact.co2.toLocaleString("en-IN")} kg</strong>
+            <span>CO₂ avoided</span>
           </div>
         </div>
       </section>

@@ -6,7 +6,7 @@
    on to an NGO. Needs the "donations" admin module.
    ========================================================= */
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { adminDonationApi } from "../../api/donations";
 import { getAccount } from "../../api/session";
 
@@ -19,6 +19,11 @@ const adapt = (d) => ({
   image: d.image,
   images: d.images || [],
   quantity: d.quantity,
+  accepted_quantity: d.accepted_quantity,
+  admin_points: d.admin_points,
+  admin_voucher_amount: d.admin_voucher_amount,
+  suggested_points: d.suggested_points,
+  suggested_voucher_amount: d.suggested_voucher_amount,
   donation_date: d.donation_date,
   status: d.status,
   /* local time, so the booked day never shifts */
@@ -119,9 +124,31 @@ export function useDonationsStatus() {
   };
 }
 
-/* key: accept | reject | reschedule | cancelPickup | pickedUp | received | complete | reopen
-   payload: { date, slot, partner } | { reason } | { ngo }.
+/* key: accept | reject | reschedule | cancelPickup | pickedUp | failed | received | complete | reopen
+   payload: { date, slot, partner, points?, voucher_amount? } | { reason } | { ngo } | ...
    Resolves with the updated donation, rejects with the server's message. */
 export async function runDonationAction(donationId, key, payload = {}) {
   return put(await adminDonationApi.act(donationId, key, payload));
+}
+
+/* The voucher amounts (rupees) the Accept form can offer in its select, from
+   Settings > Platform > donationVoucherTiers. Fetched once and cached for the session. */
+let rewardOptionsCache = null;
+export function useRewardOptions() {
+  const [tiers, setTiers] = useState(rewardOptionsCache || []);
+  useEffect(() => {
+    if (rewardOptionsCache) return;
+    let cancelled = false;
+    adminDonationApi
+      .rewardOptions()
+      .then((d) => {
+        rewardOptionsCache = d.voucher_tiers || [];
+        if (!cancelled) setTiers(rewardOptionsCache);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return tiers;
 }

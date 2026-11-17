@@ -141,7 +141,7 @@ function load(rangeKey, force = false) {
 
   cache.set(rangeKey, { ...hit, inFlight: true });
   analyticsApi
-    .report(rangeKey)
+    .adminReport(rangeKey)
     .then((data) => cache.set(rangeKey, { data, error: "", loadedAt: Date.now() }))
     .catch((e) =>
       cache.set(rangeKey, {

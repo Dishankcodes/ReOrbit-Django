@@ -193,3 +193,65 @@
     display: none;
   }
 }
+
+/* =========================
+   PHONE MENU: buttons, scrim, scrolling
+========================= */
+
+.navbar-mobile-actions,
+.navbar-scrim {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  .navbar-links {
+    max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 2;
+  }
+
+  .navbar-mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .navbar-links .navbar-mobile-actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 1rem;
+    border-radius: 0.75rem;
+    text-align: center;
+  }
+
+  .navbar-links .navbar-mobile-actions a.btn-primary:hover {
+    background: var(--primary);
+    filter: brightness(1.08);
+  }
+
+  /* a tap anywhere outside the open menu closes it */
+  .navbar-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(20, 30, 25, 0.28);
+    cursor: default;
+  }
+
+  .navbar-inner {
+    position: relative;
+    z-index: 2;
+  }
+}

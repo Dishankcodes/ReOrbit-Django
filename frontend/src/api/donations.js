@@ -52,6 +52,9 @@ export const adminDonationApi = {
     create: (name, phone = "") =>
       post("/donations/admin/partners/", { name, phone }).then((r) => r.data),
   },
+  /* The voucher amounts a select on the accept form can offer, from Settings > Platform. */
+  rewardOptions: () =>
+    apiRequest("/donations/admin/reward-options/").then((r) => r.data),
 };
 
 /* The member's donation vouchers: { vouchers: [...], ready: n }. */

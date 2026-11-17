@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { isSignedIn } from "../../api/session";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -20,6 +21,20 @@ export default function Navbar() {
   const closeMenu = () => {
     setOpen(false);
   };
+  const signedIn = isSignedIn("remaker");
+
+  /* the open menu closes on Escape, and when the window grows back to desktop width */
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => event.key === "Escape" && setOpen(false);
+    const onResize = () => window.innerWidth > 850 && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [open]);
 
   return (
     <nav
@@ -68,6 +83,22 @@ export default function Navbar() {
           <a href="/remakers-faq" onClick={closeMenu}>
             FAQ
           </a>
+
+          {/* on a phone the buttons live in this menu (the bar itself has no room) */}
+          <div className="remaker-navbar-mobile-actions">
+            <a className="remaker-back-user" href="/" onClick={closeMenu}>
+              <span className="material-symbols-outlined">person</span>
+              <span>Back to user</span>
+            </a>
+
+            <a
+              className="remaker-get-started"
+              href={signedIn ? "/remaker-dashboard" : "/remakers-auth"}
+              onClick={closeMenu}
+            >
+              {signedIn ? "Open dashboard" : "Get started"}
+            </a>
+          </div>
         </div>
 
         {/* =========================
@@ -80,8 +111,11 @@ export default function Navbar() {
             <span>Back to user</span>
           </a>
 
-          <a className="remaker-get-started" href="/remakers-auth">
-            Get started
+          <a
+            className="remaker-get-started"
+            href={signedIn ? "/remaker-dashboard" : "/remakers-auth"}
+          >
+            {signedIn ? "Open dashboard" : "Get started"}
           </a>
         </div>
 
@@ -100,6 +134,14 @@ export default function Navbar() {
           </span>
         </button>
       </div>
+      {open && (
+        <button
+          type="button"
+          className="remaker-navbar-scrim"
+          aria-label="Close menu"
+          onClick={closeMenu}
+        />
+      )}
     </nav>
   );
 }

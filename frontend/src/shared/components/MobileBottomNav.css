@@ -1,0 +1,107 @@
+/* Bottom menu for phones, after login. Hidden on wider screens (the sidebar is enough there). */
+
+.mbn {
+  --mbn-accent: #2a4d3a;
+  --mbn-soft: #e4ede7;
+  --mbn-ink: #5d6b63;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 900; /* under the drawer (950) and its overlay, over the page */
+  display: none;
+  align-items: stretch;
+  justify-content: space-around;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding: 0 6px env(safe-area-inset-bottom, 0px);
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.07);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.mbn-remaker {
+  --mbn-accent: #270809;
+  --mbn-soft: #f1ebe8;
+  --mbn-ink: #6b5f5c;
+}
+.mbn-admin {
+  --mbn-accent: #1e3d2f;
+  --mbn-soft: #e4ede7;
+  --mbn-ink: #5d6b63;
+}
+
+@media (max-width: 900px) {
+  .mbn {
+    display: flex;
+  }
+  .mbn.mbn-typing {
+    display: none;
+  }
+}
+
+.mbn-item {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  color: var(--mbn-ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mbn-item .mbn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 28px;
+  border-radius: 14px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.mbn-item.active {
+  color: var(--mbn-accent);
+}
+.mbn-item.active .mbn-icon {
+  background: var(--mbn-soft);
+}
+.mbn-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mbn-item:focus-visible {
+  outline: 2px solid var(--mbn-accent);
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+
+/* the raised + in the middle */
+.mbn-add .mbn-icon {
+  width: 54px;
+  height: 54px;
+  margin-top: -22px;
+  border-radius: 50%;
+  background: var(--mbn-accent);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22), 0 0 0 5px #fff;
+}
+.mbn-add.active .mbn-icon {
+  background: var(--mbn-accent);
+}
+.mbn-add:active .mbn-icon {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mbn-item .mbn-icon {
+    transition: none;
+  }
+}

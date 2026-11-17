@@ -1,0 +1,156 @@
+/* =========================================================
+   Responsive hardening for every page (loaded once, app-wide).
+
+   Page stylesheets cover most layouts. This file covers what they leave out:
+   pages that cannot shrink, floating bars that the phone menu would cover,
+   phone-sized form fields, and grids that never collapse.
+   It only changes anything on narrow screens. Desktop looks the same.
+   `!important` is deliberate here: page CSS loads after this file, so it is the only way
+   a fix for a narrow screen can win without editing every page's stylesheet.
+   ========================================================= */
+
+/* ---------- never scroll sideways ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip; /* clip, not hidden: position: sticky keeps working */
+}
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+/* a table wider than the screen scrolls inside its box, not the whole page */
+.table-scroll,
+[class*="table-wrap"],
+[class$="-tablewrap"] {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- phones and small tablets ---------- */
+@media (max-width: 900px) {
+  /* iOS zooms into any field under 16px; that zoom never undoes itself */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* the phone menu is fixed at the bottom: leave room so the last card is never hidden behind it */
+  body.has-bottom-nav .user-page-content,
+  body.has-bottom-nav .remaker-page-content,
+  body.has-bottom-nav .admin-page-content {
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* messages and toasts, floating buttons and sticky save bars sit above the menu */
+  body.has-bottom-nav [class*="-toast"] {
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  body.has-bottom-nav .um-filters,
+  body.has-bottom-nav .usl-fab {
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  body.has-bottom-nav .st-savebar,
+  body.has-bottom-nav .rpp-savebar,
+  body.has-bottom-nav .set-savebar {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  /* the sell page's own floating "+" is the menu's "+" now */
+  body.has-bottom-nav .usl-fab {
+    display: none !important;
+  }
+
+  /* dialogs never wider than the screen */
+  [role="dialog"],
+  [class*="modal"] > [class*="card"],
+  [class*="modal-card"],
+  [class*="-dialog"] {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* ---------- grids that never collapsed ---------- */
+@media (max-width: 760px) {
+  .cm-bn-stats,
+  .pt-stats,
+  .apd-metrics,
+  .rm-card-stats,
+  .aw-stats,
+  .aw-rack-code,
+  .urm-stats,
+  .pt-roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .pk-steps,
+  .apd-thumbs,
+  .uhp-steps,
+  .urm-works {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .urm-works,
+  .uhp-steps {
+    gap: 12px !important;
+  }
+
+  /* admin dashboard "recent orders": a five-column table becomes small cards */
+  .admin-dashboard-orders-header {
+    display: none !important;
+  }
+  .admin-dashboard-order-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    row-gap: 6px;
+    padding: 12px 14px !important;
+    min-height: 0 !important;
+    font-size: 12px !important;
+  }
+  .admin-dashboard-order-row > strong {
+    font-size: 12px !important;
+  }
+  .admin-dashboard-order-product {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+@media (max-width: 440px) {
+  .cm-bn-stats,
+  .pt-stats,
+  .apd-metrics,
+  .rm-card-stats,
+  .aw-stats,
+  .urm-stats,
+  .pt-roles {
+    grid-template-columns: 1fr !important;
+  }
+  .urm-works {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* tables that have a fixed minimum width scroll sideways inside their card */
+@media (max-width: 1100px) {
+  .tm-mtable,
+  .aup-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* people who ask their phone for less motion get it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

@@ -27,11 +27,11 @@ import {
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
   CONDITIONS,
-  IMPACT,
   ITEMS,
   formatPrice,
 } from "../../../data/marketplaceData";
 import { useCategoryNames } from "../../../shared/catalog";
+import { usePublic } from "../../../api/publicData";
 import BannerSlot from "../../../shared/components/BannerSlot";
 import { SkeletonCards } from "../../../shared/components/Skeleton";
 import { useLiveMarketplace } from "../../data/liveMarketplace";
@@ -169,6 +169,8 @@ const SOURCE_KEYS = ["all", "user", "remaker", "admin"];
 export default function UserMarketplace() {
   const navigate = useNavigate();
   const categoryNames = useCategoryNames();
+  const { data: home } = usePublic("/home/");
+  const impact = home?.stats || null; /* real community numbers */
   const wish = useWishlist();
   const cartCount = useCartCount();
 
@@ -330,15 +332,15 @@ export default function UserMarketplace() {
         </div>
         <ul className="mk-impact" aria-label="Community impact">
           <li>
-            <strong>{IMPACT.itemsRescued.toLocaleString("en-IN")}+</strong>
+            <strong>{impact ? impact.items_rescued.toLocaleString("en-IN") : "–"}</strong>
             <span>items rescued</span>
           </li>
           <li>
-            <strong>{IMPACT.co2SavedTonnes}T</strong>
+            <strong>{impact ? `${impact.co2_tonnes}T` : "–"}</strong>
             <span>CO₂ saved</span>
           </li>
           <li>
-            <strong>{IMPACT.remakersOnboarded}</strong>
+            <strong>{impact ? impact.remakers.toLocaleString("en-IN") : "–"}</strong>
             <span>ReMakers</span>
           </li>
         </ul>

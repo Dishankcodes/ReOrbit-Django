@@ -22,6 +22,9 @@ import { useOrders } from "../data/ordersStore";
 import { summarize, useDonations } from "../data/donationsStore";
 import { useWishlist } from "../data/wishlistStore";
 import { useRewards } from "../data/rewardsStore";
+import { useFollowing } from "../data/followStore";
+import { useLiveMarketplace } from "../data/liveMarketplace";
+import { ITEMS, formatPrice } from "../../data/marketplaceData";
 import { formatDate, relativeDay } from "../utils/format";
 
 import "../css/UserDashboard.css";
@@ -66,32 +69,8 @@ function getInitials(name) {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-const recommendedProducts = [
-  {
-    id: 1,
-    name: "Reclaimed Wood Organizer",
-    maker: "EarthCraft Studio",
-    price: "₹699",
-    category: "Home",
-    icon: Package,
-  },
-  {
-    id: 2,
-    name: "Upcycled Canvas Bag",
-    maker: "Green Threads",
-    price: "₹849",
-    category: "Lifestyle",
-    icon: ShoppingBag,
-  },
-  {
-    id: 3,
-    name: "Recycled Glass Planter",
-    maker: "Glass Again",
-    price: "₹549",
-    category: "Decor",
-    icon: Leaf,
-  },
-];
+/* the newest things on the live marketplace that are not the member's own */
+const CATEGORY_ICON = { remaker: Recycle, user: Package };
 
 const ORDER_LABEL = {
   Shipped: "In Transit",
@@ -127,6 +106,8 @@ export default function UserDashboard() {
   const donationList = useDonations();
   const wish = useWishlist();
   const rewards = useRewards();
+  const following = useFollowing();
+  useLiveMarketplace();
   const donationStats = summarize(donationList);
   const monthStart = new Date(
     new Date().getFullYear(),
@@ -162,6 +143,30 @@ export default function UserDashboard() {
     time: relativeDay(e.at),
     type: ACTIVITY_TYPE[e.kind] || "reward",
   }));
+
+  const recommendedProducts = ITEMS.filter(
+    (item) => item.live && !item.soldOut && item.sellerId !== user.public_id,
+  )
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.id,
+      name: item.title,
+      maker: item.seller,
+      price: formatPrice(item.price),
+      category: item.category,
+      icon: CATEGORY_ICON[item.sellerType] || ShoppingBag,
+    }));
+
+  const memberSince = user.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-IN", {
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+  const secondLife = rewards.badges.find((b) => b.id === "second-life");
+  const secondLifePct = secondLife
+    ? Math.round((secondLife.value / secondLife.target) * 100)
+    : 0;
 
   const fullName = getUserName(user);
   const firstName = getFirstName(fullName);
@@ -347,14 +352,14 @@ export default function UserDashboard() {
 
           <div className="user-dashboard-progress">
             <div className="user-dashboard-progress-top">
-              <span>Monthly impact goal</span>
-              <strong>62%</strong>
+              <span>Second Life badge</span>
+              <strong>{secondLifePct}%</strong>
             </div>
 
             <div className="user-dashboard-progress-track">
               <div
                 className="user-dashboard-progress-fill"
-                style={{ width: "62%" }}
+                style={{ width: `${secondLifePct}%` }}
               />
             </div>
           </div>
@@ -378,33 +383,33 @@ export default function UserDashboard() {
 
               <h3>{fullName}</h3>
 
-              <p>ReOrbit member since 2026</p>
+              <p>{memberSince ? `ReOrbit member since ${memberSince}` : "ReOrbit member"}</p>
             </div>
           </div>
 
           <div className="user-dashboard-profile-details">
             <div>
               <span>LEVEL</span>
-              <strong>Eco Explorer</strong>
+              <strong>{rewards.level.name}</strong>
             </div>
 
             <div>
               <span>BADGES</span>
-              <strong>6 earned</strong>
+              <strong>{rewards.earnedBadges} earned</strong>
             </div>
 
             <div>
               <span>FOLLOWING</span>
-              <strong>14 ReMakers</strong>
+              <strong>{following.count} {following.count === 1 ? "ReMaker" : "ReMakers"}</strong>
             </div>
           </div>
 
           <div className="user-dashboard-profile-footer">
             <div className="user-dashboard-mini-progress">
-              <div style={{ width: "74%" }} />
+              <div style={{ width: `${rewards.next ? rewards.progress : 100}%` }} />
             </div>
 
-            <span>74% to next level</span>
+            <span>{rewards.next ? `${rewards.progress}% to ${rewards.next.name}` : "Top level reached"}</span>
 
             <button type="button" onClick={() => navigate("/user-profile")}>
               <ChevronRight size={15} />
@@ -497,6 +502,11 @@ export default function UserDashboard() {
           </div>
 
           <div className="user-dashboard-products">
+            {!recommendedProducts.length && (
+              <p className="user-dashboard-empty">
+                New listings from the community will show up here.
+              </p>
+            )}
             {recommendedProducts.map((product) => {
               const ProductIcon = product.icon;
 
@@ -505,7 +515,7 @@ export default function UserDashboard() {
                   type="button"
                   className="user-dashboard-product-card"
                   key={product.id}
-                  onClick={handleMarketplace}
+                  onClick={() => navigate(`/user-marketplace/product/${product.id}`)}
                 >
                   <div className="user-dashboard-product-image">
                     <ProductIcon size={28} strokeWidth={1.25} />

@@ -1138,3 +1138,60 @@
     line-height: 1.45;
   }
 }
+
+/* ---------- loading, error and empty states ---------- */
+.remaker-dash-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 11px 16px;
+  border: 1px solid var(--rd-border);
+  border-radius: 14px;
+  background: var(--rd-card);
+  font-size: 13.5px;
+  color: var(--rd-muted);
+}
+
+.remaker-dash-note[role="alert"] {
+  border-color: rgba(156, 47, 47, 0.3);
+  background: #fbf3f3;
+  color: #8a2c2c;
+}
+
+.remaker-dash-note button {
+  margin-left: auto;
+  padding: 6px 14px;
+  border: 1px solid var(--rd-maroon);
+  border-radius: 999px;
+  background: var(--rd-maroon);
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.remaker-dash-spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--rd-sage-light);
+  border-top-color: var(--rd-maroon);
+  border-radius: 50%;
+  animation: remaker-dash-spin 0.8s linear infinite;
+}
+
+@keyframes remaker-dash-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.remaker-dash-empty {
+  margin: 0;
+  padding: 22px 8px;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--rd-muted);
+}

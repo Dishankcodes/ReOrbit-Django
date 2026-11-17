@@ -32,12 +32,6 @@ class PickupPartner(PublicIdModel, TimeStampedModel):
     phone = models.CharField(max_length=20, blank=True)
     token = models.CharField(max_length=40, unique=True, editable=False)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
-    # the crew details Admin > Pickup teams shows (the people are in apps.pickups.PickupTeamMember)
-    area = models.CharField(max_length=120, blank=True)
-    vehicle = models.CharField(max_length=60, blank=True)
-    capacity = models.PositiveSmallIntegerField(default=5, help_text="Pickups a day this team can take")
-    note = models.CharField(max_length=300, blank=True)
-    paused_reason = models.CharField(max_length=200, blank=True)
 
     class Meta:
         db_table = "pickup_partners"
@@ -96,6 +90,11 @@ class Donation(PublicIdModel, TimeStampedModel):
     # what admin actually agreed to collect (partial acceptance). Defaults to the full quantity.
     accepted_quantity = models.PositiveSmallIntegerField(null=True, blank=True)
     partial_reject_reason = models.CharField(max_length=255, blank=True)
+    # An admin's own call, made at Accept time, on what this donation is worth. Null means
+    # "work it out automatically at Received time" (apps/rewards.services reward_points /
+    # voucher_amount); a number here always wins over the automatic calculation.
+    admin_points = models.PositiveIntegerField(null=True, blank=True)
+    admin_voucher_amount = models.PositiveIntegerField(null=True, blank=True)
 
     # warehouse check-in, against what the donor declared and what was accepted
     received_quantity = models.PositiveSmallIntegerField(null=True, blank=True)

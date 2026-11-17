@@ -9,6 +9,7 @@ import {
   CONDITIONS,
 } from "../../../data/donationActions";
 import { useTeamOptions } from "../../../data/pickupTeamsStore";
+import { useRewardOptions } from "../../../data/donationsStore";
 
 /* Real calendar days (local time). The server refuses pickup dates in the past. */
 const isoDay = (offset) => {
@@ -39,6 +40,9 @@ export default function DonationActionModal({
   const [receivedQty, setReceivedQty] = useState("");
   const [receivedCondition, setReceivedCondition] = useState("");
   const [receivedNote, setReceivedNote] = useState("");
+  const [points, setPoints] = useState("");
+  const [voucherAmount, setVoucherAmount] = useState("");
+  const voucherTiers = useRewardOptions();
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
@@ -54,6 +58,8 @@ export default function DonationActionModal({
     setReceivedQty("");
     setReceivedCondition("");
     setReceivedNote("");
+    setPoints("");
+    setVoucherAmount("");
     setTouched(false);
     const onKey = (e) => e.key === "Escape" && onClose();
     document.addEventListener("keydown", onKey);
@@ -94,6 +100,13 @@ export default function DonationActionModal({
     acceptedQty !== "" &&
     (Number(acceptedQty) < 1 || Number(acceptedQty) > donation.quantity);
   const partialReasonMissing = partialWanted && partialReason.trim().length < 5;
+  /* What the donor gets is decided here, at Accept — not guessed later. Leaving a field blank
+     means "work it out automatically when the item is received", same as before this existed. */
+  const showRewardChoice = action.key === "accept" && !many;
+  const pointsInvalid =
+    showRewardChoice && points !== "" && (!/^\d+$/.test(points) || Number(points) < 0);
+  const voucherAmountInvalid =
+    showRewardChoice && voucherAmount !== "" && !voucherTiers.includes(Number(voucherAmount));
 
   const submit = (e) => {
     e.preventDefault();
@@ -104,7 +117,9 @@ export default function DonationActionModal({
       teamMissing ||
       codeMissing ||
       acceptedQtyInvalid ||
-      partialReasonMissing
+      partialReasonMissing ||
+      pointsInvalid ||
+      voucherAmountInvalid
     )
       return;
     onConfirm({
@@ -123,6 +138,9 @@ export default function DonationActionModal({
             received_condition: receivedCondition,
             note: receivedNote.trim(),
           }
+        : {}),
+      ...(showRewardChoice
+        ? { points, voucher_amount: voucherAmount }
         : {}),
     });
   };
@@ -259,6 +277,53 @@ export default function DonationActionModal({
                 )}
               </label>
             )}
+
+            {showRewardChoice && (
+              <div className="dn-fields">
+                <label className="ad-modal-field">
+                  <span>
+                    Orbit Points <em>(blank = work it out automatically)</em>
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={points}
+                    placeholder={
+                      donation?.suggested_points != null
+                        ? `Suggested: ${donation.suggested_points}`
+                        : ""
+                    }
+                    onChange={(e) => setPoints(e.target.value)}
+                  />
+                  {touched && pointsInvalid && (
+                    <small className="ad-modal-error">Enter a whole number, 0 or more.</small>
+                  )}
+                </label>
+                <label className="ad-modal-field">
+                  <span>
+                    Voucher <em>(blank = work it out automatically)</em>
+                  </span>
+                  <select
+                    value={voucherAmount}
+                    onChange={(e) => setVoucherAmount(e.target.value)}
+                  >
+                    <option value="">
+                      {donation?.suggested_voucher_amount != null
+                        ? `Automatic (₹${donation.suggested_voucher_amount})`
+                        : "Automatic"}
+                    </option>
+                    {voucherTiers.map((t) => (
+                      <option key={t} value={t}>
+                        ₹{t}
+                      </option>
+                    ))}
+                  </select>
+                  {touched && voucherAmountInvalid && (
+                    <small className="ad-modal-error">Choose one of the listed amounts.</small>
+                  )}
+                </label>
+              </div>
+            )}
           </div>
         )}
 
@@ -384,7 +449,15 @@ export default function DonationActionModal({
           </button>
           <button
             type="submit"
-            disabled={noTeams || (touched && (codeMissing || acceptedQtyInvalid || partialReasonMissing))}
+            disabled={
+              noTeams ||
+              (touched &&
+                (codeMissing ||
+                  acceptedQtyInvalid ||
+                  partialReasonMissing ||
+                  pointsInvalid ||
+                  voucherAmountInvalid))
+            }
             className={`ad-btn ad-btn-${action.tone === "positive" ? "primary" : action.tone}`}
           >
             {action.confirmLabel}

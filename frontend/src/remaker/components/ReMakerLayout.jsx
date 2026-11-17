@@ -11,6 +11,7 @@ import RouteErrorBoundary from "../../shared/status/RouteErrorBoundary";
 import AnnouncementSync from "../../shared/components/AnnouncementSync";
 import { syncAnnouncements } from "../data/notificationsStore";
 
+import MobileBottomNav from "../../shared/components/MobileBottomNav";
 import "./ReMakerLayout.css";
 import "../css/remaker-buying-theme.css";
 
@@ -114,6 +115,8 @@ export default function ReMakerLayout({ children }) {
           </MaintenanceGate>
         </main>
       </div>
+
+      <MobileBottomNav side="remaker" />
     </div>
   );
 }

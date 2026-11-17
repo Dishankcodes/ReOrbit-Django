@@ -9,7 +9,7 @@ so the server never accepts something the form would have refused.
 import re
 from decimal import Decimal, InvalidOperation
 
-from apps.core.models import DEFAULT_SUPPORT_EMAIL, PlatformSettings
+from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, DEFAULT_SUPPORT_EMAIL, PlatformSettings
 
 DEFAULT_WAREHOUSE = {
     "unsoldDays": 7,
@@ -39,7 +39,8 @@ COMMERCE_INTS = {
 }
 COMMERCE_KEYS = {"platformFeePct", "codEnabled", *COMMERCE_INTS}
 WAREHOUSE_KEYS = set(DEFAULT_WAREHOUSE)
-PLATFORM_KEYS = {"maintenance", "supportEmail", "minDonationItems", "sessionMinutes"}
+PLATFORM_KEYS = {"maintenance", "supportEmail", "minDonationItems", "sessionMinutes",
+                 "donationCo2PerKg", "donationVoucherTiers"}
 SECTIONS = ("commerce", "warehouse", "notifications", "platform")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
@@ -64,6 +65,8 @@ def current(s: PlatformSettings) -> dict:
             "supportEmail": s.support_email or DEFAULT_SUPPORT_EMAIL,
             "minDonationItems": s.min_donation_items,
             "sessionMinutes": int(stored.get("sessionMinutes", 60)),
+            "donationCo2PerKg": float(s.donation_co2_per_kg),
+            "donationVoucherTiers": s.donation_voucher_tiers or list(DEFAULT_DONATION_VOUCHER_TIERS),
         },
     }
 
@@ -198,11 +201,42 @@ def _platform(data, base, errors):
     minutes = _whole(merged["sessionMinutes"], 5, 1440)
     if minutes is None:
         bad["sessionMinutes"] = "Enter a whole number from 5 to 1440."
+    try:
+        co2 = Decimal(str(merged["donationCo2PerKg"]).strip())
+    except (InvalidOperation, ValueError):
+        co2 = None
+    if (
+        isinstance(merged["donationCo2PerKg"], bool)
+        or co2 is None
+        or not co2.is_finite()
+        or not Decimal(0) <= co2 <= Decimal(50)
+        or co2 != co2.quantize(Decimal("0.01"))
+    ):
+        bad["donationCo2PerKg"] = "Enter a number from 0 to 50 (up to 2 decimals)."
+    tiers = _donation_voucher_tiers(merged["donationVoucherTiers"])
+    if tiers is None:
+        bad["donationVoucherTiers"] = "Enter 1 to 20 distinct whole rupee amounts, each from 1 to 100000."
     if bad:
         errors["platform"] = bad
         return None
-    out.update(maintenance=flag, supportEmail=email, minDonationItems=minimum, sessionMinutes=minutes)
+    out.update(maintenance=flag, supportEmail=email, minDonationItems=minimum, sessionMinutes=minutes,
+               donationCo2PerKg=co2, donationVoucherTiers=tiers)
     return out
+
+
+def _donation_voucher_tiers(value):
+    """A sorted list of 1-20 distinct whole rupee amounts (1..100000), or None if invalid."""
+    if not isinstance(value, list) or not 1 <= len(value) <= 20:
+        return None
+    out = []
+    for v in value:
+        n = _whole(v, 1, 100_000)
+        if n is None:
+            return None
+        out.append(n)
+    if len(set(out)) != len(out):
+        return None
+    return sorted(out)
 
 
 def validate(payload, now: dict):
@@ -257,6 +291,8 @@ def apply(s: PlatformSettings, values: dict, admin):
         p = values["platform"]
         s.support_email = p["supportEmail"]
         s.min_donation_items = p["minDonationItems"]
+        s.donation_co2_per_kg = p["donationCo2PerKg"]
+        s.donation_voucher_tiers = p["donationVoucherTiers"]
         s.platform_settings = {"maintenance": p["maintenance"], "sessionMinutes": p["sessionMinutes"]}
     s.updated_by = admin
     s.save()

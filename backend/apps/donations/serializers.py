@@ -7,6 +7,8 @@ the ones frontend/src/user/data/donationsStore.js and frontend/src/admin/data/do
 from django.core.files.storage import default_storage
 from django.utils import timezone
 
+from apps.rewards import services as rewards
+
 from .models import Donation
 from .services import SLA_DAYS
 
@@ -69,6 +71,9 @@ def donation_data(d, request):
         "received": ({"quantity": d.received_quantity, "condition": d.received_condition or None,
                       "quantity_mismatch": d.quantity_mismatch, "condition_mismatch": d.condition_mismatch}
                      if d.received_quantity is not None or d.received_condition else None),
+        # What an admin promised at Accept time, if anything — shown so the donor isn't surprised.
+        "promised": ({"points": d.admin_points, "voucher_amount": d.admin_voucher_amount}
+                    if d.admin_points is not None or d.admin_voucher_amount is not None else None),
         "ngo": d.ngo or None, "certificate_id": d.certificate_id or None,
         "certificate_url": media_url(request, d.certificate_file.name) if d.certificate_file else None,
         "reject_reason": d.reject_reason, "cancel_reason": d.cancel_reason,
@@ -90,6 +95,12 @@ def admin_donation_data(d, request):
         "image": images[0] if images else None, "images": images,
         "quantity": d.quantity, "accepted_quantity": d.accepted_quantity,
         "partial_reject_reason": d.partial_reject_reason or None,
+        "admin_points": d.admin_points, "admin_voucher_amount": d.admin_voucher_amount,
+        # What the system would give automatically, so the admin has a number to start from
+        # before overriding it — not what's actually been credited yet.
+        "suggested_points": rewards.reward_points(d.accepted_quantity or d.quantity),
+        "suggested_voucher_amount": rewards.voucher_amount(
+            d.category, d.accepted_quantity or d.quantity, d.condition),
         "donation_date": d.created_at, "status": d.status,
         "pickup_date": d.pickup_date.isoformat() if d.pickup_date else None,
         "pickup_slot": d.pickup_slot or None,

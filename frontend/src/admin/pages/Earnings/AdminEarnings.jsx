@@ -38,6 +38,7 @@ import {
   PAD,
 } from "../Reports/charts";
 
+import DataNote from "../../components/ui/DataNote";
 import "../../css/AdminUI.css";
 import "../../css/reports/AdminReports.css";
 import "../../css/earnings/AdminEarnings.css";
@@ -316,6 +317,7 @@ function EarningsOverview() {
           Export CSV
         </button>
       </div>
+      <DataNote loading={e.loading} error={e.error} retry={e.retry} what="earnings" />
 
       <section className="er-hero">
         <div className="er-hero-main">

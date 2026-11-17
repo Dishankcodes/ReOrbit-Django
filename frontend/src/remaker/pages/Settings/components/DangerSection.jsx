@@ -2,23 +2,26 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { formatPrice } from "../../../data/remakerMarketplaceData";
-import { useEarnings, useSales } from "../../../data/salesStore";
+import { useWallet } from "../../../../shared/data/walletStore";
+import { useDashboard } from "../../../data/dashboardData";
 import { Card } from "./Controls";
 import ConfirmModal from "./ConfirmModal";
 
 /* Closing an account never happens in one click. Open orders and unpaid
    earnings are shown first, and deleting needs a typed confirmation. */
 export default function DangerSection({ notify }) {
-  const sales = useSales();
-  const earnings = useEarnings();
+  const { summary } = useWallet();
+  const { data } = useDashboard();
 
   const [modal, setModal] = useState(null); /* "deactivate" | "delete" */
   const [typed, setTyped] = useState("");
 
-  const openOrders = sales.filter(
-    (order) => order.status === "Pending" || order.status === "Confirmed",
-  ).length;
-  const money = earnings.available + earnings.clearing + earnings.inProgress;
+  /* new + packed + shipped orders still need you; money is anything not yet paid to you */
+  const openOrders = data.pipeline
+    .filter((step) => step.key !== "delivered")
+    .reduce((n, step) => n + step.value, 0);
+  const b = summary?.balances;
+  const money = b ? b.available + b.pending + b.in_review : 0;
   const blocked = openOrders > 0 || money > 0;
 
   const close = () => {

@@ -1,10 +1,10 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { FAQS, TICKET_CATEGORIES, createTicket } from "../../data/helpStore";
 import { fileToDataUrl } from "../../data/portfolioStore";
 import { useOrders } from "../../data/ordersStore";
-import { useSales } from "../../data/salesStore";
+import { salesApi } from "../../../api/orders";
 
 import FaqList from "./components/FaqList";
 
@@ -17,7 +17,27 @@ const MAX_PHOTOS = 3;
 export default function ReMakerNewTicket() {
   const navigate = useNavigate();
   const purchases = useOrders();
-  const sales = useSales();
+  const [sales, setSales] = useState([]);
+
+  /* the orders this ReMaker sold, from the server, so a ticket can point at one */
+  useEffect(() => {
+    let alive = true;
+    salesApi
+      .list("?page_size=100")
+      .then((d) => {
+        if (alive)
+          setSales(
+            (d.results || []).map((o) => ({
+              id: o.id,
+              title: o.lines?.[0]?.title || "Order",
+            })),
+          );
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const [params] = useSearchParams();
   const fromOrder = params.get("order") || "";

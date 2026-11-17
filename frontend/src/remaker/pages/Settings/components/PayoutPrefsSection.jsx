@@ -2,12 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { formatPrice } from "../../../data/remakerMarketplaceData";
-import {
-  CLEARING_DAYS,
-  MIN_PAYOUT,
-  useBank,
-  useEarnings,
-} from "../../../data/salesStore";
+import { useWallet } from "../../../../shared/data/walletStore";
 import { saveSection } from "../../../data/settingsStore";
 import { Card, Row, SaveBar, Segmented, Toggle, useDraft } from "./Controls";
 
@@ -17,8 +12,15 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
     "payouts",
     onDirty,
   );
-  const bank = useBank();
-  const earnings = useEarnings();
+  const { summary } = useWallet();
+  const bank = summary?.account || null;
+  const balances = summary?.balances || {
+    available: 0,
+    pending: 0,
+    in_review: 0,
+  };
+  const CLEARING_DAYS = summary?.rules?.payout_hold_days ?? 7;
+  const MIN_PAYOUT = summary?.rules?.payout_min_amount ?? 0;
 
   const save = () => {
     saveSection("payouts", draft);
@@ -32,24 +34,35 @@ export default function PayoutPrefsSection({ settings, onDirty, notify }) {
         note="Payouts are sent to this bank account."
       >
         <div className="set-bank">
-          <div>
-            <small>{bank.bank}</small>
-            <strong>•••• •••• {bank.last4}</strong>
-            <span>{bank.holder}</span>
-          </div>
+          {bank ? (
+            <div>
+              <small>
+                {bank.method === "UPI" ? "UPI" : bank.bank_name || "Bank account"}
+              </small>
+              <strong>
+                {bank.method === "UPI" ? bank.upi_id : bank.account_number}
+              </strong>
+              <span>{bank.holder_name}</span>
+            </div>
+          ) : (
+            <div>
+              <small>No payout details yet</small>
+              <strong>Add where we should send your money</strong>
+            </div>
+          )}
           <Link to="/remaker-earnings/payouts" className="set-btn ghost">
-            Change bank account
+            {bank ? "Change bank account" : "Add bank account"}
           </Link>
         </div>
 
         <dl className="set-facts">
           <div>
             <dt>Available to withdraw</dt>
-            <dd>{formatPrice(earnings.available)}</dd>
+            <dd>{formatPrice(balances.available)}</dd>
           </div>
           <div>
             <dt>Still clearing</dt>
-            <dd>{formatPrice(earnings.clearing)}</dd>
+            <dd>{formatPrice(balances.pending + balances.in_review)}</dd>
           </div>
         </dl>
       </Card>

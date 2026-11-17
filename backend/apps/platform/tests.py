@@ -4,6 +4,7 @@ from apps.core.models import AuditLog, Category, PlatformSettings
 from apps.core.pricing import cod_block_reason, delivery_charge, maintenance_block_reason, platform_fee
 from apps.core.testing import APIBase
 from apps.donations import services as donation_services
+from apps.rewards import services as reward_services
 from apps.listings.models import Item
 from apps.orders import services as order_services
 
@@ -58,7 +59,8 @@ class ReadTests(SettingsBase):
             "unsoldDays": 7, "slowDays": 14, "deadDays": 30, "autoPriceCut": False, "priceCutPct": 15})
         self.assertEqual(data["platform"], {
             "maintenance": False, "supportEmail": "support@reorbit.in",
-            "minDonationItems": 1, "sessionMinutes": 60})
+            "minDonationItems": 1, "sessionMinutes": 60, "donationCo2PerKg": 1.9,
+            "donationVoucherTiers": [50, 100, 150, 200, 300, 500]})
         self.assertEqual(data["notifications"]["channels"], {"email": True, "push": True, "digest": False})
         self.assertEqual(data["log"], [])
 
@@ -226,6 +228,24 @@ class RulesReachTheRestOfTheAppTests(SettingsBase):
         with self.assertRaises(donation_services.DonationError) as ctx:
             donation_services.create(self.user, {"quantity": 3}, [])
         self.assertNotIn("quantity", ctx.exception.errors)  # other fields still fail, quantity is fine
+
+    def test_donation_co2_rate_follows_the_settings(self):
+        self.assertEqual(self.rules()["donationCo2PerKg"], 1.9)  # the shipped default
+        self.bad({"platform": {"donationCo2PerKg": -1}}, "platform", "donationCo2PerKg")
+        self.bad({"platform": {"donationCo2PerKg": 51}}, "platform", "donationCo2PerKg")
+        r = self.save({"platform": {"donationCo2PerKg": 2.5}})
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(self.rules()["donationCo2PerKg"], 2.5)
+        self.assertEqual(reward_services.co2_saved("10"), 25)  # 10kg * 2.5, the new rate, live
+
+    def test_donation_voucher_tiers_are_validated_and_sorted(self):
+        self.assertEqual(self.rules()["donationVoucherTiers"], [50, 100, 150, 200, 300, 500])
+        self.bad({"platform": {"donationVoucherTiers": []}}, "platform", "donationVoucherTiers")
+        self.bad({"platform": {"donationVoucherTiers": [10, 10]}}, "platform", "donationVoucherTiers")
+        self.bad({"platform": {"donationVoucherTiers": [0, 50]}}, "platform", "donationVoucherTiers")
+        r = self.save({"platform": {"donationVoucherTiers": [300, 100, 200]}})
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(self.rules()["donationVoucherTiers"], [100, 200, 300])  # sorted
 
 
 class MaintenanceTests(SettingsBase):

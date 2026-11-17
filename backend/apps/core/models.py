@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
@@ -65,6 +67,7 @@ class Category(PublicIdModel, TimeStampedModel):
 # Platform settings: exactly one row (pk = 1)
 # --------------------------------------------------------------------------- #
 DEFAULT_SUPPORT_EMAIL = "support@reorbit.in"
+DEFAULT_DONATION_VOUCHER_TIERS = [50, 100, 150, 200, 300, 500]
 
 
 class PlatformSettings(TimeStampedModel):
@@ -91,6 +94,14 @@ class PlatformSettings(TimeStampedModel):
     min_donation_items = models.PositiveIntegerField(
         default=1, validators=[MinValueValidator(1), MaxValueValidator(99)]
     )
+    # kg of CO2 counted as saved per kg of item donated (apps/rewards.services.co2_saved).
+    # The single source of truth for this number: don't hardcode it elsewhere.
+    donation_co2_per_kg = models.DecimalField(
+        max_digits=4, decimal_places=2, default=Decimal("1.90"), validators=[MinValueValidator(0)]
+    )
+    # The voucher amounts (rupees) an admin can hand a donor at Accept time, instead of the
+    # amount apps/rewards.services.voucher_amount() would otherwise work out automatically.
+    donation_voucher_tiers = models.JSONField(default=list, blank=True)
     support_email = models.EmailField(blank=True)
     # Groups the admin Settings screen saves as a unit (validated in apps/platform)
     warehouse_rules = models.JSONField(default=dict, blank=True)
@@ -151,6 +162,8 @@ class PlatformSettings(TimeStampedModel):
             "supportEmail": self.support_email or DEFAULT_SUPPORT_EMAIL,
             "unsoldDays": warehouse.get("unsoldDays", 7),
             "maintenance": self.maintenance,
+            "donationCo2PerKg": float(self.donation_co2_per_kg),
+            "donationVoucherTiers": self.donation_voucher_tiers or DEFAULT_DONATION_VOUCHER_TIERS,
         }
 
 

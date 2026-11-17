@@ -12,8 +12,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.utils import timezone
 
 from apps.core import buyers as buyer_kit
+from apps.core.models import PlatformSettings
 
-from .models import Voucher
+from .models import RewardRule, Voucher
 
 VOUCHER_DAYS = 90  # how long a new voucher stays valid
 MIN_ORDER_MULTIPLE = 2  # a voucher needs a cart of at least twice its value (the app tells donors this)
@@ -28,8 +29,11 @@ WEIGHT_PER_ITEM = {
 DEFAULT_WEIGHT = Decimal("1.5")
 CONDITION_FACTOR = {"Good": Decimal("1"), "Medium": Decimal("0.7"), "Worst": Decimal("0.4")}
 DEFAULT_FACTOR = Decimal("0.7")
-POINTS_BASE, POINTS_PER_ITEM = 50, 10
-CO2_PER_KG = Decimal("1.9")
+# Fallbacks only, used if the RewardRule rows are ever missing (a fresh, unseeded database).
+# The real numbers an admin can change live in RewardRule (keys "donationBase"/"donationItem")
+# and PlatformSettings.donation_co2_per_kg — nothing here is the authority once those exist.
+DEFAULT_DONATION_BASE_POINTS, DEFAULT_DONATION_ITEM_POINTS = 100, 20
+DEFAULT_CO2_PER_KG = Decimal("1.9")
 VOUCHER_MIN, VOUCHER_MAX = 50, 500
 
 
@@ -54,11 +58,28 @@ def weight_kg(category, quantity):
 
 
 def co2_saved(weight):
-    return _round_half_up(Decimal(weight) * CO2_PER_KG, "0.01")
+    """kg of CO2 counted as saved, at the admin-configurable rate (Settings > Platform)."""
+    rate = PlatformSettings.load().donation_co2_per_kg or DEFAULT_CO2_PER_KG
+    return _round_half_up(Decimal(weight) * rate, "0.01")
+
+
+def _rule_points(key, fallback):
+    """A RewardRule's points, 0 if an admin has switched it off, or `fallback` if the rule
+    doesn't exist at all (matches frontend/src/user/data/rewardsStore.js's ruleMap/get, so the
+    estimate a donor sees before pickup and the points actually credited never disagree)."""
+    rule = RewardRule.objects.filter(key=key).first()
+    if rule is None:
+        return fallback
+    return rule.points if rule.active else 0
 
 
 def reward_points(quantity):
-    return POINTS_BASE + POINTS_PER_ITEM * max(1, int(quantity or 1))
+    """What a donation earns automatically: the "donationBase" rule once, plus "donationItem"
+    per item. An admin can override this per-donation at Accept time (see Donation.admin_points);
+    this is only the fallback when they don't."""
+    base = _rule_points("donationBase", DEFAULT_DONATION_BASE_POINTS)
+    per_item = _rule_points("donationItem", DEFAULT_DONATION_ITEM_POINTS)
+    return base + per_item * max(1, int(quantity or 1))
 
 
 def voucher_amount(category, quantity, condition):
@@ -78,12 +99,14 @@ def new_code():
     raise RuntimeError("Could not make a unique voucher code.")  # 32^8 codes: practically unreachable
 
 
-def issue_for_donation(donation):
-    """The donor's voucher. Safe to call twice: one voucher per donation (also a database rule)."""
+def issue_for_donation(donation, amount=None):
+    """The donor's voucher. Safe to call twice: one voucher per donation (also a database rule).
+    `amount` lets an admin's own choice (Donation.admin_voucher_amount) override the amount
+    that would otherwise be worked out automatically from category/quantity/condition."""
     existing = Voucher.objects.filter(source_type="donation", source_id=donation.public_id).first()
     if existing:
         return existing
-    amount = voucher_amount(donation.category, donation.quantity, donation.condition)
+    amount = amount or voucher_amount(donation.category, donation.quantity, donation.condition)
     return Voucher.objects.create(
         owner=donation.donor, code=new_code(), title=f"₹{amount} marketplace voucher", amount=amount,
         min_order=amount * MIN_ORDER_MULTIPLE, expires_at=timezone.now() + timedelta(days=VOUCHER_DAYS),

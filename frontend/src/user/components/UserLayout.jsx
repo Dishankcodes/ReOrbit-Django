@@ -8,6 +8,7 @@ import AccountGate from "../../shared/components/AccountGate";
 import MaintenanceGate from "../../shared/components/MaintenanceGate";
 import { useUserAccountStatus } from "../../shared/accountStatus";
 import RouteErrorBoundary from "../../shared/status/RouteErrorBoundary";
+import MobileBottomNav from "../../shared/components/MobileBottomNav";
 
 import "./UserLayout.css";
 
@@ -91,6 +92,8 @@ export default function UserLayout({ children }) {
           </MaintenanceGate>
         </main>
       </div>
+
+      <MobileBottomNav side="user" />
     </div>
   );
 }

@@ -40,6 +40,7 @@ import {
   num,
 } from "./charts";
 
+import DataNote from "../../components/ui/DataNote";
 import "../../css/AdminUI.css";
 import "../../css/reports/AdminReports.css";
 
@@ -131,6 +132,7 @@ export default function AdminReports() {
         {r.weekly ? "weekly" : "monthly"} · compared with the previous{" "}
         {r.range.days >= 1000 ? "period" : `${r.range.days} days`}
       </p>
+      <DataNote loading={r.loading} error={r.error} retry={r.retry} what="the report" />
 
       <nav className="rp-tabs" aria-label="Report sections">
         {TABS.map((t) => (
