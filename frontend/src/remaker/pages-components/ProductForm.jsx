@@ -1,4 +1,5 @@
 import NumberInput from "../../shared/components/NumberInput";
+import { compressPhoto } from "../../shared/compressPhoto";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -177,8 +178,22 @@ export default function ProductForm({ mode = "add", product = null }) {
     }
   };
 
-  const addFiles = (fileList, startAt = null) => {
-    const files = Array.from(fileList || []);
+  /* big phone photos are shrunk as soon as they are picked, and kept in memory
+     (see shared/compressPhoto.js); a photo the phone can't hand over shows a message */
+  const shrink = async (list) => {
+    const out = [];
+    for (const f of Array.from(list || [])) {
+      try {
+        out.push(f.type.startsWith("image/") ? await compressPhoto(f) : f);
+      } catch (e) {
+        setPhotoError(e.message);
+      }
+    }
+    return out;
+  };
+
+  const addFiles = async (fileList, startAt = null) => {
+    const files = await shrink(fileList);
     const next = [...photos];
     let message = "";
     let preferred = startAt;
@@ -212,7 +227,9 @@ export default function ProductForm({ mode = "add", product = null }) {
     setField("photos", next);
   };
 
-  const replaceAt = (index, file) => {
+  const replaceAt = async (index, picked) => {
+    if (!picked) return;
+    const [file] = await shrink([picked]);
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -239,11 +256,12 @@ export default function ProductForm({ mode = "add", product = null }) {
 
   const handlePicked = (event) => {
     const { index, replace } = fileTarget.current;
+    const files = Array.from(event.target.files || []); // read before the input is cleared
 
     if (replace) {
-      replaceAt(index, event.target.files?.[0]);
+      replaceAt(index, files[0]);
     } else {
-      addFiles(event.target.files, index);
+      addFiles(files, index);
     }
 
     event.target.value = "";

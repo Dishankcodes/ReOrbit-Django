@@ -111,6 +111,7 @@ class CloudinaryMediaStorage(Storage):
             invalidate=True,
             unique_filename=False,
             use_filename=False,
+            timeout=60,  # never hang a request forever if Cloudinary is slow
         )
         return str(name).replace("\\", "/")
 

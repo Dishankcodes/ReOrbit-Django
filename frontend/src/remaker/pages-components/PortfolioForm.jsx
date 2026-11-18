@@ -1,3 +1,4 @@
+import { compressPhoto } from "../../shared/compressPhoto";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -219,14 +220,23 @@ export default function PortfolioForm({ mode = "add", work = null }) {
     }
   };
 
-  const pick = (kind, file) => {
+  const pick = async (kind, picked) => {
     setPhotoError((current) => ({ ...current, [kind]: "" }));
 
-    if (!isPhoto(file)) {
+    if (!isPhoto(picked)) {
       setPhotoError((current) => ({
         ...current,
         [kind]: "Choose a JPG, PNG or WebP photo.",
       }));
+      return;
+    }
+
+    /* shrink it now (big phone photos are fine) and keep our own copy in memory */
+    let file;
+    try {
+      file = await compressPhoto(picked);
+    } catch (error) {
+      setPhotoError((current) => ({ ...current, [kind]: error.message }));
       return;
     }
 

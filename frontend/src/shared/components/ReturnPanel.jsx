@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { compressPhotos } from "../compressPhoto";
 import {
   AlertTriangle,
   PackageX,
@@ -340,14 +341,12 @@ export default function ReturnPanel({ order }) {
                     accept="image/*"
                     multiple
                     hidden
-                    onChange={(e) => {
-                      setFiles(
-                        [...files, ...Array.from(e.target.files || [])].slice(
-                          0,
-                          maxPhotos,
-                        ),
-                      );
+                    onChange={async (e) => {
+                      const picked = Array.from(e.target.files || []);
                       e.target.value = "";
+                      /* shrink big phone photos and keep them in memory */
+                      const shrunk = await compressPhotos(picked).catch(() => []);
+                      setFiles((current) => [...current, ...shrunk].slice(0, maxPhotos));
                     }}
                   />
                 </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { compressPhotos } from "../../../shared/compressPhoto";
 import { Plus, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -73,7 +74,11 @@ function ProductModal({ product, categories, onClose, onSaved }) {
   const fileRef = useRef(null);
   const set = (k, v) => setF((c) => ({ ...c, [k]: v }));
 
-  const addFiles = (list) => {
+  const addFiles = async (picked) => {
+    /* big phone photos are shrunk now and kept in memory (shared/compressPhoto.js) */
+    const list = await compressPhotos(
+      [...picked].filter((x) => x.type.startsWith("image/")),
+    ).catch(() => []);
     const room = MAX_PHOTOS - f.photos.length;
     const next = [...list]
       .filter((x) => x.type.startsWith("image/") && x.size <= 5 * 1024 * 1024)

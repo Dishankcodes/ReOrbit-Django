@@ -6,6 +6,8 @@ import {
   updateTokens,
 } from "./session";
 
+import { readyFormData } from "../shared/compressPhoto";
+
 export const ACCOUNT_STATUS_EVENT = "reorbit:account-status";
 
 const API_BASE_URL =
@@ -116,6 +118,9 @@ function send(endpoint, { method, body, token, headers }) {
         : body !== undefined
           ? JSON.stringify(body)
           : undefined,
+  }).catch((error) => {
+    error.isNetwork = true; // the request never got an answer (offline, server down, upload cut off)
+    throw error;
   });
 }
 
@@ -129,10 +134,15 @@ function send(endpoint, { method, body, token, headers }) {
   - Errors carry .status, .data, .errors (field -> messages) and .code.
 */
 export async function apiRequest(endpoint, options = {}) {
-  const { method = "GET", body, headers = {}, auth = true } = options;
+  const { method = "GET", headers = {}, auth = true } = options;
+  let { body } = options;
   let token = options.token || (auth ? getAccessToken() : null);
+  const isUpload = body instanceof FormData;
 
   try {
+    /* photos are read into memory first: a file the phone can no longer read gives a clear
+       "choose it again" message instead of a silent failed request */
+    if (isUpload) body = await readyFormData(body);
     let response = await send(endpoint, { method, body, token, headers });
 
     if (response.status === 401 && token && endpoint !== REFRESH_PATH) {
@@ -170,10 +180,17 @@ export async function apiRequest(endpoint, options = {}) {
 
     return data;
   } catch (error) {
-    if (error.name === "TypeError") {
+    if (error.isNetwork) {
       throw new Error(
-        "Unable to connect to the ReOrbit server. Please check your connection and try again.",
+        isUpload
+          ? "The upload didn't reach the ReOrbit server. Check your connection and try again."
+          : "Unable to connect to the ReOrbit server. Please check your connection and try again.",
       );
+    }
+    if (error.name === "TypeError" && error.status === undefined) {
+      // a mistake in the page itself, not the connection: say so, and keep the details for debugging
+      console.error("[ReOrbit] request failed in the page:", error);
+      throw new Error("Something went wrong on this page. Please refresh and try again.");
     }
     throw error;
   }

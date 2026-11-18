@@ -1,3 +1,4 @@
+import { compressPhotos } from "../compressPhoto";
 import React, {
   useCallback,
   useEffect,
@@ -146,9 +147,11 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
   useEffect(() => () => added.forEach((a) => URL.revokeObjectURL(a.url)), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const room = options.max_photos - keep.length - added.length;
-  const pickPhotos = (e) => {
-    const files = Array.from(e.target.files || []).slice(0, Math.max(room, 0));
+  const pickPhotos = async (e) => {
+    const picked = Array.from(e.target.files || []).slice(0, Math.max(room, 0));
     e.target.value = "";
+    /* shrink big phone photos and keep them in memory */
+    const files = await compressPhotos(picked).catch(() => []);
     setAdded((a) => [
       ...a,
       ...files.map((file) => ({ file, url: URL.createObjectURL(file) })),

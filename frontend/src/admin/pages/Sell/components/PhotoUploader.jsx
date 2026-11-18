@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { compressPhotos } from "../../../../shared/compressPhoto";
 import {
   ImagePlus,
   X,
@@ -28,7 +29,10 @@ export default function PhotoUploader({ images, onChange }) {
   const [error, setError] = useState("");
 
   const add = async (fileList) => {
-    const files = Array.from(fileList || []);
+    /* big phone photos are shrunk now and kept in memory (shared/compressPhoto.js) */
+    const files = await compressPhotos(
+      Array.from(fileList || []).filter((f) => f.type.startsWith("image/")),
+    ).catch(() => []);
     if (!files.length) return;
     const room = MAX_PHOTOS - images.length;
     const problems = [];

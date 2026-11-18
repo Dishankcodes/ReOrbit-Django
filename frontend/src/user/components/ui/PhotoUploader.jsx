@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { ImagePlus, X, Star } from "lucide-react";
+import { compressPhoto } from "../../../shared/compressPhoto";
 
 const MAX_PHOTOS = 5;
 const MAX_MB = 5;
@@ -10,9 +11,24 @@ export default function PhotoUploader({ images, onChange, error }) {
   const [localError, setLocalError] = useState("");
   const [dragging, setDragging] = useState(false);
 
-  const addFiles = (fileList) => {
-    const files = Array.from(fileList || []);
-    if (!files.length) return;
+  const addFiles = async (fileList) => {
+    const picked = Array.from(fileList || []);
+    if (inputRef.current) inputRef.current.value = "";
+    if (!picked.length) return;
+    /* shrink big phone photos now and keep our own copy (see shared/compressPhoto.js) */
+    let unreadable = "";
+    const files = (
+      await Promise.all(
+        picked.map((f) =>
+          f.type.startsWith("image/")
+            ? compressPhoto(f).catch((e) => {
+                unreadable = e.message;
+                return null;
+              })
+            : f,
+        ),
+      )
+    ).filter(Boolean);
 
     const room = MAX_PHOTOS - images.length;
     const accepted = [];
@@ -35,9 +51,8 @@ export default function PhotoUploader({ images, onChange, error }) {
       }
     });
 
-    setLocalError(message);
+    setLocalError(message || unreadable);
     if (accepted.length) onChange([...images, ...accepted]);
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   const remove = (id) => {
