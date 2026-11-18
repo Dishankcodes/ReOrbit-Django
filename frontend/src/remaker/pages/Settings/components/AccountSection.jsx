@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
+import PlaceFromAddressBook from "../../../../shared/components/PlaceFromAddressBook";
 import { Card, Field, SaveBar, useDraft } from "./Controls";
 
-/* Name, studio handle and phone, saved to /api/remakers/profile/. Email is the sign-in address. */
+/* Name and studio handle, saved to /api/remakers/profile/. Email is the sign-in address; phone, city and pincode come from the address book. */
 export default function AccountSection({ me, onDirty, notify }) {
   const saved = useMemo(
     () => ({
       full_name: me.account?.full_name || "",
       username: me.account?.username || "",
-      phone: me.profile?.phone || "",
     }),
     [me.account, me.profile],
   );
@@ -21,14 +21,11 @@ export default function AccountSection({ me, onDirty, notify }) {
     if (!draft.full_name.trim()) next.full_name = "Enter your name.";
     if (draft.username && !/^[a-zA-Z0-9_.]{3,30}$/.test(draft.username))
       next.username = "3 to 30 letters, numbers, dots or underscores.";
-    if (draft.phone && !/^[6-9]\d{9}$/.test(draft.phone.replace(/\D/g, "").slice(-10)))
-      next.phone = "Enter a 10-digit Indian mobile number.";
     setErrors(next);
     if (Object.keys(next).length) return;
     const r = await me.save({
       full_name: draft.full_name.trim(),
       username: draft.username.trim(),
-      phone: draft.phone.trim() || null,
     });
     if (r.ok) notify("Account saved.");
     else {
@@ -36,7 +33,6 @@ export default function AccountSection({ me, onDirty, notify }) {
       setErrors({
         full_name: e.full_name?.[0],
         username: e.username?.[0],
-        phone: e.phone?.[0] || e.profile?.phone?.[0],
       });
       notify(r.message || "Not saved. Check the fields.");
     }
@@ -71,25 +67,16 @@ export default function AccountSection({ me, onDirty, notify }) {
               onChange={(e) => set("username", e.target.value)}
             />
           </Field>
-          <Field label="Phone" htmlFor="set-phone" error={errors.phone} hint="Only ReOrbit's pickup team sees it.">
-            <input
-              id="set-phone"
-              type="text"
-              inputMode="tel"
-              value={draft.phone}
-              maxLength={14}
-              onChange={(e) => set("phone", e.target.value)}
-            />
-          </Field>
           <Field label="Email" htmlFor="set-email" hint="Your sign-in address. Contact support to change it.">
             <input id="set-email" type="text" value={me.account?.email || ""} readOnly disabled />
           </Field>
         </div>
       </Card>
 
+      <PlaceFromAddressBook profile={me.profile} to="/remaker-addresses" tone="maroon" />
+
       <p className="set-note">
-        Photo, cover, bio, skills, city and address are on your{" "}
-        <Link to="/remaker-profile">studio profile</Link>.
+        Photo, cover, bio and skills are on your <Link to="/remaker-profile">studio profile</Link>.
       </p>
 
       <SaveBar dirty={dirty} onSave={save} onReset={reset} disabled={me.busy} />

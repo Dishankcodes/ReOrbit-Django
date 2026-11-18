@@ -1,7 +1,7 @@
 import React from "react";
 
 export const SECTIONS = [
-  { key: "account", label: "Account", note: "Name, phone and email" },
+  { key: "account", label: "Account", note: "Name, handle and email" },
   { key: "notifications", label: "Notifications", note: "What we tell you about" },
   { key: "payouts", label: "Payouts", note: "How you get paid" },
   { key: "security", label: "Sign-in and security", note: "How you sign in, alerts" },

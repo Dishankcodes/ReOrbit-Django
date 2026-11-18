@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
-import { getProductsBySeller } from "../../../data/marketplaceData";
+import { cardToItem } from "../../../data/marketplaceData";
 import { apiRequest } from "../../../api/api";
-import { useLiveMarketplace } from "../../data/liveMarketplace";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { personChat } from "../../data/messageTargets";
@@ -17,7 +16,18 @@ import { Link } from "../../../shared/portalRouter";
 export default function UserSellerProfile() {
   const { sellerId } = useParams();
   const [params] = useSearchParams();
-  const live = useLiveMarketplace(); // loads live listings when this page is opened directly
+  const [products, setProducts] = useState([]);
+  /* this member's live listings, straight from the marketplace (any number of them) */
+  useEffect(() => {
+    let active = true;
+    setProducts([]);
+    apiRequest(`/marketplace/?seller=${encodeURIComponent(sellerId)}&page_size=100`, { auth: false })
+      .then((r) => active && setProducts((r.data?.results || []).map(cardToItem)))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [sellerId]);
   const [seller, setSeller] = useState(null);
   const [state, setState] = useState("loading"); // loading | ok | missing
   const fileComplaint = useUserComplaintFiler();
@@ -65,7 +75,6 @@ export default function UserSellerProfile() {
     );
   }
 
-  void live;
   return (
     <ProfileShell
       person={{
@@ -74,7 +83,7 @@ export default function UserSellerProfile() {
         totalReviews: summary.count,
       }}
       isMaker={false}
-      products={getProductsBySeller(sellerId)}
+      products={products}
       reviews={reviews}
       chat={personChat(seller, "seller")}
       reportType="User"

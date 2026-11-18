@@ -24,7 +24,9 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  /* "clip", not "hidden": hidden would make this box scroll on its own and break sticky panels */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .admin-layout *,

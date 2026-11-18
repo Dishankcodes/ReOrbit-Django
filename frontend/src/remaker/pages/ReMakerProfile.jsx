@@ -20,18 +20,14 @@ import {
   X,
 } from "lucide-react";
 
-import CitySelect from "../../shared/components/CitySelect";
+import { Link } from "react-router-dom";
 import useMyProfile from "../../shared/hooks/useMyProfile";
 import {
   GUJARAT,
-  GUJARAT_PIN_HINT,
   mediaUrl,
-  pincodeProblem,
 } from "../../api/profile";
 
 import "../css/ReMakerProfile.css";
-import PhoneInput from "../../shared/components/PhoneInput";
-import { PHONE_ERROR, isPhone } from "../../shared/phone";
 
 /* ---------------------------------------------------------
    The profile lives on the server (ReMakers + ReMaker_Profile).
@@ -62,9 +58,10 @@ function toDraft(account, profile) {
     speciality: profile?.speciality || "",
     email: account?.email || "",
     authProvider: account?.auth_provider || "email",
+    /* shown read-only: they come from the default saved address */
     phone: profile?.phone || "",
     city: profile?.city || "",
-    state: GUJARAT,
+    state: profile?.state || GUJARAT,
     pincode: profile?.pincode || "",
     bio: profile?.bio || "",
     skills: splitList(profile?.skills, ","),
@@ -81,10 +78,7 @@ const toPayload = (d) => ({
   username: d.username.trim(),
   studio_name: d.studioName.trim(),
   speciality: d.speciality.trim(),
-  phone: d.phone.trim(),
-  city: d.city.trim(),
-  state: GUJARAT,
-  pincode: d.pincode.trim(),
+  /* phone, city and pincode are edited in the address book, not here */
   bio: d.bio.trim(),
   skills: d.skills.join(", "),
   experience: d.experience.trim(),
@@ -175,11 +169,6 @@ export default function ReMakerProfile() {
     username: draft.username.trim()
       ? ""
       : "Add the username buyers will know you by.",
-    phone: isPhone(draft.phone) ? "" : PHONE_ERROR,
-    pincode: draft.pincode.trim()
-      ? pincodeProblem(draft.pincode)
-      : "Enter your 6-digit pincode.",
-    city: draft.city.trim() ? "" : "Select your city.",
   };
 
   const hasErrors = Object.values(errors).some(Boolean);
@@ -752,42 +741,7 @@ export default function ReMakerProfile() {
           <section className="rpp-card">
             <h3>Contact</h3>
 
-            {editing ? (
-              <div className="rpp-form single">
-                <Field id="rpp-phone" label="Phone" error={err("phone")}>
-                  <PhoneInput
-                    id="rpp-phone"
-                    value={draft.phone}
-                    invalid={Boolean(err("phone"))}
-                    onValue={(phone) => setField("phone", phone)}
-                  />
-                </Field>
-                <div className="rpp-form-pair">
-                  <Field id="rpp-city" label="City" error={err("city")}>
-                    <CitySelect
-                      id="rpp-city"
-                      value={draft.city}
-                      invalid={Boolean(err("city"))}
-                      onChange={(city) => setField("city", city)}
-                    />
-                  </Field>
-                  <Field id="rpp-state" label="State">
-                    {textInput("rpp-state", "state", {
-                      value: GUJARAT,
-                      readOnly: true,
-                      disabled: true,
-                    })}
-                  </Field>
-                </div>
-                <Field id="rpp-pin" label="Pincode" error={err("pincode")}>
-                  <span className="rpp-hint">{GUJARAT_PIN_HINT}</span>
-                  {textInput("rpp-pin", "pincode", {
-                    inputMode: "numeric",
-                    maxLength: 6,
-                  })}
-                </Field>
-              </div>
-            ) : (
+            {(
               <ul className="rpp-contact">
                 <li>
                   <Phone size={16} />
@@ -796,12 +750,16 @@ export default function ReMakerProfile() {
                 <li>
                   <MapPin size={16} />
                   <span>
-                    {[data.city, data.state].filter(Boolean).join(", ")}
+                    {[data.city, data.state].filter(Boolean).join(", ") || "No city yet."}
                     <small>{data.pincode}</small>
                   </span>
                 </li>
               </ul>
             )}
+            <p className="rpp-hint rpp-from-book">
+              From your default saved address.{" "}
+              <Link to="/remaker-addresses">Manage addresses</Link> to change your phone, city or pincode.
+            </p>
           </section>
 
           {/* SOCIAL */}

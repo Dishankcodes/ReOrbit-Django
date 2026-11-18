@@ -28,7 +28,10 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  /* "clip", not "hidden": hidden would also make this box scroll on its own (a second scrollbar
+     inside the page) and break every sticky panel inside it */
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Global Reset */

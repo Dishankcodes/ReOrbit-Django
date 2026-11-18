@@ -130,7 +130,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # runs scheduled announcements and finishes 30-day account deletions by itself (no cron needed)
+    "apps.core.autojobs.AutoJobsMiddleware",
 ]
+
+# Background jobs inside the web server (apps/core/autojobs.py). Set AUTO_JOBS=False in .env to turn off.
+AUTO_JOBS = os.getenv("AUTO_JOBS", "True").lower() not in ("0", "false", "no")
 
 
 

@@ -94,10 +94,19 @@
 .rpf-side {
   position: sticky;
   top: 98px;
+  align-self: start;
   display: flex;
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+}
+
+/* the preview column is taller than most screens: when it can't fit, let it scroll with the
+   page instead of sticking (a stuck column taller than the screen hides its own bottom) */
+@media (max-height: 1120px) {
+  .rpf-side {
+    position: static;
+  }
 }
 
 /* CARD */

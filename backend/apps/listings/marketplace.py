@@ -139,12 +139,20 @@ class BrowseView(APIView):
         want = [q["sold_by"]] if q.get("sold_by") in KINDS else list(KINDS)
         if q.get("condition"):
             want = [k for k in want if k == "user"]  # only user listings have a condition
+        # ?seller=USR-…/RMK-… : one seller's live listings (their public profile page)
+        seller = (q.get("seller") or "").strip().upper()
+        if seller:
+            kind = {"USR": "user", "RMK": "remaker"}.get(seller.split("-")[0])
+            want = [k for k in want if k == kind]
+        user_qs, remaker_qs = _user_qs(), _remaker_qs()
+        if seller:
+            user_qs, remaker_qs = user_qs.filter(user__public_id=seller), remaker_qs.filter(remaker__public_id=seller)
         parts = []
         if "user" in want:
-            parts.append(_light(_filters(_user_qs(), q, price_field="listing_price", condition_ok=True),
+            parts.append(_light(_filters(user_qs, q, price_field="listing_price", condition_ok=True),
                                 "user", "listing_price"))
         if "remaker" in want:
-            parts.append(_light(_filters(_remaker_qs(), q, price_field="price", condition_ok=False),
+            parts.append(_light(_filters(remaker_qs, q, price_field="price", condition_ok=False),
                                 "remaker", "price"))
         if "admin" in want:
             parts.append(_light(_filters(_admin_qs(), q, price_field="price", condition_ok=False),

@@ -1,21 +1,16 @@
 import NumberInput from "../../../../../shared/components/NumberInput";
-import React, { useEffect } from "react";
+import React from "react";
 import { Minus, Plus, ShieldAlert } from "lucide-react";
 import {
   CONDITIONS,
   useDonationCategories,
 } from "../../../../data/donationsStore";
 import PhotoUploader from "../../../../components/ui/PhotoUploader";
-import { useRules } from "../../../../../shared/platformRules";
 
 export default function StepItem({ form, set, errors }) {
   const categories = useDonationCategories();
-  /* the smallest donation ReOrbit accepts (Admin › Settings › Platform) */
-  const minItems = Math.max(1, Number(useRules().minDonationItems) || 1);
-
-  useEffect(() => {
-    if (form.quantity < minItems) set("quantity", minItems);
-  }, [form.quantity, minItems, set]);
+  /* any number of items, at least 1 (type it or use - / +) */
+  const minItems = 1;
 
   return (
     <div className="dn-form">
@@ -132,11 +127,6 @@ export default function StepItem({ form, set, errors }) {
               <Plus size={16} />
             </button>
           </div>
-          {minItems > 1 && (
-            <span className="dn-hint">
-              Please donate at least {minItems} items at a time.
-            </span>
-          )}
           {errors.quantity && (
             <span className="dn-error">{errors.quantity}</span>
           )}

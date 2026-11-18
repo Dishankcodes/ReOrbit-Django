@@ -22,6 +22,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitAuthenticated, IsReOrbitUser
+from apps.core.profile import sync_place_from_address
 from apps.core import buyers
 from apps.core.gujarat import canonical_city
 from apps.core.models import SavedAddress
@@ -117,6 +118,7 @@ class AddressList(APIView):
             if make_default:
                 SavedAddress.objects.filter(is_default=True, **book).update(is_default=False)
             a = SavedAddress.objects.create(is_default=make_default, **own, **v)
+        sync_place_from_address(user)
         return created({"address": address_data(a)})
 
 
@@ -134,6 +136,7 @@ class AddressDetail(APIView):
         for k, val in v.items():
             setattr(a, k, val)
         a.save()
+        sync_place_from_address(request.user.account)
         return ok({"address": address_data(a)})
 
     def delete(self, request, public_id):
@@ -145,6 +148,7 @@ class AddressDetail(APIView):
             if nxt:
                 nxt.is_default = True
                 nxt.save(update_fields=["is_default", "updated_at"])
+        sync_place_from_address(user)
         return ok(message="Address removed.")
 
 
@@ -159,6 +163,7 @@ class AddressDefault(APIView):
             SavedAddress.objects.filter(is_default=True, **own).exclude(pk=a.pk).update(is_default=False)
             a.is_default = True
             a.save(update_fields=["is_default", "updated_at"])
+        sync_place_from_address(user)
         return ok({"address": address_data(a)})
 
 

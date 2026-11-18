@@ -223,13 +223,14 @@ class RulesReachTheRestOfTheAppTests(SettingsBase):
         self.save({"commerce": {"maxListingsPerDay": 2}})
         self.assertEqual(daily_cap(), 2)
 
-    def test_minimum_donation_size(self):
+    def test_any_donation_of_at_least_one_item_is_fine(self):
+        # there is no admin minimum any more: 1 item is enough, 0 is not
         self.save({"platform": {"minDonationItems": 3}})
         with self.assertRaises(donation_services.DonationError) as ctx:
-            donation_services.create_donation(self.user, {"quantity": 2}, [])
-        self.assertIn("at least 3", ctx.exception.errors["quantity"][0])
+            donation_services.create_donation(self.user, {"quantity": 0}, [])
+        self.assertIn("at least 1", ctx.exception.errors["quantity"][0])
         with self.assertRaises(donation_services.DonationError) as ctx:
-            donation_services.create_donation(self.user, {"quantity": 3}, [])
+            donation_services.create_donation(self.user, {"quantity": 1}, [])
         self.assertNotIn("quantity", ctx.exception.errors)  # other fields still fail, quantity is fine
 
     def test_donation_co2_rate_follows_the_settings(self):

@@ -809,7 +809,6 @@ function PlatformSection({ s, toast }) {
   const e = {};
   if (!/^\S+@\S+\.\S+$/.test(p.supportEmail))
     e.supportEmail = "Enter a valid email address.";
-  if (!(p.minDonationItems >= 1)) e.minDonationItems = "At least 1.";
   if (!(p.sessionMinutes >= 5)) e.sessionMinutes = "At least 5 minutes.";
   return (
     <>
@@ -844,14 +843,6 @@ function PlatformSection({ s, toast }) {
               type="email"
               value={p.supportEmail}
               onChange={(ev) => d.set("supportEmail", ev.target.value)}
-            />
-          </Field>
-          <Field label="Minimum items per donation" error={e.minDonationItems}>
-            <input
-              type="number"
-              min="1"
-              value={p.minDonationItems}
-              onChange={numIn(d.set, "minDonationItems")}
             />
           </Field>
           <Field

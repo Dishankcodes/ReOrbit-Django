@@ -73,6 +73,44 @@ def validate_social_links(value):
 
 
 
+def sync_place_from_address(account):
+    """The address book is where members and ReMakers keep their phone, city, pincode and address.
+    Copy the default saved address onto the profile (which the seller page, forms and admin screens
+    read), so there is one place to change them. Called after every address change and when the
+    profile opens. Does nothing for admins, or when there is no saved address yet."""
+    from apps.core import buyers
+    from apps.core.models import SavedAddress
+
+    p = getattr(account, "profile", None)
+    if p is None:
+        return
+    try:
+        if buyers.type_of(account) == "admin":
+            return
+        a = SavedAddress.objects.filter(**buyers.owner(account)).order_by("-is_default", "pk").first()
+    except Exception:  # noqa: BLE001  never stop the profile from opening
+        return
+    if a is None:
+        return
+    try:
+        pin = validate_gujarat_pincode(a.pincode) if a.pincode else ""
+    except Exception:  # noqa: BLE001  not a pincode the profile accepts
+        pin = ""
+    want = {
+        "phone": (a.phone or None),
+        "city": a.city or "",
+        "pincode": pin or None,
+        "address": ", ".join(x for x in (a.address_line1, a.address_line2, a.landmark) if x)[:500] or None,
+    }
+    if getattr(a, "state", None) and hasattr(p, "state"):
+        want["state"] = a.state
+    changed = [k for k, v in want.items() if hasattr(p, k) and (getattr(p, k) or None) != (v or None)]
+    for k in changed:
+        setattr(p, k, want[k])
+    if changed:
+        p.save(update_fields=changed)
+
+
 def ensure_profile(account, serializer_class):
     """The account's profile row, created on first use (older or imported accounts may not have one)."""
     from django.core.exceptions import ObjectDoesNotExist
@@ -125,38 +163,7 @@ class BaseProfileView(APIView):
         return changes, errors
 
     def fill_place(self, account):
-        """City, pincode and address the member already gave in their saved delivery address fill the
-        profile once, so every form (sell, donate, checkout) starts from them. They can change it."""
-        p = getattr(account, "profile", None)
-        if p is None or (p.city and p.pincode and p.address):
-            return
-        from apps.core import buyers
-        from apps.core.models import SavedAddress
-
-        try:
-            a = (SavedAddress.objects.filter(**buyers.owner(account)).order_by("-is_default", "pk").first())
-        except Exception:  # noqa: BLE001  never stop the profile from opening
-            return
-        if a is None:
-            return
-        changed = []
-        try:
-            pin = validate_gujarat_pincode(a.pincode) if a.pincode else ""
-        except Exception:  # noqa: BLE001  not a pincode the profile accepts
-            pin = ""
-        if not p.pincode and pin:
-            p.pincode = pin
-            changed.append("pincode")
-        if not p.city and a.city and (pin or p.pincode):
-            p.city = a.city
-            changed.append("city")
-        if not p.address:
-            line = ", ".join(x for x in (a.address_line1, a.address_line2, a.landmark) if x)
-            if line:
-                p.address = line[:500]
-                changed.append("address")
-        if changed:
-            p.save(update_fields=changed)
+        sync_place_from_address(account)
 
     def get(self, request):
         self.fill_place(request.user.account)

@@ -1,0 +1,74 @@
+.pfab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0 4px;
+  padding: 16px 18px;
+  border: 1px solid #dce5de;
+  border-radius: 16px;
+  background: #f6f9f7;
+}
+.pfab-text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.pfab-text strong {
+  font-size: 14px;
+}
+.pfab-text ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+.pfab-text li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pfab-text small {
+  color: #6b756d;
+  font-size: 12.5px;
+}
+.pfab-link {
+  flex: none;
+  padding: 9px 16px;
+  border: 1px solid #2a4d3a;
+  border-radius: 999px;
+  color: #2a4d3a;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  -webkit-text-fill-color: #2a4d3a;
+}
+.pfab-link:hover {
+  background: #2a4d3a;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+/* ReMaker side: maroon */
+.pfab.maroon {
+  border-color: #e1dcd9;
+  background: #f8f5f3;
+}
+.pfab.maroon .pfab-link {
+  border-color: #421517;
+  color: #421517;
+  -webkit-text-fill-color: #421517;
+}
+.pfab.maroon .pfab-link:hover {
+  background: #421517;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+@media (max-width: 560px) {
+  .pfab {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

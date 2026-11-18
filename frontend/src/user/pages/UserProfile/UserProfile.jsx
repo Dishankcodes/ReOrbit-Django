@@ -3,8 +3,6 @@ import TextSuggestions, { BIO_IDEAS } from "../../../shared/components/TextSugge
 import {
   User,
   Mail,
-  Phone,
-  MapPin,
   Calendar,
   ShieldCheck,
   Pencil,
@@ -29,42 +27,35 @@ import { useWishlist } from "../../data/wishlistStore";
 import { useDonations, summarize } from "../../data/donationsStore";
 import { useRewards } from "../../data/rewardsStore";
 
-import CitySelect from "../../../shared/components/CitySelect";
+import PlaceFromAddressBook from "../../../shared/components/PlaceFromAddressBook";
 import useMyProfile from "../../../shared/hooks/useMyProfile";
-import {
-  GUJARAT,
-  GUJARAT_PIN_HINT,
-  changeUserPassword,
-  mediaUrl,
-  pincodeProblem,
-} from "../../../api/profile";
+import { changeUserPassword, mediaUrl } from "../../../api/profile";
 
 import "../../css/UserProfile-css/UserProfile.css";
 import PhoneInput from "../../../shared/components/PhoneInput";
-import { PHONE_ERROR, isPhone } from "../../../shared/phone";
 
 const profileStats = [
   {
     label: "Orders",
-    value: "24",
+    value: "0",
     icon: Package,
     className: "orders",
   },
   {
     label: "Wishlist",
-    value: "18",
+    value: "0",
     icon: Heart,
     className: "wishlist",
   },
   {
     label: "Donations",
-    value: "7",
+    value: "0",
     icon: Gift,
     className: "donations",
   },
   {
     label: "Orbit Points",
-    value: "2,480",
+    value: "0",
     icon: Star,
     className: "points",
   },
@@ -98,10 +89,6 @@ export default function UserProfile() {
   const toForm = (account, profile) => ({
     full_name: account?.full_name || "",
     email: account?.email || "",
-    phone: profile?.phone || "",
-    city: profile?.city || "",
-    state: GUJARAT,
-    pincode: profile?.pincode || "",
     bio: profile?.bio || "",
   });
 
@@ -162,20 +149,9 @@ export default function UserProfile() {
 
   const handleSaveProfile = async (event) => {
     event.preventDefault();
-    const pinError = pincodeProblem(formData.pincode);
-    if (formData.phone && !isPhone(formData.phone)) {
-      setFieldErrors({ phone: [PHONE_ERROR] });
-      notify("Please correct the highlighted fields.", true);
-      return;
-    }
-    if (pinError) {
-      setFieldErrors({ pincode: [pinError] });
-      notify("Please correct the highlighted fields.", true);
-      return;
-    }
-    const { email, state, ...editable } = formData; // email is never sent; state is always Gujarat
+    /* phone, city and pincode live in the address book (Saved addresses), not here */
+    const { email, ...editable } = formData; // email is never sent
     void email;
-    void state;
     const result = await me.save(editable);
     if (result.ok) {
       setFieldErrors({});
@@ -484,61 +460,9 @@ export default function UserProfile() {
                   helper="Email cannot be changed here."
                 />
 
-                <ProfileField
-                  label="Phone Number"
-                  name="phone"
-                  value={formData.phone}
-                  icon={Phone}
-                  disabled={!isEditing}
-                  onChange={handleInputChange}
-                  error={fieldErrors.phone}
-                  phone
-                />
-
-                <div className="profile-field">
-                  <label htmlFor="city">City</label>
-                  <CitySelect
-                    id="city"
-                    value={formData.city}
-                    disabled={!isEditing}
-                    invalid={Boolean(fieldErrors.city)}
-                    onChange={(city) => {
-                      setFormData((current) => ({ ...current, city }));
-                      setFieldErrors((current) => ({
-                        ...current,
-                        city: undefined,
-                      }));
-                    }}
-                  />
-                  {fieldErrors.city && (
-                    <small className="profile-field-error">
-                      {fieldErrors.city[0]}
-                    </small>
-                  )}
-                </div>
-
-                <ProfileField
-                  label="State"
-                  name="state"
-                  value={GUJARAT}
-                  icon={MapPin}
-                  disabled
-                  onChange={handleInputChange}
-                  error={fieldErrors.state}
-                  helper="ReOrbit is available in Gujarat only."
-                />
-
-                <ProfileField
-                  label="Pincode"
-                  name="pincode"
-                  value={formData.pincode}
-                  icon={MapPin}
-                  disabled={!isEditing}
-                  onChange={handleInputChange}
-                  error={fieldErrors.pincode}
-                  helper={isEditing ? GUJARAT_PIN_HINT : undefined}
-                />
               </div>
+
+              <PlaceFromAddressBook profile={me.profile} to="/user-addresses" />
 
               <div className="profile-field profile-bio-field">
                 <label htmlFor="bio">Bio</label>

@@ -28,7 +28,7 @@ from django.utils import timezone
 from apps.admins.models import Admins
 from apps.core import buyers as buyer_kit
 from apps.core.images import process_image
-from apps.core.models import Category, PlatformSettings, SavedAddress
+from apps.core.models import Category, SavedAddress
 from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
 from apps.core.validators import validate_image, validate_phone
@@ -195,9 +195,8 @@ def create_donation(donor, data, files):
         quantity = int(str(1 if raw_quantity in (None, "") else raw_quantity).strip())
     except ValueError:
         quantity = 0
-    min_items = PlatformSettings.load().min_donation_items
-    if not min_items <= quantity <= 32000:  # no real upper limit, only what the column can hold
-        errors["quantity"] = [f"Donate at least {min_items} item(s)."]
+    if not 1 <= quantity <= 32000:  # at least 1; no real upper limit, only what the column can hold
+        errors["quantity"] = ["Quantity must be at least 1."]
 
     files = list(files or [])
     if not files:

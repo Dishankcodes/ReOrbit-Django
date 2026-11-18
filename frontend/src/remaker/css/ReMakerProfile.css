@@ -836,3 +836,13 @@
 .rpp .rcs {
   --rcs-accent: #270809;
 }
+
+.rpp-from-book {
+  display: block;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+.rpp-from-book a {
+  color: var(--rp-maroon-soft, #421517);
+  font-weight: 700;
+}
