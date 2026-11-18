@@ -46,7 +46,7 @@ class ListCreateView(AdminBase):
         stage = request.query_params.get("status")
         if stage:
             qs = qs.filter(warehouse_status=stage)
-        return ok({"items": sz.items_data(qs[:2000], request)})
+        return ok({"items": sz.items_data(qs[:2000], request), "layout": services.layout()})
 
     def post(self, request):
         try:

@@ -66,6 +66,8 @@ export default function AdminWarehouseItem() {
   const { inventoryId } = useParams();
   const navigate = useNavigate();
   const s = useStockItem(inventoryId);
+  /* donated lots (Floor 1) came from a donation, not a purchase */
+  const donated = String(s?.item_id || "").startsWith("DON-");
   const { toast, toastNode } = useToast();
   const [pending, setPending] = useState(null);
 
@@ -312,8 +314,8 @@ export default function AdminWarehouseItem() {
           <section className="aup-card">
             <header className="aup-card-head">
               <div>
-                <h3>Bought from</h3>
-                <p>Who we purchased this stock from.</p>
+                <h3>{donated ? "Donated by" : "Bought from"}</h3>
+                <p>{donated ? "Who gave this to ReOrbit." : "Who we purchased this stock from."}</p>
               </div>
             </header>
             <div className="aw-source">
@@ -341,8 +343,17 @@ export default function AdminWarehouseItem() {
             </div>
             <dl className="ao-txn">
               <div>
-                <dt>Purchase order</dt>
-                <dd className="aup-mono">{s.purchase_ref}</dd>
+                <dt>{donated ? "Donation" : "Purchase order"}</dt>
+                <dd className="aup-mono">
+                  {/* bought on the marketplace by the team: ORD-1001-L5 -> the order ORD-1001 */}
+                  {/^ORD-\d+-L\d+$/.test(s.purchase_ref || "") ? (
+                    <Link to={`/admin-orders/${s.purchase_ref.replace(/-L\d+$/, "")}`}>
+                      {s.purchase_ref.replace(/-L\d+$/, "")}
+                    </Link>
+                  ) : (
+                    s.purchase_ref || "—"
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Received</dt>
@@ -415,7 +426,7 @@ export default function AdminWarehouseItem() {
                 </div>
                 <p>
                   {s.zone
-                    ? `Zone ${s.zone.key} · ${s.zone.name}`
+                    ? `${s.zone.floor.name} (${s.zone.floor.note.toLowerCase()}) · Zone ${s.zone.key} · ${s.zone.name}`
                     : s.location.zone === "DOCK"
                       ? "Receiving dock"
                       : "QC & refurbishment bay"}

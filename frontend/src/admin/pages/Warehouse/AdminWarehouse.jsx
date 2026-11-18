@@ -27,6 +27,7 @@ import {
   useStock,
   runWarehouseActions,
   ALERT_LEVELS,
+  useWarehouseLayout,
 } from "../../data/warehouseStore";
 import {
   WAREHOUSE_ACTION_LIST,
@@ -34,7 +35,7 @@ import {
   canApplyWarehouseAction,
 } from "../../data/warehouseActions";
 import { useSettings } from "../../data/settingsStore";
-import { ZONES, WAREHOUSE_ADDRESS } from "../../data/adminWarehouse";
+import { zonesOf } from "../../data/adminWarehouse";
 import { formatDate, formatDateTime, formatINR } from "../../utils/format";
 
 import StatusBadge from "../../components/ui/StatusBadge";
@@ -211,6 +212,8 @@ export default function AdminWarehouse() {
     return c;
   }, [alerts]);
 
+  const layout = useWarehouseLayout();
+  const ZONES = useMemo(() => zonesOf(layout), [layout]);
   const zoneUse = useMemo(
     () =>
       ZONES.map((z) => {
@@ -225,7 +228,7 @@ export default function AdminWarehouse() {
           pct: Math.min(100, Math.round((used / z.capacity) * 100)),
         };
       }),
-    [stock],
+    [stock, ZONES],
   );
   const dockCount = stock.filter((s) => s.location?.zone === "DOCK").length;
   const qcCount = stock.filter((s) => s.location?.zone === "QC").length;
@@ -534,7 +537,10 @@ export default function AdminWarehouse() {
         <header className="aw-floor-head">
           <div>
             <h3>Floor plan</h3>
-            <p>{WAREHOUSE_ADDRESS}</p>
+            <p>
+              {layout.address ||
+                "Add ReOrbit's warehouse address in Admin › Addresses."}
+            </p>
           </div>
           {zone !== "all" && (
             <button
@@ -546,35 +552,49 @@ export default function AdminWarehouse() {
             </button>
           )}
         </header>
+        {layout.floors.map((floor) => (
+          <div className="aw-floor-level" key={floor.key}>
+            <h4 className="aw-floor-name">
+              {floor.name}
+              <small>{floor.note}</small>
+            </h4>
+            <div className="aw-zones">
+              {zoneUse
+                .filter((z) => z.floor.key === floor.key)
+                .map((z) => (
+                  <button
+                    key={z.key}
+                    type="button"
+                    className={`aw-zone ${zone === z.key ? "active" : ""}`}
+                    onClick={() => {
+                      setStatus("All");
+                      setZone(zone === z.key ? "all" : z.key);
+                    }}
+                    aria-pressed={zone === z.key}
+                  >
+                    <span className="aw-zone-key">{z.key}</span>
+                    <span className="aw-zone-body">
+                      <strong>{z.name}</strong>
+                      <small>
+                        {z.used} of {z.capacity} bins
+                        {z.flagged ? ` · ${z.flagged} unsold` : ""}
+                      </small>
+                      <span className="aw-bar">
+                        <i
+                          className={
+                            z.pct >= 85 ? "full" : z.pct >= 60 ? "busy" : ""
+                          }
+                          style={{ width: `${z.pct}%` }}
+                        />
+                      </span>
+                    </span>
+                    <em>{z.pct}%</em>
+                  </button>
+                ))}
+            </div>
+          </div>
+        ))}
         <div className="aw-zones">
-          {zoneUse.map((z) => (
-            <button
-              key={z.key}
-              type="button"
-              className={`aw-zone ${zone === z.key ? "active" : ""}`}
-              onClick={() => {
-                setStatus("All");
-                setZone(zone === z.key ? "all" : z.key);
-              }}
-              aria-pressed={zone === z.key}
-            >
-              <span className="aw-zone-key">{z.key}</span>
-              <span className="aw-zone-body">
-                <strong>{z.name}</strong>
-                <small>
-                  {z.used} of {z.capacity} bins
-                  {z.flagged ? ` · ${z.flagged} unsold` : ""}
-                </small>
-                <span className="aw-bar">
-                  <i
-                    className={z.pct >= 85 ? "full" : z.pct >= 60 ? "busy" : ""}
-                    style={{ width: `${z.pct}%` }}
-                  />
-                </span>
-              </span>
-              <em>{z.pct}%</em>
-            </button>
-          ))}
           <button
             type="button"
             className={`aw-zone aw-zone-aux ${zone === "DOCK" ? "active" : ""}`}
@@ -707,10 +727,14 @@ export default function AdminWarehouse() {
                 <span>Zone</span>
                 <select value={zone} onChange={(e) => setZone(e.target.value)}>
                   <option value="all">All zones</option>
-                  {ZONES.map((z) => (
-                    <option key={z.key} value={z.key}>
-                      {z.key} · {z.name}
-                    </option>
+                  {layout.floors.map((f) => (
+                    <optgroup key={f.key} label={`${f.name} · ${f.note}`}>
+                      {f.zones.map((z) => (
+                        <option key={z.key} value={z.key}>
+                          {z.key} · {z.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                   <option value="DOCK">Receiving dock</option>
                   <option value="QC">QC bay</option>

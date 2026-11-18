@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useSettings } from "./settingsStore";
-import { ZONES } from "./adminWarehouse";
+import { FALLBACK_LAYOUT, zonesOf } from "./adminWarehouse";
 import { warehouseApi } from "../../api/warehouse";
 
 /* shown while a donated lot has no photo yet */
@@ -18,7 +18,7 @@ const NO_PHOTO =
     '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#e8f0ec"/><text x="200" y="158" font-family="sans-serif" font-size="18" fill="#6c8b7d" text-anchor="middle">No photo yet</text></svg>',
   );
 
-let state = { items: [], loaded: false, loading: false, error: "" };
+let state = { items: [], layout: FALLBACK_LAYOUT, loaded: false, loading: false, error: "" };
 const listeners = new Set();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l) => {
@@ -34,7 +34,7 @@ const set = (patch) => {
 /* another account signing in on this tab must not see the previous stock */
 if (typeof window !== "undefined") {
   window.addEventListener("reorbit:session-ended", () => {
-    state = { items: [], loaded: false, loading: false, error: "" };
+    state = { items: [], layout: FALLBACK_LAYOUT, loaded: false, loading: false, error: "" };
     emit();
   });
 }
@@ -47,7 +47,9 @@ export function loadStock({ force = false } = {}) {
   set({ loading: true, error: "" });
   inFlight = warehouseApi
     .list()
-    .then((items) => set({ items: items.map(row), loaded: true, loading: false }))
+    .then(({ items, layout }) =>
+      set({ items: items.map(row), layout: layout || FALLBACK_LAYOUT, loaded: true, loading: false }),
+    )
     .catch((e) =>
       set({ loading: false, error: e.message || "We couldn't load the warehouse." }),
     )
@@ -79,7 +81,7 @@ export const ALERT_LEVELS = {
   dead: { key: "dead", label: "Dead stock", short: "30+ days" },
 };
 
-function withDerived(item, rules, now) {
+function withDerived(item, rules, now, zones) {
   const inShop =
     item.warehouse_status === "Stored" && item.sale_status === "Listed";
   const inside = item.warehouse_status !== "Released";
@@ -103,7 +105,7 @@ function withDerived(item, rules, now) {
           : "watch";
     rawAlert = { ...ALERT_LEVELS[level], days: daysListed };
   }
-  const zone = ZONES.find((z) => z.key === item.location?.zone) || null;
+  const zone = zones.find((z) => z.key === item.location?.zone) || null;
   return {
     ...item,
     inside,
@@ -118,12 +120,18 @@ function withDerived(item, rules, now) {
 }
 
 export function useStock() {
-  const { items } = useLoaded();
+  const { items, layout } = useLoaded();
   const { warehouse } = useSettings();
   return useMemo(() => {
     const now = Date.now();
-    return items.map((i) => withDerived(i, warehouse, now));
-  }, [items, warehouse]);
+    const zones = zonesOf(layout);
+    return items.map((i) => withDerived(i, warehouse, now, zones));
+  }, [items, warehouse, layout]);
+}
+
+/* the floor plan from the server: { floors: [{ key, name, note, zones }], racks, levels, address } */
+export function useWarehouseLayout() {
+  return useLoaded().layout || FALLBACK_LAYOUT;
 }
 export function useStockItem(id) {
   return useStock().find((i) => i.inventory_id === id) || null;

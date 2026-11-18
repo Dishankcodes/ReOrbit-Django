@@ -51,6 +51,8 @@ class WarehouseItem(PublicIdModel, TimeStampedModel):
     source_sub = models.CharField(max_length=150, blank=True)
     source_city = models.CharField(max_length=100, blank=True)
     purchase_ref = models.CharField(max_length=40, blank=True)
+    # photo path for stock bought on the marketplace (donations and store listings have their own photos)
+    photo = models.CharField(max_length=255, blank=True)
 
     # Rupees, whole numbers
     cost_price = models.PositiveIntegerField(default=0)
@@ -60,7 +62,8 @@ class WarehouseItem(PublicIdModel, TimeStampedModel):
     warehouse_status = models.CharField(max_length=14, choices=Stage.choices, default=Stage.RECEIVED)
     sale_status = models.CharField(max_length=10, choices=Sale.choices, default=Sale.NOT_LISTED)
 
-    # Where it is: zone A-E on the racks, DOCK, or QC (refurbishment bay). Empty once it has left.
+    # Where it is: a zone on the racks (floor + area, "1A".."2E"; donations on Floor 1, bought stock
+    # on Floor 2), DOCK, or QC (refurbishment bay). Empty once it has left.
     zone = models.CharField(max_length=8, blank=True)
     rack = models.CharField(max_length=2, blank=True)
     level = models.PositiveSmallIntegerField(null=True, blank=True)

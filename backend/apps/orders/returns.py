@@ -241,6 +241,10 @@ def mark_received(rr_pk, *, actor_kind, actor=None, ip=None):
         from apps.rewards import services as rewards  # local import: rewards reads orders lazily too
 
         rewards.on_order_returned(o, amount)  # take back the points that order earned
+        if o.buyer_admin_id:  # a team purchase went back to its seller: it leaves the warehouse
+            from apps.warehouse import services as warehouse  # local import: warehouse reads orders too
+
+            warehouse.on_purchase_returned(o)
         if actor_kind == "admin":
             audit(actor, "return.received", "return", rr.public_id, after={"refund": amount}, ip=ip)
         _notify_buyer(o, "Return received", f"{o.public_id}: your refund of ₹{amount:,} is being made.")

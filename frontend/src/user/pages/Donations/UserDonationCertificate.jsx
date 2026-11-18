@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom";
 import {
   Award,
   Download,
-  Leaf,
   Lock,
   Printer,
   Share2,
@@ -12,10 +11,8 @@ import {
 
 import { getAccount } from "../../../api/session";
 import { donationApi } from "../../../api/donations";
-import {
-  REWARD_RULES,
-  useDonation,
-} from "../../data/donationsStore";
+import BrandMark from "../../../shared/components/BrandMark";
+import { useDonation } from "../../data/donationsStore";
 import { formatDate, kg } from "../../utils/format";
 import Crumbs from "../../components/ui/Crumbs";
 import DonationNotFound from "./components/DonationNotFound";
@@ -53,8 +50,12 @@ export default function UserDonationCertificate() {
     );
   }
 
-  const issued = donation.events[donation.events.length - 1]?.at;
-  const co2 = Math.round(donation.weightKg * REWARD_RULES.co2PerKg * 10) / 10;
+  /* everything printed comes from the server (CO2 uses the rate in Admin › Settings › Platform) */
+  const cert = donation.certificate || {};
+  const issued = cert.issued_at || donation.events[donation.events.length - 1]?.at;
+  const co2 = Number(cert.co2_kg ?? 0);
+  const weight = cert.weight_kg ?? donation.weightKg;
+  const qty = cert.quantity ?? donation.quantity;
 
   const share = async () => {
     try {
@@ -117,9 +118,7 @@ export default function UserDonationCertificate() {
           <span className="dn-cert-corner dn-cert-corner--br" />
 
           <div className="dn-cert-brand">
-            <span>
-              <Leaf size={20} />
-            </span>{" "}
+            <BrandMark size={34} />
             ReOrbit
           </div>
 
@@ -129,13 +128,13 @@ export default function UserDonationCertificate() {
             This certificate is proudly presented to
           </p>
           <h2 className="dn-cert-name">
-            {getAccount("user")?.full_name || "ReOrbit donor"}
+            {cert.name || getAccount("user")?.full_name || "ReOrbit donor"}
           </h2>
 
           <p className="dn-cert-body">
             for donating{" "}
             <strong>
-              {donation.quantity} × {donation.title}
+              {qty} × {donation.title}
             </strong>{" "}
             ({donation.category}),{" "}
             {/* where the items went is not printed on the certificate */}
@@ -144,15 +143,15 @@ export default function UserDonationCertificate() {
 
           <div className="dn-cert-stats">
             <div>
-              <strong>{kg(donation.weightKg)}</strong>
+              <strong>{kg(weight)}</strong>
               <span>Waste diverted</span>
             </div>
             <div>
-              <strong>{co2} kg</strong>
+              <strong>{co2.toLocaleString("en-IN", { maximumFractionDigits: 2 })} kg</strong>
               <span>CO₂ saved</span>
             </div>
             <div>
-              <strong>{donation.reward?.points || 0}</strong>
+              <strong>{cert.points ?? donation.reward?.points ?? 0}</strong>
               <span>Orbit Points</span>
             </div>
           </div>

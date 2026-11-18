@@ -91,7 +91,7 @@ class ReadTests(WarehouseBase):
             self.assertIn(key, data)
         self.assertEqual(data["inventory_id"], item.public_id)
         self.assertRegex(data["sku"], r"^RO-FUR-\d+$")
-        self.assertEqual(data["location"], {"zone": "DOCK", "rack": "01", "level": 1, "bin": "DOCK-01"})
+        self.assertEqual(data["location"], {"zone": "DOCK", "rack": "01", "level": 1, "bin": "DOCK-01", "floor": None})
         self.assertEqual(data["source"]["type"], "User")
         self.assertEqual(data["source"]["path"], f"/admin-users/{self.user.public_id}")
         self.assertEqual(data["actions"], ["putAway"])
@@ -104,17 +104,17 @@ class ReadTests(WarehouseBase):
 
     def test_filter_by_stage(self):
         self.lot()
-        self.lot(S.STORED, zone="A", rack="01", level=1)
+        self.lot(S.STORED, zone="2A", rack="01", level=1)
         rows = self.get(f"{BASE}?status=Stored", as_=self.admin).data["data"]["items"]
         self.assertEqual([r["warehouse_status"] for r in rows], ["Stored"])
 
     def test_actions_per_state_match_the_screens(self):
         self.assertEqual(services.allowed_actions(self.lot()), ["putAway"])
-        sold = self.lot(S.ASSIGNED, Sale.SOLD, zone="A", rack="01", level=1)
+        sold = self.lot(S.ASSIGNED, Sale.SOLD, zone="2A", rack="01", level=1)
         self.assertEqual(services.allowed_actions(sold), ["dispatch"])
         refurb = self.lot(S.REFURBISHMENT, zone="QC", rack="01", level=1)
         self.assertEqual(services.allowed_actions(refurb), ["receiveBack"])
-        shelf = self.lot(S.STORED, zone="A", rack="01", level=1)
+        shelf = self.lot(S.STORED, zone="2A", rack="01", level=1)
         self.assertEqual(services.allowed_actions(shelf), ["list", "refurbish", "donate"])
         gone = self.lot(S.RELEASED, Sale.DONATED, zone="")
         self.assertEqual(services.allowed_actions(gone), [])
@@ -122,8 +122,9 @@ class ReadTests(WarehouseBase):
 
 class PutAwayTests(WarehouseBase):
     def test_put_away_uses_the_categorys_zone(self):
-        for category, zone in (("Furniture", "A"), ("Kitchen", "B"), ("Electronics", "D"), ("Sports", "E"),
-                               ("Unknown things", "E")):
+        # bought stock (no donation) goes to Floor 2
+        for category, zone in (("Furniture", "2A"), ("Kitchen", "2B"), ("Electronics", "2D"), ("Sports", "2E"),
+                               ("Unknown things", "2E")):
             item = self.lot(category=category)
             r = self.act(item, "putAway")
             self.assertEqual(r.status_code, 200, r.data)
@@ -132,6 +133,22 @@ class PutAwayTests(WarehouseBase):
             self.assertRegex(got["location"]["bin"], rf"^{zone}-0[1-8]-[1-4]$")
             self.assertIsNotNone(got["stored_at"])
             self.assertEqual(got["events"][-1]["label"], "Stored on shelf")
+
+    def test_donated_items_go_to_floor_1(self):
+        from apps.donations.models import Donation
+
+        d = Donation.objects.create(donor=self.user, title="Books", quantity=1, pickup_address={"line1": "x"})
+        item = self.lot(category="Furniture", donation=d)
+        got = self.act(item, "putAway").data["data"]["item"]
+        self.assertEqual((got["location"]["zone"], got["location"]["floor"]), ("1A", "1"))
+        self.assertRegex(got["location"]["bin"], r"^1A-0[1-8]-[1-4]$")
+
+    def test_layout_lists_both_floors(self):
+        r = self.get(BASE, as_=self.admin)
+        floors = r.data["data"]["layout"]["floors"]
+        self.assertEqual([f["name"] for f in floors], ["Floor 1", "Floor 2"])
+        self.assertEqual(floors[0]["zones"][0]["key"], "1A")
+        self.assertEqual(len(floors[1]["zones"]), 5)
 
     def test_items_spread_over_the_racks(self):
         bins = set()
@@ -143,7 +160,7 @@ class PutAwayTests(WarehouseBase):
         self.assertEqual(len(bins), 5)
 
     def test_a_full_zone_refuses(self):
-        with mock.patch.dict(services.ZONE_CAPACITY, {"A": 2}):
+        with mock.patch.dict(services.ZONE_CAPACITY, {"2A": 2}):
             for _ in range(2):
                 self.assertEqual(self.act(self.lot(), "putAway").status_code, 200)
             third = self.lot()
@@ -341,7 +358,7 @@ class RefurbishmentTests(WarehouseBase):
         got = r.data["data"]["item"]
         self.assertEqual((got["warehouse_status"], got["sale_status"], got["condition"]), ("Stored", "Not listed", "Good"))
         self.assertIsNone(got["refurb"])
-        self.assertEqual(got["location"]["zone"], "A")
+        self.assertEqual(got["location"]["zone"], "2A")
         self.assertEqual(got["events"][-1]["label"], "Received back from ReMaker")
 
     def test_relist_after_refurbishment_reuses_the_listing(self):
@@ -486,13 +503,13 @@ class CheckInAndStockTests(WarehouseBase):
 
     def test_move_to_another_bin(self):
         item = self.stored()
-        r = self.patch(f"{BASE}{item.public_id}/", {"location": {"zone": "B", "rack": 3, "level": 2}}, as_=self.admin)
+        r = self.patch(f"{BASE}{item.public_id}/", {"location": {"zone": "2B", "rack": 3, "level": 2}}, as_=self.admin)
         self.assertEqual(r.status_code, 200, r.data)
-        self.assertEqual(r.data["data"]["item"]["location"]["bin"], "B-03-2")
+        self.assertEqual(r.data["data"]["item"]["location"]["bin"], "2B-03-2")
         bad = self.patch(f"{BASE}{item.public_id}/", {"location": {"zone": "Z", "rack": 3, "level": 2}}, as_=self.admin)
         self.assertEqual(bad.status_code, 400)
         dock = self.lot()
-        self.assertEqual(self.patch(f"{BASE}{dock.public_id}/", {"location": {"zone": "A", "rack": 1, "level": 1}},
+        self.assertEqual(self.patch(f"{BASE}{dock.public_id}/", {"location": {"zone": "2A", "rack": 1, "level": 1}},
                                     as_=self.admin).status_code, 400)  # not on a shelf yet
 
     def test_released_items_are_read_only(self):
@@ -503,7 +520,7 @@ class CheckInAndStockTests(WarehouseBase):
 class BulkTests(WarehouseBase):
     def test_bulk_put_away_some_fail_some_pass(self):
         a, b = self.lot(), self.lot()
-        shelf = self.lot(S.STORED, zone="A", rack="01", level=1)
+        shelf = self.lot(S.STORED, zone="2A", rack="01", level=1)
         r = self.post(f"{BASE}actions/", {"ids": [a.public_id, b.public_id, shelf.public_id, "WHI-0"],
                                           "action": "putAway"}, as_=self.admin)
         self.assertEqual(r.status_code, 200, r.data)

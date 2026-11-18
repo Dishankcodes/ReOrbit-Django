@@ -45,6 +45,8 @@ def _image(w, request):
         images = sorted(store.images.all(), key=lambda i: (i.display_order, i.pk))
         if images:
             return media_url(request, images[0].image.name)
+    if w.photo:  # bought on the marketplace: the photo the order kept
+        return media_url(request, w.photo)
     return ""
 
 
@@ -98,7 +100,8 @@ def item_data(w, request, *, wishlisted=0, now=None, rule=None):
         "released_at": w.released_at,
         "warehouse_status": w.warehouse_status,
         "sale_status": w.sale_status,
-        "location": {"zone": w.zone, "rack": w.rack, "level": w.level, "bin": w.bin} if w.zone else None,
+        "location": {"zone": w.zone, "rack": w.rack, "level": w.level, "bin": w.bin,
+                     "floor": w.zone[0] if w.zone[:1].isdigit() else None} if w.zone else None,
         "refurb": refurb,
         "views": 0,
         "wishlisted": wishlisted,

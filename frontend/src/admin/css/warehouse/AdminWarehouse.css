@@ -818,3 +818,26 @@
     transition: none;
   }
 }
+
+/* floor plan: one row of zones per floor (Floor 1 donations, Floor 2 bought stock) */
+.aw-floor-level {
+  margin-bottom: 14px;
+}
+.aw-floor-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #0e3a2d;
+}
+.aw-floor-name small {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7f76;
+}
+.aw-zone-key {
+  font-size: 15px;
+}

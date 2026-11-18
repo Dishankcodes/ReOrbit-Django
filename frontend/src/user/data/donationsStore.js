@@ -307,6 +307,8 @@ const adapt = (d) => ({
       }
     : null,
   certificateId: d.certificate_id,
+  /* what the certificate prints, from the server: { name, quantity, weight_kg, co2_kg, points, issued_at } */
+  certificate: d.certificate || null,
   rejectReason: d.reject_reason || "",
   cancelReason: d.cancel_reason || "",
   reward: d.reward || { points: 0, voucher: null },

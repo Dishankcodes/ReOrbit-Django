@@ -5,7 +5,8 @@ import { apiRequest } from "./api";
 const base = "/warehouse/admin";
 
 export const warehouseApi = {
-  list: () => apiRequest(`${base}/`).then((r) => r.data.items),
+  /* { items, layout } — layout is the floor plan (floors and their zones) */
+  list: () => apiRequest(`${base}/`).then((r) => ({ items: r.data.items, layout: r.data.layout })),
   one: (id) => apiRequest(`${base}/${encodeURIComponent(id)}/`).then((r) => r.data.item),
 
   /* putAway, list, discount, promote, refurbish, donate, snooze, receiveBack, dispatch */

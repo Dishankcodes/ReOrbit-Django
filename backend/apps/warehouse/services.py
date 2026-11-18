@@ -25,13 +25,22 @@ from .models import WarehouseEvent, WarehouseItem
 Stage, Sale = WarehouseItem.Stage, WarehouseItem.Sale
 
 # ---------------------------------------------------------------- layout
-ZONES = (
+# Two floors. Donated items go to Floor 1; everything ReOrbit bought (from members or ReMakers)
+# goes to Floor 2. Each floor has the same five areas, so a zone is floor + area: "1A" is
+# Floor 1, Furniture hall. A bin reads 1A-03-2 (zone, rack, level). The admin screens read this
+# layout from the server (layout() below), so this is the only place it is defined.
+FLOORS = (
+    ("1", "Floor 1", "Donated items"),
+    ("2", "Floor 2", "Bought stock"),
+)
+AREAS = (
     ("A", "Furniture hall", 60),
     ("B", "Home & kitchen", 48),
     ("C", "Textiles & clothing", 56),
     ("D", "Electronics & books", 36),
     ("E", "Sports & misc", 24),
 )
+ZONES = tuple((f"{floor}{area}", name, cap) for floor, _f, _n in FLOORS for area, name, cap in AREAS)
 ZONE_CAPACITY = {key: cap for key, _name, cap in ZONES}
 CATEGORY_ZONE = {
     "furniture": "A", "home decor": "B", "kitchen": "B", "clothing": "C",
@@ -121,20 +130,44 @@ def allowed_actions(item, rule=None, now=None):
 
 
 # ---------------------------------------------------------------- shelves
-def zone_for(category):
-    return CATEGORY_ZONE.get((category or "").strip().lower(), "E")
+def floor_for(item):
+    """Donations live on Floor 1, bought stock on Floor 2."""
+    return "1" if getattr(item, "donation_id", None) else "2"
 
 
-def assign_shelf(category, exclude_pk=None):
-    """The emptiest rack and level in the category's zone. Refuses when the zone is full."""
-    zone = zone_for(category)
+def zone_for(category, floor="2"):
+    return f"{floor}{CATEGORY_ZONE.get((category or '').strip().lower(), 'E')}"
+
+
+def layout():
+    """The floor plan for the admin screens: floors, their zones, rack sizes and the address."""
+    from apps.core.buyers import reorbit_address_data
+
+    a = reorbit_address_data()
+    address = ", ".join(x for x in ((a or {}).get("line1"), (a or {}).get("line2"), (a or {}).get("city"),
+                                     (a or {}).get("pincode")) if x) if a else ""
+    return {
+        "floors": [
+            {"key": f, "name": name, "note": note,
+             "zones": [{"key": f"{f}{area}", "area": area, "name": zname, "capacity": cap}
+                       for area, zname, cap in AREAS]}
+            for f, name, note in FLOORS
+        ],
+        "racks": RACKS, "levels": LEVELS, "qc_bays": QC_BAYS,
+        "address": address,
+    }
+
+
+def assign_shelf(category, exclude_pk=None, floor="2"):
+    """The emptiest rack and level in the category's zone on that floor. Refuses when the zone is full."""
+    zone = zone_for(category, floor)
     taken = WarehouseItem.objects.filter(zone=zone, warehouse_status__in=(Stage.STORED, Stage.ASSIGNED))
     if exclude_pk:
         taken = taken.exclude(pk=exclude_pk)
     capacity = ZONE_CAPACITY[zone]
     if taken.count() >= capacity:
         raise WarehouseError(
-            f"Zone {zone} is full ({capacity} spaces). Free a space before putting this away.",
+            f"Zone {zone} (Floor {zone[0]}) is full ({capacity} spaces). Free a space before putting this away.",
             code="ZONE_FULL", status=409,
         )
     used = {(r, lvl): n for r, lvl, n in taken.values_list("rack", "level").annotate(n=Count("pk"))}
@@ -224,7 +257,7 @@ def _take_off_sale(item):
 
 # ---------------------------------------------------------------- the actions
 def _put_away(item, admin, payload, now):
-    _place(item, assign_shelf(item.category, item.pk))
+    _place(item, assign_shelf(item.category, item.pk, floor_for(item)))
     item.warehouse_status, item.stored_at = Stage.STORED, now
     log(item, "Stored on shelf", f"Location {item.bin} · Admin", "good", admin, now)
 
@@ -325,7 +358,7 @@ def _snooze(item, admin, payload, now):
 
 
 def _receive_back(item, admin, payload, now):
-    spot = assign_shelf(item.category, item.pk)
+    spot = assign_shelf(item.category, item.pk, floor_for(item))
     _place(item, spot)
     item.warehouse_status, item.sale_status, item.condition = Stage.STORED, Sale.NOT_LISTED, "Good"
     item.refurb_remaker = item.refurb_assigned_at = item.refurb_due_at = None
@@ -518,14 +551,14 @@ def _move_target(item, raw, errors):
     zone = str(raw.get("zone") or "").upper()
     rack, level = _whole(raw.get("rack"), 1, RACKS), _whole(raw.get("level"), 1, LEVELS)
     if zone not in ZONE_CAPACITY or rack is None or level is None:
-        errors["location"] = [f"Choose a zone (A–E), a rack (1–{RACKS}) and a level (1–{LEVELS})."]
+        errors["location"] = [f"Choose a zone (1A–2E: floor and area), a rack (1–{RACKS}) and a level (1–{LEVELS})."]
         return None
     if zone != item.zone:
         used = WarehouseItem.objects.filter(
             zone=zone, warehouse_status__in=(Stage.STORED, Stage.ASSIGNED)
         ).exclude(pk=item.pk).count()
         if used >= ZONE_CAPACITY[zone]:
-            errors["location"] = [f"Zone {zone} is full."]
+            errors["location"] = [f"Zone {zone} (Floor {zone[0]}) is full."]
             return None
     return zone, f"{rack:02d}", level
 
@@ -566,6 +599,74 @@ def donation_completed(donation, ngo):
     _clear_place(item)
     item.save()
     log(item, "Donated", f"{ngo} · Donation completed", "neutral", at=now)
+
+
+# ---------------------------------------------------------------- stock the team bought on the marketplace
+PURCHASE_CONDITION = {
+    "new": "Like new", "like new": "Like new", "excellent": "Like new",
+    "very good": "Good", "good": "Good", "refurbished": "Good", "fair": "Fair",
+}
+
+
+def purchase_ref(order, line):
+    return f"{order.public_id}-L{line.pk}"
+
+
+def receive_purchase(order):
+    """An order the ReOrbit team placed on the marketplace (Admin › Buy Products) was delivered.
+    Each thing bought arrives at the dock as bought stock: put away, it goes to Floor 2.
+    Safe to call twice: a line that already arrived is skipped. Returns the new lots."""
+    if not order.buyer_admin_id or order.seller_type not in ("user", "remaker"):
+        return []  # only team purchases from members or ReMakers; ReOrbit's own store is already ours
+    seller = order.seller_user if order.seller_type == "user" else order.seller_remaker
+    if seller is None:
+        return []
+    city = getattr(getattr(seller, "profile", None), "city", "") or ""
+    sub = seller.email if order.seller_type == "user" else f"“{getattr(seller, 'username', '') or seller.full_name}”"
+    made = []
+    lines = order.lines.select_related("item__category", "remaker_product__category")
+    for ln in lines:
+        ref = purchase_ref(order, ln)
+        if WarehouseItem.objects.filter(purchase_ref=ref).exists():
+            continue
+        src = ln.item or ln.remaker_product
+        category = getattr(getattr(src, "category", None), "name", "") or "Other"
+        raw = (getattr(ln.item, "condition", "") or "") if ln.item_id else "Like new"
+        condition = PURCHASE_CONDITION.get(raw.strip().lower(), "Good")
+        item = WarehouseItem.objects.create(
+            title=ln.title[:150], category=category[:100], quantity=ln.qty, condition=condition,
+            source_user=seller if order.seller_type == "user" else None,
+            source_remaker=seller if order.seller_type == "remaker" else None,
+            source_name=seller.full_name, source_sub=sub[:150], source_city=city,
+            purchase_ref=ref, cost_price=ln.line_total, list_price=ln.unit_price, original_price=ln.unit_price,
+            photo=ln.cover or "", zone="DOCK", rack="01", level=1,
+        )
+        log(item, "Received at warehouse",
+            f"Bought on the marketplace from {seller.full_name} · Order {order.public_id}", "good",
+            order.buyer_admin)
+        made.append(item)
+    if made:
+        notify(order.buyer_admin, "Your purchase is at the warehouse",
+               f"{order.public_id}: {len(made)} item{'s' if len(made) > 1 else ''} arrived at the receiving dock. "
+               "Put it away to store it on Floor 2.",
+               module="warehouse", target_url=f"/admin-warehouse/{made[0].public_id}",
+               ref_type="warehouse_item", ref_id=made[0].public_id)
+    return made
+
+
+def on_purchase_returned(order):
+    """A team purchase was returned to its seller: its lots leave the warehouse (unless already sold on)."""
+    now = timezone.now()
+    for item in WarehouseItem.objects.select_for_update().filter(purchase_ref__startswith=f"{order.public_id}-L"):
+        if item.warehouse_status in (Stage.RELEASED, Stage.ASSIGNED):
+            continue  # already gone, or already sold to someone else
+        _take_off_sale(item)
+        item.warehouse_status, item.sale_status = Stage.RELEASED, Sale.NOT_LISTED
+        item.released_at, item.given_to = now, "Returned to seller"
+        item.listed_at = item.promoted_until = item.snoozed_until = None
+        _clear_place(item)
+        item.save()
+        log(item, "Returned to seller", f"Order {order.public_id} was returned and refunded", "neutral", at=now)
 
 
 def on_store_sale(store, order):

@@ -717,6 +717,11 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
 
             wallet.credit_delivered_order(o)  # the seller earns the item subtotal (held for the return window)
             vouchers.on_order_delivered(o)  # the buyer's Orbit Points; never fails the delivery
+            if o.buyer_admin_id:
+                # bought by the ReOrbit team: it arrives at the warehouse dock (Floor 2 once put away)
+                from apps.warehouse import services as warehouse  # local import: warehouse reads orders too
+
+                warehouse.receive_purchase(o)
         if actor_kind == "admin":
             audit(actor, f"order.{action}", "order", o.public_id, before={"status": before}, after={"status": to}, ip=ip)
         _notify_buyer(o, f"Order {to.lower()}", f"{o.public_id} is {to.lower()}." + (f" {detail}" if to == "Shipped" else ""))

@@ -76,6 +76,15 @@ def donation_data(d, request):
                     if d.admin_points is not None or d.admin_voucher_amount is not None else None),
         "ngo": d.ngo or None, "certificate_id": d.certificate_id or None,
         "certificate_url": media_url(request, d.certificate_file.name) if d.certificate_file else None,
+        # everything the certificate prints, worked out by the server (rate from Settings › Platform)
+        "certificate": ({
+            "name": d.donor.full_name,
+            "quantity": d.effective_quantity,
+            "weight_kg": float(d.weight_kg),
+            "co2_kg": float(rewards.co2_saved(d.weight_kg or 0)),
+            "points": d.reward_points or 0,
+            "issued_at": d.completed_at or d.distributed_at,
+        } if d.certificate_id else None),
         "reject_reason": d.reject_reason, "cancel_reason": d.cancel_reason,
         "reward": {"points": d.reward_points, "voucher": voucher_brief(d.reward_voucher)},
         "voucher_min": rewards.VOUCHER_MIN,  # an accepted donation earns at least this voucher

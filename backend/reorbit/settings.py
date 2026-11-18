@@ -266,12 +266,32 @@ STORAGES = {
 
 
 # MEDIA / USER UPLOADS
-# Local filesystem currently.
-# Replace default storage with cloud storage before live uploads.
+# Development: files are saved in backend/uploads/ and served at /uploads/.
+# Production (DJANGO_ENV=production): files go to Cloudinary (apps/core/cloudinary_storage.py),
+# so they survive redeploys. Set CLOUDINARY_URL (cloudinary://<key>:<secret>@<cloud_name>), or the
+# three CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET values.
 
 
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = BASE_DIR / "uploads"
+
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development").strip().lower()
+CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "").strip()
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "").strip()
+CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY", "").strip()
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET", "").strip()
+CLOUDINARY_FOLDER = os.getenv("CLOUDINARY_FOLDER", "reorbit").strip().strip("/")
+CLOUDINARY_READY = bool(CLOUDINARY_URL or (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET))
+# On by default in production; USE_CLOUDINARY=True/False overrides (e.g. to try it locally).
+USE_CLOUDINARY = env_bool("USE_CLOUDINARY", DJANGO_ENV == "production")
+
+if USE_CLOUDINARY:
+    if not CLOUDINARY_READY:
+        raise ImproperlyConfigured(
+            "Cloudinary is on (DJANGO_ENV=production or USE_CLOUDINARY=True) but its keys are missing. "
+            "Set CLOUDINARY_URL, or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET."
+        )
+    STORAGES["default"] = {"BACKEND": "apps.core.cloudinary_storage.CloudinaryMediaStorage"}
 
 
 
