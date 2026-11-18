@@ -1,0 +1,189 @@
+/* =========================================================
+   Phones and tablets: every button big enough for a thumb, nothing wider than the screen.
+
+   - Touch targets are at least 40px (Apple and Google ask for 44/48; 40 keeps the existing
+     look on small icon rows). Icons stay the same size, only the tappable box grows.
+   - Small text links (footer FAQ, Terms...) get an invisible padding so a thumb hits them,
+     with a negative margin so the layout doesn't move.
+   - "html body" in front: page styles load later (per route), this must still win.
+   ========================================================= */
+
+@media (max-width: 768px), (pointer: coarse) {
+  /* ---------- round / square icon buttons ---------- */
+  html body .user-header-icon-button,
+  html body .remaker-icon-button,
+  html body .remaker-stat-arrow,
+  html body .ad-icon-btn,
+  html body .ad-page-btn,
+  html body .nt-icon-btn,
+  html body .unt-x,
+  html body .rp-icon-btn,
+  html body .hp-refresh,
+  html body .mk-heart,
+  html body .profile-camera-button,
+  html body .ushp-sum-remove,
+  html body .footer-socials a,
+  html body .remaker-footer .remaker-footer-socials a,
+  html body .pd-qty button,
+  html body .wl-mini button,
+  html body .rpf-slot-actions button,
+  html body .rw-ticket-code button,
+  html body .rm-view button,
+  html body .rp-seg button,
+  html body .sh-steps button,
+  html body .sod-copy {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  /* the header icons sit in a tight row: 40px, but keep their circles round */
+  html body .user-header-icon-button {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+  /* checkout quantity steppers */
+  html body .ckp-step button {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  /* star picker on the ReMaker help / review forms */
+  html body button[aria-label$=" star"],
+  html body button[aria-label$=" stars"] {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* ---------- small text links: bigger hit area, same layout ---------- */
+  html body .footer-column a,
+  html body .footer-bottom a,
+  html body .remaker-footer .remaker-footer-column a,
+  html body .remaker-footer .remaker-footer-bottom a,
+  html body .admin-footer-column a,
+  html body .admin-footer-bottom a {
+    display: inline-block;
+    padding: 12px 8px;
+    margin: -12px -8px;
+  }
+  /* more room between the stacked links so the bigger hit areas don't overlap */
+  html body .footer-column,
+  html body .remaker-footer .remaker-footer-column,
+  html body .admin-footer-column {
+    gap: 24px;
+  }
+  html body .footer-column h4,
+  html body .remaker-footer .remaker-footer-column h4,
+  html body .admin-footer-column h4 {
+    margin-bottom: 0;
+  }
+  html body .dn-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 6px;
+    margin: -10px -6px;
+  }
+}
+
+/* ---------- things wider than a phone ---------- */
+@media (max-width: 640px) {
+  /* Sales & orders bar (member + ReMaker): "More…" and the search share one full row */
+  html body .so-bar-right {
+    flex: 1 1 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+  html body .so-bar-right .so-more-select {
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+  html body .so-search-member {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* ReMaker transactions: the "All / Earnings / Payouts" filter goes under the title */
+  html body .rod-panel-head:has(.wlt-method) {
+    flex-wrap: wrap;
+  }
+  html body .wlt-method {
+    flex: 1 1 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  html body .wlt-method button {
+    min-height: 40px;
+    min-width: 0;
+  }
+
+  /* admin product / payout tables: scroll sideways inside their panel, never the page */
+  html body .apr-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  html body .apr-table .apr-prod b {
+    display: block;
+    max-width: 52vw;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ---------- no hover on a touch screen: show what a mouse would reveal ---------- */
+@media (hover: none), (max-width: 768px) {
+  /* product photo tools (replace / make cover / remove) were hover-only, so invisible on phones */
+  html body .rpf-slot .rpf-slot-actions {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    justify-content: flex-end;
+    gap: 4px;
+    opacity: 1;
+    transform: none;
+  }
+  html body .rpf-slot .rpf-slot-actions button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  }
+  /* the small photo tiles (2nd–5th photo) are ~100px wide: three buttons share the width */
+  html body .rpf-slot:not(.is-cover) .rpf-slot-actions {
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    justify-content: center;
+    gap: 3px;
+  }
+  html body .rpf-slot:not(.is-cover) .rpf-slot-actions button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: 36px;
+    height: 34px;
+    min-height: 34px;
+  }
+  /* home page ReMaker cards: the caption that slides in on hover */
+  html body .remaker-card .showcase {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  /* segmented chips (admin reviews / testimonials): keep each label on one line and let the
+     strip scroll, instead of squeezing "To review" onto two lines */
+  html body .arv-chips {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  html body .arv-chips button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 36px;
+  }
+}

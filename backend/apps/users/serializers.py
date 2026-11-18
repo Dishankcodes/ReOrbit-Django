@@ -41,12 +41,38 @@ class UserProfileSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
         return validate_flag_dict(value, "privacy_preferences")
 
 
+EMPTY_PROFILE = {
+    "profile_image": None,
+    "bio": "",
+    "address": "",
+    "city": "",
+    "state": "",
+    "phone": "",
+    "pincode": "",
+    "notification_preferences": {},
+    "privacy_preferences": {},
+    "environmental_impact": 0,
+    "total_uploads": 0,
+    "total_sales": 0,
+    "total_purchases": 0,
+    "orbit_points": 0,
+}
+
+
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
     has_password = serializers.SerializerMethodField()
 
     def get_has_password(self, obj):
         return bool(obj.password)
+
+    def to_representation(self, instance):
+        """A user saved without a profile row (old data, a half-finished import) still gets an
+        empty profile, so screens that read user.profile.city never crash on null."""
+        data = super().to_representation(instance)
+        if data.get("profile") is None:
+            data["profile"] = EMPTY_PROFILE.copy()
+        return data
 
     class Meta:
         model = Users
