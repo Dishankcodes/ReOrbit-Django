@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import AdminForgotPassword from "./AdminForgotPassword";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
@@ -45,6 +46,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [forgot, setForgot] = useState(() => new URLSearchParams(window.location.search).get("forgot") === "1");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -199,6 +201,19 @@ export default function AdminLogin() {
           <h1>Welcome back.</h1>
           <p className="al-sub">Sign in to manage the ReOrbit platform.</p>
 
+          {forgot ? (
+            <AdminForgotPassword
+              initialEmail={email}
+              onBack={() => setForgot(false)}
+              onDone={(msg, mail) => {
+                setForgot(false);
+                setEmail(mail);
+                setPassword("");
+                setError("");
+                setSuccess(msg);
+              }}
+            />
+          ) : (
           <form className="al-form" onSubmit={handleSubmit} noValidate>
             {error && (
               <div className="al-alert" role="alert">
@@ -252,6 +267,9 @@ export default function AdminLogin() {
                   {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
+              <button type="button" className="al-link al-forgot" onClick={() => setForgot(true)}>
+                Forgot password?
+              </button>
             </div>
 
             <button type="submit" className="al-submit" disabled={loading}>
@@ -266,6 +284,7 @@ export default function AdminLogin() {
               )}
             </button>
           </form>
+          )}
 
           <div className="al-secure">
             <ShieldCheck size={15} /> Secure administrator access

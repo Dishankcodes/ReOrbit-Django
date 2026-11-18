@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { apiRequest } from "../../../../api/api";
+import { signOut } from "../../../../api/auth";
 
 import { salesApi } from "../../../../api/orders";
 import { inr as formatPrice } from "../../../../shared/components/WalletParts";
@@ -7,11 +10,19 @@ import { useWallet } from "../../../../shared/data/walletStore";
 import { Card } from "./Controls";
 import ConfirmModal from "./ConfirmModal";
 
-/* Closing an account never happens in one click. Open orders and unpaid
-   earnings are shown first, and deleting needs a typed confirmation. */
+/* Closing an account never happens in one click. Open orders and unpaid earnings are shown first,
+   deleting needs a typed confirmation, and the account can be brought back by signing in within 30 days. */
 export default function DangerSection({ notify }) {
+  const navigate = useNavigate();
   const { summary } = useWallet();
   const [counts, setCounts] = useState(null);
+  const [server, setServer] = useState(null); /* { blockers, grace_days } from the server */
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    apiRequest("/remakers/me/delete/")
+      .then((r) => setServer(r.data))
+      .catch(() => setServer({ blockers: [], grace_days: 30 }));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -31,7 +42,23 @@ export default function DangerSection({ notify }) {
   const openOrders = (c.Confirmed || 0) + (c.Packed || 0) + (c.Shipped || 0);
   const b = summary?.balances;
   const money = b ? b.available + b.pending + b.in_review : 0;
-  const blocked = openOrders > 0 || money > 0;
+  const serverBlockers = server?.blockers || [];
+  const blocked = openOrders > 0 || money > 0 || serverBlockers.length > 0;
+  const days = server?.grace_days || 30;
+
+  const remove = async () => {
+    setBusy(true);
+    try {
+      const r = await apiRequest("/remakers/me/delete/", { method: "POST", body: { confirm: typed } });
+      signOut();
+      navigate("/remakers-home", { replace: true, state: { notice: r.message } });
+    } catch (ex) {
+      if (ex.errors?.blockers) setServer((x) => ({ ...x, blockers: ex.errors.blockers }));
+      notify(ex.message || "Your account wasn't deleted.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const close = () => {
     setModal(null);
@@ -78,35 +105,25 @@ export default function DangerSection({ notify }) {
       </Card>
 
       <Card
-        title="Deactivate my studio"
-        note="A break, not a goodbye. Your studio is hidden and you can come back any time."
-      >
-        <ul className="set-list">
-          <li>Your products and portfolio are hidden from the marketplace.</li>
-          <li>Your reviews, followers and order history are kept.</li>
-          <li>Sign in again to turn everything back on.</li>
-        </ul>
-        <button
-          type="button"
-          className="set-btn ghost"
-          onClick={() => setModal("deactivate")}
-        >
-          Deactivate studio
-        </button>
-      </Card>
-
-      <Card
         title="Delete my account"
         tone="danger"
-        note="This cannot be undone."
+        note={`Your studio is hidden straight away and deleted for good after ${days} days.`}
       >
         <ul className="set-list">
-          <li>Your studio, products, portfolio and followers are removed.</li>
-          <li>Your reviews from customers are deleted with the products.</li>
+          <li>Changed your mind? Sign in within {days} days and everything comes back.</li>
+          <li>Your studio, products and portfolio leave the marketplace at once.</li>
           <li>
-            We keep invoices and tax records for as long as the law requires.
+            After {days} days your name, contact details, photos and followers are removed. Orders and payouts stay
+            on record without your personal details.
           </li>
         </ul>
+        {serverBlockers.length > 0 && (
+          <ul className="set-list set-blockers">
+            {serverBlockers.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+        )}
         <button
           type="button"
           className="set-btn danger"
@@ -122,42 +139,18 @@ export default function DangerSection({ notify }) {
         )}
       </Card>
 
-      {modal === "deactivate" && (
-        <ConfirmModal
-          title="Deactivate your studio?"
-          confirmLabel="Deactivate"
-          onConfirm={() => {
-            close();
-            notify(
-              "We got your request. We will email you to confirm deactivation.",
-            );
-          }}
-          onClose={close}
-        >
-          <p>
-            Your studio will be hidden until you sign in again. Customers cannot
-            place new orders in the meantime.
-          </p>
-        </ConfirmModal>
-      )}
-
       {modal === "delete" && (
         <ConfirmModal
-          title="Delete your account for good?"
-          confirmLabel="Delete my account"
+          title="Delete your account?"
+          confirmLabel={busy ? "Deleting…" : "Delete my account"}
           tone="danger"
-          disabled={typed.trim() !== "DELETE"}
-          onConfirm={() => {
-            close();
-            notify(
-              "We got your request. We will email you to finish deleting your account.",
-            );
-          }}
+          disabled={busy || typed.trim().toUpperCase() !== "DELETE"}
+          onConfirm={remove}
           onClose={close}
         >
           <p>
-            This removes your studio, products and portfolio. Type <b>DELETE</b>{" "}
-            to confirm.
+            Your studio is hidden now and deleted for good in {days} days. Sign in before then to keep it. Type{" "}
+            <b>DELETE</b> to confirm.
           </p>
           <input
             type="text"

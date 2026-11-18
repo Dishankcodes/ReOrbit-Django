@@ -74,3 +74,21 @@ def send(to, subject, **parts):
         except Exception:  # noqa: BLE001
             log.exception("email to %s failed: %s", addr, subject)
     return sent
+
+
+def security_notice(account, what, when=None, cta=None):
+    """Email the account owner about a security change ("Your password was changed", a new sign-in...).
+    These always go out: they are how someone notices that it wasn't them."""
+    from django.utils import timezone
+
+    first = (getattr(account, "full_name", "") or "there").split()[0]
+    at = timezone.localtime(when or timezone.now())
+    return send(
+        account.email, f"ReOrbit security: {what}",
+        heading=f"Hi {first}, {what[0].lower() + what[1:]}",
+        intro="This is a security notice for your ReOrbit account. If this was you, there's nothing to do.",
+        facts=[("What happened", what), ("When", f"{at:%d %b %Y, %I:%M %p}"), ("Account", account.email)],
+        cta=cta,
+        footer="Wasn't you? Reset your password straight away with “Forgot password” on the sign-in page, "
+               "and contact ReOrbit support.",
+    )

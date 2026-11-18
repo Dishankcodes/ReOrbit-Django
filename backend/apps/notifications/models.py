@@ -32,7 +32,11 @@ class Announcement(PublicIdModel):
         "admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="announcements"
     )
     sent_by_name = models.CharField(max_length=120, blank=True)
+    # taken back after sending: the messages were removed from every inbox (kept here as a record)
+    recalled_at = models.DateTimeField(null=True, blank=True)
+    recalled_by_name = models.CharField(max_length=120, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         db_table = "announcements"

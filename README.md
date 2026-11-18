@@ -1,274 +1,99 @@
-# 🌍 ReOrbit – Every Item Deserves a New Orbit
+<p align="center">
+  <img src="frontend/public/images/brand/reorbit-globe-192.png" width="96" alt="ReOrbit" />
+</p>
 
-> **A Sustainable Marketplace for Reusable & Upcycled Products**
+<h1 align="center">ReOrbit</h1>
+<p align="center"><b>Reuse · Recreate · Reimagine</b><br/>A circular marketplace where pre-loved things get a second life.</p>
 
-ReOrbit is a full-stack web platform built with **Django** that connects people with reusable items to artists, buyers, and environmentally conscious individuals. Instead of allowing usable products to become waste, ReOrbit gives them a **second life** through resale, donation, exchange, refurbishment, and creative upcycling.
-
-The platform bridges the gap between **sellers, artists, buyers, and administrators**, creating a circular economy where every item can continue its journey instead of ending up in landfills.
-
----
-
-# 📖 About the Project
-
-Millions of reusable products are discarded every year despite still having value. ReOrbit aims to solve this problem by providing a digital ecosystem where users can:
-
-- Sell reusable items
-- Donate items for refurbishment
-- Exchange products with other users
-- Purchase second-life products
-- Connect with talented artists
-- Support sustainable living
-
-Artists can transform old products into unique creations, while administrators ensure quality, transparency, and smooth platform operations.
+<p align="center">
+  <a href="https://dishankcodes-reorbit.vercel.app/">Live site</a> ·
+  <a href="https://dishankcodes-reorbit.vercel.app/remakers">ReMakers</a>
+</p>
 
 ---
 
-# 🎯 Objectives
+## What ReOrbit is
 
-- Promote sustainable consumption.
-- Reduce unnecessary waste generation.
-- Encourage product reuse and refurbishment.
-- Support artists by providing a marketplace for upcycled products.
-- Build a trusted community-driven circular economy.
-- Reward users for environmentally responsible actions.
+ReOrbit connects three kinds of people around the life of an everyday item:
 
----
+| Side | What they do |
+| --- | --- |
+| **Members** | Sell things they no longer use, buy pre-loved finds, donate items for free pickup, review orders and earn Orbit Points, badges and vouchers. |
+| **ReMakers** | Makers and artists who buy rescued pieces, turn them into new creations and sell them from their own studio page, with followers, reviews and analytics. |
+| **ReOrbit team (admin)** | Looks after accounts, listings, orders, donations, pickups, the warehouse, payouts, rewards, content and support, with role-based access for every team member. |
 
-# ✨ Key Features
+## How an item moves
 
-## 👤 Authentication & Account Management
-
-- Secure User Registration & Login
-- Email Verification
-- Password Reset
-- Profile Management
-- Role-Based Access Control
-- Secure Authentication System
-
----
-
-## ♻️ Item Management
-
-- Upload reusable items
-- AI Category Detection _(planned)_
-- AI Price Recommendation _(planned)_
-- Item Verification
-- Item Approval Workflow
-- Item Status Tracking
-- QR Code Tracking _(planned)_
-- Image Gallery
-- Product Details
-- Product Search & Filtering
-- Wishlist Management
-
----
-
-## 🛒 Marketplace
-
-- Buy reusable products
-- Sell reusable products
-- Donate products
-- Exchange items
-- Artist Marketplace
-- Refurbished Product Store
-- Custom Artist Orders
-- Product Ratings & Reviews
-
----
-
-## 🎨 Artist Features
-
-- Artist Profile
-- Portfolio Showcase
-- Purchase reusable items
-- Sell refurbished/upcycled products
-- Earnings Dashboard
-- Customer Reviews
-- Accept Custom Projects
-
----
-
-## 🚚 Order & Warehouse Management
-
-- Pickup Request Management
-- Warehouse Tracking
-- Refurbishment Workflow
-- Order Tracking
-- Inventory Management
-- Product Listing Management
-
----
-
-## 💬 Communication
-
-- User ↔ Artist Chat
-- Notifications
-- Review & Rating System
-
----
-
-## 📊 Dashboard & Analytics
-
-### User Dashboard
-
-- Uploaded Items
-- Purchased Products
-- Sold Products
-- Donations
-- Exchanges
-- Orbit Points
-- Wishlist
-- Order History
-- Environmental Impact
-- Personal Statistics
-
-### Artist Dashboard
-
-- Sales Analytics
-- Earnings
-- Portfolio Statistics
-- Product Performance
-- Customer Feedback
-
-### Admin Dashboard
-
-- User Statistics
-- Artist Management
-- Warehouse Overview
-- Transaction Monitoring
-- Reports & Analytics
-- Platform Performance
-
----
-
-## 🎁 Rewards System
-
-- Orbit Points
-- Achievement Badges
-- Sustainability Certificates
-- Offers & Rewards _(planned)_
-
----
-
-# 👥 User Roles
-
-| User Type          | Role                 | Responsibilities                                                                                                                                                                                           |
-| ------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Administrator**  | System Administrator | Manage users and artists, verify items, approve products, manage warehouse operations, oversee refurbishment processes, monitor transactions, handle reports, and maintain overall platform functionality. |
-| **User / Seller**  | Primary User         | Register, upload reusable items, buy, sell, donate, or exchange products, track orders, earn Orbit Points, manage wishlist, view dashboard analytics, chat with artists, and provide ratings and reviews.  |
-| **Artist / Buyer** | Secondary User       | Manage artist profile, purchase reusable items, create upcycled products, maintain portfolio, sell refurbished products, track earnings, receive customer reviews, and accept custom projects.             |
-| **Guest User**     | Visitor              | Browse products, explore the platform before registration, search products, view artist profiles, and read platform reviews.                                                                               |
-
----
-
-# 🔄 Platform Workflow
-
-```text
-User Uploads Item
-        │
-        ▼
-Item Verification
-        │
-        ▼
-Admin Approval
-        │
-        ▼
-Available on Marketplace
-        │
- ┌──────┼───────────┐
- │      │           │
- ▼      ▼           ▼
- Buy   Donate   Exchange
- │      │
- ▼      ▼
-Artist Purchases
-        │
-        ▼
-Refurbishment / Upcycling
-        │
-        ▼
-Listed for Sale
-        │
-        ▼
-Customer Purchase
+```
+List / donate  →  ReOrbit pickup (optional)  →  Order and delivery  →  Payment held  →  Clears to the seller's wallet
+                                   ↘ donation  →  warehouse  →  ReOrbit store
 ```
 
----
+- **Selling.** A member or ReMaker lists an item with photos, condition, price, city and pincode. It goes live straight away. The team can flag it, switch it off or suggest a fairer price.
+- **Delivery.** The seller ships it themselves, or picks **Managed by ReOrbit**: they pack it, ask for a pickup, and ReOrbit's pickup team collects it and delivers it.
+- **Payment.** Buyers pay online (Razorpay) or by cash on delivery. A seller's money is held until delivery, waits 7 days for returns, then clears to their wallet for withdrawal.
+- **Donations.** A member offers items and the team reviews them. A free pickup is booked and the items reach the warehouse. The donor gets Orbit Points, sometimes a voucher, and a downloadable certificate.
+- **After delivery.** Buyers have 7 days to return an order. They can review the product once and the seller once. Reviews can be reported and moderated.
 
-# 🏗️ Technology Stack
+## Feature tour
 
-### Backend
+**Members**
+- Marketplace with search, filters (category, condition, price, seller type), wishlist, cart and checkout.
+- Voucher and coupon codes at checkout.
+- Selling: listings with real views and saves, sales, ReOrbit pickup or self-shipping, wallet and payouts.
+- Donations with pickup scheduling, history and certificates.
+- Orbit Points, levels (Seedling → Champion), badges shown on their public seller profile, rewards and vouchers.
+- Reviews, messages with sellers, reports with answers from the team, support tickets.
+- A dashboard whose sections load as you scroll.
 
-- Django
-- Django REST Framework
+**ReMakers**
+- A studio page with portfolio, followers, ratings and a "rescued" count (pieces bought from members).
+- Product management, sales and order handling, the same ReOrbit pickup, payouts.
+- Analytics: views, saves, orders, revenue, traffic sources, best hours and a conversion funnel.
+- Coupon codes at checkout. ReMakers can follow other ReMakers.
 
-### Frontend
+**ReOrbit team**
+- A dashboard plus modules for users, ReMakers, products, orders, returns, donations, pickups and pickup teams, warehouse, ReOrbit's own store, earnings and payouts, rewards and vouchers, reviews and complaints, support tickets and website messages, notifications and announcements, content, and settings.
+- Content covers banners, FAQs, versioned policies, Home spotlights, testimonials and featured ReMakers.
+- A super admin creates roles and gives each team member view or edit access per module.
+- Every sensitive action is written to an audit log.
 
-- HTML5
-- CSS3
-- Bootstrap
-- JavaScript
+## Tech stack
 
-### Database
+| Layer | Stack |
+| --- | --- |
+| Frontend | React 19, Vite 6, React Router 7, lucide-react, Recharts |
+| Backend | Django 6, Django REST Framework, SimpleJWT, PostgreSQL |
+| Payments | Razorpay (online) and cash on delivery |
+| Email | SMTP or Mailjet (OTP codes, receipts, branded emails) |
+| Auth | Email and password with OTP for sign-up and password reset, Google sign-in |
 
-- PostgreSQL
+## Project layout
 
-### Additional Technologies
-
-- REST APIs
-- JWT Authentication _(planned)_
-- AI Integration _(Future Enhancement)_
-
----
-
-# 📂 Project Structure
-
-```text
-ReOrbit/
-│
-├── backend/
-│   ├── authentication/
-│   ├── users/
-│   ├── artists/
-│   ├── products/
-│   ├── marketplace/
-│   ├── warehouse/
-│   ├── dashboard/
-│   ├── chat/
-│   ├── rewards/
-│   ├── api/
-│   └── manage.py
-│
-├── frontend/
-│
-├── media/
-├── static/
-├── templates/
-│
-└── README.md
+```
+backend/
+  reorbit/            settings and URLs
+  apps/
+    accounts/ users/ remakers/ admins/   accounts, profiles, permissions
+    listings/ orders/ payments/ earnings/ pickups/
+    donations/ warehouse/ rewards/ reviews/ complaints/
+    social/ messaging/ notifications/ support/ content/ analytics/ platform/ core/
+frontend/
+  src/
+    user/  remaker/  admin/   one app per side
+    shared/                    components, hooks and helpers used by all three
+    api/                       API client
 ```
 
----
+## Accounts and privacy
 
-# 🚀 Future Enhancements
+- Account status is enforced by the server: active, suspended or blocked. A suspended or blocked account can still reach support.
+- **Deleting an account** starts a 30-day grace period. Signing in again within 30 days cancels the deletion. After that, the account is closed and personal details are removed. Orders, payments and donations are kept for records, without personal details.
 
-- AI Price Recommendation
-- AI Category Detection
-- QR-Based Item Tracking
-- Real-Time Notifications
-- Live Chat
-- Digital Wallet
-- Carbon Footprint Calculator
-- Pickup Route Optimization
-- Mobile Application
-- Recommendation System
-- Payment Gateway Integration
-- Multi-language Support
+## Brand
+
+The ReOrbit globe-and-orbit mark lives in `frontend/public/images/brand/`.
 
 ---
 
-# 🌱 Why ReOrbit?
-
-ReOrbit is more than a marketplace—it's a platform dedicated to promoting sustainability through reuse, refurbishment, and responsible consumption. By connecting users, artists, and administrators, it creates opportunities for products to gain a second life while supporting creative talent and reducing environmental impact.
-
-**Together, we can ensure that every item deserves a new orbit.**
+<p align="center">Made with care for a circular future 🌱</p>

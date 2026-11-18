@@ -396,6 +396,18 @@ class ReMakerCouponTests(RewardsBase):
         with self.assertRaises(rewards.VoucherError):
             rewards.check(self.maker, "RO-DONATE1", 500)
 
+    def test_remakers_audience_is_any_product_but_only_remaker_accounts(self):
+        rewards.save_offer(offer_body(code="RMK10", kind="code", audience="remakers", usage_limit=5), self.rw)
+        v, d = rewards.check(self.maker, "RMK10", 1000, seller_types={"user"})
+        self.assertGreater(d, 0)
+        with self.assertRaises(rewards.VoucherError):
+            rewards.check(self.buyer, "RMK10", 1000, seller_types={"remaker"})
+        rewards.save_offer(offer_body(code="STORE5", kind="code", applies_to="reorbit"), self.rw)
+        with self.assertRaises(rewards.VoucherError) as cm:
+            rewards.check(self.buyer, "STORE5", 1000, seller_types={"user"})
+        self.assertEqual(cm.exception.code, "VOUCHER_PRODUCTS")
+        rewards.check(self.buyer, "STORE5", 1000, seller_types={"platform"})
+
     def test_points_and_donor_coupons_are_members_only(self):
         rewards.save_offer(offer_body(code="DONORS", kind="code", audience="donors"), self.rw)
         with self.assertRaises(rewards.VoucherError) as cm:

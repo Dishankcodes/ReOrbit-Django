@@ -128,3 +128,32 @@ def warnings_by_target():
         out.setdefault(key, []).append(
             {"at": w.created_at, "message": w.message, "complaintId": w.complaint.public_id, "by": w.sent_by_name})
     return out
+
+
+ACTION_TEXT = {
+    "dismissed": "Reviewed: we didn't find a rule was broken", "resolved": "Handled by our team",
+    "warned": "We warned the account you reported", "suspended": "We suspended the account you reported",
+    "blocked": "We blocked the account you reported", "removedProduct": "We took the listing down",
+    "removedReview": "We removed the review",
+}
+# the team's own words go to the reporter only for these; the others carry what was said to the other side
+NOTE_FOR_REPORTER = ("dismissed", "resolved")
+
+
+def reporter_data(c, request):
+    """What the person who filed the report sees: what they reported, where it stands and the team's answer.
+    Internal notes, the assignee and the other side's details are never included."""
+    try:
+        t = target_data(c, request)
+        target = {"type": c.target_type, "id": t.get("id"), "name": t.get("name"), "image": t.get("image")}
+    except Exception:  # noqa: BLE001  the reported thing may be gone
+        target = {"type": c.target_type, "id": "", "name": c.target_type, "image": None}
+    answer = None
+    if c.status in ("Resolved", "Dismissed"):
+        answer = {"title": ACTION_TEXT.get(c.resolution_action, "Our team closed this report"),
+                  "note": c.resolution_note if c.resolution_action in NOTE_FOR_REPORTER else "",
+                  "at": c.resolved_at}
+    return {"id": c.public_id, "category": c.category, "description": c.description, "status": c.status,
+            "created_at": c.created_at, "target": target, "answer": answer,
+            "updates": [{"label": e.label, "at": e.created_at} for e in c.events.all()
+                        if e.label in ("Complaint filed", "Review started", "Reopened", "Resolved", "Dismissed")]}

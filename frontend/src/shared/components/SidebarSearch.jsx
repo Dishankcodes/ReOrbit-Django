@@ -3,7 +3,8 @@ import { History, Search } from "lucide-react";
 import "./SidebarSearch.css";
 
 /* Menu search for the dark sidebars (member and ReMaker). Same behaviour as the admin one:
-   type to filter every link, Enter opens the first match, Esc clears, "/" focuses the box from anywhere,
+   type to filter every link, ↑/↓ move through the matches (or the recent pages), Enter opens the
+   highlighted one (the first by default), Esc clears, "/" focuses the box from anywhere,
    and focusing the empty box lists the last few pages you opened.
 
    useSidebarSearch(items, { storageKey, pathname, navigate, onPicked }) -> { query, results, box }
@@ -23,6 +24,7 @@ export function useSidebarSearch(items, { storageKey, pathname, navigate, onPick
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [recent, setRecent] = useState(() => readRecent(storageKey));
+  const [hi, setHi] = useState(0); /* the highlighted row for the arrow keys */
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -73,9 +75,22 @@ export function useSidebarSearch(items, { storageKey, pathname, navigate, onPick
     .filter(Boolean)
     .slice(0, 4);
 
+  const list = q ? results : focused ? recentItems : [];
+  const at = list.length ? Math.min(hi, list.length - 1) : -1;
+  const move = (d) => {
+    if (!list.length) return;
+    setHi((at + d + list.length) % list.length);
+  };
+  /* keep the highlighted row on screen */
+  useEffect(() => {
+    if (at < 0) return;
+    document.querySelector(".sbs-kbd, .is-kbd")?.scrollIntoView?.({ block: "nearest" });
+  }, [at, q]);
+
   const open = (item) => {
     navigate(item.path);
     setQuery("");
+    setHi(0);
     inputRef.current?.blur();
     onPicked?.();
   };
@@ -87,11 +102,26 @@ export function useSidebarSearch(items, { storageKey, pathname, navigate, onPick
         ref={inputRef}
         type="search"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setHi(0);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Escape") setQuery("");
-          if (e.key === "Enter" && results[0]) open(results[0]);
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            move(1);
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            move(-1);
+          }
+          if (e.key === "Enter" && list[at]) {
+            e.preventDefault();
+            open(list[at]);
+          }
         }}
+        aria-activedescendant={at >= 0 ? `sbs-opt-${at}` : undefined}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Search menu…"
@@ -103,13 +133,14 @@ export function useSidebarSearch(items, { storageKey, pathname, navigate, onPick
           <span className="sbs-recent-label">
             <History size={11} /> RECENT
           </span>
-          {recentItems.map((item) => {
+          {recentItems.map((item, i) => {
             const Icon = item.icon;
             return (
               <button
                 type="button"
                 key={item.path}
-                className="sbs-recent-item"
+                id={`sbs-opt-${i}`}
+                className={`sbs-recent-item ${at === i ? "sbs-kbd" : ""}`}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   open(item);
@@ -125,5 +156,7 @@ export function useSidebarSearch(items, { storageKey, pathname, navigate, onPick
     </div>
   );
 
-  return { query, results, box, clear: () => setQuery("") };
+  /* sidebars add this class to the matching result row so the arrow keys show where they are */
+  const isHi = (item) => Boolean(q) && at >= 0 && results[at]?.path === item.path;
+  return { query, results, box, isHi, clear: () => setQuery("") };
 }

@@ -88,6 +88,28 @@ class RecordView(APIView):
         viewer = request.user if getattr(request.user, "is_authenticated", False) else None
         mine = viewer.account if viewer and viewer.account_type == "remaker" else None
 
+        if kind == "product" and ref[:4] in ("LST-", "ADI-"):
+            # member listings and ReOrbit store items: one counter on the row
+            from django.db.models import F
+
+            from apps.admins.models import AdminItem
+            from apps.listings.models import Item
+
+            if ref.startswith("LST-"):
+                row = Item.objects.filter(public_id=ref).only("pk", "user_id").first()
+                own = bool(row and viewer and viewer.account_type == "user" and viewer.account.pk == row.user_id)
+                model = Item
+            else:
+                row = AdminItem.objects.filter(public_id=ref).only("pk").first()
+                own = bool(viewer and viewer.account_type == "admin")
+                model = AdminItem
+            if row is None:
+                return fail("We couldn't find that product.", status=404)
+            if own:
+                return ok({"counted": False})
+            model.objects.filter(pk=row.pk).update(view_count=F("view_count") + 1)
+            return ok({"counted": True})
+
         if kind == "product":
             product = RemakerProduct.objects.filter(
                 public_id=ref, deleted_at__isnull=True,

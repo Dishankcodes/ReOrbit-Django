@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BrandMark from "../../shared/components/BrandMark";
 import { signOut } from "../../api/auth";
 import {
   LayoutDashboard,
@@ -17,7 +18,6 @@ import {
   Settings,
   CircleHelp,
   LogOut,
-  Leaf,
   X,
   ChevronRight,
   MessageCircle,
@@ -304,7 +304,7 @@ export default function UserSidebar({
         key={item.path}
         to={item.path}
         end={item.path === "/user-dashboard"}
-        className={() => `user-sidebar-link ${active ? "active" : ""}`}
+        className={() => `user-sidebar-link ${active ? "active" : ""} ${search.isHi(item) ? "is-kbd" : ""}`}
         aria-current={active ? "page" : undefined}
         onClick={handleNavigation}
       >
@@ -334,7 +334,7 @@ export default function UserSidebar({
       <div className="user-sidebar-top">
         <div className="user-sidebar-brand">
           <div className="user-sidebar-brand-icon">
-            <Leaf size={22} strokeWidth={1.8} />
+            <BrandMark size={30} />
           </div>
 
           <div className="user-sidebar-brand-text">

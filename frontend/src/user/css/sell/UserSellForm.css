@@ -380,10 +380,29 @@
   border-color: #b3261e;
 }
 
-.usl-head-actions > .dn-btn:not(.dn-btn--ghost),
-.usl-head-actions > .dn-btn:not(.dn-btn--ghost):visited,
-.usl-head-actions > .dn-btn:not(.dn-btn--ghost):hover,
-.usl-head-actions > .dn-btn:not(.dn-btn--ghost):focus { color: #fff; -webkit-text-fill-color: #fff; }
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):not(.dn-btn--danger),
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):not(.dn-btn--danger):visited,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):not(.dn-btn--danger):hover,
+.usl-head-actions > .dn-btn:not(.dn-btn--ghost):not(.dn-btn--danger):focus { color: #fff; -webkit-text-fill-color: #fff; }
+
+/* Withdraw / Delete: outlined in the theme's warning red, filled on hover */
+.usl-head-actions > .dn-btn--danger {
+  border-color: #e3b5ae;
+  background: #fff;
+  color: #a8433a;
+  -webkit-text-fill-color: #a8433a;
+}
+.usl-head-actions > .dn-btn--danger svg {
+  color: currentColor;
+  stroke: currentColor;
+}
+.usl-head-actions > .dn-btn--danger:hover:not(:disabled) {
+  border-color: #a8433a;
+  background: #a8433a;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 8px 20px rgba(168, 67, 58, 0.22);
+}
 
 /* sell form: what "Managed by ReOrbit" means for the delivery fee */
 .usl-managed-note {

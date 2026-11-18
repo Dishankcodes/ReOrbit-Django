@@ -24,7 +24,7 @@ from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitA
 from apps.core.models import Notification
 from apps.core.pagination import StandardPagination
 from apps.core.responses import fail, ok
-from apps.core.services import mark_read
+from apps.core.services import audit, mark_read
 
 from . import announcements as ann
 from .models import Announcement
@@ -160,7 +160,9 @@ MeDismissRead, AdminDismissRead = _pair(DismissRead)
 # --------------------------------------------------------------------------- #
 # Admin announcements: one message to every member and/or ReMaker
 # --------------------------------------------------------------------------- #
-def announcement_data(a):
+def announcement_data(a, reads=None):
+    status = "recalled" if a.recalled_at else "scheduled" if a.sent_at is None else "sent"
+    read = (reads or {}).get(a.public_id, 0) if a.sent_at else 0
     return {
         "id": a.public_id,
         "title": a.title,
@@ -169,40 +171,50 @@ def announcement_data(a):
         "type": a.kind,
         "link": a.link,
         "at": a.sent_at or a.scheduled_at or a.created_at,
+        "scheduled_at": a.scheduled_at,
+        "sent_at": a.sent_at,
         "scheduled": a.sent_at is None,
+        "status": status,
         "recipients": a.recipients,
+        "read": read,
+        "read_pct": round(read * 100 / a.recipients) if a.recipients else 0,
+        "recalled_at": a.recalled_at,
+        "recalled_by": a.recalled_by_name,
         "by": a.sent_by_name,
     }
 
 
-class AnnouncementList(APIView):
-    """GET the history (newest first). POST sends now, or schedules with `scheduleAt`."""
+def _reads(ids):
+    """{announcement id: how many recipients opened it}"""
+    from django.db.models import Count
 
-    permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+    from apps.core.models import Notification
 
-    def get(self, request):
-        ann.deliver_due()
-        rows = Announcement.objects.all()[:200]
-        return ok({"announcements": [announcement_data(a) for a in rows]})
+    return dict(Notification.objects.filter(ref_type="announcement", ref_id__in=ids, is_read=True)
+                .values("ref_id").annotate(n=Count("pk")).values_list("ref_id", "n"))
 
-    def post(self, request):
-        d = request.data
-        title = str(d.get("title") or "").strip()
-        message = str(d.get("message") or "").strip()
-        audience = d.get("audience")
-        kind = d.get("type") or Announcement.Kind.UPDATE
-        link = str(d.get("link") or "").strip()
-        errors = {}
-        if not title or len(title) > 150:
-            errors["title"] = ["Enter a title of up to 150 characters."]
-        if not message or len(message) > 1000:
-            errors["message"] = ["Enter a message of up to 1,000 characters."]
-        if audience not in Announcement.Audience.values:
-            errors["audience"] = ["Choose who receives it."]
-        if kind not in Announcement.Kind.values:
-            errors["type"] = ["Choose a valid type."]
-        if link and ann.safe_link(link) != link:
-            errors["link"] = ["Use a page inside ReOrbit, like /user-marketplace."]
+
+def _clean_announcement(d, partial_of=None):
+    """(fields, errors) from a request body. With partial_of, missing keys keep that announcement's values."""
+    base = partial_of
+    title = str(d.get("title", base.title if base else "") or "").strip()
+    message = str(d.get("message", base.message if base else "") or "").strip()
+    audience = d.get("audience", base.audience if base else None)
+    kind = d.get("type", base.kind if base else None) or Announcement.Kind.UPDATE
+    link = str(d.get("link", base.link if base else "") or "").strip()
+    errors = {}
+    if not title or len(title) > 150:
+        errors["title"] = ["Enter a title of up to 150 characters."]
+    if not message or len(message) > 1000:
+        errors["message"] = ["Enter a message of up to 1,000 characters."]
+    if audience not in Announcement.Audience.values:
+        errors["audience"] = ["Choose who receives it."]
+    if kind not in Announcement.Kind.values:
+        errors["type"] = ["Choose a valid type."]
+    if link and ann.safe_link(link) != link:
+        errors["link"] = ["Use a page inside ReOrbit, like /user-marketplace."]
+    when = base.scheduled_at if base else None
+    if "scheduleAt" in d:
         when = None
         if d.get("scheduleAt"):
             when = parse_datetime(str(d["scheduleAt"]))
@@ -212,17 +224,33 @@ class AnnouncementList(APIView):
                 when = timezone.make_aware(when)
             if when is not None and when <= timezone.now():
                 errors["scheduleAt"] = ["Pick a time in the future."]
+    return {"title": title, "message": message, "audience": audience, "kind": kind, "link": link,
+            "scheduled_at": when}, errors
+
+
+class AnnouncementList(APIView):
+    """GET the history (newest first). POST sends now, or schedules with `scheduleAt`."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+
+    def get(self, request):
+        ann.deliver_due()
+        rows = list(Announcement.objects.all()[:200])
+        reads = _reads([a.public_id for a in rows if a.sent_at])
+        return ok({"announcements": [announcement_data(a, reads) for a in rows]})
+
+    def post(self, request):
+        fields, errors = _clean_announcement(request.data)
         if errors:
             return fail("Check the announcement and try again.", errors=errors)
         admin = request.user.account
-        a = Announcement.objects.create(
-            title=title, message=message, kind=kind, audience=audience, link=link,
-            scheduled_at=when, sent_by=admin, sent_by_name=f"Admin · {admin.full_name}",
-        )
-        if when is None:
+        a = Announcement.objects.create(**fields, sent_by=admin, sent_by_name=f"Admin · {admin.full_name}")
+        if a.scheduled_at is None:
             ann.deliver(a.pk)
             a.refresh_from_db()
-        return ok({"announcement": announcement_data(a)}, "Scheduled." if when else "Sent.")
+        audit(admin, "announcement.create", "announcement", a.public_id,
+              reason=f"{a.title} → {a.audience}" + (" (scheduled)" if a.scheduled_at and not a.sent_at else ""))
+        return ok({"announcement": announcement_data(a)}, "Scheduled." if a.sent_at is None else "Sent.")
 
 
 class AnnouncementReach(APIView):
@@ -236,13 +264,53 @@ class AnnouncementReach(APIView):
 
 
 class AnnouncementDetail(APIView):
-    """DELETE cancels an announcement that has not been sent yet. Sent ones stay as a record."""
+    """PATCH edits a scheduled announcement. POST {action: send_now | recall}. DELETE cancels a scheduled one.
+
+    recall: takes a sent announcement back out of every inbox (for a mistake); it stays here as a record."""
 
     permission_classes = [IsReOrbitAdmin, HasAdminModule("notifications")]
+
+    def patch(self, request, public_id):
+        a = get_object_or_404(Announcement, public_id=public_id)
+        if a.sent_at:
+            return fail("This announcement was already sent. Duplicate it to send a new one.", status=409)
+        fields, errors = _clean_announcement(request.data, partial_of=a)
+        if errors:
+            return fail("Check the announcement and try again.", errors=errors)
+        if fields["scheduled_at"] is None:
+            return fail("Pick when to send it, or use Send now.", errors={"scheduleAt": ["Pick a time."]})
+        for k, v in fields.items():
+            setattr(a, k, v)
+        a.save()
+        return ok({"announcement": announcement_data(a)}, "Saved.")
+
+    def post(self, request, public_id):
+        from apps.core.models import Notification
+
+        admin = request.user.account
+        action = str(request.data.get("action") or "")
+        a = get_object_or_404(Announcement, public_id=public_id)
+        if action == "send_now":
+            if a.sent_at:
+                return fail("This announcement was already sent.", status=409)
+            ann.deliver(a.pk)
+            a.refresh_from_db()
+            audit(admin, "announcement.send_now", "announcement", a.public_id)
+            return ok({"announcement": announcement_data(a)}, f"Sent to {a.recipients:,} people.")
+        if action == "recall":
+            if not a.sent_at or a.recalled_at:
+                return fail("Only a sent announcement can be taken back.", status=409)
+            removed, _ = Notification.objects.filter(ref_type="announcement", ref_id=a.public_id).delete()
+            a.recalled_at, a.recalled_by_name = timezone.now(), admin.full_name
+            a.save(update_fields=["recalled_at", "recalled_by_name", "updated_at"])
+            audit(admin, "announcement.recall", "announcement", a.public_id, reason=f"{removed} removed")
+            return ok({"announcement": announcement_data(a)}, "Taken back from every inbox.")
+        return fail("Unknown action.", errors={"action": ["Use send_now or recall."]})
 
     def delete(self, request, public_id):
         a = get_object_or_404(Announcement, public_id=public_id)
         if a.sent_at:
             return fail("This announcement was already sent.", status=409)
+        audit(request.user.account, "announcement.cancel", "announcement", a.public_id)
         a.delete()
         return ok(message="Cancelled.")

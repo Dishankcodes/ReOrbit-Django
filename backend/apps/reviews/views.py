@@ -64,7 +64,14 @@ class MyReviews(APIView):
         t = (request.query_params.get("q") or "").strip()
         if t:
             qs = qs.filter(Q(title__icontains=t) | Q(order__public_id__icontains=t))
-        rows = [entry_data(ln, request) for ln in qs[:200]]
+        lines = list(qs[:200])
+        key = buyers.key_of(request.user.account)
+        # one review per product and one per seller: a repeat purchase shows the review already written
+        prod = {(r.order_item.kind, r.order_item.ref_id): r for r in ProductReview.objects.filter(reviewer_key=key)
+                .select_related("order_item").prefetch_related("photos").order_by("-pk")}
+        sell = {(r.seller_type, r.seller_user_id or r.seller_remaker_id): r
+                for r in SellerReview.objects.filter(reviewer_key=key).order_by("-pk")}
+        rows = [entry_data(ln, request, prod, sell) for ln in lines]
         counts = {"waiting": sum(not r["complete"] for r in rows), "done": sum(r["complete"] for r in rows)}
         return ok({"results": rows, "counts": counts, "edit_days": services.EDIT_DAYS,
                    "seller_tags": services.SELLER_TAGS, "max_photos": services.MAX_PHOTOS})

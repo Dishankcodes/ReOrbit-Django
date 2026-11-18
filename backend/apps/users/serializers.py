@@ -70,8 +70,35 @@ class UserSerializer(serializers.ModelSerializer):
 class AdminUserSerializer(UserSerializer):
     """What an admin sees about a user (never the password)."""
 
+    uploads_count = serializers.SerializerMethodField()
+    sold_count = serializers.SerializerMethodField()
+    bought_count = serializers.SerializerMethodField()
+
     class Meta(UserSerializer.Meta):
         fields = [f for f in UserSerializer.Meta.fields if f != "has_password"] + [
-            "status_changed_at",
+            "status_changed_at", "uploads_count", "sold_count", "bought_count",
         ]
         read_only_fields = fields
+
+    # filled by the admin list/detail querysets (users.views._with_counts); counted here anywhere else
+    def get_uploads_count(self, obj):
+        if hasattr(obj, "uploads_count"):
+            return obj.uploads_count
+        from apps.listings.models import Item
+
+        return Item.objects.filter(user=obj, deleted_at__isnull=True).exclude(item_status="Draft").count()
+
+    def get_sold_count(self, obj):
+        if hasattr(obj, "sold_count"):
+            return obj.sold_count
+        from apps.orders.models import Order
+
+        return Order.objects.filter(seller_user=obj, status=Order.Status.DELIVERED).count()
+
+    def get_bought_count(self, obj):
+        if hasattr(obj, "bought_count"):
+            return obj.bought_count
+        from apps.orders.models import Order
+
+        return Order.objects.filter(buyer_user=obj).exclude(
+            status__in=(Order.Status.CANCELLED, Order.Status.PENDING_PAYMENT)).count()

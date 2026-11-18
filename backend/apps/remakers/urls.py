@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import product_views as pv
 from .public_views import PublicReMakerDetail, PublicReMakerList
+from .views import DeleteMyAccount
 from .views import (
     CheckEmailView,
     RequestOTPView,
@@ -28,6 +29,7 @@ urlpatterns = [
     path("public/<str:public_id>/", PublicReMakerDetail.as_view(), name="remaker-public-detail"),
     # ReMaker Account
     path("me/", MeView.as_view(), name="remaker-me"),
+    path("me/delete/", DeleteMyAccount.as_view()),
     path("profile/", ProfileView.as_view(), name="remaker-profile"),
     path("profile/photo/", ProfilePhotoView.as_view(), name="remaker-profile-photo"),
     path("profile/cover/", ProfileCoverView.as_view(), name="remaker-profile-cover"),

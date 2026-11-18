@@ -23,6 +23,7 @@ import {
 } from "../../data/listingsStore";
 import { getAccount } from "../../../api/session";
 import { pincodeProblem } from "../../../api/profile";
+import { loadKnownPlace } from "../../../api/knownPlace";
 import CitySelect from "../../../shared/components/CitySelect";
 import "../../../shared/components/CitySelect.css";
 import { formatPrice } from "../../../data/marketplaceData";
@@ -116,6 +117,19 @@ export default function UserSellForm() {
       filled.current = true;
     }
   }, [existing]);
+
+  /* a new listing: city and pincode come from the profile or saved address (they can change them) */
+  useEffect(() => {
+    if (editing) return undefined;
+    let alive = true;
+    loadKnownPlace("user").then((p) => {
+      if (!alive) return;
+      setForm((f) => ({ ...f, city: f.city || p.city, pincode: f.pincode || p.pincode }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [editing]);
 
   useEffect(() => {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -458,7 +472,7 @@ export default function UserSellForm() {
                   <NumberInput
                     className="dn-input"
                     min={1}
-                    max={20}
+                    max={100000}
                     value={form.quantity}
                     onChange={(n) => set("quantity", n)}
                   />,

@@ -29,7 +29,14 @@ def notify(
     ref_type="",
     ref_id="",
 ):
-    """Create one inbox notification for a Users / ReMakers / Admins instance."""
+    """Create one inbox notification for a Users / ReMakers / Admins instance.
+
+    A member who switched a topic off in Settings › Notifications doesn't get it (returns None).
+    Account, support and urgent messages always go through."""
+    if not wants(recipient, module, severity):
+        return None
+    if severity == "critical" and hasattr(recipient, "permission_level"):
+        _email_admin_alert(recipient, title, body, target_url)
     return Notification.objects.create(
         title=title,
         body=body,
@@ -42,8 +49,58 @@ def notify(
     )
 
 
+def _email_admin_alert(admin, title, body, target_url):
+    """Urgent admin alerts also go by email, unless the admin turned "Email urgent alerts" off."""
+    prefs = getattr(admin, "notification_preferences", None) or {}
+    if prefs.get("email", True) is False:
+        return
+    try:
+        from apps.core import mailer
+
+        mailer.send(admin.email, f"[ReOrbit admin] {title}", heading=title, intro=body[:500],
+                    footer="You get these because “Email urgent alerts” is on in Admin › Settings › Notifications.")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+# Settings › Notifications topics -> the modules that belong to them
+PREF_TOPICS = {
+    "orders": ("orders", "sales", "returns", "payments", "earnings", "listings", "products"),
+    "donations": ("donations", "pickups"),
+    "rewards": ("rewards",),
+    "reviews": ("reviews",),
+    "messages": ("messages", "social"),
+    "offers": ("offers",),
+}
+ALWAYS = ("account", "support", "complaints", "help", "")
+
+
+def topic_of(module):
+    for topic, modules in PREF_TOPICS.items():
+        if module in modules:
+            return topic
+    return None
+
+
+def wants(recipient, module, severity="info"):
+    """Has this member left notifications for this module's topic on? (Default: yes.)"""
+    if module in ALWAYS or severity == "critical":
+        return True
+    if hasattr(recipient, "admin_id") and hasattr(recipient, "permission_level"):
+        # admins pick the modules they hear about (Admin › Settings › Notifications)
+        prefs = (getattr(recipient, "notification_preferences", None) or {}).get("modules") or {}
+        key = {"listings": "products", "sales": "orders", "payments": "earnings"}.get(module, module)
+        return prefs.get(key, True) is not False
+    topic = topic_of(module)
+    if topic is None:
+        return True
+    profile = getattr(recipient, "profile", None)
+    prefs = getattr(profile, "notification_preferences", None) or {}
+    return prefs.get(topic, True) is not False
+
+
 def notify_many(recipients, title, body, **kwargs):
-    return [notify(r, title, body, **kwargs) for r in recipients]
+    return [n for n in (notify(r, title, body, **kwargs) for r in recipients) if n is not None]
 
 
 def mark_read(notification):

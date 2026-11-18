@@ -167,3 +167,65 @@
     padding: 18px;
   }
 }
+
+/* the "thanks" state: the rating as a card, with a proper edit button */
+.rro-done {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.rro-done-card {
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--rro-accent) 14%, transparent);
+  border-radius: 14px;
+  background: #fff;
+}
+.rro-done-card p {
+  margin: 8px 0 0;
+  color: #1f2923;
+  font-style: italic;
+  line-height: 1.55;
+}
+.rro-chip {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--rro-soft);
+  color: var(--rro-accent);
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.rro-done-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.rro-done-foot .rro-ok {
+  margin: 0 auto 0 0;
+}
+.rro-edit {
+  padding: 8px 16px;
+  border: 1px solid var(--rro-accent);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rro-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.rro-edit:hover {
+  background: var(--rro-accent);
+  color: #fff;
+}
+.rro-stars.static em {
+  margin-left: 8px;
+  color: var(--rro-accent);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+}

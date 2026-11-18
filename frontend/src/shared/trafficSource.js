@@ -36,9 +36,9 @@ function firstTime(key) {
 
 const here = () => window.location.pathname + window.location.search;
 
-/* Only ReMaker listings are counted (RPR- ids). */
+/* Every product page counts: member listings (LST-), ReMaker creations (RPR-), ReOrbit store (ADI-). */
 export function trackProductView(id) {
-  if (!String(id || "").startsWith("RPR-") || !firstTime(`p:${id}`)) return;
+  if (!/^(RPR|LST|ADI)-/.test(String(id || "")) || !firstTime(`p:${id}`)) return;
   analyticsApi.recordView({
     type: "product",
     id,

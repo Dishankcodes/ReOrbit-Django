@@ -12,26 +12,43 @@ import { rewardsApi } from "../../api/rewards";
 import { getAccount } from "../../api/session";
 import { useFollowing } from "./followStore";
 
+/* Levels follow lifetime points (spending points never lowers your level). `perk` is what a level
+   really does on ReOrbit today; `meaning` explains it in plain words. */
 export const LEVELS = [
-  { key: "seedling", name: "Seedling", min: 0, perk: "Welcome to ReOrbit" },
+  {
+    key: "seedling",
+    name: "Seedling",
+    min: 0,
+    perk: "Earn points on every purchase, donation, listing and review",
+    meaning: "Where everyone starts. You've joined the circle and every item you keep in use counts.",
+  },
   {
     key: "sprout",
     name: "Sprout",
     min: 500,
-    perk: "Early access to new ReMaker drops",
+    perk: "Unlocks rewards and coupons set for Sprout and up",
+    meaning: "You're making reuse a habit: a few orders, donations or listings in.",
   },
   {
     key: "orbiter",
     name: "Orbiter",
     min: 1500,
-    perk: "Unlocks the ₹250 Sustainability Voucher",
+    perk: "Unlocks rewards and coupons set for Orbiter and up",
+    meaning: "A regular in the ReOrbit community, keeping things in orbit month after month.",
   },
-  { key: "guardian", name: "Guardian", min: 3000, perk: "Priority support" },
+  {
+    key: "guardian",
+    name: "Guardian",
+    min: 3000,
+    perk: "Unlocks rewards and coupons set for Guardian and up",
+    meaning: "You protect resources at scale. Your purchases and donations make a visible difference.",
+  },
   {
     key: "champion",
     name: "Champion",
     min: 5000,
-    perk: "Featured on the community wall",
+    perk: "Every level-locked reward, plus the Impact Champion badge",
+    meaning: "The top of the orbit. You lead by example in circular living.",
   },
 ];
 export const levelIndex = (lifetime) =>
@@ -212,7 +229,8 @@ export const adaptOffer = (o) => ({
   perUser: o.per_user,
   audience: o.audience,
   level: Math.max(0, Math.min(o.min_level, LEVEL_NAMES.length - 1)),
-  remakerOnly: o.remaker_only,
+  remakerOnly: o.applies_to === "remaker",
+  appliesTo: o.applies_to,
   paused: o.paused,
   status: o.status,
   claimedByMe: o.claimed_by_me,

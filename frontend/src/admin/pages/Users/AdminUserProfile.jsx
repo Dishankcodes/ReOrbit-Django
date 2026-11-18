@@ -68,6 +68,8 @@ export default function AdminUserProfile() {
 
   const [tab, setTab] = useState("overview");
   const [pending, setPending] = useState(null);
+  const access = useAccess(); /* hooks before any early return */
+  const canMessage = access.can("messages", "edit");
 
   /* new person -> start on the overview tab at the top */
   useEffect(() => {
@@ -110,7 +112,6 @@ export default function AdminUserProfile() {
 
   const { profile } = user;
   const actions = getAvailableActions(user.status);
-  const canMessage = useAccess().can("messages", "edit");
   const latestReason = user.statusHistory[0];
 
   const tabs = [

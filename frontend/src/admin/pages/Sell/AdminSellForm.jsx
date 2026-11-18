@@ -33,6 +33,7 @@ import PhotoUploader, {
 import ListingPreview from "./components/ListingPreview";
 import EmptyState from "../../components/ui/EmptyState";
 
+import { apiRequest } from "../../../api/api";
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
 import "../../css/shop/AdminShop.css";
@@ -572,6 +573,7 @@ export default function AdminSellForm() {
                     inputMode: "numeric",
                   },
                 })}
+                <ShipsFrom />
                 <div className="sh-field">
                   <span>Delivery</span>
                   {/* the buyer always pays ReOrbit's own rate from Admin › Settings › Commerce */}
@@ -755,6 +757,33 @@ export default function AdminSellForm() {
           <ListingPreview form={form} />
         </aside>
       </div>
+    </div>
+  );
+}
+
+/* ReOrbit ships its own listings from its default address (Admin › Addresses): nothing to type here */
+function ShipsFrom() {
+  const [a, setA] = useState(undefined);
+  useEffect(() => {
+    apiRequest("/orders/addresses/")
+      .then((r) => {
+        const list = r.data.addresses || [];
+        setA(list.find((x) => x.is_default) || list[0] || null);
+      })
+      .catch(() => setA(null));
+  }, []);
+  return (
+    <div className="sh-field">
+      <span>Ships from</span>
+      <input
+        value={a === undefined ? "Loading…" : a ? `${a.label} · ${a.line1}, ${a.city} ${a.pincode}` : "No ReOrbit address yet"}
+        disabled
+        readOnly
+        aria-label="Ships from"
+      />
+      <small className="sh-field-hint">
+        ReOrbit's default address. Change it in <Link to="/admin-addresses">Addresses</Link>.
+      </small>
     </div>
   );
 }

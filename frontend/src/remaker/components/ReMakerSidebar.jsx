@@ -318,7 +318,7 @@ export default function ReMakerSidebar({
         className={({ isActive }) => {
           /* "Products" covers its sub-pages, except "Add Product", which has its own item. */
           const sub = pathname.startsWith("/remaker-products/new");
-          return `remaker-sidebar-link ${isActive && !(item.path === "/remaker-products" && sub) ? "active" : ""}`;
+          return `remaker-sidebar-link ${isActive && !(item.path === "/remaker-products" && sub) ? "active" : ""} ${search.isHi(item) ? "is-kbd" : ""}`;
         }}
         onClick={handleNavigation}
       >

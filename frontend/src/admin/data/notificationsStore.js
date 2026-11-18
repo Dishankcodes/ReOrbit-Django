@@ -286,6 +286,66 @@ export async function sendAnnouncement({
   return a;
 }
 
+const replaceAnnouncement = (a) =>
+  set({ announcements: state.announcements.map((x) => (x.id === a.id ? announcementFromServer(a) : x)) });
+
+/* edit a scheduled one: same fields as sendAnnouncement */
+export async function updateAnnouncement(id, { title, message, audience, type, link, scheduleAt }) {
+  const a = await adminAnnouncementsApi.update(id, {
+    title,
+    message,
+    audience,
+    type,
+    link: link || "",
+    scheduleAt: scheduleAt ? new Date(scheduleAt).toISOString() : "",
+  });
+  replaceAnnouncement(a);
+  return a;
+}
+/* action: "send_now" | "recall" -> the server's message */
+export async function announcementAction(id, action) {
+  const r = await adminAnnouncementsApi.act(id, action);
+  replaceAnnouncement(r.announcement);
+  return r.message;
+}
+export async function cancelAnnouncement(id) {
+  await adminAnnouncementsApi.cancel(id);
+  set({ announcements: state.announcements.filter((x) => x.id !== id) });
+}
+export const refreshAnnouncements = () => loadAnnouncements();
+
+/* where a tap on the announcement takes people (paths work on both apps: /user-* opens the
+   matching ReMaker page for ReMakers) */
+export const ANNOUNCE_LINKS = [
+  ["", "No link (just the message)"],
+  ["/user-marketplace", "Marketplace"],
+  ["/user-orbit-points", "Orbit Points and rewards"],
+  ["/user-sell/new", "Sell an item"],
+  ["/user-donations/new", "Donate items"],
+  ["/user-orders", "My orders"],
+  ["/user-help", "Help and support"],
+  ["/remaker-products/new", "ReMaker: add a product"],
+  ["/remaker-dashboard", "ReMaker: dashboard"],
+];
+/* starting points per type: tap one to fill the title and message */
+export const ANNOUNCE_TEMPLATES = {
+  offer: [
+    { title: "Weekend green sale", message: "Pre-loved finds are extra affordable this weekend. Grab yours before they're gone!" },
+    { title: "New coupon for you", message: "Use your new coupon at checkout and save on your next order." },
+  ],
+  update: [
+    { title: "Something new on ReOrbit", message: "We've made ReOrbit easier to use. Open the app to see what's new." },
+    { title: "Faster pickups in your city", message: "Our pickup team now covers more areas, so pickups happen sooner." },
+  ],
+  maintenance: [
+    { title: "Short maintenance tonight", message: "ReOrbit will be unavailable for about 30 minutes tonight while we make improvements. Thanks for your patience." },
+  ],
+  reminder: [
+    { title: "Don't forget your rewards", message: "You have Orbit Points waiting. Redeem them for vouchers before they expire." },
+    { title: "Items waiting for a review", message: "Tell others how your recent purchase went. It only takes a minute." },
+  ],
+};
+
 export const AUDIENCE_LABEL = {
   users: "All users",
   remakers: "All ReMakers",

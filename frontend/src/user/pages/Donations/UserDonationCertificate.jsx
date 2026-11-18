@@ -138,13 +138,7 @@ export default function UserDonationCertificate() {
               {donation.quantity} × {donation.title}
             </strong>{" "}
             ({donation.category}),{" "}
-            {donation.ngo ? (
-              <>
-                which has been delivered to <strong>{donation.ngo.name}</strong>, {donation.ngo.city},
-              </>
-            ) : (
-              <>which has been received into the ReOrbit warehouse,</>
-            )}{" "}
+            {/* where the items went is not printed on the certificate */}
             giving these items a second life and keeping them out of landfill.
           </p>
 

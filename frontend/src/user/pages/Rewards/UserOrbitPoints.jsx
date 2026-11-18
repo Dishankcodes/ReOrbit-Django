@@ -10,7 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-import { useRewards, useWaysToEarn } from "../../data/rewardsStore";
+import { LEVELS, useRewards, useWaysToEarn } from "../../data/rewardsStore";
 import { useVoucherList } from "../../../shared/rewardRules";
 import { kg } from "../../utils/format";
 import { PageLoader } from "../../../shared/components/Spinner";
@@ -189,6 +189,8 @@ export default function UserOrbitPoints() {
         )}
       </section>
 
+      <LevelGuide levelIndex={levelIndex} lifetime={lifetime} offers={vouchers} />
+
       <section className="urw-earn-strip">
         <div>
           <Gift size={22} />
@@ -208,5 +210,53 @@ export default function UserOrbitPoints() {
         </Link>
       </section>
     </div>
+  );
+}
+
+/* What each level means and what it unlocks. Rewards and coupons can be set for a minimum level
+   by the ReOrbit team; the counts below are the ones on offer right now. */
+function LevelGuide({ levelIndex, lifetime, offers }) {
+  const perLevel = LEVELS.map((_, i) => offers.filter((o) => (o.level || 0) === i && !o.paused).length);
+  return (
+    <section className="urw-lvguide" aria-labelledby="urw-lvguide-title">
+      <div className="urw-lvguide-head">
+        <h3 id="urw-lvguide-title">What the levels mean</h3>
+        <p>
+          Your level follows your <b>lifetime</b> points ({lifetime.toLocaleString("en-IN")} so far). Spending points
+          on rewards never moves you down.
+        </p>
+      </div>
+      <ol className="urw-lvguide-list">
+        {LEVELS.map((l, i) => {
+          const state = i < levelIndex ? "done" : i === levelIndex ? "now" : "next";
+          return (
+            <li key={l.key} className={`is-${state}`}>
+              <span className="urw-lvguide-dot" aria-hidden="true">
+                {i + 1}
+              </span>
+              <div>
+                <header>
+                  <strong>{l.name}</strong>
+                  <small>{l.min ? `${l.min.toLocaleString("en-IN")}+ lifetime points` : "From your first day"}</small>
+                  {state === "now" && <em>You are here</em>}
+                </header>
+                <p>{l.meaning}</p>
+                <ul>
+                  <li>{l.perk}</li>
+                  {i > 0 && (
+                    <li>
+                      {perLevel[i]
+                        ? `${perLevel[i]} reward${perLevel[i] === 1 ? "" : "s"} on offer for this level right now`
+                        : "Level-only rewards appear here when ReOrbit adds them"}
+                    </li>
+                  )}
+                  <li>Your level shows on your profile and dashboard</li>
+                </ul>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }

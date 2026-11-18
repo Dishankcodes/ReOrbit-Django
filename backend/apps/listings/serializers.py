@@ -39,6 +39,8 @@ class ItemSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
     seller = serializers.SerializerMethodField()
+    views = serializers.IntegerField(source="view_count", read_only=True)
+    saves = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
@@ -65,9 +67,16 @@ class ItemSerializer(serializers.ModelSerializer):
             "pincode",
             "images",
             "seller",
+            "views",
+            "saves",
             "created_at",
             "updated_at",
         ]
+
+    def get_saves(self, obj):
+        from apps.core.engagement import saves_for
+
+        return saves_for([obj.public_id]).get(obj.public_id, 0)
 
     def get_category(self, obj):
         c = obj.category

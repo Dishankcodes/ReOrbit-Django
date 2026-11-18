@@ -7,6 +7,7 @@ import {
   saveProfile,
   uploadImage,
 } from "../../api/profile";
+import { forgetKnownPlace } from "../../api/knownPlace";
 
 /*
   const p = useMyProfile("user" | "remaker");
@@ -73,6 +74,7 @@ export default function useMyProfile(type) {
     try {
       const data = await saveProfile(type, payload);
       remember(data.account, data.profile);
+      forgetKnownPlace(); /* forms pick up the new city and pincode */
       return { ok: true, message: "Profile updated successfully." };
     } catch (e) {
       return { ok: false, message: e.message, errors: e.errors || {} };

@@ -102,3 +102,9 @@
 .remaker-sidebar {
   --sbs-panel: #2d0b0d;
 }
+
+.sbs-recent-item.sbs-kbd {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -2px;
+  background: rgba(255, 255, 255, 0.12);
+}

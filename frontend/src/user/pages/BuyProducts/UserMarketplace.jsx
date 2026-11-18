@@ -26,7 +26,6 @@ import {
 } from "../../data/shopStore";
 import { clearWishlist, useWishlist } from "../../data/wishlistStore";
 import {
-  CONDITIONS,
   ITEMS,
   formatPrice,
 } from "../../../data/marketplaceData";
@@ -206,6 +205,15 @@ export default function UserMarketplace() {
       ),
     [live.version, ownSellerId],
   );
+
+  /* the conditions sellers really use (members: Excellent…Fair, ReOrbit store: Like new…Refurbished,
+     ReMaker creations: New), in a sensible order, only the ones on the marketplace right now */
+  const conditionOptions = useMemo(() => {
+    const order = ["New", "Like new", "Excellent", "Very Good", "Good", "Fair", "Refurbished"];
+    const present = new Set(base.map((i) => i.condition).filter(Boolean));
+    return [...order.filter((c) => present.has(c)), ...[...present].filter((c) => !order.includes(c)).sort()];
+  }, [base]);
+
   const counts = useMemo(
     () => ({
       all: base.length,
@@ -394,7 +402,7 @@ export default function UserMarketplace() {
           aria-label="Condition"
         >
           <option value="All">Any condition</option>
-          {CONDITIONS.map((c) => (
+          {conditionOptions.map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>

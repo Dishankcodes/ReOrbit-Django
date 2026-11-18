@@ -15,6 +15,7 @@ about seven queries however large the catalogue grows.
 from decimal import Decimal, InvalidOperation
 
 from django.db.models import CharField, F, Q, Value
+from apps.core import engagement
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_control
 from django.utils.decorators import method_decorator
@@ -35,8 +36,9 @@ LIVE = (SellableBase.Status.LISTED, SellableBase.Status.SOLD_OUT)  # sold out st
 
 
 def _user_qs():
-    return Item.objects.filter(item_status=Item.Status.LISTED, deleted_at__isnull=True).exclude(
-        moderation_status=Item.Moderation.DISABLED)
+    # only active members' listings: a suspended, blocked or deleted account's items leave the marketplace
+    return Item.objects.filter(item_status=Item.Status.LISTED, deleted_at__isnull=True,
+                               user__status="Active").exclude(moderation_status=Item.Moderation.DISABLED)
 
 
 def _remaker_qs():
@@ -102,6 +104,7 @@ def card(kind, o, request):
                 "seller": {"type": "remaker", "id": o.remaker.public_id,
                            "name": o.remaker.full_name, "username": o.remaker.username}}
     return {**base, "price": o.price, "stock": o.stock, "sold_out": sold_out,
+            "condition": getattr(o, "condition", "") or "Good",
             "seller": {"type": "admin", "id": o.admin.public_id, "name": "ReOrbit"}}
 
 
@@ -167,6 +170,9 @@ class BrowseView(APIView):
                               .select_related("category", "admin").prefetch_related("images")}
         out = [card(kind, found[kind][pk], request) for kind, pk, *_ in page
                if pk in found.get(kind, {})]
+        # member listings and store items carry their own counter; only ReMaker views need a query
+        known = {o.public_id: o.view_count for k in ("user", "admin") for o in found.get(k, {}).values()}
+        engagement.attach(out, known_views=known)
         return pager.get_paginated_response(out)
 
 
@@ -194,6 +200,5 @@ class DetailView(APIView):
         else:
             from django.http import Http404
             raise Http404
-        if kind == "admin":  # the store owner's "Views" number
-            type(o).objects.filter(pk=o.pk).update(view_count=F("view_count") + 1)
-        return ok({"product": detail(kind, o, request)})
+        # views are counted by the page (POST /api/analytics/view/, once per visit), not by every fetch
+        return ok({"product": engagement.attach([detail(kind, o, request)])[0]})

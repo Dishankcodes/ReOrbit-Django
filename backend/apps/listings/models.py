@@ -55,6 +55,7 @@ class Item(PublicIdModel, TimeStampedModel):
     description = models.TextField()
     condition = models.CharField(max_length=12, choices=Condition.choices)
     quantity = models.PositiveIntegerField(default=1)
+    view_count = models.PositiveIntegerField(default=0, help_text="Times the product page was opened (once per visit)")
     estimated_price = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )

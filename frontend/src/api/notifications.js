@@ -51,4 +51,13 @@ export const adminAnnouncementsApi = {
     apiRequest(`/notifications/admin/announcements/${id}/`, {
       method: "DELETE",
     }),
+  update: (id, body) =>
+    apiRequest(`/notifications/admin/announcements/${id}/`, { method: "PATCH", body }).then(
+      (r) => r.data.announcement,
+    ),
+  act: (id, action) =>
+    apiRequest(`/notifications/admin/announcements/${id}/`, { method: "POST", body: { action } }).then((r) => ({
+      announcement: r.data.announcement,
+      message: r.message,
+    })),
 };

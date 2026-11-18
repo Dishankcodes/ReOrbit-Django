@@ -44,8 +44,9 @@ function fromApi(p) {
     customization: p.customization_available,
     originType: "own",
     originItemId: "",
-    views: 0,
-    sales: 0,
+    views: p.views || 0,
+    saves: p.saves || 0,
+    sales: p.sales || 0,
     hold: p.deactivation
       ? { reason: p.deactivation.reason, at: p.deactivation.at }
       : null,

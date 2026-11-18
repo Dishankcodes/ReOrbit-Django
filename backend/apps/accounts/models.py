@@ -12,10 +12,12 @@ class OTP_Verification(models.Model):
         REMAKER_REGISTER = "remaker_register", "ReMaker Registration"
         REMAKER_LOGIN = "remaker_login", "ReMaker Login"
         USER_FORGOT_PASSWORD = "user_forgot_password", "User Forgot Password"
+        ADMIN_FORGOT_PASSWORD = "admin_forgot_password", "Admin Forgot Password"
 
     class AccountType(models.TextChoices):
         USER = "user", "User"
         REMAKER = "remaker", "ReMaker"
+        ADMIN = "admin", "Admin"
 
     otp_id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=255)

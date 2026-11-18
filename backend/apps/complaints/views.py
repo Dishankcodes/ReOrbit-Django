@@ -47,7 +47,17 @@ class IsMember(BasePermission):
 
 
 class MyReport(APIView):
+    """GET: the reports I filed and the team's answer. POST: file a new one."""
+
     permission_classes = [IsReOrbitAuthenticated, IsMember]
+
+    def get(self, request):
+        from .serializers import reporter_data
+
+        me = request.user.account
+        field = "reporter_remaker" if request.user.account_type == "remaker" else "reporter_user"
+        rows = queryset().filter(**{field: me}).order_by("-created_at")[:100]
+        return ok({"results": [reporter_data(c, request) for c in rows]})
 
     def post(self, request):
         try:

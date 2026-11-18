@@ -21,20 +21,31 @@ export const levelFor = (lifetime) =>
 
 /* "Who can use it", as the form shows it, and the fields the server stores. */
 const AUDIENCE_RULES = {
-  Everyone: { audience: "all", min_level: 0, remaker_only: false },
-  "New users": { audience: "new", min_level: 0, remaker_only: false },
-  Donors: { audience: "donors", min_level: 0, remaker_only: false },
-  "Level Orbiter and above": { audience: "all", min_level: 2, remaker_only: false },
-  ReMakers: { audience: "all", min_level: 0, remaker_only: true },
+  Everyone: { audience: "all", min_level: 0 },
+  "Members only": { audience: "members", min_level: 0 },
+  "New users": { audience: "new", min_level: 0 },
+  Donors: { audience: "donors", min_level: 0 },
+  "Level Orbiter and above": { audience: "all", min_level: 2 },
+  ReMakers: { audience: "remakers", min_level: 0 },
 };
 export const AUDIENCES = Object.keys(AUDIENCE_RULES);
+/* points rewards are spent by members, so ReMakers can't be picked for them */
+export const POINTS_AUDIENCES = AUDIENCES.filter((a) => a !== "ReMakers");
 const audienceLabel = (o) => {
-  if (o.remaker_only) return "ReMakers";
+  if (o.audience === "remakers") return "ReMakers";
+  if (o.audience === "members") return "Members only";
   if (o.audience === "new") return "New users";
   if (o.audience === "donors") return "Donors";
   if (o.min_level >= 2) return "Level Orbiter and above";
   return "Everyone";
 };
+/* "Works on": which products it takes money off */
+export const APPLIES_TO = [
+  ["any", "Any product"],
+  ["remaker", "ReMaker creations"],
+  ["reorbit", "ReOrbit's own products"],
+];
+export const appliesLabel = (k) => (APPLIES_TO.find(([v]) => v === k) || APPLIES_TO[0])[1];
 
 /* ---------- state ---------- */
 const idle = {

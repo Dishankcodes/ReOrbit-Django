@@ -10,9 +10,6 @@ import {
   Settings2,
   Save,
   RotateCcw,
-  Monitor,
-  Smartphone,
-  LogOut,
   Info,
   ArrowRight,
   AlertTriangle,
@@ -34,6 +31,8 @@ import { useRules, saveRule } from "../../data/rewardsStore";
 import { formatINR, timeAgo } from "../../utils/format";
 import useToast from "../../components/ui/useToast";
 import { useAccess } from "../../data/teamStore";
+import { apiRequest } from "../../../api/api";
+import { changeAdminPassword } from "../../../api/profile";
 
 import "../../css/AdminUI.css";
 import "../../css/settings/AdminSettings.css";
@@ -95,7 +94,7 @@ function Field({ label, hint, error, suffix, prefix, children }) {
     </label>
   );
 }
-function Switch({ on, onChange, label, desc }) {
+function Switch({ on, onChange, label, desc, disabled = false }) {
   return (
     <div className="st-switch-row">
       <div>
@@ -108,7 +107,9 @@ function Switch({ on, onChange, label, desc }) {
         aria-checked={on}
         aria-label={label}
         className={`st-switch ${on ? "on" : ""}`}
-        onClick={() => onChange(!on)}
+        disabled={disabled}
+        style={disabled ? { opacity: 0.55, cursor: "default" } : undefined}
+        onClick={() => !disabled && onChange(!on)}
       >
         <i />
       </button>
@@ -239,22 +240,31 @@ function SecuritySection({ s, toast }) {
   const [show, setShow] = useState(false);
   const [err, setErr] = useState({});
   const sc = strength(f.next);
-  const submit = () => {
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
     const e = {};
     if (!f.cur) e.cur = "Enter your current password.";
     if (f.next.length < 8) e.next = "Use at least 8 characters.";
-    else if (!/\d/.test(f.next)) e.next = "Add at least one number.";
-    else if (f.next === f.cur)
-      e.next = "Choose a password you haven’t used just now.";
+    else if (!/\d/.test(f.next) || !/[A-Za-z]/.test(f.next)) e.next = "Use letters and at least one number.";
+    else if (f.next === f.cur) e.next = "Choose a password you haven’t used just now.";
     if (f.again !== f.next) e.again = "The two passwords don’t match.";
     setErr(e);
     if (Object.keys(e).length) return;
-    setSecurity(
-      { passwordChangedAt: new Date().toISOString() },
-      "Password changed",
-    );
-    setF({ cur: "", next: "", again: "" });
-    toast("Password updated. Other sessions stay signed in in this demo.");
+    setBusy(true);
+    try {
+      const r = await changeAdminPassword({ current_password: f.cur, new_password: f.next });
+      setSecurity({ passwordChangedAt: new Date().toISOString() }, "Password changed");
+      setF({ cur: "", next: "", again: "" });
+      toast(r.message || "Password updated. We emailed you a confirmation.");
+    } catch (ex) {
+      setErr({
+        cur: ex.errors?.current_password?.[0],
+        next: ex.errors?.new_password?.[0],
+      });
+      toast(ex.message || "Password not changed.");
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <>
@@ -320,78 +330,24 @@ function SecuritySection({ s, toast }) {
             {show ? <EyeOff size={14} /> : <Eye size={14} />}
             {show ? "Hide" : "Show"} passwords
           </button>
+          <Link to="/admin-login?forgot=1" className="st-forgot">
+            Forgot your current password?
+          </Link>
           <button
             type="button"
             className="ad-btn ad-btn-primary ad-btn-sm"
             onClick={submit}
+            disabled={busy}
           >
-            Update password
+            {busy ? "Updating…" : "Update password"}
           </button>
         </div>
       </Card>
-      <Card
-        title="Two-step verification"
-        sub="Ask for a code from your authenticator app when signing in."
-      >
-        <Switch
-          on={s.security.twoFactor}
-          label="Require a code at sign-in"
-          desc={
-            s.security.twoFactor
-              ? "On — recommended for admins."
-              : "Off — turn this on to protect refunds, blocks and fee changes."
-          }
-          onChange={(v) => {
-            setSecurity(
-              { twoFactor: v },
-              v ? "Two-step verification on" : "Two-step verification off",
-            );
-            toast(
-              v
-                ? "Two-step verification turned on."
-                : "Two-step verification turned off.",
-            );
-          }}
-        />
-      </Card>
-      <Card
-        title="Where you’re signed in"
-        sub="Sign out any device you don’t recognise."
-      >
-        <ul className="st-sessions">
-          {s.security.sessions.map((x) => (
-            <li key={x.id}>
-              <span className="st-sess-ico">
-                {/iPhone|Android/.test(x.device) ? (
-                  <Smartphone size={17} />
-                ) : (
-                  <Monitor size={17} />
-                )}
-              </span>
-              <div>
-                <strong>
-                  {x.device}
-                  {x.current && <em>This device</em>}
-                </strong>
-                <p>
-                  {x.place} · {x.at}
-                </p>
-              </div>
-              {!x.current && (
-                <button
-                  type="button"
-                  className="ad-btn ad-btn-ghost ad-btn-sm"
-                  onClick={() => {
-                    revokeSession(x.id);
-                    toast("Session signed out.");
-                  }}
-                >
-                  <LogOut size={14} />
-                  Sign out
-                </button>
-              )}
-            </li>
-          ))}
+      <Card title="Signing in" sub="How your admin account is kept safe.">
+        <ul className="st-facts">
+          <li>Every password change or reset is confirmed by email.</li>
+          <li>Forgot it? Use “Forgot password” on the admin sign-in page: we email you a 6-digit code.</li>
+          <li>The super admin can issue you a temporary password from Team, and you're emailed when they do.</li>
         </ul>
       </Card>
     </>
@@ -762,68 +718,86 @@ function RewardsSection({ toast }) {
   );
 }
 
-function NotificationsSection({ s, toast }) {
-  const d = useDraft(s.notifications);
-  const n = d.draft;
-  const setCh = (k, v) =>
-    d.setDraft({ ...n, channels: { ...n.channels, [k]: v } });
-  const setMod = (k, v) =>
-    d.setDraft({ ...n, modules: { ...n.modules, [k]: v } });
+const MODULE_LABEL = {
+  users: "Users", remakers: "ReMakers", products: "Products & listings", orders: "Orders & sales",
+  returns: "Returns", donations: "Donations", pickups: "Pickups", warehouse: "Warehouse",
+  earnings: "Earnings & payouts", rewards: "Rewards", reviews: "Reviews", complaints: "Complaints",
+  support: "Support", content: "Content", messages: "Messages",
+};
+
+/* Saved on the server for this admin: which modules ring the bell, and whether urgent alerts are
+   also emailed. Account and urgent alerts always come through. */
+function NotificationsSection({ toast }) {
+  const [saved, setSaved] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    apiRequest("/admins/notification-preferences/")
+      .then((r) => {
+        setSaved(r.data);
+        setDraft(r.data);
+      })
+      .catch((e) => setError(e.message || "Could not load your preferences."));
+  }, []);
+  if (error) return <p className="st-note">{error}</p>;
+  if (!draft) return <p className="st-note">Loading…</p>;
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  const keys = Object.keys(draft.modules);
+  const allOn = keys.every((k) => draft.modules[k]);
+  const setMod = (k, v) => setDraft({ ...draft, modules: { ...draft.modules, [k]: v } });
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await apiRequest("/admins/notification-preferences/", { method: "PUT", body: draft });
+      setSaved(r.data);
+      setDraft(r.data);
+      toast("Notification preferences saved.");
+    } catch (e) {
+      toast(e.message || "Not saved.");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <>
       <Card title="How you’re notified">
+        <Switch on label="In-app bell" desc="Always on: the bell in the header and Admin › Notifications." disabled />
         <Switch
-          on={n.channels.email}
-          label="Email alerts"
-          desc="Critical alerts go to your email address."
-          onChange={(v) => setCh("email", v)}
-        />
-        <Switch
-          on={n.channels.push}
-          label="In-app and push"
-          desc="The bell in the header and browser notifications."
-          onChange={(v) => setCh("push", v)}
-        />
-        <Switch
-          on={n.channels.digest}
-          label="Daily summary"
-          desc="One email at 8 AM instead of many small ones."
-          onChange={(v) => setCh("digest", v)}
-        />
-        <Switch
-          on={n.quietHours}
-          label="Quiet hours (10 PM – 7 AM)"
-          desc="Only critical alerts break through."
-          onChange={(v) => d.set("quietHours", v)}
+          on={draft.email}
+          label="Email urgent alerts"
+          desc="Urgent alerts (like an overdue pickup or a refund to send) are also emailed to you."
+          onChange={(v) => setDraft({ ...draft, email: v })}
         />
       </Card>
       <Card
         title="What you hear about"
-        sub="Turn off modules you don’t manage."
+        sub="Only the modules you can open are listed. Turn off the ones you don’t look after. Urgent alerts still come through."
       >
         <div className="st-chips">
-          {Object.keys(n.modules).map((k) => (
+          {keys.map((k) => (
             <button
               key={k}
               type="button"
-              aria-pressed={n.modules[k]}
-              className={n.modules[k] ? "on" : ""}
-              onClick={() => setMod(k, !n.modules[k])}
+              aria-pressed={draft.modules[k]}
+              className={draft.modules[k] ? "on" : ""}
+              onClick={() => setMod(k, !draft.modules[k])}
             >
-              {n.modules[k] && <CheckCircle2 size={14} />}
-              {k}
+              {draft.modules[k] && <CheckCircle2 size={14} />}
+              {MODULE_LABEL[k] || k}
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          className="ad-btn ad-btn-ghost ad-btn-sm"
+          style={{ marginTop: 12 }}
+          onClick={() => setDraft({ ...draft, modules: Object.fromEntries(keys.map((k) => [k, !allOn])) })}
+        >
+          {allOn ? "Turn all off" : "Turn all on"}
+        </button>
       </Card>
-      <SaveBar
-        dirty={d.dirty}
-        onDiscard={d.discard}
-        onSave={() => {
-          saveSection("notifications", n, "Notification preferences updated");
-          toast("Notification preferences saved.");
-        }}
-      />
+      <SaveBar dirty={dirty && !busy} onDiscard={() => setDraft(saved)} onSave={save} />
     </>
   );
 }

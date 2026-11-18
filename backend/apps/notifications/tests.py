@@ -191,3 +191,40 @@ class AnnouncementTests(APIBase):
     def test_reach_counts_active_accounts_only(self):
         d = self.get(self.URL + "reach/", as_=self.admin).data["data"]
         self.assertEqual((d["users"], d["remakers"], d["everyone"]), (1, 1, 2))
+
+
+class AnnouncementFlowTests(APIBase):
+    URL = "/api/notifications/admin/announcements/"
+
+    def setUp(self):
+        super().setUp()
+        self.admin = self.make_admin(modules={"notifications": "edit"})
+        self.u = self.make_user()
+
+    def body(self, **over):
+        b = {"title": "Big green sale", "message": "Everything pre-loved is 10% off this weekend.",
+             "audience": "users", "type": "offer", "link": "/user-marketplace"}
+        b.update(over)
+        return b
+
+    def test_schedule_edit_send_now_read_and_recall(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        later = (timezone.now() + timedelta(days=1)).isoformat()
+        a = self.post(self.URL, self.body(scheduleAt=later), as_=self.admin).data["data"]["announcement"]
+        self.assertEqual(a["status"], "scheduled")
+        r = self.client.patch(f"{self.URL}{a['id']}/", {"title": "Bigger green sale"}, format="json",
+                              **self._headers(self.admin))
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["announcement"]["title"], "Bigger green sale")
+        r = self.post(f"{self.URL}{a['id']}/", {"action": "send_now"}, as_=self.admin)
+        self.assertEqual(r.data["data"]["announcement"]["recipients"], 1)
+        Notification.objects.filter(user=self.u, module="announcements").update(is_read=True)
+        rows = self.get(self.URL, as_=self.admin).data["data"]["announcements"]
+        self.assertEqual((rows[0]["read"], rows[0]["read_pct"]), (1, 100))
+        r = self.post(f"{self.URL}{a['id']}/", {"action": "recall"}, as_=self.admin)
+        self.assertEqual(r.data["data"]["announcement"]["status"], "recalled")
+        self.assertFalse(Notification.objects.filter(module="announcements").exists())
+        self.assertEqual(self.post(f"{self.URL}{a['id']}/", {"action": "recall"}, as_=self.admin).status_code, 409)

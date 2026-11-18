@@ -1365,3 +1365,53 @@
     font-size: 23px;
   }
 }
+
+.ust-forgot {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--dn-p);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.ust-mailnote {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  line-height: 1.55;
+}
+.ust-mailnote svg {
+  flex: none;
+  margin-top: 3px;
+}
+.ust-blockers {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #f0d9a8;
+  border-radius: 12px;
+  background: #fff8e8;
+  color: #6b4a00;
+  font-size: 13px;
+}
+.ust-blockers strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ust-blockers ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.ust-risk li svg {
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.ust-spin {
+  animation: ust-spin 0.8s linear infinite;
+}
+@keyframes ust-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

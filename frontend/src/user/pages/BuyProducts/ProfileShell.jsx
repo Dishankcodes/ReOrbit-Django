@@ -12,7 +12,26 @@ import {
   UserPlus,
   Users,
   Award,
+  Leaf,
+  ShoppingBag,
+  Gift,
+  Recycle,
+  Tag,
+  Trophy,
 } from "lucide-react";
+
+const BADGE_ICON = {
+  leaf: Leaf,
+  "shopping-bag": ShoppingBag,
+  heart: Heart,
+  gift: Gift,
+  recycle: Recycle,
+  users: Users,
+  star: Star,
+  tag: Tag,
+  badge: BadgeCheck,
+  trophy: Trophy,
+};
 
 import { useGoBack } from "../../../shared/backNav";
 import ReportButton from "../../../shared/components/ReportButton";
@@ -134,8 +153,22 @@ export default function ProfileShell({
               {person.username && <span>@{person.username}</span>}
             </p>
             {person.bio && <p className="ushp-bio">{person.bio}</p>}
+            {person.badges?.length > 0 && (
+              <ul className="ushp-badges" aria-label="Badges earned">
+                {person.badges.map((b) => {
+                  const Icon = BADGE_ICON[b.icon] || Award;
+                  return (
+                    <li key={b.id} title={b.text}>
+                      <Icon size={13} /> {b.title}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
           <div className="ushp-actions">
+            {/* only ReMakers can be followed (members selling pre-loved items can't) */}
+            {isMaker && onFollow && (
             <button
               type="button"
               className={`dn-btn ${following ? "dn-btn--ghost" : ""}`}
@@ -152,6 +185,7 @@ export default function ProfileShell({
                 </>
               )}
             </button>
+            )}
             <MessageButton target={chat} label="Message" />
             <ReportButton
               type={reportType}
@@ -302,8 +336,9 @@ export default function ProfileShell({
             <PackageSearch size={30} />
             <h3>No listings right now</h3>
             <p>
-              Follow {person.name.split(" ")[0]} to hear when something new goes
-              up.
+              {isMaker
+                ? `Follow ${person.name.split(" ")[0]} to hear when something new goes up.`
+                : "Nothing listed right now. Check back soon."}
             </p>
           </div>
         ))}

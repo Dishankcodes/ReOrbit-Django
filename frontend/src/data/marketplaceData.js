@@ -334,8 +334,8 @@ export function setLiveItems(cards) {
       quantity: c.stock,
       soldOut: c.sold_out,
       returnable: c.returnable !== false,
-      views: 0,
-      likes: 0,
+      views: c.views || 0,
+      likes: c.saves || 0,
       listedDate: c.created_at,
     })),
   );

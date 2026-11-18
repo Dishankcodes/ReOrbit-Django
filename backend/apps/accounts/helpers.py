@@ -24,6 +24,15 @@ def is_valid_email(value):
 def touch_login(account):
     account.last_login_at = timezone.now()
     account.save(update_fields=["last_login_at"])
+    # signing in within 30 days of deleting your own account brings it back
+    from apps.core.account_deletion import restore_if_pending
+
+    try:
+        restore_if_pending(account)
+    except Exception:  # noqa: BLE001  never block a sign-in over this
+        import logging
+
+        logging.getLogger(__name__).exception("restore after sign-in failed")
 
 
 def send_otp_or_error(email, purpose, account_type):

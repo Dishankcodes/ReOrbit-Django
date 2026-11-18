@@ -7,7 +7,6 @@ import { apiRequest } from "../../../api/api";
 import { useLiveMarketplace } from "../../data/liveMarketplace";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
-import { useFollowing } from "../../data/followStore";
 import { personChat } from "../../data/messageTargets";
 import { PageLoader } from "../../../shared/components/Spinner";
 import ProfileShell from "./ProfileShell";
@@ -21,7 +20,6 @@ export default function UserSellerProfile() {
   const live = useLiveMarketplace(); // loads live listings when this page is opened directly
   const [seller, setSeller] = useState(null);
   const [state, setState] = useState("loading"); // loading | ok | missing
-  const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
   const { reviews, summary } = useSellerReviews("user", sellerId);
 
@@ -40,7 +38,8 @@ export default function UserSellerProfile() {
           image: m.image || "",
           bio: m.bio || "Pre-loved finds, passed on through ReOrbit.",
           joined: String(m.joined),
-          productsSold: m.items_sold,
+          productsSold: Number(m.items_sold || 0).toLocaleString("en-IN"),
+          badges: m.badges || [],
           sellerType: "user",
         });
         setState("ok");
@@ -77,8 +76,6 @@ export default function UserSellerProfile() {
       isMaker={false}
       products={getProductsBySeller(sellerId)}
       reviews={reviews}
-      following={isFollowing(sellerId)}
-      onFollow={() => toggle(sellerId)}
       chat={personChat(seller, "seller")}
       reportType="User"
       reportTarget={{

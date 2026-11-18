@@ -149,6 +149,12 @@ def pickup_of(o):
             "cancel_reason": r.cancel_reason, "requested_at": o.pickup_requested_at}
 
 
+def _reorbit_address():
+    from apps.core.buyers import reorbit_address_data
+
+    return reorbit_address_data()
+
+
 def order_data(o, request, *, events=False, buyer=False):
     """`events` adds the tracking history; `buyer` adds who bought (sellers and admin need it)."""
     data = {
@@ -177,6 +183,8 @@ def order_data(o, request, *, events=False, buyer=False):
         "can_cancel": o.status in (Order.Status.CONFIRMED, Order.Status.PACKED),
         "seller_earning": 0 if o.seller_type == "platform" else o.subtotal + (0 if o.managed_delivery else o.delivery_fee),
         "managed_delivery": o.managed_delivery,
+        # ReOrbit's own address (Admin > Addresses): where its store orders ship from and returns go back to
+        "reorbit_address": _reorbit_address() if o.seller_type == "platform" or o.managed_delivery else None,
         "pickup": pickup_of(o),
         "cod_received_at": o.cod_received_at,
         "failed": {"reason": o.fail_reason, "label": FAIL_REASONS.get(o.fail_reason, (o.fail_reason, ""))[0],

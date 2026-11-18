@@ -975,14 +975,33 @@
 /* A solid button rendered as a link (<a class="dn-btn">: Track order, View profile, Raise a
    ticket…) keeps white text and icons. Link colour rules from other loaded stylesheets were
    turning them black. Ghost, soft and danger buttons keep their own colours. */
-a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger),
-a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):visited,
-a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):hover,
-a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):focus {
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):not(.dn-btn--light),
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):not(.dn-btn--light):visited,
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):not(.dn-btn--light):hover,
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):not(.dn-btn--light):focus {
   color: #fff !important;
   -webkit-text-fill-color: #fff;
 }
-a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger) svg {
+a.dn-btn:not(.dn-btn--ghost):not(.dn-btn--soft):not(.dn-btn--danger):not(.dn-btn--light) svg {
   color: #fff;
   stroke: #fff;
+}
+
+/* white button for dark cards ("Contact support" on Help): dark text, soft hover */
+.dn-btn.dn-btn--light,
+a.dn-btn.dn-btn--light,
+a.dn-btn.dn-btn--light:visited {
+  border-color: #fff;
+  background: #fff;
+  color: #1f2923 !important;
+  -webkit-text-fill-color: #1f2923;
+}
+.dn-btn.dn-btn--light:hover,
+a.dn-btn.dn-btn--light:hover,
+a.dn-btn.dn-btn--light:focus-visible {
+  border-color: #f2d48a;
+  background: #f2d48a;
+  color: #1f2923 !important;
+  -webkit-text-fill-color: #1f2923;
+  transform: translateY(-1px);
 }

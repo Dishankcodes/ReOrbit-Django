@@ -444,8 +444,8 @@ export default function AdminReports() {
               <BarList rows={d.status} />
             </ChartCard>
             <ChartCard
-              title="Pickups by status"
-              sub={`${num(d.pk.kpi.total)} pickups · ${d.pk.kpi.cancelRate}% cancelled`}
+              title="Accepted pickups by status"
+              sub={`${num(d.pk.kpi.total)} accepted pickups · ${d.pk.kpi.cancelRate}% cancelled`}
               table={rowsTable(d.pk.status, "Status")}
             >
               <BarList rows={d.pk.status} />

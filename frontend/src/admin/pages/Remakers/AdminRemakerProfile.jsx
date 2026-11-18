@@ -14,7 +14,6 @@ import {
   ShoppingBag,
   Package,
   Images,
-  Hammer,
   Star,
   Flag,
   History,
@@ -39,7 +38,6 @@ import useToast from "../../components/ui/useToast";
 import RemakerOverviewTab from "./tabs/RemakerOverviewTab";
 import PortfolioTab from "./tabs/PortfolioTab";
 import ProductsTab from "./tabs/ProductsTab";
-import RefurbishmentsTab from "./tabs/RefurbishmentsTab";
 import RemakerReviewsTab from "./tabs/RemakerReviewsTab";
 import OrdersTab from "../Users/tabs/OrdersTab";
 import ReportsTab from "../Users/tabs/ReportsTab";
@@ -59,7 +57,7 @@ const NOTICE_TEXT = {
   Blocked:
     "This ReMaker is blocked. Their products are off the marketplace until they are unblocked.",
   Deleted:
-    "This ReMaker is deleted. History is kept for orders and refurbishments, and the account can be restored.",
+    "This ReMaker is deleted. History is kept for orders and reviews, and the account can be restored.",
 };
 
 export default function AdminRemakerProfile() {
@@ -77,6 +75,8 @@ export default function AdminRemakerProfile() {
   const { toast, toastNode } = useToast();
   const [tab, setTab] = useState("overview");
   const [pending, setPending] = useState(null);
+  const access = useAccess(); /* hooks before any early return */
+  const canMessage = access.can("messages", "edit");
 
   useEffect(() => {
     setTab("overview");
@@ -118,7 +118,6 @@ export default function AdminRemakerProfile() {
 
   const { profile } = remaker;
   const actions = getAvailableActions(remaker.status);
-  const canMessage = useAccess().can("messages", "edit");
   const latest = remaker.statusHistory[0];
 
   const tabs = [
@@ -140,12 +139,6 @@ export default function AdminRemakerProfile() {
       label: "Orders",
       icon: ShoppingBag,
       count: remaker.orders.length,
-    },
-    {
-      id: "refurbishments",
-      label: "Refurbishments",
-      icon: Hammer,
-      count: remaker.refurbishments.length,
     },
     {
       id: "reviews",
@@ -342,7 +335,6 @@ export default function AdminRemakerProfile() {
         {tab === "portfolio" && <PortfolioTab remaker={remaker} />}
         {tab === "products" && <ProductsTab remaker={remaker} toast={toast} />}
         {tab === "orders" && <OrdersTab user={remaker} />}
-        {tab === "refurbishments" && <RefurbishmentsTab remaker={remaker} />}
         {tab === "reviews" && <RemakerReviewsTab remaker={remaker} />}
         {tab === "reports" && <ReportsTab user={remaker} noun="ReMaker" />}
         {tab === "activity" && <ActivityTab user={remaker} />}

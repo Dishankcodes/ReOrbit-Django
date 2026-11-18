@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import AdminFooter from "../../components/AdminFooter";
 import { useUsers } from "../../data/usersStore";
 import { useRemakers } from "../../data/remakersStore";
-import { useProducts } from "../../data/productsStore";
+import { apiRequest } from "../../../api/api";
 import { useReport } from "../../data/reportsStore";
 import "../../css/Home.css";
 
@@ -16,7 +16,7 @@ const managementItems = [
   {
     icon: "inventory_2",
     title: "Products & listings",
-    text: "Approve or reject what members and ReMakers post, and keep the marketplace accurate and trustworthy.",
+    text: "Watch what members and ReMakers list, flag or switch off listings that break the rules, and suggest fairer prices.",
   },
   {
     icon: "receipt_long",
@@ -36,7 +36,7 @@ const managementItems = [
   {
     icon: "storefront",
     title: "Buy & sell as the platform",
-    text: "Buy from members and ReMakers, then list refurbished stock for sale with photos and track each selling order.",
+    text: "Buy from members and ReMakers, list warehouse stock in ReOrbit's own store and handle each selling order.",
   },
   {
     icon: "redeem",
@@ -86,7 +86,7 @@ const flow = [
   { icon: "volunteer_activism", label: "Donate or list" },
   { icon: "local_shipping", label: "Pickup" },
   { icon: "warehouse", label: "Warehouse" },
-  { icon: "handyman", label: "Refurbish" },
+  { icon: "storefront", label: "List" },
   { icon: "shopping_bag", label: "Sell" },
   { icon: "account_balance_wallet", label: "Earn" },
 ];
@@ -103,11 +103,16 @@ const compact = (n) =>
 export default function AdminHome() {
   const users = useUsers();
   const remakers = useRemakers();
-  const products = useProducts();
+  const [liveCount, setLiveCount] = useState(null);
+  /* live listings across the marketplace (members, ReMakers and ReOrbit's store), from the server */
+  useEffect(() => {
+    apiRequest("/marketplace/?page_size=1", { auth: false })
+      .then((r) => setLiveCount(r.data?.count ?? r.data?.total ?? (r.data?.results || []).length))
+      .catch(() => setLiveCount(0));
+  }, []);
   const report = useReport("all");
   const memberCount = users.filter((u) => u.status !== "Deleted").length;
   const makerCount = remakers.filter((r) => r.status === "Active").length;
-  const liveCount = products.filter((p) => p.state === "live").length;
 
   return (
     <div className="admin-home-container">
@@ -279,7 +284,7 @@ export default function AdminHome() {
                 inventory_2
               </span>
 
-              <strong>{liveCount}</strong>
+              <strong>{liveCount ?? "…"}</strong>
 
               <span>Live listings</span>
             </div>

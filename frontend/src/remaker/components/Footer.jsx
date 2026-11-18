@@ -1,4 +1,5 @@
 import React from "react";
+import BrandMark from "../../shared/components/BrandMark";
 import ShareSiteButton from "../../shared/components/ShareSiteButton";
 import "./Footer.css";
 
@@ -24,6 +25,8 @@ const columns = [
     links: [
       ["FAQ", "/remakers-faq"],
       ["Privacy Policy", "/privacy"],
+      ["Community guidelines", "/policies/community"],
+      ["Shipping & delivery", "/policies/shipping"],
       ["Contact Us", "/remakers-contact"],
     ],
   },
@@ -53,14 +56,14 @@ export default function Footer() {
         {/* BRAND */}
         <div className="remaker-footer-brand">
           <a className="remaker-footer-logo" href="/">
-            <span className="material-symbols-outlined">eco</span>
+            <BrandMark size={34} />
 
             <span>ReOrbit</span>
           </a>
 
           <p>
-            A circular marketplace where verified, refurbished and rescued
-            objects find a meaningful second story.
+            A circular marketplace where rescued objects become new
+            creations and find a meaningful second story.
           </p>
 
           <div className="remaker-footer-socials">

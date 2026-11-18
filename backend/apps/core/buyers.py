@@ -45,3 +45,26 @@ def order_url(obj):
 def owner(account):
     """Filter/create kwargs for SavedAddress: {"user": a} / {"remaker": a} / {"admin": a}."""
     return {type_of(account): account}
+
+
+def address_book(account):
+    """Filter kwargs for the addresses this account can use. Admins share one book: ReOrbit's own
+    addresses (Admin > Addresses), so any team member ships, buys and receives with the same ones."""
+    if type_of(account) == "admin":
+        return {"admin__isnull": False}
+    return owner(account)
+
+
+def reorbit_address():
+    """ReOrbit's main address (the default one in Admin > Addresses) as a SavedAddress, or None."""
+    from apps.core.models import SavedAddress
+
+    return SavedAddress.objects.filter(admin__isnull=False).order_by("-is_default", "-updated_at", "pk").first()
+
+
+def reorbit_address_data():
+    a = reorbit_address()
+    if a is None:
+        return None
+    return {"name": a.recipient_name, "phone": a.phone, "line1": a.address_line1, "line2": a.address_line2,
+            "landmark": a.landmark, "city": a.city, "state": a.state, "pincode": a.pincode, "label": a.label}

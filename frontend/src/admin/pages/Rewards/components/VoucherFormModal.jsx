@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, Wand2, Coins, Ticket } from "lucide-react";
-import { AUDIENCES, codeTaken } from "../../../data/rewardsStore";
+import { APPLIES_TO, AUDIENCES, POINTS_AUDIENCES, codeTaken } from "../../../data/rewardsStore";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const addDays = (n) =>
@@ -18,6 +18,7 @@ const EMPTY = () => ({
   usage_limit: 500,
   per_user: 1,
   audience: "Everyone",
+  applies_to: "any",
   valid_from: todayISO(),
   valid_to: addDays(30),
 });
@@ -173,7 +174,10 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
             role="radio"
             aria-checked={isPoints}
             className={isPoints ? "on" : ""}
-            onClick={() => set("kind", "points")}
+            onClick={() => {
+              set("kind", "points");
+              if (f.audience === "ReMakers") set("audience", "Everyone");
+            }}
           >
             <Coins size={18} />
             <span>
@@ -237,10 +241,24 @@ export default function VoucherFormModal({ open, voucher, onSave, onClose }) {
               value={f.audience}
               onChange={(e) => set("audience", e.target.value)}
             >
-              {AUDIENCES.map((a) => (
+              {(isPoints ? POINTS_AUDIENCES : AUDIENCES).map((a) => (
                 <option key={a}>{a}</option>
               ))}
             </select>
+            {f.audience === "ReMakers" && (
+              <small className="rw-hint">Any ReMaker account can use it, on any product.</small>
+            )}
+          </label>
+          <label className="ad-modal-field">
+            <span>Works on</span>
+            <select value={f.applies_to || "any"} onChange={(e) => set("applies_to", e.target.value)}>
+              {APPLIES_TO.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+            <Err k="applies_to" />
           </label>
 
           <label className="ad-modal-field">

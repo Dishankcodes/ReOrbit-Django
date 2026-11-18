@@ -1,0 +1,43 @@
+.txs {
+  --txs-accent: #2a4d3a;
+  --txs-soft: #e4ede7;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.txs--remaker {
+  --txs-accent: #4a1d20;
+  --txs-soft: #f5e9e6;
+}
+.txs--admin {
+  --txs-accent: #0e3a2d;
+  --txs-soft: #e3efe8;
+}
+.txs small {
+  color: #6b756d;
+  font-size: 12px;
+  font-weight: 600;
+}
+.txs button {
+  padding: 5px 11px;
+  border: 1px dashed #cfd8d2;
+  border-radius: 999px;
+  background: #fff;
+  color: #1f2923;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.txs button:hover {
+  border-style: solid;
+}
+.txs button.on {
+  border-style: solid;
+  border-color: var(--txs-accent);
+  background: var(--txs-soft);
+  color: var(--txs-accent);
+  font-weight: 700;
+}

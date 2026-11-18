@@ -694,3 +694,20 @@
     width: auto;
   }
 }
+
+.st-forgot {
+  margin-right: auto;
+  margin-left: 8px;
+  color: #0e3a2d;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.st-facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: #4a5a52;
+  font-size: 13.5px;
+}

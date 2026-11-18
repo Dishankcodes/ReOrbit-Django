@@ -30,18 +30,25 @@ def seller_review_data(r):
     }
 
 
-def entry_data(line, request):
-    """One delivered order line with the state of its reviews."""
+def entry_data(line, request, mine_by_product=None, mine_by_seller=None):
+    """One delivered order line with the state of its reviews. A product or seller the person already
+    reviewed on another order shows that review (one review per product, one per seller)."""
     o = line.order
     pr = getattr(line, "review", None)
     sr = getattr(o, "seller_review", None)
     reviewable_seller = services.can_review_seller(o)
+    if pr is None and mine_by_product:
+        pr = mine_by_product.get((line.kind, line.ref_id))
+    if sr is None and mine_by_seller and reviewable_seller:
+        sr = mine_by_seller.get((o.seller_type, o.seller_user_id or o.seller_remaker_id))
     return {
         "order_id": o.public_id, "line_id": line.ref_id, "delivered_at": o.delivered_at,
         "item": {"title": line.title, "qty": line.qty, "cover": media_url(request, line.cover)},
         "seller": seller_of(o), "can_review_seller": reviewable_seller,
         "product_review": product_review_data(pr, request) if pr else None,
         "seller_review": seller_review_data(sr) if sr and reviewable_seller else None,
+        "product_review_from": pr.order.public_id if pr and pr.order_id != o.pk else None,
+        "seller_review_from": sr.order.public_id if sr and reviewable_seller and sr.order_id != o.pk else None,
         "complete": bool(pr) and (bool(sr) or not reviewable_seller),
     }
 

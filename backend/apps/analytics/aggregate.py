@@ -222,11 +222,15 @@ def _donations_section(start, prev_start, end, buckets):
         "pending": Donation.objects.filter(status="Pending").count(),
     }
 
-    # every pickup: one per donation, plus the listings members asked ReOrbit to collect
+    # pickups the team accepted: donations that were approved for pickup (not ones still under review,
+    # not accepted, or cancelled before a pickup was booked), plus booked listing pickups
     today = timezone.localdate()
-    pk = [{"status": DONATION_PICKUP.get(d.status, "Requested"), "agent": d.assigned_partner.name if d.assigned_partner_id else None,
-           "date": d.pickup_date} for d in don_in]
+    accepted = [d for d in don_in if d.status not in ("Pending", "Rejected")
+                and not (d.status == "Cancelled" and not d.pickup_date)]
+    pk = [{"status": DONATION_PICKUP.get(d.status, "Scheduled"), "agent": d.assigned_partner.name if d.assigned_partner_id else None,
+           "date": d.pickup_date} for d in accepted]
     for r in (PickupRequest.objects.filter(created_at__gte=start, created_at__lte=end)
+              .exclude(status="Requested").exclude(status="Cancelled", pickup_date__isnull=True)
               .select_related("assigned_partner")):
         pk.append({"status": r.status, "agent": r.assigned_partner.name if r.assigned_partner_id else None,
                    "date": r.pickup_date})
@@ -243,7 +247,7 @@ def _donations_section(start, prev_start, end, buckets):
         "pk": {
             "kpi": pk_kpi,
             "status": [{"label": s.replace("_", " "), "value": sum(1 for p in pk if p["status"] == s)}
-                       for s in ("Requested", "Scheduled", "Picked_Up", "Completed", "Cancelled")],
+                       for s in ("Scheduled", "Picked_Up", "Completed", "Cancelled")],
             "agents": tally([p for p in pk if p["agent"]], lambda p: p["agent"]),
         },
     }

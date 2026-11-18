@@ -23,6 +23,11 @@ class _Base(serializers.ModelSerializer):
         imgs = _images(obj)
         return ImageSerializer(imgs[0], context=self.context).data["url"] if imgs else None
 
+    def get_saves(self, obj):
+        from apps.core.engagement import saves_for
+
+        return saves_for([obj.public_id]).get(obj.public_id, 0)
+
 
 COMMON = ["id", "title", "description", "category", "price", "stock", "status",
           "images", "cover", "created_at", "updated_at"]
@@ -33,11 +38,27 @@ class RemakerProductSerializer(_Base):
 
     remaker = serializers.SerializerMethodField()
     deactivation = serializers.SerializerMethodField()
+    views = serializers.SerializerMethodField()
+    saves = serializers.SerializerMethodField()
+    sales = serializers.SerializerMethodField()
 
     class Meta:
         model = RemakerProduct
         fields = COMMON + ["materials", "dimensions", "customization_available",
-                           "pickup_preference", "delivery_fee", "remaker", "deactivation"]
+                           "pickup_preference", "delivery_fee", "remaker", "deactivation", "views", "saves", "sales"]
+
+    def get_views(self, obj):
+        from apps.core.engagement import views_for
+
+        return int(views_for([obj.public_id]).get(obj.public_id) or 0)
+
+    def get_sales(self, obj):
+        from django.db.models import Sum
+
+        from apps.orders.models import Order, OrderItem
+
+        return OrderItem.objects.filter(remaker_product_id=obj.pk).exclude(
+            order__status__in=(Order.Status.CANCELLED, Order.Status.PENDING_PAYMENT)).aggregate(n=Sum("qty"))["n"] or 0
 
     def get_remaker(self, obj):
         r = obj.remaker
@@ -52,11 +73,12 @@ class RemakerProductSerializer(_Base):
 class AdminItemSerializer(_Base):
     admin = serializers.SerializerMethodField()
     views = serializers.IntegerField(source="view_count", read_only=True)
+    saves = serializers.SerializerMethodField()
 
     class Meta:
         model = AdminItem
         fields = COMMON + ["sku", "admin", "mrp", "condition", "source", "inventory_id",
-                           "specs", "delivery", "returnable", "views"]
+                           "specs", "delivery", "returnable", "views", "saves"]
 
     def get_admin(self, obj):
         return {"id": obj.admin.public_id, "name": obj.admin.full_name}

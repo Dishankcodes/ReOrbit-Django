@@ -109,7 +109,42 @@ class BaseProfileView(APIView):
                 changes["full_name"] = name
         return changes, errors
 
+    def fill_place(self, account):
+        """City, pincode and address the member already gave in their saved delivery address fill the
+        profile once, so every form (sell, donate, checkout) starts from them. They can change it."""
+        p = getattr(account, "profile", None)
+        if p is None or (p.city and p.pincode and p.address):
+            return
+        from apps.core import buyers
+        from apps.core.models import SavedAddress
+
+        try:
+            a = (SavedAddress.objects.filter(**buyers.owner(account)).order_by("-is_default", "pk").first())
+        except Exception:  # noqa: BLE001  never stop the profile from opening
+            return
+        if a is None:
+            return
+        changed = []
+        try:
+            pin = validate_gujarat_pincode(a.pincode) if a.pincode else ""
+        except Exception:  # noqa: BLE001  not a pincode the profile accepts
+            pin = ""
+        if not p.pincode and pin:
+            p.pincode = pin
+            changed.append("pincode")
+        if not p.city and a.city and (pin or p.pincode):
+            p.city = a.city
+            changed.append("city")
+        if not p.address:
+            line = ", ".join(x for x in (a.address_line1, a.address_line2, a.landmark) if x)
+            if line:
+                p.address = line[:500]
+                changed.append("address")
+        if changed:
+            p.save(update_fields=changed)
+
     def get(self, request):
+        self.fill_place(request.user.account)
         return ok(self.payload(request))
 
     def patch(self, request):

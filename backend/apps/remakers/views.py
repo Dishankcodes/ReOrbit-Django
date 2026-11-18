@@ -11,6 +11,7 @@ from apps.accounts.google import (
     profile_from_code,
     read_signup_token,
 )
+from apps.core.account_deletion import DeleteMyAccount as _DeleteMyAccount, is_past_grace, purge
 from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
@@ -76,6 +77,9 @@ class RequestOTPView(APIView):
             return fail("Invalid OTP purpose.")
 
         remaker = ReMakers.objects.filter(email__iexact=email).first()
+        if remaker is not None and is_past_grace(remaker):
+            purge(remaker)  # deleted more than 30 days ago: gone for good
+            remaker = None
 
         if purpose == P.REMAKER_LOGIN and Users.objects.filter(email__iexact=email).exists():
             return fail(
@@ -105,7 +109,10 @@ class RequestOTPView(APIView):
         else:
             if not remaker:
                 return fail("No ReMaker account found with this email.", status=status.HTTP_404_NOT_FOUND)
-            if remaker.status in (ReMakers.Status.BLOCKED, ReMakers.Status.DELETED):
+            self_deleted = remaker.status == ReMakers.Status.DELETED and remaker.deletion_requested_at
+            # a ReMaker who deleted their own account can sign in within 30 days to bring it back
+            if remaker.status == ReMakers.Status.BLOCKED or (
+                    remaker.status == ReMakers.Status.DELETED and not self_deleted):
                 return fail(f"Account is {remaker.status.lower()}.", status=status.HTTP_403_FORBIDDEN)
 
         result, error = send_otp_or_error(email, purpose, OTP_Verification.AccountType.REMAKER)
@@ -417,3 +424,9 @@ class AdminReMakerDetail(AdminAccountDetail):
     def get_queryset(self):
         return _with_counts(super().get_queryset())
     serializer_class = AdminReMakerSerializer
+
+
+class DeleteMyAccount(_DeleteMyAccount):
+    """GET / POST /api/remakers/me/delete/ : delete my account (30 days to undo by signing in)."""
+
+    permission_classes = [IsReOrbitReMaker]

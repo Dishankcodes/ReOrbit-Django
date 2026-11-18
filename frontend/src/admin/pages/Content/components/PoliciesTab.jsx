@@ -150,6 +150,16 @@ export default function PoliciesTab({ canEdit, by, toast }) {
           </div>
           {!editing && (
             <div className="cm-pol-actions">
+              {!policy.neverPublished && (
+                <a
+                  className="ad-btn ad-btn-ghost"
+                  href={{ terms: "/terms", privacy: "/privacy" }[policy.key] || `/policies/${policy.key}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View live page
+                </a>
+              )}
               <button
                 type="button"
                 className="ad-btn ad-btn-ghost"

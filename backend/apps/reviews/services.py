@@ -59,6 +59,23 @@ def reviewer_fields(account):
     return {"reviewer_type": t, "reviewer_key": buyers.key_of(account), f"reviewer_{t}": account}
 
 
+def same_product_review(reviewer_key, line, lock=False):
+    """This person's review of the same product on an earlier order line, or None."""
+    qs = ProductReview.objects.filter(reviewer_key=reviewer_key, order_item__kind=line.kind,
+                                      order_item__ref_id=line.ref_id).exclude(order_item=line).order_by("pk")
+    return (qs.select_for_update() if lock else qs).first()
+
+
+def same_seller_review(reviewer_key, order, lock=False):
+    """This person's review of the same seller on another order, or None."""
+    if order.seller_type not in ("user", "remaker"):
+        return None
+    qs = SellerReview.objects.filter(reviewer_key=reviewer_key, seller_type=order.seller_type,
+                                     **{f"seller_{order.seller_type}_id": getattr(order, f"seller_{order.seller_type}_id")}
+                                     ).exclude(order=order).order_by("pk")
+    return (qs.select_for_update() if lock else qs).first()
+
+
 def can_review_seller(order):
     return order.seller_type in ("user", "remaker")
 
@@ -170,6 +187,11 @@ def save_product_review(account, order_id, line_id, data, files=(), remove_photo
     if line is None:
         raise ReviewError("We couldn't find that item in the order.", status=404)
     review = ProductReview.objects.select_for_update().filter(order_item=line).first()
+    if review is None:
+        # one review per product per person: buying it again edits the review they already wrote
+        review = same_product_review(base["reviewer_key"], line, lock=True)
+        if review is not None:
+            order = review.order
     if review:
         _check_hidden(review)
         _check_edit_window(review)
@@ -213,6 +235,11 @@ def save_seller_review(account, order_id, data):
     if not can_review_seller(order):
         raise ReviewError("This order was sold by ReOrbit, so there is no seller to review.", code="platform_seller")
     review = SellerReview.objects.select_for_update().filter(order=order).first()
+    if review is None:
+        # one review per seller per person, however many orders: a later order edits that review
+        review = same_seller_review(base["reviewer_key"], order, lock=True)
+        if review is not None:
+            order = review.order
     if review:
         _check_hidden(review)
         _check_edit_window(review)

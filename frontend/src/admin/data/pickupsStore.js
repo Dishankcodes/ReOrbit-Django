@@ -62,6 +62,7 @@ function fromRequest(r) {
     ref_path: isOrder ? r.order.path : `/admin-products/${r.item.id}`,
     ref_label: isOrder ? "Order" : "Item listing",
     order: r.order || null, // order pickups: the order, its buyer and where it goes
+    dropTo: r.drop_to || null, // listing pickups: ReOrbit's own address (Admin › Addresses)
     title: r.item.title,
     category: r.item.category,
     image: r.item.image,

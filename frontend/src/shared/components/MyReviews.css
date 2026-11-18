@@ -18,9 +18,9 @@
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .rv-head h1 {
   margin: 0 0 2px;
@@ -32,17 +32,19 @@
   font-size: 14px;
 }
 .rv-avg {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   background: var(--rv-card);
   border: 1px solid var(--rv-line);
-  border-radius: 14px;
-  padding: 10px 16px;
-  min-width: 150px;
+  border-radius: 999px;
+  padding: 7px 16px;
 }
 .rv-avg b {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 22px;
+  font-size: 17px;
 }
 .rv-avg small {
   color: var(--rv-muted);

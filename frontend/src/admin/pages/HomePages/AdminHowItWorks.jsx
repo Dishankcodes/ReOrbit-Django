@@ -152,7 +152,7 @@ export default function HowItWorks() {
       icon: "volunteer_activism",
       label: "Step one",
       title: "Donate or list",
-      text: "A member offers an item. An admin accepts it, or the listing goes into the review queue.",
+      text: "A member offers a donation or lists an item. Donations wait for an admin to accept them; listings go live straight away and can be flagged or switched off if reported.",
     },
     {
       icon: "local_shipping",
@@ -164,13 +164,13 @@ export default function HowItWorks() {
       icon: "warehouse",
       label: "Step three",
       title: "Warehouse",
-      text: "The item is received, given a rack and bin, and either listed as it is or sent for refurbishment.",
+      text: "The item is received into the warehouse, given a rack and bin, checked, and priced for ReOrbit's own store.",
     },
     {
       icon: "handyman",
       label: "Step four",
-      title: "Refurbish & list",
-      text: "A ReMaker restores it, and the finished product is listed for sale with photos and a price.",
+      title: "List in the store",
+      text: "It is listed in ReOrbit's store with photos, condition and a price, alongside member listings and ReMaker creations.",
     },
     {
       icon: "shopping_bag",

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BrandMark from "../../../shared/components/BrandMark";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import "../../css/ReMakerAuth.css";
@@ -492,7 +493,7 @@ export default function ReMakerAuth() {
             ------------------------------------------------ */}
             <div className="remaker-auth-logo">
               <span className="remaker-logo-mark">
-                <span className="material-symbols-outlined">eco</span>
+                <BrandMark size={30} />
               </span>
 
               <span>ReOrbit</span>

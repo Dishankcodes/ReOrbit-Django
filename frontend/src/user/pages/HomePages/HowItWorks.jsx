@@ -894,8 +894,7 @@ export default function HowItWorks() {
                 <h3>Arrange pickup</h3>
 
                 <p>
-                  Where pickup is supported, provide the required location
-                  details and follow the available handover process.
+                  Ship it yourself with a courier, or let ReOrbit pick it up from your door. Your city and pincode come from your profile.
                 </p>
               </div>
 
@@ -907,8 +906,7 @@ export default function HowItWorks() {
                 <h3>Keep it moving</h3>
 
                 <p>
-                  Your item can reach another user, enter ReOrbit's inventory or
-                  become a useful material for a ReMaker.
+                  When it sells, the money is held safely until delivery and then clears to your wallet, ready to withdraw.
                 </p>
               </div>
             </div>
@@ -1070,9 +1068,7 @@ export default function HowItWorks() {
                 <h3>Pickup support</h3>
 
                 <p>
-                  Where pickup is supported, items can be collected from the
-                  provided location. Availability and applicable pickup charges
-                  depend on the item and location.
+                  Choose "Managed by ReOrbit" and our pickup team collects the parcel from you and delivers it to the buyer. Donation pickups are always free.
                 </p>
               </div>
 
@@ -1086,9 +1082,7 @@ export default function HowItWorks() {
                 <h3>ReOrbit inventory</h3>
 
                 <p>
-                  Donated or eligible items can enter the ReOrbit warehouse and
-                  inventory process, where they can be managed for further reuse
-                  and redistribution.
+                  Donations are reviewed by the team, collected for free and received into the ReOrbit warehouse. You get Orbit Points, sometimes a voucher, and a donation certificate.
                 </p>
               </div>
 
@@ -1104,8 +1098,7 @@ export default function HowItWorks() {
                 <h3>ReMaker route</h3>
 
                 <p>
-                  Items and materials with creative potential can reach ReMakers
-                  who repair, restore or transform them into new creations.
+                  ReMakers buy pre-loved pieces on the marketplace and turn them into new creations, which you can follow and buy from their studio pages.
                 </p>
               </div>
             </div>

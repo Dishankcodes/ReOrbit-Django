@@ -437,7 +437,32 @@ class AdminPolicyPublish(_Admin):
             v = _publish(p, body, note or "First version", major, self.who(request))
             self.log(request, f"Published {p.title} version {v}")
             self.audit(request, "policy.publish", "policy", p.key, after={"version": v})
-        return ok({"policy": policy_row(p), "version": v}, message=f"{p.title} version {v} is live.")
+        told = 0
+        if major and v != "1.0":
+            told = _announce_policy(p, note, request.user.account)
+        msg = f"{p.title} version {v} is live." + (f" {told:,} members and ReMakers were told." if told else "")
+        return ok({"policy": policy_row(p), "version": v, "notified": told}, message=msg)
+
+
+POLICY_PATHS = {"terms": "/terms", "privacy": "/privacy"}
+
+
+def _announce_policy(p, note, admin):
+    """A major change to a policy is announced in everyone's notification bell, with a link to read it."""
+    from apps.notifications import announcements as ann
+    from apps.notifications.models import Announcement
+
+    try:
+        a = Announcement.objects.create(
+            title=f"We updated our {p.title.lower()}"[:150],
+            message=(f"What changed: {note}" if note else f"Please take a moment to read the new {p.title.lower()}.")[:1000],
+            kind=Announcement.Kind.UPDATE, audience=Announcement.Audience.EVERYONE,
+            link=POLICY_PATHS.get(p.key, f"/policies/{p.key}"),
+            sent_by=admin, sent_by_name=f"Admin · {admin.full_name}",
+        )
+        return ann.deliver(a.pk) or 0
+    except Exception:  # noqa: BLE001  publishing never fails because the announcement did
+        return 0
 
 
 class AdminPolicyRestore(_Admin):

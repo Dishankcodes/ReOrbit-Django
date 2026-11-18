@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import TextSuggestions, { BIO_IDEAS } from "../../../shared/components/TextSuggestions";
 import {
   User,
   Mail,
@@ -552,6 +553,14 @@ export default function UserProfile() {
                   maxLength={250}
                   placeholder="Tell us a little about yourself..."
                 />
+                {isEditing && (
+                  <TextSuggestions
+                    items={BIO_IDEAS.user}
+                    value={formData.bio}
+                    max={250}
+                    onChange={(bio) => setFormData((current) => ({ ...current, bio }))}
+                  />
+                )}
                 {fieldErrors.bio && (
                   <small className="profile-field-error">
                     {fieldErrors.bio[0]}

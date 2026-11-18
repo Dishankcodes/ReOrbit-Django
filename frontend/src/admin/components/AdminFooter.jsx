@@ -1,5 +1,4 @@
 import React from "react";
-import ShareSiteButton from "../../shared/components/ShareSiteButton";
 import "./AdminFooter.css";
 
 const columns = [
@@ -12,10 +11,10 @@ const columns = [
     ],
   },
   {
-    title: "Community",
+    title: "Admin",
     links: [
-      ["ReMakers", "/remakers"],
-      ["About Us", "/admin-about"],
+      ["How it works", "/admin-how-it-works"],
+      ["About ReOrbit", "/admin-about"],
       ["Admin sign in", "/admin-login"],
     ],
   },
@@ -40,13 +39,9 @@ export default function AdminFooter() {
           </a>
 
           <p>
-            Creating a sustainable marketplace where every item deserves a
-            second story.
+            The control room for ReOrbit: accounts, listings, orders, donations,
+            pickups, the warehouse and payouts, all in one place.
           </p>
-
-          <div className="admin-footer-socials">
-            <ShareSiteButton />
-          </div>
         </div>
 
         {/* COLUMNS */}

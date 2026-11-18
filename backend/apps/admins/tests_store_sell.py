@@ -77,7 +77,10 @@ class StoreSellTests(OrderBase):
 
     def test_public_page_views_are_counted(self):
         self.assertEqual(self.tote.view_count, 0)
-        self.assertEqual(self.client.get(f"/api/marketplace/{self.tote.public_id}/").status_code, 200)
+        # the product page counts a view once per visit (POST /api/analytics/view/), not every fetch
+        for _ in range(2):
+            r = self.client.post("/api/analytics/view/", {"type": "product", "id": self.tote.public_id}, format="json")
+            self.assertEqual(r.status_code, 200, r.data)
         self.client.get(f"/api/marketplace/{self.tote.public_id}/")
         self.tote.refresh_from_db()
         self.assertEqual(self.tote.view_count, 2)

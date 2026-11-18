@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BrandMark from "../../shared/components/BrandMark";
 import { isSignedIn } from "../../api/session";
 import "./Navbar.css";
 
@@ -50,7 +51,7 @@ export default function Navbar() {
           href="/remakers-home"
           onClick={closeMenu}
         >
-          <span className="material-symbols-outlined">eco</span>
+          <BrandMark size={34} />
 
           <span>ReOrbit</span>
         </a>

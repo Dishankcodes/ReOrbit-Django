@@ -62,7 +62,13 @@ export function mapUser(row) {
     updated_at: row.updated_at,
     last_active: row.last_login_at || row.created_at,
     email_verified_at: row.email_verified_at,
-    profile: baseProfile(row.profile),
+    profile: {
+      ...baseProfile(row.profile),
+      /* real counts from the server: listings uploaded, sales delivered, orders bought */
+      total_uploads: row.uploads_count ?? row.profile?.total_uploads ?? 0,
+      total_sales: row.sold_count ?? row.profile?.total_sales ?? 0,
+      total_purchases: row.bought_count ?? row.profile?.total_purchases ?? 0,
+    },
     totals: { spent: 0, earned: 0 },
     items: [],
     orders: [],

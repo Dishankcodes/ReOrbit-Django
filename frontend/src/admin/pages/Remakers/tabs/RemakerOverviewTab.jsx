@@ -6,7 +6,6 @@ import {
   ShieldAlert,
   Recycle,
   Package,
-  Hammer,
   Award,
 } from "lucide-react";
 import StatusBadge from "../../../components/ui/StatusBadge";
@@ -33,9 +32,6 @@ export default function RemakerOverviewTab({ remaker, goToTab }) {
   const against = remaker.reports.filter((r) =>
     r.direction.startsWith("Against"),
   );
-  const done = remaker.refurbishments.filter(
-    (r) => r.refurbishment_status === "Completed",
-  ).length;
 
   return (
     <div className="aup-grid-2">
@@ -153,9 +149,6 @@ export default function RemakerOverviewTab({ remaker, goToTab }) {
             </div>
           </div>
           <ul className="aup-impact-rows">
-            <li>
-              <Hammer size={15} /> Refurbishments completed <b>{done}</b>
-            </li>
             <li>
               <Package size={15} /> Upcycled products listed{" "}
               <b>{profile.total_uploads}</b>

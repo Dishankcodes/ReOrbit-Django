@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 from apps.accounts.google import GoogleAuthError, profile_from_code
+from apps.core.account_deletion import DeleteMyAccount as _DeleteMyAccount, is_past_grace, purge
 from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
@@ -88,6 +89,9 @@ class LoginView(APIView):
             return fail("Password is required.")
 
         user = Users.objects.filter(email__iexact=email).first()
+        if user is not None and is_past_grace(user):
+            purge(user)  # deleted more than 30 days ago: gone for good, the email is free again
+            user = None
         if not user:
             return fail(
                 "No account found with this email. Please create an account first.",
@@ -102,6 +106,7 @@ class LoginView(APIView):
             )
 
         touch_login(user)
+        _login_alert(user, request)
         return ok(
             {"user": UserSerializer(user).data, **create_token_pair("user", user.user_id)},
             "Login successful.",
@@ -334,12 +339,37 @@ class ChangePasswordView(APIView):
         return ok(message="Password updated successfully.")
 
 
+def _with_counts(qs):
+    """Real numbers for the admin list: listings uploaded, orders sold (delivered) and orders bought."""
+    from django.db.models import Count, IntegerField, OuterRef, Subquery
+    from django.db.models.functions import Coalesce
+
+    from apps.listings.models import Item
+    from apps.orders.models import Order
+
+    def counted(model_qs):
+        return Coalesce(Subquery(model_qs.order_by().values("n")[:1], output_field=IntegerField()), 0)
+
+    uploads = (Item.objects.filter(user=OuterRef("pk"), deleted_at__isnull=True).exclude(item_status="Draft")
+               .values("user").annotate(n=Count("pk")))
+    sold = (Order.objects.filter(seller_user=OuterRef("pk"), status=Order.Status.DELIVERED)
+            .values("seller_user").annotate(n=Count("pk")))
+    bought = (Order.objects.filter(buyer_user=OuterRef("pk"))
+              .exclude(status__in=(Order.Status.CANCELLED, Order.Status.PENDING_PAYMENT))
+              .values("buyer_user").annotate(n=Count("pk")))
+    return qs.annotate(uploads_count=counted(uploads), sold_count=counted(sold), bought_count=counted(bought))
+
+
 class AdminUserList(AdminAccountList):
-    """GET /api/users/admin/  (admin with the "users" module, view level)."""
+    """GET /api/users/admin/  (admin with the "users" module, view level).
+    Each row carries uploads_count, sold_count (delivered sales) and bought_count."""
 
     permission_classes = [IsReOrbitAdmin, HasAdminModule("users")]
     queryset = Users.objects.all()
     serializer_class = AdminUserSerializer
+
+    def get_queryset(self):
+        return _with_counts(super().get_queryset())
     search_fields = ("full_name", "email", "public_id", "profile__city", "profile__phone")
 
 
@@ -347,6 +377,9 @@ class AdminUserDetail(AdminAccountDetail):
     """GET /api/users/admin/<public_id>/"""
 
     permission_classes = [IsReOrbitAdmin, HasAdminModule("users")]
+
+    def get_queryset(self):
+        return _with_counts(super().get_queryset())
     queryset = Users.objects.all()
     serializer_class = AdminUserSerializer
 
@@ -355,5 +388,24 @@ def _tell_password(user):
     """A security notice: if it wasn't them, they can see it straight away."""
     from apps.core.services import notify
 
+    from apps.core.mailer import security_notice
+
     notify(user, "Your password was changed", "If this wasn't you, reset it now and contact support.",
            module="account", target_url="/user-settings", severity="warning", ref_type="account", ref_id=user.public_id)
+    security_notice(user, "Your password was changed")
+
+
+def _login_alert(user, request):
+    """Settings › Security › Login alerts: email the member when someone signs in."""
+    prefs = getattr(getattr(user, "profile", None), "notification_preferences", None) or {}
+    if prefs.get("loginAlerts"):
+        from apps.core.mailer import security_notice
+
+        agent = (request.META.get("HTTP_USER_AGENT") or "")[:80]
+        security_notice(user, "There was a new sign-in to your account" + (f" ({agent})" if agent else ""))
+
+
+class DeleteMyAccount(_DeleteMyAccount):
+    """GET / POST /api/users/me/delete/ : delete my account (30 days to undo by signing in)."""
+
+    permission_classes = [IsReOrbitUser]

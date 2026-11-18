@@ -63,6 +63,17 @@ class FilingTests(ComplaintBase):
         c2 = self.filed(who=self.reporter, type="ReMaker", target_id=self.maker.public_id, category="Late delivery")
         self.assertEqual(c2.target_remaker_id, self.maker.pk)
 
+    def test_the_reporter_sees_their_reports_and_the_answer(self):
+        c = self.filed()
+        mine = self.get("/api/complaints/me/", as_=self.reporter).data["data"]["results"]
+        self.assertEqual([r["id"] for r in mine], [c.public_id])
+        self.assertIsNone(mine[0]["answer"])
+        self.assertEqual(self.act(c, "dismiss", reason="No rule was broken here").status_code, 200)
+        mine = self.get("/api/complaints/me/", as_=self.reporter).data["data"]["results"]
+        self.assertEqual(mine[0]["status"], "Dismissed")
+        self.assertIn("No rule was broken", mine[0]["answer"]["note"])
+        self.assertEqual(self.get("/api/complaints/me/", as_=self.maker).data["data"]["results"], [])
+
     def test_validation(self):
         self.assertEqual(self.report(description="short").status_code, 400)
         self.assertEqual(self.report(category="Made up").status_code, 400)

@@ -281,6 +281,7 @@ export default function AdminSidebar({
   };
 
   const [query, setQuery] = useState("");
+  const [hi, setHi] = useState(0);
   const [focused, setFocused] = useState(false);
   const searchRef = useRef(null);
   const RECENT_KEY = "reorbit_admin_recent";
@@ -348,14 +349,28 @@ export default function AdminSidebar({
         `${i.label} ${i.words || ""}`.toLowerCase().includes(q),
       )
     : [];
+  /* ↑/↓ move through the matches (or the recent pages when the box is empty), Enter opens it */
+  const kbList = q ? results : focused ? recentItems : [];
+  const at = kbList.length ? Math.min(hi, kbList.length - 1) : -1;
   const goFirst = (e) => {
     if (e.key === "Escape") setQuery("");
-    if (e.key === "Enter" && results[0]) {
-      navigate(results[0].path);
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && kbList.length) {
+      e.preventDefault();
+      const d = e.key === "ArrowDown" ? 1 : -1;
+      setHi((at + d + kbList.length) % kbList.length);
+    }
+    if (e.key === "Enter" && kbList[at]) {
+      e.preventDefault();
+      navigate(kbList[at].path);
       setQuery("");
+      setHi(0);
+      searchRef.current?.blur();
       handleNavigation();
     }
   };
+  useEffect(() => {
+    if (at >= 0) document.querySelector(".is-kbd")?.scrollIntoView?.({ block: "nearest" });
+  }, [at, q]);
 
   const renderMenuItem = (item) => {
     const Icon = item.icon;
@@ -364,7 +379,9 @@ export default function AdminSidebar({
         key={item.path}
         to={item.path}
         end={item.path === "/admin-dashboard"}
-        className={() => `admin-sidebar-link ${isActive(item.path) ? "active" : ""}`}
+        className={() =>
+          `admin-sidebar-link ${isActive(item.path) ? "active" : ""} ${q && at >= 0 && results[at]?.path === item.path ? "is-kbd" : ""}`
+        }
         onClick={() => {
           setQuery("");
           handleNavigation();
@@ -429,7 +446,10 @@ export default function AdminSidebar({
           ref={searchRef}
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setHi(0);
+          }}
           onKeyDown={goFirst}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -442,13 +462,13 @@ export default function AdminSidebar({
             <span className="admin-sidebar-section-label">
               <History size={11} /> RECENT
             </span>
-            {recentItems.map((item) => {
+            {recentItems.map((item, i) => {
               const Icon = item.icon;
               return (
                 <button
                   type="button"
                   key={item.path}
-                  className="admin-sidebar-recent-item"
+                  className={`admin-sidebar-recent-item ${at === i ? "is-kbd" : ""}`}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     navigate(item.path);

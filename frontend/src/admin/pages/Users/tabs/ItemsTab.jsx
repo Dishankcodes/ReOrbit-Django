@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import TextSuggestions from "../../../../shared/components/TextSuggestions";
+import { LISTING_ACTIONS, PRICE_MESSAGE_IDEAS } from "../../../data/listingModeration";
 import { useNavigate } from "react-router-dom";
 import { Boxes, MoreVertical, Ban, Tag, ExternalLink, X } from "lucide-react";
 
@@ -18,6 +20,7 @@ const DISABLE_ACTION = {
   confirmLabel: "Disable item",
   placeholder: "Explain why this item should be disabled...",
   reasonHint: "required",
+  suggestions: LISTING_ACTIONS.disable.suggestions,
 };
 
 const DISABLE_ALL_ACTION = {
@@ -30,6 +33,7 @@ const DISABLE_ALL_ACTION = {
   confirmLabel: "Turn off all",
   placeholder: "Explain why these listings are being turned off...",
   reasonHint: "required",
+  suggestions: ["These listings look like spam.", "The listings appear to be fake.", "Many buyers reported these listings."],
 };
 
 export default function ItemsTab({ user, toast }) {
@@ -356,6 +360,7 @@ export default function ItemsTab({ user, toast }) {
                 onChange={(event) => setPriceMessage(event.target.value)}
                 placeholder="Explain why you recommend this price..."
               />
+              <TextSuggestions tone="admin" items={PRICE_MESSAGE_IDEAS} value={priceMessage} max={300} onChange={setPriceMessage} />
             </label>
 
             <div className="ad-modal-actions">

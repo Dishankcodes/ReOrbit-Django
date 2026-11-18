@@ -58,7 +58,9 @@ NOT_LIVE_RULES = {"referral", "follow"}  # the platform has nothing that hands t
 EARN_KINDS = ("purchase", "firstOrder", "donation", "listing", "review", "follow", "referral")
 LIFETIME_KINDS = EARN_KINDS + ("reversal", "revoke")  # spending, refunds and deductions never lower the level
 MAX_ADJUST = 100000
-AUDIENCES = ("all", "new", "donors")
+AUDIENCES = ("all", "new", "donors", "members", "remakers")
+APPLIES_TO = ("any", "remaker", "reorbit")
+MEMBER_ONLY_AUDIENCES = ("new", "donors", "members")
 
 
 class VoucherError(Exception):
@@ -325,7 +327,7 @@ def _audience_block(offer, user):
     return ""
 
 
-def _check_offer(buyer, offer, goods_total, has_remaker):
+def _check_offer(buyer, offer, goods_total, seller_types):
     """Raises VoucherError when this member cannot use the public coupon now."""
     today = timezone.localdate()
     if offer.draft or offer.paused or offer.valid_from > today:
@@ -339,26 +341,31 @@ def _check_offer(buyer, offer, goods_total, has_remaker):
     if live.count() >= offer.usage_limit:
         raise VoucherError("This coupon has been fully claimed.", "VOUCHER_USED_UP")
     if is_maker:
-        # ReMakers have no Orbit Points or donations, so coupons aimed at those can't apply
-        if offer.audience == "donors" or offer.min_level:
+        # ReMakers have no Orbit Points or donations, so member-only coupons can't apply
+        if offer.audience in ("donors", "members") or offer.min_level:
             raise VoucherError("This coupon is for member accounts.", "VOUCHER_MEMBER")
         if offer.audience == "new" and _maker_has_ordered(buyer):
             raise VoucherError("This coupon is for first-time buyers only.", "VOUCHER_AUDIENCE")
     else:
+        if offer.audience == "remakers":
+            raise VoucherError("This coupon is for ReMaker accounts.", "VOUCHER_AUDIENCE")
         blocked = _audience_block(offer, buyer)
         if blocked:
             raise VoucherError(blocked, "VOUCHER_AUDIENCE")
     if not is_maker and offer.min_level and level_index(totals(buyer)[1]) < offer.min_level:
         raise VoucherError(f"Reach {LEVELS[offer.min_level][1]} level to use this coupon.", "VOUCHER_LEVEL")
-    if offer.remaker_only and not has_remaker:
-        raise VoucherError("Add a ReMaker product to use this coupon.", "VOUCHER_AUDIENCE")
+    types = set(seller_types or ())
+    if offer.applies_to == "remaker" and "remaker" not in types:
+        raise VoucherError("Add a ReMaker creation to use this coupon.", "VOUCHER_PRODUCTS")
+    if offer.applies_to == "reorbit" and "platform" not in types:
+        raise VoucherError("Add a product sold by ReOrbit to use this coupon.", "VOUCHER_PRODUCTS")
     if goods_total < offer.min_order:
         raise VoucherError(
             f"Add ₹{offer.min_order - goods_total:,} more to use this coupon (minimum order ₹{offer.min_order:,}).",
             "VOUCHER_MIN_ORDER")
 
 
-def check(buyer, raw_code, goods_total, *, lock=False, has_remaker=True):
+def check(buyer, raw_code, goods_total, *, lock=False, seller_types=None):
     """Return (voucher, discount) or raise VoucherError. `buyer` is the account row.
 
     With lock=True (inside the checkout transaction) the rows are locked, so two checkouts can never both
@@ -395,7 +402,7 @@ def check(buyer, raw_code, goods_total, *, lock=False, has_remaker=True):
     offer = (oqs.select_for_update() if lock else oqs).first()
     if offer is None:
         raise VoucherError("This voucher isn't valid.")
-    _check_offer(buyer, offer, goods_total, has_remaker)
+    _check_offer(buyer, offer, goods_total, seller_types)
     claim = Voucher(
         **({"owner_remaker": buyer} if is_maker else {"owner": buyer}),
         code=new_code(offer.code[:11]), offer=offer, title=offer.title,
@@ -507,7 +514,7 @@ def offer_data(o, used=None):
         "max_discount": o.max_discount or o.value, "points_cost": o.points_cost, "usage_limit": o.usage_limit,
         "used": used, "left": max(0, o.usage_limit - used),
         "usage_pct": min(100, round(used * 100 / o.usage_limit)) if o.usage_limit else 0, "per_user": o.per_user,
-        "audience": o.audience, "min_level": o.min_level, "remaker_only": o.remaker_only,
+        "audience": o.audience, "min_level": o.min_level, "applies_to": o.applies_to,
         "valid_from": o.valid_from, "valid_to": o.valid_to, "draft": o.draft, "paused": o.paused, "status": status,
         "days_left": (o.valid_to - today).days, "expiring_soon": status == "Active" and (o.valid_to - today).days <= 7,
     }
@@ -549,7 +556,7 @@ def member_offers(user):
     balance, lifetime = totals(user)
     level = level_index(lifetime)
     live = ~Q(vouchers__status=Voucher.Status.VOID)
-    rows = list(RewardOffer.objects.filter(draft=False, valid_to__gte=today).annotate(
+    rows = list(RewardOffer.objects.filter(draft=False, valid_to__gte=today).exclude(audience="remakers").annotate(
         used_n=Count("vouchers", filter=live),
         mine_n=Count("vouchers", filter=live & Q(vouchers__owner=user))))
     return [member_offer_data(o, user, o.used_n, o.mine_n, balance, level) for o in rows]
@@ -615,6 +622,35 @@ def summary(user):
                                                  expires_at__gt=timezone.now()).count(),
         "stats": stats, "levels": [level_data(n) for n in range(len(LEVELS))],
     }
+
+
+# The badges a member can earn (same list the Badges page shows). (id, icon, title, text, stat, target)
+BADGES = (
+    ("first-orbit", "leaf", "First Orbit", "Completed a first sustainable purchase.", "delivered_orders", 1),
+    ("circular-shopper", "shopping-bag", "Circular Shopper", "5 marketplace orders delivered.", "delivered_orders", 5),
+    ("collector", "heart", "Thoughtful Collector", "Saved 10 products to their wishlist.", "wishlist", 10),
+    ("community-giver", "gift", "Community Giver", "Completed 3 donations.", "donations_completed", 3),
+    ("second-life", "recycle", "Second Life", "Rescued 25 items from waste by buying or donating.", "rescued", 25),
+    ("makers-friend", "users", "Maker's Friend", "Follows 3 ReMakers.", "following", 3),
+    ("reviewer", "star", "Helpful Reviewer", "Posted 3 order reviews.", "reviews", 3),
+    ("seller-starter", "tag", "Seller Starter", "Listed a first item for sale.", "listed", 1),
+    ("trusted-seller", "badge", "Trusted Seller", "Sold 3 items to happy buyers.", "sold", 3),
+    ("impact-champion", "trophy", "Impact Champion", "Reached 5,000 lifetime Orbit Points.", "lifetime", 5000),
+)
+
+
+def earned_badges(user, stats=None, lifetime=None):
+    """The badges this member has earned, worked out from the same numbers as summary()."""
+    from apps.social.models import Follow
+
+    if stats is None:
+        data = summary(user)
+        stats, lifetime = data["stats"], data["lifetime"]
+    nums = {**stats, "rescued": (stats.get("donated_items") or 0) + (stats.get("bought_items") or 0),
+            "lifetime": lifetime or 0,
+            "following": Follow.objects.filter(follower_type="user", user=user).count()}
+    return [{"id": b, "icon": icon, "title": t, "text": txt}
+            for b, icon, t, txt, key, target in BADGES if (nums.get(key) or 0) >= target]
 
 
 def entry_data(e):
@@ -687,6 +723,13 @@ def save_offer(data, admin, offer=None):
     if audience not in AUDIENCES:
         errors["audience"] = ["Choose who can use it."]
     level = _int(data.get("min_level"), "min_level", errors, 0, len(LEVELS) - 1, default=0)
+    applies_to = str(data.get("applies_to") or "any")
+    if applies_to not in APPLIES_TO:
+        errors["applies_to"] = ["Choose which products it works on."]
+    if kind == "points" and audience == "remakers":
+        errors["audience"] = ["Points rewards are for members. Use a coupon code for ReMakers."]
+    if audience == "remakers" and level:
+        errors["min_level"] = ["ReMakers have no Orbit level."]
     vf, vt = _date(data.get("valid_from"), "valid_from", errors), _date(data.get("valid_to"), "valid_to", errors)
     if vf and vt and vt < vf:
         errors["valid_to"] = ["The end date can't be before the start date."]
@@ -698,7 +741,7 @@ def save_offer(data, admin, offer=None):
         code=code, title=title, description=" ".join(str(data.get("description") or "").split())[:255], kind=kind,
         discount_type=dtype, value=value, min_order=min_order, max_discount=cap,
         points_cost=cost if kind == "points" else 0, usage_limit=limit, per_user=per_user, audience=audience,
-        min_level=level, remaker_only=bool(data.get("remaker_only")), valid_from=vf, valid_to=vt,
+        min_level=level, applies_to=applies_to, valid_from=vf, valid_to=vt,
         draft=bool(data.get("draft")), paused=bool(data.get("paused")))
     if offer is None:
         return RewardOffer.objects.create(**fields)

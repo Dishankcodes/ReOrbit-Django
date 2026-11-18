@@ -12,7 +12,7 @@ export default function AdminAbout() {
     {
       icon: "inventory_2",
       title: "Products & Listings",
-      text: "Approve or reject what members and ReMakers post so everything on the marketplace is accurate and safe to buy.",
+      text: "Flag, switch off or re-enable listings, suggest fairer prices and act on reports so the marketplace stays accurate and safe.",
     },
     {
       icon: "receipt_long",
@@ -22,7 +22,7 @@ export default function AdminAbout() {
     {
       icon: "volunteer_activism",
       title: "Donations & Pickups",
-      text: "Decide on each donation, schedule a free pickup and follow it until the item reaches the warehouse or an NGO.",
+      text: "Decide on each donation, schedule a free pickup with a pickup team and follow it until the item reaches the warehouse.",
     },
     {
       icon: "warehouse",
@@ -32,7 +32,7 @@ export default function AdminAbout() {
     {
       icon: "storefront",
       title: "Buy & Sell",
-      text: "The platform can buy products and sell its own refurbished stock, with full selling-order handling.",
+      text: "The platform can buy products and sell its own stock from the warehouse, with full selling-order handling.",
     },
     {
       icon: "redeem",
@@ -64,7 +64,7 @@ export default function AdminAbout() {
       icon: "handyman",
       title: "ReMakers",
       label: "THE CREATORS",
-      text: "ReMakers turn rescued materials into new products, sell them on ReOrbit, and take on refurbishment work from the warehouse.",
+      text: "ReMakers buy rescued pieces from members, turn them into new products and sell them on ReOrbit, with their own studio page and followers.",
     },
     {
       number: "03",
@@ -84,7 +84,7 @@ export default function AdminAbout() {
     {
       icon: "inventory",
       title: "Stock you can see",
-      text: "Racks, bins, refurbishment progress and unsold alerts show where every item is and what needs attention.",
+      text: "Racks, bins and unsold alerts show where every item is and what needs attention.",
     },
     {
       icon: "account_balance_wallet",

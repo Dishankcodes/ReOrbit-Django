@@ -528,3 +528,11 @@
 .admin-sidebar-recent-item:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* keyboard highlight from the menu search (↑ / ↓) */
+.admin-sidebar-link.is-kbd,
+.admin-sidebar-recent-item.is-kbd {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: -2px;
+  background: rgba(255, 255, 255, 0.12);
+}

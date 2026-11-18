@@ -1,4 +1,5 @@
 import React from "react";
+import BrandMark from "../../shared/components/BrandMark";
 import { Link } from "react-router-dom";
 import ShareSiteButton from "../../shared/components/ShareSiteButton";
 import { getRules } from "../../shared/platformRules";
@@ -27,6 +28,10 @@ const columns = [
       ["FAQ", "/faq"],
       ["Contact Us", "/contact"],
       ["Privacy Policy", "/privacy"],
+      ["Returns & refunds", "/policies/refunds"],
+      ["Shipping & delivery", "/policies/shipping"],
+      ["Donation guidelines", "/policies/donation"],
+      ["Community guidelines", "/policies/community"],
     ],
   },
 ];
@@ -55,7 +60,7 @@ export default function Footer() {
         {/* Brand */}
         <div className="footer-brand">
           <Link className="footer-logo" to="/">
-            <span className="material-symbols-outlined">eco</span>
+            <BrandMark size={34} />
 
             <span>ReOrbit</span>
           </Link>

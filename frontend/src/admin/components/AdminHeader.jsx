@@ -134,8 +134,8 @@ const pageInformation = {
     subtitle: "Review ReOrbit performance and analytics.",
   },
   "/admin-addresses": {
-    title: "Addresses",
-    subtitle: "Where your orders and donation pickups go.",
+    title: "ReOrbit addresses",
+    subtitle: "Shared by the whole team. The default one is used whenever ReOrbit's address is needed: store orders ship from it, collected listings and returns come here, and what ReOrbit buys is delivered here.",
   },
   "/admin-settings": {
     title: "Settings",

@@ -10,7 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Flag, X, CheckCircle2 } from "lucide-react";
-import { CATEGORIES } from "../complaintCategories";
+import { CATEGORIES, REPORT_IDEAS } from "../complaintCategories";
+import TextSuggestions from "./TextSuggestions";
 import "./ReportButton.css";
 
 const NOUN = {
@@ -114,7 +115,8 @@ export default function ReportButton({
                 <h3>Thanks, we got your report</h3>
                 <p>
                   Our team will look into {NOUN[type]} and take action if it
-                  breaks our rules. You won’t be named to them.
+                  breaks our rules. You won’t be named to them. You can follow
+                  it and read our answer in Help › My reports.
                 </p>
                 <button
                   type="button"
@@ -133,7 +135,10 @@ export default function ReportButton({
                   <span>What’s wrong?</span>
                   <select
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(e) => {
+                      setReason(e.target.value);
+                      setDetails("");
+                    }}
                   >
                     {CATEGORIES[type].map((c) => (
                       <option key={c}>{c}</option>
@@ -148,6 +153,12 @@ export default function ReportButton({
                     onChange={(e) => setDetails(e.target.value)}
                     placeholder="Share what you saw. Facts help us act faster."
                     maxLength={600}
+                  />
+                  <TextSuggestions
+                    items={REPORT_IDEAS[reason] || REPORT_IDEAS.Other}
+                    value={details}
+                    max={600}
+                    onChange={setDetails}
                   />
                   {touched && tooShort && (
                     <small className="rb-error">

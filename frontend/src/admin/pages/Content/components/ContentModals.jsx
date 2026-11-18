@@ -685,7 +685,7 @@ export function PublishModal({
             />
             <span>
               This is a major change that members should read again{" "}
-              <em>(version {target})</em>
+              <em>(version {target}; everyone gets a notification with a link to read it)</em>
             </span>
           </label>
         </>

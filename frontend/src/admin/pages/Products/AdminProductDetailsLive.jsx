@@ -352,22 +352,18 @@ export default function AdminProductDetailsLive() {
               </div>
             </header>
             <div className="apd-metrics">
-              {isStore && (
-                <>
-                  <div>
-                    <small>
-                      <Eye size={13} /> Views
-                    </small>
-                    <strong>{p.views ?? 0}</strong>
-                  </div>
-                  <div>
-                    <small>
-                      <Heart size={13} /> Wishlisted
-                    </small>
-                    <strong>{stats ? stats.wishlisted || 0 : "…"}</strong>
-                  </div>
-                </>
-              )}
+              <div>
+                <small>
+                  <Eye size={13} /> Views
+                </small>
+                <strong>{(p.views ?? 0).toLocaleString("en-IN")}</strong>
+              </div>
+              <div>
+                <small>
+                  <Heart size={13} /> Wishlisted
+                </small>
+                <strong>{p.saves ?? (stats ? stats.wishlisted || 0 : "…")}</strong>
+              </div>
               <div>
                 <small>
                   <ShoppingBag size={13} /> Orders

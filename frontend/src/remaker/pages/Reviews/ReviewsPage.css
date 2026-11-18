@@ -1004,8 +1004,10 @@
 }
 
 .rvp-side-card.cta {
-  background: var(--rp-green);
-  border-color: var(--rp-green);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 45%),
+    linear-gradient(140deg, #4a1d20 0%, var(--rp-maroon) 100%);
+  border-color: #4a1d20;
   color: #fff;
 }
 

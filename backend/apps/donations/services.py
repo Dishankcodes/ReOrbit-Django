@@ -196,8 +196,8 @@ def create_donation(donor, data, files):
     except ValueError:
         quantity = 0
     min_items = PlatformSettings.load().min_donation_items
-    if not min_items <= quantity <= 99:
-        errors["quantity"] = [f"Donate at least {min_items} item(s), up to 99."]
+    if not min_items <= quantity <= 32000:  # no real upper limit, only what the column can hold
+        errors["quantity"] = [f"Donate at least {min_items} item(s)."]
 
     files = list(files or [])
     if not files:

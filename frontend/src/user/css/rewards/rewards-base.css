@@ -1115,3 +1115,94 @@
 .urw-donation-empty > .dn-btn:hover, .urw-donation-empty > .dn-btn:focus {
   color: #fff; -webkit-text-fill-color: #fff;
 }
+
+/* Orbit Points › what the levels mean */
+.urw-lvguide {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid var(--dn-border, #dce5de);
+  border-radius: 22px;
+  background: #fff;
+}
+.urw-lvguide-head h3 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+.urw-lvguide-head p {
+  margin: 0 0 16px;
+  color: var(--dn-muted, #6b756d);
+  font-size: 13.5px;
+}
+.urw-lvguide-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.urw-lvguide-list > li {
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #eef2ef;
+  border-radius: 16px;
+  background: #fbfcfb;
+}
+.urw-lvguide-list > li.is-now {
+  border-color: var(--dn-p, #2a4d3a);
+  background: var(--dn-soft, #e4ede7);
+}
+.urw-lvguide-list > li.is-next {
+  opacity: 0.85;
+}
+.urw-lvguide-dot {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: #e3ebe6;
+  color: var(--dn-p, #2a4d3a);
+  font-weight: 800;
+}
+.urw-lvguide-list > li.is-done .urw-lvguide-dot,
+.urw-lvguide-list > li.is-now .urw-lvguide-dot {
+  background: var(--dn-p, #2a4d3a);
+  color: #fff;
+}
+.urw-lvguide-list header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.urw-lvguide-list header small {
+  color: var(--dn-muted, #6b756d);
+  font-size: 12px;
+}
+.urw-lvguide-list header em {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--dn-p, #2a4d3a);
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.urw-lvguide-list p {
+  margin: 4px 0 6px;
+  color: #3d4842;
+  font-size: 13.5px;
+}
+.urw-lvguide-list > li > div { flex: 1; min-width: 0; text-align: left; }
+.urw-lvguide-list ul li { display: list-item; padding: 0; border: 0; background: none; }
+.urw-lvguide-list ul li::before { content: none; }
+.urw-lvguide-list ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--dn-muted, #6b756d);
+  font-size: 12.5px;
+}

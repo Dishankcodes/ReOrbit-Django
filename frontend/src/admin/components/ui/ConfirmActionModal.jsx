@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import TextSuggestions from "../../../shared/components/TextSuggestions";
 import { X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { ACTION_ICONS } from "./actionIcons";
 
@@ -98,6 +99,9 @@ export default function ConfirmActionModal({
               }
               autoFocus
             />
+            {action.suggestions?.length > 0 && (
+              <TextSuggestions tone="admin" items={action.suggestions} value={reason} max={500} onChange={setReason} />
+            )}
             {touched && reasonMissing && (
               <small className="ad-modal-error">
                 Please add a short reason (at least 5 characters).

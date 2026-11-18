@@ -42,6 +42,8 @@ class ReMakers(PublicIdModel):
     status_changed_at = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # set when the person deletes their own account: they can sign in within 30 days to undo it
+    deletion_requested_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

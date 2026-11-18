@@ -52,7 +52,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 6px;
-  font-family: var(--font-serif, Georgia, serif);
+  font-family: var(--font-display, "Bricolage Grotesque", system-ui, sans-serif);
   font-size: 28px;
   font-weight: 600;
   color: #1e3d2f;
@@ -124,7 +124,7 @@
   font-size: 20px;
   font-weight: 700;
   color: #1f2923;
-  font-family: var(--font-serif, Georgia, serif);
+  font-family: var(--font-display, "Bricolage Grotesque", system-ui, sans-serif);
   order: 2;
 }
 .ushp-stats dt {
@@ -145,7 +145,7 @@
 }
 .ushp-about h2 {
   margin: 0 0 8px;
-  font-family: var(--font-serif, Georgia, serif);
+  font-family: var(--font-display, "Bricolage Grotesque", system-ui, sans-serif);
   font-size: 22px;
   color: #1e3d2f;
 }
@@ -220,7 +220,7 @@
   margin: 0 0 4px;
   font-size: 16px;
   color: #1e3d2f;
-  font-family: var(--font-serif, Georgia, serif);
+  font-family: var(--font-display, "Bricolage Grotesque", system-ui, sans-serif);
 }
 .ushp-portfolio p {
   margin: 0;
@@ -400,4 +400,46 @@
   .ushp-actions {
     padding-top: 0;
   }
+}
+
+/* badges a community seller has earned */
+.ushp-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ushp-badges li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, var(--dn-p, #2a4d3a) 22%, transparent);
+  border-radius: 999px;
+  background: var(--dn-soft, #e4ede7);
+  color: var(--dn-p, #2a4d3a);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ushp-badges li svg {
+  color: #c08a1d;
+}
+
+/* opened inside the ReMaker app: the ReMaker look (Plus Jakarta Sans, maroon accents) */
+.remaker-layout .sp {
+  --dn-p: #4a1d20;
+  --dn-pd: #270809;
+  --dn-soft: #f5e9e6;
+  font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+}
+.remaker-layout .sp h1,
+.remaker-layout .sp h2,
+.remaker-layout .sp h3,
+.remaker-layout .sp h4,
+.remaker-layout .sp .ushp-stat strong,
+.remaker-layout .sp strong {
+  font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }

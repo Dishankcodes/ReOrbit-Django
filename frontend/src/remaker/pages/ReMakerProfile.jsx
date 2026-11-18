@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import TextSuggestions, { BIO_IDEAS } from "../../shared/components/TextSuggestions";
 import {
   Award,
   BadgeCheck,
@@ -557,6 +558,13 @@ export default function ReMakerProfile() {
                     placeholder="Tell buyers who you are and what you make."
                   />
                   <span className="rpp-hint">{draft.bio.length}/400</span>
+                  <TextSuggestions
+                    tone="remaker"
+                    items={BIO_IDEAS.remaker}
+                    value={draft.bio}
+                    max={400}
+                    onChange={(bio) => setField("bio", bio)}
+                  />
                 </Field>
               </div>
             ) : (

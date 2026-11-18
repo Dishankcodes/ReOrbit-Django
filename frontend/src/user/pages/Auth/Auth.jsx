@@ -20,7 +20,9 @@ import "../../css/Auth.css";
 export default function Auth() {
   const navigate = useNavigate();
 
-  const [mode, setMode] = useState("login");
+  const [mode, setMode] = useState(() =>
+    new URLSearchParams(window.location.search).get("forgot") === "1" ? "forgot-email" : "login",
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);

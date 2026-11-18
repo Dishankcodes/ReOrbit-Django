@@ -19,6 +19,7 @@ import { HELP_CATEGORIES, useHelpFaqs } from "../../data/supportStore";
 import EmptyState from "../../components/ui/EmptyState";
 import HelpNav from "./components/HelpNav";
 import RateReOrbit from "../../../shared/components/RateReOrbit";
+import MyReports from "../../../shared/components/MyReports";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
@@ -160,6 +161,8 @@ export default function UserHelp() {
         </section>
       )}
 
+      <MyReports side="user" hideWhenEmpty />
+
       <RateReOrbit side="user" />
 
       <section className="uhp-cta">
@@ -169,7 +172,7 @@ export default function UserHelp() {
           <p>Our support team usually replies within 24 hours.</p>
         </div>
         <div className="uhp-cta-actions">
-          <Link to="/user-help/contact" className="dn-btn">
+          <Link to="/user-help/contact" className="dn-btn dn-btn--light">
             Contact support
           </Link>
           <Link to="/user-help/tickets" className="dn-btn dn-btn--ghost">

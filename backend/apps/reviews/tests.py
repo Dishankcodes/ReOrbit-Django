@@ -30,6 +30,15 @@ class ReviewBase(PostDeliveryBase):
         self.deliver(oid, item)
         return oid, item.public_id
 
+    def second_buyer(self):
+        """Switch to another member: one person reviews a product (and a seller) only once."""
+        from apps.orders.tests import GOOD_ADDR
+
+        u = self.make_user("second@example.com")
+        r = self.post("/api/orders/addresses/", GOOD_ADDR, as_=u)
+        self.buyer, self.addr = u, r.data["data"]["address"]["id"]
+        return u
+
     def product_url(self, oid, ref):
         return f"/api/reviews/me/orders/{oid}/items/{ref}/product/"
 
@@ -222,6 +231,7 @@ class ReviewFlowTests(ReviewBase):
         self.reviewed(self.table, rating=5)
         self.maker.profile.refresh_from_db()
         self.assertEqual((float(self.maker.profile.rating_average), self.maker.profile.rating_count), (5.0, 2))
+        self.second_buyer()
         oid, ref = self.delivered(self.table)
         self.rate_product(oid, ref, rating=2)
         self.maker.profile.refresh_from_db()
@@ -271,6 +281,7 @@ class ReviewFlowTests(ReviewBase):
 
     def test_admin_queue_uphold_and_dismiss(self):
         self.reviewed(self.table, seller=False)
+        self.second_buyer()
         oid2, ref2 = self.delivered(self.table)
         b = self.rate_product(oid2, ref2, rating=1, body="Awful.").data["data"]["review"]["id"]
         rows = self.received(self.maker)
@@ -280,7 +291,7 @@ class ReviewFlowTests(ReviewBase):
         q = self.get("/api/reviews/admin/?reported=1", as_=self.viewer).data["data"]
         self.assertEqual((q["count"], q["counts"]["reported"]), (2, 2))
         self.assertEqual(q["results"][0]["pending_reports"], 1)
-        self.assertEqual(q["results"][0]["reviewer"]["email"], "buyer@example.com")
+        self.assertEqual(q["results"][0]["reviewer"]["email"], "second@example.com")
         rep_a = next(x for x in q["results"] if x["id"] == a)["reports"][0]["id"]
         rep_b = next(x for x in q["results"] if x["id"] == b)["reports"][0]["id"]
         self.assertEqual(self.post(f"/api/reviews/admin/reports/{rep_a}/resolve/", {"action": "dismiss"}, as_=self.viewer).status_code, 403)
@@ -324,3 +335,24 @@ class ReviewFlowTests(ReviewBase):
         self.assertEqual(q("?status=Hidden")["count"], 1)
         self.assertEqual(self.post(f"/api/reviews/admin/{rid}/restore/", {}, as_=self.mod).status_code, 200)
         self.assertEqual(q("?status=Hidden")["count"], 0)
+
+
+
+class OneReviewEachTests(ReviewBase):
+    """A person reviews a product once and a seller once, however many times they buy."""
+
+    def test_second_order_edits_the_first_reviews(self):
+        type(self.lamp).objects.filter(pk=self.lamp.pk).update(quantity=5)
+        self.lamp.refresh_from_db()
+        o1, ref = self.delivered()
+        o2, _ = self.delivered()
+        self.assertEqual(self.rate_product(o1, ref, rating=5).status_code, 201)
+        self.assertEqual(self.rate_product(o2, ref, rating=2).status_code, 201)
+        self.assertEqual(ProductReview.objects.count(), 1)
+        self.assertEqual(ProductReview.objects.get().rating, 2)
+        url = lambda o: f"/api/reviews/me/orders/{o}/seller/"  # noqa: E731
+        self.assertEqual(self.post(url(o1), {"rating": 5}, as_=self.buyer).status_code // 100, 2)
+        self.assertEqual(self.post(url(o2), {"rating": 4}, as_=self.buyer).status_code // 100, 2)
+        self.assertEqual(SellerReview.objects.count(), 1)
+        rows = self.get("/api/reviews/me/", as_=self.buyer).data["data"]["results"]
+        self.assertTrue(all(r["product_review"] for r in rows))

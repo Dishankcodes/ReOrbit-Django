@@ -27,6 +27,7 @@ class PublicReMakerSerializer(serializers.ModelSerializer):
     profile = PublicReMakerProfileSerializer(read_only=True)
     followers_count = serializers.SerializerMethodField()
     products_count = serializers.SerializerMethodField()
+    rescued_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ReMakers
@@ -38,6 +39,7 @@ class PublicReMakerSerializer(serializers.ModelSerializer):
             "profile",
             "followers_count",
             "products_count",
+            "rescued_count",
         ]
         read_only_fields = fields
 
@@ -51,6 +53,9 @@ class PublicReMakerSerializer(serializers.ModelSerializer):
         return Follow.objects.filter(
             target=obj, follower_type__in=FOLLOWER_TYPES
         ).count()
+
+    def get_rescued_count(self, obj):
+        return int(getattr(obj, "rescued_total", 0) or 0)
 
     def get_products_count(self, obj):
         if hasattr(obj, "products_total"):
@@ -72,10 +77,19 @@ def live_products(remaker):
 
 
 def with_public_counts(queryset):
-    """Annotate ReMakers with followers_total and products_total (no N+1)."""
-    from django.db.models import Count, Q
+    """Annotate ReMakers with followers_total, products_total and rescued_total (no N+1).
+
+    rescued_total: pieces the ReMaker bought from members on ReOrbit and received (delivered orders),
+    which is the material they rescue for new work."""
+    from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Sum
+    from django.db.models.functions import Coalesce
 
     from apps.core.models import SellableBase
+    from apps.orders.models import Order, OrderItem
+
+    rescued = (OrderItem.objects.filter(order__buyer_remaker=OuterRef("pk"), order__seller_user__isnull=False,
+                                        order__status=Order.Status.DELIVERED)
+               .values("order__buyer_remaker").annotate(n=Sum("qty")).values("n")[:1])
 
     return queryset.annotate(
         followers_total=Count(
@@ -94,4 +108,5 @@ def with_public_counts(queryset):
             ),
             distinct=True,
         ),
+        rescued_total=Coalesce(Subquery(rescued, output_field=IntegerField()), 0),
     )

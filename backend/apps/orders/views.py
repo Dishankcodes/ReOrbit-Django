@@ -99,22 +99,23 @@ class AddressList(APIView):
     permission_classes = [IsReOrbitAuthenticated]
 
     def get(self, request):
-        rows = SavedAddress.objects.filter(**buyers.owner(request.user.account))
+        rows = SavedAddress.objects.filter(**buyers.address_book(request.user.account))
         return ok({"addresses": [address_data(a) for a in rows]})
 
     def post(self, request):
         user = request.user.account
         own = buyers.owner(user)
-        if SavedAddress.objects.filter(**own).count() >= MAX_ADDRESSES:
+        book = buyers.address_book(user)
+        if SavedAddress.objects.filter(**book).count() >= MAX_ADDRESSES:
             return fail(f"You can save up to {MAX_ADDRESSES} addresses.")
         v, errors = _clean_address(request.data)
         if errors:
             return fail("Please fix the highlighted fields.", errors=errors)
         with transaction.atomic():
-            first = not SavedAddress.objects.select_for_update().filter(**own).exists()
+            first = not SavedAddress.objects.select_for_update().filter(**book).exists()
             make_default = first or bool(request.data.get("is_default"))
             if make_default:
-                SavedAddress.objects.filter(is_default=True, **own).update(is_default=False)
+                SavedAddress.objects.filter(is_default=True, **book).update(is_default=False)
             a = SavedAddress.objects.create(is_default=make_default, **own, **v)
         return created({"address": address_data(a)})
 
@@ -123,7 +124,7 @@ class AddressDetail(APIView):
     permission_classes = [IsReOrbitAuthenticated]
 
     def _get(self, request, public_id):
-        return get_object_or_404(SavedAddress, public_id=public_id, **buyers.owner(request.user.account))
+        return get_object_or_404(SavedAddress, public_id=public_id, **buyers.address_book(request.user.account))
 
     def patch(self, request, public_id):
         a = self._get(request, public_id)
@@ -140,7 +141,7 @@ class AddressDetail(APIView):
         was_default, user = a.is_default, request.user.account
         a.delete()
         if was_default:
-            nxt = SavedAddress.objects.filter(**buyers.owner(user)).first()
+            nxt = SavedAddress.objects.filter(**buyers.address_book(user)).first()
             if nxt:
                 nxt.is_default = True
                 nxt.save(update_fields=["is_default", "updated_at"])
@@ -152,7 +153,7 @@ class AddressDefault(APIView):
 
     def post(self, request, public_id):
         user = request.user.account
-        own = buyers.owner(user)
+        own = buyers.address_book(user)
         a = get_object_or_404(SavedAddress, public_id=public_id, **own)
         with transaction.atomic():
             SavedAddress.objects.filter(is_default=True, **own).exclude(pk=a.pk).update(is_default=False)
@@ -466,10 +467,11 @@ def _act(request, order, action, actor_kind):
         if order.managed_delivery and who == "seller" and action in services.MANAGED_SELLER_BLOCKED:
             raise services.CheckoutError("ReOrbit picks up and delivers this order. Pack it, then ask ReOrbit to pick it up.",
                                          code="MANAGED_DELIVERY", status=409)
-        if order.managed_delivery and who == "admin" and action in ("ship", "deliver"):
-            # ReOrbit-managed orders move only through Admin > Pickups (picked up = shipped, completed = delivered)
-            raise services.CheckoutError("ReOrbit delivers this order: update it from Admin › Pickups.",
-                                         code="MANAGED_DELIVERY", status=409)
+        if order.managed_delivery and who == "admin" and action == "ship" and not order.pickup_requested_at:
+            # "Managed by ReOrbit": seller packs -> asks for the pickup (Admin > Pickups) -> ReOrbit ships it.
+            # Never straight from Packed, so every managed parcel goes through a pickup.
+            raise services.CheckoutError("The seller hasn't asked for the ReOrbit pickup yet.",
+                                         code="PICKUP_FIRST", status=409)
         if action == "pickup":
             if who != "seller":
                 raise services.CheckoutError("Only the seller asks for a pickup.", code="FORBIDDEN", status=403)

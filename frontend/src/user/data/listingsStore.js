@@ -208,8 +208,8 @@ function fromApi(a) {
     deliveryFee: a.delivery_fee == null ? null : Number(a.delivery_fee),
     status,
     createdAt: a.created_at,
-    views: 0,
-    likes: 0,
+    views: a.views || 0,
+    likes: a.saves || 0,
     marketId: status === "Live" && !disabled ? a.id : null,
     adminDisabled: disabled
       ? {

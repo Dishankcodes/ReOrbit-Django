@@ -249,6 +249,7 @@ export function LineChart({
           ) : null,
         )}
         {area &&
+          data.length > 0 &&
           series
             .slice(0, 1)
             .map((s) => (

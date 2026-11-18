@@ -53,8 +53,8 @@ class CouponCheckoutTests(OrderBase):
         self.assertEqual(r.status_code, 400, r.data)
         self.assertFalse(Order.objects.exists() or Voucher.objects.exists())
 
-    def test_remaker_only_coupon_needs_a_remaker_product(self):
-        self.coupon(code="MAKER20", remaker_only=True)
+    def test_remaker_creations_coupon_needs_a_remaker_product(self):
+        self.coupon(code="MAKER20", applies_to="remaker")
         member_item = [{"id": self.lamp.public_id, "qty": 1}]
         q = self.post("/api/orders/quote/", {"items": member_item, "voucher_code": "MAKER20"}, as_=self.buyer).data["data"]
         self.assertTrue(q["voucher_error"])

@@ -34,10 +34,16 @@ def _reserve_ids(prefix, n):
     return [f"{prefix}-{i}" for i in range(first, first + n)]
 
 
-def _targets(audience):
+def _targets(audience, kind=None):
     out = []
     if audience in ("users", "everyone"):
-        out.append(("user", Users.objects.filter(status=Users.Status.ACTIVE).values_list("pk", flat=True)))
+        users = Users.objects.filter(status=Users.Status.ACTIVE)
+        if kind == Announcement.Kind.OFFER:  # members who turned "Offers and coupons" off don't get offers
+            from apps.users.models import User_Profile
+
+            opted_out = User_Profile.objects.filter(notification_preferences__offers=False).values("user_id")
+            users = users.exclude(pk__in=opted_out)
+        out.append(("user", users.values_list("pk", flat=True)))
     if audience in ("remakers", "everyone"):
         out.append(("remaker", ReMakers.objects.filter(status=ReMakers.Status.ACTIVE).values_list("pk", flat=True)))
     return out
@@ -51,7 +57,7 @@ def deliver(announcement_id):
             return None
         severity = "warning" if a.kind == Announcement.Kind.MAINTENANCE else "info"
         total = 0
-        for field, pks in _targets(a.audience):
+        for field, pks in _targets(a.audience, a.kind):
             pks = list(pks)
             for i in range(0, len(pks), BATCH):
                 chunk = pks[i:i + BATCH]

@@ -302,8 +302,12 @@ export default function SellerOrderDetails({
   const reorbitHands = managed && !isAdmin;
   const pickup = o.pickup || null;
   const next = managed && isAdmin
-    ? // shipped / delivered come from the pickup (Admin › Pickups), never from here
-      { Confirmed: ["pack", "Mark as packed"] }[o.status]
+    ? // ReOrbit ships only after the seller asked for the pickup (it then shows in Admin › Pickups)
+      {
+        Confirmed: ["pack", "Mark as packed"],
+        Packed: pickup?.requested ? ["ship", "Mark as shipped"] : null,
+        Shipped: ["deliver", "Mark as delivered"],
+      }[o.status]
     : reorbitHands
     ? {
         Confirmed: ["pack", "Mark as packed"],
@@ -1062,6 +1066,12 @@ export default function SellerOrderDetails({
                   {a.phone}
                 </p>
                 {o.note && <p className="sod-note">Buyer's note: {o.note}</p>}
+                {o.reorbit_address && o.seller?.type === "platform" && (
+                  <p className="sod-note">
+                    Ships from ReOrbit ({o.reorbit_address.label}): {o.reorbit_address.line1}, {o.reorbit_address.city}{" "}
+                    {o.reorbit_address.pincode}
+                  </p>
+                )}
               </div>
               <div>
                 <h4>

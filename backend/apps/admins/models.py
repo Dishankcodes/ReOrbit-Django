@@ -57,6 +57,8 @@ class Admins(PublicIdModel):
     role_key = models.CharField(max_length=20, blank=True, default="custom")
     phone = models.CharField(max_length=20, blank=True, default="")
     note = models.CharField(max_length=255, blank=True, default="")
+    # Settings › Notifications for this admin: {"modules": {"orders": false, ...}, "email": true}
+    notification_preferences = models.JSONField(default=dict, blank=True)
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.ACTIVE
     )

@@ -119,7 +119,7 @@ export default function StepItem({ form, set, errors }) {
             </button>
             <NumberInput
               min={minItems}
-              max={99}
+              max={32000}
               value={form.quantity}
               aria-label="Quantity"
               onChange={(n) => set("quantity", n)}
@@ -127,7 +127,7 @@ export default function StepItem({ form, set, errors }) {
             <button
               type="button"
               aria-label="Increase quantity"
-              onClick={() => set("quantity", Math.min(99, form.quantity + 1))}
+              onClick={() => set("quantity", Math.min(32000, form.quantity + 1))}
             >
               <Plus size={16} />
             </button>

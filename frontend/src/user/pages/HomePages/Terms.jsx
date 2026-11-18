@@ -6,8 +6,29 @@ import PolicyContent, {
 } from "../../../shared/components/PolicyContent";
 import { usePolicyText } from "../../../shared/content";
 
+/* Every policy page uses this layout. The text comes from Admin › Content › Policies. */
+export const POLICY_PAGES = {
+  terms: { badge: "Terms & Conditions", icon: "description", title: "A better marketplace", em: " starts with trust.",
+    intro: "These terms explain the rules for using ReOrbit, creating listings, buying products, donating items, working as a ReMaker and using the services provided through the platform." },
+  privacy: { badge: "Privacy policy", icon: "shield_person", title: "Your data,", em: " handled with care.",
+    intro: "What we collect, why we collect it, and the choices you have." },
+  refunds: { badge: "Returns and refunds", icon: "assignment_return", title: "Changed your mind?", em: " Here's how returns work.",
+    intro: "When you can return an order, how refunds are paid back and how long it takes." },
+  shipping: { badge: "Shipping and delivery", icon: "local_shipping", title: "From one home", em: " to the next.",
+    intro: "How orders are packed, shipped and delivered, including ReOrbit pickups." },
+  donation: { badge: "Donation guidelines", icon: "volunteer_activism", title: "Give things", em: " a second life.",
+    intro: "What you can donate, how pickups work and what happens to your items." },
+  community: { badge: "Community guidelines", icon: "diversity_3", title: "A kind, honest", em: " community.",
+    intro: "How we expect members and ReMakers to treat each other on ReOrbit." },
+};
+
 export default function Terms() {
-  const policy = usePolicyText("terms");
+  return <PolicyPage policyKey="terms" />;
+}
+
+export function PolicyPage({ policyKey }) {
+  const meta = POLICY_PAGES[policyKey] || POLICY_PAGES.terms;
+  const policy = usePolicyText(policyKey);
   return (
     <>
       <style>{`
@@ -516,20 +537,16 @@ export default function Terms() {
         <section className="terms-hero">
           <div className="container terms-hero-inner">
             <span className="terms-badge">
-              <span className="material-symbols-outlined">description</span>
-              Terms & Conditions
+              <span className="material-symbols-outlined">{meta.icon}</span>
+              {policy?.title || meta.badge}
             </span>
 
             <h1>
-              A better marketplace
-              <em> starts with trust.</em>
+              {meta.title}
+              <em>{meta.em}</em>
             </h1>
 
-            <p>
-              These terms explain the rules for using ReOrbit, creating
-              listings, buying products, donating items, working as a ReMaker
-              and using the services provided through the platform.
-            </p>
+            <p>{meta.intro}</p>
 
             <div className="terms-updated">
               Version {policy?.version} · Last updated:{" "}
@@ -547,7 +564,7 @@ export default function Terms() {
             prefix="terms"
             policy={policy}
             contactTitle="Need clarification?"
-            contactText="If you have questions about these terms, marketplace rules or your use of ReOrbit, our support team can help."
+            contactText="If you have questions about this policy or your use of ReOrbit, our support team can help."
           />
         </section>
 

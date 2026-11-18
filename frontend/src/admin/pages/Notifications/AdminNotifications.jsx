@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Bell,
@@ -16,9 +16,6 @@ import {
   MailOpen,
   Inbox,
   Clock,
-  Users,
-  Store,
-  Globe,
   BellOff,
 } from "lucide-react";
 
@@ -29,16 +26,17 @@ import {
   dismiss,
   useAnnouncements,
   sendAnnouncement,
+  updateAnnouncement,
   MODULES,
   AUDIENCE_LABEL,
-  ANNOUNCE_TYPES,
   timeAgo,
-  realAgo,
   useAnnouncementReach,
 } from "../../data/notificationsStore";
 import useToast from "../../components/ui/useToast";
 import EmptyState from "../../components/ui/EmptyState";
 import AnnounceModal from "./AnnounceModal";
+import AnnouncementsPanel from "./AnnouncementsPanel";
+import { useAccess } from "../../data/teamStore";
 
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
@@ -59,7 +57,6 @@ const FILTERS = [
   { key: "unread", label: "Unread" },
   { key: "action", label: "Needs action" },
 ];
-const AUD_ICON = { users: Users, remakers: Store, everyone: Globe };
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
@@ -74,13 +71,14 @@ export default function AdminNotifications() {
   const [filter, setFilter] = useState("all");
   const [module, setModule] = useState("all");
   const [q, setQ] = useState("");
-  const [composer, setComposer] = useState({ open: false, prefill: null });
+  const [composer, setComposer] = useState({ open: false, prefill: null, editing: null });
+  const canEdit = useAccess().can("notifications", "edit");
 
   /* "Announce to users" from the Rewards page lands here with a draft */
   useEffect(() => {
     const c = location.state?.compose;
     if (c) {
-      setComposer({ open: true, prefill: c });
+      setComposer({ open: true, prefill: c, editing: null });
       setParams({ tab: "announcements" }, { replace: true, state: null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,9 +132,15 @@ export default function AdminNotifications() {
       `${ids.length} notification${ids.length === 1 ? "" : "s"} marked as read`,
     );
   };
-  const closeComposer = () => setComposer({ open: false, prefill: null });
+  const closeComposer = useCallback(() => setComposer({ open: false, prefill: null, editing: null }), []);
   const send = async (data) => {
     try {
+      if (composer.editing) {
+        await updateAnnouncement(composer.editing.id, data);
+        closeComposer();
+        toast("Scheduled announcement updated");
+        return;
+      }
       const a = await sendAnnouncement(data);
       closeComposer();
       setParams({ tab: "announcements" }, { replace: true });
@@ -250,7 +254,7 @@ export default function AdminNotifications() {
         <button
           type="button"
           className="ad-btn ad-btn-primary"
-          onClick={() => setComposer({ open: true, prefill: null })}
+          onClick={() => setComposer({ open: true, prefill: null, editing: null })}
         >
           <Megaphone size={15} /> Send announcement
         </button>
@@ -414,50 +418,27 @@ export default function AdminNotifications() {
       )}
 
       {tab === "announcements" && (
-        <section className="nt-ann-grid">
-          {announcements.map((a) => {
-            const AI = AUD_ICON[a.audience];
-            return (
-              <article key={a.id} className="nt-ann">
-                <header>
-                  <span className={`nt-ann-type t-${a.type}`}>
-                    {ANNOUNCE_TYPES[a.type]}
-                  </span>
-                  <span
-                    className={`nt-ann-status ${a.scheduled ? "sched" : "sent"}`}
-                  >
-                    {a.scheduled ? "Scheduled" : "Sent"}
-                  </span>
-                </header>
-                <h4>{a.title}</h4>
-                <p>{a.message}</p>
-                <footer>
-                  <span>
-                    <AI size={13} /> {AUDIENCE_LABEL[a.audience]}
-                  </span>
-                  <span>
-                    <Clock size={13} />{" "}
-                    {a.scheduled
-                      ? new Date(a.at).toLocaleString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : realAgo(a.at)}
-                    {!a.scheduled && a.recipients > 0 && ` · ${a.recipients} reached`}
-                  </span>
-                  <span className="nt-by">{a.by}</span>
-                </footer>
-              </article>
-            );
-          })}
-        </section>
+        <AnnouncementsPanel
+          announcements={announcements}
+          canEdit={canEdit}
+          toast={toast}
+          onCompose={(from) =>
+            setComposer({
+              open: true,
+              editing: null,
+              prefill: from
+                ? { title: from.title, message: from.message, audience: from.audience, type: from.type, link: from.link }
+                : null,
+            })
+          }
+          onEdit={(a) => setComposer({ open: true, editing: a, prefill: null })}
+        />
       )}
 
       <AnnounceModal
         open={composer.open}
         prefill={composer.prefill}
+        editing={composer.editing}
         reach={reach}
         onSend={send}
         onClose={closeComposer}

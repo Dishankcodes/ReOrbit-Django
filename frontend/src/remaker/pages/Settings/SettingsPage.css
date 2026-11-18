@@ -1180,3 +1180,7 @@
     animation: none !important;
   }
 }
+
+/* Delete account: things to finish first */
+.set-blockers { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+.set-blockers li { color: #8a4b00; }

@@ -54,9 +54,13 @@ def request_data(r, request):
                 "image": _cover(request, it), "quantity": it.quantity}
         order = None
     kind = "remaker" if r.remaker_id else "user"
+    from apps.core.buyers import reorbit_address_data
+
     return {
         "id": r.public_id,
         "kind": "order" if r.order_id else "item",
+        # a collected listing goes to ReOrbit's own address (Admin > Addresses); an order goes to the buyer
+        "drop_to": reorbit_address_data() if not r.order_id else None,
         "item": item,
         "order": order,
         "status": r.status,

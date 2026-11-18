@@ -23,7 +23,7 @@ export function mapPublicRemaker(row) {
     totalReviews: Number(profile.rating_count || 0),
     followers: Number(row.followers_count || 0),
     productsCount: Number(row.products_count ?? profile.total_uploads ?? 0),
-    itemsRescued: 0,
+    itemsRescued: Number(row.rescued_count || 0),
     yearsOfExperience: Number.parseInt(profile.experience, 10) || 0,
     sellerType: "remaker",
     verified: true,

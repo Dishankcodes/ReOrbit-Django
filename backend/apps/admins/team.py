@@ -258,6 +258,9 @@ class TeamResetPasswordView(TeamBase):
             admin.public_id,
             ip=request.META.get("REMOTE_ADDR"),
         )
+        from apps.core.mailer import security_notice
+
+        security_notice(admin, "A new temporary password was set for your admin account by the super admin")
         return ok({"temporary_password": password}, "New temporary password created.")
 
 

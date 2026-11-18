@@ -8,11 +8,14 @@ from .team import (
     TeamResetPasswordView,
     TeamStatusView,
 )
-from .views import ChangePasswordView, LoginView, MeView, ProfileView
+from .views import ChangePasswordView, NotificationPrefsView, ForgotPasswordRequestOTP, ForgotPasswordReset, LoginView, MeView, ProfileView
 
 urlpatterns = [
     path("auth/login/", LoginView.as_view()),
+    path("auth/forgot-password/request-otp/", ForgotPasswordRequestOTP.as_view()),
+    path("auth/forgot-password/reset/", ForgotPasswordReset.as_view()),
     path("me/", MeView.as_view()),
+    path("notification-preferences/", NotificationPrefsView.as_view()),
     path("profile/", ProfileView.as_view()),
     path("password/change/", ChangePasswordView.as_view()),
     path("store/", sv.ListCreateView.as_view()),

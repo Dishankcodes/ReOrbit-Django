@@ -722,7 +722,7 @@ export default function About() {
                 <h3>Create something new.</h3>
 
                 <p>
-                  Purchase or receive the selected material and transform it
+                  Buy the selected piece on the marketplace (a coupon code can help) and transform it
                   through your own skills, techniques and creative process.
                 </p>
               </div>

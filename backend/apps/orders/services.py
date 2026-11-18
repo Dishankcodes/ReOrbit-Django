@@ -245,9 +245,10 @@ def split_discount(discount, totals):
     return shares
 
 
-def _has_remaker(plan):
-    """A ReMaker-only coupon needs at least one ReMaker product in the cart."""
-    return any(g["seller"]["type"] == "remaker" for g in plan["groups"])
+def _seller_types(plan):
+    """Who sells what is in the cart (user / remaker / platform): a coupon for ReMaker creations or for
+    ReOrbit's own products needs one of those in the cart."""
+    return {g["seller"]["type"] for g in plan["groups"]}
 
 
 def quote(buyer, raw_lines, method=None, voucher_code=None):
@@ -261,7 +262,7 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
     discount, applied, voucher_error = 0, None, ""
     if str(voucher_code or "").strip():
         try:
-            v, discount = vouchers.check(buyer, voucher_code, goods, has_remaker=_has_remaker(plan))
+            v, discount = vouchers.check(buyer, voucher_code, goods, seller_types=_seller_types(plan))
             discount, applied = min(discount, max(0, grand - 1)), vouchers.brief(v)
         except VoucherError as e:
             voucher_error = e.message
@@ -377,7 +378,9 @@ def create_checkout(buyer, data, key=None):
     method = str(data.get("method") or "").upper()
     if method not in (Payment.Method.RAZORPAY, Payment.Method.COD):
         raise CheckoutError("Choose how you want to pay.", {"method": ["Choose how you want to pay."]})
-    address = SavedAddress.objects.filter(public_id=str(data.get("address_id") or ""), **buyer_kit.owner(buyer)).first()
+    address = SavedAddress.objects.filter(public_id=str(data.get("address_id") or ""), **buyer_kit.address_book(buyer)).first()
+    if address is None and buyer_kit.type_of(buyer) == "admin":
+        address = buyer_kit.reorbit_address()  # ReOrbit buying for itself: it delivers to its own address
     if address is None:
         raise CheckoutError("Choose a delivery address.", {"address_id": ["Choose a delivery address."]})
     merged = parse_lines(data.get("items"))
@@ -412,7 +415,7 @@ def create_checkout(buyer, data, key=None):
             if voucher_code:
                 try:  # locked: two checkouts can never both spend it
                     voucher, discount = vouchers.check(buyer, voucher_code, sum(g["subtotal"] for g in plan["groups"]),
-                                                       lock=True, has_remaker=_has_remaker(plan))
+                                                       lock=True, seller_types=_seller_types(plan))
                 except VoucherError as e:
                     raise CheckoutError(e.message, code=e.code)
                 discount = min(discount, max(0, grand - 1))  # an order always keeps at least ₹1 to pay

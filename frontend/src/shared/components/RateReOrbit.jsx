@@ -4,8 +4,51 @@ import "./RateReOrbit.css";
 
 const LABELS = ["", "Poor", "Could be better", "Good", "Great", "Love it"];
 const IDEAS = {
-  high: ["Easy to sell my things.", "Great finds at fair prices.", "Love the second-life idea.", "Support was quick and kind."],
-  low: ["The app could be easier to use.", "Delivery took too long.", "I'd like more items near me."],
+  user: {
+    high: [
+      "Love the second-life idea.",
+      "Easy to sell things I no longer use.",
+      "Great finds at fair prices.",
+      "Donation pickup was quick and free.",
+      "Support was quick and kind.",
+      "Orbit Points make it fun to keep going.",
+      "Feels good to shop without waste.",
+      "Delivery was smooth and on time.",
+    ],
+    mid: [
+      "Good idea, a few rough edges.",
+      "I'd like more items near me.",
+      "Delivery could be a little faster.",
+      "Search could be easier to use.",
+    ],
+    low: [
+      "The app could be easier to use.",
+      "Delivery took too long.",
+      "I couldn't find what I needed.",
+      "Support took a while to reply.",
+      "Prices felt high for used items.",
+    ],
+  },
+  remaker: {
+    high: [
+      "Great place to sell my creations.",
+      "Easy to find materials to rescue.",
+      "Buyers really value handmade work.",
+      "ReOrbit pickup saves me a lot of time.",
+      "Payouts are clear and on time.",
+      "The studio page shows my work well.",
+    ],
+    mid: [
+      "Good platform, I'd like more buyers.",
+      "Listing products could be quicker.",
+      "More analytics would help.",
+    ],
+    low: [
+      "Not many orders yet.",
+      "Payouts took too long.",
+      "Hard to find the right materials.",
+    ],
+  },
 };
 
 /* Help › Rate ReOrbit: a member or ReMaker rates the platform. The team may pick it for the Home page
@@ -58,7 +101,8 @@ export default function RateReOrbit({ side = "user" }) {
 
   if (mine === undefined) return null;
   const shown = hover || rating;
-  const ideas = rating >= 4 ? IDEAS.high : rating ? IDEAS.low : [];
+  const set = IDEAS[side] || IDEAS.user;
+  const ideas = rating >= 4 ? set.high : rating === 3 ? set.mid : rating ? set.low : [];
   const done = mine && !editing;
 
   return (
@@ -77,18 +121,24 @@ export default function RateReOrbit({ side = "user" }) {
 
       {done ? (
         <div className="rro-done">
-          <div className="rro-stars static" aria-label={`${mine.rating} out of 5 stars`}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <span key={n} className={n <= mine.rating ? "on" : ""}>
-                ★
-              </span>
-            ))}
+          <div className="rro-done-card">
+            <div className="rro-stars static" aria-label={`${mine.rating} out of 5 stars`}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <span key={n} className={n <= mine.rating ? "on" : ""}>
+                  ★
+                </span>
+              ))}
+              <em>{LABELS[mine.rating]}</em>
+            </div>
+            <p>“{mine.message}”</p>
+            {mine.shown && <span className="rro-chip">On the Home page</span>}
           </div>
-          <p>“{mine.message}”</p>
-          {msg && <small className="rro-ok">{msg}</small>}
-          <button type="button" className="rro-link" onClick={() => (setEditing(true), setMsg(""))}>
-            Edit my rating
-          </button>
+          <div className="rro-done-foot">
+            {msg && <small className="rro-ok">{msg}</small>}
+            <button type="button" className="rro-edit" onClick={() => (setEditing(true), setMsg(""))}>
+              Edit my rating
+            </button>
+          </div>
         </div>
       ) : (
         <form className="rro-form" onSubmit={submit} noValidate>

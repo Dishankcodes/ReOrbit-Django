@@ -438,3 +438,46 @@
     transition: none !important;
   }
 }
+
+/* forgot password */
+.al-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--al-green, #08271f);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.al-forgot {
+  align-self: flex-end;
+  margin-top: 6px;
+}
+.al-field:has(.al-forgot) {
+  display: flex;
+  flex-direction: column;
+}
+.al-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #4a5a52;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.al-forgot-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+  color: var(--al-ink, #0d2a21);
+  font-size: 18px;
+}

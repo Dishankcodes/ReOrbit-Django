@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
+import TextSuggestions from "../../../shared/components/TextSuggestions";
+import { PRICE_MESSAGE_IDEAS } from "../../data/listingModeration";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -578,6 +580,7 @@ export default function AdminListingDetailLive() {
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Explain why you recommend this price..."
               />
+              <TextSuggestions tone="admin" items={PRICE_MESSAGE_IDEAS} value={message} max={300} onChange={setMessage} />
             </label>
             <div className="ad-modal-actions">
               <button

@@ -14,6 +14,7 @@ import FaqList from "./components/FaqList";
 import ReportsList from "./components/ReportsList";
 import TicketList from "./components/TicketList";
 import RateReOrbit from "../../../shared/components/RateReOrbit";
+import MyReports from "../../../shared/components/MyReports";
 
 import "../../css/ReMakerUi.css";
 import "./HelpPage.css";
@@ -290,8 +291,9 @@ export default function ReMakerHelp() {
       {/* ================= REPORTS ================= */}
       {tab === "reports" && (
         <>
+          <MyReports side="remaker" title="Reports about people, listings and reviews" hideWhenEmpty />
           <p className="hlp-note">
-            These are problems you reported about orders you bought. To report
+            Below are problems you reported about orders you bought. To report
             an order, open it from Purchases.
           </p>
 

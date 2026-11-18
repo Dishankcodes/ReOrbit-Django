@@ -8,6 +8,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Heart,
 } from "lucide-react";
 
 import { PRODUCT_STATUS, formatPrice } from "../../data/remakerProducts";
@@ -194,6 +195,10 @@ export default function ReMakerProducts() {
                     <span>
                       <Eye size={14} />
                       {product.views.toLocaleString("en-IN")} views
+                    </span>
+                    <span>
+                      <Heart size={14} />
+                      {(product.saves || 0).toLocaleString("en-IN")} saved
                     </span>
                     <span>
                       <ShoppingBag size={14} />

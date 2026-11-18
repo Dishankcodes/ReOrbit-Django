@@ -583,3 +583,11 @@
   margin-left: 6px;
   opacity: 0.75;
 }
+
+/* the theme's global heading colour is more specific: win it back on the dark card */
+.dn .uhp-cta h3 {
+  color: #fff;
+}
+.uhp-cta a.dn-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

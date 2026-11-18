@@ -301,6 +301,39 @@ export default function AdminPickupDetails() {
             </ul>
           </section>
 
+          {p.type === "Item" && (
+            <section className="aup-card">
+              <header className="aup-card-head">
+                <div>
+                  <h3>Take it to</h3>
+                  <p>ReOrbit's address, from Admin › Addresses.</p>
+                </div>
+                <Link to="/admin-addresses" className="aup-link">
+                  Addresses <ArrowRight size={14} />
+                </Link>
+              </header>
+              {p.dropTo ? (
+                <ul className="dn-contact">
+                  <li>
+                    <strong>{p.dropTo.label} · {p.dropTo.name}</strong>
+                  </li>
+                  {p.dropTo.phone && (
+                    <li>
+                      <Phone size={14} /> {p.dropTo.phone}
+                    </li>
+                  )}
+                  <li>
+                    {[p.dropTo.line1, p.dropTo.line2, p.dropTo.city, p.dropTo.pincode].filter(Boolean).join(", ")}
+                  </li>
+                </ul>
+              ) : (
+                <p className="aup-muted" style={{ padding: "0 4px" }}>
+                  Add ReOrbit's address in Admin › Addresses so the team knows where to bring it.
+                </p>
+              )}
+            </section>
+          )}
+
           {p.type === "Order" && p.order && (
             <section className="aup-card">
               <header className="aup-card-head">
