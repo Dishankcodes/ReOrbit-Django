@@ -494,3 +494,35 @@ class AdminSpotlight(_Admin):
 class AdminSpotlightSearch(_Admin):
     def get(self, request):
         return ok({"results": [_pick_card(c) for c in spotlight.search(request, request.query_params.get("q", ""))]})
+
+
+# --------------------------------------------------------------------------- #
+# Discover ReMakers page (before login)
+# --------------------------------------------------------------------------- #
+class AdminDiscover(_Admin):
+    def get(self, request):
+        from . import discover
+
+        return ok(discover.admin_state(request))
+
+    def put(self, request):
+        from . import discover
+
+        before = list(HomePick.objects.filter(surface__in=(discover.SPOT, discover.IMGS, discover.CARDS))
+                      .values_list("surface", "ref"))
+        d = request.data
+        try:
+            discover.save(d.get("spotlight"), d.get("images") or [], d.get("cards") or [], request.user.account)
+        except discover.DiscoverError as exc:
+            return fail(str(exc), {"cards": [str(exc)]})
+        self.log(request, "Changed the featured ReMakers on Discover ReMakers")
+        self.audit(request, "discover.remakers", "home_pick", "discover", before={"picks": before},
+                   after={"spotlight": d.get("spotlight"), "images": d.get("images"), "cards": d.get("cards")})
+        return ok(discover.admin_state(request), message="Discover page saved.")
+
+
+class AdminDiscoverSearch(_Admin):
+    def get(self, request):
+        from . import discover
+
+        return ok({"results": discover.search(request, request.query_params.get("q", ""))})

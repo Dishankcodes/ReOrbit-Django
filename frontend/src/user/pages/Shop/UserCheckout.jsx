@@ -89,9 +89,11 @@ export default function UserCheckout() {
   const [voucherCode, setVoucherCode] = useState("");
   const q = useServerQuote(buyable, voucherCode);
   const quote = q.quote;
-  const isMember =
-    getAccountType() === "user"; /* donation vouchers are for members */
-  const voucherApplied = isMember && quote?.voucher ? quote.voucher : null;
+  const accountType = getAccountType();
+  const isMember = accountType === "user";
+  /* members use donation/points vouchers and coupon codes; ReMakers only coupon codes */
+  const canVoucher = isMember || accountType === "remaker";
+  const voucherApplied = canVoucher && quote?.voucher ? quote.voucher : null;
 
   const [step, setStep] = useState("address");
   const [addrId, setAddrId] = useState(null);
@@ -814,8 +816,9 @@ export default function UserCheckout() {
               </button>
             </p>
           )}
-          {isMember && (
+          {canVoucher && (
             <VoucherBox
+              codesOnly={!isMember}
               code={voucherCode}
               applied={voucherApplied}
               error={quote?.voucher_error}

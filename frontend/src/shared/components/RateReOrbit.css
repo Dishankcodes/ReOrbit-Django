@@ -1,0 +1,169 @@
+.rro {
+  --rro-accent: #2a4d3a;
+  --rro-soft: #e8f0ea;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 24px;
+  margin: 22px 0;
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--rro-accent) 16%, transparent);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #fff 0%, var(--rro-soft) 140%);
+}
+.rro--remaker {
+  --rro-accent: #4a1d20;
+  --rro-soft: #f5e9e6;
+}
+.rro-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--rro-soft);
+  color: var(--rro-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rro-intro h3 {
+  margin: 10px 0 6px;
+  color: #1f2923;
+  font-size: 1.2rem;
+}
+.rro-intro p {
+  margin: 0;
+  color: #66726a;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.rro-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rro-stars button,
+.rro-stars span {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: #d6dbd7;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+.rro-stars.static span {
+  font-size: 20px;
+  cursor: default;
+}
+.rro-stars button:hover {
+  transform: scale(1.12);
+}
+.rro-stars .on {
+  color: #e2a63b;
+}
+.rro-stars em {
+  margin-left: 10px;
+  color: var(--rro-accent);
+  font-size: 0.85rem;
+  font-style: normal;
+  font-weight: 700;
+}
+.rro-form textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 13px;
+  border: 1px solid #d6e0d9;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.rro-form textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--rro-accent) 35%, transparent);
+  border-color: var(--rro-accent);
+}
+.rro-ideas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rro-ideas button {
+  padding: 5px 10px;
+  border: 1px dashed #cfdad2;
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rro-ideas button.on {
+  border-style: solid;
+  border-color: var(--rro-accent);
+  background: var(--rro-soft);
+  color: var(--rro-accent);
+  font-weight: 700;
+}
+.rro-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.rro-foot small {
+  color: #8a948d;
+  font-size: 12px;
+}
+.rro-err {
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 600;
+}
+.rro-submit {
+  margin-left: auto;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rro-accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rro-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.rro-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rro-accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.rro-done p {
+  margin: 8px 0;
+  color: #1f2923;
+  font-style: italic;
+  line-height: 1.55;
+}
+.rro-ok {
+  display: block;
+  margin-bottom: 6px;
+  color: #1f7a45;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .rro {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+}

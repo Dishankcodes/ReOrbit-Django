@@ -128,3 +128,44 @@ class ContentLog(models.Model):
     class Meta:
         db_table = "content_log"
         ordering = ["-created_at", "-id"]
+
+
+class PlatformFeedback(PublicIdModel, TimeStampedModel):
+    """A member's or ReMaker's rating of ReOrbit itself (Help > Rate ReOrbit).
+
+    One per account: sending again updates it and puts it back for review. The team picks up to
+    three per Home page to show as testimonials (Admin > Testimonials).
+    """
+
+    public_id_prefix = "PFB"
+    MAX_SHOWN = 3
+    SURFACES = ("user", "remaker")
+
+    class Status(models.TextChoices):
+        NEW = "New", "New"
+        SHOWN = "Shown", "Shown"
+        HIDDEN = "Hidden", "Not shown"
+
+    author_type = models.CharField(max_length=8)  # user | remaker
+    user = models.OneToOneField("users.Users", null=True, blank=True, on_delete=models.CASCADE,
+                                related_name="platform_feedback")
+    remaker = models.OneToOneField("remakers.ReMakers", null=True, blank=True, on_delete=models.CASCADE,
+                                   related_name="platform_feedback")
+    rating = models.PositiveSmallIntegerField()
+    message = models.CharField(max_length=400)
+    status = models.CharField(max_length=8, choices=Status.choices, default=Status.NEW)
+    surface = models.CharField(max_length=8, blank=True)  # where it is shown: user | remaker
+    position = models.PositiveSmallIntegerField(default=0)
+    reviewed_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "platform_feedback"
+        ordering = ["-created_at", "-pk"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(rating__gte=1, rating__lte=5), name="pfb_rating_1_5"),
+            models.CheckConstraint(
+                condition=(models.Q(author_type="user", user__isnull=False, remaker__isnull=True)
+                           | models.Q(author_type="remaker", remaker__isnull=False, user__isnull=True)),
+                name="pfb_one_author"),
+        ]

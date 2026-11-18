@@ -53,6 +53,10 @@ const pageInformation = {
     title: "Pickups",
     subtitle: "Manage pickup requests and schedules.",
   },
+  "/admin-testimonials": {
+    title: "Testimonials",
+    subtitle: "Members' and ReMakers' ratings of ReOrbit. Pick up to 3 for each Home page.",
+  },
   "/admin-content": {
     title: "Content",
     subtitle: "Categories, home banners, FAQs and policy text.",

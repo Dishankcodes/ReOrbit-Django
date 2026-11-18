@@ -303,6 +303,13 @@ def has_ordered(user):
         status__in=(Order.Status.CANCELLED, Order.Status.PENDING_PAYMENT)).exists()
 
 
+def _maker_has_ordered(maker):
+    from apps.orders.models import Order
+
+    return Order.objects.filter(buyer_remaker=maker).exclude(
+        status__in=(Order.Status.CANCELLED, Order.Status.PENDING_PAYMENT)).exists()
+
+
 def has_donated(user):
     from apps.donations.models import Donation
 
@@ -326,14 +333,22 @@ def _check_offer(buyer, offer, goods_total, has_remaker):
     if offer.valid_to < today:
         raise VoucherError("This coupon has expired.", "VOUCHER_EXPIRED")
     live = offer.vouchers.exclude(status=Voucher.Status.VOID)
-    if live.filter(owner=buyer).count() >= offer.per_user:
+    is_maker = buyer_kit.type_of(buyer) == "remaker"
+    if live.filter(**({"owner_remaker": buyer} if is_maker else {"owner": buyer})).count() >= offer.per_user:
         raise VoucherError("You've already used this coupon.", "VOUCHER_USED")
     if live.count() >= offer.usage_limit:
         raise VoucherError("This coupon has been fully claimed.", "VOUCHER_USED_UP")
-    blocked = _audience_block(offer, buyer)
-    if blocked:
-        raise VoucherError(blocked, "VOUCHER_AUDIENCE")
-    if offer.min_level and level_index(totals(buyer)[1]) < offer.min_level:
+    if is_maker:
+        # ReMakers have no Orbit Points or donations, so coupons aimed at those can't apply
+        if offer.audience == "donors" or offer.min_level:
+            raise VoucherError("This coupon is for member accounts.", "VOUCHER_MEMBER")
+        if offer.audience == "new" and _maker_has_ordered(buyer):
+            raise VoucherError("This coupon is for first-time buyers only.", "VOUCHER_AUDIENCE")
+    else:
+        blocked = _audience_block(offer, buyer)
+        if blocked:
+            raise VoucherError(blocked, "VOUCHER_AUDIENCE")
+    if not is_maker and offer.min_level and level_index(totals(buyer)[1]) < offer.min_level:
         raise VoucherError(f"Reach {LEVELS[offer.min_level][1]} level to use this coupon.", "VOUCHER_LEVEL")
     if offer.remaker_only and not has_remaker:
         raise VoucherError("Add a ReMaker product to use this coupon.", "VOUCHER_AUDIENCE")
@@ -350,8 +365,10 @@ def check(buyer, raw_code, goods_total, *, lock=False, has_remaker=True):
     spend it, and a public coupon is saved as this member's voucher. A code that is not found and a code
     that belongs to someone else give the same answer, so codes cannot be guessed.
     """
-    if buyer_kit.type_of(buyer) != "user":
-        raise VoucherError("Vouchers are for member accounts.", "VOUCHER_MEMBER")
+    kind = buyer_kit.type_of(buyer)
+    if kind not in ("user", "remaker"):
+        raise VoucherError("Vouchers are for member and ReMaker accounts.", "VOUCHER_MEMBER")
+    is_maker = kind == "remaker"
     code = clean_code(raw_code)
     if not code:
         raise VoucherError("Enter a voucher code.")
@@ -360,7 +377,9 @@ def check(buyer, raw_code, goods_total, *, lock=False, has_remaker=True):
     qs = Voucher.objects.filter(code=code)
     owned = (qs.select_for_update() if lock else qs).first()
     if owned is not None:
-        if owned.owner_id != buyer.pk or owned.status == Voucher.Status.VOID:
+        # a ReMaker never has donation or points vouchers: only their own coupon claims match
+        mine = owned.owner_remaker_id == buyer.pk if is_maker else owned.owner_id == buyer.pk
+        if not mine or owned.status == Voucher.Status.VOID:
             raise VoucherError("This voucher isn't valid.")
         if owned.status == Voucher.Status.USED:
             raise VoucherError("This voucher has already been used.", "VOUCHER_USED")
@@ -378,7 +397,8 @@ def check(buyer, raw_code, goods_total, *, lock=False, has_remaker=True):
         raise VoucherError("This voucher isn't valid.")
     _check_offer(buyer, offer, goods_total, has_remaker)
     claim = Voucher(
-        owner=buyer, code=new_code(offer.code[:11]), offer=offer, title=offer.title,
+        **({"owner_remaker": buyer} if is_maker else {"owner": buyer}),
+        code=new_code(offer.code[:11]), offer=offer, title=offer.title,
         amount=offer.value if offer.discount_type == "fixed" else offer.max_discount,
         discount_type=offer.discount_type, percent=offer.value if offer.discount_type == "percent" else 0,
         max_discount=offer.max_discount, min_order=offer.min_order,

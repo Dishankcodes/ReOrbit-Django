@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Tags, ImagePlus, CircleHelp, ScrollText, History } from "lucide-react";
+import { Tags, ImagePlus, CircleHelp, ScrollText, History, Crown } from "lucide-react";
 
 import {
   useCategories,
@@ -18,6 +18,7 @@ import CategoriesTab from "./components/CategoriesTab";
 import BannersTab from "./components/BannersTab";
 import FaqsTab from "./components/FaqsTab";
 import PoliciesTab from "./components/PoliciesTab";
+import DiscoverPanel from "./components/DiscoverPanel";
 
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
@@ -51,6 +52,13 @@ export default function AdminContent() {
       icon: ImagePlus,
       badge: banners.length,
       note: `${banners.filter((b) => b.status === "Live").length} live`,
+    },
+    {
+      key: "discover",
+      label: "Discover",
+      icon: Crown,
+      badge: "★",
+      note: "Featured ReMakers",
     },
     {
       key: "faqs",
@@ -105,6 +113,7 @@ export default function AdminContent() {
       <div role="tabpanel">
         {tab === "categories" && <CategoriesTab {...props} />}
         {tab === "banners" && <BannersTab {...props} />}
+        {tab === "discover" && <DiscoverPanel {...props} />}
         {tab === "faqs" && <FaqsTab {...props} />}
         {tab === "policies" && <PoliciesTab {...props} />}
       </div>

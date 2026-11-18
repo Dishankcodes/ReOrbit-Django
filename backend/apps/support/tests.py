@@ -250,3 +250,55 @@ class PublicContactTests(SupportTicketTests):
                                                        "subject": "Partnership", "message": "We'd like to partner with you."}, format="json")
         self.assertEqual((r.status_code, r.data["data"]["linked"]), (201, False))
         self.assertEqual(SupportTicket.objects.count(), n)
+
+
+class SidebarBadgeTests(SupportTicketTests):
+    def test_closed_tickets_never_count_as_unread(self):
+        self.post("/api/support/me/", {"subject": "Need help now", "message": "Please help me with this."}, as_=self.user)
+        page = self.get("/api/support/admin/", as_=self.agent).data["data"]
+        before = page["unread_count"]
+        self.assertGreaterEqual(before, 1)
+        for t in SupportTicket.objects.all():
+            t.status = SupportTicket.Status.CLOSED
+            t.save(update_fields=["status"])
+        self.assertEqual(self.get("/api/support/admin/", as_=self.agent).data["data"]["unread_count"], 0)
+
+
+class ContactInboxTests(SupportTicketTests):
+    def test_visitor_message_lands_in_the_inbox_and_gets_a_reply(self):
+        from django.core import mail
+        from apps.core.models import Notification
+        from apps.support.models import ContactMessage
+        mail.outbox.clear()
+        r = self.client.post("/api/support/contact/", {"name": "Riya Shah", "email": "riya@example.com", "topic": "other",
+                                                       "subject": "Partnership idea", "message": "We run a thrift store and want to list."}, format="json")
+        self.assertEqual(r.status_code, 201, r.data)
+        ref = r.data["data"]["reference"]
+        m = ContactMessage.objects.get(public_id=ref)
+        self.assertEqual((m.status, m.ticket_id), ("New", None))
+        # the team is emailed and the visitor gets an acknowledgement with the reference
+        subjects = [e.subject for e in mail.outbox]
+        self.assertTrue(any(ref in s and "[ReOrbit contact]" in s for s in subjects))
+        ack = [e for e in mail.outbox if e.to == ["riya@example.com"]]
+        self.assertTrue(ack and ref in ack[0].subject and ack[0].alternatives)
+        self.assertTrue(Notification.objects.filter(admin=self.agent, module="support").exists())
+
+        inbox = self.get("/api/support/admin/contact/?status=New", as_=self.agent).data["data"]
+        self.assertEqual([x["id"] for x in inbox["results"]], [ref])
+        self.assertEqual(inbox["counts"]["New"], 1)
+
+        mail.outbox.clear()
+        self.assertEqual(self.post(f"/api/support/admin/contact/{ref}/", {"action": "reply", "message": ""}, as_=self.agent).status_code, 400)
+        r = self.post(f"/api/support/admin/contact/{ref}/", {"action": "reply", "message": "Thanks! Here's how to start."}, as_=self.agent)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["message_item"]["status"], "Replied")
+        self.assertEqual(mail.outbox[0].to, ["riya@example.com"])
+        self.assertIn("Here's how to start", mail.outbox[0].body)
+
+    def test_member_message_is_a_ticket_and_recorded(self):
+        from apps.support.models import ContactMessage
+        r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "purchase",
+                                                       "subject": "Where is my order", "message": "My order hasn't arrived yet."}, format="json")
+        self.assertEqual((r.status_code, r.data["data"]["linked"]), (201, True))
+        m = ContactMessage.objects.get(public_id=r.data["data"]["reference"])
+        self.assertEqual((m.ticket.public_id, m.status), (r.data["data"]["ticket"], "Closed"))

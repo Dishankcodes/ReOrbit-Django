@@ -675,3 +675,37 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* suggested phrases under the review box */
+.rv-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rv-suggest small {
+  color: var(--dn-muted, #6b756d);
+  font-size: 12px;
+  font-weight: 600;
+}
+.rv-suggest button {
+  padding: 5px 11px;
+  border: 1px dashed var(--dn-border, #cfdcd4);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--dn-text, #1f2923);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rv-suggest button:hover {
+  border-style: solid;
+}
+.rv-suggest button.on {
+  border-style: solid;
+  border-color: var(--dn-p, #2a4d3a);
+  background: var(--dn-soft, #e4ede7);
+  color: var(--dn-p, #2a4d3a);
+  font-weight: 700;
+}

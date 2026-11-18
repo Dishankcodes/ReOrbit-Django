@@ -4,8 +4,9 @@ import { Ticket, X } from "lucide-react";
 import { useVouchers } from "../../../data/donationsStore";
 import { formatPrice } from "../../../../data/marketplaceData";
 
-/* Donation voucher at checkout. The server checks the code and prices the discount; this only
-   asks for it. `applied` is quote.voucher, `error` is quote.voucher_error. */
+/* Voucher or coupon code at checkout. The server checks the code and prices the discount; this only
+   asks for it. `applied` is quote.voucher, `error` is quote.voucher_error.
+   codesOnly (ReMakers): coupon codes only; they have no donation or points vouchers. */
 export default function VoucherBox({
   code,
   applied,
@@ -13,10 +14,9 @@ export default function VoucherBox({
   busy,
   onApply,
   onClear,
+  codesOnly = false,
 }) {
   const [text, setText] = useState("");
-  const { vouchers } = useVouchers();
-  const ready = vouchers.filter((v) => v.status === "Active");
 
   if (applied) {
     return (
@@ -55,13 +55,13 @@ export default function VoucherBox({
   return (
     <div className="ushp-voucher" style={{ margin: "14px 0" }}>
       <label className="dn-label" htmlFor="voucher-code">
-        Donation voucher
+        {codesOnly ? "Coupon code" : "Voucher or coupon code"}
       </label>
       <div style={{ display: "flex", gap: 8 }}>
         <input
           id="voucher-code"
           className="dn-input"
-          placeholder="RO-XXXXXXXX"
+          placeholder={codesOnly ? "Enter a coupon code" : "RO-XXXXXXXX or a coupon code"}
           value={text}
           onChange={(e) => setText(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && apply(text)}
@@ -81,23 +81,24 @@ export default function VoucherBox({
           {error}
         </p>
       )}
-      {ready.length > 0 && (
-        <p className="ushp-note" style={{ marginTop: 8 }}>
-          You have{" "}
-          {ready.length === 1 ? "a voucher" : `${ready.length} vouchers`}:{" "}
-          {ready.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              className="dn-link"
-              style={{ marginRight: 10 }}
-              onClick={() => apply(v.code)}
-            >
-              {v.code} (₹{v.amount} off ₹{v.min_order.toLocaleString("en-IN")}+)
-            </button>
-          ))}
-        </p>
-      )}
+      {!codesOnly && <MyVouchers onPick={apply} />}
     </div>
+  );
+}
+
+/* the member's own ready vouchers, one tap to apply */
+function MyVouchers({ onPick }) {
+  const { vouchers } = useVouchers();
+  const ready = vouchers.filter((v) => v.status === "Active");
+  if (!ready.length) return null;
+  return (
+    <p className="ushp-note" style={{ marginTop: 8 }}>
+      You have {ready.length === 1 ? "a voucher" : `${ready.length} vouchers`}:{" "}
+      {ready.map((v) => (
+        <button key={v.id} type="button" className="dn-link" style={{ marginRight: 10 }} onClick={() => onPick(v.code)}>
+          {v.code} (₹{v.amount} off ₹{v.min_order.toLocaleString("en-IN")}+)
+        </button>
+      ))}
+    </p>
   );
 }

@@ -2,6 +2,7 @@
 from django.urls import path
 
 from . import public_views as pub
+from . import feedback as fb
 from . import views as a
 
 urlpatterns = [
@@ -19,6 +20,12 @@ urlpatterns = [
     path("admin/banners/<str:public_id>/", a.AdminBannerDetail.as_view()),
     path("admin/banners/<str:public_id>/duplicate/", a.AdminBannerDuplicate.as_view()),
     path("admin/banners/<str:public_id>/move/", a.AdminBannerMove.as_view()),
+    path("feedback/", fb.MyFeedback.as_view()),
+    path("feedback/mine/", fb.MyFeedback.as_view()),
+    path("admin/feedback/", fb.AdminFeedbackList.as_view()),
+    path("admin/feedback/<str:public_id>/", fb.AdminFeedbackDetail.as_view()),
+    path("admin/discover/", a.AdminDiscover.as_view()),
+    path("admin/discover/search/", a.AdminDiscoverSearch.as_view()),
     path("admin/spotlight/", a.AdminSpotlight.as_view()),
     path("admin/spotlight/search/", a.AdminSpotlightSearch.as_view()),
     path("admin/faqs/", a.AdminFaqs.as_view()),

@@ -1,10 +1,11 @@
-import { isSignedIn } from "../../../api/session";
+import { isSignedIn, loginUrl } from "../../../api/session";
 import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import BannerSlot from "../../../shared/components/BannerSlot";
+import Testimonials from "../../../shared/components/Testimonials";
 import { inr, initialsImage, usePublic } from "../../../api/publicData";
 import { CategoryIcon } from "../../../shared/categoryIcons";
 import "../../css/Home.css";
@@ -45,23 +46,9 @@ const HERO_DEFAULT = [
   },
 ];
 
-const testimonials = [
-  {
-    text: "I listed a chair on a Sunday. It was picked up Tuesday, and I could follow its journey through ReOrbit.",
-    name: "Meera Iyer",
-    role: "Seller · Ahmedabad",
-  },
-  {
-    text: "The condition notes are genuinely useful. What arrived was exactly what the listing described — no surprises, no disappointment.",
-    name: "Kavya Deshpande",
-    role: "Buyer · Ahmedabad",
-  },
-  {
-    text: "Finding good material used to be difficult. ReOrbit makes sourcing much more organised and reliable for my work.",
-    name: "Tara Bose",
-    role: "ReMaker · Ahmedabad",
-  },
-];
+/* Smart link: a signed-in member goes straight to the page, a visitor signs in first and lands on it. */
+const memberLink = (path) => (isSignedIn("user") ? path : loginUrl("user", path));
+
 
 /* Real data only. Nothing invented is shown: with no products or ReMakers yet, those
    blocks are simply left out, and the counts read zero. */
@@ -302,9 +289,9 @@ export default function Home() {
               <span className="section-badge">How it works</span>
               <h2>One item, four hands</h2>
               <p>
-                Every listing moves through a tracked lifecycle, so buyers know
-                exactly what they are getting and sellers know where their item
-                ended up.
+                Every item keeps its story: sellers describe it honestly, buyers
+                see the photos, condition notes and reviews, and everyone can
+                follow where it went next.
               </p>
             </div>
 
@@ -313,22 +300,22 @@ export default function Home() {
                 [
                   "01",
                   "You list it",
-                  "Photos, condition notes, and whether you want to sell, donate, or offer it as raw material.",
+                  "Add photos, honest condition notes and a price, or choose to donate it instead.",
                 ],
                 [
                   "02",
-                  "We verify it",
-                  "An admin reviews condition and category, then confirms pickup against your pincode.",
+                  "Buyers find it",
+                  "It goes live on the marketplace. Buyers see your photos, condition and seller reviews, and can message you.",
                 ],
                 [
                   "03",
-                  "Warehouse work",
-                  "Repairs, cleaning, and testing are logged against the item so its history stays intact.",
+                  "Delivered your way",
+                  "Ship it yourself, or let ReOrbit pick it up and deliver it. Payment is held safely until it arrives.",
                 ],
                 [
                   "04",
                   "Second orbit",
-                  "It sells, goes to a donation partner, or a ReMaker claims it as material for new work.",
+                  "It finds a new home, reaches a donation partner, or a ReMaker turns it into something new.",
                 ],
               ].map(([number, title, text]) => (
                 <article className="step-card" key={number}>
@@ -361,9 +348,12 @@ export default function Home() {
                 Clear out things you no longer use. Sell them, donate them, or
                 give them a chance at a better second life.
               </p>
-              <a href="/list" className="role-button">
+              <Link to={memberLink("/user-sell/new")} className="role-button">
                 Start listing <Icon>arrow_forward</Icon>
-              </a>
+              </Link>
+              <Link to={memberLink("/user-donations/new")} className="role-button role-button--soft">
+                Donate items <Icon>volunteer_activism</Icon>
+              </Link>
             </article>
 
             <article className="orbit-role-card buyers">
@@ -375,9 +365,12 @@ export default function Home() {
                 Discover pre-loved and refurbished products with honest
                 condition details and their complete item history.
               </p>
-              <a href="/discover-marketplace" className="role-button">
+              <Link
+                to={isSignedIn("user") ? "/user-marketplace" : "/discover-marketplace"}
+                className="role-button"
+              >
                 Browse marketplace <Icon>arrow_forward</Icon>
-              </a>
+              </Link>
             </article>
 
             <article className="orbit-role-card remaker">
@@ -389,9 +382,9 @@ export default function Home() {
                 Source rescued materials, showcase your work, and turn
                 overlooked items into meaningful creations.
               </p>
-              <a href="/remakers-home" className="role-button">
-                Join as a ReMaker <Icon>arrow_forward</Icon>
-              </a>
+              <Link to={isSignedIn("remaker") ? "/remaker-dashboard" : "/remakers-home"} className="role-button">
+                {isSignedIn("remaker") ? "Open your studio" : "Join as a ReMaker"} <Icon>arrow_forward</Icon>
+              </Link>
             </article>
           </div>
         </section>
@@ -451,31 +444,7 @@ export default function Home() {
         )}
 
         {/* TESTIMONIALS */}
-        <section className="stories container">
-          <div className="stories-heading">
-            <span className="section-badge">
-              <Icon>format_quote</Icon>
-              Read stories
-            </span>
-            <h2>What the orbit sounds like</h2>
-          </div>
-
-          <div className="testimonial-grid">
-            {testimonials.map((item) => (
-              <article className="testimonial-card" key={item.name}>
-                <div className="stars">★★★★★</div>
-                <p>"{item.text}"</p>
-                <div className="testimonial-person">
-                  <span>{item.name.charAt(0)}</span>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <small>{item.role}</small>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <Testimonials side="user" eyebrow="Read stories" title="What the orbit sounds like" />
 
         {/* FINAL CTA */}
         <section className="final-cta container">

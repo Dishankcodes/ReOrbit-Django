@@ -18,6 +18,7 @@ import {
 import { HELP_CATEGORIES, useHelpFaqs } from "../../data/supportStore";
 import EmptyState from "../../components/ui/EmptyState";
 import HelpNav from "./components/HelpNav";
+import RateReOrbit from "../../../shared/components/RateReOrbit";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
@@ -158,6 +159,8 @@ export default function UserHelp() {
           })}
         </section>
       )}
+
+      <RateReOrbit side="user" />
 
       <section className="uhp-cta">
         <div>

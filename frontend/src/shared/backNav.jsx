@@ -82,6 +82,7 @@ const NAMES = {
   "admin-reports": ["Reports"],
   "admin-notifications": ["Notifications"],
   "admin-content": ["Content"],
+  "admin-testimonials": ["Testimonials"],
   "admin-reviews": ["Reviews"],
   "admin-team": ["Team"],
   "admin-settings": ["Settings"],

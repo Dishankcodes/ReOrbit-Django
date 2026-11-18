@@ -417,6 +417,45 @@ function StatementDrawer({ payout, canEdit, onClose, onAct }) {
 }
 
 /* Seller money on its way: by the day it clears, and who could be paid right now */
+/* one line per ledger entry: seller, order (delivered date), amount; refunds marked */
+function MoneyRows({ rows }) {
+  if (!rows.length) return <p className="apr-empty">Nothing here.</p>;
+  return (
+    <table className="apr-table pyo-day-rows">
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={`${r.order}-${r.kind}-${i}`}>
+            <td>
+              <Link to={r.seller.type === "remaker" ? `/admin-remakers/${r.seller.id}` : `/admin-users/${r.seller.id}`}>
+                {r.seller.name}
+              </Link>
+              <br />
+              <small>{r.seller.type === "remaker" ? "ReMaker" : "Member"}</small>
+            </td>
+            <td>
+              {r.order ? <Link to={`/admin-orders/${r.order}`}>{r.order}</Link> : "—"}
+              {r.delivered_at && (
+                <>
+                  <br />
+                  <small>Delivered {formatDate(r.delivered_at)}{r.managed_delivery ? " · ReOrbit delivery" : ""}</small>
+                </>
+              )}
+            </td>
+            <td className="pyo-r">
+              <b>
+                {r.amount < 0 ? "− " : ""}
+                {formatINR(Math.abs(r.amount))}
+              </b>
+              <br />
+              <small>{r.kind === "Reversal" ? "Refund taken back" : "Earning"}</small>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function Upcoming({ refreshKey }) {
   const [tab, setTab] = useState("schedule");
   const [data, setData] = useState(null);
@@ -469,16 +508,30 @@ function Upcoming({ refreshKey }) {
               </span>
             )}
             {data.held_by_returns.amount !== 0 && (
-              <span>
+              <button type="button" className="pyo-fact-btn" onClick={() => setOpen(open === "held" ? null : "held")}>
                 <b>{formatINR(data.held_by_returns.amount)}</b> frozen by {plural(data.held_by_returns.count, "open return")}
-              </span>
+              </button>
             )}
             {data.waiting_for_cod_cash.amount !== 0 && (
-              <span>
+              <button type="button" className="pyo-fact-btn" onClick={() => setOpen(open === "cod" ? null : "cod")}>
                 <b>{formatINR(data.waiting_for_cod_cash.amount)}</b> waiting for COD cash ({plural(data.waiting_for_cod_cash.count, "order")})
-              </span>
+              </button>
             )}
           </div>
+          {open === "cod" && (
+            <div className="pyo-side-list">
+              <p className="pyo-muted">
+                Cash-on-delivery orders start clearing only once you confirm ReOrbit received the cash (Orders › COD cash).
+              </p>
+              <MoneyRows rows={data.waiting_for_cod_cash.rows || []} />
+            </div>
+          )}
+          {open === "held" && (
+            <div className="pyo-side-list">
+              <p className="pyo-muted">These clear once the return is closed.</p>
+              <MoneyRows rows={data.held_by_returns.rows || []} />
+            </div>
+          )}
           {data.schedule.length === 0 ? (
             <p className="apr-empty">Nothing clears in the next {data.days} days.</p>
           ) : (
@@ -488,36 +541,19 @@ function Upcoming({ refreshKey }) {
                   <button type="button" onClick={() => setOpen(open === d.date ? null : d.date)} aria-expanded={open === d.date}>
                     <span className="pyo-day">{day(d.date)}</span>
                     <span className="pyo-muted">
-                      {plural(new Set(d.rows.map((r) => r.seller.id)).size, "seller")} · {plural(d.rows.length, "order")}
+                      {plural(d.sellers ?? new Set(d.rows.map((r) => r.seller.id)).size, "seller")} ·{" "}
+                      {plural(d.orders ?? new Set(d.rows.map((r) => r.order)).size, "order")}
+                      {d.refunded < 0 && (
+                        <>
+                          {" "}
+                          · earned {formatINR(d.earned)}, refunded {formatINR(Math.abs(d.refunded))}
+                        </>
+                      )}
                     </span>
                     <b>{formatINR(d.amount)}</b>
                     <ChevronRight size={15} className="pyo-chev" />
                   </button>
-                  {open === d.date && (
-                    <table className="apr-table pyo-day-rows">
-                      <tbody>
-                        {d.rows.map((r, i) => (
-                          <tr key={`${r.order}-${i}`}>
-                            <td>
-                              <Link to={r.seller.type === "remaker" ? `/admin-remakers/${r.seller.id}` : `/admin-users/${r.seller.id}`}>
-                                {r.seller.name}
-                              </Link>
-                              <br />
-                              <small>{r.seller.type === "remaker" ? "ReMaker" : "Member"}</small>
-                            </td>
-                            <td>{r.order ? <Link to={`/admin-orders/${r.order}`}>{r.order}</Link> : "—"}</td>
-                            <td className="pyo-r">
-                              <b>
-                                {r.amount < 0 ? "− " : ""}
-                                {formatINR(Math.abs(r.amount))}
-                              </b>
-                              {r.kind === "Reversal" && <small> refund</small>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                  {open === d.date && <MoneyRows rows={d.rows} />}
                 </li>
               ))}
             </ul>

@@ -426,7 +426,8 @@
   gap: 8px;
   margin-bottom: 12px;
 }
-.pyo-up-facts span {
+.pyo-up-facts span,
+.pyo-up-facts .pyo-fact-btn {
   padding: 6px 12px;
   border-radius: 999px;
   background: #f2f5f3;
@@ -485,4 +486,26 @@
   .pyo-days li > button .pyo-muted {
     display: none;
   }
+}
+
+/* clickable facts (COD cash / frozen) and their lists */
+.pyo-fact-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.pyo-side-list {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px dashed #d6e0d9;
+  border-radius: 12px;
+  background: #fbfcfb;
+}
+.pyo-side-list p {
+  margin: 0 0 6px;
 }

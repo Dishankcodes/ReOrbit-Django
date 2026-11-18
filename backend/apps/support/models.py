@@ -98,3 +98,35 @@ class SupportTicketAdminRead(TimeStampedModel):
         constraints = [
             models.UniqueConstraint(fields=["ticket", "admin"], name="ticket_admin_read_once"),
         ]
+
+
+class ContactMessage(PublicIdModel, TimeStampedModel):
+    """A message from the public "Contact us" form (/contact, /remakers-contact).
+
+    From someone with an account it also becomes a support ticket (`ticket`). From anyone else
+    it lives here: Admin › Support › Website messages, where the team replies by email."""
+
+    class Status(models.TextChoices):
+        NEW = "New", "New"
+        REPLIED = "Replied", "Replied"
+        CLOSED = "Closed", "Closed"
+
+    public_id_prefix = "CNT"
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    topic = models.CharField(max_length=60)
+    subject = models.CharField(max_length=160)
+    message = models.TextField()
+    side = models.CharField(max_length=10, default="user", help_text="user or remaker site")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.NEW, db_index=True)
+    ticket = models.ForeignKey(SupportTicket, null=True, blank=True, on_delete=models.SET_NULL,
+                               related_name="contact_messages")
+    reply = models.TextField(blank=True, default="")
+    replied_at = models.DateTimeField(null=True, blank=True)
+    replied_by = models.ForeignKey("admins.Admins", null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name="contact_replies")
+
+    class Meta:
+        db_table = "contact_messages"
+        ordering = ["-created_at", "-id"]

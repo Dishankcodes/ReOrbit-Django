@@ -1,4 +1,6 @@
 from django.urls import path
+from .dashboard import MemberDashboard
+from .public_views import PublicMemberDetail
 from .views import (
     RegisterView,
     LoginView,
@@ -22,6 +24,8 @@ urlpatterns = [
     path("auth/forgot-password/verify-otp/", ForgotPasswordVerifyOTPView.as_view()),
     path("auth/forgot-password/reset/", ForgotPasswordResetView.as_view()),
     path("me/", MeView.as_view()),
+    path("me/dashboard/", MemberDashboard.as_view()),
+    path("public/<str:public_id>/", PublicMemberDetail.as_view()),
     path("profile/", ProfileView.as_view()),
     path("profile/photo/", ProfilePhotoView.as_view()),
     path("password/change/", ChangePasswordView.as_view()),

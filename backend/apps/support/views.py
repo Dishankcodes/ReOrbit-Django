@@ -531,7 +531,11 @@ class AdminTickets(APIView):
                 status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
             ).count(),
         }
-        unread_count = queryset.filter(_last_member_at__isnull=False).filter(
+        # the sidebar badge: tickets still open with a member message the admin hasn't read.
+        # Resolved / closed tickets never count, even if the last message was unread.
+        unread_count = queryset.exclude(
+            status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+        ).filter(_last_member_at__isnull=False).filter(
             Q(_viewer_read_at__isnull=True) | Q(_last_member_at__gt=F("_viewer_read_at"))
         ).count()
         if status:

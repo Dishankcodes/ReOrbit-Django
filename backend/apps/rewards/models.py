@@ -27,7 +27,11 @@ class Voucher(PublicIdModel, TimeStampedModel):
         related_name="vouchers",
     )
 
-    owner = models.ForeignKey("users.Users", on_delete=models.CASCADE, related_name="vouchers")
+    # A member's voucher (donation, points or a coupon claim). A ReMaker can only claim public
+    # coupon codes at checkout, so those claims have owner_remaker instead.
+    owner = models.ForeignKey("users.Users", null=True, blank=True, on_delete=models.CASCADE, related_name="vouchers")
+    owner_remaker = models.ForeignKey(
+        "remakers.ReMakers", null=True, blank=True, on_delete=models.CASCADE, related_name="coupon_claims")
     code = models.CharField(max_length=20, unique=True)
     title = models.CharField(max_length=120)
     amount = models.PositiveIntegerField(help_text="Rupees taken off the order")

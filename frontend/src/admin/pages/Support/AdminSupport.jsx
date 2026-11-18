@@ -30,11 +30,14 @@ import UserAvatar from "../../components/ui/UserAvatar";
 import EmptyState from "../../components/ui/EmptyState";
 import Pagination from "../../components/ui/Pagination";
 import useToast from "../../components/ui/useToast";
+import ContactInbox from "./components/ContactInbox";
+import { apiRequest } from "../../../api/api";
 
 import "../../css/AdminUI.css";
 import "../../css/users/AdminUsers.css";
 import "../../css/orders/AdminOrders.css";
 import "../../css/support/AdminSupport.css";
+import "../../css/reviews/AdminReviews.css";
 
 /* statuses the team can set, per app (the User app has no "waiting" state) */
 const STATUS_OPTIONS = {
@@ -102,7 +105,7 @@ const CARDS = [
   { key: "Resolved", label: "Resolved", icon: CircleCheck, tone: "good" },
 ];
 
-export default function AdminSupport() {
+function TicketsView() {
   const navigate = useNavigate();
   const { toast, toastNode } = useToast();
 
@@ -253,6 +256,7 @@ export default function AdminSupport() {
                 onChange={(e) => setPriority(e.target.value)}
               >
                 <option value="all">Any</option>
+                <option>Urgent</option>
                 <option>High</option>
                 <option>Normal</option>
                 <option>Low</option>
@@ -407,5 +411,38 @@ export default function AdminSupport() {
 
       {toastNode}
     </div>
+  );
+}
+
+/* Tickets (from members and ReMakers) and Website messages (the public Contact us form) */
+export default function AdminSupport() {
+  const [params, setParams] = useSearchParams();
+  const view = params.get("view") === "messages" ? "messages" : "tickets";
+  const [newMessages, setNewMessages] = useState(0);
+  useEffect(() => {
+    apiRequest("/support/admin/contact/?status=New")
+      .then((r) => setNewMessages(r.data.counts?.New || 0))
+      .catch(() => {});
+  }, [view]);
+  const go = (v) => {
+    const n = new URLSearchParams(params);
+    if (v === "messages") n.set("view", "messages");
+    else n.delete("view");
+    n.delete("open");
+    setParams(n, { replace: true });
+  };
+  return (
+    <>
+      <nav className="sp-views" aria-label="Support inbox">
+        <button type="button" className={view === "tickets" ? "on" : ""} onClick={() => go("tickets")}>
+          <LifeBuoy size={15} /> Tickets
+        </button>
+        <button type="button" className={view === "messages" ? "on" : ""} onClick={() => go("messages")}>
+          <Inbox size={15} /> Website messages
+          {newMessages > 0 && <em>{newMessages}</em>}
+        </button>
+      </nav>
+      {view === "messages" ? <ContactInbox /> : <TicketsView />}
+    </>
   );
 }

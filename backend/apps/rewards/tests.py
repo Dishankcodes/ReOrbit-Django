@@ -376,3 +376,28 @@ class AdminRewardsTests(RewardsBase):
         row = rows[0]
         self.assertEqual((row["id"], row["balance"], row["lifetime"], row["purchases"], row["spent"]), (self.buyer.public_id, 390, 390, 290, 0))
         self.assertEqual(row["level"]["key"], "seedling")
+
+
+class ReMakerCouponTests(RewardsBase):
+    """ReMakers buying at checkout: public coupon codes yes, donation vouchers never."""
+
+    def test_remaker_can_claim_a_coupon_but_not_a_member_voucher(self):
+        o = rewards.save_offer(offer_body(code="MAKER10", kind="code", usage_limit=10, per_user=1), self.rw)
+        v, d = rewards.check(self.maker, "MAKER10", 1000, lock=True)
+        self.assertEqual(v.owner_remaker_id, self.maker.pk)
+        self.assertIsNone(v.owner_id)
+        rewards.mark_used(v)
+        with self.assertRaises(rewards.VoucherError) as cm:
+            rewards.check(self.maker, "MAKER10", 1000, lock=True)
+        self.assertEqual(cm.exception.code, "VOUCHER_USED")
+        self.assertEqual(o.vouchers.count(), 1)
+        Voucher.objects.create(owner=self.buyer, code="RO-DONATE1", amount=100, min_order=0,
+                               expires_at=timezone.now() + timedelta(days=3), source_type="donation", source_id="DON-9")
+        with self.assertRaises(rewards.VoucherError):
+            rewards.check(self.maker, "RO-DONATE1", 500)
+
+    def test_points_and_donor_coupons_are_members_only(self):
+        rewards.save_offer(offer_body(code="DONORS", kind="code", audience="donors"), self.rw)
+        with self.assertRaises(rewards.VoucherError) as cm:
+            rewards.check(self.maker, "DONORS", 1000)
+        self.assertEqual(cm.exception.code, "VOUCHER_MEMBER")

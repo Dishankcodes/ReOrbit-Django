@@ -32,6 +32,7 @@ import {
   History,
   ReceiptText,
   BadgeIndianRupee,
+  Quote,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAccess } from "../data/teamStore";
@@ -170,6 +171,7 @@ const managementMenu = [
     path: "/admin-content",
     icon: LayoutTemplate,
   },
+  { key: "content", label: "Testimonials", path: "/admin-testimonials", icon: Quote },
   { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
   { key: "reports", label: "Reports", path: "/admin-reports", icon: BarChart3 },
   { key: "team", label: "Team & Roles", path: "/admin-team", icon: UserCog },

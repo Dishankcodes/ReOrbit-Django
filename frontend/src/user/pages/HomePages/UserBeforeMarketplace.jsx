@@ -1,7 +1,14 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { publicProduct, usePublic } from "../../../api/publicData";
+import { isSignedIn } from "../../../api/session";
+
+/* Smart links: the member pages need a login, so a visitor is sent to sign in and then lands
+   straight on the product (RequireAuth keeps ?next=). A signed-in ReMaker opens their own side. */
+const side = () => (isSignedIn("remaker") && !isSignedIn("user") ? "remaker" : "user");
+const productLink = (id) => `/${side()}-marketplace/product/${id}`;
 
 export default function Marketplace() {
   const [activeTab, setActiveTab] = useState("all");
@@ -465,6 +472,9 @@ export default function Marketplace() {
         }
 
         .marketplace-product-card {
+          display: block;
+          color: inherit;
+          text-decoration: none;
           overflow: hidden;
 
           background: var(--card);
@@ -907,7 +917,7 @@ export default function Marketplace() {
                   chapter.
                 </p>
 
-                <a href="/login" className="marketplace-action-button">
+                <a href="/user-sell/new" className="marketplace-action-button">
                   Sell an item
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -931,7 +941,7 @@ export default function Marketplace() {
                   applicable.
                 </p>
 
-                <a href="/login" className="marketplace-action-button light">
+                <a href="/user-donations/new" className="marketplace-action-button light">
                   Donate an item
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -1029,9 +1039,11 @@ export default function Marketplace() {
             )}
             <div className="marketplace-grid">
               {filteredProducts.map((product) => (
-                <article
+                <Link
+                  to={productLink(product.id)}
                   className="marketplace-product-card"
                   key={product.id || product.title}
+                  aria-label={`${product.title}, ${product.price}`}
                 >
                   <div className="marketplace-product-image">
                     <img src={product.image} alt={product.title} />
@@ -1067,7 +1079,7 @@ export default function Marketplace() {
                       </span>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </div>

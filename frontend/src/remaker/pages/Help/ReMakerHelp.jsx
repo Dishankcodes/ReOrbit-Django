@@ -13,6 +13,7 @@ import ContactCards from "./components/ContactCards";
 import FaqList from "./components/FaqList";
 import ReportsList from "./components/ReportsList";
 import TicketList from "./components/TicketList";
+import RateReOrbit from "../../../shared/components/RateReOrbit";
 
 import "../../css/ReMakerUi.css";
 import "./HelpPage.css";
@@ -220,6 +221,8 @@ export default function ReMakerHelp() {
             </div>
             <ContactCards />
           </section>
+
+          <RateReOrbit side="remaker" />
         </>
       )}
 

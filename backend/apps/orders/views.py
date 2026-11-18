@@ -466,6 +466,10 @@ def _act(request, order, action, actor_kind):
         if order.managed_delivery and who == "seller" and action in services.MANAGED_SELLER_BLOCKED:
             raise services.CheckoutError("ReOrbit picks up and delivers this order. Pack it, then ask ReOrbit to pick it up.",
                                          code="MANAGED_DELIVERY", status=409)
+        if order.managed_delivery and who == "admin" and action in ("ship", "deliver"):
+            # ReOrbit-managed orders move only through Admin > Pickups (picked up = shipped, completed = delivered)
+            raise services.CheckoutError("ReOrbit delivers this order: update it from Admin › Pickups.",
+                                         code="MANAGED_DELIVERY", status=409)
         if action == "pickup":
             if who != "seller":
                 raise services.CheckoutError("Only the seller asks for a pickup.", code="FORBIDDEN", status=403)

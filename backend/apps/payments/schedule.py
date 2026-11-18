@@ -118,23 +118,40 @@ def upcoming(days=30, now=None):
     by_day = {}
     for e in soon[:500]:
         key = _local(e.available_at).isoformat()
-        day = by_day.setdefault(key, {"date": key, "amount": 0, "rows": []})
+        day = by_day.setdefault(key, {"date": key, "amount": 0, "earned": 0, "refunded": 0, "rows": []})
         day["amount"] += e.amount
-        day["rows"].append({
-            "seller": _seller(e, "seller_user" if e.seller_user_id else "seller_remaker"),
-            "order": e.order.public_id if e.order_id else None,
-            "amount": e.amount, "kind": e.kind, "available_at": e.available_at,
-        })
+        day["earned" if e.amount >= 0 else "refunded"] += e.amount
+        day["rows"].append(_row(e))
     later = base.filter(available_at__gt=until).exclude(held).aggregate(n=Count("pk"), s=Sum("amount"))
     frozen = base.filter(held).aggregate(n=Count("pk"), s=Sum("amount"))
     cod = base.filter(available_at__isnull=True).aggregate(n=Count("pk"), s=Sum("amount"))
+    rel = ("order", "seller_user", "seller_remaker")
+    for d in by_day.values():
+        d["orders"] = len({r["order"] for r in d["rows"]})
+        d["sellers"] = len({r["seller"]["id"] for r in d["rows"]})
     return {
         "days": days,
         "schedule": list(by_day.values()),
         "total": sum(d["amount"] for d in by_day.values()),
         "later": {"count": later["n"] or 0, "amount": later["s"] or 0},
-        "held_by_returns": {"count": frozen["n"] or 0, "amount": frozen["s"] or 0},
-        "waiting_for_cod_cash": {"count": cod["n"] or 0, "amount": cod["s"] or 0},
+        "held_by_returns": {"count": frozen["n"] or 0, "amount": frozen["s"] or 0,
+                            "rows": [_row(e) for e in base.filter(held).select_related(*rel).order_by("-pk")[:50]]},
+        "waiting_for_cod_cash": {"count": cod["n"] or 0, "amount": cod["s"] or 0,
+                                 "rows": [_row(e) for e in base.filter(available_at__isnull=True)
+                                          .select_related(*rel).order_by("-pk")[:50]]},
+    }
+
+
+def _row(e):
+    o = e.order if e.order_id else None
+    return {
+        "seller": _seller(e, "seller_user" if e.seller_user_id else "seller_remaker"),
+        "order": o.public_id if o else None,
+        "amount": e.amount, "kind": e.kind, "available_at": e.available_at,
+        "delivered_at": o.delivered_at if o else None,
+        "order_total": o.total if o else None,
+        "managed_delivery": bool(o and o.managed_delivery),
+        "note": e.note,
     }
 
 

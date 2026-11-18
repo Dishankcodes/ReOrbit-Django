@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { PackageSearch } from "lucide-react";
 
 import ProductForm from "../../pages-components/ProductForm";
+import ProductReviewsCard from "../../../shared/components/ProductReviewsCard";
 import { useMyProduct } from "../../data/productsStore";
 
 import "../../css/ReMakerProductForm.css";
@@ -40,5 +41,12 @@ export default function ReMakerEditProduct() {
   }
 
   /* key resets the form when switching between products */
-  return <ProductForm key={product.id} mode="edit" product={product} />;
+  return (
+    <>
+      <ProductForm key={product.id} mode="edit" product={product} />
+      <div className="rpf-reviews">
+        <ProductReviewsCard productId={product.id} />
+      </div>
+    </>
+  );
 }

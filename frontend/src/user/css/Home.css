@@ -1116,3 +1116,10 @@
   background: var(--primary);
   color: var(--primary-foreground, #fff);
 }
+
+/* second, quieter action on a "Who it's for" card */
+.role-button--soft {
+  margin-top: 10px;
+  border-style: dashed;
+  background: transparent;
+}

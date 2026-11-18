@@ -1,0 +1,136 @@
+.prc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.prc-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.prc-head small {
+  color: var(--dn-muted, #6b756d);
+  font-size: 12.5px;
+}
+.prc-avg {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.prc-avg strong {
+  font-size: 26px;
+  line-height: 1;
+}
+.prc-stars {
+  display: inline-flex;
+  gap: 1px;
+  color: #d5dbd7;
+  vertical-align: -2px;
+}
+.prc-stars .on {
+  color: #e2a12b;
+  fill: #e2a12b;
+}
+.prc-muted {
+  color: var(--dn-muted, #6b756d);
+  font-size: 13px;
+}
+.prc-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--dn-soft, #f2f6f3);
+  color: var(--dn-muted, #6b756d);
+  font-size: 13px;
+}
+.prc-dist {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.prc-dist > div {
+  display: grid;
+  grid-template-columns: 30px 1fr 26px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.prc-dist i {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eeea;
+}
+.prc-dist b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #e2a12b;
+}
+.prc-dist em {
+  color: var(--dn-muted, #6b756d);
+  font-style: normal;
+  text-align: right;
+}
+.prc-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.prc-list li {
+  padding: 14px 0;
+  border-top: 1px solid var(--dn-border, #e3ebe6);
+}
+.prc-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.prc-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dn-soft, #e4ede7);
+  color: var(--dn-p, #2a4d3a);
+  font-weight: 800;
+}
+.prc-who strong {
+  display: block;
+  font-size: 13.5px;
+}
+.prc-who span {
+  color: var(--dn-muted, #6b756d);
+  font-size: 12px;
+}
+.prc-list p {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.prc-photos {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.prc-photos img {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.prc-reply {
+  margin-top: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--dn-soft, #f2f6f3);
+  font-size: 12.5px;
+}

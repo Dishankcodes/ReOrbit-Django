@@ -1,120 +1,36 @@
 import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { Link } from "react-router-dom";
 import { initialsImage, usePublic } from "../../../api/publicData";
+import { isSignedIn } from "../../../api/session";
+
+/* A ReMaker's studio page needs a login: a visitor signs in and lands on it (RequireAuth keeps ?next=). */
+const studioLink = (id) =>
+  `/${isSignedIn("remaker") && !isSignedIn("user") ? "remaker" : "user"}-marketplace/remaker/${id}`;
+const stars = (n) => (n ? `${Number(n).toFixed(1)} ★` : "New");
+const FALLBACK_HERO = [
+  "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
+  "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
+];
 
 export default function ReMakerDiscover() {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const sampleCategories = [
-    "All",
-    "Furniture",
-    "Home & Decor",
-    "Art & Craft",
-    "Electronics",
-  ];
-
-  const sampleRemakers = [
-    {
-      name: "Aarav Studio",
-      specialty: "Furniture & Wood",
-      location: "Ahmedabad",
-      category: "Furniture",
-      image:
-        "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 24,
-      description:
-        "Transforms rescued timber and overlooked furniture into functional pieces designed to last.",
-      quote:
-        "The best material is often the one someone else has already stopped noticing.",
-    },
-    {
-      name: "Second Form",
-      specialty: "Upcycled Objects",
-      location: "Bengaluru",
-      category: "Home & Decor",
-      image:
-        "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 18,
-      description:
-        "Reimagines everyday objects and materials into distinctive pieces for modern spaces.",
-      quote: "I don't see old objects. I see unfinished ideas.",
-    },
-    {
-      name: "Mitti Works",
-      specialty: "Home & Decor",
-      location: "Mumbai",
-      category: "Home & Decor",
-      image:
-        "https://images.pexels.com/photos/15602670/pexels-photo-15602670.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 31,
-      description:
-        "Creates expressive home pieces by combining recovered materials with traditional craft.",
-      quote: "Every material carries a story. My job is to continue it.",
-    },
-    {
-      name: "ReForm Studio",
-      specialty: "Furniture Restoration",
-      location: "Pune",
-      category: "Furniture",
-      image:
-        "https://images.pexels.com/photos/177143/pexels-photo-177143.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 16,
-      description:
-        "Gives old furniture a refreshed identity through careful restoration and redesign.",
-      quote:
-        "Restoration isn't about making something new. It's about revealing what was already there.",
-    },
-    {
-      name: "Clay & Cycle",
-      specialty: "Art & Ceramics",
-      location: "Jaipur",
-      category: "Art & Craft",
-      image:
-        "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 21,
-      description:
-        "Combines handmade ceramics with recovered materials to create characterful decor.",
-      quote: "Imperfection is where the personality begins.",
-    },
-    {
-      name: "Circuit Again",
-      specialty: "Electronics & Components",
-      location: "Delhi",
-      category: "Electronics",
-      image:
-        "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-      creations: 13,
-      description:
-        "Repairs, repurposes and redesigns usable electronic components into practical creations.",
-      quote: "A broken device can still contain a lot of useful life.",
-    },
-  ];
-
-  /* real ReMakers when there are any; the sample studios only show on an empty platform */
-  const { data: live } = usePublic("/remakers/?page_size=48");
-  const real = (live?.results || []).map((r) => ({
-    name: r.name,
-    specialty: r.specialty || "ReMaker",
-    location: r.city || "Gujarat",
-    category: r.category || "",
-    image: r.image || initialsImage(r.name),
-    creations: r.creations,
-    description: r.bio || "Gives reclaimed material a second life.",
-    id: r.id,
+  /* the team picks the spotlight and up to 9 cards (Admin › Content › Discover); empty places fill
+     with the highest-rated ReMakers */
+  const { data } = usePublic("/discover-remakers/");
+  const spotlight = data?.spotlight || null;
+  const remakers = (data?.cards || []).map((r) => ({
+    ...r,
+    image: r.cover || r.avatar || initialsImage(r.name),
+    location: r.city || "India",
   }));
-  const remakers = real.length ? real : sampleRemakers;
-  const categories = real.length
-    ? [
-        "All",
-        ...Array.from(new Set(real.map((r) => r.category).filter(Boolean))),
-      ]
-    : sampleCategories;
-
+  const hero = [...(data?.hero_images || []), ...FALLBACK_HERO].slice(0, 2);
+  const categories = ["All", ...Array.from(new Set(remakers.map((r) => r.category).filter(Boolean)))];
   const filteredRemakers =
-    activeCategory === "All"
-      ? remakers
-      : remakers.filter((maker) => maker.category === activeCategory);
+    activeCategory === "All" ? remakers : remakers.filter((maker) => maker.category === activeCategory);
+  const spotImgs = spotlight?.images?.length ? spotlight.images : [spotlight?.avatar || initialsImage(spotlight?.name || "R")];
 
   return (
     <>
@@ -433,6 +349,41 @@ export default function ReMakerDiscover() {
           height: 100%;
 
           object-fit: cover;
+        }
+
+        /* the spotlight's three pictures: one large, two stacked */
+        .featured-remaker-image.fr-n2,
+        .featured-remaker-image.fr-n3 {
+          display: grid;
+          gap: 8px;
+          border: 0;
+        }
+        .featured-remaker-image.fr-n2 { grid-template-columns: 1fr 1fr; }
+        .featured-remaker-image.fr-n3 {
+          grid-template-columns: 1.6fr 1fr;
+          grid-template-rows: 1fr 1fr;
+        }
+        .featured-remaker-image.fr-n3 img:first-child { grid-row: 1 / 3; }
+        .featured-remaker-image.fr-n2 img,
+        .featured-remaker-image.fr-n3 img {
+          border-radius: 20px;
+          min-height: 0;
+        }
+        .fr-by {
+          margin: -6px 0 12px;
+          color: var(--muted-foreground, #6b756d);
+          font-weight: 600;
+        }
+        a.remaker-card {
+          display: block;
+          color: inherit;
+          text-decoration: none;
+        }
+        .remaker-empty {
+          grid-column: 1 / -1;
+          text-align: center;
+          opacity: 0.7;
+          padding: 30px 0;
         }
 
         .featured-remaker-copy {
@@ -1170,7 +1121,7 @@ export default function ReMakerDiscover() {
                   </span>
                 </a>
 
-                <a href="/marketplace" className="remakers-secondary-btn">
+                <a href="/discover-marketplace" className="remakers-secondary-btn">
                   Shop their creations
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -1178,37 +1129,27 @@ export default function ReMakerDiscover() {
                 </a>
               </div>
 
-              <div className="remakers-hero-stats">
-                <div className="remaker-stat">
-                  <strong>1,200+</strong>
-                  <span>ReMakers</span>
+              {data?.stats && (
+                <div className="remakers-hero-stats">
+                  <div className="remaker-stat">
+                    <strong>{data.stats.remakers.toLocaleString("en-IN")}</strong>
+                    <span>{data.stats.remakers === 1 ? "ReMaker" : "ReMakers"}</span>
+                  </div>
+                  <div className="remaker-stat">
+                    <strong>{data.stats.creations.toLocaleString("en-IN")}</strong>
+                    <span>Creations live</span>
+                  </div>
                 </div>
-
-                <div className="remaker-stat">
-                  <strong>8.4k</strong>
-                  <span>Creations made</span>
-                </div>
-
-                <div className="remaker-stat">
-                  <strong>32k kg</strong>
-                  <span>Material kept moving</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="remakers-hero-visual">
               <div className="remakers-main-image">
-                <img
-                  src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                  alt="ReMaker working in a creative studio"
-                />
+                <img src={hero[0]} alt="A ReMaker's creation" />
               </div>
 
               <div className="remakers-small-image">
-                <img
-                  src="https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                  alt="Handcrafted objects in a studio"
-                />
+                <img src={hero[1]} alt="Another ReMaker creation" />
               </div>
 
               <div className="remakers-floating-card">
@@ -1217,7 +1158,7 @@ export default function ReMakerDiscover() {
                     <span className="material-symbols-outlined">verified</span>
                   </div>
 
-                  <strong>Verified ReMakers</strong>
+                  <strong>Real ReMakers</strong>
                 </div>
 
                 <p>
@@ -1233,56 +1174,52 @@ export default function ReMakerDiscover() {
             FEATURED
         ===================================================== */}
 
-        <section className="featured-remaker">
-          <div className="container featured-remaker-grid">
-            <div className="featured-remaker-image">
-              <img
-                src="https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000"
-                alt="Aarav Studio workspace"
-              />
-            </div>
-
-            <div className="featured-remaker-copy">
-              <span className="section-eyebrow">ReMaker spotlight</span>
-
-              <h2>Aarav Studio</h2>
-
-              <div className="featured-meta">
-                <span>
-                  <span className="material-symbols-outlined">location_on</span>
-                  Ahmedabad
-                </span>
-
-                <span>
-                  <span className="material-symbols-outlined">chair</span>
-                  Furniture & Wood
-                </span>
-
-                <span>
-                  <span className="material-symbols-outlined">verified</span>
-                  Verified
-                </span>
+        {spotlight && (
+          <section className="featured-remaker">
+            <div className="container featured-remaker-grid">
+              <div className={`featured-remaker-image fr-n${Math.min(spotImgs.length, 3)}`}>
+                {spotImgs.slice(0, 3).map((src, i) => (
+                  <img key={src + i} src={src} alt={i === 0 ? `${spotlight.name}'s work` : ""} />
+                ))}
               </div>
 
-              <p>
-                Aarav works primarily with rescued timber, old furniture frames
-                and recovered wood. Instead of replacing what is already
-                available, his studio focuses on restoring its usefulness and
-                character.
-              </p>
+              <div className="featured-remaker-copy">
+                <span className="section-eyebrow">ReMaker spotlight</span>
 
-              <div className="featured-quote">
-                “The best material is often the one someone else has already
-                stopped noticing.”
+                <h2>{spotlight.name}</h2>
+                {spotlight.name !== spotlight.maker && <p className="fr-by">by {spotlight.maker}</p>}
+
+                <div className="featured-meta">
+                  {spotlight.city && (
+                    <span>
+                      <span className="material-symbols-outlined">location_on</span>
+                      {spotlight.city}
+                    </span>
+                  )}
+                  <span>
+                    <span className="material-symbols-outlined">handyman</span>
+                    {spotlight.specialty}
+                  </span>
+                  <span>
+                    <span className="material-symbols-outlined">star</span>
+                    {spotlight.reviews ? `${stars(spotlight.rating)} · ${spotlight.reviews} reviews` : "New on ReOrbit"}
+                  </span>
+                  <span>
+                    <span className="material-symbols-outlined">inventory_2</span>
+                    {spotlight.creations} creations
+                  </span>
+                </div>
+
+                <p>{spotlight.bio || `${spotlight.maker} turns rescued material into new work on ReOrbit since ${spotlight.joined}.`}</p>
+
+                <Link to={studioLink(spotlight.id)} className="remakers-primary-btn">
+                  Visit studio
+                  <span className="material-symbols-outlined">arrow_forward</span>
+                </Link>
               </div>
-
-              <a href="/remakers" className="remakers-primary-btn">
-                Visit studio
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </a>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* =====================================================
             DIRECTORY
@@ -1318,44 +1255,40 @@ export default function ReMakerDiscover() {
             </div>
 
             <div className="remaker-directory-grid">
+              {filteredRemakers.length === 0 && (
+                <p className="remaker-empty">{data ? "ReMakers will appear here soon." : "Loading ReMakers…"}</p>
+              )}
               {filteredRemakers.map((maker) => (
-                <article className="remaker-card" key={maker.id || maker.name}>
+                <Link to={studioLink(maker.id)} className="remaker-card" key={maker.id}>
                   <div className="remaker-card-image">
                     <img src={maker.image} alt={maker.name} />
 
                     <span className="verified-badge">
-                      <span className="material-symbols-outlined">
-                        verified
-                      </span>
-                      Verified ReMaker
+                      <span className="material-symbols-outlined">star</span>
+                      {stars(maker.rating)}
                     </span>
 
-                    <span className="creation-count">
-                      {maker.creations} creations
-                    </span>
+                    <span className="creation-count">{maker.creations} creations</span>
                   </div>
 
                   <div className="remaker-card-content">
                     <div className="remaker-card-meta">
                       <span>{maker.specialty}</span>
-
                       <span>{maker.location}</span>
                     </div>
 
                     <h3>{maker.name}</h3>
 
                     <p className="remaker-card-description">
-                      {maker.description}
+                      {maker.bio || "Gives reclaimed material a second life."}
                     </p>
 
-                    <a href="/remakers" className="remaker-card-link">
+                    <span className="remaker-card-link">
                       View studio
-                      <span className="material-symbols-outlined">
-                        arrow_forward
-                      </span>
-                    </a>
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                    </span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </div>

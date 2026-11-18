@@ -301,7 +301,10 @@ export default function SellerOrderDetails({
   const managed = !!o.managed_delivery;
   const reorbitHands = managed && !isAdmin;
   const pickup = o.pickup || null;
-  const next = reorbitHands
+  const next = managed && isAdmin
+    ? // shipped / delivered come from the pickup (Admin › Pickups), never from here
+      { Confirmed: ["pack", "Mark as packed"] }[o.status]
+    : reorbitHands
     ? {
         Confirmed: ["pack", "Mark as packed"],
         Packed: pickup?.requested ? null : ["pickup", "Ask ReOrbit to pick up"],

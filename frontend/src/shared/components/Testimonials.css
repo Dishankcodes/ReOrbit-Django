@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap");
+
+.tsm {
+  --tsm-accent: #2a4d3a;
+  --tsm-soft: #e8f0ea;
+  --tsm-ink: #1f2923;
+  --tsm-muted: #66726a;
+  padding: 90px 16px;
+}
+.tsm--remaker {
+  --tsm-accent: #4a1d20;
+  --tsm-soft: #f5e9e6;
+  --tsm-ink: #2a1a1b;
+  --tsm-muted: #7a6466;
+}
+.tsm-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.tsm-head {
+  margin-bottom: 38px;
+  text-align: center;
+}
+.tsm-eyebrow {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--tsm-soft);
+  color: var(--tsm-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tsm-head h2 {
+  margin: 14px 0 0;
+  color: var(--tsm-ink);
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+  line-height: 1.1;
+}
+.tsm-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.tsm-grid.tsm-n1 {
+  max-width: 620px;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+}
+.tsm-grid.tsm-n2 {
+  max-width: 900px;
+  margin: 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tsm-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 30px 28px 24px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tsm-accent) 14%, transparent);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 18px 40px -28px rgba(20, 40, 30, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.tsm-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 48px -26px rgba(20, 40, 30, 0.4);
+}
+.tsm-card--lead {
+  background: var(--tsm-accent);
+  color: #fff;
+}
+.tsm-mark {
+  position: absolute;
+  top: -18px;
+  right: 18px;
+  color: var(--tsm-soft);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 140px;
+  line-height: 1;
+  pointer-events: none;
+}
+.tsm-card--lead .tsm-mark {
+  color: rgba(255, 255, 255, 0.12);
+}
+.tsm-stars {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  color: #d9ddd9;
+  font-size: 17px;
+}
+.tsm-stars .on {
+  color: #e2a63b;
+}
+.tsm-card blockquote {
+  position: relative;
+  flex: 1;
+  margin: 0 0 24px;
+  color: var(--tsm-ink);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.12rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+.tsm-card--lead blockquote {
+  color: #fff;
+}
+.tsm-card figcaption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px dashed color-mix(in srgb, var(--tsm-accent) 22%, transparent);
+}
+.tsm-card--lead figcaption {
+  border-top-color: rgba(255, 255, 255, 0.25);
+}
+.tsm-card figcaption img,
+.tsm-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.tsm-avatar {
+  display: grid;
+  place-items: center;
+  background: var(--tsm-soft);
+  color: var(--tsm-accent);
+  font-weight: 800;
+}
+.tsm-card--lead .tsm-avatar {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.tsm-card figcaption strong {
+  display: block;
+  color: var(--tsm-ink);
+  font-size: 0.95rem;
+}
+.tsm-card figcaption small {
+  color: var(--tsm-muted);
+  font-size: 0.8rem;
+}
+.tsm-card--lead figcaption strong {
+  color: #fff;
+}
+.tsm-card--lead figcaption small {
+  color: rgba(255, 255, 255, 0.72);
+}
+@media (max-width: 900px) {
+  .tsm {
+    padding: 64px 16px;
+  }
+  .tsm-grid,
+  .tsm-grid.tsm-n2 {
+    grid-template-columns: 1fr;
+  }
+}

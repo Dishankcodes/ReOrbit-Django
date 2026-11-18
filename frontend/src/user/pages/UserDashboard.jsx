@@ -1,669 +1,480 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  ArrowUpRight,
+  Gift,
+  Heart,
   Leaf,
   Package,
+  PackageCheck,
+  Plus,
   ShoppingBag,
-  Heart,
-  Gift,
-  Star,
-  Recycle,
-  TrendingUp,
-  Clock3,
-  CheckCircle2,
-  CircleDot,
   Sparkles,
-  ChevronRight,
+  Star,
+  Store,
+  Truck,
+  Wallet,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-import { useOrders } from "../data/ordersStore";
-import { summarize, useDonations } from "../data/donationsStore";
-import { useWishlist } from "../data/wishlistStore";
-import { useRewards } from "../data/rewardsStore";
-import { useFollowing } from "../data/followStore";
-import { useLiveMarketplace } from "../data/liveMarketplace";
-import { ITEMS, formatPrice } from "../../data/marketplaceData";
+import { apiRequest } from "../../api/api";
 import { formatDate, relativeDay } from "../utils/format";
 
-import "../css/UserDashboard.css";
+import "../css/shared/ui-base.css";
+import "../css/UserDashboardV2.css";
 
-function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem("reorbit_user");
+const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+const TONE = {
+  Delivered: "good",
+  Completed: "good",
+  Shipped: "info",
+  Packed: "info",
+  Confirmed: "info",
+  Scheduled: "info",
+  Picked_Up: "info",
+  Received: "info",
+  Pending: "wait",
+  Pending_Payment: "wait",
+  Cancelled: "bad",
+  Rejected: "bad",
+  Delivery_Failed: "bad",
+  Failed_Pickup: "bad",
+};
 
-    if (!storedUser) {
-      return {};
+/* One dashboard section from the server. `when` false waits (lazy): it loads once visible. */
+function useSection(name, when = true) {
+  const [state, setState] = useState({ data: null, error: "" });
+  useEffect(() => {
+    if (!when) return undefined;
+    let alive = true;
+    apiRequest(`/users/me/dashboard/?section=${name}`)
+      .then((r) => alive && setState({ data: r.data, error: "" }))
+      .catch((e) => alive && setState({ data: null, error: e.message || "Could not load." }));
+    return () => {
+      alive = false;
+    };
+  }, [name, when]);
+  return state;
+}
+
+/* Becomes true once the box is near the screen, so a section loads only when the member scrolls to it. */
+function useNearScreen() {
+  const ref = useRef(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    if (near) return undefined;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setNear(true);
+      return undefined;
     }
-
-    return JSON.parse(storedUser);
-  } catch {
-    return {};
-  }
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setNear(true), {
+      rootMargin: "200px 0px",
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
+  return [ref, near];
 }
 
-function getUserName(user) {
-  return user?.full_name || user?.fullName || user?.name || "there";
-}
-
-function getFirstName(name) {
-  if (!name) {
-    return "there";
-  }
-
-  return name.trim().split(/\s+/)[0];
-}
-
-function getInitials(name) {
-  if (!name) {
-    return "RU";
-  }
-
-  const words = name.trim().split(/\s+/);
-
-  if (words.length === 1) {
-    return words[0].substring(0, 2).toUpperCase();
-  }
-
-  return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
-}
-
-/* the newest things on the live marketplace that are not the member's own */
-const CATEGORY_ICON = { remaker: Recycle, user: Package };
-
-const ORDER_LABEL = {
-  Shipped: "In Transit",
-  Confirmed: "Processing",
-  Processing: "Processing",
-  Delivered: "Delivered",
-  Cancelled: "Cancelled",
-};
-const ACTIVITY_ICON = {
-  purchase: CheckCircle2,
-  donation: Gift,
-  listing: Sparkles,
-  review: Star,
-  follow: Heart,
-  spend: Star,
-};
-const ACTIVITY_TYPE = {
-  purchase: "success",
-  donation: "donation",
-  listing: "reward",
-  review: "reward",
-  follow: "wishlist",
-  spend: "reward",
-};
-
-export default function UserDashboard() {
-  const navigate = useNavigate();
-
-  const user = useMemo(() => getStoredUser(), []);
-
-  /* real numbers from the orders, donations, wishlist and rewards stores */
-  const orders = useOrders();
-  const donationList = useDonations();
-  const wish = useWishlist();
-  const rewards = useRewards();
-  const following = useFollowing();
-  useLiveMarketplace();
-  const donationStats = summarize(donationList);
-  const monthStart = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    1,
-  );
-  const ordersThisMonth = orders.filter(
-    (o) => new Date(o.placedAt) >= monthStart,
-  ).length;
-  const pointsFmt = rewards.balance.toLocaleString("en-IN");
-  const reuseKg =
-    Math.round(
-      (donationStats.weight +
-        orders
-          .filter((o) => o.status === "Delivered")
-          .reduce((n, o) => n + (o.item.co2SavedKg || 0) * o.qty, 0)) *
-        10,
-    ) / 10;
-
-  const recentOrders = orders.slice(0, 3).map((o) => ({
-    id: `#${o.id}`,
-    product: o.item.title,
-    status: ORDER_LABEL[o.status] || o.status,
-    date: formatDate(o.placedAt),
-    amount: `₹${o.total.toLocaleString("en-IN")}`,
-  }));
-
-  const activities = rewards.ledger.slice(0, 4).map((e, i) => ({
-    id: e.id,
-    icon: ACTIVITY_ICON[e.kind] || Star,
-    title: e.title,
-    description: `${e.detail} · ${e.points > 0 ? "+" : "−"}${Math.abs(e.points)} points`,
-    time: relativeDay(e.at),
-    type: ACTIVITY_TYPE[e.kind] || "reward",
-  }));
-
-  const recommendedProducts = ITEMS.filter(
-    (item) => item.live && !item.soldOut && item.sellerId !== user.public_id,
-  )
-    .slice(0, 3)
-    .map((item) => ({
-      id: item.id,
-      name: item.title,
-      maker: item.seller,
-      price: formatPrice(item.price),
-      category: item.category,
-      icon: CATEGORY_ICON[item.sellerType] || ShoppingBag,
-    }));
-
-  const memberSince = user.created_at
-    ? new Date(user.created_at).toLocaleDateString("en-IN", {
-        month: "short",
-        year: "numeric",
-      })
-    : "";
-  const secondLife = rewards.badges.find((b) => b.id === "second-life");
-  const secondLifePct = secondLife
-    ? Math.round((secondLife.value / secondLife.target) * 100)
-    : 0;
-
-  const fullName = getUserName(user);
-  const firstName = getFirstName(fullName);
-  const initials = getInitials(fullName);
-
-  const handleMarketplace = () => {
-    navigate("/user-marketplace");
-  };
-
-  const handleOrders = () => {
-    navigate("/user-orders");
-  };
-
-  const handleWishlist = () => {
-    navigate("/user-wishlist");
-  };
-
-  const handleDonations = () => {
-    navigate("/user-donations");
-  };
-
-  const handleFollowing = () => {
-    navigate("/user-following");
-  };
-
-  const handleOrbitPoints = () => {
-    navigate("/user-orbit-points");
-  };
-
+function Lazy({ name, minHeight = 240, children }) {
+  const [ref, near] = useNearScreen();
+  const { data, error } = useSection(name, near);
   return (
-    <div className="user-dashboard">
-      {/* 
-          DASHBOARD HERO
-       */}
-
-      <section className="user-dashboard-hero">
-        <div className="user-dashboard-hero-content">
-          <div className="user-dashboard-hero-eyebrow">
-            <span className="user-dashboard-hero-dot" />
-            YOUR REORBIT JOURNEY
-          </div>
-
-          <h2>
-            Good to see you, <span>{firstName}.</span>
-          </h2>
-
-          <p>
-            Every purchase, donation and reuse decision helps keep something
-            valuable in orbit.
-          </p>
-
-          <div className="user-dashboard-hero-actions">
-            <button
-              type="button"
-              className="user-dashboard-primary-button"
-              onClick={handleMarketplace}
-            >
-              Explore Marketplace
-              <ArrowRight size={16} />
-            </button>
-
-            <button
-              type="button"
-              className="user-dashboard-secondary-button"
-              onClick={handleOrbitPoints}
-            >
-              <Star size={15} />
-              View Orbit Points
-            </button>
-          </div>
+    <div ref={ref} style={data ? undefined : { minHeight }}>
+      {error ? (
+        <p className="udb-note">{error}</p>
+      ) : data ? (
+        children(data)
+      ) : (
+        <div className="udb-card udb-skel" aria-busy="true" aria-label="Loading">
+          <i />
+          <i />
+          <i />
         </div>
-
-        <div className="user-dashboard-hero-art">
-          <div className="user-dashboard-orbit orbit-one" />
-          <div className="user-dashboard-orbit orbit-two" />
-          <div className="user-dashboard-orbit orbit-three" />
-
-          <div className="user-dashboard-hero-leaf">
-            <Leaf size={52} strokeWidth={1.2} />
-          </div>
-
-          <div className="user-dashboard-floating-card floating-card-one">
-            <Recycle size={15} />
-            <span>Reuse Impact</span>
-            <strong>+{reuseKg} kg</strong>
-          </div>
-
-          <div className="user-dashboard-floating-card floating-card-two">
-            <Star size={14} />
-            <span>Orbit Points</span>
-            <strong>{pointsFmt}</strong>
-          </div>
-        </div>
-      </section>
-
-      {/* QUICK STATS*/}
-
-      <section className="user-dashboard-stats">
-        <div className="user-dashboard-stat-card">
-          <div className="user-dashboard-stat-icon">
-            <ShoppingBag size={19} />
-          </div>
-
-          <div className="user-dashboard-stat-content">
-            <span>Total Orders</span>
-            <strong>{orders.length}</strong>
-            <small>
-              <TrendingUp size={11} />
-              {ordersThisMonth} this month
-            </small>
-          </div>
-        </div>
-
-        <div className="user-dashboard-stat-card">
-          <div className="user-dashboard-stat-icon">
-            <Heart size={19} />
-          </div>
-
-          <div className="user-dashboard-stat-content">
-            <span>Wishlist Items</span>
-            <strong>{wish.count}</strong>
-            <small>Saved for later</small>
-          </div>
-        </div>
-
-        <div className="user-dashboard-stat-card">
-          <div className="user-dashboard-stat-icon">
-            <Gift size={19} />
-          </div>
-
-          <div className="user-dashboard-stat-content">
-            <span>Donations</span>
-            <strong>{donationStats.total}</strong>
-            <small>Giving items another life</small>
-          </div>
-        </div>
-
-        <div className="user-dashboard-stat-card">
-          <div className="user-dashboard-stat-icon reward">
-            <Star size={19} />
-          </div>
-
-          <div className="user-dashboard-stat-content">
-            <span>Orbit Points</span>
-            <strong>{pointsFmt}</strong>
-            <small>
-              {rewards.next
-                ? `${rewards.toNext.toLocaleString("en-IN")} points to ${rewards.next.name}`
-                : "Top level reached"}
-            </small>
-          </div>
-        </div>
-      </section>
-
-      {/* 
-          IMPACT + PROFILE
-       */}
-
-      <section className="user-dashboard-impact-grid">
-        <div className="user-dashboard-impact-card">
-          <div className="user-dashboard-section-heading">
-            <div>
-              <span className="user-dashboard-label">YOUR IMPACT</span>
-
-              <h3>
-                Small choices.
-                <br />
-                Meaningful impact.
-              </h3>
-            </div>
-
-            <div className="user-dashboard-impact-icon">
-              <Leaf size={22} />
-            </div>
-          </div>
-
-          <div className="user-dashboard-impact-number">
-            <strong>{reuseKg}</strong>
-            <span>kg</span>
-          </div>
-
-          <p>Estimated material kept in use through your ReOrbit activity.</p>
-
-          <div className="user-dashboard-progress">
-            <div className="user-dashboard-progress-top">
-              <span>Second Life badge</span>
-              <strong>{secondLifePct}%</strong>
-            </div>
-
-            <div className="user-dashboard-progress-track">
-              <div
-                className="user-dashboard-progress-fill"
-                style={{ width: `${secondLifePct}%` }}
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="user-dashboard-text-button"
-            onClick={handleOrbitPoints}
-          >
-            See your impact
-            <ArrowUpRight size={14} />
-          </button>
-        </div>
-
-        <div className="user-dashboard-profile-card">
-          <div className="user-dashboard-profile-top">
-            <div className="user-dashboard-profile-avatar">{initials}</div>
-
-            <div>
-              <span className="user-dashboard-label">YOUR PROFILE</span>
-
-              <h3>{fullName}</h3>
-
-              <p>{memberSince ? `ReOrbit member since ${memberSince}` : "ReOrbit member"}</p>
-            </div>
-          </div>
-
-          <div className="user-dashboard-profile-details">
-            <div>
-              <span>LEVEL</span>
-              <strong>{rewards.level.name}</strong>
-            </div>
-
-            <div>
-              <span>BADGES</span>
-              <strong>{rewards.earnedBadges} earned</strong>
-            </div>
-
-            <div>
-              <span>FOLLOWING</span>
-              <strong>{following.count} {following.count === 1 ? "ReMaker" : "ReMakers"}</strong>
-            </div>
-          </div>
-
-          <div className="user-dashboard-profile-footer">
-            <div className="user-dashboard-mini-progress">
-              <div style={{ width: `${rewards.next ? rewards.progress : 100}%` }} />
-            </div>
-
-            <span>{rewards.next ? `${rewards.progress}% to ${rewards.next.name}` : "Top level reached"}</span>
-
-            <button type="button" onClick={() => navigate("/user-profile")}>
-              <ChevronRight size={15} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 
-          RECENT ORDERS
-       */}
-
-      <section className="user-dashboard-section-block">
-        <div className="user-dashboard-section-title-row">
-          <div>
-            <span className="user-dashboard-label">ACTIVITY</span>
-
-            <h3>Recent orders</h3>
-          </div>
-
-          <button
-            type="button"
-            className="user-dashboard-view-button"
-            onClick={handleOrders}
-          >
-            View all
-            <ArrowRight size={14} />
-          </button>
-        </div>
-
-        <div className="user-dashboard-orders-card">
-          <div className="user-dashboard-orders-header">
-            <span>ORDER</span>
-            <span>PRODUCT</span>
-            <span>DATE</span>
-            <span>STATUS</span>
-            <span>AMOUNT</span>
-          </div>
-
-          {recentOrders.map((order) => (
-            <div className="user-dashboard-order-row" key={order.id}>
-              <strong>{order.id}</strong>
-
-              <div className="user-dashboard-order-product">
-                <div className="user-dashboard-order-image">
-                  <Package size={17} strokeWidth={1.7} />
-                </div>
-
-                <span>{order.product}</span>
-              </div>
-
-              <span className="user-dashboard-order-date">{order.date}</span>
-
-              <span
-                className={`user-dashboard-order-status ${order.status
-                  .toLowerCase()
-                  .replace(" ", "-")}`}
-              >
-                <CircleDot size={10} />
-                {order.status}
-              </span>
-
-              <strong>{order.amount}</strong>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 
-          RECOMMENDATIONS + ACTIVITY
-       */}
-
-      <section className="user-dashboard-bottom-grid">
-        <div className="user-dashboard-section-block">
-          <div className="user-dashboard-section-title-row">
-            <div>
-              <span className="user-dashboard-label">FOR YOU</span>
-
-              <h3>Recommended products</h3>
-            </div>
-
-            <button
-              type="button"
-              className="user-dashboard-view-button"
-              onClick={handleMarketplace}
-            >
-              Explore
-              <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <div className="user-dashboard-products">
-            {!recommendedProducts.length && (
-              <p className="user-dashboard-empty">
-                New listings from the community will show up here.
-              </p>
-            )}
-            {recommendedProducts.map((product) => {
-              const ProductIcon = product.icon;
-
-              return (
-                <button
-                  type="button"
-                  className="user-dashboard-product-card"
-                  key={product.id}
-                  onClick={() => navigate(`/user-marketplace/product/${product.id}`)}
-                >
-                  <div className="user-dashboard-product-image">
-                    <ProductIcon size={28} strokeWidth={1.25} />
-
-                    <span>{product.category}</span>
-                  </div>
-
-                  <div className="user-dashboard-product-info">
-                    <h4>{product.name}</h4>
-
-                    <p>{product.maker}</p>
-
-                    <div>
-                      <strong>{product.price}</strong>
-
-                      <ArrowUpRight size={14} />
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="user-dashboard-section-block">
-          <div className="user-dashboard-section-title-row">
-            <div>
-              <span className="user-dashboard-label">YOUR JOURNEY</span>
-
-              <h3>Recent activity</h3>
-            </div>
-
-            <Sparkles size={19} className="user-dashboard-title-icon" />
-          </div>
-
-          <div className="user-dashboard-activity-card">
-            {activities.map((activity, index) => {
-              const ActivityIcon = activity.icon;
-
-              return (
-                <div className="user-dashboard-activity-item" key={activity.id}>
-                  <div
-                    className={`user-dashboard-activity-icon ${activity.type}`}
-                  >
-                    <ActivityIcon size={15} strokeWidth={1.8} />
-                  </div>
-
-                  <div className="user-dashboard-activity-content">
-                    <strong>{activity.title}</strong>
-
-                    <p>{activity.description}</p>
-
-                    <span>
-                      <Clock3 size={10} />
-                      {activity.time}
-                    </span>
-                  </div>
-
-                  {index !== activities.length - 1 && (
-                    <div className="user-dashboard-activity-line" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 
-          QUICK ACTIONS
-       */}
-
-      <section className="user-dashboard-quick-actions">
-        <div className="user-dashboard-quick-header">
-          <div>
-            <span className="user-dashboard-label">QUICK ACTIONS</span>
-
-            <h3>What would you like to do?</h3>
-          </div>
-        </div>
-
-        <div className="user-dashboard-quick-grid">
-          <button type="button" onClick={handleMarketplace}>
-            <div>
-              <StoreIcon />
-            </div>
-
-            <span>Browse Marketplace</span>
-
-            <ArrowUpRight size={15} />
-          </button>
-
-          <button type="button" onClick={handleWishlist}>
-            <div>
-              <Heart size={18} />
-            </div>
-
-            <span>View Wishlist</span>
-
-            <ArrowUpRight size={15} />
-          </button>
-
-          <button type="button" onClick={handleDonations}>
-            <div>
-              <Gift size={18} />
-            </div>
-
-            <span>Manage Donations</span>
-
-            <ArrowUpRight size={15} />
-          </button>
-
-          <button type="button" onClick={handleFollowing}>
-            <div>
-              <UsersIcon />
-            </div>
-
-            <span>Discover ReMakers</span>
-
-            <ArrowUpRight size={15} />
-          </button>
-        </div>
-      </section>
+      )}
     </div>
   );
 }
 
-function StoreIcon() {
-  return <ShoppingBag size={18} strokeWidth={1.8} />;
+function Head({ eyebrow, title, to, action = "View all" }) {
+  return (
+    <div className="udb-head">
+      <div>
+        <span>{eyebrow}</span>
+        <h3>{title}</h3>
+      </div>
+      {to && (
+        <Link to={to} className="udb-more">
+          {action} <ArrowRight size={14} />
+        </Link>
+      )}
+    </div>
+  );
 }
 
-function UsersIcon() {
+function Chip({ status, label }) {
+  return <em className={`udb-chip ${TONE[status] || ""}`}>{label || status}</em>;
+}
+
+function Thumb({ src, Icon = Package }) {
+  return <span className="udb-thumb">{src ? <img src={src} alt="" loading="lazy" /> : <Icon size={18} />}</span>;
+}
+
+function Empty({ text, to, cta }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <div className="udb-empty">
+      <p>{text}</p>
+      {to && (
+        <Link to={to} className="dn-btn dn-btn--sm">
+          {cta}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Ring({ pct }) {
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg viewBox="0 0 80 80" className="udb-ring" aria-hidden="true">
+      <circle cx="40" cy="40" r={r} className="track" />
+      <circle cx="40" cy="40" r={r} className="fill" strokeDasharray={c} strokeDashoffset={c - (c * pct) / 100} />
     </svg>
+  );
+}
+
+function Hero({ s }) {
+  const since = s.member_since
+    ? new Date(s.member_since).toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+    : "";
+  return (
+    <section className="udb-hero">
+      <div className="udb-hero-main">
+        <span className="udb-eyebrow">
+          <Leaf size={13} /> Your ReOrbit
+        </span>
+        <h2>
+          Hi {s.first_name}, <span>welcome back.</span>
+        </h2>
+        <p>
+          {s.items_reused > 0
+            ? `You've given ${s.items_reused} ${s.items_reused === 1 ? "thing" : "things"} a second life so far. Keep it going.`
+            : "Buy pre-loved, sell what you don't use, or donate it. Every item you keep in orbit counts."}
+        </p>
+        <div className="udb-actions">
+          <Link to="/user-marketplace" className="udb-act primary">
+            <ShoppingBag size={16} /> Shop
+          </Link>
+          <Link to="/user-sell/new" className="udb-act">
+            <Plus size={16} /> Sell an item
+          </Link>
+          <Link to="/user-donations/new" className="udb-act">
+            <Gift size={16} /> Donate
+          </Link>
+        </div>
+      </div>
+      <Link to="/user-orbit-points" className="udb-level">
+        <div className="udb-level-ring">
+          <Ring pct={s.points.progress} />
+          <strong>{s.points.balance.toLocaleString("en-IN")}</strong>
+          <small>points</small>
+        </div>
+        <div>
+          <b>{s.points.level}</b>
+          <span>
+            {s.points.next
+              ? `${s.points.to_next.toLocaleString("en-IN")} to ${s.points.next}`
+              : "Top level reached"}
+          </span>
+          {since && <small>Member since {since}</small>}
+        </div>
+      </Link>
+    </section>
+  );
+}
+
+function Tiles({ s }) {
+  const tiles = [
+    {
+      to: "/user-orders",
+      Icon: ShoppingBag,
+      label: "Orders",
+      value: s.orders.total,
+      note: s.orders.active ? `${s.orders.active} on the way` : `${s.orders.this_month} this month`,
+    },
+    {
+      to: "/user-sell",
+      Icon: Store,
+      label: "Live listings",
+      value: s.selling.live,
+      note: s.selling.to_ship ? `${s.selling.to_ship} to ship` : `${s.selling.sold} sold`,
+      alert: s.selling.to_ship > 0,
+    },
+    {
+      to: "/user-wallet",
+      Icon: Wallet,
+      label: "Wallet",
+      value: inr(s.selling.available),
+      note: s.selling.pending ? `${inr(s.selling.pending)} clearing` : "Ready to withdraw",
+    },
+    {
+      to: "/user-donations",
+      Icon: Gift,
+      label: "Donations",
+      value: s.donations.total,
+      note: s.donations.open ? `${s.donations.open} in progress` : `${s.donations.kg} kg given`,
+    },
+    { to: "/user-wishlist", Icon: Heart, label: "Wishlist", value: s.wishlist, note: "Saved for later" },
+  ];
+  return (
+    <section className="udb-tiles">
+      {tiles.map(({ to, Icon, label, value, note, alert }) => (
+        <Link to={to} key={label} className={`udb-tile ${alert ? "alert" : ""}`}>
+          <span className="udb-tile-ic">
+            <Icon size={18} />
+          </span>
+          <span className="udb-tile-l">{label}</span>
+          <strong>{value}</strong>
+          <small>{note}</small>
+        </Link>
+      ))}
+    </section>
+  );
+}
+
+function OrderRow({ o, to }) {
+  return (
+    <Link to={to} className="udb-row">
+      <Thumb src={o.cover} />
+      <span className="udb-row-main">
+        <strong>
+          {o.title}
+          {o.more ? <small> +{o.more} more</small> : null}
+        </strong>
+        <small>
+          {o.id} · {relativeDay(o.placed_at)}
+        </small>
+      </span>
+      <Chip status={o.status} label={o.status_label} />
+      <b>{inr(o.total)}</b>
+    </Link>
+  );
+}
+
+function Bars({ months, series }) {
+  const keys = [
+    ["bought", "Bought"],
+    ["sold", "Sold"],
+    ["donated", "Donated"],
+  ];
+  const max = Math.max(1, ...months.map((_, i) => keys.reduce((n, [k]) => n + series[k][i], 0)));
+  return (
+    <div className="udb-bars">
+      <div className="udb-bars-plot">
+        {months.map((m, i) => (
+          <div className="udb-bar" key={m + i} title={keys.map(([k, l]) => `${l}: ${series[k][i]}`).join(" · ")}>
+            <div className="udb-bar-stack">
+              {keys.map(([k]) =>
+                series[k][i] ? <i key={k} className={k} style={{ height: `${(series[k][i] / max) * 100}%` }} /> : null,
+              )}
+            </div>
+            <small>{m}</small>
+          </div>
+        ))}
+      </div>
+      <div className="udb-legend">
+        {keys.map(([k, l]) => (
+          <span key={k}>
+            <i className={k} /> {l}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function UserDashboard() {
+  const { data: s, error } = useSection("summary");
+
+  if (error) {
+    return (
+      <div className="udb">
+        <p className="udb-note">{error}</p>
+      </div>
+    );
+  }
+  if (!s) {
+    return (
+      <div className="udb">
+        <div className="udb-hero udb-skel-hero" aria-busy="true" />
+        <div className="udb-tiles">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="udb-tile udb-skel-tile" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="udb">
+      <Hero s={s} />
+      <Tiles s={s} />
+
+      <div className="udb-grid">
+        <section className="udb-card">
+          <Head eyebrow="Buying" title="Your recent orders" to="/user-orders" />
+          <Lazy name="orders">
+            {(d) =>
+              d.recent.length ? (
+                <>
+                  {d.to_review > 0 && (
+                    <Link to="/user-reviews" className="udb-nudge">
+                      <Star size={15} /> {d.to_review} delivered {d.to_review === 1 ? "order is" : "orders are"} waiting
+                      for your review
+                      <ArrowRight size={14} />
+                    </Link>
+                  )}
+                  {d.recent.map((o) => (
+                    <OrderRow key={o.id} o={o} to={`/user-orders/${o.id}`} />
+                  ))}
+                </>
+              ) : (
+                <Empty text="No orders yet. Pre-loved finds are waiting." to="/user-marketplace" cta="Browse" />
+              )
+            }
+          </Lazy>
+        </section>
+
+        <section className="udb-card">
+          <Head eyebrow="Selling" title="Your shop" to="/user-sell" action="Manage" />
+          <Lazy name="selling">
+            {(d) =>
+              d.listings.length || d.sales.length ? (
+                <>
+                  {d.sales.length > 0 && <h4 className="udb-sub">Latest sales</h4>}
+                  {d.sales.map((o) => (
+                    <OrderRow key={o.id} o={o} to={`/user-sell/sales/${o.id}`} />
+                  ))}
+                  {d.listings.length > 0 && <h4 className="udb-sub">Live now</h4>}
+                  <div className="udb-mini-grid">
+                    {d.listings.map((l) => (
+                      <Link key={l.id} to={`/user-sell/${l.id}`} className="udb-mini">
+                        <Thumb src={l.cover} />
+                        <strong>{l.title}</strong>
+                        <small>{inr(l.price)}</small>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <Empty text="Nothing listed yet. Turn things you don't use into money." to="/user-sell/new" cta="List an item" />
+              )
+            }
+          </Lazy>
+        </section>
+
+        <section className="udb-card">
+          <Head eyebrow="Giving" title="Your donations" to="/user-donations" />
+          <Lazy name="donations">
+            {(d) =>
+              d.recent.length ? (
+                d.recent.map((x) => (
+                  <Link key={x.id} to={`/user-donations/${x.id}`} className="udb-row">
+                    <Thumb Icon={x.status === "Scheduled" ? Truck : Gift} />
+                    <span className="udb-row-main">
+                      <strong>{x.title}</strong>
+                      <small>
+                        {x.quantity} × {x.category}
+                        {x.pickup_date ? ` · pickup ${formatDate(x.pickup_date)}` : ` · ${relativeDay(x.created_at)}`}
+                      </small>
+                    </span>
+                    <Chip status={x.status} label={x.status_label} />
+                  </Link>
+                ))
+              ) : (
+                <Empty text="Donate things you no longer need. We pick them up." to="/user-donations/new" cta="Donate" />
+              )
+            }
+          </Lazy>
+        </section>
+
+        <section className="udb-card">
+          <Head eyebrow="Last 6 months" title="Your activity" to="/user-orbit-points" action="Points" />
+          <Lazy name="activity">
+            {(d) => (
+              <>
+                <Bars months={d.months} series={d.series} />
+                {d.points.length > 0 && (
+                  <ul className="udb-ledger">
+                    {d.points.map((e) => (
+                      <li key={e.id}>
+                        <span className={e.points > 0 ? "plus" : "minus"}>
+                          {e.points > 0 ? "+" : "−"}
+                          {Math.abs(e.points)}
+                        </span>
+                        <span>
+                          <strong>{e.title}</strong>
+                          <small>{e.detail}</small>
+                        </span>
+                        <small>{relativeDay(e.at)}</small>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </Lazy>
+        </section>
+      </div>
+
+      <section className="udb-card udb-picks">
+        <Lazy name="picks" minHeight={300}>
+          {(d) => (
+            <>
+              <Head
+                eyebrow={d.personal ? "Based on your wishlist" : "Fresh on ReOrbit"}
+                title="Picked for you"
+                to="/user-marketplace"
+                action="Explore"
+              />
+              {d.products.length ? (
+                <div className="udb-products">
+                  {d.products.map((p) => (
+                    <Link key={p.id} to={`/user-marketplace/product/${p.id}`} className="udb-product">
+                      <span className="udb-product-img">
+                        <img src={p.cover} alt="" loading="lazy" />
+                        {p.kind === "remaker" && (
+                          <em>
+                            <Sparkles size={11} /> ReMaker
+                          </em>
+                        )}
+                      </span>
+                      <strong>{p.title}</strong>
+                      <small>
+                        {p.category?.name}
+                        {p.city ? ` · ${p.city}` : ""}
+                      </small>
+                      <b>{inr(p.price)}</b>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Empty text="New products will show up here." />
+              )}
+            </>
+          )}
+        </Lazy>
+      </section>
+
+      {s.orders.total + s.donations.total + s.selling.sold > 0 && (
+        <p className="udb-foot">
+          <PackageCheck size={15} /> {s.items_reused} {s.items_reused === 1 ? "item" : "items"} kept in orbit
+          {s.donations.kg ? ` · ${s.donations.kg} kg donated` : ""}
+          {s.orders.spent ? ` · ${inr(s.orders.spent)} spent on pre-loved` : ""}
+        </p>
+      )}
+    </div>
   );
 }

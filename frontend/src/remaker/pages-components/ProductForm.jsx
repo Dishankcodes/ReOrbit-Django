@@ -426,14 +426,18 @@ export default function ProductForm({ mode = "add", product = null }) {
   const ORIGIN_ITEMS = useMemo(
     () =>
       myOrders
-        .filter((o) => o.status === "Delivered")
+        .filter((o) => (o.apiStatus || o.status) === "Delivered")
         .flatMap((o) =>
-          (o.items || []).map((i) => ({
+          (o.lines || o.items || []).map((i) => ({
             id: i.id,
             title: i.title,
-            bought: formatDate(o.created_at),
+            cover: i.cover || "",
+            order: o.id,
+            bought: formatDate(o.deliveredAt || o.placedAt || o.created_at),
           })),
-        ),
+        )
+        /* the same item bought twice is listed once */
+        .filter((it, i, all) => all.findIndex((x) => x.id === it.id) === i),
     [myOrders],
   );
   const originItem = ORIGIN_ITEMS.find(
@@ -908,29 +912,45 @@ export default function ProductForm({ mode = "add", product = null }) {
             {values.originType === "item" ? (
               <div className="rpf-origin">
                 <div className="rpf-field">
-                  <label htmlFor="rpf-origin-item">
+                  <span className="rpf-origin-label" id="rpf-origin-item">
                     Item you bought on ReOrbit
-                  </label>
-                  <div className="rpf-select">
-                    <select
-                      id="rpf-origin-item"
-                      value={values.originItemId}
-                      onChange={(event) =>
-                        setField("originItemId", event.target.value)
-                      }
-                    >
-                      <option value="">
-                        {ORIGIN_ITEMS.length
-                          ? "Choose an item"
-                          : "You have not bought anything on ReOrbit yet"}
-                      </option>
-                      {ORIGIN_ITEMS.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.title} (bought {item.bought})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  </span>
+                  {ORIGIN_ITEMS.length === 0 ? (
+                    <p className="rpf-origin-empty">
+                      Nothing delivered to you on ReOrbit yet. Items you buy show up here once
+                      they're delivered, so you can link them.
+                    </p>
+                  ) : (
+                    <ul className="rpf-origin-list" role="radiogroup" aria-labelledby="rpf-origin-item">
+                      {ORIGIN_ITEMS.map((item) => {
+                        const on = values.originItemId === item.id;
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              role="radio"
+                              aria-checked={on}
+                              className={on ? "on" : ""}
+                              onClick={() => setField("originItemId", on ? "" : item.id)}
+                            >
+                              <span className="rpf-origin-img">
+                                {item.cover ? <img src={item.cover} alt="" /> : <span>{item.title.slice(0, 1)}</span>}
+                              </span>
+                              <span className="rpf-origin-text">
+                                <strong>{item.title}</strong>
+                                <small>
+                                  {item.order} · delivered {item.bought}
+                                </small>
+                              </span>
+                              <span className="rpf-origin-tick" aria-hidden="true">
+                                {on ? "✓" : ""}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
 
                 {originItem && (

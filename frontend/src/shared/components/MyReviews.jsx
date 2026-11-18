@@ -330,6 +330,7 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
               value={p.body}
               onChange={(e) => setP({ ...p, body: e.target.value })}
             />
+            <SuggestChips kind="product" rating={p.rating} value={p.body} onChange={(body) => setP({ ...p, body })} />
             {errs.body && <p className="rv-field-error">{errs.body[0]}</p>}
 
             <div className="rv-photos">
@@ -438,6 +439,7 @@ function ReviewModal({ entry, start, options, onClose, onChanged }) {
               value={s.body}
               onChange={(e) => setS({ ...s, body: e.target.value })}
             />
+            <SuggestChips kind="seller" rating={s.rating} value={s.body} onChange={(body) => setS({ ...s, body })} />
             <p className="rv-note">
               Seller reviews are public on the seller's profile. You can edit
               your reviews for {options.edit_days} days.
@@ -633,6 +635,45 @@ const KINDS = [
   ["product", "Product reviews"],
   ["seller", "Seller reviews"],
 ];
+
+/* Tap-to-add sentences under the review box. They follow the star rating, so a 2-star review
+   isn't offered "Perfect, would buy again". Tapping adds the sentence; tapping again removes it. */
+const SUGGEST = {
+  product: {
+    high: ["Exactly as described.", "Great quality for the price.", "Looks even better in person.",
+      "Well packed and arrived safely.", "Would buy again."],
+    mid: ["Mostly as described.", "Good value, with small signs of use.", "Took a little longer to arrive.",
+      "Does the job well."],
+    low: ["Not as described in the listing.", "Arrived damaged.", "Quality was lower than expected.",
+      "Photos didn't match the item."],
+  },
+  seller: {
+    high: ["Quick to reply.", "Packed it with care.", "Shipped fast.", "Friendly and helpful seller."],
+    mid: ["Replied, but slowly.", "Packing could be better.", "Dispatch took a few days."],
+    low: ["Didn't reply to messages.", "Poorly packed.", "Shipped very late."],
+  },
+};
+function SuggestChips({ kind, rating, value, onChange }) {
+  if (!rating) return null;
+  const level = rating >= 4 ? "high" : rating === 3 ? "mid" : "low";
+  const text = value || "";
+  const toggle = (line) =>
+    onChange(
+      text.includes(line)
+        ? text.replace(line, "").replace(/\s{2,}/g, " ").trim()
+        : `${text.trim()} ${line}`.trim().slice(0, 1000),
+    );
+  return (
+    <div className="rv-suggest" aria-label="Suggested phrases">
+      <small>Tap to add:</small>
+      {SUGGEST[kind][level].map((line) => (
+        <button key={line} type="button" className={text.includes(line) ? "on" : ""} onClick={() => toggle(line)}>
+          {line}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function MyReviews({
   accent = "#2a4d3a",

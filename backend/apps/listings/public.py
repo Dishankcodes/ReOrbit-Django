@@ -220,3 +220,21 @@ class TopSellingView(APIView):
             data = {"products": _top_selling(request)}
             cache.set(key, data, TTL)
         return ok(data)
+
+
+class DiscoverRemakersView(APIView):
+    """The featured ReMakers on the before-login Discover ReMakers page (picked in Admin > Content)."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @method_decorator(cache_control(max_age=60, public=True))
+    def get(self, request):
+        from apps.content import discover
+
+        key = discover.cache_key(request.get_host())
+        data = cache.get(key)
+        if data is None:
+            data = discover.build(request)
+            cache.set(key, data, TTL)
+        return ok(data)

@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import SoldOutTag from "../../../shared/components/SoldOutTag";
 import BannerSlot from "../../../shared/components/BannerSlot";
+import Testimonials from "../../../shared/components/Testimonials";
 import { isSignedIn } from "../../../api/session";
 import { usePublic, inr, initialsImage } from "../../../api/publicData";
 import "../../css/ReMakers.css";
@@ -98,33 +99,6 @@ const featuredProducts = [
   },
 ];
 
-const makers = [
-  {
-    name: "Aarav Studio",
-    specialty: "Furniture & wood",
-    location: "Ahmedabad",
-    image:
-      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    quote: "I turn rescued timber into pieces people want to keep.",
-  },
-  {
-    name: "Second Form",
-    specialty: "Upcycled objects",
-    location: "Bengaluru",
-    image:
-      "https://images.pexels.com/photos/5824819/pexels-photo-5824819.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    quote: "Every overlooked object has another version waiting to happen.",
-  },
-  {
-    name: "Mitti Works",
-    specialty: "Home & decor",
-    location: "Mumbai",
-    image:
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    quote: "The best material is often the material already around us.",
-  },
-];
-
 const journey = [
   {
     number: "01",
@@ -148,23 +122,6 @@ const journey = [
   },
 ];
 
-const testimonials = [
-  {
-    text: "ReOrbit makes sourcing feel less like searching for leftovers and more like discovering possibilities.",
-    name: "Meera Shah",
-    role: "Independent ReMaker",
-  },
-  {
-    text: "The lifecycle story gives customers a reason to care about the finished piece, not just how it looks.",
-    name: "Kabir Patel",
-    role: "Furniture maker",
-  },
-  {
-    text: "Having verified material and a place to sell the final work closes the loop beautifully.",
-    name: "Riya Mehta",
-    role: "Upcycling artist",
-  },
-];
 
 export default function ReMakers() {
   const { data } = usePublic("/home/");
@@ -194,7 +151,6 @@ export default function ReMakers() {
     image: r.image || initialsImage(r.name),
     quote: r.bio || `${r.creations} creation${r.creations === 1 ? "" : "s"} on ReOrbit.`,
   }));
-  const shownMakers = liveMakers.length ? liveMakers : makers;
   const st = data?.stats;
   const n = (v) => Number(v || 0).toLocaleString("en-IN");
   const statRows = st
@@ -528,6 +484,7 @@ export default function ReMakers() {
             FEATURED REMAKERS
         ===================================================== */}
 
+        {liveMakers.length > 0 && (
         <section className="rm-section rm-featured" id="featured">
           <div className="rm-container">
             <div className="rm-section-head">
@@ -542,13 +499,13 @@ export default function ReMakers() {
                 </p>
               </div>
 
-              <a className="rm-btn rm-btn-secondary" href="/remakers">
+              <a className="rm-btn rm-btn-secondary" href="/discover-remakers">
                 View all ReMakers
               </a>
             </div>
 
             <div className="rm-maker-grid">
-              {shownMakers.map((maker) => (
+              {liveMakers.map((maker) => (
                 <article className="rm-maker-card" key={maker.name}>
                   <div className="rm-maker-image">
                     <img src={maker.image} alt={maker.name} />
@@ -584,6 +541,7 @@ export default function ReMakers() {
             </div>
           </div>
         </section>
+        )}
 
         {/* =====================================================
             JOURNEY
@@ -624,39 +582,8 @@ export default function ReMakers() {
           </div>
         </section>
 
-        {/* =====================================================
-            TESTIMONIALS
-        ===================================================== */}
-
-        <section className="rm-section" id="stories">
-          <div className="rm-container">
-            <div className="rm-centered-heading">
-              <span className="rm-eyebrow">From the community</span>
-
-              <h2>Good making is better together.</h2>
-            </div>
-
-            <div className="rm-testimonial-grid">
-              {testimonials.map((item) => (
-                <article className="rm-testimonial-card" key={item.name}>
-                  <div className="rm-quote-mark">“</div>
-
-                  <p>{item.text}</p>
-
-                  <div className="rm-testimonial-person">
-                    <div className="rm-avatar">{item.name.charAt(0)}</div>
-
-                    <div>
-                      <strong>{item.name}</strong>
-
-                      <span>{item.role}</span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* TESTIMONIALS: ratings the team chose (Admin › Testimonials) */}
+        <Testimonials side="remaker" eyebrow="From the community" title="Good making is better together." />
       </main>
 
       <Footer />

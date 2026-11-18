@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import ScrollToTop from "./shared/components/ScrollToTop";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useNavTracker } from "./shared/backNav";
 import "./styles/theme.css";
@@ -489,6 +490,10 @@ const AdminContent = page(
   "admin",
   () => import("./admin/pages/Content/AdminContent"),
 );
+const AdminTestimonials = page(
+  "admin",
+  () => import("./admin/pages/Content/AdminTestimonials"),
+);
 const AdminReviews = page(
   "admin",
   () => import("./admin/pages/Reviews/AdminReviews"),
@@ -561,6 +566,7 @@ export default function App() {
   const { pathname } = useLocation();
   return (
     <RouteErrorBoundary theme="public" full resetKey={pathname}>
+      <ScrollToTop />
       <Suspense fallback={<DelayedLoader minHeight={360} />}>
         <RouteEffects />
         <OfflineBanner />
@@ -907,6 +913,7 @@ export default function App() {
                 element={<AdminNotifications />}
               />
               <Route path="/admin-content" element={<AdminContent />} />
+              <Route path="/admin-testimonials" element={<AdminTestimonials />} />
               <Route path="/admin-reviews" element={<AdminReviews />} />
               <Route path="/admin-help" element={<AdminHelp />} />
               <Route path="/admin-states" element={<AdminStates />} />

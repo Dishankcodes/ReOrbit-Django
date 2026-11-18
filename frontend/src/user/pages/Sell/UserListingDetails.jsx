@@ -40,6 +40,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
 import EarningsPreview from "./components/EarningsPreview";
+import ProductReviewsCard from "../../../shared/components/ProductReviewsCard";
 import { ListingBadge } from "./components/SellBadges";
 
 import "../../css/shared/ui-base.css";
@@ -391,6 +392,8 @@ export default function UserListingDetails() {
             </div>
             <DonationTimeline events={listing.events} />
           </section>
+
+          <ProductReviewsCard productId={listing.id} />
         </div>
 
         <aside className="usl-side">
