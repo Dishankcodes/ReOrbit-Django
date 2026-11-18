@@ -1,4 +1,5 @@
 import React from "react";
+import { withSlug } from "../../../shared/slug";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import SoldOutTag from "../../../shared/components/SoldOutTag";
@@ -186,7 +187,7 @@ export default function ReMakers() {
                     <img src={p.src} alt={p.alt} />
                     <SoldOutTag show={p.soldOut} size="sm" />
                     {p.id && !p.soldOut && (
-                      <a className="rm-photo-buy" href={`/buy/${p.id}?as=remaker`}>
+                      <a className="rm-photo-buy" href={`/buy/${withSlug(p.id, p.alt)}?as=remaker`}>
                         Buy now
                       </a>
                     )}
@@ -339,7 +340,7 @@ export default function ReMakers() {
                     {product.id && (
                       <a
                         className="rm-product-link"
-                        href={`/buy/${encodeURIComponent(product.id)}?as=remaker`}
+                        href={`/buy/${withSlug(product.id, product.title)}?as=remaker`}
                         aria-label={`View ${product.title}`}
                         tabIndex={product.id ? 0 : -1}
                       />
@@ -392,7 +393,7 @@ export default function ReMakers() {
                     {product.id && (
                       <a
                         className="rm-product-link"
-                        href={`/buy/${encodeURIComponent(product.id)}?as=remaker`}
+                        href={`/buy/${withSlug(product.id, product.title)}?as=remaker`}
                         aria-label={`View ${product.title}`}
                         tabIndex={-1}
                       />

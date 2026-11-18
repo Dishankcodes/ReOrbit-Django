@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { productPath } from "../../../shared/slug";
 import { Link, useNavigate } from "../../../shared/portalRouter";
 import {
   AlertTriangle,
@@ -131,7 +132,7 @@ export default function UserCart() {
                 className={`dn-card ushp-line ${off ? "is-off" : ""}`}
               >
                 <Link
-                  to={`/user-marketplace/product/${item.id}`}
+                  to={productPath(item.id, item.title)}
                   className="ushp-line-img"
                 >
                   <SafeImage src={item.image} alt={item.title} />
@@ -151,7 +152,7 @@ export default function UserCart() {
                     )}
                   </span>
                   <h3>
-                    <Link to={`/user-marketplace/product/${item.id}`}>
+                    <Link to={productPath(item.id, item.title)}>
                       {item.title}
                     </Link>
                   </h3>

@@ -1,4 +1,5 @@
 import { isSignedIn, loginUrl } from "../../../api/session";
+import { withSlug } from "../../../shared/slug";
 import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -117,7 +118,7 @@ function ProductCard({ product, className }) {
         <span className="price-chip">{product.price}</span>
         <span className="category-chip">{product.category}</span>
         {product.id && (
-          <Link className="hero-buy" to={`/buy/${product.id}`}>
+          <Link className="hero-buy" to={`/buy/${withSlug(product.id, product.title)}`}>
             Buy now
           </Link>
         )}

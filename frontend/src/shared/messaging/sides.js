@@ -1,3 +1,4 @@
+import { remakerPath, sellerPath } from "../slug";
 import {
   ADMIN_KINDS,
   REMAKER_KINDS,
@@ -90,7 +91,7 @@ export function profileLink(conversation, side) {
   if (side === "remaker") {
     return peer.type === "user" ? `/remaker-customers/${peer.id}` : null;
   }
-  if (peer.type === "remaker") return `/user-marketplace/remaker/${peer.id}`;
-  if (peer.type === "user") return `/user-marketplace/seller/${peer.id}`;
+  if (peer.type === "remaker") return remakerPath(peer.id, peer.name);
+  if (peer.type === "user") return sellerPath(peer.id, peer.name);
   return null;
 }

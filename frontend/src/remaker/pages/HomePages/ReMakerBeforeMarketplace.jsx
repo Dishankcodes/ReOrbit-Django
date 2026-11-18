@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { withSlug } from "../../../shared/slug";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { usePublic, inr } from "../../../api/publicData";
@@ -1239,7 +1240,7 @@ export default function ReMakerBeforeMarketplace() {
                           </span>
 
                           <a
-                            href={`/buy/${encodeURIComponent(item.id)}?as=remaker`}
+                            href={`/buy/${withSlug(item.id, item.title)}?as=remaker`}
                             className="rbm-view"
                           >
                             View

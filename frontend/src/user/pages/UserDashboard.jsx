@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { productPath } from "../../shared/slug";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -442,7 +443,7 @@ export default function UserDashboard() {
               {d.products.length ? (
                 <div className="udb-products">
                   {d.products.map((p) => (
-                    <Link key={p.id} to={`/user-marketplace/product/${p.id}`} className="udb-product">
+                    <Link key={p.id} to={productPath(p.id, p.title)} className="udb-product">
                       <span className="udb-product-img">
                         <img src={p.cover} alt="" loading="lazy" />
                         {p.kind === "remaker" && (

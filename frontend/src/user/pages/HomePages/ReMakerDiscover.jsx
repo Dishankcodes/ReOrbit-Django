@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { withSlug } from "../../../shared/slug";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { Link } from "react-router-dom";
@@ -6,8 +7,8 @@ import { initialsImage, usePublic } from "../../../api/publicData";
 import { isSignedIn } from "../../../api/session";
 
 /* A ReMaker's studio page needs a login: a visitor signs in and lands on it (RequireAuth keeps ?next=). */
-const studioLink = (id) =>
-  `/${isSignedIn("remaker") && !isSignedIn("user") ? "remaker" : "user"}-marketplace/remaker/${id}`;
+const studioLink = (id, name) =>
+  `/${isSignedIn("remaker") && !isSignedIn("user") ? "remaker" : "user"}-marketplace/remaker/${withSlug(id, name)}`;
 const stars = (n) => (n ? `${Number(n).toFixed(1)} ★` : "New");
 const FALLBACK_HERO = [
   "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
@@ -1212,7 +1213,7 @@ export default function ReMakerDiscover() {
 
                 <p>{spotlight.bio || `${spotlight.maker} turns rescued material into new work on ReOrbit since ${spotlight.joined}.`}</p>
 
-                <Link to={studioLink(spotlight.id)} className="remakers-primary-btn">
+                <Link to={studioLink(spotlight.id, spotlight.maker || spotlight.name)} className="remakers-primary-btn">
                   Visit studio
                   <span className="material-symbols-outlined">arrow_forward</span>
                 </Link>
@@ -1259,7 +1260,7 @@ export default function ReMakerDiscover() {
                 <p className="remaker-empty">{data ? "ReMakers will appear here soon." : "Loading ReMakers…"}</p>
               )}
               {filteredRemakers.map((maker) => (
-                <Link to={studioLink(maker.id)} className="remaker-card" key={maker.id}>
+                <Link to={studioLink(maker.id, maker.name)} className="remaker-card" key={maker.id}>
                   <div className="remaker-card-image">
                     <img src={maker.image} alt={maker.name} />
 

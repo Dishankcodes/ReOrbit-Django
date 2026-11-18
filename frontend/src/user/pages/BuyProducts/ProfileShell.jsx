@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { productPath } from "../../../shared/slug";
 import { Link, useNavigate } from "../../../shared/portalRouter";
 import {
   BadgeCheck,
@@ -291,10 +292,10 @@ export default function ProfileShell({
                   className={`mk-media ${soldOutClass(Boolean(p.soldOut) || p.quantity < 1)}`}
                   role="button"
                   tabIndex={0}
-                  onClick={() => navigate(`/user-marketplace/product/${p.id}`)}
+                  onClick={() => navigate(productPath(p.id, p.title))}
                   onKeyDown={(e) => {
                     if (e.key === "Enter")
-                      navigate(`/user-marketplace/product/${p.id}`);
+                      navigate(productPath(p.id, p.title));
                   }}
                 >
                   <SafeImage src={p.image} alt={p.title} />
@@ -305,7 +306,7 @@ export default function ProfileShell({
                   <span className="mk-cat">{p.category}</span>
                   <h3
                     onClick={() =>
-                      navigate(`/user-marketplace/product/${p.id}`)
+                      navigate(productPath(p.id, p.title))
                     }
                   >
                     {p.title}
@@ -321,7 +322,7 @@ export default function ProfileShell({
                       type="button"
                       className="mk-add"
                       onClick={() =>
-                        navigate(`/user-marketplace/product/${p.id}`)
+                        navigate(productPath(p.id, p.title))
                       }
                     >
                       View
@@ -385,7 +386,7 @@ export default function ProfileShell({
         <PortfolioWorkModal
           work={openWork}
           onClose={() => setOpenWork(null)}
-          productHref={(product) => `/user-marketplace/product/${product.id}`}
+          productHref={(product) => productPath(product.id, product.title)}
         />
       )}
     </div>

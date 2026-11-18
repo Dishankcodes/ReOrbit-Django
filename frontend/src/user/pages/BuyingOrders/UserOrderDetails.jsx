@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { productPath } from "../../../shared/slug";
 import MessageButton from "../../components/ui/MessageButton";
 import { sellerChat } from "../../data/messageTargets";
 import { Link, useParams } from "../../../shared/portalRouter";
@@ -131,7 +132,7 @@ export default function UserOrderDetails() {
           )}
           {delivered && (
             <Link
-              to={`/user-marketplace/product/${order.itemId}`}
+              to={productPath(order.itemId, order.lines?.[0]?.title)}
               className="dn-btn dn-btn--ghost"
             >
               <RotateCcw size={16} /> Buy again
@@ -239,7 +240,7 @@ export default function UserOrderDetails() {
             <div className="dn-card-head">
               <h2>{order.lines.length > 1 ? "Items" : "Item"}</h2>
               <Link
-                to={`/user-marketplace/product/${order.itemId}`}
+                to={productPath(order.itemId, order.lines?.[0]?.title)}
                 className="dn-link"
               >
                 View product →

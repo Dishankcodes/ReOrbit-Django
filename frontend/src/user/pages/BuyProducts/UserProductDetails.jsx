@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePageTitle } from "../../../shared/pageMeta";
+import { idFrom, personPath, productPath } from "../../../shared/slug";
+import useReadableAddress from "../../../shared/useReadableAddress";
 import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
 import { trackProductView } from "../../../shared/trafficSource";
 import {
@@ -68,11 +70,13 @@ const Stars = ({ rating = 0 }) => (
 export default function UserProductDetails() {
   const { goBack, canGoBack, prevLabel } = useGoBack("/user-marketplace");
   const params = useParams();
-  const productId = params.productId ?? params.id;
+  const rawProduct = params.productId ?? params.id;
+  const productId = idFrom(rawProduct); // "teak-table-RPR-1001" -> "RPR-1001"
   const navigate = useNavigate();
   const live = useLiveMarketplace(); // makes sure live listings are loaded when this page is opened directly
   const item = getItemById(productId);
   usePageTitle(item?.title);
+  useReadableAddress(rawProduct, item ? productPath(item.id, item.title) : "");
   const wish = useWishlist();
   const stock = useShopItem(productId, live.version);
   const cartCount = useCartCount();
@@ -171,9 +175,7 @@ export default function UserProductDetails() {
   const liked = wish.has(productId);
   const buyable = Boolean(stock?.purchasable);
   const maxQty = Math.max(1, stock?.available || 1);
-  const sellerPath = isMaker
-    ? `/user-marketplace/remaker/${item.sellerId}`
-    : `/user-marketplace/seller/${item.sellerId}`;
+  const sellerPath = personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller);
   /* Where the seller card goes: a ReMaker to their studio, a community seller to their
      profile, and ReOrbit itself to everything ReOrbit sells. */
   const sellerHref = isStore ? "/user-marketplace?source=admin" : sellerPath;
@@ -558,7 +560,7 @@ export default function UserProductDetails() {
                 type="button"
                 key={p.id}
                 onClick={() => {
-                  navigate(`/user-marketplace/product/${p.id}`);
+                  navigate(productPath(p.id, p.title));
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               >

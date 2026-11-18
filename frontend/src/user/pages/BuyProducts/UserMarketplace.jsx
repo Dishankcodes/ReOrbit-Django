@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { personPath, productPath } from "../../../shared/slug";
 import { getAccount } from "../../../api/session";
 import { useNavigate, useSearchParams } from "../../../shared/portalRouter";
 import {
@@ -64,13 +65,11 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   const inCart = useInCart(item.id);
   const isMaker = item.sellerType === "remaker";
 
-  const openProduct = () => navigate(`/user-marketplace/product/${item.id}`);
+  const openProduct = () => navigate(productPath(item.id, item.title));
   const openSeller = (e) => {
     e.stopPropagation();
     navigate(
-      isMaker
-        ? `/user-marketplace/remaker/${item.sellerId}`
-        : `/user-marketplace/seller/${item.sellerId}`,
+      personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller),
     );
   };
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { productPath } from "../../../../shared/slug";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, Heart, Pencil, ChevronRight, ExternalLink } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
@@ -60,7 +61,7 @@ export default function ListingCard({ listing }) {
           )}
           {listing.status === "Live" && listing.marketId && (
             <Link
-              to={`/user-marketplace/product/${listing.marketId}`}
+              to={productPath(listing.marketId, listing.title)}
               className="dn-btn dn-btn--ghost dn-btn--sm"
             >
               <ExternalLink size={13} /> View live

@@ -6,6 +6,7 @@
    ========================================================= */
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { personPath } from "../../shared/slug";
 import { buyerOrdersApi } from "../../api/orders";
 
 export const STAGES = [
@@ -277,10 +278,7 @@ export const isActive = (o) =>
   !o.cancelled && o.stage < 5 && o.apiStatus !== "Returned_To_Origin";
 
 /* ReMaker sellers have their own profile route */
-export const sellerPath = (item) =>
-  item.sellerType === "remaker"
-    ? `/user-marketplace/remaker/${item.sellerId}`
-    : `/user-marketplace/seller/${item.sellerId}`;
+export const sellerPath = (item) => personPath(item.sellerType, item.sellerId, item.seller);
 
 function decorate(o) {
   const order = adapt(o);
@@ -288,9 +286,7 @@ function decorate(o) {
   const seller = { ...(o.seller || {}), name: o.seller?.name || "Seller" };
   const path = !o.seller?.id
     ? null
-    : o.seller.type === "remaker"
-      ? `/user-marketplace/remaker/${o.seller.id}`
-      : `/user-marketplace/seller/${o.seller.id}`;
+    : personPath(o.seller.type, o.seller.id, o.seller.name);
   return {
     ...order,
     seller,

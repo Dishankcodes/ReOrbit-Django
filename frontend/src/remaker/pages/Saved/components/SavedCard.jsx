@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { withSlug } from "../../../../shared/slug";
 import { Link } from "react-router-dom";
 
 import { formatPrice } from "../../../../data/marketplaceData";
@@ -38,7 +39,7 @@ export default function SavedCard({ listing, onRemove }) {
         <span className="sav-cat">{listing.category}</span>
         <h3>
           <Link
-            to={`/remaker-marketplace/product/${listing.id}`}
+            to={`/remaker-marketplace/product/${withSlug(listing.id, listing.title)}`}
             className="sav-link"
           >
             {listing.title}
@@ -60,7 +61,7 @@ export default function SavedCard({ listing, onRemove }) {
 
       <div className="sav-actions">
         <Link
-          to={`/remaker-marketplace/product/${listing.id}`}
+          to={`/remaker-marketplace/product/${withSlug(listing.id, listing.title)}`}
           className="rk-btn primary small"
         >
           {soldOut ? "View details" : "Buy now"}

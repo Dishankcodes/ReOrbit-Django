@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { productPath } from "../../../shared/slug";
 import { Link, useNavigate } from "../../../shared/portalRouter";
 import {
   Heart,
@@ -43,7 +44,7 @@ function WishCard({ item, stock, onRemove, onAdded }) {
   const navigate = useNavigate();
   const inCart = useInCart(item.id);
   const remaker = item.sellerType === "remaker";
-  const open = () => navigate(`/user-marketplace/product/${item.id}`);
+  const open = () => navigate(productPath(item.id, item.title));
 
   return (
     <article className={`wl-card ${stock.purchasable ? "" : "is-off"}`}>
@@ -378,11 +379,11 @@ function Suggestions({ items, stockOf, wish }) {
           <article
             key={i.id}
             className="wl-mini"
-            onClick={() => navigate(`/user-marketplace/product/${i.id}`)}
+            onClick={() => navigate(productPath(i.id, i.title))}
             role="link"
             tabIndex={0}
             onKeyDown={(e) =>
-              e.key === "Enter" && navigate(`/user-marketplace/product/${i.id}`)
+              e.key === "Enter" && navigate(productPath(i.id, i.title))
             }
           >
             <SafeImage src={i.image} alt={i.title} />

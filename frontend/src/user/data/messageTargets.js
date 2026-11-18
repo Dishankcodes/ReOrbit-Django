@@ -1,4 +1,5 @@
 /* Conversation targets shared by product, profile, order and donation pages. */
+import { productPath } from "../../shared/slug";
 
 export const sellerChat = (item) => ({
   key: `${item.sellerType === "remaker" ? "remaker" : "seller"}:${item.sellerId}`,
@@ -11,7 +12,7 @@ export const sellerChat = (item) => ({
   image: item.sellerImage,
   context: {
     label: `${item.title} · ₹${Number(item.price).toLocaleString("en-IN")}`,
-    to: `/user-marketplace/product/${item.id}`,
+    to: productPath(item.id, item.title),
     image: item.image,
   },
 });

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { usePageTitle } from "../../../shared/pageMeta";
+import { idFrom, remakerPath } from "../../../shared/slug";
+import useReadableAddress from "../../../shared/useReadableAddress";
 import { Link, useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
@@ -14,13 +16,15 @@ import ProfileShell from "./ProfileShell";
 import { trackProfileView } from "../../../shared/trafficSource";
 
 export default function UserArtistProfile() {
-  const { artistId } = useParams();
+  const { artistId: rawArtist } = useParams();
+  const artistId = idFrom(rawArtist); // "messy-mirror-RMK-1001" -> "RMK-1001"
   const [params] = useSearchParams();
   const [artist, setArtist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [products, setProducts] = useState([]);
   usePageTitle(artist?.name);
+  useReadableAddress(rawArtist, artist ? remakerPath(artistId, artist.name) : "");
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
   const { reviews } = useSellerReviews("remaker", artistId);

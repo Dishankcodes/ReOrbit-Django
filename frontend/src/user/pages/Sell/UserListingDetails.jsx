@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { productPath } from "../../../shared/slug";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -142,7 +143,7 @@ export default function UserListingDetails() {
           )}
           {status === "Live" && listing.marketId && (
             <Link
-              to={`/user-marketplace/product/${listing.marketId}`}
+              to={productPath(listing.marketId, listing.title)}
               className="dn-btn dn-btn--ghost"
             >
               <ExternalLink size={15} /> View live

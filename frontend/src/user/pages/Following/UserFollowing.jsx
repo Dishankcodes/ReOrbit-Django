@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { productPath, remakerPath } from "../../../shared/slug";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Compass,
@@ -235,12 +236,12 @@ export default function UserFollowing() {
                 <article
                   key={i.id}
                   className="fl-post"
-                  onClick={() => navigate(`/user-marketplace/product/${i.id}`)}
+                  onClick={() => navigate(productPath(i.id, i.title))}
                   role="link"
                   tabIndex={0}
                   onKeyDown={(e) =>
                     e.key === "Enter" &&
-                    navigate(`/user-marketplace/product/${i.id}`)
+                    navigate(productPath(i.id, i.title))
                   }
                 >
                   <SafeImage
@@ -250,7 +251,7 @@ export default function UserFollowing() {
                   />
                   <div className="fl-post-body">
                     <Link
-                      to={`/user-marketplace/remaker/${i.sellerId}`}
+                      to={remakerPath(i.sellerId, i.seller)}
                       className="fl-post-maker"
                       onClick={(e) => e.stopPropagation()}
                     >

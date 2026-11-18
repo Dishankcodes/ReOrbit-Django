@@ -1,4 +1,5 @@
 import React from "react";
+import { remakerPath as slugRemakerPath } from "../../../../shared/slug";
 import { Link, useNavigate } from "react-router-dom";
 import {
   BadgeCheck,
@@ -14,11 +15,11 @@ import { followerCount } from "../../../data/followStore";
 /* the card is also used on the Following page, which must not depend on the Remakers page for its styles */
 import "../../../css/remakers/UserRemakers.css";
 
-export const remakerPath = (id) => `/user-marketplace/remaker/${id}`;
+export const remakerPath = (id, name) => slugRemakerPath(id, name);
 
 export default function RemakerCard({ maker, following, onToggle }) {
   const navigate = useNavigate();
-  const open = () => navigate(remakerPath(maker.id));
+  const open = () => navigate(remakerPath(maker.id, maker.name));
   const works = (maker.portfolio || []).slice(0, 3);
 
   return (
@@ -82,7 +83,7 @@ export default function RemakerCard({ maker, following, onToggle }) {
             {works.map((work) => (
               <Link
                 key={work.id}
-                to={`${remakerPath(maker.id)}?tab=portfolio`}
+                to={`${remakerPath(maker.id, maker.name)}?tab=portfolio`}
                 title={work.title}
                 onClick={(event) => event.stopPropagation()}
               >
