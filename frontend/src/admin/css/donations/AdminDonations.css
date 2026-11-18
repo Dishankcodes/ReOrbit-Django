@@ -787,3 +787,24 @@
   font-size: 15px;
   font-weight: 600;
 }
+
+/* donor's photos under the main one (click any to see it full size) */
+.dn-hero-photos {
+  display: grid;
+  gap: 8px;
+  flex: none;
+  align-content: start;
+}
+.dn-hero-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  gap: 4px;
+  width: 92px;
+}
+.dn-hero-thumbs img {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(173, 206, 193, 0.5);
+  border-radius: 8px;
+  object-fit: cover;
+}

@@ -44,6 +44,7 @@ import {
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
+import { apiRequest } from "../../../api/api";
 import MessageButton from "../../components/ui/MessageButton";
 import { sellerChat } from "../../data/messageTargets";
 
@@ -78,6 +79,27 @@ export default function UserProductDetails() {
   const [tab, setTab] = useState("details");
   const [qty, setQty] = useState(1);
   const [toast, setToast] = useState(false);
+  /* every photo of this product (the card list only carries the cover); click one to see it full size */
+  const [photos, setPhotos] = useState([]);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setPhotos([]);
+    setPhotoIndex(0);
+    apiRequest(`/marketplace/${encodeURIComponent(productId)}/`, {
+      auth: false,
+    })
+      .then((r) => {
+        const list = (r.data?.product?.images || [])
+          .map((i) => i.url)
+          .filter(Boolean);
+        if (active) setPhotos(list);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [productId]);
 
   useEffect(() => {
     setQty(1);
@@ -199,32 +221,54 @@ export default function UserProductDetails() {
       </nav>
 
       <section className="pd-hero">
-        <div className="pd-gallery">
-          <SafeImage src={item.image} alt={item.title} />
-          <span className={`pd-type ${isMaker ? "maker" : ""}`}>
-            {isMaker ? (
-              <>
-                <Sparkles size={12} /> ReMaker piece
-              </>
-            ) : isStore ? (
-              <>
-                <BadgeCheck size={12} /> ReOrbit store
-              </>
-            ) : (
-              <>
-                <Boxes size={12} /> Community item
-              </>
-            )}
-          </span>
-          <button
-            type="button"
-            className={`pd-heart ${liked ? "on" : ""}`}
-            aria-pressed={liked}
-            aria-label={liked ? "Remove from wishlist" : "Save to wishlist"}
-            onClick={() => wish.toggle(productId)}
-          >
-            <Heart size={18} fill={liked ? "currentColor" : "none"} />
-          </button>
+        <div className="pd-media" data-gallery>
+          <div className="pd-gallery">
+            <SafeImage
+              src={photos[photoIndex] || item.image}
+              alt={item.title}
+              title="Click to see it full size"
+            />
+            <span className={`pd-type ${isMaker ? "maker" : ""}`}>
+              {isMaker ? (
+                <>
+                  <Sparkles size={12} /> ReMaker piece
+                </>
+              ) : isStore ? (
+                <>
+                  <BadgeCheck size={12} /> ReOrbit store
+                </>
+              ) : (
+                <>
+                  <Boxes size={12} /> Community item
+                </>
+              )}
+            </span>
+            <button
+              type="button"
+              className={`pd-heart ${liked ? "on" : ""}`}
+              aria-pressed={liked}
+              aria-label={liked ? "Remove from wishlist" : "Save to wishlist"}
+              onClick={() => wish.toggle(productId)}
+            >
+              <Heart size={18} fill={liked ? "currentColor" : "none"} />
+            </button>
+          </div>
+          {photos.length > 1 && (
+            <div className="pd-thumbs" role="list" aria-label="Photos">
+              {photos.map((src, i) => (
+                <button
+                  type="button"
+                  role="listitem"
+                  key={src}
+                  className={i === photoIndex ? "on" : ""}
+                  aria-label={`Show photo ${i + 1}`}
+                  onClick={() => setPhotoIndex(i)}
+                >
+                  <img src={src} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="pd-info">
@@ -268,14 +312,16 @@ export default function UserProductDetails() {
                 <li className="pd-noreturn">
                   <Ban size={16} />
                   <span>
-                    <b>Returns not accepted</b> for this product. Check the photos and details before you buy.
+                    <b>Returns not accepted</b> for this product. Check the
+                    photos and details before you buy.
                   </span>
                 </li>
               ) : (
                 <li>
                   <RotateCcw size={16} />
                   <span>
-                    <b>7-day returns</b> if it arrives damaged or not as described
+                    <b>7-day returns</b> if it arrives damaged or not as
+                    described
                   </span>
                 </li>
               ))}

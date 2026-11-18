@@ -1,0 +1,151 @@
+/* Photos that open full size get a zoom cursor (links keep their normal pointer) */
+img[src*="/listings/"],
+img[src*="/donations/"],
+img[src*="/returns/"],
+img[src*="/reviews/"],
+img[src*="/support/"],
+img[src^="blob:"],
+img[data-zoom] {
+  cursor: zoom-in;
+}
+a[href] img,
+button img,
+label img,
+[role="button"] img,
+[role="link"] img,
+[data-no-zoom] img,
+img[data-no-zoom] {
+  cursor: inherit;
+}
+
+.iv {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 64px 72px 96px;
+  background: rgba(12, 14, 13, 0.92);
+  animation: iv-in 0.16s ease-out;
+}
+@keyframes iv-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.iv-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  background: #fff;
+  cursor: default;
+}
+
+.iv-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  color: #f1f3f2;
+  font: 600 14px/1.3 "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+}
+.iv-bar span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.iv-bar div {
+  display: flex;
+  gap: 8px;
+}
+.iv-bar a,
+.iv-bar button,
+.iv-nav {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  cursor: pointer;
+}
+.iv-bar a:hover,
+.iv-bar button:hover,
+.iv-nav:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.iv-bar button:focus-visible,
+.iv-nav:focus-visible {
+  outline: 2px solid #f2d48a;
+  outline-offset: 2px;
+}
+
+.iv-nav {
+  position: absolute;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translateY(-50%);
+}
+.iv-nav.prev {
+  left: 16px;
+}
+.iv-nav.next {
+  right: 16px;
+}
+
+.iv-strip {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  display: flex;
+  gap: 8px;
+  max-width: calc(100% - 32px);
+  overflow-x: auto;
+  transform: translateX(-50%);
+}
+.iv-strip button {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #222;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.iv-strip button.on {
+  border-color: #fff;
+  opacity: 1;
+}
+.iv-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .iv {
+    padding: 60px 10px 86px;
+  }
+  .iv-nav {
+    top: auto;
+    bottom: 84px;
+    transform: none;
+    width: 42px;
+    height: 42px;
+  }
+}

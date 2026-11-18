@@ -143,12 +143,23 @@ export default function AdminDonationDetails() {
 
       {/* ---------- hero ---------- */}
       <section className="aup-hero">
-        <div className="aup-hero-main">
-          <img
-            src={d.image}
-            alt={d.title}
-            className="aw-hero-img dn-hero-img"
-          />
+        <div className="aup-hero-main" data-gallery>
+          <div className="dn-hero-photos">
+            <img
+              src={d.image}
+              alt={d.title}
+              title="Click to see it full size"
+              className="aw-hero-img dn-hero-img"
+            />
+            {/* every photo the donor sent: click any to see it full size */}
+            {(d.images || []).length > 1 && (
+              <div className="dn-hero-thumbs">
+                {d.images.map((src, i) => (
+                  <img key={src} src={src} alt={`${d.title}, photo ${i + 1}`} title="Click to see it full size" />
+                ))}
+              </div>
+            )}
+          </div>
           <div className="aup-hero-info">
             <div className="aup-hero-name">
               <h2>

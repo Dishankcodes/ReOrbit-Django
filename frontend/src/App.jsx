@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import ScrollToTop from "./shared/components/ScrollToTop";
+import ImageViewer from "./shared/components/ImageViewer";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useNavTracker } from "./shared/backNav";
 import "./styles/theme.css";
@@ -564,6 +565,8 @@ export default function App() {
   return (
     <RouteErrorBoundary theme="public" full resetKey={pathname}>
       <ScrollToTop />
+      {/* click any product / item photo to see it full size, on every side */}
+      <ImageViewer />
       <Suspense fallback={<DelayedLoader minHeight={360} />}>
         <RouteEffects />
         <OfflineBanner />
