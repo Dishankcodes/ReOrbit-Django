@@ -841,3 +841,16 @@
 .aw-zone-key {
   font-size: 15px;
 }
+
+/* floor plan before the server's layout has arrived (or if it couldn't be loaded) */
+.aw-floor-wait {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border: 1px dashed #c9d8cf;
+  border-radius: 14px;
+  color: #5d7268;
+  font-size: 13.5px;
+}

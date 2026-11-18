@@ -23,7 +23,6 @@ import {
   saveSection,
   loadSettings,
   setSecurity,
-  revokeSession,
   DEFAULTS,
 } from "../../data/settingsStore";
 import { useStock } from "../../data/warehouseStore";

@@ -27,8 +27,7 @@ import {
   useStock,
   runWarehouseActions,
   ALERT_LEVELS,
-  useWarehouseLayout,
-} from "../../data/warehouseStore";
+  useWarehouseLayout, useStockStatus } from "../../data/warehouseStore";
 import {
   WAREHOUSE_ACTION_LIST,
   getWarehouseActions,
@@ -213,6 +212,7 @@ export default function AdminWarehouse() {
   }, [alerts]);
 
   const layout = useWarehouseLayout();
+  const stockStatus = useStockStatus();
   const ZONES = useMemo(() => zonesOf(layout), [layout]);
   const zoneUse = useMemo(
     () =>
@@ -538,8 +538,11 @@ export default function AdminWarehouse() {
           <div>
             <h3>Floor plan</h3>
             <p>
-              {layout.address ||
-                "Add ReOrbit's warehouse address in Admin › Addresses."}
+              {layout
+                ? layout.address || "Add ReOrbit's warehouse address in Admin › Addresses."
+                : stockStatus.error
+                  ? "The floor plan couldn't be loaded."
+                  : "Loading the floor plan…"}
             </p>
           </div>
           {zone !== "all" && (
@@ -552,7 +555,21 @@ export default function AdminWarehouse() {
             </button>
           )}
         </header>
-        {layout.floors.map((floor) => (
+        {!layout && (
+          <div className="aw-floor-wait" role="status">
+            {stockStatus.error ? (
+              <>
+                <span>{stockStatus.error}</span>
+                <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={stockStatus.retry}>
+                  Try again
+                </button>
+              </>
+            ) : (
+              <span>Loading zones and capacity from the server…</span>
+            )}
+          </div>
+        )}
+        {(layout?.floors || []).map((floor) => (
           <div className="aw-floor-level" key={floor.key}>
             <h4 className="aw-floor-name">
               {floor.name}
@@ -727,7 +744,7 @@ export default function AdminWarehouse() {
                 <span>Zone</span>
                 <select value={zone} onChange={(e) => setZone(e.target.value)}>
                   <option value="all">All zones</option>
-                  {layout.floors.map((f) => (
+                  {(layout?.floors || []).map((f) => (
                     <optgroup key={f.key} label={`${f.name} · ${f.note}`}>
                       {f.zones.map((z) => (
                         <option key={z.key} value={z.key}>

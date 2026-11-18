@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useSettings } from "./settingsStore";
-import { FALLBACK_LAYOUT, zonesOf } from "./adminWarehouse";
+import { zonesOf } from "./adminWarehouse";
 import { warehouseApi } from "../../api/warehouse";
 
 /* shown while a donated lot has no photo yet */
@@ -18,7 +18,7 @@ const NO_PHOTO =
     '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#e8f0ec"/><text x="200" y="158" font-family="sans-serif" font-size="18" fill="#6c8b7d" text-anchor="middle">No photo yet</text></svg>',
   );
 
-let state = { items: [], layout: FALLBACK_LAYOUT, loaded: false, loading: false, error: "" };
+let state = { items: [], layout: null, loaded: false, loading: false, error: "" };
 const listeners = new Set();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l) => {
@@ -34,7 +34,7 @@ const set = (patch) => {
 /* another account signing in on this tab must not see the previous stock */
 if (typeof window !== "undefined") {
   window.addEventListener("reorbit:session-ended", () => {
-    state = { items: [], layout: FALLBACK_LAYOUT, loaded: false, loading: false, error: "" };
+    state = { items: [], layout: null, loaded: false, loading: false, error: "" };
     emit();
   });
 }
@@ -48,7 +48,7 @@ export function loadStock({ force = false } = {}) {
   inFlight = warehouseApi
     .list()
     .then(({ items, layout }) =>
-      set({ items: items.map(row), layout: layout || FALLBACK_LAYOUT, loaded: true, loading: false }),
+      set({ items: items.map(row), layout: layout || null, loaded: true, loading: false }),
     )
     .catch((e) =>
       set({ loading: false, error: e.message || "We couldn't load the warehouse." }),
@@ -129,9 +129,10 @@ export function useStock() {
   }, [items, warehouse, layout]);
 }
 
-/* the floor plan from the server: { floors: [{ key, name, note, zones }], racks, levels, address } */
+/* the floor plan from the server: { floors: [{ key, name, note, zones }], racks, levels, address },
+   or null while it loads / if it couldn't be loaded */
 export function useWarehouseLayout() {
-  return useLoaded().layout || FALLBACK_LAYOUT;
+  return useLoaded().layout || null;
 }
 export function useStockItem(id) {
   return useStock().find((i) => i.inventory_id === id) || null;

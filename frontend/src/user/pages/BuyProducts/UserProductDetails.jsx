@@ -37,7 +37,6 @@ import { useLiveMarketplace } from "../../data/liveMarketplace";
 import {
   getItemById,
   getProductsBySeller,
-  getSellerFromItem,
   formatPrice,
 } from "../../../data/marketplaceData";
 import ReportButton from "../../../shared/components/ReportButton";
@@ -117,7 +116,6 @@ export default function UserProductDetails() {
     if (item?.id) trackProductView(item.id);
   }, [item?.id]);
 
-  const seller = useMemo(() => getSellerFromItem(item), [item]);
   const { reviews, summary: reviewSummary } = useProductReviews(item?.id);
   const related = useMemo(
     () =>
@@ -280,13 +278,6 @@ export default function UserProductDetails() {
             {item.category} · {item.condition}
           </span>
           <h1>{item.title}</h1>
-          {!item.live && (
-            <div className="pd-rate">
-              <Stars rating={seller?.rating || item.sellerRating} />{" "}
-              <b>{item.sellerRating}</b>{" "}
-              <span>seller rating · {item.views} views</span>
-            </div>
-          )}
           <div className="pd-price">
             <strong>{formatPrice(item.price)}</strong>
             <span>Listed price</span>

@@ -51,7 +51,9 @@ export function fetchPublic(path) {
   return inflight.get(path);
 }
 
-/* { data, loading, error }. `data` stays null on failure, so pages fall back to their sample content. */
+/* { data, loading, error }. `data` stays null while loading or on failure. Pages then show
+   "—", an empty state or a loading state; never sample products, prices or numbers. (Plain
+   decorative photos may stay, but nothing that looks like a real listing or figure.) */
 export function usePublic(path) {
   const [state, setState] = useState(() => {
     const c = readCache(path);

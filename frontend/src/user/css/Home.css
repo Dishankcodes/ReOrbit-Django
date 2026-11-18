@@ -1123,3 +1123,48 @@
   border-style: dashed;
   background: transparent;
 }
+
+/* hero, before there are any live listings: an invitation instead of sample cards */
+.hero-visual--empty {
+  display: grid;
+  place-items: center;
+  height: auto;
+  min-height: 360px;
+}
+.hero-empty-card {
+  max-width: 360px;
+  padding: 32px 28px;
+  border: 1px dashed rgba(42, 77, 58, 0.35);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  color: #2a4d3a;
+}
+.hero-empty-card .material-symbols-outlined {
+  font-size: 34px;
+}
+.hero-empty-card h3 {
+  margin: 10px 0 6px;
+  font-size: 1.3rem;
+}
+.hero-empty-card p {
+  margin: 0 0 18px;
+  color: #5f6b63;
+  line-height: 1.5;
+}
+.hero-empty-btn {
+  display: inline-block;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: #2a4d3a;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+@media (max-width: 900px) {
+  .hero-visual--empty {
+    width: 100%;
+    min-height: 0;
+  }
+}

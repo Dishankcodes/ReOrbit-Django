@@ -11,41 +11,6 @@ import { inr, initialsImage, usePublic } from "../../../api/publicData";
 import { CategoryIcon } from "../../../shared/categoryIcons";
 import "../../css/Home.css";
 
-/* The three cards on the right of the hero. Real listings replace them as they appear. */
-const HERO_DEFAULT = [
-  {
-    title: "Teak drawer chest, 1970s",
-    description:
-      "Solid teak four-drawer chest with original brass pulls. Sun-faded top panel, structurally sound.",
-    price: "₹4,200",
-    location: "Ahmedabad",
-    impact: "62 kg CO₂e",
-    category: "Furniture",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDYkmp1RxtipFncf82ttZPoo5AMeUWQXZ4x0d2qyVgIeytNXEc7dUDHHlFi2zPjMUXntoI8gmfQ_JB0-Umo1xYN9iQbyAzeY71ZSk6lgx1Qu7bjNHTCaMDdb_EOsaaEsG1STtFSlxwXQRqyJcuptatzT7imrfrmC_5BReQI6Fjutm--WFqedKKR6mowGjKqK_aS4Ug1LS5NVtfkmg5Nr3dr2kIdCDkhK2So0FMu31ZFkzveSwKo7RogOQ",
-  },
-  {
-    title: "Vintage reading chair",
-    description:
-      "A classic wooden reading chair with a restored frame and freshly finished seat.",
-    price: "₹2,800",
-    location: "Ahmedabad",
-    impact: "38 kg CO₂e",
-    category: "Furniture",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD8fsEWMuDS6tP3H8YHowI8FXZi5ipEgQwoPBzzWvj__K_wdHNiTJ20KtKkR00kVzVlHmmyweiwTyzO9dhTAle81e_cnY8dsdB_h_qCd5_wh_5xhOXyTCZEhTC6frgmFAzEDIGHLyq1u5UqJieIK00SGnu8dpIW70YCJXSXZ6mCvF20YQVS5gQo-D48xDCd0e3H3Bsu8_q_wD8LAIz3dqPi2CoHlkkpJAts4SrA11s-aEkUa3Z8i2LjwQg",
-  },
-  {
-    title: "Handmade ceramic table lamp",
-    description: "Warm ceramic table lamp with carefully restored wiring.",
-    price: "₹1,650",
-    location: "Ahmedabad",
-    impact: "12 kg CO₂e",
-    category: "Home & Living",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDKJuCnBWzoLkZZmurTZHo67Oi3tHOzLCimM74JvTF3kXI7O_Gmlc8EuoARQAj_ahgGA0UaysFOc2XnymQUO5b6gKKPviIO_tRXwO-uj1L-FBQbMzKnNd7D5J899qhIyOaIAjubZzSxuSdWwM1EfXNCDDCTaBpP6ccQChhHrrQbU9LkhO1idIKTXkxxn_lZ9SgIErKjpo6SPXFz6ar6-tkQ152sUhYPsbJYHtYFK4WEbTt9pRqF_2sKcQ",
-  },
-];
 
 /* Smart link: a signed-in member goes straight to the page, a visitor signs in first and lands on it. */
 const memberLink = (path) => (isSignedIn("user") ? path : loginUrl("user", path));
@@ -69,7 +34,7 @@ function useHomeData() {
     image: p.cover,
     soldOut: !!p.sold_out,
   }));
-  const products = [...live, ...HERO_DEFAULT.slice(live.length)];
+  const products = live; // only real listings; none yet -> an invitation to list instead
   const categories = real?.categories?.length
     ? real.categories.map((c) => [c.icon || "Package", c.name, `${c.live} live`])
     : [];
@@ -209,6 +174,18 @@ export default function Home() {
             </div>
           </div>
 
+          {products.length === 0 && (
+            <div className="hero-visual hero-visual--empty">
+              <div className="hero-empty-card">
+                <Icon>inventory_2</Icon>
+                <h3>The first listings are on their way</h3>
+                <p>List something you no longer use and it could be the first thing people see here.</p>
+                <Link className="hero-empty-btn" to={memberLink("/user-sell/new")}>
+                  List an item
+                </Link>
+              </div>
+            </div>
+          )}
           {products.length > 0 && (
             <div className="hero-visual">
               {products.map((product, i) => (
@@ -363,8 +340,8 @@ export default function Home() {
               </div>
               <h3>For buyers</h3>
               <p>
-                Discover pre-loved and refurbished products with honest
-                condition details and their complete item history.
+                Discover pre-loved finds and one-of-a-kind ReMaker creations,
+                with honest condition details and photos.
               </p>
               <Link
                 to={isSignedIn("user") ? "/user-marketplace" : "/discover-marketplace"}

@@ -107,7 +107,9 @@ class AdminSystemStatus(APIView):
         ]
         worst = "down" if any(c["state"] == "down" for c in checks) else (
             "warn" if any(c["state"] == "warn" for c in checks) else "ok")
-        store = getattr(settings, "REORBIT_STORE", {}) or {}
+        from apps.orders.serializers import reorbit_store
+
+        store = reorbit_store()
         return ok({
             "overall": worst, "checks": checks, "checked_at": timezone.now(),
             "debug": settings.DEBUG,

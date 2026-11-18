@@ -33,14 +33,19 @@ def seller_of(o):
 
 
 def reorbit_store():
-    """ReOrbit's own details, for orders the platform sells itself."""
+    """ReOrbit's own details, for orders the platform sells itself: the default address in
+    Admin › Addresses, with any REORBIT_STORE_* setting taking priority. Never made up."""
+    from apps.core.buyers import reorbit_address_data
     from apps.core.support_contacts import support_email
 
     c = settings.REORBIT_STORE
+    a = reorbit_address_data() or {}
+    line = c["address_line"] or ", ".join(x for x in (a.get("line1"), a.get("line2")) if x)
     return {
-        "name": c["name"], "phone": c["phone"],
+        "name": c["name"], "phone": c["phone"] or a.get("phone", ""),
         "email": support_email(),
-        "address": {"line1": c["address_line"], "city": c["city"], "state": c["state"], "pincode": c["pincode"]},
+        "address": {"line1": line, "city": c["city"] or a.get("city", ""), "state": c["state"] or a.get("state", ""),
+                    "pincode": c["pincode"] or a.get("pincode", "")},
     }
 
 

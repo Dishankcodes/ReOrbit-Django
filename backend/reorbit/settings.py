@@ -96,7 +96,6 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.payments",
     "apps.reviews",
-    "apps.earnings",
     "apps.analytics",
 
     # Domain B: platform operations
@@ -494,16 +493,15 @@ LOGGING = {
 
 
 # REORBIT'S OWN DETAILS
-# Shown on orders sold by ReOrbit itself (the "Sold by" card). Set these in .env for the
-# real company address; the defaults are the warehouse address used across the admin.
+# Shown on orders sold by ReOrbit itself (the "Sold by" card). They come from the default address
+# in Admin › Addresses; these optional variables override it. Nothing is made up: a detail that
+# isn't set anywhere is simply left out.
 
 REORBIT_STORE = {
     "name": os.getenv("REORBIT_STORE_NAME", "ReOrbit").strip() or "ReOrbit",
-    "address_line": os.getenv(
-        "REORBIT_STORE_ADDRESS", "Plot 14, Orbit Industrial Park, Sarkhej"
-    ).strip(),
-    "city": os.getenv("REORBIT_STORE_CITY", "Ahmedabad").strip(),
-    "state": os.getenv("REORBIT_STORE_STATE", "Gujarat").strip(),
-    "pincode": os.getenv("REORBIT_STORE_PINCODE", "382210").strip(),
-    "phone": os.getenv("REORBIT_STORE_PHONE", "1800 000 1234").strip(),
+    "address_line": os.getenv("REORBIT_STORE_ADDRESS", "").strip(),
+    "city": os.getenv("REORBIT_STORE_CITY", "").strip(),
+    "state": os.getenv("REORBIT_STORE_STATE", "").strip(),
+    "pincode": os.getenv("REORBIT_STORE_PINCODE", "").strip(),
+    "phone": os.getenv("REORBIT_STORE_PHONE", "").strip(),
 }

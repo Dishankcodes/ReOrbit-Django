@@ -25,9 +25,14 @@ class SellerCardTests(OrderBase):
         card = self.detail(self.maker, ids["platform"])["seller"]
         self.assertEqual(card["type"], "platform")
         self.assertEqual(card["name"], "ReOrbit")
-        self.assertEqual(card["address"]["city"], "Ahmedabad")
-        self.assertTrue(card["address"]["line1"])
+        # nothing saved in Admin › Addresses yet: left empty, never made up
+        self.assertEqual((card["address"]["city"], card["address"]["line1"], card["phone"]), ("", "", ""))
         self.assertTrue(card["email"])
+        # ReOrbit's address book is the source
+        self.assertEqual(self.post("/api/orders/addresses/", GOOD_ADDR, as_=self.boss).status_code, 201)
+        card = self.detail(self.maker, ids["platform"])["seller"]
+        self.assertEqual(card["address"]["city"], GOOD_ADDR["city"])
+        self.assertTrue(card["address"]["line1"])
 
     @override_settings(REORBIT_STORE={"name": "ReOrbit", "address_line": "1 Test Road", "city": "Surat",
                                       "state": "Gujarat", "pincode": "395003", "phone": "99999"})

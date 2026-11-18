@@ -21,12 +21,11 @@ function storedAdmin() {
 const a = storedAdmin();
 
 let state = {
+  /* the signed-in admin as the server returned them at sign-in (nothing invented) */
   profile: {
-    name: a.full_name || a.fullName || a.name || "Admin",
-    email: a.email || "admin@reorbit.in",
-    phone: a.phone || "+91 79000 54321",
-    role: "Super admin",
-    bio: "",
+    name: a.full_name || a.fullName || a.name || "",
+    email: a.email || "",
+    phone: a.phone || "",
   },
   commerce: {
     platformFeePct: 3, // charged on member-to-member orders
@@ -46,52 +45,16 @@ let state = {
     autoPriceCut: false,
     priceCutPct: 15,
   },
-  notifications: {
-    channels: { email: true, push: true, digest: false },
-    modules: {
-      Warehouse: true,
-      Donations: true,
-      Pickups: true,
-      Orders: true,
-      Products: true,
-      Rewards: true,
-      Sales: true,
-      Users: true,
-    },
-    quietHours: false,
-  },
   platform: {
     maintenance: false,
     supportEmail: "support@reorbit.in",
     minDonationItems: 1,
     sessionMinutes: 60,
   },
+  /* only what this browser saw happen; there are no device sessions or 2-step codes to manage
+     (admins sign in with email + password, and every password change is emailed to them) */
   security: {
-    twoFactor: false,
     passwordChangedAt: null,
-    sessions: [
-      {
-        id: "s1",
-        device: "Chrome on Windows",
-        place: "Ahmedabad, India",
-        at: "This device",
-        current: true,
-      },
-      {
-        id: "s2",
-        device: "Safari on iPhone",
-        place: "Ahmedabad, India",
-        at: "2 days ago",
-        current: false,
-      },
-      {
-        id: "s3",
-        device: "Firefox on macOS",
-        place: "Pune, India",
-        at: "9 days ago",
-        current: false,
-      },
-    ],
   },
   log: [],
   loaded: false,
@@ -202,12 +165,6 @@ export function setSecurity(patch, label) {
     log: label ? [stamp(label), ...state.log].slice(0, 20) : state.log,
   };
   emit();
-}
-export function revokeSession(id) {
-  setSecurity(
-    { sessions: state.security.sessions.filter((s) => s.id !== id) },
-    "Signed out a session",
-  );
 }
 export function resetSection(section, defaults) {
   return saveSection(section, defaults, `${section} reset to defaults`);

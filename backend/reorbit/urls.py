@@ -19,7 +19,6 @@ urlpatterns = [
     path("api/orders/", include("apps.orders.urls")),
     path("api/payments/", include("apps.payments.urls")),
     path("api/reviews/", include("apps.reviews.urls")),
-    path("api/earnings/", include("apps.earnings.urls")),
     path("api/analytics/", include("apps.analytics.urls")),
     # Domain B: platform operations
     path("api/content/", include("apps.content.urls")),

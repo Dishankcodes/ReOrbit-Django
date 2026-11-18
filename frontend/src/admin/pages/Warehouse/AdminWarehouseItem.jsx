@@ -429,7 +429,9 @@ export default function AdminWarehouseItem() {
                     ? `${s.zone.floor.name} (${s.zone.floor.note.toLowerCase()}) · Zone ${s.zone.key} · ${s.zone.name}`
                     : s.location.zone === "DOCK"
                       ? "Receiving dock"
-                      : "QC & refurbishment bay"}
+                      : s.location.zone === "QC"
+                        ? "QC & refurbishment bay"
+                        : `Zone ${s.location.zone}`}
                 </p>
               </div>
             ) : (
