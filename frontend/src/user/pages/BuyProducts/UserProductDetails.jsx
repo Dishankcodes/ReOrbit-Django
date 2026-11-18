@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { usePageTitle } from "../../../shared/pageMeta";
 import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
 import { trackProductView } from "../../../shared/trafficSource";
 import {
@@ -71,6 +72,7 @@ export default function UserProductDetails() {
   const navigate = useNavigate();
   const live = useLiveMarketplace(); // makes sure live listings are loaded when this page is opened directly
   const item = getItemById(productId);
+  usePageTitle(item?.title);
   const wish = useWishlist();
   const stock = useShopItem(productId, live.version);
   const cartCount = useCartCount();

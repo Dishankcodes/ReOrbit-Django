@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { usePageTitle } from "../../../shared/pageMeta";
 import { Link, useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
@@ -19,6 +20,7 @@ export default function UserArtistProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [products, setProducts] = useState([]);
+  usePageTitle(artist?.name);
   const { isFollowing, toggle } = useFollowing();
   const fileComplaint = useUserComplaintFiler();
   const { reviews } = useSellerReviews("remaker", artistId);

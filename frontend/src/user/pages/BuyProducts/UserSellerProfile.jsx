@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "../../../shared/portalRouter";
 import { UserX } from "lucide-react";
 
 import { cardToItem } from "../../../data/marketplaceData";
+import { usePageTitle } from "../../../shared/pageMeta";
 import { apiRequest } from "../../../api/api";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
@@ -29,6 +30,7 @@ export default function UserSellerProfile() {
     };
   }, [sellerId]);
   const [seller, setSeller] = useState(null);
+  usePageTitle(seller?.name);
   const [state, setState] = useState("loading"); // loading | ok | missing
   const fileComplaint = useUserComplaintFiler();
   const { reviews, summary } = useSellerReviews("user", sellerId);

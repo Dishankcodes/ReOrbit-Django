@@ -119,6 +119,8 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
+    # first, so it times the whole request (Server-Timing header + "SLOW ..." log lines)
+    "apps.core.timing.RequestTimingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
@@ -203,9 +205,12 @@ if DATABASE_URL:
                     "prefer" if DEBUG else "require"
                 ),
             },
+            # Reuse the connection between requests: opening a new TLS connection to Neon costs
+            # several round trips. Health checks replace a connection Neon closed while idle.
             "CONN_MAX_AGE": int(
-                os.getenv("DB_CONN_MAX_AGE", "60")
+                os.getenv("DB_CONN_MAX_AGE", "300")
             ),
+            "CONN_HEALTH_CHECKS": True,
         }
     }
 
