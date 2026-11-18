@@ -484,7 +484,7 @@
 }
 
 .set-toggle.on {
-  background: var(--rp-success);
+  background: var(--rp-maroon-soft);
 }
 
 .set-toggle.on span {

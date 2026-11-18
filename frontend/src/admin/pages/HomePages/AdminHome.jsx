@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminNavbar from "../../components/AdminNavbar";
 import AdminFooter from "../../components/AdminFooter";
-import { useUsers } from "../../data/usersStore";
-import { useRemakers } from "../../data/remakersStore";
+import { usePublic } from "../../../api/publicData";
 import { apiRequest } from "../../../api/api";
 import { useReport } from "../../data/reportsStore";
 import "../../css/Home.css";
@@ -101,8 +100,8 @@ const compact = (n) =>
         : `₹${Math.round(n)}`;
 
 export default function AdminHome() {
-  const users = useUsers();
-  const remakers = useRemakers();
+  /* members and ReMakers on the platform, from the server's public stats */
+  const { data: home } = usePublic("/home/");
   const [liveCount, setLiveCount] = useState(null);
   /* live listings across the marketplace (members, ReMakers and ReOrbit's store), from the server */
   useEffect(() => {
@@ -111,8 +110,8 @@ export default function AdminHome() {
       .catch(() => setLiveCount(0));
   }, []);
   const report = useReport("all");
-  const memberCount = users.filter((u) => u.status !== "Deleted").length;
-  const makerCount = remakers.filter((r) => r.status === "Active").length;
+  const memberCount = home?.stats?.members ?? 0;
+  const makerCount = home?.stats?.remakers ?? 0;
 
   return (
     <div className="admin-home-container">

@@ -42,62 +42,6 @@ const materials = [
   },
 ];
 
-const featuredProducts = [
-  {
-    title: "Restored Reading Chair",
-    category: "Furniture",
-    price: "₹2,800",
-    location: "Pune",
-    image:
-      "https://images.pexels.com/photos/1643280/pexels-photo-1643280.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Rescued wood",
-  },
-  {
-    title: "Handmade Ceramic Lamp",
-    category: "Home & Living",
-    price: "₹1,650",
-    location: "Ahmedabad",
-    image:
-      "https://images.pexels.com/photos/5825540/pexels-photo-5825540.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Reclaimed materials",
-  },
-  {
-    title: "Reclaimed Wood Console",
-    category: "Furniture",
-    price: "₹4,200",
-    location: "Bengaluru",
-    image:
-      "https://images.pexels.com/photos/34658646/pexels-photo-34658646.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Rescued timber",
-  },
-  {
-    title: "Upcycled Side Table",
-    category: "Furniture",
-    price: "₹2,200",
-    location: "Mumbai",
-    image:
-      "https://images.pexels.com/photos/8134812/pexels-photo-8134812.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Recovered wood",
-  },
-  {
-    title: "Reclaimed Wall Art",
-    category: "Decor",
-    price: "₹1,200",
-    location: "Delhi",
-    image:
-      "https://images.pexels.com/photos/14792097/pexels-photo-14792097.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Repurposed materials",
-  },
-  {
-    title: "Restored Lounge Chair",
-    category: "Furniture",
-    price: "₹3,600",
-    location: "Jaipur",
-    image:
-      "https://images.pexels.com/photos/2168227/pexels-photo-2168227.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    material: "Rescued frame",
-  },
-];
 
 const journey = [
   {
@@ -143,7 +87,8 @@ export default function ReMakers() {
     material: f.seller,
     soldOut: f.sold_out,
   }));
-  const shownProducts = liveProducts.length ? liveProducts : featuredProducts;
+  /* only real products: no sample cards when the store is empty */
+  const shownProducts = liveProducts;
   const liveMakers = (data?.remakers || []).map((r) => ({
     name: r.name,
     specialty: r.specialty || "ReMaker",
@@ -153,19 +98,13 @@ export default function ReMakers() {
   }));
   const st = data?.stats;
   const n = (v) => Number(v || 0).toLocaleString("en-IN");
-  const statRows = st
-    ? [
-        [n(st.remakers), "ReMakers on ReOrbit"],
-        [n(st.items_rescued), "Items given another purpose"],
-        [n(st.live_products), "Products available right now"],
-        [n(st.members), "Members shopping on ReOrbit"],
-      ]
-    : [
-        ["1,200+", "ReMakers discovering new material"],
-        ["8.4k", "Items given another purpose"],
-        ["32k kg", "Material kept in circulation"],
-        ["4.9/5", "Average ReMaker community rating"],
-      ];
+  const dash = (v) => (st ? n(v) : "—"); /* "—" while loading, never made-up numbers */
+  const statRows = [
+    [dash(st?.remakers), "ReMakers on ReOrbit"],
+    [dash(st?.items_rescued), "Items given another purpose"],
+    [dash(st?.live_products), "Products available right now"],
+    [dash(st?.members), "Members shopping on ReOrbit"],
+  ];
   return (
     <div className="remaker-page rm-page">
       <Navbar />
@@ -370,7 +309,12 @@ export default function ReMakers() {
 
           {/* AUTOMATIC CAROUSEL */}
 
-          <div className="rm-products-slider">
+          {shownProducts.length === 0 && (
+            <p className="rm-products-empty">
+              New creations from ReMakers will show up here as soon as they are listed.
+            </p>
+          )}
+          <div className="rm-products-slider" hidden={shownProducts.length === 0}>
             <div className="rm-products-track">
               {/* FIRST SET */}
 

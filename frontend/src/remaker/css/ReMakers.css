@@ -1673,3 +1673,13 @@
   text-transform: uppercase;
   pointer-events: none;
 }
+
+.rm-products-empty {
+  margin: 8px auto 0;
+  max-width: 560px;
+  padding: 22px;
+  border: 1px dashed rgba(122, 46, 46, 0.25);
+  border-radius: 18px;
+  text-align: center;
+  color: #6f5a55;
+}

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.core.profile import GujaratOnlyMixin, validate_social_links
+from apps.core.profile import GujaratOnlyMixin, validate_flag_dict, validate_social_links
 
 from .models import ReMaker_Profile, ReMakers
 
@@ -23,6 +23,8 @@ class ReMakerProfileSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
             "experience",
             "certification",
             "social_links",
+            "notification_preferences",
+            "privacy_preferences",
             # counters: read-only, set by the server
             "environmental_impact",
             "total_uploads",
@@ -44,6 +46,12 @@ class ReMakerProfileSerializer(GujaratOnlyMixin, serializers.ModelSerializer):
 
     def validate_social_links(self, value):
         return validate_social_links(value)
+
+    def validate_notification_preferences(self, value):
+        return validate_flag_dict(value, "notification_preferences")
+
+    def validate_privacy_preferences(self, value):
+        return validate_flag_dict(value, "privacy_preferences")
 
 
 class ReMakerSerializer(serializers.ModelSerializer):

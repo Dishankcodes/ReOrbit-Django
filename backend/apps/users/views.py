@@ -396,13 +396,9 @@ def _tell_password(user):
 
 
 def _login_alert(user, request):
-    """Settings › Security › Login alerts: email the member when someone signs in."""
-    prefs = getattr(getattr(user, "profile", None), "notification_preferences", None) or {}
-    if prefs.get("loginAlerts"):
-        from apps.core.mailer import security_notice
+    from apps.accounts.helpers import login_alert
 
-        agent = (request.META.get("HTTP_USER_AGENT") or "")[:80]
-        security_notice(user, "There was a new sign-in to your account" + (f" ({agent})" if agent else ""))
+    login_alert(user, request)
 
 
 class DeleteMyAccount(_DeleteMyAccount):

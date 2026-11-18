@@ -12,7 +12,7 @@ from apps.accounts.google import (
     read_signup_token,
 )
 from apps.core.account_deletion import DeleteMyAccount as _DeleteMyAccount, is_past_grace, purge
-from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
+from apps.accounts.helpers import clean_email, is_valid_email, login_alert, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitReMaker
@@ -217,6 +217,7 @@ class LoginVerifyOTPView(APIView):
 
         consume_otp(record)
         touch_login(remaker)
+        login_alert(remaker, request)
         return ok(
             {
                 "remaker": ReMakerSerializer(remaker).data,
@@ -270,6 +271,7 @@ class GoogleAuthView(APIView):
                 remaker.email_verified_at = remaker.email_verified_at or timezone.now()
                 remaker.save(update_fields=["google_id", "email_verified_at", "updated_at"])
             touch_login(remaker)
+            login_alert(remaker, request)
             return ok(
                 {"remaker": ReMakerSerializer(remaker).data, **create_token_pair("remaker", remaker.remaker_id)},
                 "Login successful.",

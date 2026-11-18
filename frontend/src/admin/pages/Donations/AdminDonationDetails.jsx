@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { useDonation, runDonationAction } from "../../data/donationsStore";
+import { adminDonationApi } from "../../../api/donations";
 import { getDonationActions, teamNameOf } from "../../data/donationActions";
 import { useTeamLabel } from "../../data/pickupTeamsStore";
 import { formatDate, formatDateTime, timeAgo } from "../../utils/format";
@@ -443,7 +444,9 @@ export default function AdminDonationDetails() {
                 className="ad-btn ad-btn-ghost ad-btn-sm"
                 style={{ marginTop: 14 }}
                 onClick={() =>
-                  toast("Certificate download is not connected yet (UI only).")
+                  adminDonationApi
+                    .downloadCertificate(d.id)
+                    .catch((e) => toast(e.message || "Couldn't download the certificate."))
                 }
               >
                 <Download size={14} /> Download certificate

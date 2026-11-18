@@ -114,6 +114,19 @@ class MyDonationCertificate(APIView):
                             as_attachment=True, filename=f"{d.certificate_id}.pdf")
 
 
+class AdminDonationCertificate(APIView):
+    """GET admin/<id>/certificate/  the donor's certificate PDF, for the team (once it is issued)."""
+
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]
+
+    def get(self, request, public_id):
+        d = get_object_or_404(Donation, public_id=public_id)
+        if not d.certificate_file:
+            return fail("The certificate is issued once the donation is completed.", status=404, code="NOT_READY")
+        return FileResponse(d.certificate_file.open("rb"), content_type="application/pdf",
+                            as_attachment=True, filename=f"{d.certificate_id}.pdf")
+
+
 # ------------------------------------------------------------------ admin
 class AdminDonations(APIView):
     permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]

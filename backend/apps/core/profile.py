@@ -72,6 +72,21 @@ def validate_social_links(value):
     return cleaned
 
 
+
+def ensure_profile(account, serializer_class):
+    """The account's profile row, created on first use (older or imported accounts may not have one)."""
+    from django.core.exceptions import ObjectDoesNotExist
+
+    try:
+        return account.profile
+    except ObjectDoesNotExist:
+        from apps.core import buyers
+
+        model = serializer_class.Meta.model
+        profile, _ = model.objects.get_or_create(**{buyers.type_of(account): account})
+        account.profile = profile
+        return profile
+
 class BaseProfileView(APIView):
     """GET / PATCH the signed-in member's profile together with the account name fields.
 
@@ -90,7 +105,7 @@ class BaseProfileView(APIView):
         account.refresh_from_db()
         return {
             "account": self.account_serializer(account, context=ctx).data,
-            "profile": self.profile_serializer(account.profile, context=ctx).data,
+            "profile": self.profile_serializer(ensure_profile(account, self.profile_serializer), context=ctx).data,
         }
 
     def clean_account(self, request, data):
@@ -156,7 +171,7 @@ class BaseProfileView(APIView):
             k: v for k, v in data.items() if k not in ("profile_image", "cover_image")
         }
         serializer = self.profile_serializer(
-            account.profile, data=profile_data, partial=True, context={"request": request}
+            ensure_profile(account, self.profile_serializer), data=profile_data, partial=True, context={"request": request}
         )
         if not serializer.is_valid():
             errors.update(serializer.errors)
@@ -181,7 +196,7 @@ class BaseImageView(APIView):
     label = "Profile photo"
 
     def respond(self, request, message):
-        profile = request.user.account.profile
+        profile = ensure_profile(request.user.account, self.profile_serializer)
         profile.refresh_from_db()
         data = self.profile_serializer(profile, context={"request": request}).data
         return ok({"profile": data}, message)
@@ -190,7 +205,7 @@ class BaseImageView(APIView):
         upload = ImageUploadSerializer(data=request.data)
         if not upload.is_valid():
             return fail("Upload a valid image.", errors=upload.errors)
-        profile = request.user.account.profile
+        profile = ensure_profile(request.user.account, self.profile_serializer)
         old = getattr(profile, self.field)
         old_name, old_storage = (old.name, old.storage) if old else (None, None)
         new_file = process_image(upload.validated_data["image"], self.max_side)
@@ -201,7 +216,7 @@ class BaseImageView(APIView):
         return self.respond(request, f"{self.label} updated.")
 
     def delete(self, request):
-        profile = request.user.account.profile
+        profile = ensure_profile(request.user.account, self.profile_serializer)
         old = getattr(profile, self.field)
         if old:
             delete_file(old)

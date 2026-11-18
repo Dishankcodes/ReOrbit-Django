@@ -45,3 +45,13 @@ def send_otp_or_error(email, purpose, account_type):
         return None, response
     except OTPSendError as exc:
         return None, fail(str(exc), status=503, code="EMAIL_FAILED")
+
+
+def login_alert(account, request):
+    """Settings › Security › Sign-in alerts: email the member or ReMaker when someone signs in."""
+    prefs = getattr(getattr(account, "profile", None), "notification_preferences", None) or {}
+    if prefs.get("loginAlerts"):
+        from apps.core.mailer import security_notice
+
+        agent = (request.META.get("HTTP_USER_AGENT") or "")[:80]
+        security_notice(account, "There was a new sign-in to your account" + (f" ({agent})" if agent else ""))

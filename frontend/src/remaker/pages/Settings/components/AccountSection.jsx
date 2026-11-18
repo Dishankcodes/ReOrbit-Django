@@ -1,91 +1,98 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { LANGUAGES, TIMEZONES, saveSection } from "../../../data/settingsStore";
-import { Card, Field, Row, SaveBar, Toggle, useDraft } from "./Controls";
-import PasswordCard from "./PasswordCard";
+import { Card, Field, SaveBar, useDraft } from "./Controls";
 
-export default function AccountSection({ settings, onDirty, notify }) {
-  const { draft, set, dirty, reset } = useDraft(
-    settings.account,
-    "account",
-    onDirty,
+/* Name, studio handle and phone, saved to /api/remakers/profile/. Email is the sign-in address. */
+export default function AccountSection({ me, onDirty, notify }) {
+  const saved = useMemo(
+    () => ({
+      full_name: me.account?.full_name || "",
+      username: me.account?.username || "",
+      phone: me.profile?.phone || "",
+    }),
+    [me.account, me.profile],
   );
+  const { draft, set, dirty, reset } = useDraft(saved, "account", onDirty);
+  const [errors, setErrors] = useState({});
 
-  const save = () => {
-    saveSection("account", draft);
-    notify("Account settings saved.");
+  const save = async () => {
+    const next = {};
+    if (!draft.full_name.trim()) next.full_name = "Enter your name.";
+    if (draft.username && !/^[a-zA-Z0-9_.]{3,30}$/.test(draft.username))
+      next.username = "3 to 30 letters, numbers, dots or underscores.";
+    if (draft.phone && !/^[6-9]\d{9}$/.test(draft.phone.replace(/\D/g, "").slice(-10)))
+      next.phone = "Enter a 10-digit Indian mobile number.";
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    const r = await me.save({
+      full_name: draft.full_name.trim(),
+      username: draft.username.trim(),
+      phone: draft.phone.trim() || null,
+    });
+    if (r.ok) notify("Account saved.");
+    else {
+      const e = r.errors || {};
+      setErrors({
+        full_name: e.full_name?.[0],
+        username: e.username?.[0],
+        phone: e.phone?.[0] || e.profile?.phone?.[0],
+      });
+      notify(r.message || "Not saved. Check the fields.");
+    }
   };
+
+  if (me.loading) return <p className="set-note">Loading your account…</p>;
 
   return (
     <div className="set-stack">
-      <p className="set-note">
-        Your name, photo, phone, address and email are on your{" "}
-        <Link to="/remaker-profile">studio profile</Link>.
-      </p>
-
-      <Card title="Language and time">
+      <Card title="About you" note="Shown on your orders and messages.">
         <div className="set-grid">
-          <Field label="Language" htmlFor="set-lang">
-            <div className="set-select">
-              <select
-                id="set-lang"
-                value={draft.language}
-                onChange={(e) => set("language", e.target.value)}
-              >
-                {LANGUAGES.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <Field label="Full name" htmlFor="set-name" error={errors.full_name}>
+            <input
+              id="set-name"
+              type="text"
+              value={draft.full_name}
+              maxLength={120}
+              onChange={(e) => set("full_name", e.target.value)}
+            />
           </Field>
-
           <Field
-            label="Time zone"
-            htmlFor="set-tz"
-            hint="Used for order times and quiet hours."
+            label="Studio handle"
+            htmlFor="set-user"
+            error={errors.username}
+            hint="Used in your studio link."
           >
-            <div className="set-select">
-              <select
-                id="set-tz"
-                value={draft.timezone}
-                onChange={(e) => set("timezone", e.target.value)}
-              >
-                {TIMEZONES.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <input
+              id="set-user"
+              type="text"
+              value={draft.username}
+              maxLength={30}
+              onChange={(e) => set("username", e.target.value)}
+            />
+          </Field>
+          <Field label="Phone" htmlFor="set-phone" error={errors.phone} hint="Only ReOrbit's pickup team sees it.">
+            <input
+              id="set-phone"
+              type="text"
+              inputMode="tel"
+              value={draft.phone}
+              maxLength={14}
+              onChange={(e) => set("phone", e.target.value)}
+            />
+          </Field>
+          <Field label="Email" htmlFor="set-email" hint="Your sign-in address. Contact support to change it.">
+            <input id="set-email" type="text" value={me.account?.email || ""} readOnly disabled />
           </Field>
         </div>
       </Card>
 
-      <Card
-        title="Sign-in"
-        note={`You signed up with ${draft.authProvider === "google" ? "Google" : "email"}.`}
-      >
-        <Row
-          title="Two-step verification"
-          note="We send a one-time code by SMS or email each time you sign in on a new device."
-        >
-          <Toggle
-            checked={draft.twoStep}
-            onChange={(value) => set("twoStep", value)}
-            label="Two-step verification"
-          />
-        </Row>
-      </Card>
+      <p className="set-note">
+        Photo, cover, bio, skills, city and address are on your{" "}
+        <Link to="/remaker-profile">studio profile</Link>.
+      </p>
 
-      <PasswordCard
-        provider={draft.authProvider}
-        onChanged={() => notify("Password updated.")}
-      />
-
-      <SaveBar dirty={dirty} onSave={save} onReset={reset} />
+      <SaveBar dirty={dirty} onSave={save} onReset={reset} disabled={me.busy} />
     </div>
   );
 }

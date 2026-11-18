@@ -45,7 +45,13 @@ def _targets(audience, kind=None):
             users = users.exclude(pk__in=opted_out)
         out.append(("user", users.values_list("pk", flat=True)))
     if audience in ("remakers", "everyone"):
-        out.append(("remaker", ReMakers.objects.filter(status=ReMakers.Status.ACTIVE).values_list("pk", flat=True)))
+        makers = ReMakers.objects.filter(status=ReMakers.Status.ACTIVE)
+        if kind == Announcement.Kind.OFFER:  # same switch on the ReMaker side
+            from apps.remakers.models import ReMaker_Profile
+
+            opted_out = ReMaker_Profile.objects.filter(notification_preferences__offers=False).values("remaker_id")
+            makers = makers.exclude(pk__in=opted_out)
+        out.append(("remaker", makers.values_list("pk", flat=True)))
     return out
 
 

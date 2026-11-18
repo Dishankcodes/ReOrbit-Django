@@ -41,7 +41,7 @@ const SECTIONS = [
   {
     key: "security",
     label: "Security",
-    hint: "Password, 2-step, sessions",
+    hint: "Password and sign-in",
     icon: ShieldCheck,
   },
   {

@@ -12,6 +12,7 @@ urlpatterns = [
     path("admin/reward-options/", v.AdminRewardOptions.as_view()),
     path("admin/", v.AdminDonations.as_view()),
     path("admin/<str:public_id>/", v.AdminDonationDetail.as_view()),
+    path("admin/<str:public_id>/certificate/", v.AdminDonationCertificate.as_view()),
     path("admin/<str:public_id>/<str:action>/", v.AdminDonationAction.as_view()),
     path("partner/pickups/", v.PartnerPickups.as_view()),
     path("partner/pickups/<str:public_id>/<str:action>/", v.PartnerPickupAction.as_view()),

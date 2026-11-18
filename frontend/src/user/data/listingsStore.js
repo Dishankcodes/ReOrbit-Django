@@ -1,31 +1,21 @@
 /* =========================================================
-   User › Selling (UI only, in-memory).
+   User › Selling.
    A user lists pre-loved items. Published listings go live straight away:
    Draft -> Live -> Reserved -> Sold (or Withdrawn by the seller). The team
    can still switch one off, with a reason, from Admin > Products.
    Sellers keep the full price: no commission and no pickup fee.
    Live listings are added to the marketplace, and sales come
    in as orders the seller has to pack and ship.
-   Listings are real (/api/listings/me/). Sales are still demo data until the
-   orders domain is wired.
+   Listings are real (/api/listings/me/) and so are sales (/api/orders/sales/).
    ========================================================= */
 
 import { useMemo, useSyncExternalStore } from "react";
 import { useEffect } from "react";
 import * as api from "../../api/listings";
+import { salesApi } from "../../api/orders";
 
-const DAY = 86400000;
-const ago = (d, h = 0) =>
-  new Date(Date.now() - d * DAY - h * 3600000).toISOString();
 
-export const SELLER = {
-  id: "user-aarav-patel",
-  name: "Aarav Patel",
-  city: "Ahmedabad",
-  pincode: "380015",
-  image: "/images/users/aarav-patel.jpg",
-  rating: 4.9,
-};
+
 
 export const SELL_CATEGORIES = [
   "Furniture",
@@ -93,65 +83,6 @@ const ev = (id, label, detail, at, tone = "neutral") => ({
   tone,
 });
 
-const seedSales = () => [
-  {
-    id: "SL-5104",
-    listingId: "LST-3005",
-    title: "Stack of design books (12)",
-    image:
-      "https://images.pexels.com/photos/16009657/pexels-photo-16009657.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    buyer: { name: "Pooja Nair", city: "Pune" },
-    qty: 1,
-    price: 900,
-    placedAt: ago(1),
-    status: "Confirmed",
-    payout: { status: "Pending", at: null },
-    courier: null,
-    events: [
-      ev(
-        "e1",
-        "Order placed",
-        "Pooja Nair ordered your books",
-        ago(1),
-        "neutral",
-      ),
-      ev(
-        "e2",
-        "Payment secured",
-        "Held by ReOrbit until delivery",
-        ago(1),
-        "good",
-      ),
-    ],
-  },
-  {
-    id: "SL-5102",
-    listingId: "LST-3004",
-    title: "Cane stool set (2)",
-    image:
-      "https://images.pexels.com/photos/696407/pexels-photo-696407.jpeg?auto=compress&cs=tinysrgb&w=1000",
-    buyer: { name: "Harsh Mehta", city: "Surat" },
-    qty: 1,
-    price: 2400,
-    placedAt: ago(20),
-    status: "Delivered",
-    payout: { status: "Paid", at: ago(12) },
-    courier: { name: "Delhivery", awb: "DLV51029" },
-    events: [
-      ev(
-        "e1",
-        "Order placed",
-        "Harsh Mehta ordered your stools",
-        ago(20),
-        "neutral",
-      ),
-      ev("e2", "Packed", "You packed the order", ago(19), "info"),
-      ev("e3", "Shipped", "Delhivery · DLV51029", ago(18), "info"),
-      ev("e4", "Delivered", "Handed over to the buyer", ago(14), "good"),
-      ev("e5", "Payout sent", "Credited to your account", ago(12), "good"),
-    ],
-  },
-];
 
 /* ---------- mapping the API <-> the shapes the screens use ---------- */
 
@@ -233,7 +164,8 @@ function fromApi(a) {
 /* ---------- store ---------- */
 
 let listings = [];
-let sales = seedSales();
+let sales = [];
+let salesLoaded = false;
 let limit = { cap: 5, used: 0 };
 let categories = [];
 let loaded = false;
@@ -284,6 +216,43 @@ export function loadListings({ force = false } = {}) {
       commit();
     });
   return inFlight;
+}
+
+/* The member's real sales (orders for their listings), from /api/orders/sales/. */
+function saleFromApi(o) {
+  const line = (o.items || [])[0] || {};
+  const delivered = o.status === "Delivered";
+  return {
+    id: o.id,
+    listingId: line.id || "",
+    title: line.title || "Order",
+    image: line.cover || "",
+    buyer: { name: o.buyer?.name || "Buyer", city: o.address?.city || "" },
+    qty: (o.items || []).reduce((n, l) => n + (l.qty || 0), 0),
+    price: o.subtotal || 0,
+    earning: o.seller_earning || 0,
+    placedAt: o.confirmed_at || o.created_at,
+    status: o.status,
+    payout: { status: delivered ? "Clearing" : "Pending", at: o.delivered_at || null },
+    courier: o.courier,
+    events: [],
+  };
+}
+let salesInFlight = null;
+export function loadSales({ force = false } = {}) {
+  if (salesInFlight && !force) return salesInFlight;
+  salesInFlight = salesApi
+    .list("?page_size=100")
+    .then((d) => {
+      sales = (d.results || []).map(saleFromApi);
+    })
+    .catch(() => {})
+    .finally(() => {
+      salesLoaded = true;
+      salesInFlight = null;
+      commit();
+    });
+  return salesInFlight;
 }
 
 /* sell-form categories, from the server (Admin > Content manages them) */
@@ -404,53 +373,11 @@ export async function deleteListing(id) {
   commit();
 }
 
-/* seller moves a sale along: Confirmed -> Packed -> Shipped -> Delivered (demo until orders are wired) */
-export function advanceSale(id) {
-  const sale = sales.find((s) => s.id === id);
-  if (!sale) return;
-  const idx = SALE_STEPS.indexOf(sale.status);
-  if (idx < 0 || idx >= SALE_STEPS.length - 1) return;
-  const next = SALE_STEPS[idx + 1];
-  const detail = {
-    Packed: "You packed the order",
-    Shipped: "Delhivery · DLV" + id.replace(/\D/g, "") + "7",
-    Delivered: "Handed over to the buyer",
-  }[next];
-  sales = sales.map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          status: next,
-          courier:
-            next === "Shipped"
-              ? { name: "Delhivery", awb: `DLV${id.replace(/\D/g, "")}7` }
-              : s.courier,
-          payout:
-            next === "Delivered"
-              ? { status: "Processing", at: new Date().toISOString() }
-              : s.payout,
-          events: [
-            ...s.events,
-            {
-              id: `e${s.events.length + 1}-${Date.now()}`,
-              label: next,
-              detail,
-              at: new Date().toISOString(),
-              tone: next === "Delivered" ? "good" : "info",
-            },
-          ],
-        }
-      : s,
-  );
-  commit();
-}
-
-/* ---------- hooks + derived ---------- */
 
 export const netOf = (sale) => {
   /* Sellers keep the full price. The buyer pays the platform fee and delivery on top. */
-  const gross = sale.price * sale.qty;
-  return { gross, commission: 0, pickupFee: 0, net: gross };
+  const gross = sale.price || 0;
+  return { gross, commission: 0, pickupFee: 0, net: sale.earning ?? gross };
 };
 
 export function useListings() {
@@ -475,6 +402,9 @@ export function useListing(id) {
 }
 export function useSales() {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  useEffect(() => {
+    if (!salesLoaded) loadSales();
+  }, []);
   return useMemo(
     () =>
       s.sales.map((x) => ({
@@ -499,13 +429,11 @@ export function summarizeSelling(listings, sales) {
     sold: listings.filter((l) => l.status === "Sold").length,
     toShip: sales.filter((s) => ["Confirmed", "Packed"].includes(s.status))
       .length,
-    earned: delivered
-      .filter((s) => s.payout.status === "Paid")
+    /* delivered sales (money in or clearing to the wallet) vs orders still on the way */
+    earned: delivered.reduce((n, s) => n + s.net, 0),
+    pending: inFlight
+      .filter((s) => !["Cancelled", "Returned", "Delivery_Failed"].includes(s.status))
       .reduce((n, s) => n + s.net, 0),
-    pending: [
-      ...delivered.filter((s) => s.payout.status !== "Paid"),
-      ...inFlight,
-    ].reduce((n, s) => n + s.net, 0),
     views: listings.reduce((n, l) => n + (l.views || 0), 0),
   };
 }

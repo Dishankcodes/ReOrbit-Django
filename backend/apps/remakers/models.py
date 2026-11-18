@@ -100,6 +100,9 @@ class ReMaker_Profile(models.Model):
     experience = models.CharField(max_length=100, null=True, blank=True)
     certification = models.TextField(null=True, blank=True)
     social_links = models.JSONField(default=dict, blank=True)
+    # Settings › Notifications topics and Settings › Privacy switches ({key: bool}); missing = on
+    notification_preferences = models.JSONField(default=dict, blank=True)
+    privacy_preferences = models.JSONField(default=dict, blank=True)
     # Cached counters: set by the server only, never by the browser.
     environmental_impact = models.DecimalField(
         max_digits=12, decimal_places=2, default=0

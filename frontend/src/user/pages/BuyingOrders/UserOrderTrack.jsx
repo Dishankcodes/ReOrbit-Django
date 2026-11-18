@@ -35,10 +35,6 @@ import "../../css/orders/UserOrderTrack.css";
 import { PageLoader } from "../../../shared/components/Spinner";
 const ROUTE_PROGRESS = [0, 6, 18, 46, 88, 100];
 
-/* a stable fake distance per seller city, just for the demo route card */
-const distanceFor = (city = "") =>
-  300 +
-  (Array.from(city).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 1200);
 
 export default function UserOrderTrack() {
   const { orderId } = useParams();
@@ -75,7 +71,6 @@ export default function UserOrderTrack() {
     ? ROUTE_PROGRESS[order.stage]
     : ROUTE_PROGRESS[order.stage];
   const origin = order.seller?.city || "Seller";
-  const km = distanceFor(origin);
   const code = String(
     ((parseInt(order.id.replace(/\D/g, ""), 10) * 7) % 9000) + 1000,
   );
@@ -188,7 +183,7 @@ export default function UserOrderTrack() {
                 <div>
                   <h2>Shipment route</h2>
                   <small>
-                    About {km} km from {origin} to {order.address.city}
+                    From {origin} to {order.address.city}
                   </small>
                 </div>
                 <span className="dn-chip">{progress}% of the way</span>

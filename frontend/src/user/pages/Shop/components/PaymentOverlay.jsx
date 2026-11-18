@@ -7,7 +7,7 @@ const STEPS = [
   "Confirming your order",
 ];
 
-/* Full-screen "processing / failed" layer while the fake payment runs. */
+/* Full-screen "processing / failed" layer while the payment (Razorpay or COD) is confirmed. */
 export default function PaymentOverlay({
   state,
   error,

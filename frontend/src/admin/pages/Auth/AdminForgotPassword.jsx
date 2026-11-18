@@ -57,7 +57,7 @@ export default function AdminForgotPassword({ initialEmail = "", onDone, onBack 
 
   return (
     <form className="al-form" onSubmit={step === "email" ? send : reset} noValidate>
-      <button type="button" className="al-back" onClick={onBack}>
+      <button type="button" className="al-link al-backlink" onClick={onBack}>
         <ArrowLeft size={15} /> Back to sign in
       </button>
       <h3 className="al-forgot-title">

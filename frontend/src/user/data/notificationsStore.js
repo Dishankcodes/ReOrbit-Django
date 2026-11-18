@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { notificationsApi } from "../../api/notifications";
-import { useSettings } from "./settingsStore";
+import { getAccount } from "../../api/session";
 import { lastMessage, useUnreadConversations } from "./messagesStore";
 
 const KEY = "reorbit_user_notif_read";
@@ -201,9 +201,9 @@ function start() {
 
 /* ---------- what each kind of notification is called, and where it goes by default ---------- */
 export const NOTIFICATION_TYPES = {
-  order: { label: "Orders", pref: "orderUpdates", to: "/user-orders" },
-  donation: { label: "Donations", pref: "donationUpdates", to: "/user-donations" },
-  sell: { label: "Selling", pref: "orderUpdates", to: "/user-sell" },
+  order: { label: "Orders", pref: "orders", to: "/user-orders" },
+  donation: { label: "Donations", pref: "donations", to: "/user-donations" },
+  sell: { label: "Selling", pref: "orders", to: "/user-sell" },
   earning: { label: "Wallet", pref: null, to: "/user-wallet" },
   support: { label: "Support", pref: null, to: "/user-help/tickets" },
   message: { label: "Messages", pref: null, to: "/user-messages" },
@@ -242,7 +242,6 @@ const fromServer = (n) => {
 
 export function useNotifications() {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  const settings = useSettings();
   const unreadConversations = useUnreadConversations();
 
   useEffect(() => {
@@ -267,10 +266,12 @@ export function useNotifications() {
       });
     });
 
-    const prefs = settings.prefs.notifications;
+    /* Settings › Notifications, saved on the server (missing = on). The server already skips what
+       is switched off; this hides older rows of a topic that was turned off later. */
+    const prefs = getAccount("user")?.profile?.notification_preferences || {};
     const allowed = (n) => {
-      const pref = NOTIFICATION_TYPES[n.type].pref;
-      return pref ? prefs[pref] : true;
+      const pref = NOTIFICATION_TYPES[n.type]?.pref;
+      return pref ? prefs[pref] !== false : true;
     };
     const serverRows = s.server.map(fromServer);
     /* the server counts everything unread; take off what the user's switches hide */
@@ -294,5 +295,5 @@ export function useNotifications() {
       error: s.error,
       hasMore: s.page < s.pages,
     };
-  }, [s, settings, unreadConversations]);
+  }, [s, unreadConversations]);
 }

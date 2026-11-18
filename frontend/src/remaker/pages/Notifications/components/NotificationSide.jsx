@@ -2,22 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import { CATEGORIES } from "../../../data/notificationsStore";
-import { NOTIFICATION_ROWS } from "../../../data/settingsStore";
+import { REMAKER_TOPICS } from "../../../data/settingsStore";
 
 /* Right column: unread by type, how alerts reach you, a few tips */
 export default function NotificationSide({ unreadByCategory, prefs, onPick }) {
-  const channelLabel = (key) => {
-    const row = prefs.channels[key];
-    if (!row) return "Off";
-
-    const on = [
-      row.app && "App",
-      row.email && "Email",
-      row.sms && "SMS",
-    ].filter(Boolean);
-    return on.length ? on.join(", ") : "Off";
-  };
-
   return (
     <aside className="ntf-side">
       <section className="ntf-card">
@@ -43,39 +31,29 @@ export default function NotificationSide({ unreadByCategory, prefs, onPick }) {
 
       <section className="ntf-card">
         <div className="ntf-card-head">
-          <h3>How alerts reach you</h3>
+          <h3>What shows in your bell</h3>
           <Link to="/remaker-settings?section=notifications">Change</Link>
         </div>
 
         <dl className="ntf-channels">
-          {NOTIFICATION_ROWS.slice(0, 5).map((row) => (
-            <div key={row.key}>
-              <dt>
-                {row.label.split(" and ")[0].replace("New orders", "Sales")}
-              </dt>
-              <dd>{channelLabel(row.key)}</dd>
+          {REMAKER_TOPICS.map(([key, label]) => (
+            <div key={key}>
+              <dt>{label}</dt>
+              <dd>{prefs[key] === false ? "Off" : "On"}</dd>
             </div>
           ))}
         </dl>
 
         <p className="ntf-quiet">
-          {prefs.quietOn
-            ? `Quiet hours: ${prefs.quietFrom} to ${prefs.quietTo}`
-            : "Quiet hours are off"}{" "}
-          ·{" "}
-          {prefs.digest === "instant"
-            ? "Instant alerts"
-            : prefs.digest === "daily"
-              ? "Daily summary"
-              : "Weekly summary"}
+          Email is only used for sign-in codes, account and security messages.
         </p>
       </section>
 
       <section className="ntf-card tips">
         <h3>Never miss an order</h3>
         <p>
-          New orders must be accepted within 24 hours. Turn on SMS for sales so
-          you hear about them even when you are not on ReOrbit.
+          Keep "Sales and orders" on so new orders show up in your bell straight
+          away. Pack and hand them over quickly to keep your rating high.
         </p>
         <Link
           to="/remaker-settings?section=notifications"

@@ -20,29 +20,39 @@ export const donationApi = {
     post(`/donations/me/${id}/note/`, { note }).then((r) => r.data),
   /* Fetches the certificate PDF with the signed-in token and saves it, since a plain
      <a href> can't carry an Authorization header. Only works once the donation is Completed. */
-  downloadCertificate: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/donations/me/${id}/certificate/`, {
-      headers: { Authorization: `Bearer ${getAccessToken()}` },
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.message || "The certificate isn't ready yet.");
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${id}-certificate.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  },
+  downloadCertificate: (id) =>
+    saveCertificate(`/donations/me/${id}/certificate/`, id, getAccessToken()),
 };
+
+/* Fetch a certificate PDF with the signed-in token and hand it to the browser as a download. */
+export async function saveCertificate(path, id, token) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || "The certificate isn't ready yet.");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${id}-certificate.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 /* Admin side. `list` resolves to { results, count }. `key` is one of
    accept | reject | reschedule | cancelPickup | pickedUp | failed | received | complete | reopen. */
 export const adminDonationApi = {
+  downloadCertificate: (id) =>
+    saveCertificate(
+      `/donations/admin/${id}/certificate/`,
+      id,
+      getAccessToken("admin"),
+    ),
   list: () => apiRequest("/donations/admin/").then((r) => r.data),
   act: (id, key, payload = {}) =>
     post(`/donations/admin/${id}/${key}/`, payload).then((r) => r.data),
@@ -76,7 +86,9 @@ async function partnerRequest(path, { method = "GET", body, token } = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const error = new Error(data.message || `Request failed with status ${res.status}`);
+    const error = new Error(
+      data.message || `Request failed with status ${res.status}`,
+    );
     error.status = res.status;
     error.code = data.code;
     throw error;

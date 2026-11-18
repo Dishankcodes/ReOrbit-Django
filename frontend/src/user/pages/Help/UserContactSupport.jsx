@@ -1,3 +1,4 @@
+import { getRules } from "../../../shared/platformRules";
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Clock, Mail, MessageSquare, Send } from "lucide-react";
@@ -201,7 +202,7 @@ export default function UserContactSupport() {
           <article className="dn-card dn-card-pad">
             <Mail size={20} />
             <h3>Email us</h3>
-            <p>support@reorbit.example</p>
+            <p>{getRules().supportEmail || "support@reorbit.in"}</p>
           </article>
           <article className="dn-card dn-card-pad">
             <MessageSquare size={20} />

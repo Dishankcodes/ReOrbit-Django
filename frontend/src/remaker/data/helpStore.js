@@ -9,7 +9,6 @@ import {
 
 export const SUPPORT = {
   email: "support@reorbit.in",
-  phone: "1800 000 1234",
   hours: "Every day, 9 am to 7 pm",
   replyTime: "We usually reply within 24 hours",
 };
@@ -30,8 +29,8 @@ export const FAQS = [
   {
     id: "f1",
     category: "start",
-    q: "How do I get my studio verified?",
-    a: "Fill in your studio profile with a photo, your craft, your experience and any certifications. Our team checks it within 2 working days and adds the Verified ReMaker badge.",
+    q: "How do I make my studio stand out?",
+    a: "Fill in your studio profile with a photo, a cover, your craft, your experience and any certifications. Add portfolio pieces and good photos to every product. Complete studios get more views and followers.",
   },
   {
     id: "f2",
@@ -43,7 +42,7 @@ export const FAQS = [
     id: "f3",
     category: "start",
     q: "Can I change my studio name?",
-    a: "Yes. Open Settings, then Account, and edit your studio name. It updates on your products and profile straight away.",
+    a: "Yes. Edit your studio name on your studio profile, and your studio handle under Settings, then Account. Both update on your products and profile straight away.",
   },
   {
     id: "f4",
@@ -60,20 +59,20 @@ export const FAQS = [
   {
     id: "f6",
     category: "products",
-    q: "Why is my product still pending?",
-    a: "New products pass a quick quality check. It normally takes a few hours. We will send a notification as soon as it is live.",
+    q: "When does my product go live?",
+    a: "As soon as you publish it. A product saved as a draft stays hidden until you publish. The ReOrbit team can switch off a product that breaks the rules, and you will get a notification with the reason.",
   },
   {
     id: "f7",
     category: "orders",
-    q: "How long do I have to accept an order?",
-    a: "You have 24 hours. Orders that are not accepted in time are cancelled and the customer is refunded, which can lower your seller rating.",
+    q: "What do I do when an order comes in?",
+    a: "Paid orders arrive confirmed, so there is nothing to accept. Pack the item, mark it packed, then either ship it yourself with a tracking number or ask for a ReOrbit pickup. Ship quickly: slow orders get cancelled and refunded, which can hurt your rating.",
   },
   {
     id: "f8",
     category: "orders",
     q: "Who delivers my orders?",
-    a: "When a customer chooses ReOrbit delivery, a rider collects the parcel from your address after you mark it packed. The customer pays the delivery fee. Customers can also collect from you in person.",
+    a: "You choose for each order. Ship it yourself with any courier and add the tracking number, or pick Managed by ReOrbit: pack it, ask for a pickup, and ReOrbit's pickup team collects it from your address and delivers it.",
   },
   {
     id: "f9",
@@ -91,19 +90,19 @@ export const FAQS = [
     id: "f11",
     category: "money",
     q: "When can I withdraw my money?",
-    a: "Earnings clear 3 days after delivery. Once you have ₹500 or more available you can withdraw it from the Payouts page, and it reaches your bank in 1 to 2 working days.",
+    a: "Earnings are held after delivery for the return window, then clear to your wallet. Once you have at least the smallest payout amount you can withdraw from the Payouts page. Settings, then Payouts, shows the current hold days and minimum.",
   },
   {
     id: "f12",
     category: "money",
     q: "Can I change my bank account?",
-    a: "Yes. Go to Earnings, then Payouts, and choose Change next to your bank account. We keep only the last 4 digits of the account number.",
+    a: "Yes. Open Settings, then Payouts, and choose Change account. Your full account number is stored encrypted and only the last digits are shown.",
   },
   {
     id: "f16",
     category: "account",
-    q: "How do I turn on two-step verification?",
-    a: "Open Settings, then Account, and switch on Two-step verification. We will send a one-time code each time you sign in on a new device.",
+    q: "How do I keep my account safe?",
+    a: "ReMakers sign in with a one-time code sent to their email (or with Google), so there is no password to steal. Keep your email account secure, and turn on sign-in alerts under Settings, then Sign-in and security, to get an email whenever someone signs in.",
   },
   {
     id: "f17",
@@ -115,7 +114,7 @@ export const FAQS = [
     id: "f18",
     category: "account",
     q: "How do I close my account?",
-    a: "Finish your open orders and withdraw your money first. Then open Settings, then Close account, to deactivate or delete your studio.",
+    a: "Finish your open orders and returns and withdraw your money first. Then open Settings, then Delete account. Your studio is hidden straight away, and you have 30 days to change your mind by signing in again.",
   },
 ];
 

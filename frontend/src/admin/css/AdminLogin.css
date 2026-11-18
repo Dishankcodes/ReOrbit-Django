@@ -481,3 +481,19 @@
   color: var(--al-ink, #0d2a21);
   font-size: 18px;
 }
+
+/* forgot password: back to the sign-in form (inline, not the corner link) */
+.al-backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2a4d3a;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.al-backlink:hover { text-decoration: underline; }

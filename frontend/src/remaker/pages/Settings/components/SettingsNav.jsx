@@ -1,20 +1,11 @@
 import React from "react";
 
 export const SECTIONS = [
-  { key: "account", label: "Account", note: "Name, contact and sign-in" },
-  { key: "studio", label: "Studio", note: "Orders, pickup and vacation" },
-  {
-    key: "notifications",
-    label: "Notifications",
-    note: "What we tell you, and how",
-  },
+  { key: "account", label: "Account", note: "Name, phone and email" },
+  { key: "notifications", label: "Notifications", note: "What we tell you about" },
   { key: "payouts", label: "Payouts", note: "How you get paid" },
-  {
-    key: "security",
-    label: "Privacy and security",
-    note: "Visibility, devices, blocked",
-  },
-  { key: "danger", label: "Close account", note: "Deactivate or delete" },
+  { key: "security", label: "Sign-in and security", note: "How you sign in, alerts" },
+  { key: "danger", label: "Delete account", note: "30 days to change your mind" },
 ];
 
 export default function SettingsNav({ active, onSelect, dirty }) {
@@ -31,9 +22,7 @@ export default function SettingsNav({ active, onSelect, dirty }) {
           <span>
             <strong>
               {item.label}
-              {dirty[item.key] && (
-                <i title="Unsaved changes" aria-label="Unsaved changes" />
-              )}
+              {dirty[item.key] && <i title="Unsaved changes" aria-label="Unsaved changes" />}
             </strong>
             <small>{item.note}</small>
           </span>

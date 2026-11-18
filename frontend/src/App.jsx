@@ -42,10 +42,6 @@ const UserBeforeMarketplace = page(
 
 /* User dashboard and marketplace */
 const UserDashboard = page("user", () => import("./user/pages/UserDashboard"));
-const UserCheckoutLegacy = page(
-  "user",
-  () => import("./user/pages/UserCheckout"),
-);
 const UserMarketplace = page(
   "user",
   () => import("./user/pages/BuyProducts/UserMarketplace"),
@@ -641,11 +637,7 @@ export default function App() {
                 path="/user-checkout/success/:ids"
                 element={<UserOrderSuccess />}
               />
-              {/* Older checkout page retained for any legacy links; current shop flow uses /user-checkout. */}
-              <Route
-                path="/user-checkout-legacy"
-                element={<UserCheckoutLegacy />}
-              />
+              <Route path="/user-checkout-legacy" element={<Navigate to="/user-checkout" replace />} />
 
               <Route path="/user-donations" element={<UserDonations />} />
               <Route path="/user-donations/new" element={<UserDonationNew />} />

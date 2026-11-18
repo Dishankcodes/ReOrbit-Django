@@ -3,6 +3,7 @@ import { Gift, Check, Award, CalendarClock } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import { formatDate } from "../../../utils/format";
+import { adminDonationApi } from "../../../../api/donations";
 
 const STEPS = [
   { key: "Pending", label: "Pending" },
@@ -79,7 +80,9 @@ export default function DonationsTab({ user, toast }) {
                 type="button"
                 className="ad-btn ad-btn-ghost ad-btn-sm"
                 onClick={() =>
-                  toast("Certificate preview is not connected yet (UI only).")
+                  adminDonationApi
+                    .downloadCertificate(donation.donation_id)
+                    .catch((e) => toast(e.message || "Couldn't download the certificate."))
                 }
               >
                 <Award size={14} /> Certificate
