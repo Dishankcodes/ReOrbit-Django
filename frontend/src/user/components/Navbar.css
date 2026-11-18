@@ -255,3 +255,11 @@
     z-index: 2;
   }
 }
+
+/* phone menu: the menu's link colour must not turn the solid button's text dark */
+.navbar-links .navbar-mobile-actions a.btn-primary,
+.navbar-links .navbar-mobile-actions a.btn-primary:visited,
+.navbar-links .navbar-mobile-actions a.btn-primary:hover {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+}

@@ -86,7 +86,13 @@ export default function AccountGate({ info, role, children }) {
       replace: true,
     });
   };
-  const help = role === "remaker" ? "/remakers-contact" : "/user-help/contact";
+  /* "Contact support" opens a ticket with the topic and title already filled in */
+  const prefill = new URLSearchParams({
+    category: role === "remaker" ? "Account and security" : "Account or login",
+    subject: suspended ? "Please review my account suspension" : "Please review my account",
+    message: info.reason ? `My account was ${String(info.status).toLowerCase()} with the reason: "${info.reason}". ` : "",
+  }).toString();
+  const help = role === "remaker" ? `/remaker-help/new?${prefill}` : `/user-help/contact?${prefill}`;
 
   /* A locked account can still reach the contact page to appeal. */
   if (info.locked && !pathname.endsWith("/contact")) {

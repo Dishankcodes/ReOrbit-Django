@@ -216,3 +216,37 @@ class TicketRightsTests(SupportTicketTests):
         # ...but can once it's assigned to them (still can't reassign it)
         self.assertEqual(self.post(A.format(ids[2]), {"action": "close"}, as_=helper).status_code, 200)
         self.assertEqual(self.post(A.format(ids[2]), {"action": "assign", "assignee_id": "none"}, as_=helper).status_code, 403)
+
+
+class PublicContactTests(SupportTicketTests):
+    def test_contact_form_links_to_the_account_or_tells_the_team(self):
+        from apps.admins.models import Admins
+        from apps.core.models import Notification
+        from apps.core.support_contacts import support_emails
+        boss = self.make_admin("boss@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN)
+        self.make_admin("boss2@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN)
+        self.assertEqual(support_emails()[:2], ["boss@example.com", "boss2@example.com"])
+        rules = self.client.get("/api/core/settings/").data["data"]
+        rules = rules.get("settings", rules)
+        self.assertEqual((rules["supportEmail"], rules["supportEmails"][1]), ("boss@example.com", "boss2@example.com"))
+
+        bad = self.client.post("/api/support/contact/", {"name": "A", "email": "x", "topic": "?", "subject": "", "message": ""}, format="json")
+        self.assertEqual(bad.status_code, 400)
+        self.assertEqual(set(bad.data["errors"]), {"name", "email", "topic", "subject", "message"})
+
+        # a blocked member appeals: it becomes a ticket on their account
+        self.user.status, self.user.status_reason = "Blocked", "Spam"
+        self.user.save()
+        r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "blocked",
+                                                       "subject": "Please unblock me", "message": "I think this was a mistake."}, format="json")
+        self.assertEqual(r.status_code, 201, r.data)
+        t = SupportTicket.objects.get(public_id=r.data["data"]["ticket"])
+        self.assertEqual((t.user_id, t.category, t.priority), (self.user.pk, "Account access", "High"))
+        self.assertTrue(Notification.objects.filter(admin=boss, module="support").exists())
+
+        # someone without an account: the team is told, no ticket
+        n = SupportTicket.objects.count()
+        r = self.client.post("/api/support/contact/", {"name": "Visitor", "email": "visitor@example.com", "topic": "other",
+                                                       "subject": "Partnership", "message": "We'd like to partner with you."}, format="json")
+        self.assertEqual((r.status_code, r.data["data"]["linked"]), (201, False))
+        self.assertEqual(SupportTicket.objects.count(), n)

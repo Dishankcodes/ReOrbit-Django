@@ -1,13 +1,14 @@
 import React from "react";
+import ShareSiteButton from "../../shared/components/ShareSiteButton";
 import "./Footer.css";
 
 const columns = [
   {
     title: "Platform",
     links: [
-      ["Marketplace", "/marketplace"],
-      ["Impact", "/impact"],
-      ["Sustainability", "/sustainability"],
+      ["Marketplace", "/discover-marketplace"],
+      ["How it works", "/remakers-how-it-works"],
+      ["ReOrbit for members", "/"],
     ],
   },
   {
@@ -15,14 +16,14 @@ const columns = [
     links: [
       ["ReMakers", "/remakers"],
       ["About Us", "/remakers-about"],
-      ["Stories", "/stories"],
+      ["Join as a ReMaker", "/remakers-auth"],
     ],
   },
   {
     title: "Help & Support",
     links: [
-      ["FAQ", "/faq"],
-      ["Help Center", "/support"],
+      ["FAQ", "/remakers-faq"],
+      ["Privacy Policy", "/privacy"],
       ["Contact Us", "/remakers-contact"],
     ],
   },
@@ -63,13 +64,11 @@ export default function Footer() {
           </p>
 
           <div className="remaker-footer-socials">
-            <a href="#" aria-label="Instagram">
-              <span className="material-symbols-outlined">photo_camera</span>
+            <a href="/remakers-contact" aria-label="Contact ReOrbit">
+              <span className="material-symbols-outlined">mail</span>
             </a>
 
-            <a href="#" aria-label="Share">
-              <span className="material-symbols-outlined">share</span>
-            </a>
+            <ShareSiteButton remaker />
           </div>
         </div>
 
@@ -89,7 +88,7 @@ export default function Footer() {
 
       {/* BOTTOM */}
       <div className="remaker-footer-bottom container">
-        <p>© 2024 ReOrbit. Circular by design. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} ReOrbit. Circular by design. All rights reserved.</p>
 
         <div>
           <a href="/privacy">Privacy</a>

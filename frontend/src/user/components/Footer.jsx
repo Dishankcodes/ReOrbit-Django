@@ -1,4 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import ShareSiteButton from "../../shared/components/ShareSiteButton";
+import { getRules } from "../../shared/platformRules";
 import "./Footer.css";
 
 const columns = [
@@ -14,16 +17,16 @@ const columns = [
     title: "Community",
     links: [
       ["ReMakers", "/discover-remakers"],
-      ["Stories", "/stories"],
-      ["Impact", "/impact"],
+      ["Become a ReMaker", "/remakers"],
+      ["Sign in / Join", "/auth"],
     ],
   },
   {
     title: "Help & Support",
     links: [
       ["FAQ", "/faq"],
-      ["Help Center", "/support"],
       ["Contact Us", "/contact"],
+      ["Privacy Policy", "/privacy"],
     ],
   },
 ];
@@ -41,21 +44,21 @@ export default function Footer() {
           <p>Sell, donate, or discover something worth keeping.</p>
         </div>
 
-        <a className="btn-primary footer-cta-button" href="/auth">
+        <Link className="btn-primary footer-cta-button" to="/auth">
           Get started
           <span className="material-symbols-outlined">arrow_forward</span>
-        </a>
+        </Link>
       </div>
 
       {/* Main Footer */}
       <div className="footer-main container">
         {/* Brand */}
         <div className="footer-brand">
-          <a className="footer-logo" href="/">
+          <Link className="footer-logo" to="/">
             <span className="material-symbols-outlined">eco</span>
 
             <span>ReOrbit</span>
-          </a>
+          </Link>
 
           <p>
             A circular marketplace where verified, refurbished and rescued
@@ -63,17 +66,15 @@ export default function Footer() {
           </p>
 
           <div className="footer-socials">
-            <a href="#" aria-label="Instagram">
-              <span className="material-symbols-outlined">photo_camera</span>
+            <a href={`mailto:${getRules().supportEmail || "support@reorbit.in"}`} aria-label="Email ReOrbit">
+              <span className="material-symbols-outlined">mail</span>
             </a>
 
-            <a href="#" aria-label="Community">
+            <Link to="/contact" aria-label="Contact ReOrbit">
               <span className="material-symbols-outlined">forum</span>
-            </a>
+            </Link>
 
-            <a href="#" aria-label="Share ReOrbit">
-              <span className="material-symbols-outlined">share</span>
-            </a>
+            <ShareSiteButton />
           </div>
         </div>
 
@@ -83,9 +84,9 @@ export default function Footer() {
             <h4>{column.title}</h4>
 
             {column.links.map(([label, href]) => (
-              <a href={href} key={label}>
+              <Link to={href} key={label}>
                 {label}
-              </a>
+              </Link>
             ))}
           </div>
         ))}
@@ -93,11 +94,11 @@ export default function Footer() {
 
       {/* Bottom */}
       <div className="footer-bottom container">
-        <p>© 2026 ReOrbit. Circular by design. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} ReOrbit. Circular by design. All rights reserved.</p>
 
         <div>
-          <a href="/UserPrivacy">Privacy</a>
-          <a href="/UserTerms">Terms</a>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
         </div>
       </div>
     </footer>

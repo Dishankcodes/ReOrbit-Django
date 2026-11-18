@@ -14,11 +14,13 @@ export default function UserContactSupport() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const fromOrder = params.get("order") || "";
+  /* a link can pre-fill the form (e.g. "Contact support" on the suspended banner) */
+  const askedCategory = TICKET_CATEGORIES.includes(params.get("category")) ? params.get("category") : "";
   const [f, setF] = useState({
-    category: fromOrder ? "Order or delivery" : "",
+    category: askedCategory || (fromOrder ? "Order or delivery" : ""),
     orderId: fromOrder,
-    subject: "",
-    message: "",
+    subject: (params.get("subject") || "").slice(0, 160),
+    message: (params.get("message") || "").slice(0, 4000),
   });
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);

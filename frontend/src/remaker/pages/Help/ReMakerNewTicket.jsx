@@ -33,13 +33,14 @@ export default function ReMakerNewTicket() {
   const fromOrder = params.get("order") || "";
   /* Opened from a product ReOrbit deactivated: the ticket is about that product. */
   const fromProduct = params.get("product") || "";
+  const askedCategory = TICKET_CATEGORIES.includes(params.get("category")) ? params.get("category") : "";
   const [category, setCategory] = useState(
-    fromOrder ? "Orders and shipping" : fromProduct ? "Products and listings" : "",
+    askedCategory || (fromOrder ? "Orders and shipping" : fromProduct ? "Products and listings" : ""),
   );
   const [subject, setSubject] = useState((params.get("subject") || "").slice(0, 120));
   const [related, setRelated] = useState(fromOrder);
   const [priority, setPriority] = useState("Normal");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState((params.get("message") || "").slice(0, 4000));
   const [photos, setPhotos] = useState([]);
   const [photoError, setPhotoError] = useState("");
   const [saving, setSaving] = useState(false);

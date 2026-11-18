@@ -68,10 +68,12 @@ class ReadTests(SettingsBase):
         })
         self.assertEqual(data["warehouse"], {
             "unsoldDays": 7, "slowDays": 14, "deadDays": 30, "autoPriceCut": False, "priceCutPct": 15})
+        emails = data["platform"].pop("supportEmails")  # the Super Admins' addresses, read-only here
+        self.assertTrue(emails)
         self.assertEqual(data["platform"], {
             "maintenance": False, "supportEmail": "support@reorbit.in",
             "minDonationItems": 1, "sessionMinutes": 60, "donationCo2PerKg": 1.9,
-            "donationVoucherTiers": [50, 100, 150, 200, 300, 500]})
+            "donationVoucherTiers": [100, 150, 200, 300, 500]})
         self.assertEqual(data["notifications"]["channels"], {"email": True, "push": True, "digest": False})
         self.assertEqual(data["log"], [])
 
@@ -240,7 +242,7 @@ class RulesReachTheRestOfTheAppTests(SettingsBase):
         self.assertEqual(reward_services.co2_saved("10"), 25)  # 10kg * 2.5, the new rate, live
 
     def test_donation_voucher_tiers_are_validated_and_sorted(self):
-        self.assertEqual(self.rules()["donationVoucherTiers"], [50, 100, 150, 200, 300, 500])
+        self.assertEqual(self.rules()["donationVoucherTiers"], [100, 150, 200, 300, 500])
         self.bad({"platform": {"donationVoucherTiers": []}}, "platform", "donationVoucherTiers")
         self.bad({"platform": {"donationVoucherTiers": [10, 10]}}, "platform", "donationVoucherTiers")
         self.bad({"platform": {"donationVoucherTiers": [0, 50]}}, "platform", "donationVoucherTiers")

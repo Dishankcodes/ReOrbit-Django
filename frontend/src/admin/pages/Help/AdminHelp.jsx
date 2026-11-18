@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -20,7 +20,11 @@ import {
   SearchX,
   CircleCheck,
   LifeBuoy,
+  AlertTriangle,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
+import { apiRequest } from "../../../api/api";
 import { useAccess } from "../../data/teamStore";
 import EmptyState from "../../components/ui/EmptyState";
 import "../../css/AdminUI.css";
@@ -179,15 +183,38 @@ const ANSWERS = [
   },
 ];
 
-const STATUS = [
-  { label: "Admin panel", ok: true },
-  { label: "Payments", ok: true },
-  { label: "Pickup scheduling", ok: true },
-  { label: "Email and notifications", ok: true },
-];
+const STATE_ICON = { ok: CircleCheck, warn: AlertTriangle, down: XCircle };
+const STATE_LABEL = { ok: "Working", warn: "Check", down: "Down" };
+
+/* live checks from the server (GET /api/adminops/admin/system-status/) */
+function useSystemStatus() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => {
+    setBusy(true);
+    apiRequest("/adminops/admin/system-status/")
+      .then((r) => {
+        setData(r.data);
+        setError("");
+      })
+      .catch((e) => setError(e.message || "Could not check the system."))
+      .finally(() => setBusy(false));
+  }, []);
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 60000);
+    return () => clearInterval(t);
+  }, [load]);
+  return { data, error, busy, reload: load };
+}
 
 export default function AdminHelp() {
   const access = useAccess();
+  const status = useSystemStatus();
+  const emails = status.data?.support?.emails || [];
+  const mainEmail = emails[0] || "support@reorbit.in";
+  const phone = status.data?.support?.phone || "";
   const [query, setQuery] = useState("");
   const [topic, setTopic] = useState("All");
   const [open, setOpen] = useState(0);
@@ -336,17 +363,28 @@ export default function AdminHelp() {
               <li>
                 <Mail size={16} />
                 <div>
-                  <strong>admin-support@reorbit.in</strong>
-                  <small>We reply within one working day</small>
+                  <strong>{mainEmail}</strong>
+                  <small>Super admin · replies within one working day</small>
                 </div>
               </li>
-              <li>
-                <Phone size={16} />
-                <div>
-                  <strong>+91 79 4000 1200</strong>
-                  <small>For urgent issues only</small>
-                </div>
-              </li>
+              {emails.slice(1).map((e) => (
+                <li key={e}>
+                  <Mail size={16} />
+                  <div>
+                    <strong>{e}</strong>
+                    <small>Alternate email</small>
+                  </div>
+                </li>
+              ))}
+              {phone && (
+                <li>
+                  <Phone size={16} />
+                  <div>
+                    <strong>{phone}</strong>
+                    <small>For urgent issues only</small>
+                  </div>
+                </li>
+              )}
               <li>
                 <Clock3 size={16} />
                 <div>
@@ -357,21 +395,47 @@ export default function AdminHelp() {
             </ul>
             <a
               className="ad-btn ad-btn-primary hp-mail"
-              href="mailto:admin-support@reorbit.in?subject=ReOrbit%20admin%20panel%20help"
+              href={`mailto:${mainEmail}?subject=ReOrbit%20admin%20panel%20help${emails.length > 1 ? `&cc=${emails.slice(1).join(",")}` : ""}`}
             >
               Email support
             </a>
           </section>
 
           <section className="au-panel hp-card">
-            <h3>System status</h3>
+            <div className="hp-status-head">
+              <h3>System status</h3>
+              <button type="button" className="hp-refresh" onClick={status.reload} disabled={status.busy} aria-label="Check again">
+                <RefreshCw size={14} className={status.busy ? "spin" : ""} />
+              </button>
+            </div>
+            {status.data && (
+              <p className={`hp-overall ${status.data.overall}`}>
+                {status.data.overall === "ok"
+                  ? "All systems working"
+                  : status.data.overall === "warn"
+                    ? "Working, with things to check"
+                    : "Something is down"}
+                <small>
+                  Checked {new Date(status.data.checked_at).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}
+                </small>
+              </p>
+            )}
+            {status.error && <p className="hp-overall down">{status.error}</p>}
+            {!status.data && !status.error && <p className="hp-overall">Checking…</p>}
             <ul className="hp-status">
-              {STATUS.map((s) => (
-                <li key={s.label}>
-                  <CircleCheck size={15} /> <span>{s.label}</span>
-                  <em>Working</em>
-                </li>
-              ))}
+              {(status.data?.checks || []).map((c) => {
+                const Icon = STATE_ICON[c.state] || CircleCheck;
+                return (
+                  <li key={c.key} className={c.state} title={c.detail}>
+                    <Icon size={15} />
+                    <span>
+                      {c.label}
+                      <small>{c.detail}</small>
+                    </span>
+                    <em>{STATE_LABEL[c.state]}</em>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 

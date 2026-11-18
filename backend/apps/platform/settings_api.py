@@ -10,6 +10,7 @@ import re
 from decimal import Decimal, InvalidOperation
 
 from apps.core.models import DEFAULT_DONATION_VOUCHER_TIERS, DEFAULT_SUPPORT_EMAIL, PlatformSettings
+from apps.core.support_contacts import support_emails
 
 DEFAULT_WAREHOUSE = {
     "unsoldDays": 7,
@@ -39,7 +40,7 @@ COMMERCE_INTS = {
 }
 COMMERCE_KEYS = {"platformFeePct", "codEnabled", *COMMERCE_INTS}
 WAREHOUSE_KEYS = set(DEFAULT_WAREHOUSE)
-PLATFORM_KEYS = {"maintenance", "supportEmail", "minDonationItems", "sessionMinutes",
+PLATFORM_KEYS = {"maintenance", "supportEmail", "supportEmails", "minDonationItems", "sessionMinutes",
                  "donationCo2PerKg", "donationVoucherTiers"}
 SECTIONS = ("commerce", "warehouse", "notifications", "platform")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -63,6 +64,8 @@ def current(s: PlatformSettings) -> dict:
         "platform": {
             "maintenance": bool(stored.get("maintenance", False)),
             "supportEmail": s.support_email or DEFAULT_SUPPORT_EMAIL,
+            # who members actually see: the Super Admins first, then the address above
+            "supportEmails": support_emails(),
             "minDonationItems": s.min_donation_items,
             "sessionMinutes": int(stored.get("sessionMinutes", 60)),
             "donationCo2PerKg": float(s.donation_co2_per_kg),

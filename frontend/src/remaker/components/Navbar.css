@@ -459,3 +459,11 @@
     z-index: 2;
   }
 }
+
+/* phone menu: "Open dashboard" / "Get started" keeps white text on its dark background */
+.remaker-page .remaker-navbar-links .remaker-navbar-mobile-actions a.remaker-get-started,
+.remaker-page .remaker-navbar-links .remaker-navbar-mobile-actions a.remaker-get-started:visited,
+.remaker-page .remaker-navbar-links .remaker-navbar-mobile-actions a.remaker-get-started:hover {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+}

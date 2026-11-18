@@ -81,17 +81,35 @@
 }
 
 /* On the member side the hero uses the member green, not the ReMaker maroon. */
-.usl-wallet {
+.usl-wallet,
+.rod.usl-wallet,
+.rod.rsl.usl-wallet {
+  /* stronger than the ReMaker palette (.rod) whichever stylesheet loaded last */
   --rp-maroon: #1e3d2f;
   --rp-maroon-soft: #2a4d3a;
+  --rp-green: #2a4d3a;
+  --rp-sage: #d4e4d8;
+  --rp-sage-light: #e4ede7;
+  --rp-text: #1f2923;
+  --rp-muted: #6b756d;
+  --rp-border: #dce5de;
+  --rp-soft: #f2f6f3;
+  --rp-shadow: 0 10px 30px rgba(31, 61, 47, 0.06);
+}
+.rod.usl-wallet .sls-balance {
+  background: linear-gradient(140deg, #1e3d2f, #2a4d3a);
+  box-shadow: 0 20px 50px rgba(30, 61, 47, 0.2);
 }
 
 .usl-wallet .rod-btn.primary, .usl-wallet .rod-btn.primary:visited,
 .usl-wallet .rod-btn.primary:hover, .usl-wallet .rod-btn.primary:focus {
   color: #fff; -webkit-text-fill-color: #fff;
 }
-.usl-wallet .sls-textbtn {
+.usl-wallet .sls-textbtn,
+.rod.usl-wallet .sls-textbtn {
   border: 1px solid currentColor; border-radius: 9px; padding: 7px 12px;
   font: inherit; font-weight: 700; cursor: pointer;
+  color: #2a4d3a;
+  text-decoration: none;
 }
 .usl-wallet .sls-textbtn:hover { background: rgba(42, 77, 58, .08); }

@@ -467,3 +467,323 @@
   font-size: 12px;
   line-height: 1.45;
 }
+
+/* =========================================================
+   Admin › Donations: summary, journey tabs, filter bar
+   ========================================================= */
+.adn2 {
+  --adn-green: #0e3a2d;
+  --adn-line: #e3ebe6;
+  --adn-muted: #64756c;
+  --adn-soft: #f3f7f4;
+}
+.adn2-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.adn2-top h2 {
+  margin: 0;
+  font-size: 24px;
+}
+.adn2-top p {
+  margin: 4px 0 0;
+  color: var(--adn-muted);
+  font-size: 14px;
+}
+.adn2-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+.adn2-facts > div {
+  min-width: 140px;
+  padding: 10px 14px;
+  border: 1px solid var(--adn-line);
+  border-radius: 14px;
+  background: #fff;
+}
+.adn2-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--adn-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.adn2-facts dd {
+  margin: 4px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+.adn2-facts dd small {
+  color: var(--adn-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* journey */
+.adn2-journey {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.adn2-journey ol {
+  display: grid;
+  flex: 1 1 640px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--adn-line);
+  border-radius: 18px;
+  background: #fff;
+  list-style: none;
+  counter-reset: step;
+}
+.adn2-journey li {
+  position: relative;
+}
+.adn2-journey li + li::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 12px;
+  height: 2px;
+  background: var(--adn-line);
+}
+.adn2-journey li.past + li::before,
+.adn2-journey li.on::before {
+  background: #8fbfa5;
+}
+.adn2-journey li button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.adn2-journey li button:hover {
+  background: var(--adn-soft);
+}
+.adn2-step-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--adn-soft);
+  color: var(--adn-green);
+}
+.adn2-step-text {
+  display: grid;
+  min-width: 0;
+}
+.adn2-step-text strong {
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.adn2-step-text em {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #e7efea;
+  color: var(--adn-green);
+  font-size: 11.5px;
+  font-style: normal;
+}
+.adn2-step-text small {
+  overflow: hidden;
+  color: var(--adn-muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adn2-journey li.on button {
+  background: var(--adn-green);
+  color: #fff;
+}
+.adn2-journey li.on .adn2-step-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.adn2-journey li.on .adn2-step-text small {
+  color: rgba(255, 255, 255, 0.75);
+}
+.adn2-journey li.on .adn2-step-text em {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.adn2-journey li.tone-wait:not(.on) .adn2-step-text em {
+  background: #fff1d6;
+  color: #8a5a00;
+}
+.adn2-other {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.adn2-other button {
+  height: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--adn-line);
+  border-radius: 14px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.adn2-other button em {
+  margin-left: 4px;
+  color: var(--adn-muted);
+  font-style: normal;
+}
+.adn2-other button.on {
+  border-color: var(--adn-green);
+  background: var(--adn-green);
+  color: #fff;
+}
+.adn2-other button.on em {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* filter bar */
+.adn2-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--adn-line);
+}
+.adn2-search {
+  flex: 1 1 260px;
+  max-width: none;
+}
+.adn2-seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--adn-line);
+  border-radius: 12px;
+  background: var(--adn-soft);
+}
+.adn2-seg button {
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--adn-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.adn2-seg button.on {
+  background: #fff;
+  color: var(--adn-green);
+  box-shadow: 0 1px 3px rgba(14, 58, 45, 0.12);
+}
+.adn2-export {
+  margin-left: auto;
+}
+.adn2-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--adn-line);
+  background: #fafcfb;
+  font-size: 12.5px;
+}
+.adn2-chips > span {
+  color: var(--adn-muted);
+  font-weight: 600;
+}
+.adn2-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #cfe2d7;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--adn-green);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.adn2-chips .adn2-clear {
+  border-color: transparent;
+  background: none;
+  text-decoration: underline;
+}
+
+/* next-step button in each row */
+.adn2 .col-next {
+  width: 1%;
+  white-space: nowrap;
+}
+.adn2-next {
+  padding: 7px 13px;
+  border: 1px solid var(--adn-green);
+  border-radius: 999px;
+  background: var(--adn-green);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.adn2-next.tone-warning {
+  border-color: #c98a1a;
+  background: #fff6e6;
+  color: #8a5a00;
+}
+.adn2-next.tone-danger {
+  border-color: #e7b9b2;
+  background: #fff;
+  color: #a8433a;
+}
+
+@media (max-width: 1100px) {
+  .adn2-journey ol {
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}
+@media (max-width: 760px) {
+  .adn2 .col-next {
+    display: none;
+  }
+  .adn2-export {
+    margin-left: 0;
+  }
+}
+.adn2-top .adn2-lead {
+  margin: 0;
+  color: #26352e;
+  font-size: 15px;
+  font-weight: 600;
+}

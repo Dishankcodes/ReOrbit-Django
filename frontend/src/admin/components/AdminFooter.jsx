@@ -1,4 +1,5 @@
 import React from "react";
+import ShareSiteButton from "../../shared/components/ShareSiteButton";
 import "./AdminFooter.css";
 
 const columns = [
@@ -13,15 +14,15 @@ const columns = [
   {
     title: "Community",
     links: [
-      ["ReMakers", "/manage-remakers"],
+      ["ReMakers", "/remakers"],
       ["About Us", "/admin-about"],
-      ["Stories", "/stories"],
+      ["Admin sign in", "/admin-login"],
     ],
   },
   {
     title: "Support",
     links: [
-      ["Support Center", "/support"],
+      ["Privacy Policy", "/privacy"],
       ["FAQ", "/faq"],
       ["Contact Us", "/contact"],
     ],
@@ -44,13 +45,7 @@ export default function AdminFooter() {
           </p>
 
           <div className="admin-footer-socials">
-            <a href="#" aria-label="Instagram">
-              <span className="material-symbols-outlined">photo_camera</span>
-            </a>
-
-            <a href="#" aria-label="Share">
-              <span className="material-symbols-outlined">share</span>
-            </a>
+            <ShareSiteButton />
           </div>
         </div>
 
@@ -70,7 +65,7 @@ export default function AdminFooter() {
 
       {/* BOTTOM */}
       <div className="admin-footer-bottom admin-footer-container">
-        <p>© 2024 ReOrbit. Circular by design. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} ReOrbit. Circular by design. All rights reserved.</p>
 
         <div>
           <a href="/privacy">Privacy Policy</a>

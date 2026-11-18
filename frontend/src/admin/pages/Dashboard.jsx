@@ -1,928 +1,580 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Users,
-  Palette,
-  ShoppingBag,
-  Package,
-  IndianRupee,
-  Gift,
-  Truck,
-  Leaf,
-  ArrowUpRight,
+  AlertTriangle,
   ArrowRight,
-  TrendingUp,
-  TrendingDown,
-  Clock3,
-  CheckCircle2,
-  AlertCircle,
-  UserPlus,
-  BadgeCheck,
-  ShoppingCart,
-  Recycle,
-  Eye,
-  MoreHorizontal,
-  ChevronRight,
-  Sparkles,
+  ArrowUpRight,
+  Bell,
   Boxes,
-  ClipboardCheck,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Gift,
+  HandCoins,
+  IndianRupee,
+  LayoutTemplate,
+  Leaf,
+  LifeBuoy,
+  Package,
+  PackageCheck,
+  Palette,
+  Recycle,
+  RotateCcw,
   Settings,
   ShieldAlert,
-  LayoutTemplate,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Truck,
+  UserPlus,
+  Users,
+  Wallet,
+  XCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-import { useReport } from "../data/reportsStore";
+import { apiRequest } from "../../api/api";
+import { adminPayoutApi } from "../../api/payouts";
 import { useDashboard } from "../data/adminopsStore";
+import { useReport } from "../data/reportsStore";
 import { useOrders } from "../data/ordersStore";
-import { useDonations } from "../data/donationsStore";
-import { usePickups } from "../data/pickupsStore";
-import { useComplaintCounts } from "../data/complaintsStore";
-import { useSupportStatus, useSupportTickets } from "../../shared/supportTickets";
-import { useSettings } from "../data/settingsStore";
 import { useAccess } from "../data/teamStore";
-import { LineChart, delta, compactInr, inr, num } from "./Reports/charts";
+import { LineChart, compactInr, delta, inr, num } from "./Reports/charts";
 import { timeAgo } from "../utils/format";
 
-import "../css/Dashboard.css";
 import "../css/reports/AdminReports.css";
+import "../css/DashboardV2.css";
 
-const QUICK = [
-  {
-    key: "users",
-    label: "Manage Users",
-    path: "/admin-users",
-    icon: <Users size={17} />,
-  },
-  {
-    key: "remakers",
-    label: "Review ReMakers",
-    path: "/admin-remakers",
-    icon: <Palette size={17} />,
-  },
-  {
-    key: "products",
-    label: "Manage Products",
-    path: "/admin-products",
-    icon: <ShoppingBag size={17} />,
-  },
-  {
-    key: "warehouse",
-    label: "Warehouse",
-    path: "/admin-warehouse",
-    icon: <WarehouseIcon />,
-  },
-  {
-    key: "pickups",
-    label: "Manage Pickups",
-    path: "/admin-pickups",
-    icon: <Truck size={17} />,
-  },
-  {
-    key: "content",
-    label: "Content & Categories",
-    path: "/admin-content",
-    icon: <LayoutTemplate size={17} />,
-  },
-  {
-    key: "complaints",
-    label: "Complaints",
-    path: "/admin-complaints",
-    icon: <ShieldAlert size={17} />,
-  },
-  {
-    key: "reports",
-    label: "View Reports",
-    path: "/admin-reports",
-    icon: <TrendingUp size={17} />,
-  },
-  {
-    key: "shop",
-    label: "Buy Products",
-    path: "/admin-shop",
-    icon: <ShoppingCart size={17} />,
-  },
-  {
-    key: "sell",
-    label: "Sell Products",
-    path: "/admin-sell",
-    icon: <IndianRupee size={17} />,
-  },
-  {
-    key: "rewards",
-    label: "Rewards",
-    path: "/admin-rewards",
-    icon: <Gift size={17} />,
-  },
-  {
-    key: "team",
-    label: "Team & Roles",
-    path: "/admin-team",
-    icon: <Users size={17} />,
-  },
-  {
-    key: null,
-    label: "Settings",
-    path: "/admin-settings",
-    icon: <Settings size={17} />,
-  },
-];
+/* =========================================================
+   Admin › Dashboard
+   The top of the page (greeting, today's work, headline numbers) comes from one light request
+   (GET /api/adminops/admin/dashboard/). Every section further down loads its own data only when
+   it scrolls into view, so opening the dashboard is quick.
+   Everything is real data, and each person only sees the areas their role can open.
+   ========================================================= */
 
-const MODULE_ICON = {
-  Warehouse: Boxes,
-  Donations: Gift,
-  Pickups: Truck,
-  Orders: ShoppingCart,
-  Products: ShoppingBag,
-  Rewards: Gift,
-  Sales: IndianRupee,
-  Users: UserPlus,
-  ReMakers: BadgeCheck,
-  Complaints: ShieldAlert,
-  System: Sparkles,
-};
-const MODULE_TYPE = {
-  Users: "user",
-  ReMakers: "remaker",
-  Orders: "order",
-  Sales: "order",
-  Donations: "donation",
-  Pickups: "pickup",
-  Warehouse: "pickup",
-  Products: "order",
-  Complaints: "user",
-};
-const ORDER_STATUS = {
-  Completed: ["Delivered", "delivered"],
-  Confirmed: ["Processing", "processing"],
-  Pending: ["Pending", "pending"],
-  Cancelled: ["Cancelled", "cancelled"],
-  Returned: ["Returned", "cancelled"],
-};
-const pctChange = (cur, prev) => delta(cur, prev);
-const changeLabel = (cur, prev) => {
-  const d = pctChange(cur, prev);
-  if (d == null) return { change: "New", trend: "up" };
-  return { change: `${d >= 0 ? "+" : ""}${d}%`, trend: d < 0 ? "down" : "up" };
-};
-
-function StatCard({ stat, onClick }) {
-  const Icon = stat.icon;
-
-  return (
-    <button
-      type="button"
-      className="admin-dashboard-stat-card"
-      onClick={onClick}
-    >
-      <div className="admin-dashboard-stat-top">
-        <div className="admin-dashboard-stat-icon">
-          <Icon size={18} strokeWidth={1.8} />
-        </div>
-
-        <ArrowUpRight size={15} className="admin-dashboard-stat-arrow" />
-      </div>
-
-      <div className="admin-dashboard-stat-body">
-        <span>{stat.title}</span>
-
-        <strong>{stat.value}</strong>
-
-        <div className="admin-dashboard-stat-bottom">
-          <span className={stat.trend === "down" ? "negative" : "positive"}>
-            {stat.trend === "down" ? (
-              <TrendingDown size={11} />
-            ) : (
-              <TrendingUp size={11} />
-            )}
-
-            {stat.change}
-          </span>
-
-          <small>{stat.description}</small>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-export default function AdminDashboard() {
-  const navigate = useNavigate();
-
-  const adminName = (() => {
-    try {
-      const storedAdmin = localStorage.getItem("reorbit_admin");
-
-      if (!storedAdmin) {
-        return "Admin";
-      }
-
-      const admin = JSON.parse(storedAdmin);
-
-      return admin?.full_name || admin?.fullName || admin?.name || "Admin";
-    } catch {
-      return "Admin";
+/* renders `children` once the placeholder is near the screen */
+function LazySection({ minHeight = 260, children, label }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (shown) return undefined;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setShown(true);
+      return undefined;
     }
-  })();
-
-  const access = useAccess();
-  const firstName = (access.me?.name || adminName).trim().split(/\s+/)[0];
-
-  const report = useReport("6m");
-  const dashboard = useDashboard();
-  const orders = useOrders();
-  const donations = useDonations();
-  const pickups = usePickups();
-  const complaintCounts = useComplaintCounts();
-  useSupportTickets("admin", {}, access.canSee("support"));
-  const supportStatus = useSupportStatus("admin");
-
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const todayLabel = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  /* What needs a person today. Hidden if the team member can't open that area. */
-  const attention = React.useMemo(() => {
-    const openTickets = supportStatus.counts.Open || 0;
-    const toReview = donations.filter((d) => d.status === "Pending").length;
-    const openPickups = pickups.filter((p) =>
-      ["Requested", "Scheduled"].includes(p.status),
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "240px 0px" },
     );
-    const reported = dashboard.operations.complaints?.reported_listings || 0;
-    const overduePickups = report.donations.pk.kpi.overdue || 0;
-    const tiles = [
-      {
-        key: "complaints",
-        area: "complaints",
-        icon: ShieldAlert,
-        label: "Open complaints",
-        count: complaintCounts.active,
-        sub: complaintCounts.overdue
-          ? `${complaintCounts.overdue} past deadline`
-          : `${complaintCounts.high} high priority`,
-        urgent: complaintCounts.overdue > 0,
-        path: "/admin-complaints",
-      },
-      {
-        key: "support",
-        area: "support",
-        icon: Sparkles,
-        label: "Support tickets",
-        count: openTickets,
-        sub: "waiting for a reply",
-        urgent: false,
-        path: "/admin-support",
-      },
-      {
-        key: "reported",
-        area: "products",
-        icon: AlertCircle,
-        label: "Reported listings",
-        count: reported,
-        sub: "reports to look at",
-        urgent: reported > 0,
-        path: "/admin-products",
-      },
-      {
-        key: "donations",
-        area: "donations",
-        icon: Gift,
-        label: "Donations to review",
-        count: toReview,
-        sub: "accept or reject",
-        urgent: false,
-        path: "/admin-donations",
-      },
-      {
-        key: "pickups",
-        area: "pickups",
-        icon: Truck,
-        label: "Open pickups",
-        count: openPickups.length,
-        sub: overduePickups
-          ? `${overduePickups} overdue`
-          : "to assign or complete",
-        urgent: overduePickups > 0,
-        path: "/admin-pickups",
-      },
-    ].filter((t) => access.canSee(t.area));
-    return { tiles, total: tiles.reduce((n, t) => n + t.count, 0) };
-  }, [
-    supportStatus.counts,
-    donations,
-    pickups,
-    dashboard,
-    complaintCounts,
-    access,
-    report,
-  ]);
-
-  const live = React.useMemo(() => {
-    const o = report.orders.kpi;
-    const dn = report.donations.kpi;
-    const activeUsers = dashboard.users.total;
-    const activeMakers = dashboard.remakers.total;
-    const liveProducts = dashboard.products.live;
-    const pendingPickups = pickups.filter((p) =>
-      ["Requested", "Scheduled"].includes(p.status),
-    ).length;
-    const { kg, reused, co2_tonnes: co2 } = dashboard.impact;
-    const newUsers = report.community.kpi.newInRange;
-    const monthAgo = report.orders.trend;
-    const cats = report.orders.categoryRows.slice(0, 5);
-    const catTotal = cats.reduce((n, c) => n + c.value, 0) || 1;
-    const listed = dashboard.products.by_category || {};
-    return {
-      stats: [
-        {
-          title: "Total Users",
-          value: num(activeUsers),
-          change: `+${newUsers} new`,
-          trend: "up",
-          description: "joined in 6 months",
-          icon: Users,
-          path: "/admin-users",
-        },
-        {
-          title: "ReMakers",
-          value: num(activeMakers),
-          change: `${dashboard.remakers.active} active`,
-          trend: "up",
-          description: "creators on ReOrbit",
-          icon: Palette,
-          path: "/admin-remakers",
-        },
-        {
-          title: "Products",
-          value: num(liveProducts),
-          change: `${dashboard.products.off_market} off market`,
-          trend: "down",
-          description: "live listings",
-          icon: ShoppingBag,
-          path: "/admin-products",
-        },
-        {
-          title: "Orders",
-          value: num(o.orders),
-          ...changeLabel(o.orders, o.ordersPrev),
-          description: "last 6 months",
-          icon: Package,
-          path: "/admin-orders",
-        },
-        {
-          title: "Revenue",
-          value: compactInr(o.revenue),
-          ...changeLabel(o.revenue, o.revenuePrev),
-          description: "paid order value",
-          icon: IndianRupee,
-          path: "/admin-reports?tab=sales",
-        },
-        {
-          title: "Donations",
-          value: num(dn.total),
-          ...changeLabel(dn.total, dn.totalPrev),
-          description: `${dn.pending} awaiting review`,
-          icon: Gift,
-          path: "/admin-donations",
-        },
-        {
-          title: "Pickups",
-          value: num(pendingPickups),
-          change: `${report.donations.pk.kpi.overdue} overdue`,
-          trend: report.donations.pk.kpi.overdue ? "down" : "up",
-          description: "open requests",
-          icon: Truck,
-          path: "/admin-pickups",
-        },
-        {
-          title: "CO₂ Saved",
-          value: `${co2.toFixed(1)}T`,
-          change: `${num(reused)} items`,
-          trend: "up",
-          description: "estimated impact",
-          icon: Leaf,
-          path: "/admin-reports?tab=donations",
-        },
-      ],
-      revenue: o.revenue,
-      revenueChange: changeLabel(o.revenue, o.revenuePrev),
-      categories: cats.map((c) => ({
-        name: c.label,
-        value: Math.round((c.value / catTotal) * 100),
-        count: `${listed[c.label] || 0} live products · ${compactInr(c.value)}`,
-      })),
-      approvals: dashboard.approvals,
-      pendingCount: dashboard.pending_count,
-      activities: dashboard.activities,
-      recentOrders: orders.slice(0, 5),
-      kg,
-      reused,
-      co2,
-      activeUsers,
-      trend: monthAgo,
-    };
-  }, [report, dashboard, orders, donations, pickups]);
-  const PATH_KEY = {
-    "/admin-users": "users",
-    "/admin-remakers": "remakers",
-    "/admin-products": "products",
-    "/admin-orders": "orders",
-    "/admin-reports?tab=sales": "reports",
-    "/admin-donations": "donations",
-    "/admin-pickups": "pickups",
-    "/admin-reports?tab=donations": "reports",
-  };
-  const stats = live.stats.filter((x) =>
-    access.canSee(PATH_KEY[x.path] || "dashboard"),
-  );
-  const {
-    categories,
-    approvals: pendingApprovals,
-    activities,
-    recentOrders,
-  } = live;
-
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown]);
   return (
-    <div className="admin-dashboard">
-      <div className="admin-dashboard-container">
-        {/* HEADER */}
-        <section className="dash-head">
-          <div>
-            <div className="admin-dashboard-eyebrow">
-              <span className="admin-dashboard-eyebrow-dot" />
-              REORBIT ADMIN CONTROL CENTER
-            </div>
-            <h2>
-              {greeting}, <span>{firstName}.</span>
-            </h2>
-            <p>
-              {todayLabel} ·{" "}
-              {attention.total > 0
-                ? `${attention.total} thing${attention.total === 1 ? "" : "s"} need your attention.`
-                : "Everything is up to date."}
-            </p>
-          </div>
-          <div className="dash-head-actions">
-            {access.canSee("reports") && (
-              <button
-                type="button"
-                className="admin-dashboard-primary-button"
-                onClick={() => navigate("/admin-reports")}
-              >
-                View reports
-                <ArrowRight size={15} />
-              </button>
-            )}
-            <button
-              type="button"
-              className="admin-dashboard-secondary-button"
-              onClick={() => navigate("/admin-notifications")}
-            >
-              <Clock3 size={15} />
-              Notifications
-            </button>
-          </div>
-        </section>
-
-        {/* NEEDS ATTENTION */}
-        <section className="dash-attn" aria-label="Needs attention">
-          {attention.tiles.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                type="button"
-                key={t.key}
-                className={`dash-attn-tile ${t.count > 0 ? (t.urgent ? "urgent" : "open") : "clear"}`}
-                onClick={() => navigate(t.path)}
-              >
-                <span className="dash-attn-icon">
-                  <Icon size={18} strokeWidth={1.8} />
-                </span>
-                <span className="dash-attn-body">
-                  <strong>{t.count}</strong>
-                  <em>{t.label}</em>
-                  <small>{t.count === 0 ? "All clear" : t.sub}</small>
-                </span>
-                <ArrowUpRight size={14} className="dash-attn-arrow" />
-              </button>
-            );
-          })}
-        </section>
-
-        {/* APPROVALS + ACTIVITY */}
-        <section className="admin-dashboard-middle-grid">
-          <div className="admin-dashboard-panel">
-            <div className="admin-dashboard-section-heading">
-              <div>
-                <span className="admin-dashboard-panel-label">
-                  NEEDS ATTENTION
-                </span>
-
-                <h3>Waiting on you</h3>
-              </div>
-
-              <span className="admin-dashboard-count-badge">
-                {live.pendingCount} to do
-              </span>
-            </div>
-
-            <div className="admin-dashboard-approval-list">
-              {pendingApprovals.length === 0 && (
-                <p className="dash-empty">
-                  Nothing needs your attention right now.
-                </p>
-              )}
-              {pendingApprovals.map((approval) => {
-                const Icon = MODULE_ICON[approval.module] || AlertCircle;
-
-                return (
-                  <div
-                    className="admin-dashboard-approval-item"
-                    key={approval.id}
-                  >
-                    <div className="admin-dashboard-approval-icon">
-                      <Icon size={16} strokeWidth={1.8} />
-                    </div>
-
-                    <div className="admin-dashboard-approval-content">
-                      <span>{approval.module}</span>
-
-                      <strong>{approval.title}</strong>
-
-                      <p>
-                        {approval.message.length > 70
-                          ? `${approval.message.slice(0, 68)}…`
-                          : approval.message}
-                      </p>
-                    </div>
-
-                    <div className="admin-dashboard-approval-right">
-                      <small>
-                        <Clock3 size={10} />
-                        {timeAgo(approval.at)}
-                      </small>
-
-                      <button
-                        type="button"
-                        onClick={() => navigate(approval.path)}
-                      >
-                        {approval.actionLabel}
-                        <ArrowUpRight size={12} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              className="admin-dashboard-panel-footer"
-              onClick={() => navigate("/admin-notifications")}
-            >
-              View all pending items
-              <ArrowRight size={13} />
-            </button>
-          </div>
-
-          <div className="admin-dashboard-panel">
-            <div className="admin-dashboard-section-heading">
-              <div>
-                <span className="admin-dashboard-panel-label">LIVE FEED</span>
-
-                <h3>Recent activity</h3>
-              </div>
-
-              <Sparkles size={17} className="admin-dashboard-heading-icon" />
-            </div>
-
-            <div className="admin-dashboard-activity-list">
-              {activities.map((activity) => {
-                const Icon = MODULE_ICON[activity.module] || Sparkles;
-
-                return (
-                  <div
-                    className="admin-dashboard-activity-item"
-                    key={activity.id}
-                  >
-                    <div
-                      className={`admin-dashboard-activity-icon ${MODULE_TYPE[activity.module] || "order"}`}
-                    >
-                      <Icon size={14} strokeWidth={1.8} />
-                    </div>
-
-                    <div className="admin-dashboard-activity-content">
-                      <strong>{activity.title}</strong>
-
-                      <p>
-                        {activity.message.length > 64
-                          ? `${activity.message.slice(0, 62)}…`
-                          : activity.message}
-                      </p>
-
-                      <span>
-                        <Clock3 size={10} />
-                        {timeAgo(activity.at)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              className="admin-dashboard-panel-footer"
-              onClick={() => navigate("/admin-notifications")}
-            >
-              View notification center
-              <ArrowRight size={13} />
-            </button>
-          </div>
-        </section>
-
-        {/* STATS */}
-        <section className="admin-dashboard-stats">
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.title}
-              stat={stat}
-              onClick={() => navigate(stat.path)}
-            />
-          ))}
-        </section>
-
-        {/* ANALYTICS */}
-        <section className="admin-dashboard-analytics-grid">
-          <div className="admin-dashboard-panel admin-dashboard-revenue-panel">
-            <div className="admin-dashboard-panel-header">
-              <div>
-                <span className="admin-dashboard-panel-label">PERFORMANCE</span>
-
-                <h3>Revenue overview</h3>
-
-                <p>Paid order value, last 6 months. Hover for details.</p>
-              </div>
-
-              <div className="admin-dashboard-chart-value">
-                <strong>{compactInr(live.revenue)}</strong>
-
-                <span>
-                  {live.revenueChange.trend === "down" ? (
-                    <TrendingDown size={11} />
-                  ) : (
-                    <TrendingUp size={11} />
-                  )}
-                  {live.revenueChange.change}
-                </span>
-              </div>
-            </div>
-
-            <div className="rp-scope">
-              <LineChart
-                data={report.orders.trend}
-                series={[
-                  {
-                    key: "revenue",
-                    label: "Order value",
-                    color: "var(--rp-c1)",
-                  },
-                ]}
-                format={inr}
-                axisFormat={compactInr}
-                area
-              />
-            </div>
-          </div>
-
-          <div className="admin-dashboard-panel admin-dashboard-category-panel">
-            <div className="admin-dashboard-panel-header">
-              <div>
-                <span className="admin-dashboard-panel-label">MARKETPLACE</span>
-
-                <h3>Sales by category</h3>
-
-                <p>Share of paid order value.</p>
-              </div>
-
-              <button
-                type="button"
-                className="admin-dashboard-more-button"
-                onClick={() => navigate("/admin-reports?tab=sales")}
-              >
-                <MoreHorizontal size={18} />
-              </button>
-            </div>
-
-            <div className="admin-dashboard-category-list">
-              {categories.map((category) => (
-                <div className="admin-dashboard-category" key={category.name}>
-                  <div className="admin-dashboard-category-top">
-                    <span>{category.name}</span>
-
-                    <strong>{category.value}%</strong>
-                  </div>
-
-                  <div className="admin-dashboard-category-track">
-                    <div
-                      style={{
-                        width: `${category.value}%`,
-                      }}
-                    />
-                  </div>
-
-                  <small>{category.count}</small>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ORDERS + IMPACT */}
-        <section className="admin-dashboard-bottom-grid">
-          <div className="admin-dashboard-panel admin-dashboard-orders-panel">
-            <div className="admin-dashboard-section-heading">
-              <div>
-                <span className="admin-dashboard-panel-label">ORDERS</span>
-
-                <h3>Recent orders</h3>
-              </div>
-
-              <button
-                type="button"
-                className="admin-dashboard-view-all"
-                onClick={() => navigate("/admin-orders")}
-              >
-                View all
-                <ArrowRight size={13} />
-              </button>
-            </div>
-
-            <div className="admin-dashboard-orders-table">
-              <div className="admin-dashboard-orders-header">
-                <span>ORDER</span>
-                <span>CUSTOMER</span>
-                <span>PRODUCT</span>
-                <span>AMOUNT</span>
-                <span>STATUS</span>
-              </div>
-
-              {recentOrders.map((order) => {
-                const [label, cls] = ORDER_STATUS[order.order_status] || [
-                  order.order_status,
-                  "pending",
-                ];
-                return (
-                  <div
-                    className="admin-dashboard-order-row dash-order-link"
-                    key={order.order_id}
-                    role="link"
-                    tabIndex={0}
-                    onClick={() => navigate(`/admin-orders/${order.order_id}`)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" &&
-                      navigate(`/admin-orders/${order.order_id}`)
-                    }
-                  >
-                    <strong>{order.order_id}</strong>
-
-                    <span>{order.buyer?.name || "—"}</span>
-
-                    <div className="admin-dashboard-order-product">
-                      <div>
-                        <Package size={15} />
-                      </div>
-
-                      <span>{order.listing?.title || "Order"}</span>
-                    </div>
-
-                    <strong>{inr(order.amount)}</strong>
-
-                    <span className={`admin-dashboard-order-status ${cls}`}>
-                      {label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="admin-dashboard-panel admin-dashboard-impact-panel">
-            <div className="admin-dashboard-section-heading">
-              <div>
-                <span className="admin-dashboard-panel-label">
-                  SUSTAINABILITY
-                </span>
-
-                <h3>Platform impact</h3>
-              </div>
-
-              <Leaf size={19} className="admin-dashboard-heading-icon" />
-            </div>
-
-            <div className="admin-dashboard-impact-main">
-              <div className="admin-dashboard-impact-circle">
-                <div>
-                  <strong>{live.co2.toFixed(1)}</strong>
-
-                  <span>tons</span>
-                </div>
-              </div>
-
-              <div>
-                <span>Estimated CO₂ saved</span>
-
-                <strong>{num(live.reused)} items</strong>
-
-                <small>kept in use, not landfill</small>
-              </div>
-            </div>
-
-            <div className="admin-dashboard-impact-stats">
-              <div>
-                <Recycle size={15} />
-
-                <div>
-                  <strong>{num(live.reused)}</strong>
-
-                  <span>items reused</span>
-                </div>
-              </div>
-
-              <div>
-                <Boxes size={15} />
-
-                <div>
-                  <strong>{num(live.kg)}</strong>
-
-                  <span>kg donated</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="admin-dashboard-impact-button"
-              onClick={() => navigate("/admin-reports")}
-            >
-              Explore impact report
-              <ArrowUpRight size={14} />
-            </button>
-          </div>
-        </section>
-
-        {/* QUICK ACTIONS */}
-        <section className="admin-dashboard-quick-section">
-          <div className="admin-dashboard-section-heading">
-            <div>
-              <span className="admin-dashboard-panel-label">QUICK ACTIONS</span>
-
-              <h3>Manage ReOrbit</h3>
-            </div>
-          </div>
-
-          <div className="admin-dashboard-quick-grid">
-            {QUICK.filter((q) => !q.key || access.canSee(q.key)).map((q) => (
-              <button
-                type="button"
-                key={q.path}
-                onClick={() => navigate(q.path)}
-              >
-                <div>{q.icon}</div>
-
-                <span>{q.label}</span>
-
-                <ChevronRight size={15} />
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
+    <div ref={ref} className="adb-lazy" style={shown ? undefined : { minHeight }} aria-busy={!shown}>
+      {shown ? children : <Skeleton label={label} />}
     </div>
   );
 }
 
-function WarehouseIcon() {
+function Skeleton({ label = "Loading…", rows = 3 }) {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 21h18" />
-      <path d="M5 21V9l7-5 7 5v12" />
-      <path d="M9 21v-6h6v6" />
-      <path d="M9 10h.01" />
-      <path d="M15 10h.01" />
-    </svg>
+    <div className="adb-card adb-skel" aria-label={label}>
+      <i className="adb-skel-title" />
+      {Array.from({ length: rows }).map((_, n) => (
+        <i key={n} className="adb-skel-line" style={{ width: `${92 - n * 14}%` }} />
+      ))}
+    </div>
+  );
+}
+
+function SectionHead({ eyebrow, title, action, onAction }) {
+  return (
+    <div className="adb-head">
+      <div>
+        <span className="adb-eyebrow">{eyebrow}</span>
+        <h3>{title}</h3>
+      </div>
+      {action && (
+        <button type="button" className="adb-link" onClick={onAction}>
+          {action} <ArrowRight size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+const trendOf = (cur, prev) => {
+  const d = delta(cur, prev);
+  if (d == null) return { text: "New", down: false };
+  return { text: `${d >= 0 ? "+" : ""}${d}%`, down: d < 0 };
+};
+
+/* ---------- today's work, from the operations counts the server already scoped to this role ---------- */
+function todayTiles(ops) {
+  const t = [];
+  const add = (cond, tile) => cond && t.push(tile);
+  const o = ops.orders;
+  add(o, { key: "pack", icon: PackageCheck, label: "Orders to pack", count: o?.to_pack || 0, path: "/admin-orders", tone: "open" });
+  add(o, { key: "ship", icon: Truck, label: "Ready to ship", count: o?.to_ship || 0, path: "/admin-orders", tone: "open" });
+  add(o, { key: "failed", icon: XCircle, label: "Failed deliveries", count: o?.delivery_failed || 0, path: "/admin-orders", tone: "urgent" });
+  add(o, { key: "returns", icon: RotateCcw, label: "Open returns", count: o?.returns_open || 0, path: "/admin-orders", tone: "urgent" });
+  add(o, { key: "refunds", icon: HandCoins, label: "Refunds due", count: o?.refunds_due || 0, path: "/admin-earnings?tab=refunds", tone: "urgent" });
+  add(ops.donations, { key: "donations", icon: Gift, label: "Donations to review", count: ops.donations?.to_review || 0, path: "/admin-donations", tone: "open" });
+  add(ops.pickups, {
+    key: "pickups", icon: Truck, label: "Open pickups", count: ops.pickups?.open || 0, path: "/admin-pickups",
+    tone: ops.pickups?.overdue ? "urgent" : "open", sub: ops.pickups?.overdue ? `${ops.pickups.overdue} overdue` : "",
+  });
+  add(ops.payouts, {
+    key: "payouts", icon: Wallet, label: "Payouts to send", count: ops.payouts?.pending || 0, path: "/admin-earnings",
+    tone: "open", sub: ops.payouts?.pending_amount ? inr(ops.payouts.pending_amount) : "",
+  });
+  add(ops.warehouse, {
+    key: "warehouse", icon: Boxes, label: "At the dock", count: ops.warehouse?.at_dock || 0, path: "/admin-warehouse",
+    tone: ops.warehouse?.alerts ? "urgent" : "open", sub: ops.warehouse?.alerts ? `${ops.warehouse.alerts} alerts` : "",
+  });
+  add(ops.complaints, { key: "complaints", icon: ShieldAlert, label: "Open complaints", count: ops.complaints?.open || 0, path: "/admin-complaints", tone: "urgent" });
+  add(ops.support, { key: "support", icon: LifeBuoy, label: "Support tickets", count: ops.support?.open || 0, path: "/admin-support", tone: "open" });
+  return t;
+}
+
+/* ---------- sections that load on scroll ---------- */
+function Performance({ navigate }) {
+  const report = useReport("6m");
+  if (report.loading) return <Skeleton label="Loading performance" rows={5} />;
+  const o = report.orders.kpi;
+  const dn = report.donations.kpi;
+  const cats = report.orders.categoryRows.slice(0, 6);
+  const total = cats.reduce((n, c) => n + c.value, 0) || 1;
+  const kpis = [
+    { label: "Revenue", value: compactInr(o.revenue), t: trendOf(o.revenue, o.revenuePrev), icon: IndianRupee },
+    { label: "Orders", value: num(o.orders), t: trendOf(o.orders, o.ordersPrev), icon: Package },
+    { label: "Donations", value: num(dn.total), t: trendOf(dn.total, dn.totalPrev), icon: Gift },
+    { label: "New members", value: num(report.community.kpi.newInRange), t: null, icon: UserPlus },
+  ];
+  return (
+    <section className="adb-card">
+      <SectionHead eyebrow="Last 6 months" title="Performance" action="Full reports" onAction={() => navigate("/admin-reports")} />
+      <div className="adb-kpis">
+        {kpis.map((k) => {
+          const Icon = k.icon;
+          return (
+            <div key={k.label} className="adb-kpi">
+              <span className="adb-kpi-icon">
+                <Icon size={16} />
+              </span>
+              <small>{k.label}</small>
+              <strong>{k.value}</strong>
+              {k.t && (
+                <em className={k.t.down ? "down" : "up"}>
+                  {k.t.down ? <TrendingDown size={12} /> : <TrendingUp size={12} />} {k.t.text} vs previous
+                </em>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="adb-perf">
+        <div className="adb-perf-chart rp-scope">
+          <h4>Paid order value</h4>
+          <LineChart
+            data={report.orders.trend}
+            series={[{ key: "revenue", label: "Order value", color: "var(--rp-c1)" }]}
+            format={inr}
+            axisFormat={compactInr}
+            area
+          />
+        </div>
+        <div className="adb-perf-cats">
+          <h4>Sales by category</h4>
+          {cats.length === 0 && <p className="adb-empty">No paid orders in this period yet.</p>}
+          {cats.map((c) => {
+            const pct = Math.round((c.value / total) * 100);
+            return (
+              <div key={c.label} className="adb-bar">
+                <div>
+                  <span>{c.label}</span>
+                  <b>{pct}%</b>
+                </div>
+                <i>
+                  <span style={{ width: `${pct}%` }} />
+                </i>
+                <small>{compactInr(c.value)}</small>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Queue({ dashboard, navigate }) {
+  const ICON = { Donations: Gift, Pickups: Truck, Orders: ShoppingCart, Products: ShoppingBag, Users: UserPlus, ReMakers: Palette, Complaints: ShieldAlert, Warehouse: Boxes, Sales: IndianRupee, Rewards: Gift };
+  return (
+    <div className="adb-two">
+      <section className="adb-card">
+        <SectionHead eyebrow="Needs a decision" title="Waiting on you" action="Notifications" onAction={() => navigate("/admin-notifications")} />
+        {dashboard.approvals.length === 0 ? (
+          <p className="adb-empty">
+            <CheckCircle2 size={16} /> Nothing is waiting on you right now.
+          </p>
+        ) : (
+          <ul className="adb-list">
+            {dashboard.approvals.map((a) => {
+              const Icon = ICON[a.module] || AlertTriangle;
+              return (
+                <li key={a.id}>
+                  <span className="adb-li-icon">
+                    <Icon size={15} />
+                  </span>
+                  <div>
+                    <small>{a.module}</small>
+                    <strong>{a.title}</strong>
+                    <p>{a.message}</p>
+                  </div>
+                  <button type="button" className="adb-chip-btn" onClick={() => navigate(a.path)}>
+                    {a.actionLabel || "Open"} <ArrowUpRight size={12} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+      <section className="adb-card">
+        <SectionHead eyebrow="Live feed" title="Recent activity" />
+        {dashboard.activities.length === 0 ? (
+          <p className="adb-empty">No activity yet.</p>
+        ) : (
+          <ul className="adb-feed">
+            {dashboard.activities.map((a) => {
+              const Icon = ICON[a.module] || Sparkles;
+              return (
+                <li key={a.id}>
+                  <span className="adb-feed-dot">
+                    <Icon size={13} />
+                  </span>
+                  <div>
+                    <strong>{a.title}</strong>
+                    <p>{a.message}</p>
+                    <small>
+                      <Clock3 size={11} /> {timeAgo(a.at)}
+                    </small>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+const ORDER_TONE = { Delivered: "good", Cancelled: "bad", Returned: "bad", Shipped: "info", Packed: "info", Confirmed: "wait", Pending_Payment: "wait" };
+function RecentOrders({ navigate }) {
+  const orders = useOrders();
+  const rows = orders.slice(0, 6);
+  return (
+    <section className="adb-card">
+      <SectionHead eyebrow="Marketplace" title="Recent orders" action="All orders" onAction={() => navigate("/admin-orders")} />
+      {rows.length === 0 ? (
+        <p className="adb-empty">No orders yet.</p>
+      ) : (
+        <div className="adb-table" role="table">
+          <div className="adb-tr adb-th" role="row">
+            <span>Order</span>
+            <span>Buyer</span>
+            <span>Item</span>
+            <span>Amount</span>
+            <span>Status</span>
+          </div>
+          {rows.map((o) => (
+            <button type="button" key={o.order_id} className="adb-tr" role="row" onClick={() => navigate(`/admin-orders/${o.order_id}`)}>
+              <b>{o.order_id}</b>
+              <span>{o.buyer?.name || "—"}</span>
+              <span className="adb-ellipsis">{o.listing?.title || "Order"}</span>
+              <b>{inr(o.amount)}</b>
+              <span className={`adb-pill ${ORDER_TONE[o.server_status] || "wait"}`}>
+                {String(o.server_status || o.order_status || "").replace(/_/g, " ")}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MoneyAndImpact({ dashboard, navigate, canMoney }) {
+  const [money, setMoney] = useState(null);
+  useEffect(() => {
+    if (!canMoney) return;
+    adminPayoutApi.summary().then(setMoney).catch(() => setMoney(false));
+  }, [canMoney]);
+  const { kg, reused, co2_tonnes: co2 } = dashboard.impact;
+  return (
+    <div className="adb-two">
+      {canMoney && (
+        <section className="adb-card">
+          <SectionHead eyebrow="Seller money" title="Payouts & refunds" action="Open earnings" onAction={() => navigate("/admin-earnings")} />
+          {money === null ? (
+            <Skeleton rows={3} />
+          ) : money === false ? (
+            <p className="adb-empty">Couldn't load payouts.</p>
+          ) : (
+            <>
+              {(money.due?.overdue || 0) > 0 && (
+                <p className="adb-alert">
+                  <AlertTriangle size={15} /> {money.due.overdue} payout(s) overdue · {inr(money.due.overdue_amount)}
+                </p>
+              )}
+              <dl className="adb-money">
+                <div>
+                  <dt>Waiting to be paid</dt>
+                  <dd>{inr(money.awaiting_payment)}</dd>
+                </div>
+                <div>
+                  <dt>Available to sellers</dt>
+                  <dd>{inr(money.available)}</dd>
+                </div>
+                <div>
+                  <dt>Clearing</dt>
+                  <dd>{inr(money.pending)}</dd>
+                </div>
+                <div>
+                  <dt>COD cash to collect</dt>
+                  <dd>
+                    {inr(money.cod_to_collect)} <small>({money.cod_orders} orders)</small>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Refunds open</dt>
+                  <dd>{num(money.refunds_open)}</dd>
+                </div>
+                <div>
+                  <dt>Paid out in total</dt>
+                  <dd>{inr(money.paid_total)}</dd>
+                </div>
+              </dl>
+            </>
+          )}
+        </section>
+      )}
+      <section className="adb-card adb-impact">
+        <SectionHead eyebrow="Sustainability" title="Platform impact" action="Impact report" onAction={() => navigate("/admin-reports?tab=donations")} />
+        <div className="adb-impact-main">
+          <div className="adb-ring">
+            <strong>{Number(co2 || 0).toFixed(1)}</strong>
+            <span>tonnes CO₂</span>
+          </div>
+          <ul>
+            <li>
+              <Recycle size={16} />
+              <div>
+                <strong>{num(reused)}</strong>
+                <span>items kept in use</span>
+              </div>
+            </li>
+            <li>
+              <Boxes size={16} />
+              <div>
+                <strong>{num(kg)} kg</strong>
+                <span>donated and weighed</span>
+              </div>
+            </li>
+            <li>
+              <Leaf size={16} />
+              <div>
+                <strong>Estimated</strong>
+                <span>from weight and items reused</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const QUICK = [
+  { key: "users", label: "Users", path: "/admin-users", icon: Users },
+  { key: "remakers", label: "ReMakers", path: "/admin-remakers", icon: Palette },
+  { key: "products", label: "Products", path: "/admin-products", icon: ShoppingBag },
+  { key: "orders", label: "Orders", path: "/admin-orders", icon: ShoppingCart },
+  { key: "donations", label: "Donations", path: "/admin-donations", icon: Gift },
+  { key: "pickups", label: "Pickups", path: "/admin-pickups", icon: Truck },
+  { key: "warehouse", label: "Warehouse", path: "/admin-warehouse", icon: Boxes },
+  { key: "content", label: "Content", path: "/admin-content", icon: LayoutTemplate },
+  { key: "complaints", label: "Complaints", path: "/admin-complaints", icon: ShieldAlert },
+  { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
+  { key: "reports", label: "Reports", path: "/admin-reports", icon: TrendingUp },
+  { key: null, label: "Settings", path: "/admin-settings", icon: Settings },
+];
+
+/* ---------- the page ---------- */
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const access = useAccess();
+  const dashboard = useDashboard();
+  const [health, setHealth] = useState(null);
+
+  useEffect(() => {
+    apiRequest("/adminops/admin/system-status/")
+      .then((r) => setHealth(r.data))
+      .catch(() => setHealth(null));
+  }, []);
+
+  const firstName = String(access.me?.name || "Admin").trim().split(/\s+/)[0];
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+
+  const tiles = todayTiles(dashboard.operations || {});
+  const todo = tiles.reduce((n, t) => n + t.count, 0);
+  const headline = [
+    access.canSee("users") && { label: "Members", value: num(dashboard.users.total), sub: `${num(dashboard.users.active)} active`, icon: Users, path: "/admin-users" },
+    access.canSee("remakers") && { label: "ReMakers", value: num(dashboard.remakers.total), sub: `${num(dashboard.remakers.active)} active`, icon: Palette, path: "/admin-remakers" },
+    access.canSee("products") && { label: "Live products", value: num(dashboard.products.live), sub: `${num(dashboard.products.off_market)} off market`, icon: ShoppingBag, path: "/admin-products" },
+    { label: "Items reused", value: num(dashboard.impact.reused), sub: `${Number(dashboard.impact.co2_tonnes || 0).toFixed(1)} t CO₂ saved`, icon: Recycle, path: access.canSee("reports") ? "/admin-reports" : null },
+  ].filter(Boolean);
+
+  return (
+    <div className="adb">
+      {/* hero */}
+      <header className="adb-hero">
+        <div>
+          <span className="adb-hero-eyebrow">
+            <Sparkles size={13} /> ReOrbit control centre
+          </span>
+          <h2>
+            {greeting}, <em>{firstName}</em>.
+          </h2>
+          <p>
+            {today} ·{" "}
+            {!dashboard.loaded ? "getting today's numbers…" : todo > 0 ? `${num(todo)} things on today's list.` : "Everything is up to date."}
+          </p>
+        </div>
+        <div className="adb-hero-side">
+          {health && (
+            <button type="button" className={`adb-health ${health.overall}`} onClick={() => navigate("/admin-help")}>
+              {health.overall === "ok" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
+              {health.overall === "ok" ? "All systems working" : health.overall === "warn" ? "Some things to check" : "Something is down"}
+            </button>
+          )}
+          <div className="adb-hero-actions">
+            {access.canSee("reports") && (
+              <button type="button" className="adb-btn light" onClick={() => navigate("/admin-reports")}>
+                Reports <ArrowRight size={15} />
+              </button>
+            )}
+            <button type="button" className="adb-btn ghost" onClick={() => navigate("/admin-notifications")}>
+              <Bell size={15} /> Notifications
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {dashboard.error && (
+        <p className="adb-alert">
+          <AlertTriangle size={15} /> {dashboard.error}{" "}
+          <button type="button" className="adb-link" onClick={dashboard.retry}>
+            Try again
+          </button>
+        </p>
+      )}
+
+      {/* today's work */}
+      {tiles.length > 0 && (
+        <section className="adb-card">
+          <SectionHead eyebrow="Today" title="What needs doing" />
+          <div className="adb-tiles">
+            {tiles.map((t) => {
+              const Icon = t.icon;
+              const state = t.count === 0 ? "clear" : t.tone;
+              return (
+                <button key={t.key} type="button" className={`adb-tile ${state}`} onClick={() => navigate(t.path)}>
+                  <span className="adb-tile-icon">
+                    <Icon size={17} />
+                  </span>
+                  <strong>{dashboard.loaded ? num(t.count) : "–"}</strong>
+                  <span>{t.label}</span>
+                  <small>{t.count === 0 ? "All clear" : t.sub || "Open"}</small>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* headline numbers */}
+      <section className="adb-stats">
+        {headline.map((h) => {
+          const Icon = h.icon;
+          return (
+            <button key={h.label} type="button" className="adb-stat" onClick={() => h.path && navigate(h.path)} disabled={!h.path}>
+              <span className="adb-stat-icon">
+                <Icon size={18} />
+              </span>
+              <div>
+                <small>{h.label}</small>
+                <strong>{dashboard.loaded ? h.value : "–"}</strong>
+                <span>{h.sub}</span>
+              </div>
+              {h.path && <ChevronRight size={16} className="adb-stat-go" />}
+            </button>
+          );
+        })}
+      </section>
+
+      {/* everything below loads as you scroll */}
+      {access.canSee("reports") && (
+        <LazySection minHeight={420} label="Loading performance">
+          <Performance navigate={navigate} />
+        </LazySection>
+      )}
+
+      <LazySection minHeight={300} label="Loading your queue">
+        <Queue dashboard={dashboard} navigate={navigate} />
+      </LazySection>
+
+      {access.canSee("orders") && (
+        <LazySection minHeight={320} label="Loading recent orders">
+          <RecentOrders navigate={navigate} />
+        </LazySection>
+      )}
+
+      <LazySection minHeight={300} label="Loading money and impact">
+        <MoneyAndImpact dashboard={dashboard} navigate={navigate} canMoney={access.canSee("earnings")} />
+      </LazySection>
+
+      <LazySection minHeight={160} label="Loading shortcuts">
+        <section className="adb-card">
+          <SectionHead eyebrow="Shortcuts" title="Manage ReOrbit" />
+          <div className="adb-quick">
+            {QUICK.filter((q) => !q.key || access.canSee(q.key)).map((q) => {
+              const Icon = q.icon;
+              return (
+                <button key={q.path} type="button" onClick={() => navigate(q.path)}>
+                  <span>
+                    <Icon size={17} />
+                  </span>
+                  {q.label}
+                  <ChevronRight size={15} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      </LazySection>
+    </div>
   );
 }

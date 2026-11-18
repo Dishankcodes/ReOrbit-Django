@@ -34,12 +34,12 @@ def seller_of(o):
 
 def reorbit_store():
     """ReOrbit's own details, for orders the platform sells itself."""
-    from apps.core.models import DEFAULT_SUPPORT_EMAIL, PlatformSettings
+    from apps.core.support_contacts import support_email
 
     c = settings.REORBIT_STORE
     return {
         "name": c["name"], "phone": c["phone"],
-        "email": PlatformSettings.load().support_email or DEFAULT_SUPPORT_EMAIL,
+        "email": support_email(),
         "address": {"line1": c["address_line"], "city": c["city"], "state": c["state"], "pincode": c["pincode"]},
     }
 

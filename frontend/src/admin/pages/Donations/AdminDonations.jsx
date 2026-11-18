@@ -16,8 +16,6 @@ import {
   SearchX,
   Eye,
   UserRound,
-  BellRing,
-  ArrowRight,
   Boxes,
   Award,
   CalendarDays,
@@ -51,16 +49,19 @@ import "../../css/products/AdminProducts.css";
 import "../../css/orders/AdminOrders.css";
 import "../../css/donations/AdminDonations.css";
 
-const STATUS_CARDS = [
-  { key: "All", label: "All donations", icon: Gift, tone: "all" },
-  { key: "Pending", label: "Pending review", icon: Hourglass, tone: "wait" },
-  { key: "Scheduled", label: "Scheduled", icon: CalendarClock, tone: "info" },
-  { key: "Picked_Up", label: "Picked up", icon: Truck, tone: "info" },
-  { key: "Received", label: "Received", icon: PackageCheck, tone: "info" },
-  { key: "Completed", label: "Completed", icon: CircleCheck, tone: "good" },
-  { key: "Rejected", label: "Rejected", icon: XCircle, tone: "bad" },
-  { key: "Cancelled", label: "Cancelled by donor", icon: XCircle, tone: "bad" },
+/* The donation journey, left to right. Each stage is a tab with its count. */
+const STAGES = [
+  { key: "review", label: "Review", hint: "Accept or reject", statuses: ["Pending"], icon: Hourglass, tone: "wait" },
+  { key: "pickup", label: "Pickup", hint: "Scheduled or to retry", statuses: ["Scheduled", "Failed_Pickup"], icon: CalendarClock, tone: "info" },
+  { key: "picked", label: "Picked up", hint: "On the way in", statuses: ["Picked_Up"], icon: Truck, tone: "info" },
+  { key: "warehouse", label: "At warehouse", hint: "Check and capture", statuses: ["Received"], icon: PackageCheck, tone: "info" },
+  { key: "done", label: "Completed", hint: "Certificate sent", statuses: ["Completed"], icon: CircleCheck, tone: "good" },
 ];
+const OTHER_TABS = [
+  { key: "closed", label: "Closed", statuses: ["Rejected", "Cancelled"], icon: XCircle },
+  { key: "all", label: "All", statuses: null, icon: Gift },
+];
+const TAB_OF = Object.fromEntries([...STAGES, ...OTHER_TABS].map((t) => [t.key, t]));
 
 const SORTS = {
   newest: {
@@ -74,10 +75,10 @@ const SORTS = {
   qty: { label: "Most items", fn: (a, b) => b.quantity - a.quantity },
 };
 const RANGES = {
-  all: "All time",
-  7: "Last 7 days",
-  30: "Last 30 days",
-  90: "Last 90 days",
+  all: "Any time",
+  7: "7 days",
+  30: "30 days",
+  90: "90 days",
 };
 
 function exportCsv(rows) {
@@ -93,7 +94,7 @@ function exportCsv(rows) {
     "Pickup date",
     "Pickup slot",
     "Pickup team",
-    "Given to",
+    "Kept in / given to",
   ];
   const lines = rows.map((d) =>
     [
@@ -108,7 +109,7 @@ function exportCsv(rows) {
       d.pickup_date ? formatDate(d.pickup_date) : "",
       d.pickup_slot || "",
       d.partner || "",
-      d.ngo || "",
+      d.ngo || (d.status === "Completed" ? "ReOrbit warehouse" : ""),
     ]
       .map((c) => `"${String(c).replace(/"/g, '""')}"`)
       .join(","),
@@ -131,7 +132,7 @@ export default function AdminDonations() {
   const { toast, toastNode } = useToast();
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("All");
+  const [tab, setTab] = useState("review");
   const [category, setCategory] = useState("all");
   const [range, setRange] = useState("all");
   const [sort, setSort] = useState("newest");
@@ -148,18 +149,11 @@ export default function AdminDonations() {
 
   /* ---------- numbers ---------- */
   const counts = useMemo(() => {
-    const c = {
-      All: donations.length,
-      Pending: 0,
-      Scheduled: 0,
-      Picked_Up: 0,
-      Received: 0,
-      Completed: 0,
-      Rejected: 0,
-      Cancelled: 0,
-    };
+    const c = Object.fromEntries([...STAGES, ...OTHER_TABS].map((t) => [t.key, 0]));
     donations.forEach((d) => {
-      c[d.status] += 1;
+      c.all += 1;
+      const t = [...STAGES, ...OTHER_TABS].find((x) => x.statuses && x.statuses.includes(d.status));
+      if (t) c[t.key] += 1;
     });
     return c;
   }, [donations]);
@@ -200,7 +194,7 @@ export default function AdminDonations() {
     const cutoff =
       range === "all" ? 0 : Date.now() - Number(range) * 86400000;
     return donations
-      .filter((d) => status === "All" || d.status === status)
+      .filter((d) => !TAB_OF[tab].statuses || TAB_OF[tab].statuses.includes(d.status))
       .filter((d) => category === "all" || d.category === category)
       .filter((d) => !cutoff || new Date(d.donation_date).getTime() >= cutoff)
       .filter(
@@ -211,20 +205,18 @@ export default function AdminDonations() {
           ),
       )
       .sort(SORTS[sort].fn);
-  }, [donations, query, status, category, range, sort]);
+  }, [donations, query, tab, category, range, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount);
   const rows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
   useEffect(() => {
     setPage(1);
-  }, [query, status, category, range, sort, pageSize]);
+  }, [query, tab, category, range, sort, pageSize]);
 
-  const filtersActive =
-    query || status !== "All" || category !== "all" || range !== "all";
+  const filtersActive = query || category !== "all" || range !== "all";
   const clearFilters = () => {
     setQuery("");
-    setStatus("All");
     setCategory("all");
     setRange("all");
   };
@@ -308,179 +300,87 @@ export default function AdminDonations() {
   ];
   const onKey = (e, id) =>
     e.key === "Enter" && e.target === e.currentTarget && open(id);
-  const showQueue = () => {
-    setStatus("Pending");
-    setCategory("all");
-    setRange("all");
-    setQuery("");
-    document
-      .getElementById("dn-panel")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  /* the one obvious next step for a row (the rest are in its menu) */
+  const nextStep = (d) => getDonationActions(d)[0] || null;
+
+  const current = TAB_OF[tab];
+  /* open on "Review" when something is waiting, otherwise on everything (until the admin picks a tab) */
+  const picked = React.useRef(false);
+  useEffect(() => {
+    if (!picked.current && donations.length && counts.review === 0 && tab === "review") setTab("all");
+  }, [donations.length, counts.review, tab]);
+  const chooseTab = (k) => {
+    picked.current = true;
+    setTab(k);
   };
+  const stageIndex = STAGES.findIndex((x) => x.key === tab);
 
   return (
-    <div className="au-page">
-      {/* ---------- review queue banner ---------- */}
-      {queue.length > 0 ? (
-        <section className="dn-queue" aria-label="Donations waiting for review">
-          <header className="dn-queue-head">
-            <span className="dn-queue-icon">
-              <BellRing size={22} />
-            </span>
-            <div>
-              <h3>
-                {queue.length} donation{queue.length === 1 ? " is" : "s are"}{" "}
-                waiting for your decision
-              </h3>
-              <p>
-                {overdueCount > 0
-                  ? `${overdueCount} ${overdueCount === 1 ? "has" : "have"} waited ${SLA_DAYS}+ days. `
-                  : ""}
-                Accept to schedule a free pickup, or reject with a reason so the
-                donor knows.
-              </p>
-            </div>
-          </header>
-          <ul className="dn-queue-list">
-            {queue.slice(0, 3).map((d) => (
-              <li key={d.id}>
-                <button
-                  type="button"
-                  className="dn-queue-main"
-                  onClick={() => open(d.id)}
-                >
-                  <img src={d.image} alt="" />
-                  <span>
+    <div className="au-page adn2">
+      {/* ---------- summary ---------- */}
+      <header className="adn2-top">
+        <div>
+          <p className="adn2-lead">
+            {queue.length > 0
+              ? `${queue.length} waiting for review${overdueCount ? `, ${overdueCount} past the ${SLA_DAYS}-day target` : ""}${queue[0] ? ` · oldest ${queue[0].waitingDays} day${queue[0].waitingDays === 1 ? "" : "s"}` : ""}.`
+              : "Nothing is waiting for review."}
+          </p>
+        </div>
+        <dl className="adn2-facts">
+          <div>
+            <dt>
+              <CalendarDays size={14} /> Pickups this week
+            </dt>
+            <dd>{kpi.pickups}</dd>
+          </div>
+          <div>
+            <dt>
+              <Boxes size={14} /> Items received
+            </dt>
+            <dd>
+              {kpi.units} <small>· {kpi.kg} kg</small>
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <Award size={14} /> Certificates
+            </dt>
+            <dd>{kpi.certs}</dd>
+          </div>
+        </dl>
+      </header>
+
+      {/* ---------- the journey ---------- */}
+      <nav className="adn2-journey" aria-label="Donation stages">
+        <ol>
+          {STAGES.map((st, i) => {
+            const Icon = st.icon;
+            const on = tab === st.key;
+            return (
+              <li key={st.key} className={`${on ? "on" : ""} ${stageIndex > i ? "past" : ""} tone-${st.tone}`}>
+                <button type="button" onClick={() => chooseTab(st.key)} aria-pressed={on}>
+                  <span className="adn2-step-icon">
+                    <Icon size={17} />
+                  </span>
+                  <span className="adn2-step-text">
                     <strong>
-                      {d.title}
-                      {d.quantity > 1 ? ` ×${d.quantity}` : ""}
+                      {st.label} <em>{counts[st.key]}</em>
                     </strong>
-                    <small>
-                      {d.id} · {d.donor.name} · {d.donor.city}
-                    </small>
+                    <small>{st.hint}</small>
                   </span>
                 </button>
-                <WaitChip donation={d} />
-                <div className="dn-queue-actions">
-                  <button
-                    type="button"
-                    className="ad-btn ad-btn-sm dn-btn-accept"
-                    onClick={() =>
-                      askAction(DONATION_ACTION_LIST.accept, [d.id])
-                    }
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="ad-btn ad-btn-sm dn-btn-reject"
-                    onClick={() =>
-                      askAction(DONATION_ACTION_LIST.reject, [d.id])
-                    }
-                  >
-                    Reject
-                  </button>
-                </div>
               </li>
-            ))}
-          </ul>
-          <footer className="dn-queue-foot">
-            <button type="button" className="adn-link" onClick={showQueue}>
-              Review all {queue.length} pending donations{" "}
-              <ArrowRight size={14} />
+            );
+          })}
+        </ol>
+        <div className="adn2-other">
+          {OTHER_TABS.map((t) => (
+            <button key={t.key} type="button" className={tab === t.key ? "on" : ""} onClick={() => chooseTab(t.key)} aria-pressed={tab === t.key}>
+              {t.label} <em>{counts[t.key]}</em>
             </button>
-          </footer>
-        </section>
-      ) : (
-        <section className="dn-allclear" role="status">
-          <CircleCheck size={20} /> <strong>All caught up.</strong> No donation
-          is waiting for review.
-        </section>
-      )}
-
-      {/* ---------- KPIs ---------- */}
-      <section className="ao-money" aria-label="Donation summary">
-        <button
-          type="button"
-          className="ao-money-card is-link"
-          onClick={showQueue}
-        >
-          <span className="ao-money-icon wait">
-            <Hourglass size={18} />
-          </span>
-          <div>
-            <small>Awaiting review</small>
-            <strong>{queue.length}</strong>
-            <em>
-              {queue[0]
-                ? `Oldest waiting ${queue[0].waitingDays} days`
-                : "Nothing waiting"}
-            </em>
-          </div>
-        </button>
-        <button
-          type="button"
-          className="ao-money-card is-link"
-          onClick={() => setStatus("Scheduled")}
-        >
-          <span className="ao-money-icon info">
-            <CalendarDays size={18} />
-          </span>
-          <div>
-            <small>Pickups this week</small>
-            <strong>{kpi.pickups}</strong>
-            <em>Free pickups scheduled</em>
-          </div>
-        </button>
-        <div className="ao-money-card">
-          <span className="ao-money-icon good">
-            <Boxes size={18} />
-          </span>
-          <div>
-            <small>Items donated</small>
-            <strong>{kpi.units}</strong>
-            <em>{kpi.kg} kg kept out of landfill</em>
-          </div>
+          ))}
         </div>
-        <div className="ao-money-card">
-          <span className="ao-money-icon good">
-            <Award size={18} />
-          </span>
-          <div>
-            <small>Certificates issued</small>
-            <strong>{kpi.certs}</strong>
-            <em>Sent to donors on completion</em>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- status cards ---------- */}
-      <section
-        className="au-cards ao-cards dn-cards"
-        aria-label="Filter by donation status"
-      >
-        {STATUS_CARDS.map((card) => {
-          const Icon = card.icon;
-          const active = status === card.key;
-          return (
-            <button
-              key={card.key}
-              type="button"
-              className={`au-card tone-${card.tone} ${active ? "active" : ""}`}
-              onClick={() => setStatus(card.key)}
-              aria-pressed={active}
-            >
-              <span className="au-card-icon">
-                <Icon size={18} strokeWidth={1.8} />
-              </span>
-              <span className="au-card-text">
-                <small>{card.label}</small>
-                <strong>{counts[card.key]}</strong>
-              </span>
-            </button>
-          );
-        })}
-      </section>
+      </nav>
 
       {/* ---------- table ---------- */}
       <section className="au-panel" id="dn-panel">
@@ -513,80 +413,86 @@ export default function AdminDonations() {
             </button>
           </div>
         ) : (
-          <div className="au-toolbar">
-            <label className="au-search">
+          <div className="adn2-filters">
+            <label className="au-search adn2-search">
               <Search size={16} />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search donation ID, item or donor"
+                placeholder={`Search ${current.key === "all" ? "all donations" : current.label.toLowerCase()} by ID, item or donor`}
                 aria-label="Search donations"
               />
               {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  aria-label="Clear search"
-                >
+                <button type="button" onClick={() => setQuery("")} aria-label="Clear search">
                   <X size={14} />
                 </button>
               )}
             </label>
-            <div className="au-toolbar-right ao-filters">
-              <label className="au-select">
-                <span>Category</span>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  <option value="all">All</option>
-                  {categories.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="au-select">
-                <span>Date</span>
-                <select
-                  value={range}
-                  onChange={(e) => setRange(e.target.value)}
-                >
-                  {Object.entries(RANGES).map(([k, label]) => (
-                    <option key={k} value={k}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="au-select">
-                <ArrowUpDown size={14} />
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  aria-label="Sort donations"
-                >
-                  {Object.entries(SORTS).map(([k, s]) => (
-                    <option key={k} value={k}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                className="ad-btn ad-btn-ghost"
-                disabled={!filtered.length}
-                onClick={() => {
-                  exportCsv(filtered);
-                  toast(`Exported ${filtered.length} donations to CSV.`);
-                }}
-              >
-                <Download size={15} /> Export
-              </button>
+            <div className="adn2-seg" role="group" aria-label="Donated in">
+              {Object.entries(RANGES).map(([k, label]) => (
+                <button key={k} type="button" className={range === k ? "on" : ""} onClick={() => setRange(k)} aria-pressed={range === k}>
+                  {label}
+                </button>
+              ))}
             </div>
+            <label className="au-select">
+              <span>Category</span>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="all">All</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="au-select">
+              <ArrowUpDown size={14} />
+              <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort donations">
+                {Object.entries(SORTS).map(([k, x]) => (
+                  <option key={k} value={k}>
+                    {x.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="ad-btn ad-btn-ghost adn2-export"
+              disabled={!filtered.length}
+              onClick={() => {
+                exportCsv(filtered);
+                toast(`Exported ${filtered.length} donations to CSV.`);
+              }}
+            >
+              <Download size={15} /> Export
+            </button>
+          </div>
+        )}
+        {selected.size === 0 && filtersActive && (
+          <div className="adn2-chips">
+            <span>
+              {filtered.length} match{filtered.length === 1 ? "" : "es"}:
+            </span>
+            {query && (
+              <button type="button" onClick={() => setQuery("")}>
+                “{query}” <X size={12} />
+              </button>
+            )}
+            {category !== "all" && (
+              <button type="button" onClick={() => setCategory("all")}>
+                {category} <X size={12} />
+              </button>
+            )}
+            {range !== "all" && (
+              <button type="button" onClick={() => setRange("all")}>
+                Last {RANGES[range]} <X size={12} />
+              </button>
+            )}
+            <button type="button" className="adn2-clear" onClick={clearFilters}>
+              Clear all
+            </button>
           </div>
         )}
 
@@ -613,6 +519,7 @@ export default function AdminDonations() {
                   <th className="col-pickup">Free pickup</th>
                   <th>Status</th>
                   <th className="col-date">Donated</th>
+                  <th className="col-next">Next step</th>
                   <th className="col-menu">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -703,6 +610,19 @@ export default function AdminDonations() {
                       </span>
                       <span className="au-sub">{timeAgo(d.donation_date)}</span>
                     </td>
+                    <td className="col-next" onClick={(e) => e.stopPropagation()}>
+                      {nextStep(d) ? (
+                        <button
+                          type="button"
+                          className={`adn2-next tone-${nextStep(d).tone}`}
+                          onClick={() => askAction(nextStep(d), [d.id])}
+                        >
+                          {nextStep(d).short}
+                        </button>
+                      ) : (
+                        <span className="ap-muted">—</span>
+                      )}
+                    </td>
                     <td
                       className="col-menu"
                       onClick={(e) => e.stopPropagation()}
@@ -722,8 +642,14 @@ export default function AdminDonations() {
         {!loading && rows.length === 0 && (
           <EmptyState
             icon={SearchX}
-            title="No donations match your filters"
-            text="Try a different search or clear the filters to see every donation."
+            title={filtersActive ? "No donations match your filters" : `Nothing in ${current.label.toLowerCase()} right now`}
+            text={
+              filtersActive
+                ? "Try a different search or clear the filters."
+                : tab === "review"
+                  ? "All caught up. New donations appear here for you to accept or reject."
+                  : "Donations move here as they reach this stage."
+            }
             action={
               filtersActive && (
                 <button

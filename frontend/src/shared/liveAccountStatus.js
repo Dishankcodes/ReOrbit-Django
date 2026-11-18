@@ -37,6 +37,8 @@ export async function loadAccountStatus(kind) {
         },
       };
       emit();
+      /* reactivated (or never blocked): forget any old "you are blocked" notice */
+      if ((a.status || "Active") === "Active") clearBlock();
     }
   } catch {
     /* offline or signed out: keep what we had */
@@ -68,6 +70,13 @@ const BLOCK_KEY = "reorbit_blocked_notice";
 export function rememberBlock(notice) {
   try {
     sessionStorage.setItem(BLOCK_KEY, JSON.stringify(notice));
+  } catch {
+    /* storage blocked */
+  }
+}
+export function clearBlock() {
+  try {
+    sessionStorage.removeItem(BLOCK_KEY);
   } catch {
     /* storage blocked */
   }

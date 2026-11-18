@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import useContactForm from "../../../shared/useContactForm";
+import { useRules } from "../../../shared/platformRules";
 
 export default function Contact() {
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
+  const { vals, set, errors, busy, done, error, submit, appeal } = useContactForm("user");
+  const rules = useRules();
+  const emails = rules.supportEmails?.length ? rules.supportEmails : [rules.supportEmail || "support@reorbit.in"];
+  const err = (k) => errors[k] && <small className="contact-error">{errors[k]}</small>;
 
   return (
     <>
@@ -536,6 +537,35 @@ export default function Contact() {
             background 0.2s ease;
         }
 
+        .contact-error {
+          display: block;
+          margin-top: 6px;
+          color: #a8433a;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        .contact-appeal {
+          margin: 0 0 16px;
+          padding: 12px 14px;
+          border-radius: 12px;
+          background: #fdf0ee;
+          color: #8f3a2e;
+          font-size: 0.88rem;
+          line-height: 1.5;
+        }
+        .contact-mail {
+          margin: 14px 0 0;
+          color: var(--muted-foreground, #6b756d);
+          font-size: 0.85rem;
+        }
+        .contact-mail a {
+          color: var(--primary, #2a4d3a);
+          font-weight: 700;
+        }
+        .contact-submit:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
         .contact-submit:hover {
           background: #1e3d2f;
 
@@ -907,7 +937,7 @@ export default function Contact() {
                   understanding item details.
                 </p>
 
-                <a href="/marketplace">
+                <a href="/discover-marketplace">
                   Visit marketplace
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -927,7 +957,7 @@ export default function Contact() {
                   can help you understand the process.
                 </p>
 
-                <a href="/marketplace">
+                <a href="/auth">
                   Start here
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -947,7 +977,7 @@ export default function Contact() {
                   through the ReOrbit ecosystem.
                 </p>
 
-                <a href="/remakers">
+                <a href="/discover-remakers">
                   Meet ReMakers
                   <span className="material-symbols-outlined">
                     arrow_forward
@@ -1006,101 +1036,95 @@ export default function Contact() {
             </div>
 
             <div className="contact-form-card">
-              {!submitted ? (
-                <form className="contact-form" onSubmit={handleSubmit}>
+              {!done ? (
+                <form className="contact-form" onSubmit={submit} noValidate>
+                  {appeal && (
+                    <p className="contact-appeal">
+                      Your account was blocked. Send this and our team will review it. We reply to the email on
+                      your account.
+                    </p>
+                  )}
                   <div className="contact-form-row">
                     <div className="contact-field">
                       <label htmlFor="name">Your name</label>
-
-                      <input
-                        id="name"
-                        type="text"
-                        placeholder="Enter your name"
-                        required
-                      />
+                      <input id="name" type="text" placeholder="Enter your name" value={vals.name} onChange={set("name")} />
+                      {err("name")}
                     </div>
 
                     <div className="contact-field">
                       <label htmlFor="email">Email address</label>
-
-                      <input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        required
-                      />
+                      <input id="email" type="email" placeholder="you@example.com" value={vals.email} onChange={set("email")} />
+                      {err("email")}
                     </div>
                   </div>
 
                   <div className="contact-field">
                     <label htmlFor="topic">What can we help with?</label>
-
-                    <select id="topic" required defaultValue="">
+                    <select id="topic" value={vals.topic} onChange={set("topic")}>
                       <option value="" disabled>
                         Select a topic
                       </option>
-
                       <option value="marketplace">Marketplace</option>
-
                       <option value="purchase">Purchase / order</option>
-
+                      <option value="payment">Payment or refund</option>
                       <option value="listing">Listing an item</option>
-
                       <option value="donation">Donation</option>
-
                       <option value="pickup">Pickup / delivery</option>
-
                       <option value="remaker">ReMaker</option>
-
                       <option value="account">Account</option>
-
+                      <option value="blocked">My account is blocked or suspended</option>
                       <option value="technical">Technical issue</option>
-
                       <option value="other">Something else</option>
                     </select>
+                    {err("topic")}
                   </div>
 
                   <div className="contact-field">
                     <label htmlFor="subject">Subject</label>
-
-                    <input
-                      id="subject"
-                      type="text"
-                      placeholder="What is this about?"
-                      required
-                    />
+                    <input id="subject" type="text" placeholder="What is this about?" value={vals.subject} onChange={set("subject")} />
+                    {err("subject")}
                   </div>
 
                   <div className="contact-field">
                     <label htmlFor="message">Message</label>
-
-                    <textarea
-                      id="message"
-                      placeholder="Tell us a little more..."
-                      required
-                    />
+                    <textarea id="message" placeholder="Tell us a little more..." value={vals.message} onChange={set("message")} />
+                    {err("message")}
                   </div>
 
-                  <button type="submit" className="contact-submit">
-                    Send message
-                    <span className="material-symbols-outlined">
-                      arrow_forward
-                    </span>
+                  {error && <p className="contact-error" role="alert">{error}</p>}
+
+                  <button type="submit" className="contact-submit" disabled={busy}>
+                    {busy ? "Sending…" : "Send message"}
+                    <span className="material-symbols-outlined">arrow_forward</span>
                   </button>
+
+                  <p className="contact-mail">
+                    Prefer email? Write to <a href={`mailto:${emails[0]}`}>{emails[0]}</a>
+                    {emails.length > 1 && (
+                      <>
+                        {" "}
+                        (or {emails.slice(1).map((e, i) => (
+                          <React.Fragment key={e}>
+                            {i > 0 && ", "}
+                            <a href={`mailto:${e}`}>{e}</a>
+                          </React.Fragment>
+                        ))}
+                        )
+                      </>
+                    )}
+                    .
+                  </p>
                 </form>
               ) : (
                 <div className="contact-success">
                   <div className="contact-success-icon">
                     <span className="material-symbols-outlined">check</span>
                   </div>
-
-                  <h3>Message received.</h3>
-
-                  <p>
-                    Thanks for reaching out to ReOrbit. Your message has been
-                    submitted successfully. We&apos;ll help you find the next
-                    step.
-                  </p>
+                  <h3>Message sent.</h3>
+                  <p>{done}</p>
+                  <Link to="/" className="contact-faq-button" style={{ marginTop: 14 }}>
+                    Back to ReOrbit
+                  </Link>
                 </div>
               )}
             </div>

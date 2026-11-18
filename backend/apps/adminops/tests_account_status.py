@@ -36,3 +36,27 @@ class AccountStatusTests(APIBase):
         self.assertEqual(self.post(u, {"status": "Active"}, as_=self.boss).status_code, 200)
         self.maker.refresh_from_db()
         self.assertEqual((self.maker.status, self.maker.status_reason), ("Active", ""))
+
+
+class SystemStatusTests(APIBase):
+    def test_admins_see_live_checks_and_support_emails(self):
+        from apps.admins.models import Admins
+        boss = self.make_admin("boss@example.com", permission_level=Admins.PermissionLevel.SUPER_ADMIN)
+        r = self.get("/api/adminops/admin/system-status/", as_=boss)
+        self.assertEqual(r.status_code, 200, r.data)
+        keys = {c["key"]: c["state"] for c in r.data["data"]["checks"]}
+        self.assertEqual(keys["database"], "ok")
+        self.assertEqual(keys["storage"], "ok")
+        self.assertEqual(r.data["data"]["support"]["emails"][0], "boss@example.com")
+        self.assertEqual(self.get("/api/adminops/admin/system-status/", as_=self.make_user()).status_code, 403)
+
+    def test_unblocked_member_works_normally_again(self):
+        boss = self.make_admin("ops@example.com", modules={"users": "edit"})
+        m = self.make_user("back@example.com")
+        u = f"/api/adminops/admin/accounts/{m.public_id}/status/"
+        self.post(u, {"status": "Blocked", "reason": "Mistake"}, as_=boss)
+        self.assertEqual(self.get("/api/orders/addresses/", as_=m).status_code, 403)
+        self.post(u, {"status": "Active"}, as_=boss)
+        self.assertEqual(self.get("/api/orders/addresses/", as_=m).status_code, 200)
+        me = self.get("/api/users/me/", as_=m).data["data"]["user"]
+        self.assertEqual((me["status"], me["status_reason"]), ("Active", ""))

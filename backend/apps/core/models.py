@@ -67,6 +67,12 @@ class Category(PublicIdModel, TimeStampedModel):
 # Platform settings: exactly one row (pk = 1)
 # --------------------------------------------------------------------------- #
 DEFAULT_SUPPORT_EMAIL = "support@reorbit.in"
+
+
+def _support():
+    from apps.core.support_contacts import support_emails  # local import: it reads Admins
+
+    return support_emails()
 DEFAULT_DONATION_VOUCHER_TIERS = [100, 150, 200, 300, 500]  # donation vouchers start at ₹100
 
 
@@ -159,7 +165,9 @@ class PlatformSettings(TimeStampedModel):
             "codLimit": self.cod_limit,
             "maxListingsPerDay": self.max_listings_per_day,
             "minDonationItems": self.min_donation_items,
-            "supportEmail": self.support_email or DEFAULT_SUPPORT_EMAIL,
+            # the Super Admins' addresses (apps.core.support_contacts): main + alternates
+            "supportEmail": _support()[0],
+            "supportEmails": _support(),
             "unsoldDays": warehouse.get("unsoldDays", 7),
             "maintenance": self.maintenance,
             "donationCo2PerKg": float(self.donation_co2_per_kg),

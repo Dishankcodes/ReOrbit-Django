@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import useContactForm from "../../../shared/useContactForm";
+import { useRules } from "../../../shared/platformRules";
+
+/* this page's topics -> the server's topic keys */
+const TOPIC_KEY = {
+  "remaker-account": "account", materials: "remaker", studio: "remaker", products: "listing",
+  orders: "purchase", partnership: "other", other: "other", blocked: "blocked",
+};
 
 export default function Contact() {
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
+  const { vals, set, errors, busy, done, error, submit, appeal } = useContactForm("remaker", TOPIC_KEY);
+  const rules = useRules();
+  const emails = rules.supportEmails?.length ? rules.supportEmails : [rules.supportEmail || "support@reorbit.in"];
+  const err = (k) => errors[k] && <small className="rc-error">{errors[k]}</small>;
 
   return (
     <>
@@ -371,6 +377,34 @@ export default function Contact() {
            SUCCESS MESSAGE
         ========================================================= */
 
+        .remaker-contact-page .rc-error {
+          display: block;
+          margin-top: 6px;
+          color: #a8433a;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        .remaker-contact-page .rc-appeal {
+          margin: 0 0 14px;
+          padding: 12px 14px;
+          border-radius: 12px;
+          background: #fdf0ee;
+          color: #8f3a2e;
+          font-size: 0.88rem;
+        }
+        .remaker-contact-page .rc-mail {
+          margin: 12px 0 0;
+          font-size: 0.85rem;
+          opacity: 0.85;
+        }
+        .remaker-contact-page .rc-mail a {
+          font-weight: 700;
+          text-decoration: underline;
+        }
+        .remaker-contact-page .rc-submit:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
         .remaker-contact-page .rc-success {
           padding: 16px;
 
@@ -885,80 +919,77 @@ export default function Contact() {
                     </p>
                   </div>
 
-                  {submitted && (
+                  {done && (
                     <div className="rc-success">
-                      <strong>Message received.</strong>
-                      Thanks for reaching out to ReOrbit. We&apos;ll get back to
-                      you with the next step.
+                      <strong>Message sent.</strong>
+                      {done}
                     </div>
                   )}
 
-                  <form className="rc-form" onSubmit={handleSubmit}>
+                  {!done && (
+                  <form className="rc-form" onSubmit={submit} noValidate>
+                    {appeal && (
+                      <p className="rc-appeal">
+                        Your account was blocked. Send this and our team will review it.
+                      </p>
+                    )}
                     <div className="rc-form-row">
                       <div className="rc-field">
                         <label htmlFor="name">Name</label>
-
-                        <input
-                          id="name"
-                          type="text"
-                          placeholder="Your name"
-                          required
-                        />
+                        <input id="name" type="text" placeholder="Your name" value={vals.name} onChange={set("name")} />
+                        {err("name")}
                       </div>
 
                       <div className="rc-field">
                         <label htmlFor="email">Email</label>
-
-                        <input
-                          id="email"
-                          type="email"
-                          placeholder="you@example.com"
-                          required
-                        />
+                        <input id="email" type="email" placeholder="you@example.com" value={vals.email} onChange={set("email")} />
+                        {err("email")}
                       </div>
                     </div>
 
                     <div className="rc-field">
-                      <label htmlFor="subject">What can we help with?</label>
-
-                      <select id="subject" defaultValue="" required>
+                      <label htmlFor="topic">What can we help with?</label>
+                      <select id="topic" value={vals.topic} onChange={set("topic")}>
                         <option value="" disabled>
                           Select a topic
                         </option>
-
                         <option value="remaker-account">ReMaker account</option>
-
+                        <option value="blocked">My account is blocked or suspended</option>
                         <option value="materials">Materials & sourcing</option>
-
                         <option value="studio">ReMaker Studio</option>
-
                         <option value="products">Products & selling</option>
-
                         <option value="orders">Orders & earnings</option>
-
                         <option value="partnership">Partnership</option>
-
                         <option value="other">Something else</option>
                       </select>
+                      {err("topic")}
+                    </div>
+
+                    <div className="rc-field">
+                      <label htmlFor="subject">Subject</label>
+                      <input id="subject" type="text" placeholder="What is this about?" value={vals.subject} onChange={set("subject")} />
+                      {err("subject")}
                     </div>
 
                     <div className="rc-field">
                       <label htmlFor="message">Message</label>
-
-                      <textarea
-                        id="message"
-                        placeholder="Tell us a little about what you need..."
-                        required
-                      />
+                      <textarea id="message" placeholder="Tell us a little about what you need..." value={vals.message} onChange={set("message")} />
+                      {err("message")}
                     </div>
 
-                    <button type="submit" className="rc-submit">
-                      Send message
-                      <span className="material-symbols-outlined">
-                        arrow_forward
-                      </span>
+                    {error && <p className="rc-error" role="alert">{error}</p>}
+
+                    <button type="submit" className="rc-submit" disabled={busy}>
+                      {busy ? "Sending…" : "Send message"}
+                      <span className="material-symbols-outlined">arrow_forward</span>
                     </button>
+
+                    <p className="rc-mail">
+                      Or email <a href={`mailto:${emails[0]}`}>{emails[0]}</a>
+                      {emails.length > 1 && <> (alternate: {emails.slice(1).join(", ")})</>}.
+                    </p>
                   </form>
+                  )}
                 </div>
               </div>
             </div>
