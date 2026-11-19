@@ -845,3 +845,69 @@
   background: #e6f0fb;
   color: #1f4f86;
 }
+
+/* ---- admin filter bar: segmented stages + "More" dropdown, then seller + search ---- */
+.so-admin .so-admin-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px;
+  border: 1px solid var(--so-line);
+  border-radius: 14px;
+  background: #f6f9f7;
+}
+.so-admin .so-admin-top .so-seg {
+  flex: 1 1 auto;
+}
+.so-admin .so-admin-top .so-seg button {
+  color: #3d4f46;
+}
+.so-admin .so-admin-top .so-seg button em {
+  background: #fff;
+}
+.so-admin .so-admin-top .so-seg button.on {
+  background: var(--so-accent);
+  color: #fff;
+}
+.so-admin .so-admin-top .so-seg button.on em {
+  background: rgba(255, 255, 255, 0.22);
+}
+.so-admin .so-tools {
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
+}
+.so-admin .so-tools > .so-admin-top,
+.so-admin .so-tools > .so-filters {
+  width: 100%;
+  box-sizing: border-box;
+}
+.so-admin .so-admin-top .so-seg button.on .so-dot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+.so-admin .so-admin-top .so-more-select {
+  flex: 0 0 auto;
+  min-width: 150px;
+  height: 38px;
+  margin: 0;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--so-line);
+  border-radius: 11px;
+  background-color: #fff;
+  color: #3d4f46;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.so-admin .so-admin-top .so-more-select.on {
+  border-color: var(--so-accent);
+  background-color: var(--so-accent);
+  color: #fff;
+}
+@media (max-width: 640px) {
+  .so-admin .so-admin-top .so-more-select {
+    flex: 1 1 100%;
+  }
+}

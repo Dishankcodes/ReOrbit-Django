@@ -49,6 +49,9 @@ function baseProfile(p = {}) {
   };
 }
 
+/* the later of two dates (either may be missing) */
+const latest = (a, b) => (!a ? b : !b ? a : new Date(a) > new Date(b) ? a : b);
+
 export function mapUser(row) {
   const joined = { type: "account", text: "Created a ReOrbit account", at: row.created_at };
   return {
@@ -60,7 +63,8 @@ export function mapUser(row) {
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    last_active: row.last_login_at || row.created_at,
+    last_active: latest(row.last_seen_at, row.last_login_at) || row.created_at,
+    last_seen_at: row.last_seen_at || null,
     email_verified_at: row.email_verified_at,
     profile: {
       ...baseProfile(row.profile),
@@ -93,7 +97,8 @@ export function mapRemaker(row) {
     status: row.status,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    last_active: row.last_login_at || row.created_at,
+    last_active: latest(row.last_seen_at, row.last_login_at) || row.created_at,
+    last_seen_at: row.last_seen_at || null,
     email_verified_at: row.email_verified_at,
     followers: row.followers_count ?? 0,
     rating: p.rating_count ? Number(p.rating_average) : 0,

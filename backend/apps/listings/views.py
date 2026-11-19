@@ -380,9 +380,8 @@ class MyDetailView(MyBase):
         item.save()
         audit(request.user.account, "listing.update", "item", item.public_id,
               before=before, after=_snapshot(item), ip=IP(request))
-        if item.item_status == Item.Status.LISTED:  # switched to "Managed by ReOrbit" while live
-            from apps.pickups import services as pickups
-            pickups.request_for_item(item)
+        # No pickup when a listing goes live or switches to "Managed by ReOrbit": ReOrbit only collects
+        # it once someone orders it (the order's pickup, see apps.pickups.services.request_for_order).
         return self.show(request, item, "Listing updated.")
 
     @transaction.atomic
@@ -435,8 +434,7 @@ class MyPublishView(MyBase):
         item.save(update_fields=["item_status", "updated_at"])
         audit(user, "listing.publish", "item", item.public_id,
               before=before, after=_snapshot(item), ip=IP(request))
-        from apps.pickups import services as pickups  # imported here: pickups imports listings' models
-        pickups.request_for_item(item)
+        # no pickup yet: "Managed by ReOrbit" listings are collected when they are ordered (one pickup, the order's)
         from apps.rewards import services as rewards  # local import: rewards reads listings lazily too
 
         rewards.on_listing_published(user, item)  # once per listing (re-publishing earns nothing more)

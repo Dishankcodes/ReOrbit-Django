@@ -221,7 +221,7 @@ function getPageInformation(pathname) {
     return marketplaceProductInformation;
   }
 
-  if (pathname === "/remaker-marketplace/reorbit") {
+  if (pathname === "/remaker-marketplace/reorbit-platform-profile") {
     return { ...sellerProfileInformation, title: "ReOrbit store", subtitle: "Items sold by ReOrbit itself, and ratings of ReOrbit." };
   }
 

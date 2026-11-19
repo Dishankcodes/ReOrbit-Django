@@ -4,7 +4,7 @@ import { UserX } from "lucide-react";
 
 import { cardToItem } from "../../../data/marketplaceData";
 import { usePageTitle } from "../../../shared/pageMeta";
-import { idFrom, sellerPath } from "../../../shared/slug";
+import { REORBIT_PROFILE, idFrom, sellerPath } from "../../../shared/slug";
 import useReadableAddress from "../../../shared/useReadableAddress";
 import { apiRequest } from "../../../api/api";
 import { useUserComplaintFiler } from "../../../shared/complaints";
@@ -12,13 +12,15 @@ import { useSellerReviews } from "../../../shared/hooks/usePublicReviews";
 import { personChat } from "../../data/messageTargets";
 import { PageLoader } from "../../../shared/components/Spinner";
 import ProfileShell from "./ProfileShell";
-import { Link } from "../../../shared/portalRouter";
+import { Link, Navigate } from "../../../shared/portalRouter";
 
 /* A member's public seller profile: their details from the server (GET /api/users/public/<id>/)
    and their live listings. Works in every portal, also when opened directly from a link. */
 export default function UserSellerProfile() {
   const { sellerId: rawSeller } = useParams();
   const sellerId = idFrom(rawSeller); // "asha-shah-USR-1004" -> "USR-1004"
+  /* an old link to ReOrbit's own "seller" page (…/seller/reorbit-ADM-1001) */
+  const isPlatform = /^ADM-/i.test(sellerId);
   const [params] = useSearchParams();
   const [products, setProducts] = useState([]);
   /* this member's live listings, straight from the marketplace (any number of them) */
@@ -67,6 +69,7 @@ export default function UserSellerProfile() {
     };
   }, [sellerId]);
 
+  if (isPlatform) return <Navigate to={REORBIT_PROFILE} replace />;
   if (state === "loading") return <PageLoader label="Loading seller…" />;
 
   if (state === "missing" || !seller) {

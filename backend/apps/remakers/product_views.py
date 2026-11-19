@@ -55,6 +55,12 @@ def _extra(data, values, errors, has):
         values["delivery_fee"] = _delivery_fee(
             None if values.get("pickup_preference") == RemakerProduct.Pickup.SELLER_HANDOVER else data.get("delivery_fee"),
             errors)
+    if "condition" in data:
+        c = str(data.get("condition") or "")
+        if c not in RemakerProduct.Condition.values:
+            errors["condition"] = ["Choose Upcycled, Refurbished or Brand new."]
+        else:
+            values["condition"] = c
     if "customization_available" in data:
         values["customization_available"] = bool(data.get("customization_available"))
 

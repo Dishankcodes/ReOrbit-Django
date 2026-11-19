@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { personPath, productPath } from "../../../shared/slug";
 import { getAccount } from "../../../api/session";
 import { useNavigate, useSearchParams } from "../../../shared/portalRouter";
@@ -42,6 +42,9 @@ import "../../../shared/components/Skeleton.css";
 import "../../css/marketplace-css/UserMarketplaceV2.css";
 
 import Spinner from "../../../shared/components/Spinner";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
+import { REORBIT_PROFILE } from "../../../shared/slug";
+import { CONDITION_IDS } from "../../../shared/conditions";
 const SORTS = [
   { key: "featured", label: "Featured" },
   { key: "newest", label: "Newest first" },
@@ -66,17 +69,21 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
   const isMaker = item.sellerType === "remaker";
 
   const openProduct = () => navigate(productPath(item.id, item.title));
+  const isStore = item.sellerType === "admin";
+  const soldOut = !stock.purchasable && !stock.own;
   const openSeller = (e) => {
     e.stopPropagation();
     navigate(
-      personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller),
+      isStore
+        ? REORBIT_PROFILE
+        : personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller),
     );
   };
 
   return (
     <article className="mk-card">
       <div
-        className="mk-media"
+        className={`mk-media ${soldOutClass(soldOut)}`}
         role="button"
         tabIndex={0}
         onClick={openProduct}
@@ -116,6 +123,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
           <Heart size={16} fill={wished ? "currentColor" : "none"} />
         </button>
         <span className="mk-cond">{item.condition}</span>
+        <SoldOutTag show={soldOut} />
       </div>
 
       <div className="mk-body">
@@ -124,9 +132,11 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
         <button type="button" className="mk-seller" onClick={openSeller}>
           by <b>{item.seller}</b>
           {isMaker && <BadgeCheck size={13} />}
-          <span className="mk-rate">
-            <Star size={11} fill="currentColor" /> {item.sellerRating}
-          </span>
+          {item.sellerRating > 0 && (
+            <span className="mk-rate">
+              <Star size={11} fill="currentColor" /> {item.sellerRating}
+            </span>
+          )}
         </button>
 
         <div className="mk-foot">
@@ -205,12 +215,11 @@ export default function UserMarketplace() {
     [live.version, ownSellerId],
   );
 
-  /* the conditions sellers really use (members: Excellent…Fair, ReOrbit store: Like new…Refurbished,
-     ReMaker creations: New), in a sensible order, only the ones on the marketplace right now */
+  /* every condition on ReOrbit, always in the same order (shared/conditions.js), plus any old
+     value still on a listing */
   const conditionOptions = useMemo(() => {
-    const order = ["New", "Like new", "Excellent", "Very Good", "Good", "Fair", "Refurbished"];
     const present = new Set(base.map((i) => i.condition).filter(Boolean));
-    return [...order.filter((c) => present.has(c)), ...[...present].filter((c) => !order.includes(c)).sort()];
+    return [...CONDITION_IDS, ...[...present].filter((c) => !CONDITION_IDS.includes(c)).sort()];
   }, [base]);
 
   const counts = useMemo(
@@ -263,6 +272,23 @@ export default function UserMarketplace() {
     savedOnly,
     wish.ids,
   ]);
+
+  /* 20 cards at a time: the next 20 appear when you scroll to the end (or tap "Show more") */
+  const PAGE = 20;
+  const [shown, setShown] = useState(PAGE);
+  useEffect(() => setShown(PAGE), [source, search, category, condition, maxPrice, sort, savedOnly]);
+  const moreRef = useRef(null);
+  const hasMore = results.length > shown;
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || !hasMore || typeof IntersectionObserver === "undefined") return undefined;
+    const io = new IntersectionObserver(
+      (entries) => entries.some((e) => e.isIntersecting) && setShown((n) => n + PAGE),
+      { rootMargin: "400px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, shown]);
 
   const filtered =
     search ||
@@ -475,17 +501,26 @@ export default function UserMarketplace() {
       {loading ? (
         <SkeletonCards count={8} min={240} />
       ) : results.length ? (
-        <div className="mk-grid">
-          {results.map((item) => (
-            <ProductCard
-              key={item.id}
-              item={item}
-              wished={wish.ids.includes(item.id)}
-              onWishlist={wish.toggle}
-              onAdded={showToast}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mk-grid">
+            {results.slice(0, shown).map((item) => (
+              <ProductCard
+                key={item.id}
+                item={item}
+                wished={wish.ids.includes(item.id)}
+                onWishlist={wish.toggle}
+                onAdded={showToast}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="mk-more" ref={moreRef}>
+              <button type="button" className="dn-btn dn-btn--ghost" onClick={() => setShown((n) => n + PAGE)}>
+                Show more ({results.length - shown} left)
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="mk-empty">
           <PackageSearch size={30} />

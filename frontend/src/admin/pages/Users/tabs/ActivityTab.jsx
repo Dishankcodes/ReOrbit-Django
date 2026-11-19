@@ -1,12 +1,21 @@
 import React from "react";
-import { UserPlus, Boxes, ShoppingBag, Gift } from "lucide-react";
+import { UserPlus, Boxes, ShoppingBag, Gift, Star, LogIn, Wifi, WifiOff, Trash2, RotateCcw, ShieldAlert } from "lucide-react";
 import { formatDateTime } from "../../../utils/format";
+import Presence from "../../../components/ui/Presence";
 
 const ICONS = {
   account: UserPlus,
   item: Boxes,
+  listing: Boxes,
   order: ShoppingBag,
   donation: Gift,
+  review: Star,
+  signin: LogIn,
+  online: Wifi,
+  offline: WifiOff,
+  deleted: Trash2,
+  restored: RotateCcw,
+  status: ShieldAlert,
 };
 
 export default function ActivityTab({ user }) {
@@ -15,8 +24,9 @@ export default function ActivityTab({ user }) {
       <header className="aup-card-head">
         <div>
           <h3>Recent activity</h3>
-          <p>A timeline of what this user has done on ReOrbit.</p>
+          <p>Sign-ins, online or offline, deleting and coming back, and everything they did on ReOrbit.</p>
         </div>
+        <Presence account={user} />
       </header>
       <ol className="aup-activity">
         {user.activity.map((event, index) => {

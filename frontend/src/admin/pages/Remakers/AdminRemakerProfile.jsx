@@ -31,6 +31,7 @@ import { formatDate, formatINR } from "../../utils/format";
 import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
 import EmptyState from "../../components/ui/EmptyState";
+import Presence from "../../components/ui/Presence";
 import ConfirmActionModal from "../../components/ui/ConfirmActionModal";
 import { ACTION_ICONS } from "../../components/ui/actionIcons";
 import useToast from "../../components/ui/useToast";
@@ -218,6 +219,7 @@ export default function AdminRemakerProfile() {
             <div className="aup-hero-name">
               <h2>{remaker.full_name}</h2>
               <StatusBadge status={remaker.status} />
+              <span className="aup-hero-presence"><Presence account={remaker} /></span>
             </div>
             <p className="rm-hero-art">“{remaker.username}”</p>
             <ul className="aup-hero-meta">

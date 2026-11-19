@@ -614,7 +614,7 @@ export default function App() {
                 path="/user-marketplace/product/:productId"
                 element={<UserProductDetails />}
               />
-              <Route path="/user-marketplace/reorbit" element={<ReOrbitStoreProfile />} />
+              <Route path="/user-marketplace/reorbit-platform-profile" element={<ReOrbitStoreProfile />} />
               <Route
                 path="/user-marketplace/seller/:sellerId"
                 element={<UserSellerProfile />}
@@ -758,7 +758,7 @@ export default function App() {
                 path="/remaker-marketplace/product/:productId"
                 element={<UserProductDetails />}
               />
-              <Route path="/remaker-marketplace/reorbit" element={<ReOrbitStoreProfile />} />
+              <Route path="/remaker-marketplace/reorbit-platform-profile" element={<ReOrbitStoreProfile />} />
               <Route
                 path="/remaker-marketplace/seller/:sellerId"
                 element={<UserSellerProfile />}
@@ -930,7 +930,7 @@ export default function App() {
                 path="/admin-shop/product/:productId"
                 element={<UserProductDetails />}
               />
-              <Route path="/admin-shop/reorbit" element={<ReOrbitStoreProfile />} />
+              <Route path="/admin-shop/reorbit-platform-profile" element={<ReOrbitStoreProfile />} />
               <Route
                 path="/admin-shop/seller/:sellerId"
                 element={<UserSellerProfile />}

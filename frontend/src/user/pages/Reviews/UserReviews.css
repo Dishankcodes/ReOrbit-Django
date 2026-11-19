@@ -1,0 +1,54 @@
+.urv-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  margin-bottom: 18px;
+  padding: 5px;
+  border: 1px solid #dce5de;
+  border-radius: 999px;
+  background: #fff;
+}
+.urv-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #4d5c54;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.urv-tabs button.on {
+  background: #2a4d3a;
+  color: #fff;
+}
+
+/* the received-reviews page in member green (it is the ReMaker page, which is maroon) */
+.rvp.rvp--member {
+  --rp-maroon: #1e3d2f;
+  --rp-maroon-soft: #2a4d3a;
+  --rp-green: #1e3d2f;
+  --rp-sage: #c4d6ca;
+  --rp-sage-light: #e8f0ea;
+  --rp-text: #1c2620;
+  --rp-muted: #66726b;
+  --rp-border: #dce5de;
+  --rp-soft: #f1f6f2;
+  --rp-shadow: 0 10px 30px rgba(31, 41, 35, 0.05);
+}
+.rvp.rvp--member .rvp-side-card.cta {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 45%),
+    linear-gradient(140deg, #2a4d3a 0%, #1e3d2f 100%);
+  border-color: #2a4d3a;
+}
+.rvp.rvp--member .rvp-kinds button.active {
+  border-bottom-color: #1e3d2f;
+  color: #1e3d2f;
+}

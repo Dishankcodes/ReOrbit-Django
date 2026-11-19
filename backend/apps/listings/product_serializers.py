@@ -44,7 +44,7 @@ class RemakerProductSerializer(_Base):
 
     class Meta:
         model = RemakerProduct
-        fields = COMMON + ["materials", "dimensions", "customization_available",
+        fields = COMMON + ["condition", "materials", "dimensions", "customization_available",
                            "pickup_preference", "delivery_fee", "remaker", "deactivation", "views", "saves", "sales"]
 
     def get_views(self, obj):

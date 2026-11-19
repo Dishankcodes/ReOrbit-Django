@@ -23,7 +23,10 @@ import "./ReviewsPage.css";
 
 const PAGE_SIZE = 6;
 
-export default function ReMakerReviews() {
+/* Reviews you received. Also used on the member side (/user-reviews › Received) with `member`:
+   same data (GET /api/reviews/received/), member colours and wording. */
+export default function ReMakerReviews({ member = false }) {
+  const cls = member ? "rvp rvp--member" : "rvp";
   const allReviews = useReviews();
   const { status, error } = useReviewsStatus();
   /* product reviews (about an item) and seller reviews (about your service) are kept apart */
@@ -136,7 +139,7 @@ export default function ReMakerReviews() {
 
   if (status === "error" && reviews.length === 0) {
     return (
-      <section className="rvp">
+      <section className={cls}>
         <div className="rvp-empty">
           <h3>We couldn't load your reviews</h3>
           <p>{error}</p>
@@ -154,27 +157,27 @@ export default function ReMakerReviews() {
 
   if (status !== "ready") {
     return (
-      <section className="rvp">
+      <section className={cls}>
         <PageLoader label="Loading your reviews…" />
       </section>
     );
   }
 
   return (
-    <section className="rvp">
+    <section className={cls}>
       {/* ================= HEADER ================= */}
       <header className="rvp-top">
         <div>
-          <h2>What customers say</h2>
+          <h2>{member ? "What buyers say about you" : "What customers say"}</h2>
           <p>
-            Read every review of your products, reply to your customers and keep
-            your rating strong. Replying to reviews builds trust with the next
-            buyer.
+            {member
+              ? "Reviews of the things you sold and of how the sale went. Reply to say thanks or explain, and report a review that breaks the rules."
+              : "Read every review of your products, reply to your customers and keep your rating strong. Replying to reviews builds trust with the next buyer."}
           </p>
         </div>
 
-        <Link to="/remaker-analytics" className="rvp-btn ghost">
-          See analytics
+        <Link to={member ? "/user-sell/sales" : "/remaker-analytics"} className="rvp-btn ghost">
+          {member ? "My sales" : "See analytics"}
         </Link>
       </header>
 
@@ -328,8 +331,8 @@ export default function ReMakerReviews() {
               Add clear photos and a short story to each product. Customers who
               understand a piece write better reviews.
             </p>
-            <Link to="/remaker-products" className="rvp-btn light">
-              Improve my products
+            <Link to={member ? "/user-sell" : "/remaker-products"} className="rvp-btn light">
+              {member ? "Improve my listings" : "Improve my products"}
             </Link>
           </section>
         </aside>

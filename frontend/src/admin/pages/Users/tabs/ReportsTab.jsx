@@ -1,10 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Flag } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import { formatDate } from "../../../utils/format";
 
 export default function ReportsTab({ user, noun = "user" }) {
+  const navigate = useNavigate();
   if (user.reports.length === 0) {
     return (
       <section className="aup-card">
@@ -27,7 +29,15 @@ export default function ReportsTab({ user, noun = "user" }) {
       </header>
       <ul className="aup-list">
         {user.reports.map((report) => (
-          <li key={report.report_id} className="aup-list-row aup-report">
+          <li
+            key={report.report_id}
+            className="aup-list-row aup-report aup-row-link"
+            role="link"
+            tabIndex={0}
+            title="Open this report"
+            onClick={() => navigate(`/admin-complaints/${report.report_id}`)}
+            onKeyDown={(e) => e.key === "Enter" && navigate(`/admin-complaints/${report.report_id}`)}
+          >
             <span
               className={`aup-report-icon ${report.direction.startsWith("Against") ? "against" : ""}`}
             >

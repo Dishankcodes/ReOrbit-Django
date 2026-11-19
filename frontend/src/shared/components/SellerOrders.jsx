@@ -145,26 +145,48 @@ export default function SellerOrders({
   const countOf = (key) =>
     SPECIAL[key] ? state.counts[SPECIAL[key][2]] || 0 : key ? state.counts[key] || 0 : total;
   const MAIN_TABS = tabs.slice(0, 5); // All, To pack, To ship, On the way, Delivered
-  const MORE_TABS = tabs.slice(5); // Not delivered, Cancelled, Returns
+  const MORE_TABS = tabs.slice(5); // Not delivered, Cancelled, Returns (+ COD cash for admins)
+  /* how many in "More" still need someone (cancelled ones are finished, so not counted) */
+  const moreCount = MORE_TABS.filter((t) => t.key !== "Cancelled").reduce((n, t) => n + countOf(t.key), 0);
 
   return (
     <div className={`so${adm ? " so-admin" : ""}`} style={{ "--so-accent": accent }}>
       {adm ? (
         <div className="so-tools">
-          <div className="so-tabs" role="tablist" aria-label="Order status">
-            {tabs.map((t) => (
-              <button
-                key={t.key || "all"}
-                type="button"
-                role="tab"
-                aria-selected={tab === t.key}
-                className={tab === t.key ? "on" : ""}
-                onClick={() => setTab(t.key)}
-              >
-                <i className={`so-dot d-${t.key || "all"}`} />
-                {t.label} <em>{countOf(t.key)}</em>
-              </button>
-            ))}
+          {/* the everyday stages as one segmented row; the rarer ones (not delivered, cancelled,
+              returns, COD cash) in one "More" dropdown that shows how many need a look */}
+          <div className="so-admin-top">
+            <div className="so-seg" role="tablist" aria-label="Order status">
+              {MAIN_TABS.map((t) => (
+                <button
+                  key={t.key || "all"}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  className={tab === t.key ? "on" : ""}
+                  onClick={() => setTab(t.key)}
+                >
+                  <i className={`so-dot d-${t.key || "all"}`} />
+                  {t.label}
+                  <em>{countOf(t.key)}</em>
+                </button>
+              ))}
+            </div>
+            <select
+              className={`so-more-select ${MORE_TABS.some((t) => t.key === tab) ? "on" : ""}`}
+              value={MORE_TABS.some((t) => t.key === tab) ? tab : ""}
+              onChange={(e) => setTab(e.target.value)}
+              aria-label="More order states"
+            >
+              <option value="">
+                More{moreCount ? ` (${moreCount})` : ""}…
+              </option>
+              {MORE_TABS.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label} ({countOf(t.key)})
+                </option>
+              ))}
+            </select>
           </div>
           <div className="so-filters">
             {role === "admin" && !fixedType && (

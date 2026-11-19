@@ -172,6 +172,13 @@ class AnnouncementTests(APIBase):
             self.assertEqual(self.send(**bad).status_code, 400, bad)
         self.assertFalse(Notification.objects.filter(module="announcements").exists())
 
+    def test_a_time_that_just_passed_sends_it_now(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        r = self.send(scheduleAt=(timezone.now() - timedelta(minutes=1)).isoformat())
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["announcement"]["status"], "sent")
+
     def test_cancel_only_before_it_is_sent(self):
         from datetime import timedelta
         from django.utils import timezone

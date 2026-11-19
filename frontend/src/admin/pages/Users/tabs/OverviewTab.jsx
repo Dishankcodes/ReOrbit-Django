@@ -15,6 +15,8 @@ import {
   formatINR,
   timeAgo,
 } from "../../../utils/format";
+import Presence, { isOnline } from "../../../components/ui/Presence";
+
 import ProviderBadge from "../components/ProviderBadge";
 
 function Detail({ label, children }) {
@@ -56,7 +58,10 @@ export default function OverviewTab({ user, goToTab }) {
             <Detail label="Pincode">{profile.pincode}</Detail>
             <Detail label="Joined">{formatDate(user.created_at)}</Detail>
             <Detail label="Last updated">{formatDate(user.updated_at)}</Detail>
-            <Detail label="Last active">{`${timeAgo(user.last_active)} · ${formatDateTime(user.last_active)}`}</Detail>
+            <Detail label="Last active">
+              <Presence account={user} />
+              {!isOnline(user) && ` · ${formatDateTime(user.last_active)}`}
+            </Detail>
             <Detail label="Google account">
               {user.google_id ? `Linked (${user.google_id})` : "Not linked"}
             </Detail>

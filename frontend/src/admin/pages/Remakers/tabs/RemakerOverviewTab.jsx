@@ -15,6 +15,8 @@ import {
   formatINR,
   timeAgo,
 } from "../../../utils/format";
+import Presence, { isOnline } from "../../../components/ui/Presence";
+
 import ProviderBadge from "../../Users/components/ProviderBadge";
 
 function Detail({ label, children }) {
@@ -89,7 +91,10 @@ export default function RemakerOverviewTab({ remaker, goToTab }) {
             <Detail label="State">{profile.state}</Detail>
             <Detail label="Pincode">{profile.pincode}</Detail>
             <Detail label="Joined">{formatDate(remaker.created_at)}</Detail>
-            <Detail label="Last active">{`${timeAgo(remaker.last_active)} · ${formatDateTime(remaker.last_active)}`}</Detail>
+            <Detail label="Last active">
+              <Presence account={remaker} />
+              {!isOnline(remaker) && ` · ${formatDateTime(remaker.last_active)}`}
+            </Detail>
           </dl>
         </section>
 

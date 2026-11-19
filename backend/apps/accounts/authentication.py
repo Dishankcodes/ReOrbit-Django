@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import TokenError
@@ -9,6 +12,20 @@ from apps.remakers.models import ReMakers
 from apps.users.models import Users
 
 ACCOUNT_MODELS = {"user": Users, "remaker": ReMakers, "admin": Admins}
+SEEN_EVERY = timedelta(minutes=2)
+
+
+def _stamp_seen(model, account):
+    """Members and ReMakers: remember when they last used the app (admins see "Online now" or
+    "Last active 3 h ago"). At most one small UPDATE every 2 minutes per account; the account row is
+    already loaded, so there is no extra lookup."""
+    if not hasattr(account, "last_seen_at"):
+        return
+    now = timezone.now()
+    if account.last_seen_at and now - account.last_seen_at < SEEN_EVERY:
+        return
+    model.objects.filter(pk=account.pk).update(last_seen_at=now)
+    account.last_seen_at = now
 
 
 class ReOrbitPrincipal:
@@ -76,5 +93,7 @@ class ReOrbitJWTAuthentication(BaseAuthentication):
         if not token_is_current(account, token):
             # the password was changed or reset after this sign-in
             raise AuthenticationFailed("Your session has ended. Please sign in again.")
+        if account_type != "admin":
+            _stamp_seen(model, account)
 
         return ReOrbitPrincipal(account, account_type), token

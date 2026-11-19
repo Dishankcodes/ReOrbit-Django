@@ -14,6 +14,8 @@ import {
   ArrowDownRight,
   Coins,
   Info,
+  Truck,
+  TicketPercent,
 } from "lucide-react";
 
 import { useEarnings, RANGES } from "../../data/earningsStore";
@@ -51,20 +53,25 @@ const C_FEE = "var(--rp-c1)";
 const C_SALE = "var(--rp-c3)";
 const C_OUT = "var(--rp-c2)";
 const C_TOTAL = "var(--er-total)";
+const C_DELIVERY = "var(--rp-c4)";
 const COLOR = {
   fees: C_FEE,
   sales: C_SALE,
+  delivery: C_DELIVERY,
+  vouchers: C_OUT,
   refunds: C_OUT,
   purchases: C_OUT,
   earnings: C_TOTAL,
   net: C_TOTAL,
 };
 const NOTE = {
+  delivery: "Delivery charges ReOrbit keeps: its own store orders and \"Managed by ReOrbit\" orders.",
+  vouchers: "Donation vouchers taken off at checkout. ReOrbit pays these; sellers still get their full price.",
   fees: "Charged to the buyer on every User or ReMaker order.",
   sales:
-    "Your own warehouse and refurbished products, with the delivery you charged.",
+    "Your own warehouse and refurbished products (delivery is counted on its own).",
   refunds: "Fees and sales given back on refunded orders.",
-  earnings: "Everything earned after refunds.",
+  earnings: "Everything earned after voucher discounts and refunds.",
   purchases: "What the platform spent buying products.",
   net: "Earnings minus purchases.",
 };
@@ -356,7 +363,17 @@ function EarningsOverview() {
           <li>
             <i style={{ background: C_SALE }} />
             <span>Product sales</span>
-            <b>+ {inr(cur.sales + cur.delivery)}</b>
+            <b>+ {inr(cur.sales)}</b>
+          </li>
+          <li>
+            <i style={{ background: C_DELIVERY }} />
+            <span>Delivery fees</span>
+            <b>+ {inr(cur.delivery)}</b>
+          </li>
+          <li>
+            <i style={{ background: C_OUT }} />
+            <span>Voucher discounts</span>
+            <b>− {inr(cur.vouchers || 0)}</b>
           </li>
           <li>
             <i style={{ background: C_OUT }} />
@@ -376,9 +393,23 @@ function EarningsOverview() {
         <Tile
           icon={Store}
           label="Product sales"
-          value={inr(cur.sales + cur.delivery)}
-          delta={delta(cur.sales + cur.delivery, prev.sales + prev.delivery)}
-          hint={`Incl. ${inr(cur.delivery)} delivery`}
+          value={inr(cur.sales)}
+          delta={delta(cur.sales, prev.sales)}
+          hint="ReOrbit's own store products"
+        />
+        <Tile
+          icon={Truck}
+          label="Delivery fees"
+          value={inr(cur.delivery)}
+          delta={delta(cur.delivery, prev.delivery)}
+          hint="Store and Managed by ReOrbit orders"
+        />
+        <Tile
+          icon={TicketPercent}
+          label="Voucher discounts"
+          value={`− ${inr(cur.vouchers || 0)}`}
+          hint="Paid by ReOrbit at checkout"
+          tone="warn"
         />
         <Tile
           icon={ShoppingCart}
@@ -402,6 +433,7 @@ function EarningsOverview() {
           legend={[
             { label: "Platform fees", color: C_FEE },
             { label: "Product sales", color: C_SALE },
+            { label: "Delivery fees", color: C_DELIVERY },
             { label: "Money out", color: C_OUT },
             { label: "Totals", color: C_TOTAL },
           ]}

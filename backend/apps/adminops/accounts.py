@@ -7,6 +7,8 @@ listings or products, orders bought and sold, donations, wishlist, reviews, repo
 Field names match the tabs (frontend/src/admin/pages/Users/tabs, .../Remakers/tabs).
 """
 
+from datetime import timedelta
+
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
@@ -133,6 +135,49 @@ def _wishlist_rows(request, me, kind):
     return rows
 
 
+ONLINE_FOR = 5  # minutes: seen this recently = "Online now"
+
+ACCOUNT_EVENTS = {
+    "account.suspended": ("status", "Suspended by ReOrbit"),
+    "account.blocked": ("status", "Blocked by ReOrbit"),
+    "account.closed": ("status", "Account closed by ReOrbit"),
+    "account.reactivated": ("status", "Made active again by ReOrbit"),
+    "account.delete_requested": ("deleted", "Deleted their account (30 days to come back)"),
+    "account.delete_cancelled": ("restored", "Came back: signed in again within 30 days"),
+}
+
+
+def presence(account):
+    """{"online": bool, "last_seen": datetime | None}: "Online now" when the app was used in the last
+    few minutes, otherwise when it was last used (or signed in to)."""
+    from django.utils import timezone
+
+    seen = max([t for t in (getattr(account, "last_seen_at", None), account.last_login_at) if t], default=None)
+    online = bool(seen and timezone.now() - seen < timedelta(minutes=ONLINE_FOR)
+                  and account.status != "Deleted")
+    return {"online": online, "last_seen": seen}
+
+
+def _account_events(account, kind):
+    """Sign-ins, status changes and deleting / coming back, from the account and the audit log."""
+    from apps.core.models import AuditLog
+
+    rows = []
+    for a in AuditLog.objects.filter(entity_type=kind, entity_id=account.public_id,
+                                     action__in=ACCOUNT_EVENTS).order_by("-created_at")[:30]:
+        kind_, text = ACCOUNT_EVENTS[a.action]
+        if a.reason and kind_ == "status" and a.action != "account.reactivated":
+            text = f"{text}: {a.reason}"
+        rows.append({"type": kind_, "text": text, "at": a.created_at})
+    if account.last_login_at:
+        rows.append({"type": "signin", "text": "Signed in", "at": account.last_login_at})
+    p = presence(account)
+    if p["last_seen"] and (not account.last_login_at or p["last_seen"] > account.last_login_at):
+        rows.append({"type": "online" if p["online"] else "offline",
+                     "text": "Online now" if p["online"] else "Last used the app", "at": p["last_seen"]})
+    return rows
+
+
 def _activity(*groups):
     rows = [row for group in groups for row in group]
     rows.sort(key=lambda r: r["at"], reverse=True)
@@ -184,6 +229,7 @@ def user_detail(request, u):
     }
     activity = _activity(
         [{"type": "account", "text": "Created a ReOrbit account", "at": u.created_at}],
+        _account_events(u, "user"),
         [{"type": "listing", "text": f"Listed {i['title']}", "at": i["created_at"]} for i in items[:20]],
         [{"type": "order", "text": f"{'Bought' if o['role'] == 'Buyer' else 'Sold'} {o['title']} ({o['order_id']})",
           "at": o["order_date"]} for o in orders[:20]],
@@ -194,6 +240,7 @@ def user_detail(request, u):
     return {
         "items": items, "orders": orders, "donations": donations, "wishlist": _wishlist_rows(request, u, "user"),
         "reviews": reviews, "reports": _report_rows(u, "user"), "activity": activity, "totals": totals,
+        "presence": presence(u),
     }
 
 
@@ -244,6 +291,7 @@ def remaker_detail(request, m):
     }
     activity = _activity(
         [{"type": "account", "text": "Created a ReMaker account", "at": m.created_at}],
+        _account_events(m, "remaker"),
         [{"type": "listing", "text": f"Added {p['title']}", "at": p["created_at"]} for p in products[:20]],
         [{"type": "order", "text": f"{'Bought' if o['role'] == 'Buyer' else 'Sold'} {o['title']} ({o['order_id']})",
           "at": o["order_date"]} for o in orders[:20]],
@@ -253,6 +301,7 @@ def remaker_detail(request, m):
     return {
         "products": products, "orders": orders, "refurbishments": refurbishments, "reviews": reviews,
         "reports": _report_rows(m, "remaker"), "activity": activity, "totals": totals,
+        "presence": presence(m),
         "followers": Follow.objects.filter(target=m).count(),
         "sales": sum(1 for o in orders if o["role"] == "Seller" and o["order_status"] == Order.Status.DELIVERED),
     }

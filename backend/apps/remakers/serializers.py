@@ -69,6 +69,7 @@ class ReMakerSerializer(serializers.ModelSerializer):
             "status_reason",
             "email_verified_at",
             "last_login_at",
+            "last_seen_at",
             "created_at",
             "updated_at",
             "profile",

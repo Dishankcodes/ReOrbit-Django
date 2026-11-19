@@ -56,6 +56,7 @@ const FILTERS = [
   { key: "all", label: "All" },
   { key: "unread", label: "Unread" },
   { key: "action", label: "Needs action" },
+  { key: "urgent", label: "Urgent" },
 ];
 
 export default function AdminNotifications() {
@@ -109,7 +110,8 @@ export default function AdminNotifications() {
       (n) =>
         (filter === "all" ||
           (filter === "unread" && !n.read) ||
-          (filter === "action" && n.needsAction)) &&
+          (filter === "action" && n.needsAction) ||
+          (filter === "urgent" && n.severity === "critical")) &&
         (module === "all" || n.module === module) &&
         (!t || `${n.title} ${n.message}`.toLowerCase().includes(t)),
     );
@@ -150,7 +152,9 @@ export default function AdminNotifications() {
           : `Announcement sent to ${a.recipients} ${a.recipients === 1 ? "person" : "people"} (${AUDIENCE_LABEL[data.audience].toLowerCase()})`,
       );
     } catch (e) {
-      toast(e.message || "The announcement could not be sent.");
+      // say which field is wrong (for example a scheduled time that has already passed)
+      const first = e.errors && Object.values(e.errors).flat()[0];
+      toast(first ? `${e.message} ${first}` : e.message || "The announcement could not be sent.");
     }
   };
   const goTab = (k) =>
@@ -197,7 +201,14 @@ export default function AdminNotifications() {
             <em>Across all admin modules</em>
           </div>
         </button>
-        <button type="button" className="ao-money-card">
+        <button
+          type="button"
+          className="ao-money-card is-link"
+          onClick={() => {
+            goTab("inbox");
+            setFilter("urgent");
+          }}
+        >
           <span className="ao-money-icon bad">
             <AlertOctagon size={18} />
           </span>
@@ -326,7 +337,9 @@ export default function AdminNotifications() {
               text={
                 filter === "unread"
                   ? "You have read everything. Nice work."
-                  : "Try another filter or search."
+                  : filter === "urgent"
+                    ? "Nothing urgent right now."
+                    : "Try another filter or search."
               }
             />
           ) : (

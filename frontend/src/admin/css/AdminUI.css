@@ -509,3 +509,48 @@
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
 }
+
+/* "Online now" / "Last active 3 h ago" */
+.aup-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #66726b;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.aup-presence i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b5c2bb;
+}
+.aup-presence.on {
+  color: #1f7a4c;
+}
+.aup-presence.on i {
+  background: #22a35f;
+  box-shadow: 0 0 0 3px rgba(34, 163, 95, 0.18);
+}
+
+.au-online-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: #22a35f;
+  box-shadow: 0 0 0 3px rgba(34, 163, 95, 0.18);
+  vertical-align: middle;
+}
+
+/* on the dark profile header */
+.aup-hero-presence .aup-presence {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+}
+.aup-hero-presence .aup-presence.on {
+  color: #bff2d2;
+}

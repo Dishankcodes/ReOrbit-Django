@@ -51,4 +51,11 @@ export const sellerPath = (id, name) => `/user-marketplace/seller/${withSlug(id,
 export const remakerPath = (id, name) => `/user-marketplace/remaker/${withSlug(id, name)}`;
 /* a member or a ReMaker, from a seller type */
 export const personPath = (type, id, name) =>
-  String(type).toLowerCase() === "remaker" ? remakerPath(id, name) : sellerPath(id, name);
+  String(type).toLowerCase() === "admin" || /^ADM-/i.test(String(id || ""))
+    ? REORBIT_PROFILE /* ReOrbit's own items: the platform profile, never "seller not found" */
+    : String(type).toLowerCase() === "remaker"
+      ? remakerPath(id, name)
+      : sellerPath(id, name);
+
+/* ReOrbit's own store profile (items sold by the platform). No account number in the address. */
+export const REORBIT_PROFILE = "/user-marketplace/reorbit-platform-profile";

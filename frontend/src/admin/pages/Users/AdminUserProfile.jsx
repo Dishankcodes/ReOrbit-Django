@@ -32,6 +32,7 @@ import { formatDate, formatINR } from "../../utils/format";
 import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
 import EmptyState from "../../components/ui/EmptyState";
+import Presence from "../../components/ui/Presence";
 import ConfirmActionModal from "../../components/ui/ConfirmActionModal";
 import { ACTION_ICONS } from "../../components/ui/actionIcons";
 import useToast from "../../components/ui/useToast";
@@ -197,6 +198,7 @@ export default function AdminUserProfile() {
             <div className="aup-hero-name">
               <h2>{user.full_name}</h2>
               <StatusBadge status={user.status} />
+              <span className="aup-hero-presence"><Presence account={user} /></span>
             </div>
             <ul className="aup-hero-meta">
               <li>

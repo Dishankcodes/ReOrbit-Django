@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import TextSuggestions, { BIO_IDEAS } from "../../../shared/components/TextSuggestions";
 import {
   User,
@@ -687,7 +688,7 @@ export default function UserProfile() {
 
         {/* QUICK ACCOUNT LINKS */}
         <section className="profile-quick-links">
-          <div className="profile-quick-link">
+          <Link to="/user-orders" className="profile-quick-link">
             <div className="profile-quick-icon">
               <ShoppingBag size={19} />
             </div>
@@ -698,9 +699,9 @@ export default function UserProfile() {
             </div>
 
             <ChevronRight size={17} />
-          </div>
+          </Link>
 
-          <div className="profile-quick-link">
+          <Link to="/user-wishlist" className="profile-quick-link">
             <div className="profile-quick-icon">
               <Heart size={19} />
             </div>
@@ -711,9 +712,9 @@ export default function UserProfile() {
             </div>
 
             <ChevronRight size={17} />
-          </div>
+          </Link>
 
-          <div className="profile-quick-link">
+          <Link to="/user-badges" className="profile-quick-link">
             <div className="profile-quick-icon">
               <Award size={19} />
             </div>
@@ -724,7 +725,7 @@ export default function UserProfile() {
             </div>
 
             <ChevronRight size={17} />
-          </div>
+          </Link>
         </section>
       </div>
     </div>

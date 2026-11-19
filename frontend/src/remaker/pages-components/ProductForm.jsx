@@ -28,6 +28,7 @@ import {
 import { useOrders as useLiveOrders } from "../../user/data/ordersStore";
 import { formatDate } from "../data/ordersStore";
 
+import { REMAKER_CONDITIONS } from "../../shared/conditions";
 import "../css/ReMakerProductForm.css";
 
 const MAX_PHOTOS = 4;
@@ -63,6 +64,7 @@ function buildInitial(product) {
     price: product?.price ? String(product.price) : "",
     stock: product ? product.stock : 1,
     materials: product?.materials || [],
+    condition: product?.condition || "Upcycled",
     originType: product?.originType || "own",
     originItemId: product?.originItemId || "",
     active: product
@@ -706,6 +708,24 @@ export default function ProductForm({ mode = "add", product = null }) {
                 {show("category") && (
                   <span className="rpf-error-inline">{show("category")}</span>
                 )}
+              </div>
+
+              <div className="rpf-field rpf-span-2">
+                <label htmlFor="rpf-condition">Condition</label>
+                <div className="rpf-select">
+                  <select
+                    id="rpf-condition"
+                    value={values.condition}
+                    onChange={(event) => setField("condition", event.target.value)}
+                  >
+                    {REMAKER_CONDITIONS.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.id}: {c.help}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <span className="rpf-hint">Buyers can filter the marketplace by this.</span>
               </div>
 
               <div className="rpf-field rpf-span-2">

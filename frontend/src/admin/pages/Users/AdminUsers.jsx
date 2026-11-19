@@ -26,6 +26,7 @@ import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
 import Pagination from "../../components/ui/Pagination";
 import EmptyState from "../../components/ui/EmptyState";
+import Presence, { isOnline } from "../../components/ui/Presence";
 import ConfirmActionModal from "../../components/ui/ConfirmActionModal";
 import useToast from "../../components/ui/useToast";
 import ProviderBadge from "./components/ProviderBadge";
@@ -316,6 +317,16 @@ export default function AdminUsers() {
 
             <div className="au-toolbar-right">
               <label className="au-select">
+                <span>Status</span>
+                <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
+                  {STATUS_CARDS.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.key === "All" ? "All statuses" : c.label} ({counts[c.key] ?? 0})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="au-select">
                 <span>Sign-up</span>
                 <select
                   value={provider}
@@ -441,7 +452,10 @@ export default function AdminUsers() {
                         size={40}
                       />
                       <div>
-                        <strong>{user.full_name}</strong>
+                        <strong>
+                          {user.full_name}
+                          {isOnline(user) && <i className="au-online-dot" title="Online now" aria-label="Online now" />}
+                        </strong>
                         <span>{user.email}</span>
                       </div>
                     </div>
@@ -474,9 +488,11 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td className="col-seen">
-                    <span className="au-muted-strong">
-                      {timeAgo(user.last_active)}
-                    </span>
+                    {isOnline(user) ? (
+                      <Presence account={user} />
+                    ) : (
+                      <span className="au-muted-strong">{timeAgo(user.last_active)}</span>
+                    )}
                   </td>
                   <td>
                     <StatusBadge status={user.status} />

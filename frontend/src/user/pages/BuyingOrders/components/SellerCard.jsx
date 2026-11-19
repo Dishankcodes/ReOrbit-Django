@@ -21,7 +21,7 @@ export function SellerChip({ order }) {
   if (!seller) return null;
   const inner = (
     <>
-      <SafeImage src={seller.image} alt="" />
+      <SafeImage src={seller.image} alt="" avatar />
       <span>
         <small>{sellerIsRemaker ? "ReMaker" : "Seller"}</small>
         <strong>{seller.name}</strong>
@@ -79,6 +79,7 @@ export default function SellerCard({ order, compact = false }) {
           src={seller.image}
           alt={seller.name}
           className="ob-seller-img"
+          avatar
         />
         <div>
           <strong>

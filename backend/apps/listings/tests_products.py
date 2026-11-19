@@ -67,6 +67,14 @@ class RemakerProductTests(ProductBase):
         self.assertEqual(r.data["data"]["product"]["status"], "Listed")
         self.assertIsNotNone(r.data["data"]["product"]["cover"])
 
+    def test_condition_defaults_to_upcycled_and_only_takes_remaker_conditions(self):
+        r = self.draft()
+        self.assertEqual(r.data["data"]["product"]["condition"], "Upcycled")
+        self.assertEqual(self.draft(condition="Refurbished").data["data"]["product"]["condition"], "Refurbished")
+        bad = self.draft(condition="Excellent")  # a member-listing condition
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn("condition", bad.data["errors"])
+
     def test_pickup_preference_round_trips(self):
         r = self.draft(pickup_preference="Platform_Pickup")
         self.assertEqual(r.status_code, 201, r.data)
@@ -225,7 +233,10 @@ class MarketplaceTests(ProductBase):
         self.assertEqual([r["kind"] for r in self.browse("?sold_by=remaker")["results"]], ["remaker"])
         self.assertEqual(self.browse("?q=walnut")["count"], 1)
         self.assertEqual(self.browse("?min_price=1000&max_price=3000")["count"], 1)
-        self.assertEqual(self.browse("?condition=Good")["count"], 1)  # only user listings have one
+        # every kind has a condition now: the member listing and the store item are "Good",
+        # the ReMaker product is "Upcycled" (the default)
+        self.assertEqual(self.browse("?condition=Good")["count"], 2)
+        self.assertEqual([r["kind"] for r in self.browse("?condition=Upcycled")["results"]], ["remaker"])
         prices = [float(r["price"]) for r in self.browse("?ordering=price_asc")["results"]]
         self.assertEqual(prices, sorted(prices))
         self.assertEqual(self.browse("?category=furniture")["count"], 3)

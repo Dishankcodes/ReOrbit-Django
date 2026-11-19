@@ -41,6 +41,7 @@ function fromApi(p) {
       .map((m) => m.trim())
       .filter(Boolean),
     dimensions: p.dimensions || "",
+    condition: p.condition || "Upcycled",
     customization: p.customization_available,
     originType: "own",
     originItemId: "",
@@ -138,6 +139,7 @@ const bodyOf = (v) => ({
   price: v.price === "" ? null : Number(v.price),
   stock: Number(v.stock) || 0,
   materials: (v.materials || []).join(", "),
+  condition: v.condition || "Upcycled",
 });
 
 /* Saves the form. goLive: true publishes it, false keeps it as it is (draft or live),

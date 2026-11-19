@@ -27,6 +27,7 @@ import {
   mediaUrl,
 } from "../../api/profile";
 
+import { skillIdeas } from "../data/skillIdeas";
 import "../css/ReMakerProfile.css";
 
 /* ---------------------------------------------------------
@@ -607,6 +608,20 @@ export default function ReMakerProfile() {
                     <Plus size={16} />
                   </button>
                 </div>
+                {draft.skills.length < 10 && (
+                  <div className="rpp-skill-ideas" aria-label="Suggested skills">
+                    <small>Tap to add (up to 10):</small>
+                    {skillIdeas(draft.speciality, draft.bio, draft.skills).map((idea) => (
+                      <button
+                        key={idea}
+                        type="button"
+                        onClick={() => addTag("skills", idea, () => {}, 10)}
+                      >
+                        <Plus size={12} /> {idea}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : data.skills.length ? (
               <div className="rpp-tags">

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePageTitle } from "../../../shared/pageMeta";
-import { idFrom, personPath, productPath } from "../../../shared/slug";
+import { REORBIT_PROFILE, idFrom, personPath, productPath } from "../../../shared/slug";
 import useReadableAddress from "../../../shared/useReadableAddress";
 import { useNavigate, useParams, Link } from "../../../shared/portalRouter";
 import { trackProductView } from "../../../shared/trafficSource";
@@ -195,7 +195,7 @@ export default function UserProductDetails() {
   const sellerPath = personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller);
   /* Where the seller card goes: a ReMaker to their studio, a community seller to their
      profile, and ReOrbit itself to everything ReOrbit sells. */
-  const sellerHref = isStore ? "/user-marketplace/reorbit" : sellerPath;
+  const sellerHref = isStore ? REORBIT_PROFILE : sellerPath;
   const sellerCta = isMaker
     ? "View ReMaker profile"
     : isStore

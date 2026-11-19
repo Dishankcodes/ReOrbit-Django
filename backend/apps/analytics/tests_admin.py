@@ -75,7 +75,7 @@ class AdminEarningsTests(AdminNumbersBase):
         d = self.earnings()
         self.assertEqual(d["cur"]["earnings"], 0)
         self.assertEqual(d["entries"], [])
-        self.assertEqual(len(d["flow"]), 6)
+        self.assertEqual(len(d["flow"]), 8)
         self.assertEqual(d["takeRate"], 0)
 
     def test_the_buyer_fee_is_platform_income_and_the_seller_price_is_not(self):
@@ -103,13 +103,24 @@ class AdminEarningsTests(AdminNumbersBase):
         self.assertEqual(d["cur"]["earnings"], order.platform_fee + order.subtotal + order.delivery_fee)
         self.assertEqual(order.platform_fee, 0)  # nobody pays ReOrbit a fee on ReOrbit's own product
         self.assertEqual(d["feeBySeller"], [])
-        self.assertEqual({e["type"] for e in d["entries"]}, {"Product sale"})
+        self.assertEqual({e["type"] for e in d["entries"]} - {"Delivery fee"}, {"Product sale"})
+
+    def test_voucher_discounts_are_money_out_and_delivery_shows_on_its_own(self):
+        oid = self.place(self.tote)
+        self.deliver(oid, self.tote)
+        Order.objects.filter(public_id=oid).update(discount=50)  # a donation voucher took ₹50 off
+        order = Order.objects.get(public_id=oid)
+        d = self.earnings()
+        by = {row["key"]: row["value"] for row in d["flow"]}
+        self.assertEqual((by["delivery"], by["vouchers"]), (order.delivery_fee, -50))
+        self.assertEqual(d["cur"]["earnings"], order.subtotal + order.delivery_fee - 50)
+        self.assertIn(("Voucher discount", -50), {(e["type"], e["amount"]) for e in d["entries"]})
 
     def test_the_waterfall_adds_up(self):
         self.deliver(self.place(self.tote), self.tote)
         d = self.earnings()
         by = {row["key"]: row["value"] for row in d["flow"]}
-        self.assertEqual(by["fees"] + by["sales"] + by["refunds"], by["earnings"])
+        self.assertEqual(by["fees"] + by["sales"] + by["delivery"] + by["vouchers"] + by["refunds"], by["earnings"])
         self.assertEqual(by["earnings"] + by["purchases"], by["net"])
         self.assertEqual(d["trend"][-1]["cumulative"], d["cur"]["earnings"])
 

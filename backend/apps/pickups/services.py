@@ -347,7 +347,11 @@ def _snapshot(user):
 
 
 def request_for_item(item):
-    """Called when a listing goes live. One request per listing, however often it is published."""
+    """A pickup of a listing on its own (before anyone buys it). One per listing.
+
+    Listings no longer call this when they go live: a "Managed by ReOrbit" listing is collected once,
+    when it is ordered (request_for_order), so the same item is never picked up twice. Kept for
+    pickups created before that change and for the admin tools."""
     if item.pickup_preference != item.Pickup.PLATFORM_PICKUP:
         return None
     r, created = PickupRequest.objects.get_or_create(

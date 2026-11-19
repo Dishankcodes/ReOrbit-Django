@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Gift, Check, Award, CalendarClock } from "lucide-react";
 import EmptyState from "../../../components/ui/EmptyState";
 import StatusBadge from "../../../components/ui/StatusBadge";
@@ -36,6 +37,7 @@ function Stepper({ status }) {
 }
 
 export default function DonationsTab({ user, toast }) {
+  const navigate = useNavigate();
   if (user.donations.length === 0) {
     return (
       <section className="aup-card">
@@ -51,7 +53,15 @@ export default function DonationsTab({ user, toast }) {
   return (
     <div className="aup-stack">
       {user.donations.map((donation) => (
-        <article key={donation.donation_id} className="aup-card aup-donation">
+        <article
+          key={donation.donation_id}
+          className="aup-card aup-donation aup-row-link"
+          role="link"
+          tabIndex={0}
+          title="Open this donation"
+          onClick={(e) => !e.target.closest("button") && navigate(`/admin-donations/${donation.donation_id}`)}
+          onKeyDown={(e) => e.key === "Enter" && e.target === e.currentTarget && navigate(`/admin-donations/${donation.donation_id}`)}
+        >
           <div className="aup-donation-top">
             <img src={donation.image} alt="" className="aup-thumb lg" />
             <div className="aup-donation-main">

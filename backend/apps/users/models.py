@@ -43,6 +43,8 @@ class Users(PublicIdModel):
     status_changed_at = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # the last time the app was used while signed in (stamped at most every 2 minutes): "Online now"
+    last_seen_at = models.DateTimeField(null=True, blank=True)
     # sign-ins from before this moment stop working (password changed or reset, "sign out everywhere")
     tokens_valid_after = models.DateTimeField(null=True, blank=True)
     # set when the person deletes their own account: they can sign in within 30 days to undo it

@@ -42,6 +42,8 @@ class ReMakers(PublicIdModel):
     status_changed_at = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # the last time the app was used while signed in (stamped at most every 2 minutes): "Online now"
+    last_seen_at = models.DateTimeField(null=True, blank=True)
     # sign-ins from before this moment stop working (password changed or reset, "sign out everywhere")
     tokens_valid_after = models.DateTimeField(null=True, blank=True)
     # set when the person deletes their own account: they can sign in within 30 days to undo it
@@ -126,7 +128,15 @@ class RemakerProduct(SellableBase):
         SELLER_HANDOVER = "Seller_Handover", "Seller hands over to courier"
         PLATFORM_PICKUP = "Platform_Pickup", "Managed by ReOrbit"
 
+    class Condition(models.TextChoices):
+        UPCYCLED = "Upcycled", "Upcycled"
+        REFURBISHED = "Refurbished", "Refurbished"
+        BRAND_NEW = "Brand new", "Brand new"
+
     public_id_prefix = "RPR"
+    # what kind of piece it is (the marketplace's condition filter): made from rescued material,
+    # an old piece restored, or made new by hand
+    condition = models.CharField(max_length=20, choices=Condition.choices, default=Condition.UPCYCLED)
     pickup_preference = models.CharField(
         max_length=20, choices=Pickup.choices, default=Pickup.SELLER_HANDOVER
     )

@@ -1221,3 +1221,30 @@
     transition: none;
   }
 }
+
+/* rows and cards that open the order, donation or report */
+.aup-row-link {
+  cursor: pointer;
+}
+tr.aup-row-link:hover td,
+li.aup-row-link:hover {
+  background: #f4f8f6;
+}
+.aup-card.aup-row-link {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.aup-card.aup-row-link:hover {
+  border-color: #b9d2c3;
+  box-shadow: 0 8px 20px rgba(14, 58, 45, 0.06);
+}
+.aup-row-link:focus-visible {
+  outline: 3px solid rgba(31, 74, 58, 0.25);
+  outline-offset: 2px;
+}
+
+.aup-activity-icon.type-online { background: #e3f5ea; color: #1f7a4c; }
+.aup-activity-icon.type-offline,
+.aup-activity-icon.type-signin { background: #eef2f0; color: #4c5d55; }
+.aup-activity-icon.type-deleted,
+.aup-activity-icon.type-status { background: #fdecea; color: #a8433a; }
+.aup-activity-icon.type-restored { background: #e6f0fb; color: #2d5a94; }

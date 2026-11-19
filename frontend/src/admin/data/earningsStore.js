@@ -21,6 +21,7 @@ const zeroTotals = {
   fees: 0,
   sales: 0,
   delivery: 0,
+  vouchers: 0,
   refunds: 0,
   purchases: 0,
   earnings: 0,
@@ -42,6 +43,8 @@ function emptyEarnings(rangeKey) {
     flow: [
       { key: "fees", label: "Platform fees", value: 0, kind: "gain" },
       { key: "sales", label: "Product sales", value: 0, kind: "gain" },
+      { key: "delivery", label: "Delivery fees", value: 0, kind: "gain" },
+      { key: "vouchers", label: "Voucher discounts", value: 0, kind: "loss" },
       { key: "refunds", label: "Refunds", value: 0, kind: "loss" },
       { key: "earnings", label: "Earnings", value: 0, kind: "total" },
       { key: "purchases", label: "Purchases", value: 0, kind: "loss" },

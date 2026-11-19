@@ -45,7 +45,7 @@ export const cardToItem = (c) => ({
   pincode: "",
   co2SavedKg: 0,
   sellerRating: 0,
-  condition: c.condition || (c.seller.type === "user" ? "Good" : "New"),
+  condition: c.condition || (c.seller.type === "user" ? "Good" : "Brand new"),
   seller: c.seller.name,
   sellerId: c.seller.id || "",
   sellerType: c.seller.type,

@@ -10,17 +10,27 @@ const when = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric
 /* Help › My reports: what this member or ReMaker reported (a seller, ReMaker, listing or review)
    and the team's answer once it is closed. `side` only changes the colours.
    `hideWhenEmpty` leaves the whole block out when there is nothing to show. */
-export default function MyReports({ side = "user", hideWhenEmpty = false, title = "My reports" }) {
+export default function MyReports({ side = "user", hideWhenEmpty = false, title = "My reports", onLoaded }) {
   const [rows, setRows] = useState(null);
   const [open, setOpen] = useState("");
   useEffect(() => {
     let alive = true;
     apiRequest("/complaints/me/")
-      .then((r) => alive && setRows(r.data.results || []))
-      .catch(() => alive && setRows([]));
+      .then((r) => {
+        if (!alive) return;
+        const list = r.data.results || [];
+        setRows(list);
+        onLoaded?.(list.length);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setRows([]);
+        onLoaded?.(0);
+      });
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (rows === null) return null;

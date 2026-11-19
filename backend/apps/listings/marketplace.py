@@ -100,6 +100,7 @@ def card(kind, o, request):
     sold_out = o.status == SellableBase.Status.SOLD_OUT
     if kind == "remaker":
         return {**base, "price": o.price, "stock": o.stock, "sold_out": sold_out,
+                "condition": o.condition or "Upcycled",
                 "customization_available": o.customization_available,
                 "seller": {"type": "remaker", "id": o.remaker.public_id,
                            "name": o.remaker.full_name, "username": o.remaker.username}}
@@ -142,8 +143,6 @@ class BrowseView(APIView):
     def get(self, request):
         q = request.query_params
         want = [q["sold_by"]] if q.get("sold_by") in KINDS else list(KINDS)
-        if q.get("condition"):
-            want = [k for k in want if k == "user"]  # only user listings have a condition
         # ?seller=USR-…/RMK-… : one seller's live listings (their public profile page)
         seller = (q.get("seller") or "").strip().upper()
         if seller:
@@ -157,10 +156,10 @@ class BrowseView(APIView):
             parts.append(_light(_filters(user_qs, q, price_field="listing_price", condition_ok=True),
                                 "user", "listing_price"))
         if "remaker" in want:
-            parts.append(_light(_filters(remaker_qs, q, price_field="price", condition_ok=False),
+            parts.append(_light(_filters(remaker_qs, q, price_field="price", condition_ok=True),
                                 "remaker", "price"))
         if "admin" in want:
-            parts.append(_light(_filters(_admin_qs(), q, price_field="price", condition_ok=False),
+            parts.append(_light(_filters(_admin_qs(), q, price_field="price", condition_ok=True),
                                 "admin", "price"))
         if not parts:
             parts = [_light(Item.objects.none(), "user", "listing_price")]

@@ -5,6 +5,8 @@ Income
   Product sales  the item price (and the delivery charge) of ReOrbit's own store products.
   Delivery       the delivery fee of "Managed by ReOrbit" orders (ReOrbit picks up and delivers them).
 Money out
+  Vouchers       donation vouchers taken off at checkout. ReOrbit pays these: sellers still get their
+                 full price.
   Refunds        the fee and the sales given back on refunded orders.
   Purchases      what the platform spends when an admin buys something.
 
@@ -61,6 +63,7 @@ def _rows(since, until):
             "pending": pay == "Pending" and status in ("Pending", "Confirmed"),
             "refunded": pay == "Refunded",
             "fee": fee, "sale": sale, "delivery": delivery, "amount": o.total, "subtotal": o.subtotal,
+            "voucher": o.discount or 0,
             "own_buy": own_buy, "own_sale": own_sale,
             "buyer": _buyer(o), "buyer_type": PARTY.get(o.buyer_type, "User"),
             "seller": _seller(o), "seller_type": o.seller_type,
@@ -76,9 +79,10 @@ def _totals(rows):
     sales = sum(r["sale"] for r in earned)
     delivery = sum(r["delivery"] for r in earned)
     refunds = sum(r["fee"] + r["sale"] + r["delivery"] for r in rows if r["refunded"])
+    vouchers = sum(r["voucher"] for r in earned)
     purchases = sum(r["amount"] for r in earned if r["own_buy"])
-    earnings = fees + sales + delivery - refunds
-    return {"fees": fees, "sales": sales, "delivery": delivery, "refunds": refunds,
+    earnings = fees + sales + delivery - vouchers - refunds
+    return {"fees": fees, "sales": sales, "delivery": delivery, "vouchers": vouchers, "refunds": refunds,
             "purchases": purchases, "earnings": earnings, "net": earnings - purchases}
 
 
@@ -104,12 +108,14 @@ def build_earnings(range_key, now=None):
     for b in buckets:
         t = _totals([r for r in rows if in_bucket(b, r["at"])])
         running += t["earnings"]
-        trend.append({"label": b["label"], "Platform fees": t["fees"], "Product sales": t["sales"] + t["delivery"],
-                      "refunds": t["refunds"], "earnings": t["earnings"], "purchases": t["purchases"], "cumulative": running})
+        trend.append({"label": b["label"], "Platform fees": t["fees"], "Product sales": t["sales"],
+                      "Delivery fees": t["delivery"], "vouchers": t["vouchers"], "refunds": t["refunds"], "earnings": t["earnings"], "purchases": t["purchases"], "cumulative": running})
 
     flow = [
         {"key": "fees", "label": "Platform fees", "value": cur["fees"], "kind": "gain"},
-        {"key": "sales", "label": "Product sales", "value": cur["sales"] + cur["delivery"], "kind": "gain"},
+        {"key": "sales", "label": "Product sales", "value": cur["sales"], "kind": "gain"},
+        {"key": "delivery", "label": "Delivery fees", "value": cur["delivery"], "kind": "gain"},
+        {"key": "vouchers", "label": "Voucher discounts", "value": -cur["vouchers"], "kind": "loss"},
         {"key": "refunds", "label": "Refunds", "value": -cur["refunds"], "kind": "loss"},
         {"key": "earnings", "label": "Earnings", "value": cur["earnings"], "kind": "total"},
         {"key": "purchases", "label": "Purchases", "value": -cur["purchases"], "kind": "loss"},
@@ -138,7 +144,13 @@ def build_earnings(range_key, now=None):
             entries.append({**base, "id": f"{r['id']}-fee", "type": "Platform fee", "amount": sign * r["fee"], "status": status})
         if r["sale"] > 0:
             entries.append({**base, "id": f"{r['id']}-sale", "type": "Product sale",
-                            "amount": sign * (r["sale"] + r["delivery"]), "status": status})
+                            "amount": sign * r["sale"], "status": status})
+        if r["delivery"] > 0:
+            entries.append({**base, "id": f"{r['id']}-delivery", "type": "Delivery fee",
+                            "amount": sign * r["delivery"], "status": status})
+        if r["voucher"] > 0 and status == "Earned":
+            entries.append({**base, "id": f"{r['id']}-voucher", "type": "Voucher discount",
+                            "amount": -r["voucher"], "status": "Spent"})
         if r["own_buy"] and status == "Earned":
             entries.append({**base, "id": f"{r['id']}-buy", "type": "Purchase", "amount": -r["amount"],
                             "status": "Spent", "party": r["seller"]})

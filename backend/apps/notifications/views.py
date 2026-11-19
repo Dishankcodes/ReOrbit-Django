@@ -13,6 +13,8 @@ Notifications are created by `apps.core.services.notify()` wherever something ha
 Nobody can read or change another account's notifications: every query starts from the caller.
 """
 
+from datetime import timedelta
+
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -223,7 +225,11 @@ def _clean_announcement(d, partial_of=None):
             elif timezone.is_naive(when):
                 when = timezone.make_aware(when)
             if when is not None and when <= timezone.now():
-                errors["scheduleAt"] = ["Pick a time in the future."]
+                # a time picked a moment ago (the minute just passed while writing): send it now
+                if when > timezone.now() - timedelta(minutes=5):
+                    when = None
+                else:
+                    errors["scheduleAt"] = ["Pick a time in the future."]
     return {"title": title, "message": message, "audience": audience, "kind": kind, "link": link,
             "scheduled_at": when}, errors
 

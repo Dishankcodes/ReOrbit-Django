@@ -46,6 +46,7 @@ import { loadVouchers } from "../../data/donationsStore";
 import { feeLabel } from "../../../shared/commerce";
 import { formatPrice } from "../../../data/marketplaceData";
 import EmptyState from "../../components/ui/EmptyState";
+import ConfirmModal from "../../components/ui/ConfirmModal";
 import SafeImage from "../../components/ui/SafeImage";
 import Spinner, { PageLoader } from "../../../shared/components/Spinner";
 import "../../../shared/components/Spinner.css";
@@ -87,6 +88,8 @@ export default function UserCheckout() {
     reload: reloadAddr,
   } = useServerAddresses();
   const [voucherCode, setVoucherCode] = useState("");
+  /* the line waiting for "Remove it?" (asked before an item leaves the order) */
+  const [removing, setRemoving] = useState(null);
   const q = useServerQuote(buyable, voucherCode);
   const quote = q.quote;
   const accountType = getAccountType();
@@ -177,6 +180,25 @@ export default function UserCheckout() {
           </button>
         </div>
         <CheckoutPicker open={picking} onClose={() => setPicking(false)} />
+
+      {removing && (
+        <ConfirmModal
+          icon={Trash2}
+          title="Remove this item?"
+          confirmLabel="Yes, remove"
+          cancelLabel="No, keep it"
+          onClose={() => setRemoving(null)}
+          onConfirm={() => {
+            removeFromCheckout(removing.id);
+            setRemoving(null);
+          }}
+        >
+          <p>
+            “{removing.item.title}” will be taken out of this order. You can add it again from the
+            product page.
+          </p>
+        </ConfirmModal>
+      )}
       </div>
     );
   }
@@ -784,7 +806,7 @@ export default function UserCheckout() {
                         type="button"
                         className="ushp-sum-remove"
                         disabled={busy}
-                        onClick={() => removeFromCheckout(l.id)}
+                        onClick={() => setRemoving(l)}
                         aria-label={`Remove ${l.item.title}`}
                         title="Remove"
                       >

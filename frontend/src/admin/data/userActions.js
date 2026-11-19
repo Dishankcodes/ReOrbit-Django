@@ -54,6 +54,14 @@ const ACTIONS = {
     title: "Suspend this account?",
     body: "A suspended account is temporarily unable to sign in, list items or place orders. You can reactivate it any time.",
     confirmLabel: "Suspend",
+    placeholder: "Why is this account paused? The person sees this.",
+    suggestions: [
+      "Several buyers reported items that didn't match the listing.",
+      "Orders were cancelled again and again without a reason.",
+      "We need to check this account's details before it can continue.",
+      "Rude or abusive messages to other members.",
+      "Payment or refund activity that needs a closer look.",
+    ],
   },
   block: {
     key: "block",
@@ -66,6 +74,14 @@ const ACTIONS = {
     title: "Block this account?",
     body: "Blocking is a stronger action meant for policy violations or fraud. The person is signed out everywhere and cannot return until unblocked.",
     confirmLabel: "Block account",
+    placeholder: "Which rule was broken? The person sees this.",
+    suggestions: [
+      "Fraud: payment or refund abuse.",
+      "Selling fake, stolen or banned items.",
+      "Repeated rule-breaking after a suspension.",
+      "Harassment or threats towards other members.",
+      "Fake reviews or several accounts used to cheat.",
+    ],
   },
   delete: {
     key: "delete",
@@ -78,6 +94,12 @@ const ACTIONS = {
     title: "Delete this account?",
     body: "The account is marked as Deleted and hidden from the platform. Records are kept for order and donation history and the account can be restored.",
     confirmLabel: "Delete account",
+    suggestions: [
+      "The person asked us to delete their account.",
+      "Duplicate account.",
+      "Test account, no longer needed.",
+      "Spam account.",
+    ],
   },
 };
 

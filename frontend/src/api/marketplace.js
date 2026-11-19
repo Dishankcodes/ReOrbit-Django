@@ -1,7 +1,8 @@
 import { apiRequest } from "./api";
 
 /* Public marketplace: user listings, ReMaker products and ReOrbit's store together. */
-export async function fetchMarketplace(maxPages = 3) {
+/* Every page (up to 2,000 listings), 100 at a time; the marketplace shows them 20 at a time. */
+export async function fetchMarketplace(maxPages = 20) {
   const first = await apiRequest("/marketplace/?page_size=100", {
     auth: false,
   });

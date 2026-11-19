@@ -73,6 +73,14 @@ class ListingTests(APIBase):
         self.assertEqual(r.status_code, 200, r.data)
         self.assertEqual(r.data["data"]["listing"]["item_status"], "Listed")
 
+    def test_a_managed_listing_gets_no_pickup_until_it_is_ordered(self):
+        from apps.pickups.models import PickupRequest
+        pid = self.draft(pickup_preference="Platform_Pickup").data["data"]["listing"]["id"]
+        self.upload(pid, png())
+        r = self.post(f"/api/listings/me/{pid}/publish/", {}, as_=self.user)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertFalse(PickupRequest.objects.exists())  # the order's pickup is the only one
+
     def test_validation(self):
         self.assertEqual(self.draft(title="a").status_code, 400)
         self.assertEqual(self.draft(category="CAT-0").status_code, 400)

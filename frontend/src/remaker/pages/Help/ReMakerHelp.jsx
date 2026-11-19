@@ -42,6 +42,10 @@ export default function ReMakerHelp() {
     [orders],
   );
 
+  /* reports about people, listings and reviews (loaded by <MyReports>); null until known */
+  const [otherReports, setOtherReports] = useState(null);
+  const reportCount = reports.length + (otherReports || 0);
+
   const switchTab = (key) => {
     const next = new URLSearchParams(params);
     if (key === "help") next.delete("tab");
@@ -138,7 +142,7 @@ export default function ReMakerHelp() {
           className={tab === "reports" ? "active" : ""}
           onClick={() => switchTab("reports")}
         >
-          My reports <span>{reports.length}</span>
+          My reports <span>{reportCount}</span>
         </button>
       </div>
 
@@ -291,13 +295,23 @@ export default function ReMakerHelp() {
       {/* ================= REPORTS ================= */}
       {tab === "reports" && (
         <>
-          <MyReports side="remaker" title="Reports about people, listings and reviews" hideWhenEmpty />
-          <p className="hlp-note">
-            Below are problems you reported about orders you bought. To report
-            an order, open it from Purchases.
-          </p>
+          <MyReports
+            side="remaker"
+            title="Reports about people, listings and reviews"
+            hideWhenEmpty
+            onLoaded={setOtherReports}
+          />
+          {(reports.length > 0 || otherReports > 0) && (
+            <p className="hlp-note">
+              {reports.length
+                ? "Below are problems you reported about orders you bought. To report an order, open it from Purchases."
+                : "You haven't reported a problem with an order you bought. To report one, open the order from Purchases."}
+            </p>
+          )}
 
           {reports.length === 0 ? (
+            /* the big empty state only when there is nothing at all (and once the other reports are known) */
+            otherReports === 0 && (
             <div className="rk-empty">
               <div className="rk-empty-art" aria-hidden="true">
                 <img
@@ -318,6 +332,7 @@ export default function ReMakerHelp() {
                 Go to purchases
               </Link>
             </div>
+            )
           ) : (
             <ReportsList reports={reports} />
           )}

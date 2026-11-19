@@ -563,3 +563,10 @@
 .mk-head p {
   display: none;
 }
+
+/* "Show more" under the grid (the next 20 also load on their own when you scroll here) */
+.mk-more {
+  display: flex;
+  justify-content: center;
+  margin: 22px 0 6px;
+}

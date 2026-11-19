@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PackageSearch, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import EmptyState from "../../../components/ui/EmptyState";
@@ -11,6 +12,7 @@ const FILTERS = [
 ];
 
 export default function OrdersTab({ user }) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
 
   const rows = useMemo(
@@ -65,7 +67,15 @@ export default function OrdersTab({ user }) {
             </thead>
             <tbody>
               {rows.map((order) => (
-                <tr key={order.order_id}>
+                <tr
+                  key={order.order_id}
+                  role="link"
+                  tabIndex={0}
+                  className="aup-row-link"
+                  onClick={() => navigate(`/admin-orders/${order.order_id}`)}
+                  onKeyDown={(e) => e.key === "Enter" && navigate(`/admin-orders/${order.order_id}`)}
+                  title="Open this order"
+                >
                   <td>
                     <span className="aup-mono">{order.order_id}</span>
                   </td>

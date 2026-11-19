@@ -313,6 +313,16 @@ export default function AdminRemakers() {
 
             <div className="au-toolbar-right">
               <label className="au-select">
+                <span>Status</span>
+                <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter by status">
+                  {STATUS_CARDS.map((c) => (
+                    <option key={c.key} value={c.key}>
+                      {c.key === "All" ? "All statuses" : c.label} ({counts[c.key] ?? 0})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="au-select">
                 <span>Skill</span>
                 <select
                   value={skill}
