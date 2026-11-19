@@ -38,8 +38,12 @@ def _database():
 
 
 def _email():
-    if settings.MAILJET_API_KEY and settings.MAILJET_SECRET_KEY and settings.MAILJET_SENDER_EMAIL:
-        return "ok", f"Mailjet, sending as {settings.MAILJET_SENDER_EMAIL}"
+    from apps.accounts.otp import _sender, email_providers
+
+    providers = email_providers()
+    if providers:
+        names = " then ".join(p.title() for p in providers)
+        return "ok", f"{names}, sending as {_sender()}"
     backend = settings.EMAIL_BACKEND.rsplit(".", 2)[-2]
     if backend == "smtp" and getattr(settings, "EMAIL_HOST_USER", ""):
         return "ok", f"SMTP via {settings.EMAIL_HOST}"

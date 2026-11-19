@@ -475,6 +475,14 @@ MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY", "").strip()
 MAILJET_SENDER_EMAIL = os.getenv("MAILJET_SENDER_EMAIL", "").strip()
 MAILJET_API_URL = "https://api.mailjet.com/v3.1/send"
 
+# Other HTTPS email services. Set the key(s) on Render; the first that works sends.
+# EMAIL_SENDER must be a sender address verified with that service.
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+EMAIL_SENDER = os.getenv("EMAIL_SENDER", "").strip()
+EMAIL_SENDER_NAME = os.getenv("EMAIL_SENDER_NAME", "ReOrbit").strip() or "ReOrbit"
+EMAIL_PROVIDERS = os.getenv("EMAIL_PROVIDERS", "").strip()  # optional order, e.g. "brevo,mailjet"
+
 
 
 # GOOGLE SIGN-IN

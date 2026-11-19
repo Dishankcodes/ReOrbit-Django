@@ -84,15 +84,59 @@ def _mailjet_configured():
     return bool(
         settings.MAILJET_API_KEY
         and settings.MAILJET_SECRET_KEY
-        and settings.MAILJET_SENDER_EMAIL
+        and (settings.MAILJET_SENDER_EMAIL or settings.EMAIL_SENDER)
     )
+
+
+def _sender():
+    return settings.EMAIL_SENDER or settings.MAILJET_SENDER_EMAIL
+
+
+def _refused(name, response):
+    # The provider's own reason (bad key, sender not verified, quota, account blocked...) goes in
+    # the Render log so a failed email can be explained. Responses never contain the API keys.
+    return RuntimeError(f"{name} refused the email: HTTP {response.status_code} {response.text[:400]}")
+
+
+def _send_via_brevo(email, subject, text, html):
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={"api-key": settings.BREVO_API_KEY, "accept": "application/json"},
+        json={
+            "sender": {"name": settings.EMAIL_SENDER_NAME, "email": _sender()},
+            "to": [{"email": email}],
+            "subject": subject,
+            "htmlContent": html,
+            "textContent": text,
+        },
+        timeout=(5, 20),
+    )
+    if response.status_code >= 400:
+        raise _refused("Brevo", response)
+
+
+def _send_via_resend(email, subject, text, html):
+    response = requests.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+        json={
+            "from": f"{settings.EMAIL_SENDER_NAME} <{_sender()}>",
+            "to": [email],
+            "subject": subject,
+            "html": html,
+            "text": text,
+        },
+        timeout=(5, 20),
+    )
+    if response.status_code >= 400:
+        raise _refused("Resend", response)
 
 
 def _send_via_mailjet(email, subject, text, html):
     payload = {
         "Messages": [
             {
-                "From": {"Email": settings.MAILJET_SENDER_EMAIL, "Name": "ReOrbit"},
+                "From": {"Email": _sender(), "Name": settings.EMAIL_SENDER_NAME},
                 "To": [{"Email": email}],
                 "Subject": subject,
                 "TextPart": text,
@@ -107,26 +151,53 @@ def _send_via_mailjet(email, subject, text, html):
         timeout=(5, 20),
     )
     if response.status_code >= 400:
-        # Mailjet's own reason (bad keys, sender not validated, quota, account blocked...) goes in the
-        # Render log so a failed email can be explained. The body never contains the API keys.
-        raise RuntimeError(f"Mailjet refused the email: HTTP {response.status_code} {response.text[:400]}")
+        raise _refused("Mailjet", response)
     messages = response.json().get("Messages", [])
     if not messages or messages[0].get("Status") != "success":
         raise RuntimeError(f"Mailjet did not accept the email: {str(messages)[:400]}")
-    logger.info("OTP email accepted by Mailjet for %s", email)
+
+
+_SENDERS = {"brevo": _send_via_brevo, "resend": _send_via_resend, "mailjet": _send_via_mailjet}
+
+
+def email_providers():
+    """The HTTPS email services that have keys, in the order they are tried.
+
+    EMAIL_PROVIDERS (e.g. "brevo,mailjet") sets the order; without it: Brevo, Resend, Mailjet.
+    If the first one refuses (blocked account, quota used up...), the next one is tried, so a
+    second provider's keys work as a backup."""
+    configured = {
+        "brevo": bool(settings.BREVO_API_KEY and _sender()),
+        "resend": bool(settings.RESEND_API_KEY and _sender()),
+        "mailjet": _mailjet_configured(),
+    }
+    order = [p.strip().lower() for p in (settings.EMAIL_PROVIDERS or "brevo,resend,mailjet").split(",")]
+    return [p for p in dict.fromkeys(order) if configured.get(p)]
 
 
 def _deliver(email, subject, text, html):
-    """Mailjet when its keys are set (production). Otherwise Django's EMAIL_BACKEND:
-    the console backend prints the code in the terminal locally, and tests read
-    it from mail.outbox."""
-    if _mailjet_configured():
-        _send_via_mailjet(email, subject, text, html)
+    """Brevo / Resend / Mailjet over HTTPS when their keys are set (production; Render's free plan
+    can't use SMTP). Otherwise Django's EMAIL_BACKEND: the console backend prints the code in the
+    terminal locally, and tests read it from mail.outbox."""
+    providers = email_providers()
+    if not providers:
+        send_mail(
+            subject, text, settings.DEFAULT_FROM_EMAIL, [email],
+            html_message=html, fail_silently=False,
+        )
         return
-    send_mail(
-        subject, text, settings.DEFAULT_FROM_EMAIL, [email],
-        html_message=html, fail_silently=False,
-    )
+    errors = []
+    for name in providers:
+        try:
+            _SENDERS[name](email, subject, text, html)
+        except Exception as exc:  # noqa: BLE001  try the next provider
+            errors.append(exc)
+            if name != providers[-1]:
+                logger.warning("%s failed, trying the next email provider: %s", name, exc)
+            continue
+        logger.info("email accepted by %s for %s", name, email)
+        return
+    raise errors[-1] if len(errors) == 1 else RuntimeError(" | ".join(str(e) for e in errors))
 
 
 def create_and_send_otp(email, purpose, account_type):
