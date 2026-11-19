@@ -123,7 +123,8 @@ class ReadTests(WarehouseBase):
 class PutAwayTests(WarehouseBase):
     def test_put_away_uses_the_categorys_zone(self):
         # bought stock (no donation) goes to Floor 2
-        for category, zone in (("Furniture", "2A"), ("Kitchen", "2B"), ("Electronics", "2D"), ("Sports", "2E"),
+        # one area per category, in the order they were created (setUp), then "Other items"
+        for category, zone in (("Furniture", "2A"), ("Kitchen", "2B"), ("Electronics", "2C"), ("Sports", "2D"),
                                ("Unknown things", "2E")):
             item = self.lot(category=category)
             r = self.act(item, "putAway")
@@ -148,7 +149,16 @@ class PutAwayTests(WarehouseBase):
         floors = r.data["data"]["layout"]["floors"]
         self.assertEqual([f["name"] for f in floors], ["Floor 1", "Floor 2"])
         self.assertEqual(floors[0]["zones"][0]["key"], "1A")
-        self.assertEqual(len(floors[1]["zones"]), 5)
+        self.assertEqual([z["name"] for z in floors[1]["zones"]],
+                         ["Furniture", "Kitchen", "Electronics", "Sports", "Other items"])
+
+    def test_a_new_category_gets_its_own_area_and_old_letters_stay(self):
+        Category.objects.create(name="Books", slug="books", applies_to="Both")
+        floors = self.get(BASE, as_=self.admin).data["data"]["layout"]["floors"]
+        self.assertEqual([(z["key"], z["name"]) for z in floors[1]["zones"]][:5],
+                         [("2A", "Furniture"), ("2B", "Kitchen"), ("2C", "Electronics"), ("2D", "Sports"), ("2E", "Books")])
+        got = self.act(self.lot(category="Books"), "putAway").data["data"]["item"]
+        self.assertEqual(got["location"]["zone"], "2E")
 
     def test_items_spread_over_the_racks(self):
         bins = set()

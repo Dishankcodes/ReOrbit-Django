@@ -617,8 +617,9 @@ export default function About() {
 
               <p>
                 When an item needs more than a new owner, suitable items and
-                materials can move through ReOrbit's inventory and refurbishment
-                process or reach ReMakers who can transform them into something
+                materials can move through ReOrbit's warehouse and refurbishment
+                process, go on sale in the ReOrbit store once they're checked, or
+                reach ReMakers who upcycle, restore or remake them into something
                 new.
               </p>
             </div>
@@ -742,9 +743,10 @@ export default function About() {
                 <h3>Give an item another route.</h3>
 
                 <p>
-                  Items can also be donated through ReOrbit. Suitable donations
-                  can move through pickup, warehouse and inventory management
-                  before continuing toward reuse or refurbishment.
+                  Items can also be donated through ReOrbit. Once a donation is
+                  accepted it is picked up free, received into the warehouse and
+                  sold, refurbished or passed on to partner NGOs. Donors earn Orbit
+                  Points and a certificate.
                 </p>
               </div>
 

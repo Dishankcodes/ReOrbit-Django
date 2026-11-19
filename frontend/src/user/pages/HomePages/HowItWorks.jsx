@@ -894,7 +894,7 @@ export default function HowItWorks() {
                 <h3>Arrange pickup</h3>
 
                 <p>
-                  Ship it yourself with a courier, or let ReOrbit pick it up from your door. Your city and pincode come from your profile.
+                  Once it's ordered, pack it and either hand it to the courier or choose "Managed by ReOrbit" and our team collects it from your door. Donations are picked up free once accepted.
                 </p>
               </div>
 
@@ -906,7 +906,7 @@ export default function HowItWorks() {
                 <h3>Keep it moving</h3>
 
                 <p>
-                  When it sells, the money is held safely until delivery and then clears to your wallet, ready to withdraw.
+                  When it sells, the money is held safely until delivery and the 7-day return window, then clears to your wallet, ready to withdraw.
                 </p>
               </div>
             </div>
@@ -1068,7 +1068,7 @@ export default function HowItWorks() {
                 <h3>Pickup support</h3>
 
                 <p>
-                  Choose "Managed by ReOrbit" and our pickup team collects the parcel from you and delivers it to the buyer. Donation pickups are always free.
+                  Choose "Managed by ReOrbit" and, once the order is packed, our pickup team collects it from you and delivers it to the buyer. Donation pickups are always free.
                 </p>
               </div>
 
@@ -1098,7 +1098,7 @@ export default function HowItWorks() {
                 <h3>ReMaker route</h3>
 
                 <p>
-                  ReMakers buy pre-loved pieces on the marketplace and turn them into new creations, which you can follow and buy from their studio pages.
+                  ReMakers rescue pre-loved pieces and turn them into upcycled, refurbished or handmade creations, which you can follow and buy from their studio pages.
                 </p>
               </div>
             </div>

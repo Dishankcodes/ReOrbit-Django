@@ -1,8 +1,8 @@
 /* =========================================================
    Admin › Warehouse — the floor plan.
    The server is the source (GET /api/warehouse/admin/ returns `layout`, built in
-   backend/apps/warehouse/services.py): two floors, each with five areas, so a zone is
-   floor + area ("1A" = Floor 1, Furniture hall). Donated items go to Floor 1, bought stock
+   backend/apps/warehouse/services.py): two floors, each with one area per marketplace
+   category (plus "Other items"), so a zone is floor + area ("1A" = Floor 1, the first category). Donated items go to Floor 1, bought stock
    to Floor 2. Nothing is assumed here: until the server answers, the screens show
    "Loading the floor plan" (or an error with Try again), never made-up capacities.
    ========================================================= */

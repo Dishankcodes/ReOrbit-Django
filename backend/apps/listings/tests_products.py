@@ -188,6 +188,22 @@ class AdminStoreTests(ProductBase):
         dup = self.post(self.B, {**BODY, "category": self.cat.public_id, "sku": "TOTE-001"}, as_=self.boss)
         self.assertEqual(dup.status_code, 400)
 
+    def test_a_new_store_product_gets_a_warehouse_shelf_when_it_goes_live(self):
+        from apps.warehouse.models import WarehouseItem
+        r = self.post(self.B, {**BODY, "category": self.cat.public_id, "title": "ReOrbit tote"}, as_=self.boss)
+        pid = r.data["data"]["product"]["id"]
+        self.up(self.B, pid, self.boss)
+        self.assertFalse(WarehouseItem.objects.exists())  # a draft has no shelf yet
+        self.post(f"{self.B}{pid}/publish/", {}, as_=self.boss)
+        lot = WarehouseItem.objects.get()
+        self.assertEqual((lot.title, lot.warehouse_status, lot.sale_status, lot.zone[:1]),
+                         ("ReOrbit tote", "Stored", "Listed", "2"))
+        self.assertEqual(AdminItem.objects.get(public_id=pid).warehouse_item_id, lot.pk)
+        # pausing and publishing again doesn't make a second lot
+        self.post(f"{self.B}{pid}/pause/", {}, as_=self.boss)
+        self.post(f"{self.B}{pid}/publish/", {}, as_=self.boss)
+        self.assertEqual(WarehouseItem.objects.count(), 1)
+
     def test_permissions(self):
         viewer = self.make_admin("v@example.com", modules={"products": "view"})
         none = self.make_admin("n@example.com", modules={"users": "edit"})

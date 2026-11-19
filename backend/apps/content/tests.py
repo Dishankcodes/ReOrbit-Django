@@ -66,6 +66,10 @@ class ContentTests(APIBase):
         self.assertEqual(self.get("/api/content/faqs/").data["data"]["results"], [])
 
     def test_policy_publish_restore(self):
+        # migration 0006 publishes Community guidelines; start from a never-published policy here
+        from .models import PolicyVersion
+        Policy.objects.filter(key="community").update(body="", version="", published_at=None)
+        PolicyVersion.objects.filter(policy__key="community").delete()
         rows = {r["key"]: r for r in self.get("/api/content/admin/policies/", as_=self.admin).data["data"]["results"]}
         self.assertTrue(rows["community"]["neverPublished"])
         self.assertEqual(self.get("/api/content/policies/community/").status_code, 404)
@@ -82,6 +86,12 @@ class ContentTests(APIBase):
         self.assertEqual(r.data["data"]["version"], "2.1")
         self.assertEqual(Policy.objects.get(key="community").body, body)
         self.assertEqual(self.get("/api/content/policies/community/").data["data"]["policy"]["version"], "2.1")
+
+    def test_policies_carry_the_current_platform_text(self):
+        terms = self.get("/api/content/policies/terms/").data["data"]["policy"]
+        self.assertEqual(terms["version"], "2.0")
+        self.assertIn("Managed by ReOrbit", terms["body"])
+        self.assertEqual(self.get("/api/content/policies/community/").data["data"]["policy"]["version"], "1.0")
 
     def test_policy_draft(self):
         self.post("/api/content/admin/policies/terms/draft/", {"body": "d" * 30, "note": "wip"}, as_=self.admin)

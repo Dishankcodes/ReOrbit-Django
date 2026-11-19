@@ -26,26 +26,56 @@ Stage, Sale = WarehouseItem.Stage, WarehouseItem.Sale
 
 # ---------------------------------------------------------------- layout
 # Two floors. Donated items go to Floor 1; everything ReOrbit bought (from members or ReMakers)
-# goes to Floor 2. Each floor has the same five areas, so a zone is floor + area: "1A" is
-# Floor 1, Furniture hall. A bin reads 1A-03-2 (zone, rack, level). The admin screens read this
-# layout from the server (layout() below), so this is the only place it is defined.
+# goes to Floor 2. Each floor has one area per marketplace category (Admin › Content), lettered in
+# the order the categories were created (A = the first), plus a last "Other items" area for anything
+# whose category isn't known. A zone is floor + area ("1A" = Floor 1, the first category) and a bin
+# reads 1A-03-2 (zone, rack, level). The letters only grow when a category is added, so a lot never
+# changes area. The admin screens read this layout from the server (layout() below).
 FLOORS = (
     ("1", "Floor 1", "Donated items"),
     ("2", "Floor 2", "Bought stock"),
 )
-AREAS = (
-    ("A", "Furniture hall", 60),
-    ("B", "Home & kitchen", 48),
-    ("C", "Textiles & clothing", 56),
-    ("D", "Electronics & books", 36),
-    ("E", "Sports & misc", 24),
+AREA_CAPACITY = 40   # spaces per area (8 racks × 4 levels, plus room on the floor)
+LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXY"  # Z is never used: the "Other items" area takes the next free letter
+# Before any category exists (a new install): the original five areas.
+DEFAULT_AREAS = (
+    ("Furniture", ("furniture",)),
+    ("Home & kitchen", ("home decor", "kitchen")),
+    ("Textiles & clothing", ("clothing", "fashion")),
+    ("Electronics & books", ("electronics", "books")),
+    ("Sports & misc", ("sports",)),
 )
-ZONES = tuple((f"{floor}{area}", name, cap) for floor, _f, _n in FLOORS for area, name, cap in AREAS)
-ZONE_CAPACITY = {key: cap for key, _name, cap in ZONES}
-CATEGORY_ZONE = {
-    "furniture": "A", "home decor": "B", "kitchen": "B", "clothing": "C",
-    "fashion": "C", "electronics": "D", "books": "D", "sports": "E",
-}
+# Optional per-zone capacity overrides, {"2A": 60}. Empty means AREA_CAPACITY everywhere.
+ZONE_CAPACITY = {}
+
+
+def areas_from(category_names):
+    """[(letter, area name, {lower-case category names})] from category names in creation order.
+    Also used by the migration that moved existing lots to the new areas."""
+    names = [n for n in category_names if n and n.strip()]
+    if not names:
+        rows = [(name, set(keys)) for name, keys in DEFAULT_AREAS]
+        return [(LETTERS[i], name, keys) for i, (name, keys) in enumerate(rows)]
+    rows = [(n.strip(), {n.strip().lower()}) for n in names[: len(LETTERS) - 1]]
+    out = [(LETTERS[i], name, keys) for i, (name, keys) in enumerate(rows)]
+    out.append((LETTERS[len(out)], "Other items", set()))
+    return out
+
+
+def _areas():
+    from apps.core.models import Category
+
+    return areas_from(list(Category.objects.order_by("pk").values_list("name", flat=True)))
+
+
+def zone_keys():
+    return {f"{floor}{letter}" for floor, _n, _note in FLOORS for letter, _name, _k in _areas()}
+
+
+def capacity_of(zone):
+    return ZONE_CAPACITY.get(zone, AREA_CAPACITY)
+
+
 RACKS, LEVELS, QC_BAYS = 8, 4, 4
 CONDITIONS = ("Like new", "Good", "Fair", "Needs refurbishing")
 
@@ -136,7 +166,11 @@ def floor_for(item):
 
 
 def zone_for(category, floor="2"):
-    return f"{floor}{CATEGORY_ZONE.get((category or '').strip().lower(), 'E')}"
+    """The category's area on that floor (the last area, "Other items", when the category is unknown)."""
+    key = (category or "").strip().lower()
+    areas = _areas()
+    letter = next((letter for letter, _name, keys in areas if key in keys), areas[-1][0])
+    return f"{floor}{letter}"
 
 
 def layout():
@@ -144,13 +178,14 @@ def layout():
     from apps.core.buyers import reorbit_address_data
 
     a = reorbit_address_data()
+    areas = _areas()
     address = ", ".join(x for x in ((a or {}).get("line1"), (a or {}).get("line2"), (a or {}).get("city"),
                                      (a or {}).get("pincode")) if x) if a else ""
     return {
         "floors": [
             {"key": f, "name": name, "note": note,
-             "zones": [{"key": f"{f}{area}", "area": area, "name": zname, "capacity": cap}
-                       for area, zname, cap in AREAS]}
+             "zones": [{"key": f"{f}{area}", "area": area, "name": zname, "capacity": capacity_of(f"{f}{area}")}
+                       for area, zname, _keys in areas]}
             for f, name, note in FLOORS
         ],
         "racks": RACKS, "levels": LEVELS, "qc_bays": QC_BAYS,
@@ -164,7 +199,7 @@ def assign_shelf(category, exclude_pk=None, floor="2"):
     taken = WarehouseItem.objects.filter(zone=zone, warehouse_status__in=(Stage.STORED, Stage.ASSIGNED))
     if exclude_pk:
         taken = taken.exclude(pk=exclude_pk)
-    capacity = ZONE_CAPACITY[zone]
+    capacity = capacity_of(zone)
     if taken.count() >= capacity:
         raise WarehouseError(
             f"Zone {zone} (Floor {zone[0]}) is full ({capacity} spaces). Free a space before putting this away.",
@@ -550,14 +585,14 @@ def _move_target(item, raw, errors):
     raw = raw if isinstance(raw, dict) else {}
     zone = str(raw.get("zone") or "").upper()
     rack, level = _whole(raw.get("rack"), 1, RACKS), _whole(raw.get("level"), 1, LEVELS)
-    if zone not in ZONE_CAPACITY or rack is None or level is None:
-        errors["location"] = [f"Choose a zone (1A–2E: floor and area), a rack (1–{RACKS}) and a level (1–{LEVELS})."]
+    if zone not in zone_keys() or rack is None or level is None:
+        errors["location"] = [f"Choose a zone (floor and area, like 2A), a rack (1–{RACKS}) and a level (1–{LEVELS})."]
         return None
     if zone != item.zone:
         used = WarehouseItem.objects.filter(
             zone=zone, warehouse_status__in=(Stage.STORED, Stage.ASSIGNED)
         ).exclude(pk=item.pk).count()
-        if used >= ZONE_CAPACITY[zone]:
+        if used >= capacity_of(zone):
             errors["location"] = [f"Zone {zone} (Floor {zone[0]}) is full."]
             return None
     return zone, f"{rack:02d}", level
@@ -667,6 +702,43 @@ def on_purchase_returned(order):
         _clear_place(item)
         item.save()
         log(item, "Returned to seller", f"Order {order.public_id} was returned and refunded", "neutral", at=now)
+
+
+def register_store_product(store, admin):
+    """A ReOrbit store product that went live without coming from the warehouse (new stock or a
+    refurbished piece added straight on Sell products): it gets a warehouse lot, so every ReOrbit
+    product has a shelf. Stored on Floor 2 in its category's area and marked Listed; when the last
+    unit sells, on_store_sale makes it ready to dispatch, as for any warehouse listing. When that
+    area is full it waits at the dock to be put away."""
+    if store.warehouse_item_id:
+        return None
+    now = timezone.now()
+    with transaction.atomic():
+        sku = store.sku if not WarehouseItem.objects.filter(sku=store.sku).exists() else None
+        price = int(store.price or 0)
+        item = WarehouseItem(
+            sku=sku, title=store.title[:150], category=store.category.name if store.category_id else "Other",
+            quantity=max(1, store.stock or 1), condition=(store.condition or "Good")[:20],
+            source_name="ReOrbit store",
+            source_sub="Refurbished stock" if getattr(store, "source", "") == "refurbished" else "New stock",
+            purchase_ref=store.public_id, list_price=price, original_price=price,
+            sale_status=Sale.LISTED, listed_at=now,
+        )
+        try:
+            _place(item, assign_shelf(item.category, floor="2"))
+            item.warehouse_status, item.stored_at = Stage.STORED, now
+            where = f"Stored at {item.zone}"
+        except WarehouseError:
+            item.zone, item.rack, item.level = "DOCK", "01", 1
+            item.warehouse_status = Stage.RECEIVED
+            where = "Its area is full: waiting at the dock to be put away"
+        item.save()
+        if item.warehouse_status == Stage.STORED:
+            where = f"Stored at {item.bin}"
+        log(item, "Added from the ReOrbit store", f"{store.public_id} went live · {where}", "good", admin, now)
+        store.warehouse_item = item
+        store.save(update_fields=["warehouse_item", "updated_at"])
+    return item
 
 
 def on_store_sale(store, order):

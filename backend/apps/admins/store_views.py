@@ -184,7 +184,19 @@ class StatsView(APIView):
         return ok({"stats": stats})
 
 
-class PublishView(Mine, sb.Publish): pass
+class PublishView(Mine, sb.Publish):
+    def post(self, request, public_id):
+        r = super().post(request, public_id)
+        if r.status_code == 200:
+            # every ReOrbit product sits on a warehouse shelf: one added here (not from the warehouse)
+            # gets its own lot when it first goes live
+            store = AdminItem.objects.select_related("category").filter(public_id=public_id).first()
+            if store and not store.warehouse_item_id and store.status in (AdminItem.Status.LISTED,
+                                                                          AdminItem.Status.SOLD_OUT):
+                from apps.warehouse import services as warehouse
+
+                warehouse.register_store_product(store, request.user.account)
+        return r
 class PauseView(Mine, sb.Unpublish): pass
 class ImagesView(Mine, sb.Images): pass
 class ImageDetailView(Mine, sb.ImageDetail): pass
