@@ -12,7 +12,7 @@ so the team decides which one to take down first.
 
 import time
 
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.db import transaction
 from django.db.models import Max, Q
 from django.shortcuts import get_object_or_404
@@ -73,7 +73,7 @@ def admin_row(f, request):
 
 
 def _bump():
-    cache.set(CACHE_VER, int(time.time() * 1000), None)
+    caches["shared"].set(CACHE_VER, int(time.time() * 1000), None)  # every worker sees it (see spotlight._versions)
 
 
 def _owner(account):
@@ -137,7 +137,7 @@ class PublicTestimonials(APIView):
 
     def get(self, request):
         side = "remaker" if request.query_params.get("side") == "remaker" else "user"
-        key = f"public_testimonials:{cache.get(CACHE_VER, 0)}:{side}:{request.get_host()}"
+        key = f"public_testimonials:{caches['shared'].get(CACHE_VER, 0)}:{side}:{request.get_host()}"
         data = cache.get(key)
         if data is None:
             rows = (F.objects.filter(status=F.Status.SHOWN, surface=side)

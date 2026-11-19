@@ -106,10 +106,13 @@ def _send_via_mailjet(email, subject, text, html):
         json=payload,
         timeout=(5, 20),
     )
-    response.raise_for_status()
+    if response.status_code >= 400:
+        # Mailjet's own reason (bad keys, sender not validated, quota, account blocked...) goes in the
+        # Render log so a failed email can be explained. The body never contains the API keys.
+        raise RuntimeError(f"Mailjet refused the email: HTTP {response.status_code} {response.text[:400]}")
     messages = response.json().get("Messages", [])
     if not messages or messages[0].get("Status") != "success":
-        raise RuntimeError("Mailjet did not accept the OTP email.")
+        raise RuntimeError(f"Mailjet did not accept the email: {str(messages)[:400]}")
     logger.info("OTP email accepted by Mailjet for %s", email)
 
 

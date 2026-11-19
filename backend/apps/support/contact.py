@@ -6,7 +6,7 @@ POST /api/support/admin/contact/<CNT-id>/     {action: reply|close|reopen, messa
 
 Every message is saved as a ContactMessage (Admin › Support › Website messages):
 - From someone with a member or ReMaker account (blocked or suspended ones too, which is how a
-  blocked person appeals) it also becomes a support ticket on that account, linked here.
+  blocked person appeals) the team sees that in the inbox; it stays a website message.
 - From anyone else it stays here and the team replies by email from the inbox.
 Admins who handle Support get a notification, the support address gets a branded email, and
 the sender gets an "we've got your message" email with their reference.
@@ -34,7 +34,7 @@ from apps.core.support_contacts import support_emails
 from apps.remakers.models import ReMakers
 from apps.users.models import Users
 
-from .models import ContactMessage, SupportTicket, TicketMessage
+from .models import ContactMessage
 
 log = logging.getLogger(__name__)
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -64,8 +64,21 @@ def _tell_support_team(title, body, url):
                 log.exception("contact notification failed")
 
 
-def contact_data(m):
+def account_hints(emails):
+    """For the team only: which of these emails belong to a ReOrbit account? Two queries for the
+    whole list. (The form needs no sign-in, so it is a hint, not proof of who wrote.)"""
+    emails = {e.lower() for e in emails if e}
+    out = {}
+    for model, kind, path in ((ReMakers, "ReMaker", "admin-remakers"), (Users, "Member", "admin-users")):
+        for a in model.objects.filter(email__in=emails).exclude(status="Deleted").only("public_id", "full_name", "status", "email"):
+            out[a.email.lower()] = {"kind": kind, "id": a.public_id, "name": a.full_name, "status": a.status,
+                                    "path": f"/{path}/{a.public_id}"}
+    return out
+
+
+def contact_data(m, accounts=None):
     return {
+        **({"account": accounts.get(m.email.lower())} if accounts is not None else {}),
         "id": m.public_id, "name": m.name, "email": m.email, "topic": m.topic, "subject": m.subject,
         "message": m.message, "side": m.side, "status": m.status, "created_at": m.created_at,
         "ticket": m.ticket.public_id if m.ticket_id else None,
@@ -105,31 +118,24 @@ class PublicContact(APIView):
         maker = ReMakers.objects.filter(email__iexact=email).exclude(status="Deleted").first()
         account = (maker or user) if side == "remaker" else (user or maker)
 
-        with transaction.atomic():
-            ticket = None
-            if account is not None:
-                owner = {"remaker": account} if isinstance(account, ReMakers) else {"user": account}
-                ticket = SupportTicket.objects.create(
-                    **owner, subject=subject, category=category,
-                    priority=SupportTicket.Priority.HIGH if account.status != "Active" else SupportTicket.Priority.NORMAL,
-                )
-                TicketMessage.objects.create(
-                    ticket=ticket, sender_type="remaker" if "remaker" in owner else "user",
-                    text=f"{message}\n\n(Sent from the website contact form by {name}.)", **owner)
-            m = ContactMessage.objects.create(
-                name=name, email=email, topic=category, subject=subject, message=message, side=side, ticket=ticket,
-                status=ContactMessage.Status.CLOSED if ticket else ContactMessage.Status.NEW,
-            )
+        # Always a website message (Admin › Support › Website messages), never a ticket inside an
+        # account: the form needs no sign-in, so anyone could type someone else's email. The team sees
+        # whether the email has an account and replies by email (or the member opens a ticket signed in).
+        m = ContactMessage.objects.create(
+            name=name, email=email, topic=category, subject=subject, message=message, side=side,
+            status=ContactMessage.Status.NEW,
+        )
 
         who = f"{account.full_name} ({account.status.lower()} {'ReMaker' if isinstance(account, ReMakers) else 'member'})" \
             if account else f"{name} · no account"
-        url = f"/admin-support/{ticket.public_id}" if ticket else f"/admin-support?view=messages&open={m.public_id}"
-        _tell_support_team(f"New {'ticket' if ticket else 'website message'}: {subject}", f"{who} · {category}", url)
+        _tell_support_team(f"New website message: {subject}", f"{who} · {category}",
+                           f"/admin-support?view=messages&open={m.public_id}")
         mailer.send(
             support_emails(), f"[ReOrbit contact] {subject} ({m.public_id})",
             heading="New message from the website",
-            intro=f"{name} wrote in through the contact form. "
-                  + (f"They have an account, so it's ticket {ticket.public_id}." if ticket else "They don't have an account: reply from Admin › Support › Website messages."),
+            intro=f"{name} wrote in through the contact form. Reply from Admin › Support › Website messages."
+                  + (" The email matches a ReOrbit account (not proof it's them: the form needs no sign-in)."
+                     if account else ""),
             facts=[("Reference", m.public_id), ("From", f"{name} <{email}>"), ("Account", who), ("Topic", category),
                    ("Site", "ReMaker" if side == "remaker" else "Member"), ("Subject", subject)],
             quote=message, footer="Sent by the ReOrbit contact form.",
@@ -137,8 +143,7 @@ class PublicContact(APIView):
         mailer.send(
             email, f"We've got your message ({m.public_id})",
             heading=f"Thanks, {name.split()[0]}. We've got your message.",
-            intro=("Our support team will reply in your ReOrbit account, usually within one working day."
-                   if ticket else "Our team will reply to this email address, usually within one working day."),
+            intro="Our team will reply to this email address, usually within one working day.",
             facts=[("Reference", m.public_id), ("Topic", category), ("Subject", subject)],
             quote=message,
             footer="Keep this reference if you contact us again. Didn't send this? You can ignore this email.",
@@ -162,7 +167,9 @@ class AdminContactMessages(APIView):
         if q:
             qs = qs.filter(Q(public_id__iexact=q) | Q(name__icontains=q) | Q(email__icontains=q)
                            | Q(subject__icontains=q) | Q(message__icontains=q))
-        return ok({"results": [contact_data(m) for m in qs[:200]], "counts": counts})
+        rows = list(qs[:200])
+        accounts = account_hints(m.email for m in rows)
+        return ok({"results": [contact_data(m, accounts) for m in rows], "counts": counts})
 
 
 class AdminContactMessage(APIView):

@@ -68,3 +68,18 @@ class DiscoverTests(APIBase):
         bad = self.client.put("/api/content/admin/discover/", {"cards": ["RMK-9999"]}, format="json",
                               **self._headers(self.ed))
         self.assertEqual(bad.status_code, 400)
+
+    def test_a_save_reaches_every_server_worker(self):
+        """On Render each worker has its own memory. A save must not leave the other worker showing
+        the old picks: the version number lives in the shared database cache."""
+        from django.core.cache import cache, caches
+
+        self.get("/api/public/discover-remakers/")  # cached in this worker's memory
+        before = caches["shared"].get("public_home_ver", 0)
+        self.client.put("/api/content/admin/discover/", {"spotlight": self.a.public_id, "cards": [self.a.public_id]},
+                        format="json", **self._headers(self.ed))
+        self.assertNotEqual(caches["shared"].get("public_home_ver", 0), before)
+        cache.delete("public_home_ver")  # what the other worker's memory looks like: never told about the save
+        d = self.get("/api/public/discover-remakers/")
+        self.assertEqual(d.data["data"]["spotlight"]["id"], self.a.public_id)
+        self.assertIn("no-cache", d["Cache-Control"])  # browsers ask again instead of keeping it for a minute

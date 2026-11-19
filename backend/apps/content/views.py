@@ -71,7 +71,7 @@ def banner_row(b, today=None):
     today = today or timezone.localdate()
     return {
         "id": b.public_id, "title": b.title, "subtitle": b.subtitle, "cta": b.cta, "link": b.link,
-        "placement": b.placement, "audience": b.audience, "image": b.image,
+        "side": b.side, "placement": b.placement, "audience": b.audience, "image": b.image,
         "start": b.start.isoformat() if b.start else "", "end": b.end.isoformat() if b.end else "",
         "active": b.active, "status": banner_status(b, today), "views": b.views, "clicks": b.clicks,
         "ctr": (b.clicks / b.views * 100) if b.views else 0,
@@ -108,10 +108,15 @@ def clean_banner(data):
     if not (link.startswith("/") or link.startswith("https://") or link.startswith("http://")) or len(link) > 300:
         errs["link"] = ["Start the link with / (inside ReOrbit) or https://."]
     out["link"] = link
+    side = data.get("side") or "user"
+    if side not in Banner.SIDES:
+        errs["side"] = ["Choose the member side or the ReMaker side."]
+        side = "user"
+    out["side"] = side
     if data.get("placement") not in Banner.PLACEMENTS:
         errs["placement"] = ["Choose where the banner shows."]
     out["placement"] = data.get("placement")
-    if data.get("audience") not in Banner.AUDIENCES:
+    if data.get("audience") not in Banner.SIDE_AUDIENCES[side]:
         errs["audience"] = ["Choose who sees the banner."]
     out["audience"] = data.get("audience")
     image = str(data.get("image") or "").strip()
@@ -127,8 +132,8 @@ def clean_banner(data):
     return out, errs
 
 
-def _next_banner_position(placement):
-    return (Banner.objects.filter(placement=placement).aggregate(m=Max("position"))["m"] or 0) + 1
+def _next_banner_position(placement, side="user"):
+    return (Banner.objects.filter(placement=placement, side=side).aggregate(m=Max("position"))["m"] or 0) + 1
 
 
 class AdminBanners(_Admin):
@@ -141,7 +146,7 @@ class AdminBanners(_Admin):
         if errs:
             return fail("Please fix the highlighted fields.", errors=errs, status=400)
         with transaction.atomic():
-            b = Banner.objects.create(active=False, position=_next_banner_position(out["placement"]),
+            b = Banner.objects.create(active=False, position=_next_banner_position(out["placement"], out["side"]),
                                       created_by=request.user.account, **out)
             self.log(request, f"Created the banner “{b.title}” as a draft")
             self.audit(request, "banner.create", "banner", b.public_id, after={"title": b.title})
@@ -163,8 +168,8 @@ class AdminBannerDetail(_Admin):
                 out, errs = clean_banner({**banner_row(b), **request.data})
                 if errs:
                     return fail("Please fix the highlighted fields.", errors=errs, status=400)
-                if out["placement"] != b.placement:
-                    out["position"] = _next_banner_position(out["placement"])
+                if out["placement"] != b.placement or out["side"] != b.side:
+                    out["position"] = _next_banner_position(out["placement"], out["side"])
                 for k, v in out.items():
                     setattr(b, k, v)
                 b.save()
@@ -224,8 +229,8 @@ class AdminBannerDuplicate(_Admin):
             b = get_object_or_404(Banner, public_id=public_id)
             copy = Banner.objects.create(
                 title=f"{b.title} (copy)"[:60], subtitle=b.subtitle, cta=b.cta, link=b.link, placement=b.placement,
-                audience=b.audience, image=b.image, start=b.start, end=b.end, active=False,
-                position=_next_banner_position(b.placement), created_by=request.user.account)
+                side=b.side, audience=b.audience, image=b.image, start=b.start, end=b.end, active=False,
+                position=_next_banner_position(b.placement, b.side), created_by=request.user.account)
             self.log(request, f"Duplicated the banner “{b.title}”")
         return created({"banner": banner_row(copy)}, message="Banner duplicated as a draft.")
 
@@ -255,7 +260,8 @@ class AdminBannerMove(_Admin):
             return fail("dir must be -1 or 1.", status=400)
         with transaction.atomic():
             b = get_object_or_404(Banner, public_id=public_id)
-            rows = list(Banner.objects.select_for_update().filter(placement=b.placement).order_by("position", "id"))
+            rows = list(Banner.objects.select_for_update().filter(placement=b.placement, side=b.side)
+                        .order_by("position", "id"))
             _swap(rows, next(r for r in rows if r.pk == b.pk), step)
         return ok({"results": [banner_row(x) for x in Banner.objects.all()]})
 

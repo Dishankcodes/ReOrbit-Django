@@ -7,7 +7,6 @@ points at something that cannot be bought. Slots nobody filled keep the page's o
 
 import time
 
-from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Q
 
@@ -70,13 +69,27 @@ def search(request, q="", limit=24):
     return [card(k, o, request) for k, o in out[:limit]]
 
 
+def _versions():
+    # The "what changed" number lives in the shared (database) cache, so EVERY server worker sees an
+    # admin's save at once. Before, it sat in one worker's memory: on Render (2 workers) about every
+    # other refresh kept showing the old Home / Discover picks for up to 5 minutes.
+    # The pages themselves are still cached in each worker's fast memory under that number.
+    from django.core.cache import caches
+
+    return caches["shared"]
+
+
 def bump_cache():
-    """Make the public Home page read the new picks at once."""
-    cache.set("public_home_ver", int(time.time() * 1000), None)
+    """Make the public Home and Discover pages read the new picks at once (on every worker)."""
+    _versions().set("public_home_ver", int(time.time() * 1000), None)
+
+
+def home_version():
+    return _versions().get("public_home_ver", 0)
 
 
 def home_cache_key(host):
-    return f"public_home:{cache.get('public_home_ver', 0)}:{host}"
+    return f"public_home:{home_version()}:{host}"
 
 
 @transaction.atomic

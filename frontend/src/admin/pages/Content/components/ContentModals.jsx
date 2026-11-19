@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import {
   BANNER_PLACEMENTS,
-  BANNER_AUDIENCES,
+  BANNER_SIDES,
+  sideOf,
   BANNER_IMAGES,
   FAQ_TOPICS,
   categoryNameTaken,
@@ -271,13 +272,39 @@ export function BannerPreview({ b }) {
   return <BannerCard banner={b} placement={b.placement} preview />;
 }
 
-export function BannerModal({ open, banner, onSave, onClose }) {
+/* Step 1 of a new banner: which side of ReOrbit shows it. The form opens after this choice, with
+   the places, audiences, suggested pages and boosted products of that side. */
+export function BannerSideModal({ open, onPick, onClose }) {
+  return (
+    <Shell
+      open={open}
+      onClose={onClose}
+      icon={ImagePlus}
+      title="Where should this banner show?"
+      labelId="cm-bn-side-title"
+      onSubmit={(e) => e.preventDefault()}
+      text="Pick a side first. A banner shows on one side only, so members and ReMakers each see banners meant for them."
+    >
+      <div className="cm-side-pick" role="list">
+        {BANNER_SIDES.map((x) => (
+          <button key={x.key} type="button" role="listitem" className="cm-side-opt" onClick={() => onPick(x.key)}>
+            <strong>{x.label}</strong>
+            <span>{x.blurb}</span>
+          </button>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+export function BannerModal({ open, banner, side: newSide = "user", onSave, onClose, onChangeSide }) {
   const editing = !!banner;
   const blank = {
     title: "",
     subtitle: "",
-    cta: "Shop now",
-    link: "/",
+    cta: newSide === "remaker" ? "Explore" : "Shop now",
+    link: newSide === "remaker" ? "/remaker-marketplace" : "/discover-marketplace",
+    side: newSide,
     placement: "Home hero",
     audience: "Everyone",
     image: "",
@@ -296,6 +323,7 @@ export function BannerModal({ open, banner, onSave, onClose }) {
               subtitle: banner.subtitle,
               cta: banner.cta,
               link: banner.link,
+              side: banner.side || "user",
               placement: banner.placement,
               audience: banner.audience,
               image: banner.image,
@@ -305,8 +333,9 @@ export function BannerModal({ open, banner, onSave, onClose }) {
           : blank,
       );
     }
-  }, [open, banner]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, banner, newSide]); // eslint-disable-line react-hooks/exhaustive-deps
   const place = BANNER_PLACEMENTS.find((p) => p.key === f.placement);
+  const sideInfo = sideOf(f.side);
   const err = {
     title:
       f.title.trim().length < 4
@@ -352,8 +381,18 @@ export function BannerModal({ open, banner, onSave, onClose }) {
         <span className="cm-bnprev-h">Preview · how it looks on the site</span>
         <BannerPreview b={f} />
         <p className="cm-hint cm-ratio">
-          Shown in “{f.placement}”, best at {place?.ratio} ratio. {place?.blurb}
+          {sideInfo.label} · “{f.placement}”, best at {place?.ratio} ratio. {sideInfo.places[f.placement]}
         </p>
+      </div>
+      <div className="cm-side-now">
+        <span>
+          Shows on the <b>{sideInfo.label}</b>: {sideInfo.blurb}
+        </span>
+        {!editing && onChangeSide && (
+          <button type="button" className="ad-btn ad-btn-ghost ad-btn-sm" onClick={onChangeSide}>
+            Change side
+          </button>
+        )}
       </div>
       <div className="cm-form">
         <label className="ad-modal-field cm-wide">
@@ -393,6 +432,7 @@ export function BannerModal({ open, banner, onSave, onClose }) {
         </label>
         <div className="cm-wide">
           <LinkSuggestions
+            side={f.side}
             audience={f.audience}
             current={f.link.trim()}
             onPick={(to, label) =>
@@ -416,9 +456,12 @@ export function BannerModal({ open, banner, onSave, onClose }) {
             onChange={(e) => set("placement", e.target.value)}
           >
             {BANNER_PLACEMENTS.map((p) => (
-              <option key={p.key}>{p.key}</option>
+              <option key={p.key} value={p.key}>
+                {p.key}
+              </option>
             ))}
           </select>
+          <small className="cm-hint">{sideInfo.places[f.placement]}</small>
         </label>
         <label className="ad-modal-field">
           <span>Who sees it</span>
@@ -426,8 +469,10 @@ export function BannerModal({ open, banner, onSave, onClose }) {
             value={f.audience}
             onChange={(e) => set("audience", e.target.value)}
           >
-            {BANNER_AUDIENCES.map((a) => (
-              <option key={a}>{a}</option>
+            {sideInfo.audiences.map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </label>

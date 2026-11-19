@@ -87,7 +87,7 @@ export function ImageUploader({ value, onChange, ratio }) {
 
 const LINKS = {
   public: [
-    ["Browse items", "/discover-marketplace"],
+    ["Marketplace", "/discover-marketplace"],
     ["Browse ReMakers", "/discover-remakers"],
     ["Sign up or log in", "/auth"],
     ["How it works", "/how-it-works"],
@@ -104,6 +104,14 @@ const LINKS = {
     ["ReMakers", "/user-remakers"],
     ["Wishlist", "/user-wishlist"],
   ],
+  /* the ReMaker landing page before sign-in */
+  remakerPublic: [
+    ["Marketplace", "/remaker-marketplace"],
+    ["Join as a ReMaker", "/remakers-auth"],
+    ["How it works for ReMakers", "/remakers-how-it-works"],
+    ["About ReMakers", "/remakers-about"],
+    ["ReMaker welcome page", "/remakers-before-marketplace"],
+  ],
   remaker: [
     ["Marketplace", "/remaker-marketplace"],
     ["Add a product", "/remaker-products/new"],
@@ -113,18 +121,26 @@ const LINKS = {
     ["ReMaker welcome page", "/remakers-before-marketplace"],
   ],
 };
-const groupFor = (aud) =>
-  aud === "Signed-in members" ? "member" : aud === "ReMakers" ? "remaker" : "public";
+/* the pages that fit this side and audience */
+const groupFor = (side, aud) => {
+  if (side === "remaker") return aud === "ReMakers" ? "remaker" : aud === "Visitors only" ? "remakerPublic" : "remakerAll";
+  return aud === "Signed-in members" ? "member" : aud === "Visitors only" ? "public" : "userAll";
+};
+const pagesFor = (group) => {
+  if (group === "userAll") return dedupe([...LINKS.public, ...LINKS.member]);
+  if (group === "remakerAll") return dedupe([...LINKS.remakerPublic, ...LINKS.remaker]);
+  return LINKS[group];
+};
+const dedupe = (rows) => rows.filter((r, i, all) => all.findIndex((x) => x[1] === r[1] || x[0] === r[0]) === i);
 
 /* "Buy now" link for a product: /buy/<id> opens the product page, or asks the visitor to log in
-   first and brings them back to it. ReMaker banners use ?as=remaker so the ReMaker login is used. */
-export const buyLink = (id, audience) =>
-  `/buy/${id}${audience === "ReMakers" ? "?as=remaker" : ""}`;
+   first and brings them back to it. ReMaker-side banners use ?as=remaker so the ReMaker login is used. */
+export const buyLink = (id, side) => `/buy/${id}${side === "remaker" ? "?as=remaker" : ""}`;
 
 /* Pages that fit this audience, the products already boosted on Home, and a product search.
    Clicking one fills the link (and the button text when it is still the default). */
-export function LinkSuggestions({ audience, current, onPick }) {
-  const group = groupFor(audience);
+export function LinkSuggestions({ side = "user", audience, current, onPick }) {
+  const group = groupFor(side, audience);
   const { data: spot } = useSpotlight();
   const [q, setQ] = useState("");
   const [found, setFound] = useState([]);
@@ -144,16 +160,15 @@ export function LinkSuggestions({ audience, current, onPick }) {
       clearTimeout(t);
     };
   }, [q]);
-  const boosted = [...(spot.user || []), ...(spot.remaker || [])].filter(
-    (p, i, all) => all.findIndex((x) => x.id === p.id) === i,
-  );
-  const pickProduct = (p) => onPick(buyLink(p.id, audience), "Buy now");
+  /* the products boosted on THIS side's Home (Admin › Content › Home spotlight) */
+  const boosted = (side === "remaker" ? spot.remaker : spot.user) || [];
+  const pickProduct = (p) => onPick(buyLink(p.id, side), "Buy now");
 
   return (
     <div className="cm-links">
       <span className="cm-links-h"><Link2 size={13} /> Suggested pages</span>
       <div className="cm-chips">
-        {LINKS[group].map(([label, to]) => (
+        {pagesFor(group).map(([label, to]) => (
           <button key={to} type="button" className={current === to ? "on" : ""} onClick={() => onPick(to, label)} title={to}>
             {label}
           </button>
@@ -161,10 +176,12 @@ export function LinkSuggestions({ audience, current, onPick }) {
       </div>
       {boosted.length > 0 && (
         <>
-          <span className="cm-links-h"><ShoppingBag size={13} /> Buy now: boosted products</span>
+          <span className="cm-links-h">
+            <ShoppingBag size={13} /> Buy now: boosted on the {side === "remaker" ? "ReMaker" : "member"} Home
+          </span>
           <div className="cm-chips">
             {boosted.map((p) => (
-              <button key={p.id} type="button" className={current === buyLink(p.id, audience) ? "on" : ""} onClick={() => pickProduct(p)} title={buyLink(p.id, audience)}>
+              <button key={p.id} type="button" className={current === buyLink(p.id, side) ? "on" : ""} onClick={() => pickProduct(p)} title={buyLink(p.id, side)}>
                 {p.title}
               </button>
             ))}
@@ -178,7 +195,7 @@ export function LinkSuggestions({ audience, current, onPick }) {
       {found.length > 0 && (
         <div className="cm-chips">
           {found.map((p) => (
-            <button key={p.id} type="button" onClick={() => pickProduct(p)} title={buyLink(p.id, audience)}>
+            <button key={p.id} type="button" onClick={() => pickProduct(p)} title={buyLink(p.id, side)}>
               {p.title}
             </button>
           ))}

@@ -94,14 +94,27 @@ class BannerStatsTests(HomeBase):
         other = self.make_admin("o2@example.com", modules={"products": "edit"})
         self.assertEqual(self.get("/api/content/admin/banners/stats/", as_=other).status_code, 403)
 
-    def test_remaker_pages_get_their_own_audience(self):
-        for aud in ("ReMakers", "Visitors only"):
-            b = self.post("/api/content/admin/banners/", {**BANNER, "audience": aud, "title": f"For {aud}"}, as_=self.editor)
+    def test_each_banner_shows_on_one_side_only(self):
+        made = [("remaker", "ReMakers"), ("remaker", "Visitors only"), ("remaker", "Everyone"),
+                ("user", "Visitors only"), ("user", "Signed-in members"), ("user", "Everyone")]
+        for side, aud in made:
+            b = self.post("/api/content/admin/banners/", {**BANNER, "side": side, "audience": aud,
+                                                         "title": f"{side} {aud}"}, as_=self.editor)
+            self.assertEqual(b.status_code, 201, b.data)
             self.patch(f"/api/content/admin/banners/{b.data['data']['banner']['id']}/", {"active": True}, as_=self.editor)
         titles = lambda who: sorted(x["title"] for x in self.get(f"/api/content/banners/?audience={who}").data["data"]["results"])
-        self.assertEqual(titles("remaker_visitor"), ["For ReMakers", "For Visitors only"])
-        self.assertEqual(titles("remaker"), ["For ReMakers"])
-        self.assertEqual(titles("member"), [])
+        self.assertEqual(titles("remaker"), ["remaker Everyone", "remaker ReMakers"])
+        self.assertEqual(titles("remaker_visitor"), ["remaker Everyone", "remaker Visitors only"])
+        self.assertEqual(titles("member"), ["user Everyone", "user Signed-in members"])
+        self.assertEqual(titles("visitor"), ["user Everyone", "user Visitors only"])
+
+    def test_audience_must_fit_the_side(self):
+        r = self.post("/api/content/admin/banners/", {**BANNER, "side": "remaker", "audience": "Signed-in members"},
+                      as_=self.editor)
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("audience", r.data["errors"])
+        r = self.post("/api/content/admin/banners/", {**BANNER, "side": "user", "audience": "ReMakers"}, as_=self.editor)
+        self.assertEqual(r.status_code, 400)
 
 
 class SpotlightTests(HomeBase):

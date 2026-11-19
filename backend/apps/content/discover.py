@@ -10,7 +10,6 @@ database. Anything the team leaves empty is filled automatically: the highest-ra
 studio cover and that ReMaker's newest creations. A ReMaker who is no longer active drops out by itself.
 """
 
-from django.core.cache import cache
 from django.db import transaction
 from django.db.models import Count, Q
 
@@ -140,7 +139,9 @@ def build(request):
 
 
 def cache_key(host):
-    return f"public_discover_rmk:{cache.get('public_home_ver', 0)}:{host}"
+    from .spotlight import home_version
+
+    return f"public_discover_rmk:{home_version()}:{host}"
 
 
 def admin_state(request):

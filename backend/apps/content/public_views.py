@@ -29,13 +29,14 @@ class _Count(AnonRateThrottle):
     rate = "60/min"
 
 
-# audience shown to each kind of visitor ("member" = signed-in buyer, "remaker", "visitor")
+# Who is looking -> (side, audiences they see). A banner is on one side only: the member side (Home,
+# marketplace) or the ReMaker side (ReMaker landing/home, ReMaker marketplace).
 _AUDIENCES = {
-    "visitor": ("Everyone", "Visitors only"),
-    "member": ("Everyone", "Signed-in members"),
-    "remaker": ("Everyone", "Signed-in members", "ReMakers"),
+    "visitor": ("user", ("Everyone", "Visitors only")),
+    "member": ("user", ("Everyone", "Signed-in members")),
+    "remaker": ("remaker", ("Everyone", "ReMakers")),
     # someone looking at the ReMaker landing page before they sign in
-    "remaker_visitor": ("Everyone", "Visitors only", "ReMakers"),
+    "remaker_visitor": ("remaker", ("Everyone", "Visitors only")),
 }
 
 
@@ -46,8 +47,8 @@ class PublicBanners(_Public):
             .filter(Q(end__isnull=True) | Q(end__gte=today))
         if request.query_params.get("placement") in Banner.PLACEMENTS:
             qs = qs.filter(placement=request.query_params["placement"])
-        who = request.query_params.get("audience", "visitor")
-        qs = qs.filter(audience__in=_AUDIENCES.get(who, _AUDIENCES["visitor"]))
+        side, audiences = _AUDIENCES.get(request.query_params.get("audience", "visitor"), _AUDIENCES["visitor"])
+        qs = qs.filter(side=side, audience__in=audiences)
         return ok({"results": [{k: v for k, v in banner_row(b, today).items() if k in
                                 ("id", "title", "subtitle", "cta", "link", "placement", "image")} for b in qs]})
 

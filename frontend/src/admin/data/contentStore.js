@@ -40,6 +40,42 @@ export const BANNER_AUDIENCES = [
   "Visitors only",
   "ReMakers",
 ];
+/* A banner shows on ONE side of ReOrbit. Chosen first, before the form opens. */
+export const BANNER_SIDES = [
+  {
+    key: "user",
+    label: "Member side",
+    blurb: "The ReOrbit Home page and the marketplace members buy from.",
+    places: {
+      "Home hero": "The big slider at the top of the ReOrbit Home page.",
+      "Home strip": "A slim promo bar under the Home hero.",
+      "Shop top": "Above the product grid in the member marketplace.",
+    },
+    audiences: [
+      ["Everyone", "Everyone on the member side"],
+      ["Signed-in members", "Signed-in members only"],
+      ["Visitors only", "Visitors who haven't signed in"],
+    ],
+  },
+  {
+    key: "remaker",
+    label: "ReMaker side",
+    blurb: "The ReMaker home / landing page and the marketplace ReMakers buy from.",
+    places: {
+      "Home hero": "The big slider at the top of the ReMaker home page.",
+      "Home strip": "A slim promo bar under the ReMaker home hero.",
+      "Shop top": "Above the product grid in the ReMaker marketplace.",
+    },
+    audiences: [
+      ["Everyone", "Everyone on the ReMaker side"],
+      ["ReMakers", "Signed-in ReMakers only"],
+      ["Visitors only", "Visitors who haven't signed in yet"],
+    ],
+  },
+];
+export const sideOf = (key) => BANNER_SIDES.find((x) => x.key === key) || BANNER_SIDES[0];
+export const audienceLabel = (b) =>
+  (sideOf(b.side).audiences.find(([k]) => k === b.audience) || [b.audience, b.audience])[1];
 export const BANNER_IMAGES = [
   {
     src: "https://images.pexels.com/photos/1148955/pexels-photo-1148955.jpeg?auto=compress&cs=tinysrgb&w=1000",
@@ -342,6 +378,7 @@ const bannerBody = (v) => ({
   subtitle: v.subtitle || "",
   cta: v.cta || "",
   link: v.link,
+  side: v.side || "user",
   placement: v.placement,
   audience: v.audience,
   image: v.image,
@@ -416,7 +453,11 @@ export function moveBanner(id, dir) {
   const i = list.findIndex((b) => b.id === id);
   if (i < 0) return;
   let j = i + dir;
-  while (j >= 0 && j < list.length && list[j].placement !== list[i].placement)
+  while (
+    j >= 0 &&
+    j < list.length &&
+    (list[j].placement !== list[i].placement || (list[j].side || "user") !== (list[i].side || "user"))
+  )
     j += dir;
   if (j < 0 || j >= list.length) return;
   [list[i], list[j]] = [list[j], list[i]];

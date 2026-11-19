@@ -155,7 +155,7 @@ class LoginView(APIView):
             except login_guard.Locked as exc:
                 return login_guard.locked_response(exc)
             return fail(
-                login_guard.WRONG + login_guard.tries_hint(left),
+                login_guard.WRONG_MEMBER + login_guard.tries_hint(left),
                 status=status.HTTP_401_UNAUTHORIZED,
                 code="INVALID_CREDENTIALS",
             )

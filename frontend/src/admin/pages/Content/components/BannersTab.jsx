@@ -23,11 +23,14 @@ import {
   moveBanner,
   refreshBannerStats,
   BANNER_PLACEMENTS,
+  BANNER_SIDES,
+  sideOf,
+  audienceLabel,
 } from "../../../data/contentStore";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import EmptyState from "../../../components/ui/EmptyState";
 import RowActionMenu from "../../../components/ui/RowActionMenu";
-import { BannerModal, ConfirmModal } from "./ContentModals";
+import { BannerModal, BannerSideModal, ConfirmModal } from "./ContentModals";
 import SpotlightPanel from "./SpotlightPanel";
 import { formatDate } from "../../../utils/format";
 
@@ -51,7 +54,9 @@ export default function BannersTab({ canEdit, by, toast }) {
   const banners = useBanners();
   const [filter, setFilter] = useState("All");
   const [place, setPlace] = useState("all");
-  const [form, setForm] = useState(null);
+  const [sideFilter, setSideFilter] = useState("all");
+  const [form, setForm] = useState(null); // { banner } to edit, { side } for a new one
+  const [choosingSide, setChoosingSide] = useState(false); // a new banner starts by picking its side
   const [deleting, setDeleting] = useState(null);
   const [pulling, setPulling] = useState(null);
 
@@ -80,21 +85,31 @@ export default function BannersTab({ canEdit, by, toast }) {
       ),
     [banners],
   );
+  const sideKey = (b) => b.side || "user";
   const shown = banners.filter(
     (b) =>
       (filter === "All" || b.status === filter) &&
-      (place === "all" || b.placement === place),
+      (place === "all" || b.placement === place) &&
+      (sideFilter === "all" || sideKey(b) === sideFilter),
   );
+  /* live banners per side and place: each side has its own slots */
   const liveBy = useMemo(() => {
     const m = {};
     banners
       .filter((b) => b.status === "Live")
       .forEach((b) => {
-        m[b.placement] = (m[b.placement] || 0) + 1;
+        const k = `${sideKey(b)}|${b.placement}`;
+        m[k] = (m[k] || 0) + 1;
       });
     return m;
   }, [banners]);
-  const over = BANNER_PLACEMENTS.filter((p) => (liveBy[p.key] || 0) > p.max);
+  const over = BANNER_SIDES.flatMap((sd) =>
+    BANNER_PLACEMENTS.filter((p) => (liveBy[`${sd.key}|${p.key}`] || 0) > p.max).map((p) => ({
+      ...p,
+      side: sd,
+      live: liveBy[`${sd.key}|${p.key}`],
+    })),
+  );
   const withViews = banners.filter((b) => b.views > 0);
   const avgCtr = withViews.length
     ? withViews.reduce((n, b) => n + b.ctr, 0) / withViews.length
@@ -201,9 +216,9 @@ export default function BannersTab({ canEdit, by, toast }) {
       </section>
 
       {over.map((p) => (
-        <p key={p.key} className="cm-warn">
-          <AlertTriangle size={15} /> {liveBy[p.key]} banners are live in “
-          {p.key}”, but it is designed for {p.max}. Unpublish one so each gets a
+        <p key={`${p.side.key}-${p.key}`} className="cm-warn">
+          <AlertTriangle size={15} /> {p.live} banners are live in “{p.key}” on the{" "}
+          {p.side.label}, but it is designed for {p.max}. Unpublish one so each gets a
           fair share of views.
         </p>
       ))}
@@ -225,6 +240,17 @@ export default function BannersTab({ canEdit, by, toast }) {
           </div>
           <div className="au-toolbar-right">
             <label className="au-select">
+              <span>Side</span>
+              <select value={sideFilter} onChange={(e) => setSideFilter(e.target.value)}>
+                <option value="all">Both sides</option>
+                {BANNER_SIDES.map((sd) => (
+                  <option key={sd.key} value={sd.key}>
+                    {sd.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="au-select">
               <span>Where</span>
               <select value={place} onChange={(e) => setPlace(e.target.value)}>
                 <option value="all">All places</option>
@@ -237,7 +263,7 @@ export default function BannersTab({ canEdit, by, toast }) {
               type="button"
               className="ad-btn ad-btn-primary"
               disabled={!canEdit}
-              onClick={() => setForm({})}
+              onClick={() => setChoosingSide(true)}
             >
               <Plus size={15} /> Create banner
             </button>
@@ -247,7 +273,7 @@ export default function BannersTab({ canEdit, by, toast }) {
         {shown.length > 0 ? (
           <div className="cm-bn-grid">
             {shown.map((b) => {
-              const same = banners.filter((x) => x.placement === b.placement);
+              const same = banners.filter((x) => x.placement === b.placement && sideKey(x) === sideKey(b));
               const pos = same.findIndex((x) => x.id === b.id);
               return (
                 <article
@@ -263,7 +289,9 @@ export default function BannersTab({ canEdit, by, toast }) {
                   >
                     {!b.image && <ImageOff size={22} />}
                     <div className="cm-bn-shade" />
-                    <span className="cm-bn-place">{b.placement}</span>
+                    <span className="cm-bn-place">
+                      {sideOf(sideKey(b)).label} · {b.placement}
+                    </span>
                     <div className="cm-bn-copy">
                       <strong>{b.title}</strong>
                       {b.subtitle && <span>{b.subtitle}</span>}
@@ -273,7 +301,7 @@ export default function BannersTab({ canEdit, by, toast }) {
                   <div className="cm-bn-body">
                     <div className="cm-bn-head">
                       <StatusBadge status={b.status} />
-                      <span className="cm-aud">{b.audience}</span>
+                      <span className="cm-aud">{audienceLabel({ ...b, side: sideKey(b) })}</span>
                       {canEdit ? (
                         <RowActionMenu
                           label={`Actions for ${b.title}`}
@@ -359,18 +387,19 @@ export default function BannersTab({ canEdit, by, toast }) {
             icon={ImageOff}
             title="No banners here"
             text={
-              filter === "All" && place === "all"
+              filter === "All" && place === "all" && sideFilter === "all"
                 ? "Create the first banner for the Home page."
                 : "Nothing matches these filters."
             }
             action={
-              filter === "All" && place === "all" ? null : (
+              filter === "All" && place === "all" && sideFilter === "all" ? null : (
                 <button
                   type="button"
                   className="ad-btn ad-btn-ghost ad-btn-sm"
                   onClick={() => {
                     setFilter("All");
                     setPlace("all");
+                    setSideFilter("all");
                   }}
                 >
                   Clear filters
@@ -388,11 +417,24 @@ export default function BannersTab({ canEdit, by, toast }) {
 
       <SpotlightPanel canEdit={canEdit} toast={toast} />
 
+      <BannerSideModal
+        open={choosingSide}
+        onPick={(side) => {
+          setChoosingSide(false);
+          setForm({ side });
+        }}
+        onClose={() => setChoosingSide(false)}
+      />
       <BannerModal
         open={!!form}
         banner={form?.banner || null}
+        side={form?.side || "user"}
         onSave={save}
         onClose={() => setForm(null)}
+        onChangeSide={() => {
+          setForm(null);
+          setChoosingSide(true);
+        }}
       />
       <ConfirmModal
         open={!!deleting}

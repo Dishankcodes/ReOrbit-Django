@@ -16,8 +16,9 @@ const VIEWS = [
 ];
 
 /* Admin › Support › Website messages: the public contact form.
-   Messages from people with an account also became tickets (linked); the rest are answered by
-   email from here. */
+   Every message lands here and is answered by email. When the email matches a member or ReMaker
+   account the row says so (a hint only: the form needs no sign-in). Older messages that were
+   turned into tickets still link to them. */
 export default function ContactInbox() {
   const access = useAccess();
   const canEdit = access.can("support", "edit");
@@ -80,7 +81,7 @@ export default function ContactInbox() {
         body: { action, message: reply },
       });
       toast(r.message);
-      setOpen(r.data.message_item);
+      setOpen((o) => ({ ...o, ...r.data.message_item }));
       setReply("");
       load();
     } catch (e) {
@@ -146,6 +147,10 @@ export default function ContactInbox() {
                     <span className="ci-tag ticket">
                       <Ticket size={11} /> {m.ticket}
                     </span>
+                  ) : m.account ? (
+                    <span className="ci-tag ticket">
+                      {m.account.kind === "ReMaker" ? <Store size={11} /> : <UserRound size={11} />} {m.account.kind}
+                    </span>
                   ) : (
                     <span className="ci-tag guest">No account</span>
                   )}
@@ -190,6 +195,17 @@ export default function ContactInbox() {
                   {open.side === "remaker" ? "ReMaker site" : "Member site"}
                 </dd>
               </div>
+              {open.account && (
+                <div>
+                  <dt>Account</dt>
+                  <dd>
+                    <Link to={open.account.path}>
+                      {open.account.name} ({open.account.kind}, {open.account.status})
+                    </Link>
+                    <small>Same email as this account. The form needs no sign-in, so check before sharing account details.</small>
+                  </dd>
+                </div>
+              )}
               {open.ticket && (
                 <div>
                   <dt>Ticket</dt>

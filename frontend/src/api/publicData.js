@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "./api";
 
-/* Data for the before-login pages. One small request each, cached in memory and for
-   5 minutes in sessionStorage so moving between public pages costs nothing. */
+/* Data for the before-login pages. Cached in memory and for 5 minutes in sessionStorage, so a page
+   you have seen opens instantly. It is then checked again in the background and updated if the team
+   changed it (Admin › Content), so a save shows on the next visit instead of 5 minutes later. */
 const TTL = 5 * 60 * 1000;
 const memory = new Map();
 
@@ -32,8 +33,8 @@ function writeCache(key, data) {
 }
 
 const inflight = new Map();
-export function fetchPublic(path) {
-  const cached = readCache(path);
+export function fetchPublic(path, { fresh = false } = {}) {
+  const cached = fresh ? null : readCache(path);
   if (cached) return Promise.resolve(cached);
   if (!inflight.has(path)) {
     inflight.set(
@@ -64,7 +65,15 @@ export function usePublic(path) {
     const c = readCache(path);
     if (c) {
       setState({ data: c, loading: false, error: "" });
-      return undefined;
+      /* show the saved copy at once, then quietly check for a newer one */
+      fetchPublic(path, { fresh: true })
+        .then((data) => {
+          if (alive && JSON.stringify(data) !== JSON.stringify(c)) setState({ data, loading: false, error: "" });
+        })
+        .catch(() => {});
+      return () => {
+        alive = false;
+      };
     }
     setState((s) => ({ ...s, loading: true }));
     fetchPublic(path)

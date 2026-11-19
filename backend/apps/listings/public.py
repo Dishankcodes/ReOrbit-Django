@@ -166,7 +166,7 @@ class HomeView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    @method_decorator(cache_control(max_age=60, public=True))
+    @method_decorator(cache_control(no_cache=True))  # the team edits it: show a save at once
     def get(self, request):
         from apps.content import spotlight
 
@@ -228,7 +228,7 @@ class DiscoverRemakersView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
-    @method_decorator(cache_control(max_age=60, public=True))
+    @method_decorator(cache_control(no_cache=True))  # the team edits it: show a save at once
     def get(self, request):
         from apps.content import discover
 

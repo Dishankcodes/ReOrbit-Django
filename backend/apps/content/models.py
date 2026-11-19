@@ -15,11 +15,20 @@ class Banner(PublicIdModel, TimeStampedModel):
 
     PLACEMENTS = ("Home hero", "Home strip", "Shop top")
     AUDIENCES = ("Everyone", "Signed-in members", "Visitors only", "ReMakers")
+    # Which side of ReOrbit shows it. Member side: the Home page and the marketplace buyers use.
+    # ReMaker side: the ReMaker landing/home page and the ReMaker marketplace. A banner is on one side only.
+    SIDES = ("user", "remaker")
+    # who on that side can see it ("ReMakers" = ReMakers who are signed in)
+    SIDE_AUDIENCES = {
+        "user": ("Everyone", "Signed-in members", "Visitors only"),
+        "remaker": ("Everyone", "ReMakers", "Visitors only"),
+    }
 
     title = models.CharField(max_length=60)
     subtitle = models.CharField(max_length=110, blank=True)
     cta = models.CharField(max_length=20, blank=True)
     link = models.CharField(max_length=300, blank=True)
+    side = models.CharField(max_length=10, default="user")
     placement = models.CharField(max_length=20)
     audience = models.CharField(max_length=20, default="Everyone")
     image = models.CharField(max_length=500)

@@ -234,7 +234,7 @@ class PublicContactTests(SupportTicketTests):
         self.assertEqual(bad.status_code, 400)
         self.assertEqual(set(bad.data["errors"]), {"name", "email", "topic", "subject", "message"})
 
-        # a blocked member appeals: it becomes a ticket on their account
+        # a blocked member appeals: it stays a website message, the team sees the matching account
         self.user.status, self.user.status_reason = "Blocked", "Spam"
         self.user.save()
         r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "blocked",
@@ -242,9 +242,11 @@ class PublicContactTests(SupportTicketTests):
         self.assertEqual(r.status_code, 201, r.data)
         from apps.support.models import ContactMessage
 
-        t = ContactMessage.objects.get(public_id=r.data["data"]["reference"]).ticket
-        self.assertEqual((t.user_id, t.category, t.priority), (self.user.pk, "Account access", "High"))
+        m = ContactMessage.objects.get(public_id=r.data["data"]["reference"])
+        self.assertEqual((m.ticket_id, m.status), (None, "New"))
         self.assertTrue(Notification.objects.filter(admin=boss, module="support").exists())
+        inbox = self.get("/api/support/admin/contact/?status=New", as_=boss).data["data"]["results"]
+        self.assertEqual(inbox[0]["account"]["id"], self.user.public_id)
 
         # someone without an account: the team is told, no ticket
         n = SupportTicket.objects.count()
@@ -298,12 +300,19 @@ class ContactInboxTests(SupportTicketTests):
         self.assertEqual(mail.outbox[0].to, ["riya@example.com"])
         self.assertIn("Here's how to start", mail.outbox[0].body)
 
-    def test_member_message_is_a_ticket_and_recorded(self):
+    def test_member_message_stays_in_the_inbox(self):
         from apps.support.models import ContactMessage
         r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "purchase",
                                                        "subject": "Where is my order", "message": "My order hasn't arrived yet."}, format="json")
         self.assertEqual(r.status_code, 201)
         self.assertNotIn("linked", r.data["data"])  # same answer as for a visitor without an account
         m = ContactMessage.objects.get(public_id=r.data["data"]["reference"])
-        self.assertIsNotNone(m.ticket)
-        self.assertEqual(m.status, "Closed")
+        self.assertEqual((m.ticket_id, m.status), (None, "New"))
+        inbox = self.get("/api/support/admin/contact/", as_=self.agent).data["data"]["results"]
+        row = next(x for x in inbox if x["id"] == m.public_id)
+        self.assertEqual(row["account"]["kind"], "Member")
+        visitor = self.client.post("/api/support/contact/", {"name": "Riya", "email": "nobody@example.com", "topic": "other",
+                                                             "subject": "Hello there", "message": "Just saying hello."}, format="json")
+        row = next(x for x in self.get("/api/support/admin/contact/", as_=self.agent).data["data"]["results"]
+                   if x["id"] == visitor.data["data"]["reference"])
+        self.assertIsNone(row["account"])

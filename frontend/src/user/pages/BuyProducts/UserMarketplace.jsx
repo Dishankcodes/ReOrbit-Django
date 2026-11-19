@@ -327,7 +327,11 @@ export default function UserMarketplace() {
 
   return (
     <div className="dn mk">
-      <BannerSlot placement="Shop top" viewer="Signed-in members" />
+      {/* the ReMaker marketplace shows the ReMaker side's "Shop top" banners, the member one the member side's */}
+      <BannerSlot
+        placement="Shop top"
+        viewer={/^\/remaker-/.test(window.location.pathname) ? "ReMakers" : "Signed-in members"}
+      />
 
       <header className="mk-head">
         <div>

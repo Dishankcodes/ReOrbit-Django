@@ -146,3 +146,7 @@ def locked_response(exc):
 
 
 WRONG = "Email or password is incorrect."
+# members can also sign in with Google; such an account may have no password at all (said to everyone,
+# so it tells nothing about whether the email is registered)
+WRONG_MEMBER = ("Email or password is incorrect. If you joined with Google, use Continue with Google, "
+                "or set a password with Forgot password.")
