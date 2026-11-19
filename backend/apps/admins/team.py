@@ -152,6 +152,7 @@ class TeamListView(TeamBase):
             permission_level=Admins.PermissionLevel.ADMIN,
             status=Admins.Status.ACTIVE,
             created_by=me,
+            must_change_password=True,  # they choose their own password at first sign-in
         )
         admin.set_password(password)
         admin.save()
@@ -250,7 +251,13 @@ class TeamResetPasswordView(TeamBase):
             return fail("Super Admin accounts can't be changed here.", status=403)
         password = temp_password()
         admin.set_password(password)
-        admin.save(update_fields=["password", "updated_at"])
+        admin.must_change_password = True  # they choose their own password at next sign-in
+        admin.save(update_fields=["password", "must_change_password", "updated_at"])
+        from apps.accounts import login_guard
+        from apps.accounts.sessions import end_all_sessions
+
+        end_all_sessions(admin)  # whoever was signed in with the old password is signed out
+        login_guard.clear("admin", admin.email)
         audit(
             request.user.account,
             "admin.reset_password",

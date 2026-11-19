@@ -4,6 +4,7 @@ from .export import MyDataExport
 from .views import DeleteMyAccount
 from .public_views import PublicMemberDetail
 from .views import (
+    RegisterRequestOTPView,
     RegisterView,
     LoginView,
     ForgotPasswordRequestOTPView,
@@ -19,6 +20,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("auth/register/request-otp/", RegisterRequestOTPView.as_view()),
     path("auth/register/", RegisterView.as_view()),
     path("auth/login/", LoginView.as_view()),
     path("auth/google/", GoogleAuthView.as_view()),

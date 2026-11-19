@@ -1,14 +1,16 @@
+from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 
+from apps.accounts import login_guard
 from apps.accounts.google import GoogleAuthError, profile_from_code
 from apps.core.account_deletion import DeleteMyAccount as _DeleteMyAccount, is_past_grace, purge
-from apps.accounts.helpers import clean_email, is_valid_email, send_otp_or_error, touch_login
+from apps.accounts.helpers import clean_email, is_valid_email, password_problem, send_otp_or_error, touch_login
+from apps.accounts.sessions import end_all_sessions
 from apps.accounts.models import OTP_Verification
-from apps.accounts.otp import consume_otp, verify_otp
+from apps.accounts.otp import OTP_EXPIRY_MINUTES, consume_otp, verify_otp
 from apps.accounts.permissions import IsReOrbitUser
 from apps.accounts.tokens import create_token_pair
 from apps.accounts.utils import issue_reset_token, read_reset_token
@@ -24,40 +26,86 @@ from .models import User_Profile, Users
 from .serializers import AdminUserSerializer, UserProfileSerializer, UserSerializer
 
 
-class RegisterView(APIView):
-    """POST /api/users/auth/register/"""
+def _register_problem(full_name, email, password):
+    """Shared by both sign-up steps: None when everything is fine, otherwise the error response."""
+    if not full_name:
+        return fail("Full name is required.")
+    if len(full_name) > 120:
+        return fail("Please keep your name under 120 characters.")
+    if not email:
+        return fail("Email is required.")
+    if not is_valid_email(email):
+        return fail("Please enter a valid email address.", code="INVALID_EMAIL")
+    if not password:
+        return fail("Password is required.")
+    if (msg := password_problem(password, Users(full_name=full_name, email=email))):
+        return fail(msg, errors={"password": [msg]}, code="WEAK_PASSWORD")
+    if Users.objects.filter(email__iexact=email).exists():
+        return fail("Email is already registered.", status=status.HTTP_409_CONFLICT)
+    if ReMakers.objects.filter(email__iexact=email).exists():
+        return fail(
+            "This email is already registered as a ReMaker. Use a different email.",
+            status=status.HTTP_409_CONFLICT,
+            code="EMAIL_USED_BY_REMAKER",
+        )
+    return None
+
+
+class RegisterRequestOTPView(APIView):
+    """POST /api/users/auth/register/request-otp/  {"full_name", "email", "password"}
+
+    Step 1 of sign-up: checks the details and emails a 6-digit code. Nothing is created yet, so
+    nobody can open an account with an email they don't own."""
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [AuthThrottle]
+    throttle_classes = [OTPIPThrottle, OTPSendThrottle]
 
     def post(self, request):
         full_name = (request.data.get("full_name") or "").strip()
         email = clean_email(request.data.get("email"))
         password = request.data.get("password") or ""
+        if (problem := _register_problem(full_name, email, password)):
+            return problem
+        result, error = send_otp_or_error(
+            email, OTP_Verification.Purpose.USER_REGISTER, OTP_Verification.AccountType.USER
+        )
+        if error:
+            return error
+        return ok({"expires_in_minutes": result["expires_in_minutes"]},
+                  f"We sent a 6-digit code to {email}.")
 
-        if not full_name:
-            return fail("Full name is required.")
-        if not email:
-            return fail("Email is required.")
-        if not is_valid_email(email):
-            return fail("Please enter a valid email address.", code="INVALID_EMAIL")
-        if not password:
-            return fail("Password is required.")
-        if Users.objects.filter(email__iexact=email).exists():
-            return fail("Email is already registered.", status=status.HTTP_409_CONFLICT)
-        if ReMakers.objects.filter(email__iexact=email).exists():
-            return fail(
-                "This email is already registered as a ReMaker. Use a different email.",
-                status=status.HTTP_409_CONFLICT,
-                code="EMAIL_USED_BY_REMAKER",
-            )
+
+class RegisterView(APIView):
+    """POST /api/users/auth/register/  {"full_name", "email", "password", "otp"}
+
+    Step 2 of sign-up: the code from the email proves the address is theirs; then the account is
+    created (email marked verified) and signed in."""
+
+    authentication_classes = []
+    permission_classes = []
+    throttle_classes = [OTPIPThrottle, OTPVerifyThrottle]
+
+    def post(self, request):
+        full_name = (request.data.get("full_name") or "").strip()
+        email = clean_email(request.data.get("email"))
+        password = request.data.get("password") or ""
+        otp = str(request.data.get("otp") or "").strip()
+
+        if (problem := _register_problem(full_name, email, password)):
+            return problem
+        if not otp:
+            return fail("Enter the 6-digit code we emailed you.", code="OTP_REQUIRED")
+        record, error = verify_otp(email, otp, OTP_Verification.Purpose.USER_REGISTER)
+        if error:
+            return fail(error, errors={"otp": [error]}, code="INVALID_OTP")
 
         with transaction.atomic():
-            user = Users(full_name=full_name, email=email)
+            user = Users(full_name=full_name, email=email, email_verified_at=timezone.now())
             user.set_password(password)
             user.save()
             User_Profile.objects.create(user=user)
+            consume_otp(record)
 
         touch_login(user)
         return created(
@@ -88,22 +136,30 @@ class LoginView(APIView):
         if not password:
             return fail("Password is required.")
 
+        try:
+            login_guard.check("user", email)
+        except login_guard.Locked as exc:
+            return login_guard.locked_response(exc)
+
         user = Users.objects.filter(email__iexact=email).first()
         if user is not None and is_past_grace(user):
             purge(user)  # deleted more than 30 days ago: gone for good, the email is free again
             user = None
-        if not user:
+        # One answer for "no such account" and "wrong password", so nobody can test which emails
+        # are registered. After 5 wrong tries the email is paused (5 min, then 15, then 1 hour).
+        if user is None:
+            login_guard.burn_time(password)
+        if user is None or not user.check_password(password):
+            try:
+                left = login_guard.failed("user", email, account=user, ip=request.META.get("REMOTE_ADDR"))
+            except login_guard.Locked as exc:
+                return login_guard.locked_response(exc)
             return fail(
-                "No account found with this email. Please create an account first.",
-                status=status.HTTP_404_NOT_FOUND,
-                code="ACCOUNT_NOT_FOUND",
-            )
-        if not user.check_password(password):
-            return fail(
-                "Invalid password. Please try again.",
+                login_guard.WRONG + login_guard.tries_hint(left),
                 status=status.HTTP_401_UNAUTHORIZED,
-                code="INVALID_PASSWORD",
+                code="INVALID_CREDENTIALS",
             )
+        login_guard.succeeded("user", email)
 
         touch_login(user)
         _login_alert(user, request)
@@ -189,11 +245,20 @@ class ForgotPasswordRequestOTPView(APIView):
         if not email:
             return fail("Email is required.")
 
+        # The same answer whether or not the email has an account (or is blocked), so nobody can
+        # use this form to find out who is registered.
+        sent = f"If {email} has a ReOrbit account, we've sent a 6-digit code to it."
         user = Users.objects.filter(email__iexact=email).first()
-        if not user:
-            return fail("No account found with this email.", status=status.HTTP_404_NOT_FOUND)
-        if user.status in (Users.Status.BLOCKED, Users.Status.DELETED):
-            return fail(f"Account is {user.status.lower()}.", status=status.HTTP_403_FORBIDDEN)
+        if not user or user.status in (Users.Status.BLOCKED, Users.Status.DELETED):
+            from django.core.cache import caches
+
+            # mimic the real 30-second resend wait, so the two cases can't be told apart that way either
+            wait = getattr(settings, "OTP_RESEND_COOLDOWN_SECONDS", 30)
+            if not caches["shared"].add(f"fp-none:{email}", 1, wait):
+                response = fail("Please wait a moment before asking for another code.", status=429, code="OTP_COOLDOWN")
+                response.data["retry_after"] = wait
+                return response
+            return ok({"expires_in_minutes": OTP_EXPIRY_MINUTES}, sent)
 
         result, error = send_otp_or_error(
             email,
@@ -202,7 +267,7 @@ class ForgotPasswordRequestOTPView(APIView):
         )
         if error:
             return error
-        return ok({"expires_in_minutes": result["expires_in_minutes"]}, result["message"])
+        return ok({"expires_in_minutes": result["expires_in_minutes"]}, sent)
 
 
 class ForgotPasswordVerifyOTPView(APIView):
@@ -226,7 +291,7 @@ class ForgotPasswordVerifyOTPView(APIView):
 
         user = Users.objects.filter(email__iexact=email).first()
         if not user:
-            return fail("User account not found.", status=status.HTTP_404_NOT_FOUND)
+            return fail("Invalid or expired OTP.")
 
         return ok(
             {"reset_token": issue_reset_token(user.user_id, record.otp_id)},
@@ -272,10 +337,14 @@ class ForgotPasswordResetView(APIView):
             user = Users.objects.filter(user_id=user_id).first()
             if not user:
                 return fail("User account not found.", status=status.HTTP_404_NOT_FOUND)
+            if (msg := password_problem(new_password, user)):
+                return fail(msg, errors={"new_password": [msg]}, code="WEAK_PASSWORD")
 
             user.set_password(new_password)
             user.save(update_fields=["password", "updated_at"])
             consume_otp(record)
+            end_all_sessions(user)  # every phone and browser signed in before is signed out
+            login_guard.clear("user", user.email)  # and a sign-in pause is lifted
             _tell_password(user)
 
         return ok(message="Password reset successfully. Please login again.")
@@ -333,10 +402,14 @@ class ChangePasswordView(APIView):
                 "Choose a password different from the current one.",
                 errors={"new_password": ["Must differ from the current password."]},
             )
+        if (msg := password_problem(new, user)):
+            return fail(msg, errors={"new_password": [msg]}, code="WEAK_PASSWORD")
         user.set_password(new)
         user.save(update_fields=["password", "updated_at"])
+        # other phones and browsers are signed out; this one gets fresh tokens and stays in
+        tokens = end_all_sessions(user, keep="user")
         _tell_password(user)
-        return ok(message="Password updated successfully.")
+        return ok(tokens, "Password updated. You've been signed out on your other devices.")
 
 
 def _with_counts(qs):

@@ -63,6 +63,10 @@ class Admins(PublicIdModel):
         max_length=20, choices=Status.choices, default=Status.ACTIVE
     )
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # sign-ins from before this moment stop working (password changed or reset, "sign out everywhere")
+    tokens_valid_after = models.DateTimeField(null=True, blank=True)
+    # set when the super admin gives a temporary password: the admin must choose their own first
+    must_change_password = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         "self",
         null=True,

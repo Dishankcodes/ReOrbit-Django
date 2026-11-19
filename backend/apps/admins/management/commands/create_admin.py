@@ -10,7 +10,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--name", required=True)
         parser.add_argument("--email", required=True)
-        parser.add_argument("--password", required=True)
+        parser.add_argument(
+            "--password",
+            default="",
+            help="Leave out to type it in privately (it then doesn't end up in your shell history).",
+        )
         parser.add_argument(
             "--permission-level", choices=["Admin", "Super_Admin"], default="Admin"
         )
@@ -32,6 +36,18 @@ class Command(BaseCommand):
                 raise CommandError(f"Bad module setting: {part}")
             modules[name] = level
 
+        password = opts["password"]
+        if not password:
+            import getpass
+
+            password = getpass.getpass("Password for the new admin: ")
+            if password != getpass.getpass("Same password again: "):
+                raise CommandError("The passwords don't match.")
+        from apps.admins.views import password_problem
+
+        if (msg := password_problem(password, Admins(email=email, full_name=opts["name"].strip()))):
+            raise CommandError(msg)
+
         admin = Admins(
             full_name=opts["name"].strip(),
             email=email,
@@ -39,6 +55,6 @@ class Command(BaseCommand):
             modules=modules,
             activated_at=timezone.now(),
         )
-        admin.set_password(opts["password"])
+        admin.set_password(password)
         admin.save()
         self.stdout.write(self.style.SUCCESS(f"Admin created: {admin.public_id} {email}"))

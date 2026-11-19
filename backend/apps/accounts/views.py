@@ -7,6 +7,7 @@ from apps.core.throttles import AuthThrottle
 
 from .authentication import ACCOUNT_MODELS, ReOrbitJWTAuthentication
 from .permissions import IsReOrbitAuthenticated
+from .sessions import token_is_current
 from .tokens import create_token_pair
 
 
@@ -30,6 +31,8 @@ class RefreshTokenView(APIView):
             account = model.objects.filter(pk=account_id).first()
             if account is None or (account_type == "admin" and account.status != "Active"):
                 raise TokenError("account unavailable")
+            if not token_is_current(account, old):
+                raise TokenError("signed out everywhere")  # password changed or reset since
             old.blacklist()
             return ok(create_token_pair(account_type, account_id), "Token refreshed successfully.")
         except TokenError:

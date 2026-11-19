@@ -12,22 +12,35 @@ validate_phone = RegexValidator(
 )
 
 
+# Photos larger than this many pixels are refused before they are decoded (a tiny file can claim
+# to be 50,000 x 50,000 pixels and eat the server's memory). 40 MP covers every phone camera.
+MAX_IMAGE_PIXELS = 40_000_000
+
+
 def validate_image(file):
-    """jpeg / png / webp, at most 5 MB. The real file type is checked, not the name."""
+    """JPEG (.jpg / .jpeg), PNG or WebP, at most 5 MB. The real file type is checked, not the name.
+
+    Only the JPEG, PNG and WebP readers are allowed to look at the file (formats=...), so an upload
+    never reaches Pillow's TIFF, BMP, GIF... readers, where most image-library security bugs live."""
     from PIL import Image
 
     if file.size > MAX_IMAGE_BYTES:
         raise ValidationError("Image must be 5 MB or smaller.")
     try:
-        image = Image.open(file)
+        image = Image.open(file, formats=sorted(ALLOWED_IMAGE_FORMATS))
+        width, height = image.size
+        if width * height > MAX_IMAGE_PIXELS:
+            raise ValidationError("This photo is too large. Please use a photo under 40 megapixels.")
         image.verify()
         fmt = image.format
+    except ValidationError:
+        raise
     except Exception:
-        raise ValidationError("Upload a valid image file.")
+        raise ValidationError("Only JPEG (.jpg), PNG or WebP images are allowed.")
     finally:
         file.seek(0)
     if fmt not in ALLOWED_IMAGE_FORMATS:
-        raise ValidationError("Only JPEG, PNG or WebP images are allowed.")
+        raise ValidationError("Only JPEG (.jpg), PNG or WebP images are allowed.")
 
 
 # ReOrbit serves Gujarat only. Gujarat pincodes run 360001-396590; 396210-396240

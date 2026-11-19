@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 import {
+  requestRegisterOTP,
   userRegister,
   userLogin,
   requestForgotPasswordOTP,
@@ -14,6 +15,7 @@ import {
 } from "../../../api/auth";
 import GoogleButton from "../../../shared/components/GoogleButton";
 import { saveSession, nextAfterLogin } from "../../../api/session";
+import useLockCountdown from "../../../shared/useLockCountdown";
 
 import "../../css/Auth.css";
 
@@ -43,6 +45,7 @@ export default function Auth() {
   const [resendLoading, setResendLoading] = useState(false);
 
   const otpRefs = useRef([]);
+  const lock = useLockCountdown();
 
   // Clear success and error messages.
   const clearMessages = () => {
@@ -191,6 +194,7 @@ export default function Auth() {
         navigate(nextAfterLogin("user", "/user-dashboard"));
       }, 500);
     } catch (err) {
+      lock.fromError(err); // 5 wrong tries: the button counts down until sign-in reopens
       setError(err?.data?.message || err?.message || "Unable to login.");
     } finally {
       setLoading(false);
@@ -221,10 +225,51 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const response = await requestRegisterOTP({
+        full_name: fullName.trim(),
+        email: normalizedEmail,
+        password,
+      });
+
+      setEmail(normalizedEmail);
+      clearOtp();
+      startResendTimer();
+      setMessage(response.message || "We sent a 6-digit code to your email.");
+      setMode("register-otp");
+
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    } catch (err) {
+      setError(
+        err?.errors?.password?.[0] || err?.data?.message || err?.message || "Unable to create your account.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sign-up step 2: the code from the email creates the account.
+  const handleRegisterVerify = async (e) => {
+    e.preventDefault();
+
+    clearMessages();
+
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length !== 6) {
+      setError("Please enter the complete 6-digit code.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
       const response = await userRegister({
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
         password,
+        otp: enteredOtp,
       });
 
       saveAuthData(response.data);
@@ -235,11 +280,35 @@ export default function Auth() {
         navigate(nextAfterLogin("user", "/user-dashboard"));
       }, 500);
     } catch (err) {
-      setError(
-        err?.data?.message || err?.message || "Unable to create your account.",
-      );
+      setError(err?.data?.message || err?.message || "That code didn't work. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Send the sign-up code again.
+  const handleRegisterResend = async () => {
+    if (resendTimer > 0 || resendLoading || loading) return;
+
+    setResendLoading(true);
+    clearMessages();
+
+    try {
+      const response = await requestRegisterOTP({
+        full_name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      clearOtp();
+      startResendTimer();
+      setMessage(response.message || "A new code is on its way.");
+      setTimeout(() => {
+        otpRefs.current[0]?.focus();
+      }, 100);
+    } catch (err) {
+      setError(err?.data?.message || err?.message || "Unable to resend the code.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -454,7 +523,7 @@ export default function Auth() {
 
   // Get authentication heading.
   const getHeading = () => {
-    if (mode === "register") {
+    if (mode === "register" || mode === "register-otp") {
       return {
         eyebrow: "CREATE YOUR ORBIT",
         title: "Create account",
@@ -517,7 +586,7 @@ export default function Auth() {
 
           <div
             className={`auth-card ${
-              mode === "register"
+              mode === "register" || mode === "register-otp"
                 ? "register-mode"
                 : mode.startsWith("forgot")
                   ? "forgot-mode"
@@ -624,9 +693,13 @@ export default function Auth() {
                 <button
                   type="submit"
                   className={`auth-submit ${loading ? "is-loading" : ""}`}
-                  disabled={loading}
+                  disabled={loading || lock.active}
                 >
-                  {loading ? "Signing in..." : "Sign in"}
+                  {lock.active
+                    ? `Try again in ${lock.label}`
+                    : loading
+                      ? "Signing in..."
+                      : "Sign in"}
                 </button>
 
                 <div className="auth-divider">
@@ -691,7 +764,7 @@ export default function Auth() {
                     <input
                       id="register-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="At least 8 characters"
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -725,7 +798,7 @@ export default function Auth() {
                   className={`auth-submit ${loading ? "is-loading" : ""}`}
                   disabled={loading}
                 >
-                  {loading ? "Creating account..." : "Create account"}
+                  {loading ? "Sending code..." : "Create account"}
                 </button>
 
                 <div className="auth-divider">
@@ -744,6 +817,88 @@ export default function Auth() {
 
                   <span>Continue with Google</span>
                 </GoogleButton>
+              </form>
+            )}
+
+            {mode === "register-otp" && (
+              <form onSubmit={handleRegisterVerify} className="forgot-password-form">
+                <div className="forgot-step">
+                  <span>02</span>
+
+                  <div>
+                    <strong>Verify your email</strong>
+
+                    <p>
+                      Enter the 6-digit code sent to <strong>{email}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="forgot-otp-container">
+                  <label>Verification code</label>
+
+                  <div className="forgot-otp-boxes" onPaste={handleOtpPaste}>
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(element) => {
+                          otpRefs.current[index] = element;
+                        }}
+                        id={`register-otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(e.target.value, index)}
+                        onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                        autoComplete={index === 0 ? "one-time-code" : "off"}
+                        aria-label={`Code digit ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <p className="forgot-otp-help">
+                    This proves the email is yours. Check spam if it hasn&apos;t arrived.
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="auth-submit"
+                  disabled={loading || otp.join("").length !== 6}
+                >
+                  {loading ? "Creating account..." : "Verify and create account"}
+                </button>
+
+                <div className="forgot-resend">
+                  <span>Didn&apos;t receive the code?</span>
+
+                  <button
+                    type="button"
+                    onClick={handleRegisterResend}
+                    disabled={resendTimer > 0 || resendLoading || loading}
+                  >
+                    {resendLoading
+                      ? "Sending..."
+                      : resendTimer > 0
+                        ? `Resend in ${resendTimer}s`
+                        : "Resend code"}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="auth-secondary-button"
+                  onClick={() => {
+                    clearMessages();
+                    clearOtp();
+                    setResendTimer(0);
+                    setMode("register");
+                  }}
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Change details
+                </button>
               </form>
             )}
 
@@ -913,7 +1068,7 @@ export default function Auth() {
                     <input
                       id="new-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="At least 8 characters"
                       value={newPassword}
                       onChange={(e) => {
                         setNewPassword(e.target.value);

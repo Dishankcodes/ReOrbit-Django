@@ -1,4 +1,5 @@
 import { API_BASE_URL, apiRequest } from "./api";
+import { updateTokens } from "./session";
 
 /* Pictures come back as full addresses from /me/ and /profile/, but login and
    register responses give "/uploads/..". This makes both work. */
@@ -35,8 +36,16 @@ export const removeImage = (type, kind) =>
     (r) => r.data.profile,
   );
 
+/* A password change signs out every other device. This one gets fresh tokens back and keeps them,
+   so it stays signed in (other tabs in this browser receive them too). */
+function keepThisDevice(response) {
+  const t = response?.data;
+  if (t?.access && t?.refresh) updateTokens(t);
+  return response;
+}
+
 export const changeUserPassword = (payload) =>
-  apiRequest("/users/password/change/", { method: "POST", body: payload });
+  apiRequest("/users/password/change/", { method: "POST", body: payload }).then(keepThisDevice);
 
 export const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
@@ -81,4 +90,4 @@ export const saveAdminProfile = (payload) =>
   );
 
 export const changeAdminPassword = (payload) =>
-  apiRequest("/admins/password/change/", { method: "POST", body: payload });
+  apiRequest("/admins/password/change/", { method: "POST", body: payload }).then(keepThisDevice);

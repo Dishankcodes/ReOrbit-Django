@@ -12,6 +12,7 @@ from apps.accounts.google import (
     read_signup_token,
 )
 from apps.core.account_deletion import DeleteMyAccount as _DeleteMyAccount, is_past_grace, purge
+from apps.accounts import login_guard
 from apps.accounts.helpers import clean_email, is_valid_email, login_alert, send_otp_or_error, touch_login
 from apps.accounts.models import OTP_Verification
 from apps.accounts.otp import consume_otp, verify_otp
@@ -43,11 +44,15 @@ def _username_error(username):
 
 
 class CheckEmailView(APIView):
-    """POST /api/remakers/auth/check-email/  {"email"} -> {"exists": bool}"""
+    """POST /api/remakers/auth/check-email/  {"email"} -> {"exists": bool}
+
+    The sign-in page needs this to choose between "sign in" and "create account". It runs under
+    the stricter code limit (20 a minute per real visitor address), so it can't be used to test
+    long lists of emails."""
 
     authentication_classes = []
     permission_classes = []
-    throttle_classes = [AuthThrottle]
+    throttle_classes = [OTPIPThrottle]
 
     def post(self, request):
         email = clean_email(request.data.get("email"))
@@ -207,14 +212,28 @@ class LoginVerifyOTPView(APIView):
                 code="EMAIL_USED_BY_USER",
             )
 
+        try:
+            login_guard.check("remaker", email)
+        except login_guard.Locked as exc:
+            return login_guard.locked_response(exc)
+
         record, error = verify_otp(email, otp, OTP_Verification.Purpose.REMAKER_LOGIN)
         if error:
+            # each code already burns after 5 wrong tries; this also pauses the email after 5 wrong
+            # codes in a row (5 min, then 15, then 1 hour), so asking for new codes doesn't help a guesser
+            try:
+                login_guard.failed("remaker", email,
+                                   account=ReMakers.objects.filter(email__iexact=email).first(),
+                                   ip=request.META.get("REMOTE_ADDR"))
+            except login_guard.Locked as exc:
+                return login_guard.locked_response(exc)
             return fail(error)
 
         remaker = ReMakers.objects.filter(email__iexact=email).first()
         if not remaker:
             return fail("ReMaker account not found.", status=status.HTTP_404_NOT_FOUND)
 
+        login_guard.succeeded("remaker", email)
         consume_otp(record)
         touch_login(remaker)
         login_alert(remaker, request)

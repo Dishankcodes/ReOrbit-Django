@@ -3,6 +3,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
+from apps.accounts.sessions import token_is_current
 from apps.admins.models import Admins
 from apps.remakers.models import ReMakers
 from apps.users.models import Users
@@ -72,5 +73,8 @@ class ReOrbitJWTAuthentication(BaseAuthentication):
 
         if account_type == "admin" and account.status != Admins.Status.ACTIVE:
             raise AuthenticationFailed("Admin account is blocked.")
+        if not token_is_current(account, token):
+            # the password was changed or reset after this sign-in
+            raise AuthenticationFailed("Your session has ended. Please sign in again.")
 
         return ReOrbitPrincipal(account, account_type), token

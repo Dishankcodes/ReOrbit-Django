@@ -1,7 +1,10 @@
 from django.utils import timezone
 from rest_framework.views import APIView
 
+from apps.accounts import login_guard
+from apps.accounts.helpers import password_problem as shared_password_problem
 from apps.accounts.permissions import IsReOrbitAdmin
+from apps.accounts.sessions import end_all_sessions
 from apps.accounts.tokens import create_token_pair
 from apps.core.responses import fail, ok
 from apps.core.mailer import security_notice
@@ -19,9 +22,23 @@ class LoginView(APIView):
     def post(self, request):
         email = (request.data.get("email") or "").strip().lower()
         password = request.data.get("password") or ""
+        if not email or not password:
+            return fail("Enter your email and password.")
+        try:
+            login_guard.check("admin", email)
+        except login_guard.Locked as exc:
+            return login_guard.locked_response(exc)
         admin = Admins.objects.filter(email__iexact=email).first()
+        if admin is None:
+            login_guard.burn_time(password)
         if not admin or not admin.check_password(password):
-            return fail("Invalid email or password.", status=401)
+            # 5 wrong tries pause this email: 5 minutes, then 15, then 1 hour (the admin is emailed)
+            try:
+                left = login_guard.failed("admin", email, account=admin, ip=request.META.get("REMOTE_ADDR"))
+            except login_guard.Locked as exc:
+                return login_guard.locked_response(exc)
+            return fail(login_guard.WRONG + login_guard.tries_hint(left), status=401, code="INVALID_CREDENTIALS")
+        login_guard.succeeded("admin", email)
         if admin.status != Admins.Status.ACTIVE:
             return fail("Admin account is blocked.", status=403)
         now = timezone.now()
@@ -43,6 +60,7 @@ class LoginView(APIView):
 class MeView(APIView):
     """GET /api/admins/me/ : the signed-in admin, including their access level per area."""
 
+    password_change_allowed = True  # reachable with a temporary password
     permission_classes = [IsReOrbitAdmin]
     support_endpoint = True
 
@@ -87,6 +105,7 @@ class ChangePasswordView(APIView):
 
     permission_classes = [IsReOrbitAdmin]
     throttle_classes = [AuthThrottle]
+    password_change_allowed = True  # the one thing an admin with a temporary password must do
 
     def post(self, request):
         admin = request.user.account
@@ -103,18 +122,24 @@ class ChangePasswordView(APIView):
                 "Choose a password different from the current one.",
                 errors={"new_password": ["Must differ from the current password."]},
             )
-        if (msg := password_problem(new)):
+        if (msg := password_problem(new, admin)):
             return fail(msg, errors={"new_password": [msg]})
         admin.set_password(new)
-        admin.save(update_fields=["password", "updated_at"])
+        admin.must_change_password = False
+        admin.save(update_fields=["password", "must_change_password", "updated_at"])
+        # other browsers are signed out; this one gets fresh tokens and stays in
+        tokens = end_all_sessions(admin, keep="admin")
         security_notice(admin, "Your admin password was changed")
-        return ok(message="Password updated successfully. We emailed you a confirmation.")
+        return ok(tokens, "Password updated. Other devices were signed out and we emailed you a confirmation.")
 
 
-def password_problem(pw):
+def password_problem(pw, admin=None):
+    """Admins: the member rules (8+ characters, not common, not like the email or name) plus at
+    least one letter and one number."""
+    pw = pw or ""
     if len(pw) < 8 or not any(c.isalpha() for c in pw) or not any(c.isdigit() for c in pw):
         return "Use at least 8 characters with letters and a number."
-    return ""
+    return shared_password_problem(pw, admin)
 
 
 class ForgotPasswordRequestOTP(APIView):
@@ -165,7 +190,7 @@ class ForgotPasswordReset(APIView):
         confirm = request.data.get("confirm_password")
         if not email or not otp:
             return fail("Enter your email and the code we sent.")
-        if (msg := password_problem(new)):
+        if (msg := password_problem(new, Admins(email=email))):
             return fail(msg, errors={"new_password": [msg]})
         if confirm is not None and confirm != new:
             return fail("The passwords don't match.", errors={"confirm_password": ["The passwords don't match."]})
@@ -177,8 +202,11 @@ class ForgotPasswordReset(APIView):
             if admin is None:
                 return fail("This admin account can't be reset.", status=404)
             admin.set_password(new)
-            admin.save(update_fields=["password", "updated_at"])
+            admin.must_change_password = False
+            admin.save(update_fields=["password", "must_change_password", "updated_at"])
             consume_otp(record)
+        end_all_sessions(admin)  # every browser signed in before is signed out
+        login_guard.clear("admin", admin.email)  # and a sign-in pause is lifted
         security_notice(admin, "Your admin password was reset")
         return ok(message="Password reset. Sign in with your new password.")
 
@@ -211,3 +239,55 @@ class NotificationPrefsView(APIView):
         admin.notification_preferences = {"modules": clean, "email": bool(request.data.get("email", True))}
         admin.save(update_fields=["notification_preferences", "updated_at"])
         return ok(self._payload(admin), message="Notification preferences saved.")
+
+
+class LoginLocksView(APIView):
+    """GET /api/admins/security/locks/ : emails whose sign-in is paused after 5 wrong attempts.
+    DELETE /api/admins/security/locks/<id>/ : lift a pause (the person can sign in again at once).
+
+    Member and ReMaker pauses need the Users / ReMakers area; admin pauses only the super admin."""
+
+    permission_classes = [IsReOrbitAdmin]
+
+    def _visible(self, admin):
+        from apps.accounts.models import LoginGuard
+
+        roles = []
+        if admin.has_module("users", "view"):
+            roles.append(LoginGuard.Role.USER)
+        if admin.has_module("remakers", "view"):
+            roles.append(LoginGuard.Role.REMAKER)
+        if admin.permission_level == Admins.PermissionLevel.SUPER_ADMIN:
+            roles.append(LoginGuard.Role.ADMIN)
+        return LoginGuard.objects.filter(role__in=roles)
+
+    def get(self, request):
+        now = timezone.now()
+        rows = self._visible(request.user.account).filter(locked_until__gt=now).order_by("-locked_until")[:200]
+        return ok({"locks": [
+            {
+                "id": r.pk,
+                "role": r.role,
+                "email": r.email,
+                "locked_until": r.locked_until,
+                "seconds_left": max(0, int((r.locked_until - now).total_seconds())),
+                "times_locked": r.locks,
+                "last_ip": r.last_ip,
+            }
+            for r in rows
+        ]})
+
+    def delete(self, request, pk):
+        from apps.core.services import audit
+
+        admin = request.user.account
+        row = self._visible(admin).filter(pk=pk).first()
+        if row is None:
+            return fail("Not found.", status=404)
+        needed = {"user": "users", "remaker": "remakers"}.get(row.role)
+        if needed and not admin.has_module(needed, "edit"):
+            return fail("You need edit access to this area to lift a pause.", status=403)
+        audit(admin, "security.unlock_sign_in", "account", f"{row.role}:{row.email}",
+              ip=request.META.get("REMOTE_ADDR"))
+        row.delete()
+        return ok(message=f"{row.email} can sign in again.")

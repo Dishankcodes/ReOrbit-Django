@@ -21,6 +21,7 @@ class AdminSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "activated_at",
+            "must_change_password",
         ]
         read_only_fields = fields
 

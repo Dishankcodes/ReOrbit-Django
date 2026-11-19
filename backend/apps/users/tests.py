@@ -6,12 +6,19 @@ from apps.core.testing import STRONG_PASSWORD, APIBase
 from apps.users.models import User_Profile, Users
 
 
+@override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
 class UserRegisterTests(APIBase):
+    """Sign-up is two steps: details -> emailed code -> account."""
+
+    def _sign_up(self, full_name="Asha Rao", email="Asha@Example.com", password=STRONG_PASSWORD):
+        r = self.post("/api/users/auth/register/request-otp/",
+                      {"full_name": full_name, "email": email, "password": password})
+        self.assertEqual(r.status_code, 200, r.data)
+        return self.post("/api/users/auth/register/",
+                         {"full_name": full_name, "email": email, "password": password, "otp": self.last_otp()})
+
     def test_register_success(self):
-        r = self.post(
-            "/api/users/auth/register/",
-            {"full_name": "Asha Rao", "email": "Asha@Example.com", "password": STRONG_PASSWORD},
-        )
+        r = self._sign_up()
         self.assertEqual(r.status_code, 201)
         self.assertEnvelope(r)
         data = r.data["data"]
@@ -22,28 +29,39 @@ class UserRegisterTests(APIBase):
         self.assertNotIn("password", data["user"])
         user = Users.objects.get()
         self.assertEqual(user.email, "asha@example.com")  # stored lower-case
+        self.assertIsNotNone(user.email_verified_at)  # the code proved the email
         self.assertTrue(User_Profile.objects.filter(user=user).exists())
         self.assertTrue(user.password.startswith(("pbkdf2_", "argon2", "bcrypt", "scrypt")))
 
-    def test_any_non_empty_password_is_accepted(self):
-        r = self.post(
-            "/api/users/auth/register/",
-            {"full_name": "Asha", "email": "a@example.com", "password": "123"},
-        )
-        self.assertEqual(r.status_code, 201)
+    def test_no_account_without_the_emailed_code(self):
+        body = {"full_name": "Asha", "email": "a@example.com", "password": STRONG_PASSWORD}
+        r = self.post("/api/users/auth/register/", body)
+        self.assertEqual((r.status_code, r.data["code"]), (400, "OTP_REQUIRED"))
+        self.post("/api/users/auth/register/request-otp/", body)
+        right = self.last_otp()
+        r = self.post("/api/users/auth/register/", dict(body, otp="000000" if right != "000000" else "111111"))
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(Users.objects.exists())
+
+    def test_weak_passwords_are_refused(self):
+        for weak in ("123", "12345678", "password", "a@example.com"):
+            r = self.post("/api/users/auth/register/request-otp/",
+                          {"full_name": "Asha", "email": "a@example.com", "password": weak})
+            self.assertEqual((r.status_code, r.data.get("code")), (400, "WEAK_PASSWORD"), weak)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_validation(self):
         base = {"full_name": "Asha", "email": "a@example.com", "password": STRONG_PASSWORD}
         for key in ("full_name", "email", "password"):
             payload = {k: v for k, v in base.items() if k != key}
-            self.assertEqual(self.post("/api/users/auth/register/", payload).status_code, 400, key)
+            self.assertEqual(self.post("/api/users/auth/register/request-otp/", payload).status_code, 400, key)
         bad = dict(base, email="not-an-email")
-        self.assertEqual(self.post("/api/users/auth/register/", bad).status_code, 400)
+        self.assertEqual(self.post("/api/users/auth/register/request-otp/", bad).status_code, 400)
 
     def test_duplicate_email_any_case_is_409(self):
         self.make_user(email="dup@example.com")
         r = self.post(
-            "/api/users/auth/register/",
+            "/api/users/auth/register/request-otp/",
             {"full_name": "Dup", "email": "DUP@example.com", "password": STRONG_PASSWORD},
         )
         self.assertEqual(r.status_code, 409)
@@ -53,8 +71,8 @@ class EmailUniqueAcrossRolesTests(APIBase):
     def test_user_cannot_register_with_a_remaker_email(self):
         self.make_remaker(email="shared@example.com")
         r = self.post(
-            "/api/users/auth/register/",
-            {"full_name": "A", "email": "shared@example.com", "password": "x"},
+            "/api/users/auth/register/request-otp/",
+            {"full_name": "A", "email": "shared@example.com", "password": STRONG_PASSWORD},
         )
         self.assertEqual(r.status_code, 409)
         self.assertEqual(r.data["code"], "EMAIL_USED_BY_REMAKER")
@@ -77,12 +95,53 @@ class UserLoginTests(APIBase):
         self.assertIn("access", r.data["data"])
         self.assertTrue(Users.objects.get().last_login_at)
 
-    def test_wrong_password_and_unknown_email(self):
+    def test_wrong_password_and_unknown_email_get_the_same_answer(self):
         self.make_user(email="u@example.com")
+        wrong = self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"})
+        unknown = self.post("/api/users/auth/login/", {"email": "x@example.com", "password": "nope"})
+        for r in (wrong, unknown):
+            self.assertEqual((r.status_code, r.data["code"]), (401, "INVALID_CREDENTIALS"))
+        self.assertEqual(wrong.data["message"], unknown.data["message"])
+
+    def test_five_wrong_passwords_pause_sign_in(self):
+        self.make_user(email="u@example.com")
+        for _ in range(4):
+            self.assertEqual(self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"}).status_code, 401)
         r = self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"})
-        self.assertEqual(r.status_code, 401)
-        r = self.post("/api/users/auth/login/", {"email": "x@example.com", "password": "nope"})
-        self.assertEqual(r.status_code, 404)
+        self.assertEqual((r.status_code, r.data["code"]), (429, "LOGIN_LOCKED"))
+        self.assertTrue(250 <= r.data["retry_after"] <= 300)
+        # even the right password waits until the pause is over
+        r = self.post("/api/users/auth/login/", {"email": "u@example.com", "password": STRONG_PASSWORD})
+        self.assertEqual(r.status_code, 429)
+        self.assertEqual(len(mail.outbox), 1)  # the owner is told
+        self.assertIn("paused", mail.outbox[0].subject)
+
+    def test_pause_grows_then_correct_password_clears_it(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.accounts.models import LoginGuard
+
+        self.make_user(email="u@example.com")
+        for _ in range(5):
+            self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"})
+        g = LoginGuard.objects.get(role="user", email="u@example.com")
+        g.locked_until = timezone.now() - timedelta(seconds=1)  # the first 5 minutes have passed
+        g.save()
+        for _ in range(5):
+            r = self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"})
+        self.assertTrue(14 * 60 <= r.data["retry_after"] <= 15 * 60)  # second pause: 15 minutes
+        LoginGuard.objects.filter(pk=g.pk).update(locked_until=timezone.now() - timedelta(seconds=1))
+        r = self.post("/api/users/auth/login/", {"email": "u@example.com", "password": STRONG_PASSWORD})
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(LoginGuard.objects.exists())
+
+    def test_an_unknown_email_is_paused_the_same_way(self):
+        for _ in range(5):
+            r = self.post("/api/users/auth/login/", {"email": "ghost@example.com", "password": "nope"})
+        self.assertEqual(r.status_code, 429)
+        self.assertEqual(len(mail.outbox), 0)  # nobody to tell
 
     def test_google_account_without_password_cannot_use_password_login(self):
         user = Users(full_name="G", email="g@example.com", auth_provider="google", google_id="g-1")
@@ -131,9 +190,11 @@ class ForgotPasswordTests(APIBase):
 
     def test_unknown_email_and_bad_code(self):
         r = self.post("/api/users/auth/forgot-password/request-otp/", {"email": "none@example.com"})
-        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.status_code, 200)  # the same answer as for a real account
+        self.assertEqual(len(mail.outbox), 0)
         self.make_user(email="u@example.com")
-        self.post("/api/users/auth/forgot-password/request-otp/", {"email": "u@example.com"})
+        known = self.post("/api/users/auth/forgot-password/request-otp/", {"email": "u@example.com"})
+        self.assertEqual(known.data["message"], r.data["message"].replace("none@example.com", "u@example.com"))
         right = self.last_otp()
         wrong = "000000" if right != "000000" else "111111"
         r = self.post(
@@ -144,8 +205,31 @@ class ForgotPasswordTests(APIBase):
     def test_blocked_user_cannot_request_reset(self):
         self.make_user(email="b@example.com", status="Blocked")
         r = self.post("/api/users/auth/forgot-password/request-otp/", {"email": "b@example.com"})
-        self.assertEqual(r.status_code, 403)
-        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(r.status_code, 200)  # looks the same from outside...
+        self.assertEqual(len(mail.outbox), 0)  # ...but no code is sent
+
+    def test_reset_signs_out_everywhere_and_lifts_a_pause(self):
+        from apps.accounts.models import LoginGuard
+
+        user = self.make_user(email="u@example.com")
+        from apps.accounts.tokens import create_token_pair
+
+        old = create_token_pair("user", user.pk)
+        for _ in range(5):
+            self.post("/api/users/auth/login/", {"email": "u@example.com", "password": "nope"})
+        self.assertTrue(LoginGuard.objects.exists())
+        mail.outbox.clear()
+        token = self._reset_token()
+        weak = self.post("/api/users/auth/forgot-password/reset/", {"reset_token": token, "new_password": "12345678"})
+        self.assertEqual(weak.status_code, 400)
+        r = self.post("/api/users/auth/forgot-password/reset/", {"reset_token": token, "new_password": "Brand-New-4821!"})
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse(LoginGuard.objects.exists())
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + old["access"])
+        self.assertEqual(self.client.get("/api/users/me/").status_code, 401)
+        self.client.credentials()
+        r = self.post("/api/auth/token/refresh/", {"refresh": old["refresh"]})
+        self.assertEqual(r.status_code, 401)
 
     @override_settings(OTP_RESEND_COOLDOWN_SECONDS=60)
     def test_second_request_inside_cooldown_is_429(self):

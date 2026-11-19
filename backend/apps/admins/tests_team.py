@@ -77,6 +77,7 @@ class TeamTests(APIBase):
             as_=self.boss,
         )
         self.assertEqual(r.status_code, 200, r.data)
+        Admins.objects.filter(pk=admin.pk).update(must_change_password=False)  # chose their own password
         self.assertEqual(self.get("/api/users/admin/", as_=admin).status_code, 200)
         self.assertEqual(self.get("/api/remakers/admin/", as_=admin).status_code, 403)
         # a partial patch leaves the rest alone
@@ -84,6 +85,28 @@ class TeamTests(APIBase):
         admin.refresh_from_db()
         self.assertEqual(admin.note, "Night")
         self.assertEqual(admin.modules["users"], "view")
+
+    def test_temporary_password_must_be_replaced_first(self):
+        from apps.core.testing import STRONG_PASSWORD
+
+        r = self.add()
+        member, temp = r.data["data"]["member"], r.data["data"]["temporary_password"]
+        admin = Admins.objects.get(public_id=member["public_id"])
+        self.assertTrue(admin.must_change_password)
+        self.patch(f"/api/admins/team/{admin.public_id}/", {"modules": {"users": "view"}, "role_key": "custom"},
+                   as_=self.boss)
+        r = self.get("/api/users/admin/", as_=admin)
+        self.assertEqual((r.status_code, r.data.get("code")), (403, "PASSWORD_CHANGE_REQUIRED"))
+        self.assertEqual(self.get("/api/admins/me/", as_=admin).status_code, 200)  # still allowed
+        r = self.post("/api/admins/password/change/", {"current_password": temp, "new_password": STRONG_PASSWORD},
+                      as_=admin)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertIn("access", r.data["data"])  # this browser keeps working with fresh tokens
+        admin.refresh_from_db()
+        self.assertFalse(admin.must_change_password)
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + r.data["data"]["access"])
+        self.assertEqual(self.client.get("/api/users/admin/").status_code, 200)
+        self.client.credentials()
 
     def test_block_and_unblock(self):
         member = self.add().data["data"]["member"]

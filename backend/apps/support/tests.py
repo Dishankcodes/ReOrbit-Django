@@ -240,7 +240,9 @@ class PublicContactTests(SupportTicketTests):
         r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "blocked",
                                                        "subject": "Please unblock me", "message": "I think this was a mistake."}, format="json")
         self.assertEqual(r.status_code, 201, r.data)
-        t = SupportTicket.objects.get(public_id=r.data["data"]["ticket"])
+        from apps.support.models import ContactMessage
+
+        t = ContactMessage.objects.get(public_id=r.data["data"]["reference"]).ticket
         self.assertEqual((t.user_id, t.category, t.priority), (self.user.pk, "Account access", "High"))
         self.assertTrue(Notification.objects.filter(admin=boss, module="support").exists())
 
@@ -248,7 +250,8 @@ class PublicContactTests(SupportTicketTests):
         n = SupportTicket.objects.count()
         r = self.client.post("/api/support/contact/", {"name": "Visitor", "email": "visitor@example.com", "topic": "other",
                                                        "subject": "Partnership", "message": "We'd like to partner with you."}, format="json")
-        self.assertEqual((r.status_code, r.data["data"]["linked"]), (201, False))
+        self.assertEqual(r.status_code, 201)
+        self.assertNotIn("linked", r.data["data"])  # the answer never says whether the email has an account
         self.assertEqual(SupportTicket.objects.count(), n)
 
 
@@ -299,6 +302,8 @@ class ContactInboxTests(SupportTicketTests):
         from apps.support.models import ContactMessage
         r = self.client.post("/api/support/contact/", {"name": "Help User", "email": self.user.email, "topic": "purchase",
                                                        "subject": "Where is my order", "message": "My order hasn't arrived yet."}, format="json")
-        self.assertEqual((r.status_code, r.data["data"]["linked"]), (201, True))
+        self.assertEqual(r.status_code, 201)
+        self.assertNotIn("linked", r.data["data"])  # same answer as for a visitor without an account
         m = ContactMessage.objects.get(public_id=r.data["data"]["reference"])
-        self.assertEqual((m.ticket.public_id, m.status), (r.data["data"]["ticket"], "Closed"))
+        self.assertIsNotNone(m.ticket)
+        self.assertEqual(m.status, "Closed")

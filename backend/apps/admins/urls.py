@@ -8,7 +8,7 @@ from .team import (
     TeamResetPasswordView,
     TeamStatusView,
 )
-from .views import ChangePasswordView, NotificationPrefsView, ForgotPasswordRequestOTP, ForgotPasswordReset, LoginView, MeView, ProfileView
+from .views import ChangePasswordView, NotificationPrefsView, ForgotPasswordRequestOTP, ForgotPasswordReset, LoginLocksView, LoginView, MeView, ProfileView
 
 urlpatterns = [
     path("auth/login/", LoginView.as_view()),
@@ -18,6 +18,8 @@ urlpatterns = [
     path("notification-preferences/", NotificationPrefsView.as_view()),
     path("profile/", ProfileView.as_view()),
     path("password/change/", ChangePasswordView.as_view()),
+    path("security/locks/", LoginLocksView.as_view()),
+    path("security/locks/<int:pk>/", LoginLocksView.as_view()),
     path("store/", sv.ListCreateView.as_view()),
     path("store/stats/", sv.StatsView.as_view()),
     path("store/<str:public_id>/", sv.DetailView.as_view()),

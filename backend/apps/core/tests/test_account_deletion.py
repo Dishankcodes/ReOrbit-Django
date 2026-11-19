@@ -30,7 +30,7 @@ class AccountDeletionTests(APIBase):
         u = self.make_user("gone@example.com")
         self.post("/api/users/me/delete/", {"confirm": "DELETE", "password": STRONG_PASSWORD}, as_=u)
         Users.objects.filter(pk=u.pk).update(deletion_requested_at=timezone.now() - timedelta(days=31))
-        self.assertEqual(self.login("gone@example.com").status_code, 404)
+        self.assertEqual(self.login("gone@example.com").status_code, 401)  # no such account any more
         u.refresh_from_db()
         self.assertEqual(u.full_name, "Deleted member")
         self.assertTrue(u.email.endswith("@deleted.reorbit.invalid"))

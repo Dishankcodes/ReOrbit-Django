@@ -55,3 +55,20 @@ def login_alert(account, request):
 
         agent = (request.META.get("HTTP_USER_AGENT") or "")[:80]
         security_notice(account, "There was a new sign-in to your account" + (f" ({agent})" if agent else ""))
+
+
+def password_problem(password, account=None):
+    """"" when the new password is fine, otherwise one plain sentence saying what to change.
+
+    Rules (settings.AUTH_PASSWORD_VALIDATORS): at least 8 characters, not only numbers, not a
+    commonly used password, not too close to the email or name."""
+    from django.contrib.auth.password_validation import validate_password
+    from django.core.exceptions import ValidationError
+
+    if len(password or "") > 128:
+        return "Use at most 128 characters."
+    try:
+        validate_password(password or "", user=account)
+    except ValidationError as exc:
+        return " ".join(exc.messages[:2])
+    return ""

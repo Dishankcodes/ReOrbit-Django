@@ -1,7 +1,16 @@
 import { apiRequest } from "./api";
 import { clearSession, getAccessToken, getRefreshToken } from "./session";
 
-// User registration.
+// Sign-up step 1: check the details and email a 6-digit code (nothing is created yet).
+export function requestRegisterOTP(payload) {
+  return apiRequest("/users/auth/register/request-otp/", {
+    method: "POST",
+    auth: false,
+    body: payload,
+  });
+}
+
+// Sign-up step 2: { full_name, email, password, otp } creates the account and signs in.
 export function userRegister(payload) {
   return apiRequest("/users/auth/register/", {
     method: "POST",

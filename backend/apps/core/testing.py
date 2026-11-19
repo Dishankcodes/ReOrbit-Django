@@ -9,7 +9,7 @@
 import re
 
 from django.core import mail
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from rest_framework.test import APITestCase
 
 from apps.accounts.tokens import create_token_pair
@@ -23,7 +23,8 @@ STRONG_PASSWORD = "Orbit-Test-7391!"
 class APIBase(APITestCase):
     def setUp(self):
         super().setUp()
-        cache.clear()  # throttle counters live in the cache
+        cache.clear()  # page caches
+        caches["shared"].clear()  # throttle counters and login locks live in the shared cache
 
     # ---- accounts ------------------------------------------------------ #
     def make_user(self, email="user@example.com", status=Users.Status.ACTIVE, **extra):

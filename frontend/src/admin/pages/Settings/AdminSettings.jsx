@@ -344,12 +344,69 @@ function SecuritySection({ s, toast }) {
       </Card>
       <Card title="Signing in" sub="How your admin account is kept safe.">
         <ul className="st-facts">
-          <li>Every password change or reset is confirmed by email.</li>
+          <li>Every password change or reset is confirmed by email, and signs you out on your other devices.</li>
+          <li>5 wrong passwords pause sign-in for that email: 5 minutes, then 15, then 1 hour. The owner is emailed.</li>
           <li>Forgot it? Use “Forgot password” on the admin sign-in page: we email you a 6-digit code.</li>
-          <li>The super admin can issue you a temporary password from Team, and you're emailed when they do.</li>
+          <li>The super admin can issue you a temporary password from Team. You choose your own at the next sign-in.</li>
         </ul>
       </Card>
+      <PausedSignIns toast={toast} />
     </>
+  );
+}
+
+/* Emails whose sign-in is paused after 5 wrong attempts. Only shown to admins who may see them
+   (Users / ReMakers area; admin pauses for the super admin). */
+function PausedSignIns({ toast }) {
+  const [rows, setRows] = useState(null);
+  const [busy, setBusy] = useState(0);
+  const load = () =>
+    apiRequest("/admins/security/locks/")
+      .then((r) => setRows(r.data?.locks || []))
+      .catch(() => setRows(null));
+  useEffect(() => {
+    load();
+  }, []);
+  if (rows === null) return null;
+  const lift = async (row) => {
+    setBusy(row.id);
+    try {
+      const r = await apiRequest(`/admins/security/locks/${row.id}/`, { method: "DELETE" });
+      toast(r.message || "Sign-in reopened.");
+      load();
+    } catch (ex) {
+      toast(ex.message || "Couldn't lift the pause.");
+    } finally {
+      setBusy(0);
+    }
+  };
+  const ROLE = { user: "Member", remaker: "ReMaker", admin: "Admin" };
+  return (
+    <Card
+      title="Paused sign-ins"
+      sub="Emails with 5 wrong attempts in a row. The pause ends by itself; lift it early only once you know it's the real owner."
+    >
+      {rows.length === 0 ? (
+        <p className="st-empty">No sign-ins are paused right now.</p>
+      ) : (
+        <ul className="st-facts">
+          {rows.map((r) => (
+            <li key={r.id}>
+              <b>{r.email}</b> · {ROLE[r.role] || r.role} · {Math.ceil(r.seconds_left / 60)} min left
+              {r.times_locked > 1 ? ` · paused ${r.times_locked} times` : ""}{" "}
+              <button
+                type="button"
+                className="ad-btn ad-btn-ghost ad-btn-sm"
+                onClick={() => lift(r)}
+                disabled={busy === r.id}
+              >
+                {busy === r.id ? "Lifting…" : "Lift pause"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 

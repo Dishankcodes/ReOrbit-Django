@@ -1,4 +1,4 @@
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.test import override_settings
 
 from apps.core.testing import APIBase
@@ -94,7 +94,14 @@ class ReMakerAuthTests(APIBase):
         wrong = "000000" if right != "000000" else "111111"
         for _ in range(5):
             self.post("/api/remakers/auth/login/verify-otp/", {"email": "m@example.com", "otp": wrong})
-        cache.clear()  # reset the 5-per-minute rate limit so this checks the burned code itself
+        caches["shared"].clear()  # past the 5-per-minute limit, so the pause itself answers
+        r = self.post("/api/remakers/auth/login/verify-otp/", {"email": "m@example.com", "otp": right})
+        # 5 wrong codes also pause sign-in for this email (5 minutes), so a guesser can't just ask for new codes
+        self.assertEqual((r.status_code, r.data["code"]), (429, "LOGIN_LOCKED"))
+        from apps.accounts.models import LoginGuard
+
+        LoginGuard.objects.all().delete()  # pause over
+        caches["shared"].clear()  # and the 5-per-minute limit: now this checks the burned code itself
         r = self.post("/api/remakers/auth/login/verify-otp/", {"email": "m@example.com", "otp": right})
         self.assertEqual(r.status_code, 400)
 

@@ -16,7 +16,7 @@ EXTENSIONS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 
 def process_image(file, max_side=1024):
     """Return a ContentFile with a clean copy of the uploaded image."""
-    image = Image.open(file)
+    image = Image.open(file, formats=list(EXTENSIONS))  # JPEG / PNG / WebP readers only
     fmt = image.format if image.format in EXTENSIONS else "JPEG"
     image = ImageOps.exif_transpose(image)
     image.thumbnail((max_side, max_side))

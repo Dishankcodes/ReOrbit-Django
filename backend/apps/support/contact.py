@@ -21,6 +21,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
 from rest_framework.throttling import AnonRateThrottle
+
+from apps.core.throttles import _Shared
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin
@@ -43,7 +45,7 @@ TOPICS = {
 }
 
 
-class ContactThrottle(AnonRateThrottle):
+class ContactThrottle(_Shared, AnonRateThrottle):
     scope = "contact"  # its own counter: browsing the site must not use up contact attempts
     rate = "5/hour"
 
@@ -141,11 +143,10 @@ class PublicContact(APIView):
             quote=message,
             footer="Keep this reference if you contact us again. Didn't send this? You can ignore this email.",
         )
-        if ticket:
-            return created({"ticket": ticket.public_id, "reference": m.public_id, "linked": True},
-                           message="Thanks, your message is with our support team. We'll reply to your account.")
-        return created({"reference": m.public_id, "linked": False},
-                       message=f"Thanks, your message is with our team (reference {m.public_id}). We'll reply by email.")
+        # One answer whether or not the email has an account, so this form can't be used to find
+        # out who is registered.
+        return created({"reference": m.public_id},
+                       message=f"Thanks, your message is with our team (reference {m.public_id}). We'll reply soon.")
 
 
 class AdminContactMessages(APIView):

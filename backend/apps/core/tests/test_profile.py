@@ -312,10 +312,28 @@ class ChangePasswordTests(APIBase):
         self.assertEqual(self.post(url, {"current_password": "wrong", "new_password": "abc"}, as_=user).status_code, 400)
         self.assertEqual(self.post(url, {"current_password": "", "new_password": ""}, as_=user).status_code, 400)
         from apps.core.testing import STRONG_PASSWORD
-        r = self.post(url, {"current_password": STRONG_PASSWORD, "new_password": "NewPass1"}, as_=user)
+        weak = self.post(url, {"current_password": STRONG_PASSWORD, "new_password": "NewPass1"}, as_=user)
+        self.assertEqual((weak.status_code, weak.data["code"]), (400, "WEAK_PASSWORD"))  # a common password
+        r = self.post(url, {"current_password": STRONG_PASSWORD, "new_password": "Kettle-Orbit-4417"}, as_=user)
         self.assertEqual(r.status_code, 200, r.data)
-        r = self.post("/api/users/auth/login/", {"email": "user@example.com", "password": "NewPass1"})
+        self.assertIn("access", r.data["data"])  # this device stays signed in
+        r = self.post("/api/users/auth/login/", {"email": "user@example.com", "password": "Kettle-Orbit-4417"})
         self.assertEqual(r.status_code, 200)
+
+    def test_change_signs_out_other_devices(self):
+        from apps.accounts.tokens import create_token_pair
+        from apps.core.testing import STRONG_PASSWORD
+
+        user = self.make_user()
+        other_phone = create_token_pair("user", user.pk)
+        r = self.post("/api/users/password/change/",
+                      {"current_password": STRONG_PASSWORD, "new_password": "Kettle-Orbit-4417"}, as_=user)
+        this_device = r.data["data"]
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + other_phone["access"])
+        self.assertEqual(self.client.get("/api/users/me/").status_code, 401)
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + this_device["access"])
+        self.assertEqual(self.client.get("/api/users/me/").status_code, 200)
+        self.client.credentials()
 
     def test_same_password_rejected(self):
         from apps.core.testing import STRONG_PASSWORD
@@ -327,7 +345,7 @@ class ChangePasswordTests(APIBase):
         user = self.make_user("g@example.com")
         user.password = None
         user.save(update_fields=["password"])
-        r = self.post("/api/users/password/change/", {"new_password": "Abc12345"}, as_=user)
+        r = self.post("/api/users/password/change/", {"new_password": "Kettle-Orbit-4417"}, as_=user)
         self.assertEqual(r.status_code, 200, r.data)
 
     def test_remaker_cannot_use(self):

@@ -73,8 +73,27 @@ class IsReOrbitReMaker(_AccountPermission):
     account_type = "remaker"
 
 
+def must_change_password(request, view):
+    """An admin signed in with a temporary password (from the super admin) can only reach the
+    endpoints marked `password_change_allowed = True` (who am I, change password) until they choose
+    their own. Enforced here, not only in the admin app."""
+    account = getattr(request.user, "account", None)
+    return bool(getattr(account, "must_change_password", False)) and not getattr(
+        view, "password_change_allowed", False
+    )
+
+
 class IsReOrbitAdmin(_AccountPermission):
     account_type = "admin"
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        if must_change_password(request, view):
+            self.message = "Choose your own password first: you're signed in with a temporary one."
+            self.code = "PASSWORD_CHANGE_REQUIRED"
+            return False
+        return True
 
 
 class IsSuperAdmin(IsReOrbitAdmin):
@@ -100,6 +119,10 @@ def HasAdminModule(module, level=None):
         def has_permission(self, request, view):
             principal = request.user
             if not principal or getattr(principal, "account_type", None) != "admin":
+                return False
+            if must_change_password(request, view):
+                self.message = "Choose your own password first: you're signed in with a temporary one."
+                self.code = "PASSWORD_CHANGE_REQUIRED"
                 return False
             needed = level or ("view" if request.method in SAFE_METHODS else "edit")
             return principal.account.has_module(module, needed)

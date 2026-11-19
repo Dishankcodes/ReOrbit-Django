@@ -213,7 +213,17 @@ class ThrottleTests(APIBase):
                 for _ in range(5)
             ]
         self.assertIn(429, codes)
-        self.assertEqual(codes[0], 404)
+        self.assertEqual(codes[0], 401)  # "Email or password is incorrect", same as a wrong password
+
+    def test_changing_x_forwarded_for_does_not_dodge_the_limit(self):
+        rates = dict(SimpleRateThrottle.THROTTLE_RATES, auth="3/min")
+        with mock.patch.object(SimpleRateThrottle, "THROTTLE_RATES", rates):
+            codes = [
+                self.post("/api/users/auth/login/", {"email": f"n{i}@example.com", "password": "x"},
+                          HTTP_X_FORWARDED_FOR=f"10.0.0.{i}").status_code
+                for i in range(6)
+            ]
+        self.assertIn(429, codes)
 
 
 @override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
@@ -274,3 +284,76 @@ class OTPRateLimitTests(APIBase):
 
         self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp_send"], "5/min")
         self.assertEqual(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp_verify"], "5/min")
+
+
+class RealClientIPTests(APIBase):
+    """apps/core/client_ip.py: the visitor's address can't be faked with X-Forwarded-For."""
+
+    def _ip(self, **meta):
+        from django.test import RequestFactory
+
+        from apps.core.client_ip import RealClientIPMiddleware
+
+        seen = {}
+        mw = RealClientIPMiddleware(lambda req: seen.setdefault("ip", req.META["REMOTE_ADDR"]))
+        mw(RequestFactory().get("/", **meta))
+        return seen["ip"]
+
+    def test_local_development_uses_the_socket_address(self):
+        self.assertEqual(self._ip(REMOTE_ADDR="127.0.0.1", HTTP_X_FORWARDED_FOR="6.6.6.6"), "127.0.0.1")
+
+    @override_settings(TRUSTED_IP_HEADERS=["HTTP_CF_CONNECTING_IP"], TRUSTED_PROXY_COUNT=2)
+    def test_production_trusts_the_edge_header_then_counts_from_the_right(self):
+        self.assertEqual(self._ip(REMOTE_ADDR="10.0.0.9", HTTP_CF_CONNECTING_IP="203.0.113.7",
+                                  HTTP_X_FORWARDED_FOR="6.6.6.6, 203.0.113.7, 172.68.1.1"), "203.0.113.7")
+        # no edge header: "<faked>, <real visitor>, <cloudflare>" -> the real visitor, never the faked one
+        self.assertEqual(self._ip(REMOTE_ADDR="10.0.0.9", HTTP_X_FORWARDED_FOR="6.6.6.6, 198.51.100.4, 172.68.1.1"),
+                         "198.51.100.4")
+        # rubbish in the header is ignored
+        self.assertEqual(self._ip(REMOTE_ADDR="10.0.0.9", HTTP_CF_CONNECTING_IP="<script>"), "10.0.0.9")
+
+
+class AdminLoginLockTests(APIBase):
+    def test_admin_pause_and_super_admin_can_lift_it(self):
+        from apps.accounts.models import LoginGuard
+        from apps.core.testing import STRONG_PASSWORD
+
+        admin = self.make_admin(email="ops@example.com")
+        boss = self.make_admin(email="boss@example.com", permission_level="Super_Admin")
+        for _ in range(5):
+            r = self.post("/api/admins/auth/login/", {"email": "ops@example.com", "password": "nope"})
+        self.assertEqual((r.status_code, r.data["code"]), (429, "LOGIN_LOCKED"))
+        self.assertEqual(self.post("/api/admins/auth/login/",
+                                   {"email": "ops@example.com", "password": STRONG_PASSWORD}).status_code, 429)
+        # an ordinary admin doesn't see admin pauses; the super admin does
+        self.assertEqual(self.get("/api/admins/security/locks/", as_=admin).data["data"]["locks"], [])
+        locks = self.get("/api/admins/security/locks/", as_=boss).data["data"]["locks"]
+        self.assertEqual([x["email"] for x in locks], ["ops@example.com"])
+        self.assertEqual(self.delete(f"/api/admins/security/locks/{locks[0]['id']}/", as_=boss).status_code, 200)
+        self.assertFalse(LoginGuard.objects.exists())
+        self.assertEqual(self.post("/api/admins/auth/login/",
+                                   {"email": "ops@example.com", "password": STRONG_PASSWORD}).status_code, 200)
+
+
+class ImageFormatTests(APIBase):
+    def _upload(self, fmt):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        from apps.core.validators import validate_image
+
+        buf = io.BytesIO()
+        Image.new("RGB", (20, 20), "green").save(buf, format=fmt)
+        f = SimpleUploadedFile(f"photo.{fmt.lower()}", buf.getvalue())
+        validate_image(f)
+
+    def test_jpg_png_webp_are_accepted_and_other_formats_never_parsed(self):
+        from django.core.exceptions import ValidationError
+
+        for fmt in ("JPEG", "PNG", "WEBP"):
+            self._upload(fmt)  # no error
+        for fmt in ("TIFF", "BMP", "GIF"):
+            with self.assertRaises(ValidationError, msg=fmt):
+                self._upload(fmt)

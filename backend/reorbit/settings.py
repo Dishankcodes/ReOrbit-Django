@@ -118,7 +118,9 @@ INSTALLED_APPS = [
 
 
 MIDDLEWARE = [
-    # first, so it times the whole request (Server-Timing header + "SLOW ..." log lines)
+    # first of all: REMOTE_ADDR becomes the visitor's real address (rate limits, audit logs)
+    "apps.core.client_ip.RealClientIPMiddleware",
+    # then time the whole request (Server-Timing header + "SLOW ..." log lines)
     "apps.core.timing.RequestTimingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -231,11 +233,18 @@ else:
 
 
 
-# PASSWORD VALIDATION
-# Preserved from your existing configuration.
-
-
-AUTH_PASSWORD_VALIDATORS = []
+# PASSWORD RULES
+# Checked whenever a password is set or changed (sign-up, change, reset, new admin). Existing
+# passwords keep working. See apps/accounts/helpers.py: password_problem().
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("email", "full_name")},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 
 
@@ -354,6 +363,10 @@ REST_FRAMEWORK = {
 
     "PAGE_SIZE": 20,
 
+    # 0 = DRF reads REMOTE_ADDR (already the real visitor, see apps/core/client_ip.py) and never
+    # trusts X-Forwarded-For itself, which callers can write.
+    "NUM_PROXIES": 0,
+
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
@@ -369,6 +382,42 @@ REST_FRAMEWORK = {
     },
 }
 
+
+
+# REAL VISITOR IP + SHARED CACHE (rate limits, login locks)
+#
+# Headers set by the edge that callers can't forge (Render sits behind Cloudflare). On by default in
+# production; locally there is no proxy, so REMOTE_ADDR is used as is.
+TRUSTED_IP_HEADERS = [
+    "HTTP_" + h.strip().upper().replace("-", "_")
+    for h in env_list(
+        "TRUSTED_IP_HEADERS",
+        "CF-Connecting-IP,True-Client-IP" if DJANGO_ENV == "production" else "",
+    )
+    if h.strip()
+]
+# Fallback when no such header arrives: how many proxies append to X-Forwarded-For
+# (Render: Cloudflare + Render = 2, so the 2nd entry from the right is the visitor).
+TRUSTED_PROXY_COUNT = int(os.getenv("TRUSTED_PROXY_COUNT", "2" if DJANGO_ENV == "production" else "0"))
+
+# Two caches:
+# - "default" stays in memory: fast page caches (home page, testimonials).
+# - "shared" is a database table: rate-limit counters and login locks. Both gunicorn workers see
+#   the same counts, and a restart, deploy or free-tier sleep doesn't reset them. The sign-in, code
+#   and contact-form limits use it (apps/core/throttles.py); the general per-request limits stay in
+#   memory so ordinary pages don't pay for a database round trip. The table is created by
+#   migration core.0007_cache_table (no extra command needed).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    },
+    "shared": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "reorbit_cache",
+        "TIMEOUT": 3600,
+        "OPTIONS": {"MAX_ENTRIES": 20000, "CULL_FREQUENCY": 4},
+    },
+}
 
 
 # OTP CONFIGURATION

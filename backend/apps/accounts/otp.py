@@ -61,6 +61,17 @@ def get_email_details(purpose):
             "Reset your ReOrbit password",
             "accounts/email_templates/otp_user_forgot_password.html",
         )
+    if purpose == P.USER_REGISTER:
+        return (
+            "Verify your email for ReOrbit",
+            "accounts/email_templates/otp_user_register.html",
+        )
+    if purpose == P.ADMIN_FORGOT_PASSWORD:
+        # was missing: admin "Forgot password" failed with "Invalid OTP purpose." before any email went out
+        return (
+            "Reset your ReOrbit admin password",
+            "accounts/email_templates/otp_user_forgot_password.html",
+        )
     raise ValueError("Invalid OTP purpose.")
 
 
