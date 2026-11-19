@@ -443,3 +443,73 @@
   font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
+
+/* ---------- Reviews tab (seller, ReMaker and ReOrbit store profiles) ----------
+   Self-contained: the profile can be opened straight from a link, without the product page's CSS. */
+.sp .pd-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+.sp .pd-reviews article {
+  padding: 16px 18px;
+  border: 1px solid #dce5de;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(31, 41, 35, 0.04);
+}
+.sp .pd-reviews article > div {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+}
+.sp .pd-reviews article strong {
+  color: #1f2923;
+  font-size: 14.5px;
+}
+.sp .pd-reviews .ushp-rev-role {
+  color: #6b756d;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sp .pd-reviews .ushp-stars {
+  display: inline-flex;
+  gap: 1px;
+  color: #e0a43a;
+}
+.sp .pd-reviews time {
+  margin-left: auto;
+  color: #6b756d;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sp .pd-reviews p {
+  margin: 8px 0 10px;
+  color: #3b4a41;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.sp .pd-reviews .pd-reply {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f1f6f2;
+  font-size: 13px;
+}
+.sp .pd-none {
+  margin-top: 14px;
+  color: #6b756d;
+}
+@media (max-width: 520px) {
+  .sp .pd-reviews time {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+/* the ReOrbit store's "rate us" box above its reviews */
+.sp .ushp-rate .rro {
+  margin: 16px 0 0;
+}

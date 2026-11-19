@@ -111,6 +111,11 @@ def card(kind, o, request):
 def detail(kind, o, request):
     imgs = ImageSerializer(_images(o), many=True, context={"request": request}).data
     data = {**card(kind, o, request), "description": o.description, "images": imgs}
+    owner = o.user if kind == "user" else o.remaker if kind == "remaker" else None
+    profile = getattr(owner, "profile", None) if owner else None
+    # the seller's profile photo for the seller card (None: the page shows the default picture)
+    data["seller"]["photo"] = (request.build_absolute_uri(profile.profile_image.url)
+                               if profile and profile.profile_image else None)
     if kind == "remaker":
         data.update(materials=o.materials, dimensions=o.dimensions)
     return data
@@ -195,11 +200,11 @@ class DetailView(APIView):
         kind = PREFIX.get(public_id[:3])
         if kind == "user":
             o = get_object_or_404(
-                _user_qs().select_related("category", "user").prefetch_related("images"),
+                _user_qs().select_related("category", "user", "user__profile").prefetch_related("images"),
                 public_id=public_id)
         elif kind == "remaker":
             o = get_object_or_404(
-                _remaker_qs().select_related("category", "remaker").prefetch_related("images"),
+                _remaker_qs().select_related("category", "remaker", "remaker__profile").prefetch_related("images"),
                 public_id=public_id)
         elif kind == "admin":
             o = get_object_or_404(

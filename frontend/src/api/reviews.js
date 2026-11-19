@@ -48,11 +48,19 @@ export const publicReviewsApi = {
     apiRequest(`/reviews/public/product/${encodeURIComponent(ref)}/`, {
       auth: false,
     }).then((r) => r.data),
-  forSeller: (type, id) =>
+  forSeller: (type, id, kind = "") =>
     apiRequest(
-      `/reviews/public/seller/${type}/${encodeURIComponent(id)}/`,
+      `/reviews/public/seller/${type}/${encodeURIComponent(id)}/${kind ? `?kind=${kind}` : ""}`,
       { auth: false },
     ).then((r) => r.data),
+  forPlatform: () =>
+    apiRequest("/public/platform-reviews/", { auth: false }).then((r) => ({
+      summary: r.data.summary,
+      results: (r.data.results || []).map((t) => ({
+        id: t.id, kind: "platform", name: t.name, rating: t.rating, body: t.text, date: t.date,
+        role: t.role, image: t.image,
+      })),
+    })),
 };
 
 /* Admin › Reviews (needs the Complaints module). */

@@ -35,6 +35,7 @@ const BADGE_ICON = {
 };
 
 import { useGoBack } from "../../../shared/backNav";
+import { friendlyDateTime } from "../../../shared/friendlyDate";
 import ReportButton from "../../../shared/components/ReportButton";
 import { reviewReportFiler } from "../../../shared/hooks/usePublicReviews";
 import { formatPrice } from "../../../data/marketplaceData";
@@ -59,11 +60,16 @@ const Stars = ({ rating = 0 }) => (
   </span>
 );
 
-/* One profile layout for community sellers and ReMakers.
-   props: person, isMaker, products, reviews, portfolio, following, onFollow, chat, reportType, reportTarget, fileComplaint */
+/* One profile layout for community sellers, ReMakers and ReOrbit's own store.
+   props: person, isMaker, store, products, reviews, reviewsTop, portfolio, following, onFollow, chat,
+          reportType, reportTarget, fileComplaint
+   store: ReOrbit itself. No follow / message / report; the reviews are ratings of the platform and
+          `reviewsTop` (the viewer's own rating form) sits above them. */
 export default function ProfileShell({
   person,
   isMaker,
+  store = false,
+  reviewsTop = null,
   products,
   reviews,
   portfolio = [],
@@ -78,7 +84,13 @@ export default function ProfileShell({
   const navigate = useNavigate();
   const [openWork, setOpenWork] = useState(null); // the portfolio piece being viewed
   const { goBack, canGoBack, prevLabel } = useGoBack("/user-marketplace");
-  const tabs = isMaker
+  const tabs = store
+    ? [
+        ["listings", `Listings (${products.length})`],
+        ["reviews", `Reviews (${person.totalReviews ?? reviews.length})`],
+        ["about", "About"],
+      ]
+    : isMaker
     ? [
         ["studio", "Studio"],
         ["portfolio", `Portfolio (${portfolio.length})`],
@@ -94,7 +106,14 @@ export default function ProfileShell({
     tabs.some(([k]) => k === initialTab) ? initialTab : tabs[0][0],
   );
 
-  const stats = isMaker
+  const stats = store
+    ? [
+        [Star, person.rating, `${person.totalReviews} ratings`],
+        [Package, products.length, "listings live"],
+        [BadgeCheck, "Official", "sold by ReOrbit"],
+        [MapPin, person.city, "ships from"],
+      ]
+    : isMaker
     ? [
         [Star, person.rating, `${person.totalReviews} reviews`],
         [Package, products.length, "products live"],
@@ -143,10 +162,15 @@ export default function ProfileShell({
                   <BadgeCheck size={14} /> Verified ReMaker
                 </span>
               )}
+              {store && (
+                <span className="ushp-verified" title="ReOrbit's own store">
+                  <BadgeCheck size={14} /> Official store
+                </span>
+              )}
             </h1>
             <p>
-              <span className={`ushp-role ${isMaker ? "maker" : ""}`}>
-                {isMaker ? person.craft : "Community seller"}
+              <span className={`ushp-role ${isMaker || store ? "maker" : ""}`}>
+                {store ? "Platform · sold by ReOrbit" : isMaker ? person.craft : "Community seller"}
               </span>
               <span>
                 <MapPin size={13} /> {person.city}
@@ -167,6 +191,7 @@ export default function ProfileShell({
               </ul>
             )}
           </div>
+          {!store && (
           <div className="ushp-actions">
             {/* only ReMakers can be followed (members selling pre-loved items can't) */}
             {isMaker && onFollow && (
@@ -195,6 +220,7 @@ export default function ProfileShell({
               target={reportTarget}
             />
           </div>
+          )}
         </div>
         <dl className="ushp-stats">
           {stats.map(([Icon, value, label]) => (
@@ -228,7 +254,9 @@ export default function ProfileShell({
         <section className="ushp-about">
           <div className="ushp-about-text">
             <h2>
-              {isMaker
+              {store
+                ? "About the ReOrbit store"
+                : isMaker
                 ? "About the studio"
                 : `About ${person.name.split(" ")[0]}`}
             </h2>
@@ -242,7 +270,7 @@ export default function ProfileShell({
               <MapPin size={15} /> {person.city}
               {person.pincode ? `, ${person.pincode}` : ""}
             </li>
-            {isMaker ? (
+            {isMaker || store ? (
               <li>
                 <Package size={15} /> {products.length} product
                 {products.length === 1 ? "" : "s"} live right now
@@ -254,7 +282,7 @@ export default function ProfileShell({
             )}
             <li>
               <Star size={15} /> {person.rating} average from{" "}
-              {person.totalReviews} reviews
+              {person.totalReviews} {store ? "ratings" : "reviews"}
             </li>
           </ul>
         </section>
@@ -344,6 +372,7 @@ export default function ProfileShell({
           </div>
         ))}
 
+      {tab === "reviews" && reviewsTop}
       {tab === "reviews" && (
         <section className="pd-reviews">
           {reviews.length ? (
@@ -351,8 +380,9 @@ export default function ProfileShell({
               <article key={r.id}>
                 <div>
                   <strong>{r.name}</strong>
+                  {r.role && <small className="ushp-rev-role">{r.role}</small>}
                   <Stars rating={r.rating} />
-                  <time>{r.date}</time>
+                  <time dateTime={r.at || r.date}>{friendlyDateTime(r.at || r.date)}</time>
                 </div>
                 <p>{r.text}</p>
                 {r.reply && (
@@ -360,6 +390,7 @@ export default function ProfileShell({
                     <b>Reply:</b> {r.reply.text}
                   </p>
                 )}
+                {!store && (
                 <ReportButton
                   type="Review"
                   label="Report review"
@@ -374,10 +405,13 @@ export default function ProfileShell({
                     ownerRole: isMaker ? "ReMaker" : "User",
                   }}
                 />
+                )}
               </article>
             ))
           ) : (
-            <p className="pd-none">No reviews yet.</p>
+            <p className="pd-none">
+              {store ? "No ratings are shown here yet." : "No reviews yet."}
+            </p>
           )}
         </section>
       )}

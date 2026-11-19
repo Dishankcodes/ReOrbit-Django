@@ -38,6 +38,9 @@
 .toc-status.s-delivered { background: #e3f3e8; color: #1f6b3a; }
 .toc-status.s-shipped, .toc-status.s-packed, .toc-status.s-confirmed { background: #e6eef8; color: #2d5a94; }
 .toc-status.s-cancelled, .toc-status.s-delivery_failed, .toc-status.s-returned_to_origin { background: #fbe9e9; color: #a24545; }
+.toc-status.s-live { background: #e3f3e8; color: #1f6b3a; }
+.toc-status.s-sold, .toc-status.s-sold_out, .toc-status.s-reserved { background: #e6eef8; color: #2d5a94; }
+.toc-status.s-deleted, .toc-status.s-inactive, .toc-status.s-withdrawn { background: #fbe9e9; color: #a24545; }
 .toc-muted { margin: 0; color: #6b7a72; font-size: 13px; }
 .toc-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .toc-items li { display: flex; align-items: center; gap: 10px; min-width: 0; }

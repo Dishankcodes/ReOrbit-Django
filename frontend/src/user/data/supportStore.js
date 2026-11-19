@@ -150,6 +150,7 @@ export const TICKET_CATEGORIES = [
   "Order or delivery",
   "Payment or refund",
   "Selling or payouts",
+  "A listing I'm selling",
   "Donation pickup",
   "Account or login",
   "Orbit Points",

@@ -119,10 +119,52 @@ def _party(kind, user, remaker, admin=None):
     return {"type": kind, "name": account.full_name, "id": account.public_id}
 
 
+LISTING_PREFIXES = ("LST-", "RPR-")
+
+
+def _listing_summary(ref, request=None):
+    """A ticket about something the member is selling (a listing LST-… or a ReMaker product RPR-…):
+    what it is, its price and whether ReOrbit turned it off, flagged it or suggested a price."""
+    from apps.listings.models import Item
+    from apps.remakers.models import RemakerProduct
+
+    is_item = ref.startswith("LST-")
+    model = Item if is_item else RemakerProduct
+    obj = (model.objects.select_related("user" if is_item else "remaker")
+           .prefetch_related("images").filter(public_id=ref).first())
+    if obj is None:
+        return {"kind": "listing", "id": ref, "missing": True}
+    images = sorted(obj.images.all(), key=lambda i: (i.image_type != "Cover", i.display_order, i.pk))
+    owner = obj.user if is_item else obj.remaker
+    data = {
+        "kind": "listing",
+        "id": obj.public_id,
+        "type": "listing" if is_item else "product",
+        "title": obj.title,
+        "price": obj.listing_price if is_item else obj.price,
+        "status": obj.item_status if is_item else obj.status,
+        "image": media_url(request, images[0].image.name) if images else None,
+        "seller": {"type": "user" if is_item else "remaker", "id": owner.public_id, "name": owner.full_name},
+        "createdAt": obj.created_at,
+        "deleted": bool(getattr(obj, "deleted_at", None)),
+    }
+    if is_item:
+        data.update(
+            moderation=obj.moderation_status,
+            moderationNote=obj.moderation_note,
+            suggestion=obj.suggestion_status or "",
+            suggestedPrice=obj.suggested_price,
+        )
+    return data
+
+
 def _order_summary(order_id, viewer=None, request=None):
-    """What a ticket's order looks like, so nobody has to look it up: status, money, items, who sold it."""
+    """What a ticket's order looks like, so nobody has to look it up: status, money, items, who sold it.
+    The same field can hold a listing / product id instead (see _listing_summary)."""
     if not order_id:
         return None
+    if order_id.startswith(LISTING_PREFIXES):
+        return _listing_summary(order_id, request)
     order = (
         Order.objects.select_related(
             "buyer_user", "buyer_remaker", "buyer_admin", "seller_user", "seller_remaker", "payment"
@@ -297,9 +339,22 @@ def _attachment(request):
 
 
 def _validate_related_order(account, order_id):
+    """The ticket's reference, if it belongs to this account: an order they bought or sold, or a
+    listing (member) / product (ReMaker) of their own. None when it isn't theirs."""
     if not order_id:
         return ""
     kind = buyers.type_of(account)
+    if order_id.startswith(LISTING_PREFIXES):
+        from apps.listings.models import Item
+        from apps.remakers.models import RemakerProduct
+
+        if kind == "user" and order_id.startswith("LST-"):
+            found = Item.objects.filter(public_id=order_id, user=account).exists()
+        elif kind == "remaker" and order_id.startswith("RPR-"):
+            found = RemakerProduct.objects.filter(public_id=order_id, remaker=account).exists()
+        else:
+            found = False
+        return order_id if found else None
     query = Order.objects.filter(public_id=order_id)
     if kind == "remaker":
         query = query.filter(Q(buyer_key=buyers.key_of(account)) | Q(seller_remaker=account))
@@ -361,14 +416,16 @@ class MyTickets(APIView):
             return fail(photo_error, errors={"photos": [photo_error]})
         validated_order = _validate_related_order(request.user.account, order_id)
         if order_id and not validated_order:
-            return fail("That order does not belong to your account.", status=404)
+            what = "listing" if order_id.startswith(LISTING_PREFIXES) else "order"
+            return fail(f"That {what} does not belong to your account.", status=404)
         if validated_order:
             open_one = SupportTicket.objects.filter(**owner, order_id=validated_order).exclude(
                 status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
             ).order_by("-created_at").first()
             if open_one is not None:
+                what = "listing" if validated_order.startswith(LISTING_PREFIXES) else "order"
                 return fail(
-                    f"You already have an open ticket for this order ({open_one.public_id}). "
+                    f"You already have an open ticket for this {what} ({open_one.public_id}). "
                     "Reply there and the team will pick it up.",
                     status=409, code="ticket_exists", errors={"ticket_id": open_one.public_id},
                 )

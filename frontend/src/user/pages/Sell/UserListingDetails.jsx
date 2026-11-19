@@ -55,6 +55,14 @@ const JUST = {
   draft: "Draft saved.",
 };
 
+/* "Contact support" from this listing: the ticket opens with the topic, subject and listing filled in */
+const supportLink = (listing, what) =>
+  `/user-help/contact?${new URLSearchParams({
+    listing: listing.id,
+    category: "A listing I'm selling",
+    subject: `${what}: ${listing.title}`.slice(0, 90),
+  })}`;
+
 export default function UserListingDetails() {
   const { listingId } = useParams();
   const navigate = useNavigate();
@@ -189,7 +197,7 @@ export default function UserListingDetails() {
             <strong>ReOrbit turned this listing off</strong>
             {listing.adminDisabled.reason} Buyers can't see it until the team
             turns it back on.{" "}
-            <Link to="/user-help/contact" className="dn-link">
+            <Link to={supportLink(listing, "Turned off")} className="dn-link">
               Contact support →
             </Link>
           </div>
@@ -203,6 +211,9 @@ export default function UserListingDetails() {
             {listing.flagged.reason} It stays live, but please check it.{" "}
             <Link to={`/user-sell/${listing.id}/edit`} className="dn-link">
               Edit listing →
+            </Link>{" "}
+            <Link to={supportLink(listing, "Flagged")} className="dn-link">
+              Contact support →
             </Link>
           </div>
         </div>

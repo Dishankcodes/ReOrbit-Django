@@ -109,7 +109,8 @@ export default function AdminListingDetailLive() {
   }, [load]);
 
   const confirm = async (reason) => {
-    const { action } = pending;
+    const action = pending; // the LISTING_ACTIONS entry the button picked
+    if (!action) return;
     setPending(null);
     try {
       setP(await moderateListing(p.id, action.status, reason));

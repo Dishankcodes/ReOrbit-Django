@@ -1,28 +1,88 @@
 import { getRules } from "../../../shared/platformRules";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Clock, Mail, MessageSquare, Send } from "lucide-react";
 
 import { TICKET_CATEGORIES, createTicket } from "../../data/supportStore";
 import { useOrders } from "../../data/ordersStore";
+import { useListings, useSales } from "../../data/listingsStore";
+import TextSuggestions from "../../../shared/components/TextSuggestions";
+import { LISTING_TOPIC, TOPIC_IDEAS, TOPIC_REFS } from "../../../shared/supportTopics";
 import HelpNav from "./components/HelpNav";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
 
+const REF_GROUPS = {
+  bought: "Orders you bought",
+  sold: "Orders you sold",
+  listings: "Your listings",
+};
+
+/* "Which order or listing?" Only the kinds that fit the topic: orders you bought, orders you sold,
+   your own listings. Loads them only when this picker is on screen. */
+function ReferencePicker({ kinds, value, onPick }) {
+  const bought = useOrders();
+  const sold = useSales();
+  const listings = useListings();
+  const rows = {
+    bought: bought.map((o) => ({ id: o.id, title: o.item?.title || "Order" })),
+    sold: sold.map((o) => ({ id: o.id, title: o.title })),
+    listings: listings
+      .filter((l) => l.status !== "Draft" || value === l.id)
+      .map((l) => ({ id: l.id, title: l.title })),
+  };
+  const all = kinds.flatMap((k) => rows[k]);
+  const missing = value && !all.some((r) => r.id === value);
+  const isListing = kinds.length === 1 && kinds[0] === "listings";
+  return (
+    <label className="dn-field">
+      <span className="dn-label">
+        {isListing ? "Which listing?" : kinds.includes("listings") ? "Which order or listing?" : "Which order?"}{" "}
+        <span className="dn-hint">(optional)</span>
+      </span>
+      <select
+        className="dn-select"
+        value={value}
+        onChange={(e) => onPick(e.target.value, all.find((r) => r.id === e.target.value))}
+      >
+        <option value="">{isListing ? "Not about one listing" : "Not about a specific one"}</option>
+        {missing && <option value={value}>{value}</option>}
+        {kinds.map((k) =>
+          rows[k].length ? (
+            <optgroup key={k} label={REF_GROUPS[k]}>
+              {rows[k].map((r) => (
+                <option key={`${k}-${r.id}`} value={r.id}>
+                  {r.id} · {r.title}
+                </option>
+              ))}
+            </optgroup>
+          ) : null,
+        )}
+      </select>
+    </label>
+  );
+}
+
 export default function UserContactSupport() {
-  const orders = useOrders();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const fromOrder = params.get("order") || "";
+  /* opened from a listing ("Contact support" on a turned-off or flagged listing) */
+  const fromListing = params.get("listing") || "";
   /* a link can pre-fill the form (e.g. "Contact support" on the suspended banner) */
   const askedCategory = TICKET_CATEGORIES.includes(params.get("category")) ? params.get("category") : "";
   const [f, setF] = useState({
-    category: askedCategory || (fromOrder ? "Order or delivery" : ""),
-    orderId: fromOrder,
-    subject: (params.get("subject") || "").slice(0, 160),
-    message: (params.get("message") || "").slice(0, 4000),
+    category: askedCategory || (fromListing ? LISTING_TOPIC : fromOrder ? "Order or delivery" : ""),
+    orderId: fromListing || fromOrder,
+    subject: (params.get("subject") || "").slice(0, 90),
+    message: (params.get("message") || "").slice(0, 800),
   });
+  /* the subject was typed (or came with the link): picking an order no longer rewrites it */
+  const [ownSubject, setOwnSubject] = useState(Boolean(params.get("subject")));
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);
@@ -34,9 +94,15 @@ export default function UserContactSupport() {
     subject: f.subject.trim().length < 5,
     message: f.message.trim().length < 20,
   };
-  const aboutOrder = ["Order or delivery", "Payment or refund"].includes(
-    f.category,
-  );
+  const refKinds = TOPIC_REFS[f.category] || null;
+  const ideas = TOPIC_IDEAS[f.category] || [];
+  const pickRef = (id, row) => {
+    setF((x) => ({
+      ...x,
+      orderId: id,
+      subject: !ownSubject && row ? `${x.category}: ${row.title}`.slice(0, 90) : x.subject,
+    }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -49,7 +115,7 @@ export default function UserContactSupport() {
           subject: f.subject,
           category: f.category,
           message: f.message,
-          orderId: aboutOrder ? f.orderId : "",
+          orderId: refKinds ? f.orderId : "",
       }));
     } catch (problem) {
       // Already asked about this order: carry on in that ticket instead of starting a second one.
@@ -123,24 +189,8 @@ export default function UserContactSupport() {
             )}
           </label>
 
-          {aboutOrder && (
-            <label className="dn-field">
-              <span className="dn-label">
-                Which order? <span className="dn-hint">(optional)</span>
-              </span>
-              <select
-                className="dn-select"
-                value={f.orderId}
-                onChange={(e) => set("orderId", e.target.value)}
-              >
-                <option value="">Not about a specific order</option>
-                {orders.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.id} · {o.item.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {refKinds && (
+            <ReferencePicker kinds={refKinds} value={f.orderId} onPick={pickRef} />
           )}
 
           <label className="dn-field">
@@ -151,7 +201,10 @@ export default function UserContactSupport() {
               className={`dn-input ${touched && err.subject ? "is-error" : ""}`}
               value={f.subject}
               maxLength={90}
-              onChange={(e) => set("subject", e.target.value)}
+              onChange={(e) => {
+                setOwnSubject(true);
+                set("subject", e.target.value);
+              }}
               placeholder="A short summary"
             />
             {touched && err.subject && (
@@ -175,6 +228,13 @@ export default function UserContactSupport() {
             <span className="dn-hint" style={{ textAlign: "right" }}>
               {f.message.length}/800
             </span>
+            <TextSuggestions
+              items={ideas}
+              value={f.message}
+              max={800}
+              label="Tap to add:"
+              onChange={(v) => set("message", v)}
+            />
             {touched && err.message && (
               <span className="dn-error">
                 Please describe the issue in at least 20 characters.

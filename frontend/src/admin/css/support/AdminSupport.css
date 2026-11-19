@@ -193,8 +193,13 @@
 }
 .sp-reply-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+.sp-keyhint {
+  margin: 0;
+  font-size: 12px;
 }
 @media (max-width: 640px) {
   .sp-bubble {
@@ -202,6 +207,9 @@
   }
   .sp-reply-actions {
     width: 100%;
+  }
+  .sp-keyhint {
+    display: none;
   }
   .sp-reply-actions .ad-btn {
     flex: 1;

@@ -214,6 +214,10 @@ class PublicSellerReviews(_Public):
                     .select_related("order", "order_item", "reviewer_user", "reviewer_remaker", "reviewer_admin").prefetch_related("photos"))
         sellers = (SellerReview.objects.filter(seller_type=seller_type, status=v, **{f"seller_{seller_type}": acct})
                    .select_related("order", "reviewer_user", "reviewer_remaker", "reviewer_admin"))
+        # ?kind=seller: only reviews of the seller themself (their profile page), not of single products
+        if request.query_params.get("kind") == "seller":
+            rows = list(sellers[:50])
+            return ok({"summary": summary_of([sellers]), "results": [public_data(r, request) for r in rows]})
         rows = sorted(chain(products[:100], sellers[:100]), key=lambda r: (r.created_at, r.pk), reverse=True)[:50]
         return ok({"summary": summary_of([products, sellers]), "results": [public_data(r, request) for r in rows]})
 

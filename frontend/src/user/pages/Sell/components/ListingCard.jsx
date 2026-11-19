@@ -1,17 +1,33 @@
 import React from "react";
 import { productPath } from "../../../../shared/slug";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, Heart, Pencil, ChevronRight, ExternalLink } from "lucide-react";
+import { Eye, Heart, Pencil, ChevronRight, ExternalLink, Ban, AlertTriangle, Tag } from "lucide-react";
 import SafeImage from "../../../components/ui/SafeImage";
 import { LISTING_STATUS } from "../../../data/listingsStore";
 import { formatPrice } from "../../../../data/marketplaceData";
 import { formatDate } from "../../../utils/format";
 import { ListingBadge } from "./SellBadges";
 
+/* What ReOrbit asked of this listing, most serious first: turned off, flagged, a new price. */
+function notices(listing) {
+  const out = [];
+  if (listing.adminDisabled)
+    out.push({ key: "off", tone: "red", icon: Ban, badge: "Turned off", text: `Hidden from buyers: ${listing.adminDisabled.reason}` });
+  if (listing.flagged)
+    out.push({ key: "flag", tone: "amber", icon: AlertTriangle, badge: "Needs attention", text: `ReOrbit flagged it: ${listing.flagged.reason}` });
+  if (listing.suggestedPrice != null)
+    out.push({
+      key: "price", tone: "blue", icon: Tag, badge: "New price suggested",
+      text: `ReOrbit suggests ${formatPrice(listing.suggestedPrice)}${listing.suggestedMessage ? `: ${listing.suggestedMessage}` : ". Open to accept or decline."}`,
+    });
+  return out;
+}
+
 export default function ListingCard({ listing }) {
   const navigate = useNavigate();
   const open = () => navigate(`/user-sell/${listing.id}`);
   const editable = ["Draft", "Withdrawn", "Live"].includes(listing.status);
+  const alerts = notices(listing);
 
   return (
     <article
@@ -24,7 +40,13 @@ export default function ListingCard({ listing }) {
       <div className="usl-card-media">
         <SafeImage src={listing.images[0]} alt={listing.title} />
         <span className="usl-card-badge">
-          <ListingBadge status={listing.status} />
+          {/* a turned-off listing isn't live for buyers, so "Turned off" replaces "Live" */}
+          {!(listing.adminDisabled && listing.status === "Live") && <ListingBadge status={listing.status} />}
+          {alerts.map((a) => (
+            <span key={a.key} className={`dn-badge dn-badge--${a.tone}`}>
+              {a.badge}
+            </span>
+          ))}
         </span>
       </div>
 
@@ -33,11 +55,18 @@ export default function ListingCard({ listing }) {
           {listing.id} · {listing.category}
         </span>
         <h3>{listing.title}</h3>
-        <p className="usl-card-note">
-          {listing.adminDisabled
-            ? `Turned off by ReOrbit: ${listing.adminDisabled.reason}`
-            : LISTING_STATUS[listing.status].blurb}
-        </p>
+        {alerts.length ? (
+          <ul className="usl-card-alerts">
+            {alerts.map((a) => (
+              <li key={a.key} className={`tone-${a.tone}`}>
+                <a.icon size={14} aria-hidden="true" />
+                <span>{a.text}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="usl-card-note">{LISTING_STATUS[listing.status].blurb}</p>
+        )}
 
         <div className="usl-card-row">
           <strong>{formatPrice(listing.price)}</strong>

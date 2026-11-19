@@ -173,3 +173,40 @@
     transition: none;
   }
 }
+
+/* Shared pieces on the buying pages that the generated theme (remaker-buying-theme.css) doesn't
+   cover: the Report button and the condition tag on marketplace cards. */
+.remaker-page-content .rb-trigger {
+  border-color: #e6dcda;
+  color: #726563;
+}
+.remaker-page-content .rb-trigger:hover {
+  background: #f3ebe9;
+  color: #331618;
+}
+html body .remaker-page-content .mk-cond {
+  background: rgba(51, 22, 24, 0.88);
+}
+
+/* profile Reviews tab in ReMaker colours (UserProfileV2.css is member green) */
+.remaker-page-content .sp .pd-reviews article {
+  border-color: #e6dcda;
+}
+.remaker-page-content .sp .pd-reviews article strong {
+  color: #331618;
+}
+.remaker-page-content .sp .pd-reviews .pd-reply {
+  background: #f6f0ef;
+}
+.remaker-page-content .ushp-verified,
+.remaker-page-content .ushp-stat-ic {
+  background: #f3ebe9;
+  color: #4d2427;
+}
+html body .remaker-page-content .sp .pd-tabs button.on {
+  background: #331618;
+  color: #fff;
+}
+.remaker-page-content .rro-done-card p {
+  color: #2a1718;
+}

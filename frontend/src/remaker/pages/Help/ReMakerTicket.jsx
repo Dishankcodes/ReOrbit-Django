@@ -1,4 +1,4 @@
-import TicketOrderCard, { orderLink } from "../../../shared/components/TicketOrderCard";
+import TicketOrderCard, { isListingRef, orderLink } from "../../../shared/components/TicketOrderCard";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
@@ -238,7 +238,7 @@ function Thread({ ticket, ticketStatus }) {
               </div>
               {ticket.relatedOrder && (
                 <div>
-                  <dt>Order</dt>
+                  <dt>{isListingRef(ticket.relatedOrder) ? "Product" : "Order"}</dt>
                   <dd>
                     <Link to={orderLink("remaker", ticket.order) || `/remaker-orders/${ticket.relatedOrder}`}>
                       {ticket.relatedOrder}

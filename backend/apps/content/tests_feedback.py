@@ -26,6 +26,23 @@ class TestimonialTests(APIBase):
         self.assertEqual(mine["status"], "New")
         self.assertEqual(self.rate(self.ed).status_code, 403)
 
+    def test_reorbit_store_profile_counts_every_rating_and_lists_only_shown_ones(self):
+        self.rate(self.users[0], 5)
+        self.rate(self.users[1], 3, "Good idea, a few rough edges here and there.")
+        self.rate(self.maker, 4)
+        data = self.client.get("/api/public/platform-reviews/").data["data"]
+        self.assertEqual((data["summary"]["count"], data["summary"]["average"]), (3, 4.0))
+        self.assertEqual(data["results"], [])  # nothing shown until the team picks it
+        pid = PlatformFeedback.objects.get(user=self.users[0]).public_id
+        self.post(f"/api/content/admin/feedback/{pid}/", {"action": "show", "surface": "user"}, as_=self.ed)
+        data = self.client.get("/api/public/platform-reviews/").data["data"]
+        self.assertEqual([r["id"] for r in data["results"]], [pid])
+        self.assertIn("date", data["results"][0])
+        self.assertNotIn("author", data["results"][0])  # no emails or account ids in public
+        # a new rating counts straight away (the cache is refreshed)
+        self.rate(self.users[2], 1, "Delivery took too long for my order.")
+        self.assertEqual(self.client.get("/api/public/platform-reviews/").data["data"]["summary"]["count"], 4)
+
     def test_admin_shows_at_most_three_per_home_page(self):
         ids = []
         for u in self.users:

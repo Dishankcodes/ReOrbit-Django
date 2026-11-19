@@ -37,7 +37,8 @@ export default function UserSellerProfile() {
   useReadableAddress(rawSeller, seller ? sellerPath(sellerId, seller.name) : "");
   const [state, setState] = useState("loading"); // loading | ok | missing
   const fileComplaint = useUserComplaintFiler();
-  const { reviews, summary } = useSellerReviews("user", sellerId);
+  /* reviews of the seller themself (how the sale went), not of single products */
+  const { reviews, summary } = useSellerReviews("user", sellerId, "seller");
 
   useEffect(() => {
     let alive = true;

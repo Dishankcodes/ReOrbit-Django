@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, LifeBuoy, Mail, Package, Palette, Paperclip, Search, Send, UserCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ExternalLink, LifeBuoy, Mail, Package, Palette, Paperclip, Search, Send, Tag, UserCheck, UserRound } from "lucide-react";
 
 import {
   assignSupportTicketToMe,
@@ -19,7 +19,9 @@ import {
   useSupportTicketDetail,
   useSupportTickets,
 } from "../../../shared/supportTickets";
-import TicketOrderCard from "../../../shared/components/TicketOrderCard";
+import TicketOrderCard, { isListingRef, orderLink } from "../../../shared/components/TicketOrderCard";
+import TextSuggestions from "../../../shared/components/TextSuggestions";
+import { replyIdeasFor } from "../../../shared/supportTopics";
 import { useAccess } from "../../data/teamStore";
 import EmptyState from "../../components/ui/EmptyState";
 import useToast from "../../components/ui/useToast";
@@ -121,8 +123,12 @@ export default function AdminTicketDetails() {
         </button>
         <span className="aup-mono">{t.id}</span>
         {t.orderId && (
-          <Link className="sp-orderchip" to={t.order && !t.order.missing ? `/admin-orders/${t.orderId}` : `/admin-support?q=${t.orderId}`}>
-            <Package size={12} /> Order {t.orderId}
+          <Link
+            className="sp-orderchip"
+            to={t.order && !t.order.missing ? orderLink("admin", t.order) : `/admin-support?q=${t.orderId}`}
+          >
+            {isListingRef(t.orderId) ? <Tag size={12} /> : <Package size={12} />}{" "}
+            {isListingRef(t.orderId) ? (t.orderId.startsWith("RPR-") ? "Product" : "Listing") : "Order"} {t.orderId}
           </Link>
         )}
       </nav>
@@ -205,9 +211,23 @@ export default function AdminTicketDetails() {
                   value={text}
                   disabled={closed}
                   onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Ctrl/⌘ + Enter sends; plain Enter is a new line, so longer replies stay easy to write
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) send(e);
+                  }}
                   placeholder={closed ? "Reopen this ticket to reply" : `Write to ${requester.name || "the member"}`}
                 />
               </label>
+              {!closed && (
+                <TextSuggestions
+                  tone="admin"
+                  items={replyIdeasFor(t.category)}
+                  value={text}
+                  max={4000}
+                  label="Tap to add:"
+                  onChange={setText}
+                />
+              )}
               <div className="sp-reply-row">
                 <label className="au-select">
                   <span>Then set to</span>
@@ -221,6 +241,7 @@ export default function AdminTicketDetails() {
                   </select>
                 </label>
                 <div className="sp-reply-actions">
+                  <small className="sp-sub sp-keyhint">Ctrl + Enter to send</small>
                   <button type="submit" className="ad-btn ad-btn-primary" disabled={busy || closed}>
                     <Send size={14} /> {busy ? "Sending…" : "Send reply"}
                   </button>
@@ -329,8 +350,8 @@ export default function AdminTicketDetails() {
             </>
           ) : (
             <section className="au-panel sp-card">
-              <h3>Order</h3>
-              <p className="sp-sub">This ticket is not linked to an order.</p>
+              <h3>Order or listing</h3>
+              <p className="sp-sub">This ticket is not linked to an order or listing.</p>
             </section>
           )}
         </aside>

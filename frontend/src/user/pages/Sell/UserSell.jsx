@@ -13,6 +13,7 @@ import {
   ReceiptText,
   SearchX,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -38,7 +39,13 @@ const TABS = [
     match: (l) => ["Reserved", "Sold"].includes(l.status),
   },
   { id: "draft", label: "Drafts", match: (l) => l.status === "Draft" },
+  { id: "attention", label: "Needs attention", match: (l) => needsAttention(l) },
 ];
+
+/* turned off or flagged by ReOrbit, or waiting on a price suggestion */
+function needsAttention(l) {
+  return Boolean(l.adminDisabled || l.flagged || l.suggestedPrice != null);
+}
 
 const SORTS = {
   newest: {
@@ -90,6 +97,8 @@ export default function UserSell() {
       )
       .sort(SORTS[sort].fn);
   }, [listings, tab, query, sort]);
+
+  const attention = listings.filter(needsAttention).length;
 
   const summary = [
     { icon: Tag, label: "Live listings", value: stats.live },
@@ -173,8 +182,23 @@ export default function UserSell() {
         })}
       </section>
 
-      {stats.toShip > 0 && (
+      {(stats.toShip > 0 || attention > 0) && (
         <section className="usl-attention" aria-label="Needs your attention">
+          {attention > 0 && (
+            <button type="button" className="usl-alert review" onClick={() => {
+                setTab("attention");
+                document.querySelector(".usl-tools")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}>
+              <AlertTriangle size={18} />
+              <div>
+                <strong>
+                  {attention} {attention === 1 ? "listing needs" : "listings need"} a look
+                </strong>
+                <span>ReOrbit turned off, flagged or suggested a new price for these.</span>
+              </div>
+              <ArrowRight size={16} />
+            </button>
+          )}
           {stats.toShip > 0 && (
             <Link to="/user-sell/sales" className="usl-alert ship">
               <Truck size={18} />

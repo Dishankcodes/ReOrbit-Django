@@ -3,6 +3,8 @@
 GET  /api/content/feedback/mine/          the signed-in member's or ReMaker's own rating (or null)
 POST /api/content/feedback/               {rating 1-5, message}  create or update it (goes back to review)
 GET  /api/public/testimonials/?side=user|remaker   up to 3 shown on that Home page (no login)
+GET  /api/public/platform-reviews/        ReOrbit's own profile: the average of every rating and the
+                                          testimonials the team chose to show (no login)
 GET  /api/content/admin/feedback/         ?status=New|Shown|Hidden&q=   (Content view access)
 POST /api/content/admin/feedback/<PFB-id>/  {action: show|hide|move, surface?, direction?}  (Content edit)
 
@@ -117,15 +119,14 @@ class MyFeedback(APIView):
         kind, owner = _owner(a)
         with transaction.atomic():
             f = F.objects.select_for_update().filter(**owner).first()
-            was_shown = bool(f and f.status == F.Status.SHOWN)
             if f is None:
                 f = F(author_type=kind, **owner)
             f.rating, f.message = rating, message
             # an edited rating is checked again before it can be on the Home page
             f.status, f.surface, f.position = F.Status.NEW, "", 0
             f.save()
-        if was_shown:
-            _bump()
+        # always: the ReOrbit profile's average counts every rating (and a shown one just left the Home page)
+        _bump()
         return ok({"feedback": {"id": f.public_id, "rating": f.rating, "message": f.message, "status": f.status,
                                 "shown": False, "updated_at": f.updated_at}},
                   message="Thank you for rating ReOrbit!")
@@ -144,6 +145,33 @@ class PublicTestimonials(APIView):
                     .select_related("user__profile", "remaker__profile").order_by("position", "-pk")[:F.MAX_SHOWN])
             data = {"testimonials": [public_row(f, request) for f in rows]}
             cache.set(key, data, 300)
+        return ok(data)
+
+
+class PublicPlatformReviews(APIView):
+    """The reviews of ReOrbit itself, for the ReOrbit store profile. Every member and ReMaker rating
+    counts towards the average (one per account); only the ones the team chose to show are listed."""
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        key = f"platform_reviews:{caches['shared'].get(CACHE_VER, 0)}:{request.get_host()}"
+        data = cache.get(key)
+        if data is None:
+            from django.db.models import Count
+
+            dist = {n: 0 for n in range(1, 6)}
+            for row in F.objects.values("rating").annotate(c=Count("pk")):
+                if row["rating"] in dist:
+                    dist[row["rating"]] = row["c"]
+            count = sum(dist.values())
+            average = round(sum(n * c for n, c in dist.items()) / count, 2) if count else 0
+            rows = (F.objects.filter(status=F.Status.SHOWN)
+                    .select_related("user__profile", "remaker__profile").order_by("-updated_at", "-pk")[:12])
+            data = {"summary": {"average": average, "count": count, "distribution": dist},
+                    "results": [{**public_row(f, request), "date": f.updated_at} for f in rows]}
+            cache.set(key, data, 120)
         return ok(data)
 
 

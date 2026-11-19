@@ -232,6 +232,11 @@ function getBrowsePage(pathname) {
       title: "Product Details",
       subtitle: "Look closely, then give it a new home.",
     };
+  if (pathname.startsWith("/user-marketplace/reorbit"))
+    return {
+      title: "ReOrbit Store",
+      subtitle: "Items sold by ReOrbit itself, and ratings of ReOrbit.",
+    };
   if (pathname.startsWith("/user-marketplace/seller/"))
     return {
       title: "Seller Profile",

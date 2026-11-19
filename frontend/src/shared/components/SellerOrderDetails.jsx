@@ -402,7 +402,7 @@ export default function SellerOrderDetails({
                 ? `/admin-support?q=${o.id}`
                 : role === "remaker"
                   ? `/remaker-help/new?order=${o.id}`
-                  : `/user-help/contact?order=${o.id}`
+                  : `/user-help/contact?order=${o.id}&category=${encodeURIComponent("Selling or payouts")}`
             }
           >
             {isAdmin ? "Support tickets for this order" : "Get help with this order"}

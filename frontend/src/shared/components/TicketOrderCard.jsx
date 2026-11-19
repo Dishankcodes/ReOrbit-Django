@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Package, ExternalLink } from "lucide-react";
+import { Package, ExternalLink, Tag } from "lucide-react";
 import "./TicketOrderCard.css";
 
 /* The order a support ticket is about: status, money, items and who sold it, with a link to the
@@ -10,8 +10,20 @@ const day = (iso) =>
   iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "";
 const METHOD = { COD: "Cash on delivery", RAZORPAY: "Paid online" };
 
+/* A ticket can point at a listing (LST-…) or a ReMaker product (RPR-…) instead of an order */
+export const isListingRef = (ref) => ref?.kind === "listing" || /^(LST|RPR)-/.test(String(ref?.id || ref || ""));
+
+export function listingLink(scope, ref) {
+  const id = ref?.id || ref;
+  if (!id) return "";
+  if (scope === "admin") return `/admin-products/${id}`;
+  if (scope === "remaker") return `/remaker-products/${id}/edit`;
+  return `/user-sell/${id}`;
+}
+
 export function orderLink(scope, order) {
   if (!order?.id) return "";
+  if (isListingRef(order)) return listingLink(scope, order);
   if (scope === "admin") return `/admin-orders/${order.id}`;
   if (scope === "remaker") {
     return order.role === "seller" ? `/remaker-sales/${order.id}` : `/remaker-orders/${order.id}`;
@@ -19,8 +31,61 @@ export function orderLink(scope, order) {
   return order.role === "seller" ? `/user-sell/sales/${order.id}` : `/user-orders/${order.id}`;
 }
 
+const STATUS_LABEL = { Listed: "Live", Sold_Out: "Sold out" };
+const MODERATION = { Disabled: "Turned off by ReOrbit", Flagged: "Flagged by ReOrbit" };
+
+function TicketListingCard({ listing, scope }) {
+  const noun = listing.type === "product" ? "Product" : "Listing";
+  if (listing.missing) {
+    return (
+      <section className="toc">
+        <h3><Tag size={15} /> {noun} {listing.id}</h3>
+        <p className="toc-muted">This listing is no longer available.</p>
+      </section>
+    );
+  }
+  const to = listingLink(scope, listing);
+  const status = listing.deleted ? "Deleted" : STATUS_LABEL[listing.status] || listing.status;
+  return (
+    <section className="toc" aria-label={`${noun} ${listing.id}`}>
+      <header>
+        <h3><Tag size={15} /> {noun} {listing.id}</h3>
+        <span className={`toc-status s-${String(status).toLowerCase().replace(/\s+/g, "_")}`}>{status}</span>
+      </header>
+      <ul className="toc-items">
+        <li>
+          {listing.image ? <img src={listing.image} alt="" /> : <span className="toc-ph" aria-hidden="true" />}
+          <div>
+            <strong>{listing.title}</strong>
+            <small>{money(listing.price)}</small>
+          </div>
+        </li>
+      </ul>
+      <dl className="toc-facts">
+        {MODERATION[listing.moderation] && (
+          <div>
+            <dt>ReOrbit</dt>
+            <dd>{MODERATION[listing.moderation]}{listing.moderationNote ? `: ${listing.moderationNote}` : ""}</dd>
+          </div>
+        )}
+        {listing.suggestion === "Pending" && listing.suggestedPrice != null && (
+          <div><dt>Suggested price</dt><dd>{money(listing.suggestedPrice)} (waiting for the seller)</dd></div>
+        )}
+        {scope === "admin" && <div><dt>Seller</dt><dd>{listing.seller?.name}</dd></div>}
+        <div><dt>Listed</dt><dd>{day(listing.createdAt)}</dd></div>
+      </dl>
+      {to && (
+        <Link className="toc-open" to={to}>
+          Open {noun.toLowerCase()} <ExternalLink size={13} />
+        </Link>
+      )}
+    </section>
+  );
+}
+
 export default function TicketOrderCard({ order, scope }) {
   if (!order) return null;
+  if (isListingRef(order)) return <TicketListingCard listing={order} scope={scope} />;
   if (order.missing) {
     return (
       <section className="toc">

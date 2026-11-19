@@ -2,6 +2,7 @@ import React from "react";
 import { MessageSquareText, Star, CornerDownRight } from "lucide-react";
 import { useProductReviews } from "../hooks/usePublicReviews";
 import "./ProductReviewsCard.css";
+import { friendlyDateTime } from "../friendlyDate";
 
 const Stars = ({ value, size = 14 }) => (
   <span className="prc-stars" aria-label={`${value} out of 5`}>
@@ -65,7 +66,7 @@ export default function ProductReviewsCard({ productId, title = "Product reviews
                   <div>
                     <strong>{r.name}</strong>
                     <span>
-                      <Stars value={r.rating} size={12} /> · {r.date}
+                      <Stars value={r.rating} size={12} /> · {friendlyDateTime(r.at || r.date)}
                     </span>
                   </div>
                 </div>

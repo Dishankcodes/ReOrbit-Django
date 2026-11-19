@@ -84,7 +84,9 @@ def _prefetch_participants(queryset):
     return queryset.prefetch_related(
         Prefetch(
             "conversation__participants",
-            queryset=ConversationParticipant.objects.select_related("user", "remaker", "admin"),
+            # profiles too: every row shows the other person's photo (one query, not one per row)
+            queryset=ConversationParticipant.objects.select_related(
+                "user", "remaker", "admin", "user__profile", "remaker__profile"),
         )
     )
 
@@ -122,8 +124,20 @@ def _profile(account, kind):
         "username": getattr(account, "username", ""),
         "type": kind,
         "city": getattr(profile, "city", "") if profile else "",
-        "image": str(getattr(profile, "profile_image", "") or "") if profile else "",
+        "image": _photo_url(profile),
     }
+
+
+def _photo_url(profile):
+    """The profile photo's address (the stored file name isn't one: on Cloudinary it needs .url,
+    locally it is "/uploads/..." and the app adds the server address). "" when there is no photo."""
+    field = getattr(profile, "profile_image", None) if profile else None
+    if not field:
+        return ""
+    try:
+        return field.url
+    except Exception:  # noqa: BLE001  a missing file must not break the inbox
+        return ""
 
 
 def _support_direct_key(kind, account):

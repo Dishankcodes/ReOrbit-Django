@@ -316,3 +316,47 @@ class ContactInboxTests(SupportTicketTests):
         row = next(x for x in self.get("/api/support/admin/contact/", as_=self.agent).data["data"]["results"]
                    if x["id"] == visitor.data["data"]["reference"])
         self.assertIsNone(row["account"])
+
+
+class TicketAboutAListingTests(SupportTicketTests):
+    """A member can link a ticket to a listing of their own (not someone else's); the team and the
+    member see the listing on the ticket, with ReOrbit's flag or price suggestion."""
+
+    def setUp(self):
+        super().setUp()
+        from apps.core.models import Category
+        from apps.listings.models import Item
+        cat = Category.objects.create(name="Furniture", slug="furniture-support")
+        self.item = Item.objects.create(
+            user=self.user, category=cat, title="Old table", description="Wooden table.", condition="Fair",
+            quantity=1, listing_price=1000, pickup_preference="Platform_Pickup", item_status="Listed",
+            city="Ahmedabad", pincode="382350", moderation_status="Disabled", moderation_note="Blurry photos",
+            suggestion_status="Pending", suggested_price=899)
+
+    def ask(self, ref, as_=None):
+        return self.post("/api/support/me/", {
+            "subject": "Turned off: Old table", "category": "A listing I'm selling",
+            "message": "ReOrbit turned off my listing and I'd like to know why.", "orderId": ref,
+        }, as_=as_ or self.user)
+
+    def test_own_listing_is_linked_and_shown_to_the_team(self):
+        r = self.ask(self.item.public_id)
+        self.assertEqual(r.status_code, 201, r.data)
+        tid = r.data["data"]["ticket"]["id"]
+        mine = self.get(f"/api/support/me/{tid}/", as_=self.user).data["data"]["ticket"]
+        self.assertEqual((mine["orderId"], mine["order"]["kind"], mine["order"]["title"]),
+                         (self.item.public_id, "listing", "Old table"))
+        team = self.get(f"/api/support/admin/{tid}/", as_=self.agent).data["data"]["ticket"]["order"]
+        self.assertEqual((team["moderation"], team["moderationNote"], team["suggestion"]),
+                         ("Disabled", "Blurry photos", "Pending"))
+        self.assertEqual(team["seller"]["id"], self.user.public_id)
+        # a second open ticket about the same listing goes to the first one
+        again = self.ask(self.item.public_id)
+        self.assertEqual((again.status_code, again.data["errors"]["ticket_id"]), (409, tid))
+        self.assertIn("listing", again.data["message"])
+
+    def test_someone_elses_listing_or_a_remaker_product_id_is_refused(self):
+        r = self.ask(self.item.public_id, as_=self.other)
+        self.assertEqual(r.status_code, 404)
+        self.assertIn("listing", r.data["message"])
+        self.assertEqual(self.ask("RPR-9999").status_code, 404)  # members can't link ReMaker products

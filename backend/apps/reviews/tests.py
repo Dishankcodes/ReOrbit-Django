@@ -255,6 +255,9 @@ class ReviewFlowTests(ReviewBase):
         self.assertNotIn("reviewer", row)
         seller = self.client.get(f"/api/reviews/public/seller/user/{self.seller.public_id}/").data["data"]
         self.assertEqual(seller["summary"]["count"], 2)
+        # the seller's profile page asks for reviews of the seller only, not of the products
+        only = self.client.get(f"/api/reviews/public/seller/user/{self.seller.public_id}/?kind=seller").data["data"]
+        self.assertEqual((only["summary"]["count"], [r["kind"] for r in only["results"]]), (1, ["seller"]))
         rid = self.received(self.seller)[0]["id"]
         self.post(f"/api/reviews/admin/{rid}/hide/", {"reason": "Breaks the rules"}, as_=self.mod)
         seller = self.client.get(f"/api/reviews/public/seller/user/{self.seller.public_id}/").data["data"]

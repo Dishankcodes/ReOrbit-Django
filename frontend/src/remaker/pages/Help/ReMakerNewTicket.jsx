@@ -38,7 +38,8 @@ export default function ReMakerNewTicket() {
     askedCategory || (fromOrder ? "Orders and shipping" : fromProduct ? "Products and listings" : ""),
   );
   const [subject, setSubject] = useState((params.get("subject") || "").slice(0, 120));
-  const [related, setRelated] = useState(fromOrder);
+  /* the product it came from is linked too, so the team sees it on the ticket */
+  const [related, setRelated] = useState(fromOrder || fromProduct);
   const [priority, setPriority] = useState("Normal");
   const [description, setDescription] = useState((params.get("message") || "").slice(0, 4000));
   const [photos, setPhotos] = useState([]);
@@ -198,7 +199,7 @@ export default function ReMakerNewTicket() {
           <div className="hlp-two">
             <div className="rk-field">
               <label htmlFor="tk-order">
-                Related order <em>optional</em>
+                {fromProduct ? "Related order or product" : "Related order"} <em>optional</em>
               </label>
               <div className="rk-select">
                 <select
@@ -207,6 +208,11 @@ export default function ReMakerNewTicket() {
                   onChange={(event) => setRelated(event.target.value)}
                 >
                   <option value="">Not about one order</option>
+                  {fromProduct && (
+                    <optgroup label="Your product">
+                      <option value={fromProduct}>{fromProduct}</option>
+                    </optgroup>
+                  )}
                   <optgroup label="Orders you bought">
                     {purchases.map((order) => (
                       <option key={order.id} value={order.id}>

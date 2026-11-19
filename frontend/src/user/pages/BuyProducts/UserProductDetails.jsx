@@ -42,7 +42,9 @@ import {
 import ReportButton from "../../../shared/components/ReportButton";
 import {
   reviewReportFiler,
+  usePlatformReviews,
   useProductReviews,
+  useSellerReviews,
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
 import SafeImage from "../../components/ui/SafeImage";
@@ -50,6 +52,8 @@ import { apiRequest } from "../../../api/api";
 import MessageButton from "../../components/ui/MessageButton";
 import { sellerChat } from "../../data/messageTargets";
 
+import { DEFAULT_AVATAR } from "../../../shared/messaging/Avatar";
+import { friendlyDateTime } from "../../../shared/friendlyDate";
 import "../../css/shared/ui-base.css";
 import "../../css/marketplace-css/UserProductDetailsV2.css";
 
@@ -87,10 +91,12 @@ export default function UserProductDetails() {
   /* every photo of this product (the card list only carries the cover); click one to see it full size */
   const [photos, setPhotos] = useState([]);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [sellerPhoto, setSellerPhoto] = useState("");
   useEffect(() => {
     let active = true;
     setPhotos([]);
     setPhotoIndex(0);
+    setSellerPhoto("");
     apiRequest(`/marketplace/${encodeURIComponent(productId)}/`, {
       auth: false,
     })
@@ -98,7 +104,10 @@ export default function UserProductDetails() {
         const list = (r.data?.product?.images || [])
           .map((i) => i.url)
           .filter(Boolean);
-        if (active) setPhotos(list);
+        if (active) {
+          setPhotos(list);
+          setSellerPhoto(r.data?.product?.seller?.photo || "");
+        }
       })
       .catch(() => {});
     return () => {
@@ -117,6 +126,16 @@ export default function UserProductDetails() {
   }, [item?.id]);
 
   const { reviews, summary: reviewSummary } = useProductReviews(item?.id);
+  /* the seller card's rating: a member's seller reviews (as on their profile), everything a ReMaker
+     received (as on their studio), or ReOrbit's platform ratings for ReOrbit's own items */
+  const sellerKind = item?.sellerType;
+  const { summary: sellerSummary } = useSellerReviews(
+    sellerKind === "user" || sellerKind === "remaker" ? sellerKind : "",
+    sellerKind === "user" || sellerKind === "remaker" ? item?.sellerId : "",
+    sellerKind === "user" ? "seller" : "",
+  );
+  const { summary: platformSummary } = usePlatformReviews(sellerKind === "admin");
+  const sellerStats = sellerKind === "admin" ? platformSummary : sellerSummary;
   const related = useMemo(
     () =>
       item
@@ -176,11 +195,11 @@ export default function UserProductDetails() {
   const sellerPath = personPath(isMaker ? "remaker" : "user", item.sellerId, item.seller);
   /* Where the seller card goes: a ReMaker to their studio, a community seller to their
      profile, and ReOrbit itself to everything ReOrbit sells. */
-  const sellerHref = isStore ? "/user-marketplace?source=admin" : sellerPath;
+  const sellerHref = isStore ? "/user-marketplace/reorbit" : sellerPath;
   const sellerCta = isMaker
     ? "View ReMaker profile"
     : isStore
-      ? "See ReOrbit listings"
+      ? "View ReOrbit store"
       : "View seller profile";
   const sellerLinked = isStore || Boolean(item.sellerId);
   const SellerCard = sellerLinked ? Link : "section";
@@ -399,7 +418,19 @@ export default function UserProductDetails() {
       </section>
 
       <SellerCard {...sellerProps}>
-        <SafeImage src={item.sellerImage} alt="" />
+        <img
+          className="pd-seller-photo"
+          src={
+            item.sellerType === "admin"
+              ? "/images/brand/reorbit-globe-192.png"
+              : sellerPhoto || item.sellerImage || DEFAULT_AVATAR
+          }
+          alt=""
+          loading="lazy"
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith(DEFAULT_AVATAR)) e.currentTarget.src = DEFAULT_AVATAR;
+          }}
+        />
         <div className="pd-seller-id">
           <small>{sellerLabel}</small>
           <strong>
@@ -411,12 +442,13 @@ export default function UserProductDetails() {
           <div>
             <dt>Rating</dt>
             <dd>
-              <Star size={12} fill="currentColor" /> {item.sellerRating}
+              <Star size={12} fill="currentColor" />{" "}
+              {sellerStats.count ? Number(sellerStats.average).toFixed(1) : "New"}
             </dd>
           </div>
           <div>
             <dt>Reviews</dt>
-            <dd>{reviewSummary.count}</dd>
+            <dd>{sellerStats.count}</dd>
           </div>
           <div>
             <dt>Listed</dt>
@@ -511,7 +543,7 @@ export default function UserProductDetails() {
                 <div>
                   <strong>{r.name}</strong>
                   <Stars rating={r.rating} />
-                  <time>{r.date}</time>
+                  <time dateTime={r.at || r.date}>{friendlyDateTime(r.at || r.date)}</time>
                 </div>
                 <p>{r.text}</p>
                 {r.reply && (
