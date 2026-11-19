@@ -45,9 +45,43 @@ def public_config():
     return {"enabled": is_configured(), "key_id": settings.RAZORPAY_KEY_ID if is_configured() else ""}
 
 
+def _ensure_pkg_resources():
+    """The Razorpay SDK (1.4.x) does `import pkg_resources` only to read its own version number.
+    pkg_resources came with setuptools, and newer setuptools / Python builds no longer ship it, so
+    the import fails with ModuleNotFoundError and every online checkout failed with it. When the real
+    module is missing, this registers a tiny stand-in with the two names the SDK uses."""
+    import sys
+
+    if "pkg_resources" in sys.modules:
+        return
+    try:
+        import pkg_resources  # noqa: F401  the real one, when installed
+        return
+    except ImportError:
+        pass
+    import types
+    from importlib import metadata
+
+    shim = types.ModuleType("pkg_resources")
+
+    class DistributionNotFound(Exception):
+        pass
+
+    def require(name):
+        try:
+            return [types.SimpleNamespace(version=metadata.version(name))]
+        except metadata.PackageNotFoundError as exc:
+            raise DistributionNotFound(name) from exc
+
+    shim.DistributionNotFound = DistributionNotFound
+    shim.require = require
+    sys.modules["pkg_resources"] = shim
+
+
 def _client():
     if not is_configured():
         raise GatewayError("Online payment is not set up yet.")
+    _ensure_pkg_resources()
     import razorpay  # imported lazily so the app starts without the SDK
 
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
