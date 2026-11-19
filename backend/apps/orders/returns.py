@@ -42,7 +42,16 @@ REASONS = {
     "changed_mind": ("Changed my mind", "buyer"),
     "no_longer_needed": ("No longer needed", "buyer"),
     "size_fit": ("Size or fit is not right", "buyer"),
+    # marked "Delivered" but the parcel never came (a seller who ships themselves marks delivery)
+    "not_received": ("It never arrived", "seller"),
 }
+
+# Reasons with nothing to send back: once approved, the refund is made straight away.
+NO_ITEM_REASONS = {"not_received"}
+
+
+def needs_photo(code):
+    return REASONS.get(code, ("", ""))[1] == "seller" and code not in NO_ITEM_REASONS
 
 
 def window_open(order, now=None):
@@ -87,7 +96,7 @@ def request_return(order_pk, buyer, reason_code, details, files):
     files = list(files or [])[:MAX_PHOTOS + 1]
     if len(files) > MAX_PHOTOS:
         errs["photos"] = [f"You can add up to {MAX_PHOTOS} photos."]
-    elif REASONS[reason_code][1] == "seller" and not files:
+    elif needs_photo(reason_code) and not files:
         errs["photos"] = ["Add at least one photo of the problem."]
     for f in files[:MAX_PHOTOS]:
         try:
@@ -132,7 +141,10 @@ def seller_decide(rr_pk, approve, note="", *, actor_kind="seller", actor=None, i
         now = timezone.now()
         rr.decided_by, rr.decided_at, rr.seller_note = "seller" if actor_kind == "seller" else "admin", now, note
         o = rr.order
-        if approve:
+        if approve and rr.reason_code in NO_ITEM_REASONS:
+            rr.status = ReturnRequest.Status.APPROVED
+            event(o, "Claim accepted", "The seller agreed the parcel never arrived", "seller" if actor_kind == "seller" else "admin")
+        elif approve:
             rr.status = ReturnRequest.Status.APPROVED
             event(o, "Return approved", "Send the item back to the seller", "seller" if actor_kind == "seller" else "admin")
             who_pays = "the seller pays return shipping" if rr.fault == "seller" else "you pay return shipping"
@@ -144,6 +156,8 @@ def seller_decide(rr_pk, approve, note="", *, actor_kind="seller", actor=None, i
         rr.save()
         if actor_kind == "admin":
             audit(actor, "return.seller_decision", "return", rr.public_id, after={"approve": approve}, ip=ip)
+    if approve and rr.reason_code in NO_ITEM_REASONS:
+        return mark_received(rr.pk, actor_kind=actor_kind, actor=actor, ip=ip)  # nothing to send back: refund now
     return rr
 
 
@@ -198,7 +212,8 @@ def admin_decide(rr_pk, approve, fault, note, admin, ip=None):
             if fault:
                 rr.fault = fault
             event(o, "Return approved by ReOrbit", note, "admin")
-            _notify_buyer(o, "Return approved", f"{o.public_id}: ReOrbit approved your return. Send the item back.")
+            if rr.reason_code not in NO_ITEM_REASONS:
+                _notify_buyer(o, "Return approved", f"{o.public_id}: ReOrbit approved your return. Send the item back.")
             _notify_seller(o, "Return approved by ReOrbit", f"{o.public_id}: {note}")
         else:
             rr.status, rr.resolved_at = ReturnRequest.Status.CLOSED, now
@@ -207,6 +222,8 @@ def admin_decide(rr_pk, approve, fault, note, admin, ip=None):
             _notify_seller(o, "Return closed by ReOrbit", f"{o.public_id}: {note}")
         rr.save()
         audit(admin, "return.admin_decision", "return", rr.public_id, after={"approve": approve, "fault": rr.fault}, reason=note, ip=ip)
+    if approve and rr.reason_code in NO_ITEM_REASONS:
+        return mark_received(rr.pk, actor_kind="admin", actor=admin, ip=ip)  # nothing to send back: refund now
     return rr
 
 
@@ -235,7 +252,8 @@ def mark_received(rr_pk, *, actor_kind, actor=None, ip=None):
         rr.status, rr.received_at, rr.resolved_at, rr.refund_amount = (
             ReturnRequest.Status.REFUNDED, timezone.now(), timezone.now(), amount)
         rr.save(update_fields=["status", "received_at", "resolved_at", "refund_amount", "updated_at"])
-        event(o, "Return received", f"Refund of ₹{amount:,}", actor_kind)
+        event(o, "Refund for a parcel that never arrived" if rr.reason_code in NO_ITEM_REASONS else "Return received",
+              f"Refund of ₹{amount:,}", actor_kind)
         refund = make_refund(o.payment, amount, "return", order=o, note=f"{rr.public_id}: {REASONS[rr.reason_code][0]}", send=False)
         wallet.reverse_earning(o, earning_taken_back(o, rr.fault), note=f"{o.public_id} returned ({rr.public_id})")
         from apps.rewards import services as rewards  # local import: rewards reads orders lazily too

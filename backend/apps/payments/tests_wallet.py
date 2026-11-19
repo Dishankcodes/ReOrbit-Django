@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest import mock
 
 from django.core.management import call_command
+from django.test import override_settings
 from django.utils import timezone
 
 from apps.core.models import Category, PlatformSettings
@@ -16,6 +17,7 @@ ADDR = {"label": "Home", "name": "Asha Shah", "phone": "9876543210", "line1": "1
 BANK = {"method": "bank", "holder_name": "Maya Patel", "bank_name": "SBI", "account_number": "123456789012", "ifsc": "SBIN0001234"}
 
 
+@override_settings(OTP_RESEND_COOLDOWN_SECONDS=0)
 class WalletBase(APIBase):
     def setUp(self):
         super().setUp()
@@ -53,9 +55,20 @@ class WalletBase(APIBase):
     def age(self, days=8):
         WalletEntry.objects.filter(kind="Earning").update(available_at=timezone.now() - timedelta(days=days - 7))
 
-    def save_account(self):
-        r = self.client.put("/api/payments/account/", BANK, format="json", **self._headers(self.maker))
+    def put_account(self, body, who=None):
+        """Changing payout details: ask for the emailed code, then save with it."""
+        who = who or self.maker
+        self.assertEqual(self.post("/api/payments/account/code/", {}, as_=who).status_code, 200)
+        return self.client.put("/api/payments/account/", {**body, "code": self.last_otp()}, format="json",
+                               **self._headers(who))
+
+    def save_account(self, settle=True):
+        r = self.put_account(BANK)
         self.assertEqual(r.status_code, 200, r.data)
+        if settle:  # the 24-hour pause after a change has passed
+            from .models import PayoutAccount
+
+            PayoutAccount.objects.update(changed_at=timezone.now() - timedelta(hours=25))
         return r
 
 
@@ -91,16 +104,36 @@ class EarningTests(WalletBase):
 
 class AccountTests(WalletBase):
     def test_validation_and_masking(self):
-        bad = self.client.put("/api/payments/account/", {**BANK, "ifsc": "xx", "account_number": "12"}, format="json", **self._headers(self.maker))
+        bad = self.put_account({**BANK, "ifsc": "xx", "account_number": "12"})
         self.assertEqual(bad.status_code, 400)
         self.assertIn("ifsc", bad.data["errors"])
         self.assertIn("account_number", bad.data["errors"])
         ok = self.save_account().data["data"]["account"]
         self.assertEqual(ok["account_number"], "••••••••9012")
-        upi = self.client.put("/api/payments/account/", {"method": "upi", "holder_name": "Maya", "upi_id": "maya@oksbi"}, format="json", **self._headers(self.maker))
+        upi = self.put_account({"method": "upi", "holder_name": "Maya", "upi_id": "maya@oksbi"})
         self.assertEqual(upi.status_code, 200)
         self.assertEqual(upi.data["data"]["account"]["upi_id"], "ma••@oksbi")
-        self.assertEqual(self.client.put("/api/payments/account/", {"method": "upi", "holder_name": "Maya", "upi_id": "nope"}, format="json", **self._headers(self.maker)).status_code, 400)
+        self.assertEqual(self.put_account({"method": "upi", "holder_name": "Maya", "upi_id": "nope"}).status_code, 400)
+
+    def test_change_needs_the_emailed_code_and_pauses_payouts(self):
+        from django.core import mail
+
+        r = self.client.put("/api/payments/account/", BANK, format="json", **self._headers(self.maker))
+        self.assertEqual((r.status_code, r.data["code"]), (400, "CODE_REQUIRED"))
+        self.post("/api/payments/account/code/", {}, as_=self.maker)
+        right = self.last_otp()
+        r = self.client.put("/api/payments/account/", {**BANK, "code": "000000" if right != "000000" else "111111"},
+                            format="json", **self._headers(self.maker))
+        self.assertEqual(r.status_code, 400)
+        mail.outbox.clear()
+        r = self.client.put("/api/payments/account/", {**BANK, "code": right}, format="json", **self._headers(self.maker))
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertIsNotNone(r.data["data"]["account"]["payouts_open_at"])
+        self.assertTrue(any("payout details" in m.subject.lower() for m in mail.outbox))  # the owner is emailed
+        self.deliver()
+        self.age()
+        r = self.post("/api/payments/payouts/request/", {}, as_=self.maker)
+        self.assertEqual((r.status_code, r.data["code"]), (409, "ACCOUNT_RECENTLY_CHANGED"))
 
     def test_login_required(self):
         self.assertEqual(self.client.get("/api/payments/wallet/").status_code, 401)

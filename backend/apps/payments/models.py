@@ -112,6 +112,8 @@ class PayoutAccount(TimeStampedModel):
     account_last4 = models.CharField(max_length=4, blank=True)
     upi_enc = models.TextField(blank=True)
     upi_hint = models.CharField(max_length=100, blank=True)
+    # when the details were last saved: no payout for 24 hours after a change (wallet.ACCOUNT_COOLDOWN)
+    changed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "payout_accounts"

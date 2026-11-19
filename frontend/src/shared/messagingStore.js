@@ -80,7 +80,15 @@ export const QUICK_REPLIES = {
   ],
 };
 
-const POLL_MS = 3000;
+/* How often to check for new messages.
+   - Messages screen open: every 4 seconds, slowing to every 15 seconds after a quiet minute
+     (no new messages); a new message, sending one, or coming back to the tab makes it fast again.
+   - Anywhere else (only the unread badge in the sidebar): every 30 seconds.
+   - Tab hidden: no checks at all; one check the moment you come back. */
+const LIVE_MS = 4000;
+const LIVE_IDLE_MS = 15000;
+const QUIET_POLLS_BEFORE_SLOWING = 15; // 15 x 4s = a quiet minute
+const BADGE_MS = 30000;
 const PAGE_SIZE = 50;
 const createState = () => ({
   rows: [],
@@ -105,6 +113,7 @@ const createState = () => ({
   detailErrors: new Map(),
   prefetching: new Set(),
   warmed: false,
+  quietPolls: 0,
   version: 0,
 });
 
@@ -270,6 +279,8 @@ async function loadList(scope, view, { append = false, poll = false } = {}) {
       if (version !== state.requestVersion) return state.rows;
       const incoming = page.conversations || [];
       if (poll && state.serverTime) {
+        const changed = incoming.length > 0 || (page.removed || []).length > 0;
+        state.quietPolls = changed ? 0 : state.quietPolls + 1;
         const removed = new Set((page.removed || []).map(String));
         const kept = state.rows.filter((row) => !removed.has(String(row.id)));
         const byId = new Map(kept.map((row) => [row.id, row]));
@@ -388,29 +399,52 @@ async function refresh(scope) {
   }
 }
 
-function usePolling(scope, enabled = true) {
+function nextDelay(scope, entry) {
+  if (entry.live > 0) {
+    return stateFor(scope).quietPolls >= QUIET_POLLS_BEFORE_SLOWING ? LIVE_IDLE_MS : LIVE_MS;
+  }
+  return BADGE_MS;
+}
+
+function schedule(scope, entry) {
+  if (entry.timer) window.clearTimeout(entry.timer);
+  entry.timer = window.setTimeout(async () => {
+    entry.timer = null;
+    await refresh(scope).catch(() => {});
+    if (entry.refs > 0) schedule(scope, entry);
+  }, nextDelay(scope, entry));
+}
+
+/* `live` = the Messages screen (needs to feel instant); otherwise only the sidebar badge. */
+function usePolling(scope, enabled = true, live = false) {
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!enabled || typeof window === "undefined") return undefined;
     const state = stateFor(scope);
     if (!state.loaded) loadList(scope, state.view).catch(() => {});
     let entry = pollers.get(scope);
     if (!entry) {
-      entry = { refs: 0, timer: null };
+      entry = { refs: 0, live: 0, timer: null };
       pollers.set(scope, entry);
     }
     entry.refs += 1;
-    if (!entry.timer && typeof window !== "undefined") {
-      entry.timer = window.setInterval(() => refresh(scope), POLL_MS);
+    if (live) {
+      entry.live += 1;
+      state.quietPolls = 0;
     }
+    schedule(scope, entry); // (re)start at the right speed for what is on screen now
     return () => {
       entry.refs -= 1;
-      if (entry.refs <= 0 && entry.timer) {
-        window.clearInterval(entry.timer);
+      if (live) entry.live = Math.max(0, entry.live - 1);
+      if (entry.refs <= 0) {
+        if (entry.timer) window.clearTimeout(entry.timer);
         entry.timer = null;
         entry.refs = 0;
+        entry.live = 0;
+      } else {
+        schedule(scope, entry);
       }
     };
-  }, [scope, enabled]);
+  }, [scope, enabled, live]);
 }
 
 export function useConversations(query = "", filter = "all") {
@@ -421,7 +455,7 @@ export function useConversations(query = "", filter = "all") {
     () => snapshot(scope),
   );
   const state = stateFor(scope);
-  usePolling(scope);
+  usePolling(scope, true, true);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       loadList(scope, { query, filter }).catch(() => {});
@@ -445,7 +479,7 @@ export function useConversationState(id) {
     () => snapshot(scope),
   );
   const state = stateFor(scope);
-  usePolling(scope);
+  usePolling(scope, true, true);
   useEffect(() => {
     state.activeId = id || null;
     if (id) {
@@ -500,7 +534,7 @@ export function useConversationCounts() {
     () => snapshot(scope),
   );
   const state = stateFor(scope);
-  usePolling(scope);
+  usePolling(scope, true, true);
   return state.counts;
 }
 
@@ -553,6 +587,7 @@ export async function loadOlderMessages(id) {
 export async function sendMessage(id, { text = "", image = "" } = {}) {
   const scope = currentScope();
   const state = stateFor(scope);
+  state.quietPolls = 0; // a conversation is happening: check for the reply at full speed
   const previous = state.details.get(id) || state.rows.find((row) => row.id === id) || {
     id, messages: [], unread: 0,
   };
@@ -715,7 +750,15 @@ function clearMessages() {
 
 if (typeof window !== "undefined") {
   window.addEventListener(SESSION_ENDED_EVENT, clearMessages);
-  const catchUp = () => pollers.forEach((_, scope) => refresh(scope));
+  /* back on the tab (or back online): check once now, at full speed again */
+  const catchUp = () => {
+    if (!isVisible()) return;
+    pollers.forEach((entry, scope) => {
+      stateFor(scope).quietPolls = 0;
+      refresh(scope).catch(() => {});
+      if (entry.refs > 0) schedule(scope, entry);
+    });
+  };
   document.addEventListener("visibilitychange", catchUp);
   window.addEventListener("online", catchUp);
 }

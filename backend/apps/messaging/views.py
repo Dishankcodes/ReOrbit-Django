@@ -4,6 +4,8 @@ from django.db.models.functions import Length
 from django.utils.dateparse import parse_datetime
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
 from rest_framework.views import APIView
@@ -548,6 +550,7 @@ def _unread_conversations(account, kind):
 class ConversationList(APIView):
     permission_classes = [IsReOrbitAuthenticated]
 
+    @method_decorator(never_cache)  # same address every check: the browser must never answer from its cache
     def get(self, request):
         account, kind = request.user.account, request.user.account_type
         if kind == "admin":
@@ -559,11 +562,13 @@ class ConversationList(APIView):
         # private chat with whichever admin record happened to be first.
         # Incremental polls (`since`) skip this: it is several queries and the
         # thread already exists by then.
-        if not request.query_params.get("since"):
+        # The app sends the cursor in an X-Since header (a constant address lets the browser reuse
+        # its CORS permission instead of an OPTIONS request before every check); ?since= still works.
+        since = request.query_params.get("since") or request.headers.get("X-Since") or ""
+        if not since:
             _ensure_support_conversation(kind, account)
 
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
-        since = request.query_params.get("since")
         since_at = parse_datetime(since) if since else None
         if since and since_at is None:
             raise ValidationError("The inbox sync cursor is invalid.")
@@ -734,13 +739,15 @@ class ConversationDetail(APIView):
 class AdminInbox(ConversationList):
     permission_classes = [IsReOrbitAdmin, HasAdminMessagesOrSupport]
 
+    @method_decorator(never_cache)  # same address every check: the browser must never answer from its cache
     def get(self, request):
         account = request.user.account
         kind = "admin"
-        if not request.query_params.get("since"):
+        # cursor from the X-Since header (the app) or ?since= (older clients), see the member inbox
+        since = request.query_params.get("since") or request.headers.get("X-Since") or ""
+        if not since:
             _sync_admin_support_inbox(account)
         query = " ".join(str(request.query_params.get("q") or "").split())[:100]
-        since = request.query_params.get("since")
         since_at = parse_datetime(since) if since else None
         if since and since_at is None:
             raise ValidationError("The inbox sync cursor is invalid.")

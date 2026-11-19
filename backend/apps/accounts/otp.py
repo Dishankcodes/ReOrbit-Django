@@ -72,6 +72,11 @@ def get_email_details(purpose):
             "Reset your ReOrbit admin password",
             "accounts/email_templates/otp_user_forgot_password.html",
         )
+    if purpose == P.PAYOUT_ACCOUNT:
+        return (
+            "Confirm your new payout details",
+            "accounts/email_templates/otp_payout_account.html",
+        )
     raise ValueError("Invalid OTP purpose.")
 
 

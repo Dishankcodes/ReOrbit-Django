@@ -152,6 +152,9 @@ export function AccountModal({ account, onSaved, onClose }) {
   const [errors, setErrors] = useState({});
   const [problem, setProblem] = useState("");
   const [busy, setBusy] = useState(false);
+  /* step 2: the details are checked, a code was emailed; saving needs it */
+  const [codeSentTo, setCodeSentTo] = useState("");
+  const [code, setCode] = useState("");
   const ref = useRef(null);
   const set = (k, v) => setF((c) => ({ ...c, [k]: v }));
 
@@ -184,10 +187,23 @@ export function AccountModal({ account, onSaved, onClose }) {
     ) {
       e.upi_id = "UPI ids look like name@bank.";
     }
+    if (codeSentTo && !/^\d{6}$/.test(code)) e.code = "Enter the 6-digit code from the email.";
     setErrors(e);
     if (Object.keys(e).length) return;
     setBusy(true);
     setProblem("");
+    if (!codeSentTo) {
+      /* step 1: email a code (payout details decide where money goes) */
+      try {
+        const r = await walletApi.sendAccountCode();
+        setCodeSentTo(r?.data?.email || "your email");
+        setProblem("");
+      } catch (err) {
+        setProblem(err.message || "Couldn't send the code. Try again in a minute.");
+      }
+      setBusy(false);
+      return;
+    }
     try {
       const body =
         method === "bank"
@@ -200,7 +216,7 @@ export function AccountModal({ account, onSaved, onClose }) {
               ifsc: f.ifsc,
             }
           : { method, holder_name: f.holder_name, upi_id: f.upi_id };
-      onSaved(await walletApi.saveAccount(body));
+      onSaved(await walletApi.saveAccount({ ...body, code }));
     } catch (err) {
       const fe = {};
       Object.entries(err.errors || {}).forEach(([k, v]) => {
@@ -314,6 +330,28 @@ export function AccountModal({ account, onSaved, onClose }) {
             })
           )}
         </div>
+        {codeSentTo && (
+          <div className="rod-field">
+            <label htmlFor="w-code">
+              Code sent to {codeSentTo}
+            </label>
+            <input
+              id="w-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="6-digit code"
+              aria-invalid={errors.code ? "true" : undefined}
+              disabled={busy}
+              autoFocus
+            />
+            {errors.code && <span className="rod-error">{errors.code}</span>}
+          </div>
+        )}
+        <p className="wlt-note">
+          For your safety we email you a code to confirm, and payouts pause for 24 hours after a change.
+        </p>
         {problem && (
           <p className="wlt-error" role="alert">
             {problem}
@@ -326,7 +364,13 @@ export function AccountModal({ account, onSaved, onClose }) {
             onClick={submit}
             disabled={busy}
           >
-            {busy ? <Spinner label="Saving…" /> : "Save payout details"}
+            {busy ? (
+              <Spinner label={codeSentTo ? "Saving…" : "Sending code…"} />
+            ) : codeSentTo ? (
+              "Confirm and save"
+            ) : (
+              "Email me a code"
+            )}
           </button>
           <button
             type="button"

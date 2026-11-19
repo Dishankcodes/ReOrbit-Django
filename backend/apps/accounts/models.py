@@ -14,6 +14,7 @@ class OTP_Verification(models.Model):
         USER_REGISTER = "user_register", "User Registration"
         USER_FORGOT_PASSWORD = "user_forgot_password", "User Forgot Password"
         ADMIN_FORGOT_PASSWORD = "admin_forgot_password", "Admin Forgot Password"
+        PAYOUT_ACCOUNT = "payout_account", "Confirm payout details"
 
     class AccountType(models.TextChoices):
         USER = "user", "User"

@@ -324,6 +324,11 @@ def _reason(payload, minimum=5, field="reason"):
     return reason
 
 
+# The most points an admin can give for one donation (the automatic amount is far lower). Bigger
+# thank-yous go through Rewards > adjust points, which needs Rewards edit access and is capped too.
+MAX_DONATION_POINTS = 5000
+
+
 def _reward_choice(p):
     """An admin's optional points + voucher amount for this donation, from the Accept form.
     Both are optional: leaving either blank means "work it out automatically at Received time"
@@ -340,6 +345,9 @@ def _reward_choice(p):
             points = -1
         if points < 0:
             errors["points"] = ["Enter a whole number, 0 or more."]
+        elif points > MAX_DONATION_POINTS:
+            # points turn into vouchers worth real money, so one donation can't hand out a fortune
+            errors["points"] = [f"One donation can earn at most {MAX_DONATION_POINTS:,} points."]
 
     voucher_amount = None
     raw_voucher = p.get("voucher_amount")

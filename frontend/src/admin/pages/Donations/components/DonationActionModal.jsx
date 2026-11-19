@@ -112,8 +112,9 @@ export default function DonationActionModal({
   const showRewardChoice = (action.key === "accept" || action.key === "received") && !many;
   const weightInvalid =
     action.fields === "receive" && weightKg !== "" && !(Number(weightKg) > 0 && Number(weightKg) < 10000);
+  const MAX_POINTS = 5000; // same cap as the server (donations/services.py)
   const pointsInvalid =
-    showRewardChoice && points !== "" && (!/^\d+$/.test(points) || Number(points) < 0);
+    showRewardChoice && points !== "" && (!/^\d+$/.test(points) || Number(points) < 0 || Number(points) > MAX_POINTS);
   const voucherAmountInvalid =
     showRewardChoice && voucherAmount !== "" && !voucherTiers.includes(Number(voucherAmount));
 
@@ -133,6 +134,7 @@ export default function DonationActionModal({
         <input
           type="number"
           min={0}
+          max={MAX_POINTS}
           value={points}
           placeholder={
             action.key === "received" && donation?.admin_points != null
@@ -144,7 +146,7 @@ export default function DonationActionModal({
           onChange={(e) => setPoints(e.target.value)}
         />
         {touched && pointsInvalid && (
-          <small className="ad-modal-error">Enter a whole number, 0 or more.</small>
+          <small className="ad-modal-error">Enter a whole number from 0 to {MAX_POINTS.toLocaleString("en-IN")}.</small>
         )}
       </label>
       <label className="ad-modal-field">

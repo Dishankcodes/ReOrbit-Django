@@ -10,6 +10,7 @@ urlpatterns = [
     path("wallet/", w.WalletView.as_view()),
     path("wallet/entries/", w.EntriesView.as_view()),
     path("account/", w.AccountView.as_view()),
+    path("account/code/", w.AccountCodeView.as_view()),
     path("payouts/", w.MyPayoutsView.as_view()),
     path("payouts/request/", w.RequestPayoutView.as_view()),
     path("admin/payouts/", w.AdminPayouts.as_view()),

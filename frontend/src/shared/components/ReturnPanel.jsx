@@ -52,9 +52,11 @@ export default function ReturnPanel({ order }) {
         .catch(() => {});
   }, [open, rr]);
 
-  const fault = opts?.return_reasons?.find(
-    (r) => r.code === vals.reason,
-  )?.fault;
+  const chosen = opts?.return_reasons?.find((r) => r.code === vals.reason);
+  const fault = chosen?.fault;
+  /* "It never arrived": no photo needed and nothing to send back */
+  const needsPhoto = chosen ? chosen.needs_photo ?? fault === "seller" : false;
+  const itemBack = chosen?.item_back !== false;
   const maxPhotos = opts?.max_photos || 4;
 
   const submit = async (e) => {
@@ -283,7 +285,7 @@ export default function ReturnPanel({ order }) {
               </label>
               <div className="dn-field">
                 <span className="dn-label">
-                  Photos {fault === "seller" ? "(at least one)" : "(optional)"}
+                  Photos {needsPhoto ? "(at least one)" : "(optional)"}
                 </span>
                 <div
                   style={{
@@ -356,9 +358,11 @@ export default function ReturnPanel({ order }) {
               </div>
               {fault && (
                 <p className="dn-muted" style={{ margin: "0 0 10px" }}>
-                  {fault === "seller"
-                    ? "The seller pays return shipping and you get the delivery fee back too."
-                    : "You pay return shipping and the delivery fee is not refunded."}
+                  {!itemBack
+                    ? "Nothing to send back. If the seller or ReOrbit agrees it never arrived, you get the full amount back, delivery fee included. The seller isn't paid while this is open."
+                    : fault === "seller"
+                      ? "The seller pays return shipping and you get the delivery fee back too."
+                      : "You pay return shipping and the delivery fee is not refunded."}
                 </p>
               )}
               {msg && (

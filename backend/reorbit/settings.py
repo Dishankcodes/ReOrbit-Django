@@ -332,7 +332,10 @@ CORS_ALLOWED_ORIGINS = env_list(
 
 # The checkout sends an Idempotency-Key header (stops a double tap creating two orders).
 # Browsers only allow it cross-origin if it is listed here.
-CORS_ALLOW_HEADERS = (*default_headers, "idempotency-key")
+CORS_ALLOW_HEADERS = (*default_headers, "idempotency-key", "x-since")
+# How long a browser may reuse a CORS permission (the OPTIONS request) for the same address.
+# Browsers cap it (Chrome at 2 hours); the message checks keep one address, so one OPTIONS per 2 hours.
+CORS_PREFLIGHT_MAX_AGE = 86400
 
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",

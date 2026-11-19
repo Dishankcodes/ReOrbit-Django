@@ -267,7 +267,7 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
         except VoucherError as e:
             voucher_error = e.message
     payable = grand - discount
-    cod = cod_block_reason(payable, s)
+    cod = cod_block_reason(payable, s) or cod_open_reason(buyer)
     return {
         "groups": [_public_group(g) for g in plan["groups"]],
         "subtotal": goods,
@@ -421,7 +421,7 @@ def create_checkout(buyer, data, key=None):
                 discount = min(discount, max(0, grand - 1))  # an order always keeps at least ₹1 to pay
             payable = grand - discount
             if cod:
-                reason = cod_block_reason(payable, s)
+                reason = cod_block_reason(payable, s) or cod_open_reason(buyer)
                 if reason:
                     raise CheckoutError(reason, {"method": [reason]}, code="COD_BLOCKED")
             shares = split_discount(discount, [g["total"] for g in plan["groups"]])
@@ -716,7 +716,10 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             from apps.payments import wallet  # local import: wallet imports core, not orders
 
             wallet.credit_delivered_order(o)  # the seller earns the item subtotal (held for the return window)
-            vouchers.on_order_delivered(o)  # the buyer's Orbit Points; never fails the delivery
+            if o.payment_status != Order.PayStatus.COD_COLLECTED:
+                vouchers.on_order_delivered(o)  # the buyer's Orbit Points; never fails the delivery
+            # pay on delivery: the points wait until ReOrbit confirms it has the cash (confirm_cod_cash), so a
+            # "delivered" marked without any money changing hands earns nothing
             if o.buyer_admin_id:
                 # bought by the ReOrbit team: it arrives at the warehouse dock (Floor 2 once put away)
                 from apps.warehouse import services as warehouse  # local import: warehouse reads orders too
@@ -881,6 +884,21 @@ def return_to_origin(order_pk, *, actor_kind, actor, ip=None):
     return o
 
 
+# Pay-on-delivery orders hold the stock with no money paid. At most this many unshipped ones per
+# account, so nobody can tie up every item (pay online and there is no limit).
+MAX_OPEN_COD_CHECKOUTS = 2
+
+
+def cod_open_reason(buyer):
+    open_cod = (Payment.objects.filter(buyer_key=buyer_kit.key_of(buyer), method=Payment.Method.COD,
+                                       orders__status__in=(Order.Status.CONFIRMED, Order.Status.PACKED))
+                .distinct().count())
+    if open_cod >= MAX_OPEN_COD_CHECKOUTS:
+        return (f"You already have {open_cod} pay-on-delivery orders waiting to ship. Pay online for this one, "
+                "or wait until one of them ships.")
+    return ""
+
+
 def confirm_cod_cash(order_pk, admin, reference="", ip=None):
     """Admin: the courier handed ReOrbit the cash for this order. Counts it as paid and starts the
     seller's clearing days."""
@@ -901,4 +919,5 @@ def confirm_cod_cash(order_pk, admin, reference="", ip=None):
         from apps.payments import wallet
 
         wallet.release_cod(o)
+        vouchers.on_order_delivered(o)  # the buyer's Orbit Points, now that the money is real
     return o

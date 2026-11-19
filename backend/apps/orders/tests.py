@@ -451,6 +451,7 @@ class FulfilmentTests(OrderBase):
         self.assertEqual(self.get("/api/orders/admin/", as_=viewer).status_code, 200)
         self.assertEqual(self.post(f"/api/orders/admin/{oid}/ship/", {"courier_name": "X1", "tracking_no": "T123"}, as_=viewer).status_code, 403)
 
+    @mock.patch.object(services, "MAX_OPEN_COD_CHECKOUTS", 100)  # this test needs several open COD orders
     def test_list_queries_do_not_grow_with_orders(self):
         from django.db import connection
         from django.test.utils import CaptureQueriesContext
@@ -585,6 +586,7 @@ class AdminReportTests(OrderBase):
         row = next(r for r in self.get("/api/orders/admin/report/", as_=self.boss).data["data"]["orders"] if r["id"] == oid)
         self.assertEqual((row["status"], row["payment_status"], row["refund_due"]), ("Cancelled", "Refund_Failed", True))
 
+    @mock.patch.object(services, "MAX_OPEN_COD_CHECKOUTS", 100)  # several open COD orders
     def test_report_query_count_does_not_grow_with_orders(self):
         from django.db import connection
         from django.test.utils import CaptureQueriesContext

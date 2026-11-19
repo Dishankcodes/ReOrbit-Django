@@ -16,8 +16,13 @@ const queryString = (params = {}) => {
 };
 
 export const messagingApi = {
-  list: (params) =>
-    apiRequest(`${endpoint()}${queryString(params)}`).then((response) => response.data),
+  /* `since` (the "what changed" check) travels in a header, not the address. The address then
+     stays the same from one check to the next, so the browser asks the server's permission
+     (the OPTIONS request) once every 2 hours instead of before every single check. */
+  list: ({ since, ...params } = {}) =>
+    apiRequest(`${endpoint()}${queryString(params)}`, since ? { headers: { "X-Since": since } } : {}).then(
+      (response) => response.data,
+    ),
   get: (id, params) =>
     apiRequest(`${endpoint()}${encodeURIComponent(id)}/${queryString(params)}`).then(
       (response) => response.data.conversation,

@@ -393,6 +393,12 @@ class MyDetailView(MyBase):
         item.deleted_at = timezone.now()
         item.save(update_fields=["deleted_at", "updated_at"])
         audit(request.user.account, "listing.delete", "item", item.public_id, ip=IP(request))
+        from apps.rewards import services as rewards  # local import, as for publishing
+
+        taken = rewards.on_listing_deleted(request.user.account, item)
+        if taken is not None:
+            return ok(message=f"Listing deleted. The {abs(taken.points)} points it earned were taken back "
+                              f"(deleted within {rewards.LISTING_POINTS_KEEP_DAYS} days).")
         return ok(message="Listing deleted.")
 
 

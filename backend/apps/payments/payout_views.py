@@ -27,6 +27,7 @@ from apps.core.models import PlatformSettings
 from apps.core.pagination import StandardPagination
 from apps.core.responses import fail, ok
 from apps.core.services import audit
+from apps.core.throttles import OTPIPThrottle
 
 from . import schedule, wallet
 from .models import Payout, WalletEntry
@@ -79,7 +80,7 @@ class WalletView(_SellerView):
         return ok({
             "balances": wallet.balances(owner),
             "rules": _rules(PlatformSettings.load()),
-            "account": acct.masked() if acct else None,
+            "account": wallet.account_data(acct),
             "last_payout": payout_data(last) if last else None,
         })
 
@@ -105,14 +106,28 @@ class AccountView(_SellerView):
             acct = wallet.get_account(self.owner(request))
         except wallet.WalletError as e:
             return _err(e)
-        return ok({"account": acct.masked() if acct else None})
+        return ok({"account": wallet.account_data(acct)})
 
     def put(self, request):
         try:
-            acct = wallet.save_account(self.owner(request), request.data)
+            acct = wallet.save_account(self.owner(request), request.data, code=request.data.get("code"))
         except wallet.WalletError as e:
             return _err(e)
-        return ok({"account": acct.masked()}, message="Payout details saved.")
+        return ok({"account": wallet.account_data(acct)},
+                  message="Payout details saved. Payouts can be requested again in 24 hours.")
+
+
+class AccountCodeView(_SellerView):
+    """POST /api/payments/account/code/ : email a 6-digit code that confirms a change of payout details."""
+
+    throttle_classes = [OTPIPThrottle]
+
+    def post(self, request):
+        try:
+            email = wallet.send_account_code(self.owner(request))
+        except wallet.WalletError as e:
+            return _err(e)
+        return ok({"email": email}, message=f"We sent a 6-digit code to {email}.")
 
 
 class MyPayoutsView(_SellerView):

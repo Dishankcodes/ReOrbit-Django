@@ -7,6 +7,9 @@ export const walletApi = {
     apiRequest(`/payments/wallet/entries/${qs}`).then((r) => r.data),
   payouts: (qs = "") =>
     apiRequest(`/payments/payouts/${qs}`).then((r) => r.data),
+  /* changing payout details needs a 6-digit code from the seller's email */
+  sendAccountCode: () =>
+    apiRequest("/payments/account/code/", { method: "POST" }).then((r) => r),
   saveAccount: (body) =>
     apiRequest("/payments/account/", { method: "PUT", body }).then(
       (r) => r.data.account,

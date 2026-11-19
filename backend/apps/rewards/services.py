@@ -194,6 +194,27 @@ def on_listing_published(user, item):
                                "listing", item.public_id))
 
 
+# A listing deleted within this many days of earning its points gives them back, so "list, delete,
+# list again" can't be used to collect points. Older listings keep them.
+LISTING_POINTS_KEEP_DAYS = 7
+
+
+def _on_listing_deleted(user, item):
+    earned = PointsEntry.objects.filter(user=user, kind="listing", ref_type="listing", ref_id=item.public_id).first()
+    if not earned or earned.points <= 0:
+        return None
+    if timezone.now() - earned.created_at > timedelta(days=LISTING_POINTS_KEEP_DAYS):
+        return None
+    return award(user, "reversal", -earned.points, "Points taken back",
+                 f"{item.title} was deleted within {LISTING_POINTS_KEEP_DAYS} days", "listing", item.public_id)
+
+
+def on_listing_deleted(user, item):
+    if user is None or buyer_kit.type_of(user) != "user":
+        return None
+    return _safe(_on_listing_deleted, user, item)
+
+
 def reward_points(quantity):
     """What a donation earns automatically: the "donationBase" rule once, plus "donationItem" per item.
     An admin can override this per donation (Donation.admin_points); this is only the fallback."""

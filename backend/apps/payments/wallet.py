@@ -116,6 +116,19 @@ def seller_amount(order):
     return order.subtotal + (0 if order.managed_delivery else order.delivery_fee)
 
 
+def clearing_days(order, settings=None):
+    """Days before an earning can be paid out. An order the seller shipped and marked delivered
+    themselves is never paid out while the buyer can still say "it never arrived" (the return
+    window), even if the payout hold is set shorter."""
+    s = settings or PlatformSettings.load()
+    days = s.payout_hold_days
+    if not order.managed_delivery:
+        from apps.orders.returns import RETURN_DAYS  # local import: orders imports wallet
+
+        days = max(days, RETURN_DAYS)
+    return days
+
+
 def credit_delivered_order(order):
     """Called inside the delivery transaction. Safe to call twice (one earning per order).
     The seller earns the subtotal plus the delivery fee when they shipped it themselves; on a
@@ -127,12 +140,13 @@ def credit_delivered_order(order):
     owner = {"seller_user": order.seller_user} if order.seller_type == "user" else {"seller_remaker": order.seller_remaker}
     s = PlatformSettings.load()
     now = timezone.now()
+    hold_days = clearing_days(order, s)
     try:
         with transaction.atomic():
             entry, created = WalletEntry.objects.get_or_create(
                 order=order, kind=WalletEntry.Kind.EARNING,
                 defaults={**owner, "amount": amount,
-                          "available_at": None if order.payment_status == "COD_Collected" else now + timedelta(days=s.payout_hold_days),
+                          "available_at": None if order.payment_status == "COD_Collected" else now + timedelta(days=hold_days),
                           "note": f"{order.public_id} delivered"},
             )
     except IntegrityError:
@@ -142,7 +156,7 @@ def credit_delivered_order(order):
             _notify(owner, "Earning added", f"₹{amount:,} from {order.public_id} is in your wallet. It starts clearing once "
                     "ReOrbit receives the cash from the courier.", ref_type="order", ref_id=order.public_id)
         else:
-            when = "now" if s.payout_hold_days == 0 else f"in {s.payout_hold_days} day(s)"
+            when = "now" if hold_days == 0 else f"in {hold_days} day(s)"
             _notify(owner, "Earning added", f"₹{amount:,} from {order.public_id} is in your wallet and can be paid out {when}.",
                     ref_type="order", ref_id=order.public_id)
     return entry
@@ -219,9 +233,43 @@ def clean_account(data):
     return v
 
 
-def save_account(owner, data):
+# After payout details are saved or changed, no payout can be requested (or made automatically) for
+# this long. Someone who got into the account can't redirect the money before the owner sees the email.
+ACCOUNT_COOLDOWN = timedelta(hours=24)
+
+
+def send_account_code(owner):
+    """Email the seller a 6-digit code that confirms a change of payout details."""
+    from apps.accounts.models import OTP_Verification
+    from apps.accounts.otp import OTPCooldown, OTPSendError, create_and_send_otp
+
+    who = owner_obj(owner)
+    kind = OTP_Verification.AccountType.USER if "seller_user" in owner else OTP_Verification.AccountType.REMAKER
+    try:
+        create_and_send_otp(who.email, OTP_Verification.Purpose.PAYOUT_ACCOUNT, kind)
+    except OTPCooldown as e:
+        raise WalletError(str(e), code="OTP_COOLDOWN", status=429)
+    except OTPSendError as e:
+        raise WalletError(str(e), code="EMAIL_FAILED", status=503)
+    return who.email
+
+
+def save_account(owner, data, code=None):
+    """Save the payout details. `code` is the 6-digit code emailed by send_account_code(): payout
+    details decide where money goes, so a signed-in session alone is not enough to change them."""
+    from apps.accounts.models import OTP_Verification
+    from apps.accounts.otp import consume_otp, verify_otp
+
     v = clean_account(data)
     number, upi = v.pop("account_number"), v.pop("upi_id")
+    who = owner_obj(owner)
+    code = str(code or "").strip()
+    if not code:
+        raise WalletError("Enter the 6-digit code we emailed you.", {"code": ["Enter the code from the email."]},
+                          code="CODE_REQUIRED")
+    record, error = verify_otp(who.email, code, OTP_Verification.Purpose.PAYOUT_ACCOUNT)
+    if error:
+        raise WalletError(error, {"code": [error]}, code="INVALID_CODE")
     with transaction.atomic():
         _lock_owner(owner)  # two first-time saves at once queue here instead of colliding
         acct = PayoutAccount.objects.filter(**owner).first()
@@ -231,10 +279,33 @@ def save_account(owner, data):
         for k, val in v.items():
             setattr(acct, k, val)
         acct.set_secrets(number, upi)  # encrypted at rest; only a masked hint stays readable
+        acct.changed_at = timezone.now()
         acct.save()
+        consume_otp(record)
     _notify(owner, "Payout details saved" if created else "Payout details changed",
-            "If you did not do this, contact support right away.", ref_type="payout_account", ref_id="")
+            "Payouts can be requested again in 24 hours. If you did not do this, contact support right away.",
+            ref_type="payout_account", ref_id="")
+    try:
+        from apps.core.mailer import security_notice
+
+        security_notice(who, "Your payout details were saved" if created else "Your payout details were changed")
+    except Exception:  # noqa: BLE001 - the change is saved; the in-app notice above still went out
+        pass
     return acct
+
+
+def payouts_open_at(acct):
+    """None when payouts are allowed, otherwise when they open again after a change of details."""
+    if acct is None or not acct.changed_at:
+        return None
+    when = acct.changed_at + ACCOUNT_COOLDOWN
+    return when if when > timezone.now() else None
+
+
+def account_data(acct):
+    if acct is None:
+        return None
+    return {**acct.masked(), "payouts_open_at": payouts_open_at(acct)}
 
 
 def get_account(owner):
@@ -261,6 +332,12 @@ def request_payout(owner, amount=None, source="seller"):
         if Payout.objects.filter(**owner, status=Payout.Status.PENDING).exists():
             raise WalletError("You already have a payout waiting to be paid. Wait for it to finish.",
                               code="PAYOUT_OPEN", status=409)
+        opens = payouts_open_at(account)
+        if opens:
+            local = timezone.localtime(opens)
+            raise WalletError(
+                f"Your payout details were changed recently. For your safety, payouts open again on "
+                f"{local:%d %b at %I:%M %p}.", code="ACCOUNT_RECENTLY_CHANGED", status=409)
         available = balances(owner)["available"]
         if amount is None:
             amount = available

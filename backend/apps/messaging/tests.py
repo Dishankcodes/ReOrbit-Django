@@ -49,6 +49,11 @@ class MessagingFlowTests(APIBase):
         user_sync = self.get("/api/messaging/me/", as_=self.user, data={"since": since})  # encoded, like URLSearchParams
         self.assertEqual(user_sync.status_code, 200, user_sync.data)
         self.assertIn(direct, [row["id"] for row in user_sync.data["data"]["conversations"]])
+        # the app sends the cursor in a header instead, so the address (and its CORS permission) stays the same
+        header_sync = self.get("/api/messaging/me/", as_=self.user, HTTP_X_SINCE=since)
+        self.assertEqual([r["id"] for r in header_sync.data["data"]["conversations"]],
+                         [r["id"] for r in user_sync.data["data"]["conversations"]])
+        self.assertIn("no-store", header_sync["Cache-Control"])
 
         maker_remaker_filter = self.get("/api/messaging/me/?kind=remaker", as_=self.maker)
         self.assertEqual(maker_remaker_filter.status_code, 200, maker_remaker_filter.data)

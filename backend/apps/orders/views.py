@@ -288,7 +288,11 @@ class OptionsView(APIView):
         return ok({
             "couriers": list(services.COURIERS),
             "return_days": returns.RETURN_DAYS, "escalate_days": returns.ESCALATE_DAYS, "max_photos": returns.MAX_PHOTOS,
-            "return_reasons": [{"code": k, "label": v[0], "fault": v[1]} for k, v in returns.REASONS.items()],
+            "return_reasons": [
+                {"code": k, "label": v[0], "fault": v[1], "needs_photo": returns.needs_photo(k),
+                 "item_back": k not in returns.NO_ITEM_REASONS}
+                for k, v in returns.REASONS.items()
+            ],
             "fail_reasons": [{"code": k, "label": v[0], "fault": v[1]} for k, v in services.FAIL_REASONS.items()],
         })
 
