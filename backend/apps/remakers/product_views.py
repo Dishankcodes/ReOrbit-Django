@@ -61,6 +61,8 @@ def _extra(data, values, errors, has):
             errors["condition"] = ["Choose Upcycled, Refurbished or Brand new."]
         else:
             values["condition"] = c
+    from apps.listings.sellables import clean_mrp
+    clean_mrp(data, values, errors)
     if "customization_available" in data:
         values["customization_available"] = bool(data.get("customization_available"))
 

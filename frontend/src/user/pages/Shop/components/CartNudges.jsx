@@ -6,7 +6,7 @@ import { formatPrice } from "../../../../data/marketplaceData";
 /* Small helpers under the cart / checkout summary, all worked out by the server (quote):
    - "Add ₹X more from <seller> for free delivery", with a progress bar, for each order that still pays
      delivery and has a free-delivery limit (ReOrbit store, ReOrbit-delivered ReMaker pieces);
-   - sale items: what they already save, and that coupons don't apply to them (Zomato-style "not on
+   - sale items: what they already save, and that coupons and points vouchers don't apply to them (donation vouchers do) (Zomato-style "not on
      offer items"). `showCoupon` adds the coupon line (checkout, where the code box is). */
 export default function CartNudges({ quote, showCoupon = false }) {
   if (!quote) return null;
@@ -45,9 +45,9 @@ export default function CartNudges({ quote, showCoupon = false }) {
             )}
             {showCoupon &&
               (quote.coupon_eligible > 0
-                ? `Coupons apply to the other ${formatPrice(quote.coupon_eligible)} only.`
-                : "Sale items aren't eligible for coupons.")}
-            {!showCoupon && "They aren't eligible for coupons."}
+                ? `Coupons and points vouchers apply to the other ${formatPrice(quote.coupon_eligible)} only; donation vouchers apply to everything.`
+                : "Sale items aren't eligible for coupons or points vouchers. Donation vouchers still apply.")}
+            {!showCoupon && "They aren't eligible for coupons or points vouchers (donation vouchers still apply)."}
           </span>
         </p>
       )}

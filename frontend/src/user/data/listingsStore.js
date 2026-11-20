@@ -130,6 +130,7 @@ function fromApi(a) {
     description: a.description || "",
     condition: a.condition || "",
     price: a.listing_price == null ? 0 : Number(a.listing_price),
+    mrp: a.mrp == null ? null : Number(a.mrp),
     quantity: a.quantity,
     images: (a.images || []).map((i) => i.url),
     imageRows: a.images || [],
@@ -288,6 +289,7 @@ const bodyOf = (form) => ({
   quantity: Number(form.quantity) || 1,
   listing_price:
     form.price === "" || form.price == null ? null : Number(form.price),
+  mrp: form.mrp ? Number(form.mrp) : null,
   pickup_preference: PICKUP_OUT[form.pickup],
   delivery_fee: null, // ReOrbit sets the delivery fee for managed delivery (Admin > Settings) and keeps it
   city: form.city,

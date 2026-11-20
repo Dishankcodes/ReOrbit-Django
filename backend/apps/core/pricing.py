@@ -41,9 +41,12 @@ def free_delivery_from(seller_type, platform_pickup=None, settings=None):
 
 
 def sale_of(obj):
-    """A listing sold below its original price (ReOrbit store items with an MRP): {"mrp", "off"} or None.
-    Sale items already carry a discount, so coupons and vouchers never apply to them."""
+    """A listing sold below its original price (any seller can set one): {"mrp", "off"} or None.
+    Sale items already carry a discount, so coupons and points vouchers don't apply to them
+    (donation vouchers still do)."""
     mrp, price = getattr(obj, "mrp", None), getattr(obj, "price", None)
+    if price is None:
+        price = getattr(obj, "listing_price", None)
     if not mrp or price is None or Decimal(mrp) <= Decimal(price):
         return None
     off = (Decimal(mrp) - Decimal(price)) * 100 / Decimal(mrp)
@@ -67,3 +70,17 @@ def maintenance_block_reason(settings=None):
     """Return "" normally; the message to show members while maintenance mode is on."""
     s = settings or PlatformSettings.load()
     return MAINTENANCE_MESSAGE if s.maintenance else ""
+
+
+MAX_SALE_OFF = 90  # an original price can't be more than 10x the price (no fake "99% off")
+
+
+def sale_problem(mrp, price):
+    """Why an original price can't be used with this price, or ""."""
+    if not mrp or not price:
+        return ""
+    if Decimal(mrp) <= Decimal(price):
+        return "The original price must be more than the selling price (or leave it empty)."
+    if Decimal(mrp) > Decimal(price) * 100 / (100 - MAX_SALE_OFF):
+        return f"That would be more than {MAX_SALE_OFF}% off. Enter the real original price."
+    return ""

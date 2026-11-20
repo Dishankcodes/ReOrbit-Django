@@ -62,6 +62,9 @@ class Item(PublicIdModel, TimeStampedModel):
     listing_price = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True
     )
+    # original price, shown struck through with "% off". A product on sale doesn't take coupons
+    # or points vouchers (donation vouchers still apply)
+    mrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     pickup_preference = models.CharField(max_length=20, choices=Pickup.choices)
     # What the buyer pays for delivery when ReOrbit manages it. The seller sets it when listing.
     delivery_fee = models.PositiveIntegerField(null=True, blank=True)

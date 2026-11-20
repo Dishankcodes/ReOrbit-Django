@@ -68,3 +68,76 @@ class SaleAndCouponTests(OrderBase):
         q = self.quote([{"id": self.tote.public_id, "qty": 1}, {"id": self.lamp.public_id, "qty": 1}])
         member = next(x for x in q["groups"] if x["seller"]["type"] == "user")
         self.assertIsNone(member["free_delivery"])  # flat fee for member items, no limit to reach
+
+
+class MemberAndReMakerSaleTests(OrderBase):
+    """Members and ReMakers can mark a product down too: same rules as ReOrbit store items, and a
+    donation voucher still works on sale items."""
+    coupon = SaleAndCouponTests.coupon
+    quote = SaleAndCouponTests.quote
+
+    def setUp(self):
+        super().setUp()
+        self.rw = self.make_admin("rws@example.com", modules={"rewards": "edit"})
+        type(self.table).objects.filter(pk=self.table.pk).update(mrp=3000)  # ₹2,400, was ₹3,000: 20% off
+        type(self.lamp).objects.filter(pk=self.lamp.pk).update(mrp=1250)  # ₹1,000, was ₹1,250: 20% off
+        self.refresh()
+
+    def donation_voucher(self, amount=200, min_order=0):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.rewards.models import Voucher
+
+        return Voucher.objects.create(
+            owner=self.buyer, code="RO-DONATE01", amount=amount, min_order=min_order, title=f"₹{amount} voucher",
+            expires_at=timezone.now() + timedelta(days=30), source_type="donation", source_id="DON-77")
+
+    def test_cards_show_member_and_remaker_sales(self):
+        for obj, mrp in ((self.table, 3000), (self.lamp, 1250)):
+            card = self.get(f"/api/marketplace/{obj.public_id}/").data["data"]["product"]
+            self.assertEqual((card["mrp"], card["off"]), (mrp, 20))
+
+    def test_coupon_skips_member_and_remaker_sale_items(self):
+        self.coupon(min_order=0)
+        lines = [{"id": self.table.public_id, "qty": 1}, {"id": self.lamp.public_id, "qty": 1}]
+        q = self.quote(lines, "SAVE10")
+        self.assertEqual((q["discount"], q["sale_items"]), (0, 2))
+        self.assertIn("donation voucher", q["voucher_error"])
+        q = self.quote(lines + [{"id": self.tote.public_id, "qty": 1}], "SAVE10")
+        self.assertEqual((q["coupon_eligible"], q["discount"]), (500, 50))
+
+    def test_donation_voucher_works_on_sale_items(self):
+        self.donation_voucher(amount=200, min_order=2000)
+        lines = [{"id": self.table.public_id, "qty": 1}, {"id": self.lamp.public_id, "qty": 1}]
+        q = self.quote(lines, "RO-DONATE01")
+        self.assertEqual((q["voucher_error"], q["discount"]), ("", 200))
+        r = self.checkout(lines, voucher_code="RO-DONATE01")
+        self.assertEqual(r.status_code, 201, r.data)
+        self.assertEqual(sum(o.discount for o in Order.objects.all()), 200)
+        self.assertTrue(all(o.discount > 0 for o in Order.objects.all()))  # shared across both sale orders
+
+    def test_sellers_set_an_original_price_and_it_is_checked(self):
+        type(self.table).objects.filter(pk=self.table.pk).update(status="Draft")  # the fixture has no photos
+        type(self.lamp).objects.filter(pk=self.lamp.pk).update(item_status="Draft")
+        r = self.client.patch(f"/api/remakers/products/{self.table.public_id}/", {"mrp": 2000}, format="json",
+                              **self._headers(self.maker))
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("more than the selling price", r.data["errors"]["mrp"][0])
+        r = self.client.patch(f"/api/remakers/products/{self.table.public_id}/", {"mrp": 99999}, format="json",
+                              **self._headers(self.maker))
+        self.assertIn("90% off", r.data["errors"]["mrp"][0])
+        r = self.client.patch(f"/api/remakers/products/{self.table.public_id}/", {"mrp": 3200}, format="json",
+                              **self._headers(self.maker))
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(r.data["data"]["product"]["mrp"], "3200.00")
+        r = self.client.patch(f"/api/remakers/products/{self.table.public_id}/", {"mrp": ""}, format="json",
+                              **self._headers(self.maker))
+        self.assertIsNone(r.data["data"]["product"]["mrp"])
+        r = self.client.patch(f"/api/listings/me/{self.lamp.public_id}/", {"mrp": 900}, format="json",
+                              **self._headers(self.seller))
+        self.assertEqual(r.status_code, 400)
+        r = self.client.patch(f"/api/listings/me/{self.lamp.public_id}/", {"mrp": 1500}, format="json",
+                              **self._headers(self.seller))
+        self.assertEqual((r.status_code, r.data["data"]["listing"]["mrp"]), (200, "1500.00"))

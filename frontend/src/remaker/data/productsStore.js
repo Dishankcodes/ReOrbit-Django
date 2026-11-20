@@ -32,6 +32,7 @@ function fromApi(p) {
     pickup: p.pickup_preference === "Platform_Pickup" ? "platform" : "self",
     deliveryFee: p.delivery_fee == null ? null : Number(p.delivery_fee),
     price: Number(p.price) || 0,
+    mrp: p.mrp == null ? null : Number(p.mrp),
     stock: p.stock,
     status: p.status,
     images: (p.images || []).map((i) => i.url),
@@ -137,6 +138,7 @@ const bodyOf = (v) => ({
     v.pickup === "platform" ? "Platform_Pickup" : "Seller_Handover",
   delivery_fee: null, // ReOrbit sets the delivery fee for managed delivery (Admin > Settings) and keeps it
   price: v.price === "" ? null : Number(v.price),
+  mrp: v.mrp ? Number(v.mrp) : null,
   stock: Number(v.stock) || 0,
   materials: (v.materials || []).join(", "),
   condition: v.condition || "Upcycled",

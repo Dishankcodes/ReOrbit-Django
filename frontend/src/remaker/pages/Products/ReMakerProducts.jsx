@@ -181,6 +181,13 @@ export default function ReMakerProducts() {
                       {product.price
                         ? formatPrice(product.price)
                         : "No price yet"}
+                      {product.mrp > product.price && (
+                        <>
+                          {" "}
+                          <del className="rpl-mrp">{formatPrice(product.mrp)}</del>{" "}
+                          <em className="rpl-off">{Math.round(((product.mrp - product.price) * 100) / product.mrp)}% off</em>
+                        </>
+                      )}
                     </strong>
                     <span>
                       {isDraft

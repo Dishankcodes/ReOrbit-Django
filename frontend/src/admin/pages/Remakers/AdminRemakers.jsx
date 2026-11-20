@@ -27,7 +27,8 @@ import {
   changeRemakerStatus,
 } from "../../data/realAccounts";
 import { ACTION_LIST, canApply } from "../../data/userActions";
-import { formatDate } from "../../utils/format";
+import { formatDate, timeAgo } from "../../utils/format";
+import Presence, { isOnline } from "../../components/ui/Presence";
 
 import StatusBadge from "../../components/ui/StatusBadge";
 import UserAvatar from "../../components/ui/UserAvatar";
@@ -68,6 +69,10 @@ const SORTS = {
   name: {
     label: "Name A–Z",
     fn: (a, b) => a.full_name.localeCompare(b.full_name),
+  },
+  active: {
+    label: "Recently active",
+    fn: (a, b) => new Date(b.last_active) - new Date(a.last_active),
   },
 };
 
@@ -420,8 +425,12 @@ export default function AdminRemakers() {
                     size={72}
                     rounded="22px"
                   />
-                  <h3>{r.full_name}</h3>
+                  <h3>
+                    {r.full_name}
+                    {isOnline(r) && <i className="au-online-dot" title="Online now" aria-label="Online now" />}
+                  </h3>
                   <span className="rm-art">“{r.username}”</span>
+                  <span className="rm-presence"><Presence account={r} /></span>
                   <StatusBadge status={r.status} />
                 </div>
                 <div className="rm-card-meta">
@@ -508,9 +517,9 @@ export default function AdminRemakers() {
                   <th>ReMaker</th>
                   <th className="col-loc">Location</th>
                   <th className="col-method">Rating</th>
-                  <th className="col-activity">Products · Sales</th>
+                  <th className="col-activity">Products · Sales · Followers</th>
                   <th className="col-joined">Joined</th>
-                  <th className="col-seen">Followers</th>
+                  <th className="col-seen">Last active</th>
                   <th>Status</th>
                   <th className="col-menu">
                     <span className="sr-only">Actions</span>
@@ -546,7 +555,10 @@ export default function AdminRemakers() {
                           size={40}
                         />
                         <div>
-                          <strong>{r.full_name}</strong>
+                          <strong>
+                            {r.full_name}
+                            {isOnline(r) && <i className="au-online-dot" title="Online now" aria-label="Online now" />}
+                          </strong>
                           <span>
                             “{r.username}” · {r.email}
                           </span>
@@ -573,8 +585,12 @@ export default function AdminRemakers() {
                           <b>{r.profile.total_uploads}</b>
                         </span>
                         <i />
-                        <span>
+                        <span title="Sales">
                           <b>{r.profile.total_sales}</b>
+                        </span>
+                        <i />
+                        <span title="Followers">
+                          <b>{r.followers}</b>
                         </span>
                       </div>
                     </td>
@@ -584,7 +600,11 @@ export default function AdminRemakers() {
                       </span>
                     </td>
                     <td className="col-seen">
-                      <span className="au-muted-strong">{r.followers}</span>
+                      {isOnline(r) ? (
+                        <Presence account={r} />
+                      ) : (
+                        <span className="au-muted-strong">{timeAgo(r.last_active)}</span>
+                      )}
                     </td>
                     <td>
                       <StatusBadge status={r.status} />

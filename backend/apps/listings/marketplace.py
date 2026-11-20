@@ -94,6 +94,8 @@ def card(kind, o, request):
         # ReOrbit store listings can be sold without returns ("Accept returns within 7 days" off)
         "returnable": bool(getattr(o, "returnable", True)),
     }
+    sale = sale_of(o)  # below its original price: shown struck through, and coupons skip it
+    base.update(mrp=sale["mrp"] if sale else None, off=sale["off"] if sale else None)
     if kind == "user":
         return {**base, "price": o.listing_price, "stock": o.quantity, "sold_out": False,
                 "condition": o.condition, "city": o.city,
@@ -105,10 +107,8 @@ def card(kind, o, request):
                 "customization_available": o.customization_available,
                 "seller": {"type": "remaker", "id": o.remaker.public_id,
                            "name": o.remaker.full_name, "username": o.remaker.username}}
-    sale = sale_of(o)  # below its original price: shown struck through, and coupons skip it
     return {**base, "price": o.price, "stock": o.stock, "sold_out": sold_out,
             "condition": getattr(o, "condition", "") or "Good",
-            "mrp": sale["mrp"] if sale else None, "off": sale["off"] if sale else None,
             "seller": {"type": "admin", "id": o.admin.public_id, "name": "ReOrbit"}}
 
 

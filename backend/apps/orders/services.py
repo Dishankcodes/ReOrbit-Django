@@ -247,20 +247,38 @@ def split_discount(discount, totals):
     return shares
 
 
-def _seller_types(plan):
+def _seller_types(plan, everything=False):
     """Who sells the full-price items in the cart (user / remaker / platform): a coupon for ReMaker
     creations or for ReOrbit's own products needs one of those in the cart (sale items don't count)."""
-    return {g["seller"]["type"] for g in plan["groups"] if g["eligible"]}
+    return {g["seller"]["type"] for g in plan["groups"] if everything or g["eligible"]}
 
 
-SALE_ONLY = "Coupons don't apply to items already on sale. Add a full-price item to use this code."
+SALE_ONLY = ("Coupons and points vouchers don't apply to items already on sale. Add a full-price item, "
+             "or use a donation voucher (those work on sale items too).")
+
+
+def _is_donation_voucher(code):
+    """Donation vouchers are a thank-you for giving, so they work on sale items too."""
+    from apps.rewards.models import Voucher
+
+    return Voucher.objects.filter(code=vouchers.clean_code(code), source_type="donation").exists()
+
+
+def voucher_base(plan, voucher):
+    """What each order's share of the discount is worked out on: the full-price part of the cart,
+    or everything for a donation voucher."""
+    full = voucher is not None and voucher.source_type == "donation"
+    return [g["subtotal"] if full else g["eligible"] for g in plan["groups"]]
 
 
 def _voucher(buyer, code, plan, lock=False):
-    """Check a voucher against the full-price part of the cart only. Items already on sale (a ReOrbit
-    product below its MRP) never get a second discount, and don't count towards a minimum order.
-    Returns (voucher, discount) or raises VoucherError."""
+    """Check a voucher against the full-price part of the cart only. Items already on sale (marked
+    down from their original price by the seller) don't get a second discount from a coupon or a
+    points voucher, and don't count towards its minimum order. Donation vouchers apply to the whole
+    cart. Returns (voucher, discount) or raises VoucherError."""
     goods = sum(g["subtotal"] for g in plan["groups"])
+    if _is_donation_voucher(code):
+        return vouchers.check(buyer, code, goods, lock=lock, seller_types=_seller_types(plan, True))
     eligible = sum(g["eligible"] for g in plan["groups"])
     if eligible <= 0 and goods > 0:
         raise VoucherError(SALE_ONLY, "VOUCHER_SALE_ONLY")
@@ -295,7 +313,8 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
         "platform_fee": sum(g["platform_fee"] for g in plan["groups"]),
         "delivery_fee": sum(g["delivery_fee"] for g in plan["groups"]),
         "discount": discount, "voucher": applied, "voucher_error": voucher_error,
-        # coupons only work on full-price items; sale items already have their own discount
+        # coupons and points vouchers only work on full-price items; sale items already have their own
+        # discount (donation vouchers work on everything)
         "coupon_eligible": sum(g["eligible"] for g in plan["groups"]),
         "sale_items": sum(ln["qty"] for g in plan["groups"] for ln in g["lines"] if ln["sale"]),
         "sale_savings": sum((ln["sale"]["mrp"] - ln["unit_price"]) * ln["qty"]
@@ -363,7 +382,7 @@ def _plan(buyer, merged, s, lock):
         g["lines"].append({
             "public_id": pid, "kind": kind, "obj": obj, "qty": qty, "title": obj.title, "unit_price": unit,
             "line_total": unit * qty, "cover": covers[kind].get(obj.pk, ""),
-            "sale": sale_of(obj) if kind == "admin_item" else None,
+            "sale": sale_of(obj),
         })
         if kind in ("item", "remaker_product") and obj.pickup_preference == Item.Pickup.PLATFORM_PICKUP:
             g["platform_pickup"] = True
@@ -459,7 +478,7 @@ def create_checkout(buyer, data, key=None):
                 if reason:
                     raise CheckoutError(reason, {"method": [reason]}, code="COD_BLOCKED")
             # the discount only lands on orders that have full-price items
-            shares = split_discount(discount, [g["eligible"] for g in plan["groups"]])
+            shares = split_discount(discount, voucher_base(plan, voucher))
             payment = Payment.objects.create(
                 **buyer_kit.fields(buyer), method=method, amount=payable, idempotency_key=key or None,
                 status=Payment.Status.COD if cod else Payment.Status.CREATED,

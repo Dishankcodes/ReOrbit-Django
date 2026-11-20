@@ -341,7 +341,16 @@ export default function ProfileShell({
                   </h3>
                   <div className="mk-foot">
                     <div>
-                      <strong>{formatPrice(p.price)}</strong>
+                      <strong>
+                        {formatPrice(p.price)}
+                        {p.mrp > p.price && (
+                          <>
+                            {" "}
+                            <del className="mk-mrp">{formatPrice(p.mrp)}</del>{" "}
+                            <em className="mk-off">{p.off}% off</em>
+                          </>
+                        )}
+                      </strong>
                       <small>
                         <MapPin size={11} /> {p.city}
                       </small>

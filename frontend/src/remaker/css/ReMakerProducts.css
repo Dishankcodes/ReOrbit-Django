@@ -227,6 +227,19 @@
   color: var(--rp-maroon);
 }
 
+.rpl-price-row .rpl-mrp {
+  color: var(--rp-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.rpl-price-row .rpl-off {
+  color: #1f7a4a;
+  font-family: var(--font-sans, inherit);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .rpl-price-row span {
   font-size: 12px;
   color: var(--rp-muted);

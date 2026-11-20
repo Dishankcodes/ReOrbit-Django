@@ -204,6 +204,92 @@ def file_member(account, data):
     return c
 
 
+REVIEW_REASONS = {  # the review report menus use their own wording; map to the complaint reasons
+    "spam": "Fake or paid review", "fake": "Fake or paid review", "paid": "Fake or paid review",
+    "abusive": "Abusive language", "offensive": "Abusive language", "hate": "Abusive language",
+    "harass": "Abusive language", "personal": "Personal information", "private": "Personal information",
+    "off-topic": "Off-topic", "off topic": "Off-topic", "unrelated": "Off-topic", "irrelevant": "Off-topic",
+}
+
+
+def _review_category(reason):
+    if reason in CATEGORIES["Review"]:
+        return reason
+    low = reason.lower()
+    return next((cat for key, cat in REVIEW_REASONS.items() if key in low), "Other")
+
+
+def mirror_review_report(account, review, reason, note=""):
+    """A member or ReMaker reported a review (Reviews flow). Put it in Admin › Complaints too, so it
+    is triaged with every other report, the team is notified and the reporter sees it in My reports.
+    Called inside report_review's transaction; returns the complaint."""
+    kind = "remaker" if isinstance(account, ReMakers) else "user"
+    fk = "target_product_review" if review.public_id.startswith("PRV-") else "target_seller_review"
+    mine = {f"reporter_{kind}": account}
+    open_one = C.objects.filter(status__in=ACTIVE, **{fk: review}, **mine).first()
+    if open_one:
+        return open_one
+    if note.startswith(f"{reason}."):  # the report form repeats the reason at the start
+        note = note[len(reason) + 1:].strip()
+    desc = f"Review report · {reason}" + (f": {note}" if note else "")
+    c = C.objects.create(
+        target_type=Type.REVIEW, **{fk: review}, category=_review_category(reason), description=desc[:1000],
+        source=C.Source.MEMBER, reporter_name=account.full_name,
+        reporter_role="ReMaker" if kind == "remaker" else "User", **mine)
+    event(c, "Complaint filed", f"Review reported by {account.full_name}", "wait")
+    _tell_admins(c)
+    return c
+
+
+def withdraw_review_complaint(account, review):
+    """The reporter took their review report back: drop the matching complaint (or close it if the
+    team had already started on it)."""
+    kind = "remaker" if isinstance(account, ReMakers) else "user"
+    fk = "target_product_review" if review.public_id.startswith("PRV-") else "target_seller_review"
+    for c in C.objects.select_for_update().filter(status__in=ACTIVE, **{fk: review, f"reporter_{kind}": account}):
+        if c.status == Status.OPEN and not c.notes.exists():
+            c.delete()
+        else:
+            _close(c, None, Status.DISMISSED, "dismissed", "The reporter withdrew this report.", "Withdrawn", "neutral")
+
+
+def close_review_complaints(review, admin, upheld, note, reporter_keys=None):
+    """The team settled a review report on the Reviews page: close the matching complaints quietly
+    (the reporter was already told by the Reviews flow). reporter_keys limits it to those reporters."""
+    fk = "target_product_review" if review.public_id.startswith("PRV-") else "target_seller_review"
+    status, action = (Status.RESOLVED, "removedReview") if upheld else (Status.DISMISSED, "dismissed")
+    label, tone = ("Review removed", "bad") if upheld else ("Dismissed", "neutral")
+    for c in C.objects.select_for_update().filter(status__in=ACTIVE, **{fk: review}):
+        who = c.reporter_user or c.reporter_remaker
+        if reporter_keys is not None and (who is None or _key(who) not in reporter_keys):
+            continue
+        _close(c, admin, status, action, f"Settled from Reviews. {note}".strip(), label, tone)
+
+
+def _key(account):
+    from apps.core import buyers
+    return buyers.key_of(account)
+
+
+def _settle_review_reports(c, admin):
+    """A review complaint was closed here: settle the matching review reports quietly, so the
+    Reviews › Reported queue doesn't keep a report the team already handled."""
+    from apps.reviews.models import ReviewReport
+    review = target_row(c)
+    link = {"product_review": review} if review.public_id.startswith("PRV-") else {"seller_review": review}
+    pending = ReviewReport.objects.select_for_update().filter(status=ReviewReport.Status.PENDING, **link)
+    upheld = c.resolution_action == "removedReview"
+    if not upheld:  # only this reporter's report; others still wait for their own decision
+        who = c.reporter_user or c.reporter_remaker
+        if who is None:
+            return
+        pending = pending.filter(reporter_key=_key(who))
+    status = ReviewReport.Status.UPHELD if upheld or c.status == Status.RESOLVED else ReviewReport.Status.DISMISSED
+    pending.update(status=status, resolved_by=admin, resolved_at=timezone.now(),
+                   resolution_note=f"Settled in complaint {c.public_id}. {c.resolution_note}"[:300],
+                   updated_at=timezone.now())
+
+
 @transaction.atomic
 def log_by_admin(admin, data, ip=None):
     """The team logs a complaint that came by email, phone or from the pickup team."""
@@ -250,6 +336,8 @@ def _finish(c, admin, p, status, action, note, label, tone):
         for x in C.objects.select_for_update().filter(status__in=ACTIVE, **{f"{fk}_id": getattr(c, f"{fk}_id")}).exclude(pk=c.pk):
             _close(x, admin, Status.RESOLVED, action, f"Handled together with {c.public_id}. {note}",
                    "Resolved", "good")
+            if x.target_type == Type.REVIEW:
+                _settle_review_reports(x, admin)
             _tell_reporter(x, "Your report was handled", f"{x.public_id}: our team took action on what you reported.")
 
 
@@ -460,6 +548,8 @@ def run_action(public_id, key, admin, payload=None, ip=None):
             raise ComplaintError("That complaint no longer exists.", code="NOT_FOUND", status=404)
         before = c.status
         handler(c, admin, payload)
+        if c.target_type == Type.REVIEW and before in ACTIVE and c.status not in ACTIVE:
+            _settle_review_reports(c, admin)
         audit(admin, f"complaint.{key}", "complaint", c.public_id, before={"status": before},
               after={"status": c.status}, ip=ip)
     return c

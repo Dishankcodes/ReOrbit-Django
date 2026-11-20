@@ -27,6 +27,7 @@ import { loadKnownPlace } from "../../../api/knownPlace";
 import CitySelect from "../../../shared/components/CitySelect";
 import "../../../shared/components/CitySelect.css";
 import { formatPrice } from "../../../data/marketplaceData";
+import SalePriceField, { salePriceProblem } from "../../../shared/components/SalePriceField";
 import Crumbs from "../../components/ui/Crumbs";
 import PhotoUploader from "../../components/ui/PhotoUploader";
 import EmptyState from "../../components/ui/EmptyState";
@@ -52,6 +53,7 @@ const makeBlank = () => {
     condition: "",
     quantity: 1,
     price: "",
+    mrp: "",
     images: [],
     city: savedProfile.city || "",
     pincode: savedProfile.pincode || "",
@@ -68,6 +70,7 @@ const toForm = (l) => ({
   condition: l.condition,
   quantity: l.quantity,
   price: String(l.price),
+  mrp: l.mrp ? String(l.mrp) : "",
   images: (l.imageRows || []).map((r, i) => ({
     id: `img-${r.id}`,
     serverId: r.id,
@@ -186,6 +189,8 @@ export default function UserSellForm() {
       if (!(price >= 50)) e.price = "Enter a price of at least ₹50.";
       else if (price > 200000)
         e.price = "The maximum listing price is ₹2,00,000.";
+      const saleProblem = salePriceProblem(price, form.mrp);
+      if (saleProblem) e.mrp = saleProblem;
       if (form.quantity < 1) e.quantity = "Quantity must be at least 1.";
     }
     if (index === 1) {
@@ -478,6 +483,12 @@ export default function UserSellForm() {
                   />,
                 )}
               </div>
+              <SalePriceField
+                price={form.price}
+                value={form.mrp}
+                onChange={(v) => set("mrp", v)}
+                error={errors.mrp}
+              />
             </div>
           )}
 

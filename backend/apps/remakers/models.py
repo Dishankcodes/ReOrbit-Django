@@ -133,6 +133,10 @@ class RemakerProduct(SellableBase):
         REFURBISHED = "Refurbished", "Refurbished"
         BRAND_NEW = "Brand new", "Brand new"
 
+    # original price, shown struck through with "% off". A product on sale doesn't take coupons
+    # or points vouchers (donation vouchers still apply)
+    mrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
     public_id_prefix = "RPR"
     # what kind of piece it is (the marketplace's condition filter): made from rescued material,
     # an old piece restored, or made new by hand

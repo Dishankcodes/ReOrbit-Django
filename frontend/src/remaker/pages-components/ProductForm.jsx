@@ -29,6 +29,7 @@ import { useOrders as useLiveOrders } from "../../user/data/ordersStore";
 import { formatDate } from "../data/ordersStore";
 
 import { REMAKER_CONDITIONS } from "../../shared/conditions";
+import SalePriceField, { salePriceProblem } from "../../shared/components/SalePriceField";
 import "../css/ReMakerProductForm.css";
 
 const MAX_PHOTOS = 4;
@@ -62,6 +63,7 @@ function buildInitial(product) {
     deliveryFee:
       product?.deliveryFee == null ? "" : String(product.deliveryFee),
     price: product?.price ? String(product.price) : "",
+    mrp: product?.mrp ? String(product.mrp) : "",
     stock: product ? product.stock : 1,
     materials: product?.materials || [],
     condition: product?.condition || "Upcycled",
@@ -146,6 +148,7 @@ export default function ProductForm({ mode = "add", product = null }) {
         ? `Write at least ${DESC_MIN} characters about how you made it.`
         : "",
     price: Number(values.price) > 0 ? "" : "Enter a price above ₹0.",
+    mrp: salePriceProblem(values.price, values.mrp),
   };
 
   const checklist = [
@@ -863,6 +866,13 @@ export default function ProductForm({ mode = "add", product = null }) {
                     : "Units you can ship right now."}
                 </span>
               </div>
+              <SalePriceField
+                look="rpf"
+                price={values.price}
+                value={values.mrp}
+                onChange={(v) => setField("mrp", v)}
+                error={errors.mrp}
+              />
             </div>
           </section>
 

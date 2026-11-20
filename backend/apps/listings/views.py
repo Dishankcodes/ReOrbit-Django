@@ -147,6 +147,8 @@ def clean_listing(data, *, existing=None):
         values["listing_price"] = _whole_rupees(
             data.get("listing_price"), "listing_price", errors, required=False
         )
+    from .sellables import clean_mrp
+    clean_mrp(data, values, errors)
     if "estimated_price" in data:
         values["estimated_price"] = _whole_rupees(
             data.get("estimated_price"), "estimated_price", errors, required=False
@@ -180,7 +182,8 @@ def clean_listing(data, *, existing=None):
 
 def readiness(item):
     """What is still missing before this listing can go live."""
-    errors = {}
+    from .sellables import sale_errors
+    errors = sale_errors(item, "listing_price")
     if len((item.description or "").strip()) < 10:
         errors["description"] = ["Describe the item (at least 10 characters)."]
     if not item.condition:
@@ -350,6 +353,9 @@ class MyListView(MyBase):
         # City and pincode fall back to the seller's profile
         item.city = values.get("city") or getattr(profile, "city", "") or ""
         item.pincode = values.get("pincode") or getattr(profile, "pincode", "") or ""
+        from .sellables import sale_errors
+        if (bad := sale_errors(item, "listing_price")):
+            return fail("Please correct the highlighted fields.", errors=bad)
         item.save()
         audit(user, "listing.create", "item", item.public_id, after=_snapshot(item), ip=IP(request))
         return self.show(request, item, "Draft saved.", 201)
@@ -370,6 +376,10 @@ class MyDetailView(MyBase):
         before = _snapshot(item)
         for k, v in values.items():
             setattr(item, k, v)
+        if "mrp" in values or "listing_price" in values:
+            from .sellables import sale_errors
+            if (bad := sale_errors(item, "listing_price")):
+                return fail("Please correct the highlighted fields.", errors=bad)
         if item.suggestion_status == Item.Suggestion.PENDING and "listing_price" in values \
                 and values["listing_price"] != before_price(before):
             item.suggestion_status = Item.Suggestion.DECLINED  # the seller chose their own price

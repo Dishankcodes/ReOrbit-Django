@@ -314,8 +314,8 @@ export default function UserProductDetails() {
           </div>
           {item.mrp > item.price && (
             <p className="pd-sale-note">
-              Already on sale: you save {formatPrice(item.mrp - item.price)}. Coupons and vouchers don't apply to sale
-              items.
+              Already discounted: you save {formatPrice(item.mrp - item.price)}. Because it's already discounted, it
+              isn't eligible for coupons or points vouchers. Donation vouchers still apply.
             </p>
           )}
           <p className="pd-summary">{item.summary}</p>

@@ -100,8 +100,33 @@ def clean_product(data, *, existing=None, extra=None):
     return values, errors
 
 
+def clean_mrp(data, values, errors, field="mrp"):
+    """The optional original price: blank or 0 clears it."""
+    if field not in data:
+        return
+    raw = data.get(field)
+    if raw in (None, "", 0, "0"):
+        values[field] = None
+        return
+    try:
+        mrp = Decimal(str(raw))
+    except InvalidOperation:
+        mrp = Decimal("-1")
+    if mrp != mrp.to_integral_value() or not 1 <= mrp <= MAX_PRICE:
+        errors[field] = ["Enter the original price in whole rupees."]
+    else:
+        values[field] = mrp
+
+
+def sale_errors(obj, price_field="price"):
+    from apps.core.pricing import sale_problem
+
+    why = sale_problem(getattr(obj, "mrp", None), getattr(obj, price_field, None))
+    return {"mrp": [why]} if why else {}
+
+
 def readiness(obj):
-    errors = {}
+    errors = sale_errors(obj)
     if len((obj.description or "").strip()) < 10:
         errors["description"] = ["Describe the product (at least 10 characters)."]
     if not obj.price or obj.price < 1:
@@ -186,6 +211,8 @@ class ListCreate(SellableViews):
             return fail("Please correct the highlighted fields.", errors=errors)
         values.setdefault("price", Decimal("0"))
         obj = self.model(**self.create_kwargs(request, values), **values)
+        if (bad := sale_errors(obj)):
+            return fail("Please correct the highlighted fields.", errors=bad)
         obj.save()
         audit(self.owner(request), f"{self.audit_name}.create", self.audit_name, obj.public_id,
               after=self.snapshot(obj), ip=IP(request))
@@ -207,6 +234,8 @@ class Detail(SellableViews):
         before = self.snapshot(obj)
         for k, v in values.items():
             setattr(obj, k, v)
+        if ("mrp" in values or "price" in values) and (bad := sale_errors(obj)):
+            return fail("Please correct the highlighted fields.", errors=bad)
         if obj.status in (S.LISTED, S.SOLD_OUT):  # a live product must stay complete
             missing = {k: v for k, v in readiness(obj).items() if k != "stock"}
             if missing:

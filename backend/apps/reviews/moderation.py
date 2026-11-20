@@ -54,6 +54,8 @@ def report_review(account, review_id, reason, note=""):
     if my_report(account, review):
         raise ReviewError("You have already reported this review.", status=409, code="already_reported")
     rep = ReviewReport.objects.create(reason=reason, note=note, **who, **_link(review))
+    from apps.complaints.services import mirror_review_report  # complaints imports this module
+    mirror_review_report(account, review, reason, note)
     return rep
 
 
@@ -66,6 +68,8 @@ def withdraw_report(account, review_id):
     if rep.status != ReviewReport.Status.PENDING:
         raise ReviewError("This report was already looked at, so it can't be withdrawn.", status=409, code="report_settled")
     rep.delete()
+    from apps.complaints.services import withdraw_review_complaint
+    withdraw_review_complaint(account, review)
 
 
 # ------------------------------------------------------------------------- admin
@@ -148,5 +152,8 @@ def resolve_report(admin, report_id, action, note="", ip=None):
                ("The review was hidden." if action == "uphold" else "The review follows our rules, so it stays up.")
                + (f" {note}" if note else ""),
                module="reviews", target_url=url, ref_type="review", ref_id=review.public_id)
+    from apps.complaints.services import close_review_complaints
+    close_review_complaints(review, admin, action == "uphold", note,
+                            None if action == "uphold" else {r.reporter_key for r in others})
     audit(admin, f"review.report_{action}", "review", review.public_id, reason=note, ip=ip)
     return review

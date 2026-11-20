@@ -1,0 +1,63 @@
+.spf .spf-opt {
+  margin-left: 4px;
+  color: #7a877f;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: none;
+}
+.spf-preview {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  color: #2f4a3c;
+  font-size: 13px;
+}
+.spf-preview s {
+  color: #8a958e;
+}
+.spf-preview em {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #e5f4ea;
+  color: #1c7a45;
+  font-style: normal;
+  font-weight: 800;
+}
+.spf-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff7e8;
+  color: #7a5414;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.spf-rule svg {
+  flex: none;
+  margin-top: 2px;
+}
+.spf--rpf {
+  grid-column: 1 / -1;
+}
+.spf-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d9e3dc;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.spf-input:focus {
+  border-color: #2f6a4f;
+  outline: none;
+}
+.spf-input.is-error {
+  border-color: #c2410c;
+}
