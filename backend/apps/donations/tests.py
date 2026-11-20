@@ -47,8 +47,10 @@ class DonationTests(OrderBase):
         self.pickup_addr = r.data["data"]["address"]["id"]
         # Real teams are created in Admin > Pickup teams (the old seeded teams were removed), so make two here.
         self.partner = PickupPartner.objects.create(name="Pickup team A", lead_name="Ravi Kumar", phone="+91 98250 41011")
-        PickupPartner.objects.create(name="Pickup team B", lead_name="Imran Qureshi", phone="+91 98251 52021")
-        PickupPartner.objects.create(name="Pickup team C", lead_name="Sunita Devi", phone="+91 98252 63031")
+        b = PickupPartner.objects.create(name="Pickup team B", lead_name="Imran Qureshi", phone="+91 98251 52021")
+        c = PickupPartner.objects.create(name="Pickup team C", lead_name="Sunita Devi", phone="+91 98252 63031")
+        # tokens are stored hashed: keep the ones shown at creation, as the admin would hand them out
+        self.tokens = {"Pickup team A": self.partner.raw_token, "Pickup team B": b.raw_token, "Pickup team C": c.raw_token}
 
     # ---- helpers ------------------------------------------------------- #
     def donate(self, who=None, photos=1, **over):
@@ -72,10 +74,10 @@ class DonationTests(OrderBase):
         return self.get(f"/api/donations/me/{donation_id}/", as_=self.buyer).data["data"]["pickup"]["handover_code"]
 
     def partner_get(self, path, token=None):
-        return self.client.get(path, HTTP_X_PARTNER_TOKEN=token or self.partner.token)
+        return self.client.get(path, HTTP_X_PARTNER_TOKEN=token or self.tokens["Pickup team A"])
 
     def partner_post(self, path, body=None, token=None):
-        return self.client.post(path, body or {}, format="json", HTTP_X_PARTNER_TOKEN=token or self.partner.token)
+        return self.client.post(path, body or {}, format="json", HTTP_X_PARTNER_TOKEN=token or self.tokens["Pickup team A"])
 
     def received_donation(self, quantity=1, **over):
         """A donation taken all the way to Received via the real partner handoff. Returns its public id."""
@@ -87,6 +89,19 @@ class DonationTests(OrderBase):
         r = self.act(did, "received")
         self.assertEqual(r.status_code, 200, r.data)
         return did
+
+    def test_five_wrong_codes_lock_the_donation_pickup(self):
+        did = self.donate().data["data"]["id"]
+        self.accept(did)
+        for _ in range(4):
+            r = self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": "0000"})
+            self.assertEqual(r.data["code"], "CODE_MISMATCH")
+        r = self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": "0000"})
+        self.assertEqual((r.status_code, r.data["code"]), (423, "CODE_LOCKED"))
+        good = self.handover_code(did)
+        r = self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": good})
+        self.assertEqual(r.status_code, 423)  # locked, even with the right code
+        self.assertEqual(Donation.objects.get(public_id=did).handover_tries, 5)
 
     # ---- 1. pickup handover verification -------------------------------- #
     def test_collection_needs_the_donors_code(self):
@@ -113,7 +128,7 @@ class DonationTests(OrderBase):
 
         r = self.partner_get("/api/donations/partner/pickups/")
         self.assertEqual([p["id"] for p in r.data["data"]], [mine])
-        r = self.partner_get("/api/donations/partner/pickups/", token=other.token)
+        r = self.partner_get("/api/donations/partner/pickups/", token=self.tokens[other.name])
         self.assertEqual([p["id"] for p in r.data["data"]], [theirs])
 
         # team A cannot touch team B's pickup
@@ -127,10 +142,27 @@ class DonationTests(OrderBase):
         self.assertEqual(self.get("/api/donations/admin/partners/", as_=self.boss).status_code, 403)
         r = self.get("/api/donations/admin/partners/", as_=self.ops)
         self.assertEqual({p["name"] for p in r.data["data"]}, {"Pickup team A", "Pickup team B", "Pickup team C"})
-        self.assertTrue(all(p["token"] for p in r.data["data"]))
+        # the list never shows a token, only its last 4 characters and when it ends
+        self.assertTrue(all("token" not in p and p["token_hint"] and p["token_expires_at"] for p in r.data["data"]))
         r = self.post("/api/donations/admin/partners/", {"name": "Pickup team D", "phone": "9000000000"}, as_=self.ops)
         self.assertEqual(r.status_code, 201, r.data)
-        self.assertTrue(r.data["data"]["token"])
+        raw = r.data["data"]["token"]  # shown once
+        d = PickupPartner.objects.get(name="Pickup team D")
+        self.assertNotEqual(d.token, raw)  # stored hashed
+        self.assertEqual(self.partner_get("/api/donations/partner/pickups/", token=raw).status_code, 200)
+
+    def test_reset_and_expired_partner_tokens(self):
+        old = self.tokens["Pickup team A"]
+        r = self.post(f"/api/donations/admin/partners/{self.partner.public_id}/token/", {}, as_=self.ops)
+        self.assertEqual(r.status_code, 200, r.data)
+        new = r.data["data"]["token"]
+        self.assertEqual(self.partner_get("/api/donations/partner/pickups/", token=old).status_code, 401)
+        self.assertEqual(self.partner_get("/api/donations/partner/pickups/", token=new).status_code, 200)
+        from datetime import timedelta
+        from django.utils import timezone
+        PickupPartner.objects.filter(pk=self.partner.pk).update(token_expires_at=timezone.now() - timedelta(days=1))
+        r = self.partner_get("/api/donations/partner/pickups/", token=new)
+        self.assertEqual((r.status_code, r.data["code"]), (401, "PARTNER_TOKEN_EXPIRED"))
 
     # ---- 3. failed pickup handling ---------------------------------------- #
     def test_failed_pickup_is_rescheduled_not_rejected(self):
@@ -151,7 +183,7 @@ class DonationTests(OrderBase):
                          (200, "Scheduled", "Pickup team B"))
         code = self.handover_code(did)
         r = self.partner_post(f"/api/donations/partner/pickups/{did}/collect/", {"code": code},
-                              token=PickupPartner.objects.get(name="Pickup team B").token)
+                              token=self.tokens["Pickup team B"])
         self.assertEqual(r.status_code, 200, r.data)
 
     def test_cancel_still_possible_after_a_failed_pickup(self):

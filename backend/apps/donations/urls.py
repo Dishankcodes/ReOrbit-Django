@@ -9,6 +9,7 @@ urlpatterns = [
     path("me/<str:public_id>/certificate/", v.MyDonationCertificate.as_view()),
     path("me/<str:public_id>/<str:action>/", v.MyDonationAction.as_view()),
     path("admin/partners/", v.AdminPickupPartners.as_view()),
+    path("admin/partners/<str:public_id>/token/", v.AdminPickupPartnerToken.as_view()),
     path("admin/reward-options/", v.AdminRewardOptions.as_view()),
     path("admin/", v.AdminDonations.as_view()),
     path("admin/<str:public_id>/", v.AdminDonationDetail.as_view()),

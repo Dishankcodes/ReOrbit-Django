@@ -13,6 +13,7 @@ from apps.core import buyers
 from apps.core.responses import created, fail, ok
 from apps.admins.models import Admins
 from apps.orders.models import Order
+from apps.core.images import process_image
 from apps.core.validators import validate_image
 from apps.orders.serializers import media_url
 from .models import SupportTicket, SupportTicketAdminRead, TicketAttachment, TicketMessage
@@ -316,8 +317,10 @@ def _photos(request):
 
 
 def _attach(message, files):
+    # a clean copy of each photo: no location or camera data (EXIF), no original file name, at most 1600px
     for f in files:
-        TicketAttachment.objects.create(message=message, image=f)
+        f.seek(0)
+        TicketAttachment.objects.create(message=message, image=process_image(f, max_side=1600))
 
 
 def _event(ticket, text):

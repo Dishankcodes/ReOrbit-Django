@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.admins.models import Admins
+from apps.core import handover
 from apps.core.services import audit, notify
 from apps.core.validators import validate_phone
 from apps.donations import services as donation_services
@@ -437,12 +438,18 @@ def _schedule(r, admin, p, *, again=False):
     if not _has_active_lead(partner):
         raise _fix({"partner": ["This team has no active lead yet."]})
     r.pickup_date, r.pickup_slot, r.assigned_partner, r.status = day, slot, partner, R.SCHEDULED
-    r.save(update_fields=["pickup_date", "pickup_slot", "assigned_partner", "status", "updated_at"])
+    fields = ["pickup_date", "pickup_slot", "assigned_partner", "status", "updated_at"]
+    if not again or not r.handover_code or r.handover_tries >= handover.MAX_TRIES:
+        # a fresh code for a new booking, or after too many wrong codes locked the old one
+        r.handover_code, r.handover_tries = handover.new_code(), 0
+        fields += ["handover_code", "handover_tries"]
+    r.save(update_fields=fields)
     label = "Pickup rescheduled" if again else "Pickup scheduled"
     detail = f"{donation_services.when(day, slot)} · {partner.name}"
     _event(r, label, detail, "wait" if again else "good", "admin")
     _notify_seller(r, "Pickup scheduled" if not again else "Pickup rescheduled",
-                   f"{_what(r)}: {donation_services.when(day, slot)}, team {partner.name}.")
+                   f"{_what(r)}: {donation_services.when(day, slot)}, team {partner.name}. "
+                   f"Show the pickup team your handover code {r.handover_code} when they collect it.")
 
 
 def _order_step(r, admin, action, courier="", tracking=""):
@@ -457,6 +464,8 @@ def _order_step(r, admin, action, courier="", tracking=""):
 
 def _picked_up(r, admin, p):
     _need(r, R.SCHEDULED)
+    # the seller's 4-digit code proves the team really collected it (a wrong one is counted by the caller)
+    handover.check(r, p.get("code"))
     if r.order_id:
         # ReOrbit is the courier now. The admin can enter a partner courier's number; else the pickup id tracks it.
         courier = _text(p.get("courier_name"), 40) or "ReOrbit Delivery"
@@ -522,10 +531,20 @@ def run_item_action(public_id, key, admin, payload=None, ip=None):
     if handler is None:
         raise PickupError("Unknown action.", code="UNKNOWN_ACTION", status=404)
     payload = payload if hasattr(payload, "get") else {}
-    with transaction.atomic():
-        r = _lock_request(public_id)
-        before = r.status
-        handler(r, admin, payload)
-        audit(admin, f"pickup.{key}", "pickup_request", r.public_id, before={"status": before},
-              after={"status": r.status}, ip=ip)
+    try:
+        with transaction.atomic():
+            r = _lock_request(public_id)
+            before = r.status
+            handler(r, admin, payload)
+            audit(admin, f"pickup.{key}", "pickup_request", r.public_id, before={"status": before},
+                  after={"status": r.status}, ip=ip)
+    except handover.CodeLocked:
+        raise PickupError(handover.LOCKED_MESSAGE, {"code": [handover.LOCKED_MESSAGE]}, code="CODE_LOCKED", status=423)
+    except handover.WrongCode:
+        pk = PickupRequest.objects.filter(public_id=public_id).values_list("pk", flat=True).first()
+        left = handover.record_miss(PickupRequest, pk)
+        who = "the seller" if PickupRequest.objects.filter(pk=pk, order__isnull=False).exists() else "the customer"
+        msg = handover.miss_message(left, who)
+        raise PickupError(msg, {"code": [msg]}, code="CODE_LOCKED" if left <= 0 else "CODE_MISMATCH",
+                          status=423 if left <= 0 else 400)
     return r

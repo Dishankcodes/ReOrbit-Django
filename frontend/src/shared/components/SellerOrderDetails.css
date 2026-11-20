@@ -541,3 +541,38 @@
   background: #fbeceb;
   color: #9b2c24;
 }
+
+/* the 4-digit code the seller shows ReOrbit's pickup team */
+.sod-handover {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--so-accent, #1f4a3a);
+  border-radius: 14px;
+  background: #f6faf7;
+}
+.sod-handover span {
+  grid-column: 1 / -1;
+  color: #5d6b64;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sod-handover strong {
+  font-size: 28px;
+  letter-spacing: 0.3em;
+  color: var(--so-accent, #1f4a3a);
+}
+.sod-handover small {
+  color: #5d6b64;
+  font-size: 12.5px;
+}
+@media (max-width: 480px) {
+  .sod-handover {
+    grid-template-columns: 1fr;
+  }
+}

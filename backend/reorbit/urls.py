@@ -4,7 +4,6 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("api/core/", include("apps.core.urls")),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/users/", include("apps.users.urls")),
@@ -36,3 +35,8 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Django's own admin site (/admin/) is off: ReOrbit has its own admin panel, and an extra login page
+# is one more thing to attack. Set DJANGO_ADMIN=True in .env to open it locally for debugging.
+if settings.DJANGO_ADMIN:
+    urlpatterns.insert(0, path("admin/", admin.site.urls))

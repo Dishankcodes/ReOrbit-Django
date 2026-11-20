@@ -54,6 +54,22 @@ class PostDeliveryBase(OrderBase):
 
     def act(self, oid, item, action, body=None, who=None):
         managed = Order.objects.filter(public_id=oid, managed_delivery=True).exists()
+        if who is None and managed and action in ("ship", "deliver"):
+            # ReOrbit's own delivery moves with its pickup (Admin › Pickups): do what the pickup would
+            from apps.orders import services as order_services
+            order = Order.objects.get(public_id=oid)
+            body = body or {}
+            try:
+                order_services.advance_order(order.pk, action, actor_kind="admin", actor=self.boss,
+                                             courier_name=body.get("courier_name", ""),
+                                             tracking_no=body.get("tracking_no", ""))
+            except order_services.CheckoutError as e:
+                from types import SimpleNamespace
+                return SimpleNamespace(status_code=e.status, data={"message": e.message, "errors": e.errors})
+            return self.get(f"/api/orders/admin/{oid}/", as_=self.boss)
+        if who is None and action == "deliver" and item is not self.tote:
+            # a courier order: the buyer confirms it arrived (sellers can't mark their own delivered)
+            return self.post(f"/api/orders/me/{oid}/received/", {}, as_=self.buyer)
         if item is self.tote or (who is None and managed and action in self.MANAGED_ADMIN_STEPS):
             # ReOrbit's own store, or a "Managed by ReOrbit" order after the pickup: an admin handles it
             return self.post(f"/api/orders/admin/{oid}/{action}/", body or {}, as_=who or self.boss)
@@ -98,7 +114,8 @@ class TrackingTests(PostDeliveryBase):
         self.assertEqual(self.act(oid, self.table, "ship", {"courier_name": "Delhivery", "tracking_no": "1111111111"}).status_code, 400)  # not a real-looking number
         ok = self.act(oid, self.table, "ship", {"courier_name": "delhivery", "tracking_no": " 12345 678901 "})
         self.assertEqual(ok.status_code, 200, ok.data)
-        self.assertEqual(ok.data["data"]["order"]["courier"], {"name": "Delhivery", "tracking_no": "12345678901"})
+        self.assertEqual({k: ok.data["data"]["order"]["courier"][k] for k in ("name", "tracking_no")},
+                         {"name": "Delhivery", "tracking_no": "12345678901"})
         oid2 = self.place(self.table)
         self.act(oid2, self.table, "pack")
         dup = self.act(oid2, self.table, "ship", {"courier_name": "Delhivery", "tracking_no": "12345678901"})

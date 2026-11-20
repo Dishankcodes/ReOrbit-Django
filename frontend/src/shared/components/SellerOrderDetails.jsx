@@ -301,22 +301,21 @@ export default function SellerOrderDetails({
   const managed = !!o.managed_delivery;
   const reorbitHands = managed && !isAdmin;
   const pickup = o.pickup || null;
-  const next = managed && isAdmin
-    ? // ReOrbit ships only after the seller asked for the pickup (it then shows in Admin › Pickups)
-      {
-        Confirmed: ["pack", "Mark as packed"],
-        Packed: pickup?.requested ? ["ship", "Mark as shipped"] : null,
-        Shipped: ["deliver", "Mark as delivered"],
-      }[o.status]
-    : reorbitHands
+  /* Proof of delivery:
+     - ReOrbit delivery (managed): after packing, everything moves from the pickup in Admin › Pickups
+       (picked up = shipped, completed = delivered). No ship / deliver buttons here, for anyone.
+     - Courier orders: the seller packs and ships with the tracking number; only the buyer ("I received
+       it") or ReOrbit, after checking the courier's tracking page, can mark it delivered.
+     - ReOrbit's own store: ReOrbit is the seller and ships and delivers it. */
+  const next = managed
     ? {
         Confirmed: ["pack", "Mark as packed"],
-        Packed: pickup?.requested ? null : ["pickup", "Ask ReOrbit to pick up"],
+        Packed: !isAdmin && !pickup?.requested ? ["pickup", "Ask ReOrbit to pick up"] : null,
       }[o.status]
     : {
         Confirmed: ["pack", "Mark as packed"],
         Packed: ["ship", "Mark as shipped"],
-        Shipped: ["deliver", "Mark as delivered"],
+        Shipped: isAdmin ? ["deliver", platform ? "Mark as delivered" : "Checked: mark as delivered"] : null,
       }[o.status];
   const courierValue =
     vals.courier_name === "Other" ? vals.other : vals.courier_name;
@@ -346,14 +345,22 @@ export default function SellerOrderDetails({
     (ret?.status === "Approved" && (mine || isAdmin)) ||
     canDecide;
 
+  const autoOn = o.auto_confirm_on
+    ? new Date(o.auto_confirm_on).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : "";
   const hint = {
     Pending_Payment:
       "The buyer hasn't finished paying yet. It moves to your orders as soon as the payment goes through.",
     Confirmed: "Pack the item safely, then mark it as packed.",
     Packed:
       "Hand the parcel to a courier and add the tracking number. You pay for shipping; the delivery fee the buyer paid is added to your earning.",
-    Shipped:
-      "Mark it delivered once the buyer has it. If the courier couldn't deliver, mark it as not delivered.",
+    Shipped: isAdmin
+      ? platform
+        ? "Mark it delivered once the buyer has it. If the courier couldn't deliver, mark it as not delivered."
+        : "Open the courier's tracking page. Mark it delivered only when the courier shows it delivered (the buyer can also confirm it)."
+      : `On its way. It becomes delivered when the buyer confirms it or ReOrbit checks the courier's tracking${
+          autoOn ? `, or by itself on ${autoOn} if the buyer doesn't report a problem` : ""
+        }. If the courier couldn't deliver, mark it as not delivered.`,
     Delivered: o.seller_earning
       ? o.payment.method === "COD" &&
         !o.cod_received_at &&
@@ -469,6 +476,25 @@ export default function SellerOrderDetails({
                 {isAdmin && pickup.id && (
                   <Link to={`/admin-pickups/${pickup.id}`}> · Open pickup {pickup.id}</Link>
                 )}
+              </p>
+            )}
+            {!isAdmin && pickup?.handover_code && (
+              <div className="sod-handover" role="note">
+                <span>Handover code</span>
+                <strong aria-label={`Handover code ${pickup.handover_code.split("").join(" ")}`}>
+                  {pickup.handover_code}
+                </strong>
+                <small>
+                  Give the parcel only to the ReOrbit team that reads this code back to you, or show it when
+                  they ask. Never share it on a call or chat.
+                </small>
+              </div>
+            )}
+            {managed && isAdmin && (
+              <p className="sod-pickup st-reorbit">
+                <Truck size={15} /> The seller chose <b>&nbsp;ReOrbit delivery</b>. After packing, its status moves only
+                from {pickup?.id ? <Link to={`/admin-pickups/${pickup.id}`}>&nbsp;Admin › Pickups ({pickup.id})</Link> : " Admin › Pickups"}
+                : picked up = shipped, completed = delivered.
               </p>
             )}
             {managed && isAdmin && !pickup?.status && ["Confirmed", "Packed"].includes(o.status) && (
@@ -1083,6 +1109,14 @@ export default function SellerOrderDetails({
                     <br />
                     Tracking: <b>{o.courier.tracking_no}</b>{" "}
                     <Copyable text={o.courier.tracking_no} />
+                    {o.courier.tracking_url && (
+                      <>
+                        <br />
+                        <a href={o.courier.tracking_url} target="_blank" rel="noopener noreferrer">
+                          Track on {o.courier.name} ↗
+                        </a>
+                      </>
+                    )}
                   </p>
                 ) : (
                   <p className="sod-muted">

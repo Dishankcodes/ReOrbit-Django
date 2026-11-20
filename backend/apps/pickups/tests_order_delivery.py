@@ -52,7 +52,17 @@ class ManagedDeliveryTests(PostDeliveryBase):
 
         p = self.pickup(oid)
         self.assertEqual(self.admin(p, "schedule", date=day(), slot=SLOT, partner="Pickup team A").status_code, 200)
-        picked = self.admin(p, "pickedUp")
+        # the seller sees the 4-digit code on their sale; the team needs it to mark the pickup collected
+        p.refresh_from_db()
+        sale = self.get(f"/api/orders/sales/{oid}/", as_=self.maker).data["data"]["order"]
+        self.assertEqual(sale["pickup"]["handover_code"], p.handover_code)
+        self.assertNotIn("handover_code", self.get(f"/api/orders/admin/{oid}/", as_=self.boss).data["data"]["order"]["pickup"])
+        self.assertEqual(self.admin(p, "pickedUp").status_code, 400)  # no code
+        # the order page can't move a ReOrbit delivery: it goes through the pickup
+        blocked = self.post(f"/api/orders/admin/{oid}/ship/", {"courier_name": "Delhivery", "tracking_no": "98765000002"},
+                            as_=self.boss)
+        self.assertEqual((blocked.status_code, blocked.data["code"]), (409, "USE_PICKUPS"))
+        picked = self.admin(p, "pickedUp", code=p.handover_code)
         self.assertEqual(picked.status_code, 200, picked.data)
         o.refresh_from_db()
         self.assertEqual((o.status, o.courier_name, o.tracking_no), ("Shipped", "ReOrbit Delivery", p.public_id))

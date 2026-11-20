@@ -8,7 +8,9 @@ POST /api/users/me/delete/      and /api/remakers/me/delete/   {confirm: "DELETE
    Nothing is removed yet, so orders, payments, earnings and donations stay intact.
 2. Within 30 days: signing in again restores everything (restore_if_pending, called by the login views).
 3. After 30 days: purge() removes personal details (name, email, phone, address, photos, saved addresses,
-   wishlist, follows, notifications) and soft-deletes listings. Order, payment and donation rows stay
+   wishlist, follows, notifications) and soft-deletes listings. It also deletes their uploaded photos
+   (listings, products, portfolio, donations, reviews, support) from storage and blanks the text of
+   their chat messages and support tickets (see _remove_content). Order, payment and donation rows stay
    for the records, pointing at an anonymous "Deleted member". The email becomes free to sign up again.
    It runs lazily on login and from `python manage.py purge_deleted_accounts` (daily cron).
 
@@ -118,6 +120,64 @@ def is_past_grace(account):
             and timezone.now() - account.deletion_requested_at > timedelta(days=GRACE_DAYS))
 
 
+REMOVED_TEXT = "This message was removed because the account was deleted."
+
+
+def _remove_content(account, kind):
+    """Photos and messages the person left behind. Returns the storage names to delete once the
+    database change is committed (so a failed purge never loses files it still points at).
+    A listing photo that an order or warehouse lot still shows (OrderItem.cover, WarehouseItem.photo)
+    is kept: it belongs to the other person's record of what they bought."""
+    from apps.listings.models import MediaImage
+    from apps.messaging.models import Message
+    from apps.orders.models import OrderItem
+    from apps.reviews.models import ProductReviewPhoto
+    from apps.support.models import TicketAttachment, TicketMessage
+    from apps.warehouse.models import WarehouseItem
+
+    names = []
+
+    def take(qs, field="image"):
+        for row in qs.only("pk", field):
+            f = getattr(row, field)
+            if f and f.name:
+                names.append(f.name)
+        qs.delete()
+
+    if kind == "user":
+        media = MediaImage.objects.filter(item__user=account)
+    else:
+        media = MediaImage.objects.filter(Q(remaker_product__remaker=account) | Q(portfolio__remaker=account))
+    in_use = set(OrderItem.objects.filter(cover__in=media.values("image")).values_list("cover", flat=True))
+    in_use |= set(WarehouseItem.objects.filter(photo__in=media.values("image")).values_list("photo", flat=True))
+    take(media.exclude(image__in=in_use))
+    if kind == "user":
+        from apps.donations.models import DonationImage
+
+        take(DonationImage.objects.filter(donation__donor=account))
+    take(ProductReviewPhoto.objects.filter(**{f"review__reviewer_{kind}": account}))
+
+    # support: their tickets lose photos and text on both sides (replies quote what they wrote)
+    tickets = {"ticket__user": account} if kind == "user" else {"ticket__remaker": account}
+    theirs = Q(**tickets) | Q(**{kind: account})
+    take(TicketAttachment.objects.filter(message__in=TicketMessage.objects.filter(theirs)))
+    TicketMessage.objects.filter(theirs).update(text=REMOVED_TEXT, attachment_url="")
+
+    # chat: what they sent (the other person's own messages stay theirs)
+    Message.objects.filter(**{f"sender_{kind}": account}).update(text=REMOVED_TEXT, attachment_url="")
+    return names
+
+
+def _delete_files(names):
+    from django.core.files.storage import default_storage
+
+    for n in names:
+        try:
+            default_storage.delete(n)
+        except Exception:  # noqa: BLE001 - a missing file must not stop the rest
+            log.warning("could not delete %s", n)
+
+
 def purge(account):
     """Remove personal details for good. Orders, payments and donations stay, anonymised."""
     from apps.core.models import Notification, SavedAddress
@@ -151,6 +211,8 @@ def purge(account):
 
             Item.objects.filter(user=account, deleted_at__isnull=True).update(deleted_at=timezone.now())
         Notification.objects.filter(**{kind: account}).delete()
+        files = _remove_content(account, kind)
+        transaction.on_commit(lambda: _delete_files(files))
         account.full_name = "Deleted member" if kind == "user" else "Deleted ReMaker"
         account.email = f"deleted-{account.public_id.lower()}@deleted.reorbit.invalid"
         if hasattr(account, "username"):

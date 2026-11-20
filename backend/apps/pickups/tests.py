@@ -171,12 +171,32 @@ class ItemPickupTests(PickupBase):
         self.assertEqual(ok.status_code, 200, ok.data)
         self.assertEqual((ok.data["data"]["status"], ok.data["data"]["partner"]), ("Scheduled", "Pickup team A"))
         self.assertEqual(self.act(r, "complete").status_code, 409)  # not picked up yet
-        self.assertEqual(self.act(r, "pickedUp").data["data"]["status"], "Picked_Up")
+        r.refresh_from_db()
+        self.assertEqual(self.act(r, "pickedUp", code=r.handover_code).data["data"]["status"], "Picked_Up")
         done = self.act(r, "complete")
         self.assertEqual(done.data["data"]["status"], "Completed")
         labels = [e["label"] for e in done.data["data"]["events"]]
         self.assertEqual(labels, ["Pickup requested", "Pickup scheduled", "Picked up from customer", "Delivered to warehouse"])
         self.assertEqual(self.act(r, "cancel", reason="Changed my mind").status_code, 409)
+
+    def test_five_wrong_codes_lock_the_pickup_until_it_is_rescheduled(self):
+        r = self.request()
+        self.act(r, "schedule", date=day(), slot=SLOT, partner="Pickup team A")
+        r.refresh_from_db()
+        wrong = "1111" if r.handover_code != "1111" else "2222"
+        for left in (4, 3, 2, 1):
+            bad = self.act(r, "pickedUp", code=wrong)
+            self.assertEqual((bad.status_code, bad.data["code"]), (400, "CODE_MISMATCH"))
+            self.assertIn(f"{left} tr", bad.data["message"])
+        locked = self.act(r, "pickedUp", code=wrong)
+        self.assertEqual((locked.status_code, locked.data["code"]), (423, "CODE_LOCKED"))
+        r.refresh_from_db()
+        self.assertEqual(self.act(r, "pickedUp", code=r.handover_code).status_code, 423)  # even the right one
+        self.act(r, "reschedule", date=day(1), slot=SLOT, partner="Pickup team A")
+        old = r.handover_code
+        r.refresh_from_db()
+        self.assertNotEqual((r.handover_code, r.handover_tries), (old, 5))
+        self.assertEqual(self.act(r, "pickedUp", code=r.handover_code).status_code, 200)
 
     def test_schedule_rules(self):
         r = self.request()

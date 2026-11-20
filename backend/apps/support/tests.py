@@ -360,3 +360,33 @@ class TicketAboutAListingTests(SupportTicketTests):
         self.assertEqual(r.status_code, 404)
         self.assertIn("listing", r.data["message"])
         self.assertEqual(self.ask("RPR-9999").status_code, 404)  # members can't link ReMaker products
+
+
+class SupportPhotoPrivacyTests(SupportTicketTests):
+    def test_photos_are_saved_without_location_data_or_the_original_name(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        from .models import TicketAttachment
+
+        img = Image.new("RGB", (40, 30), "green")
+        exif = Image.Exif()
+        exif[0x010F] = "PhoneMaker"          # camera make
+        exif[0x010E] = "Taken at 12 Ring Road"  # free-text description (where location notes often end up)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", exif=exif)
+        self.assertIn(b"PhoneMaker", buf.getvalue())
+        upload = SimpleUploadedFile("my-home-address.jpg", buf.getvalue(), content_type="image/jpeg")
+        r = self.client.post("/api/support/me/", {"subject": "Broken item photo", "category": "Order or delivery",
+                                                  "message": "Here is a photo of the damage.", "photos": [upload]},
+                             format="multipart", **self._headers(self.user))
+        self.assertEqual(r.status_code, 201, r.data)
+        att = TicketAttachment.objects.get()
+        self.assertNotIn("my-home-address", att.image.name)
+        att.image.open("rb")
+        stored = att.image.read()
+        att.image.close()
+        self.assertNotIn(b"PhoneMaker", stored)
+        self.assertFalse(Image.open(io.BytesIO(stored)).getexif())

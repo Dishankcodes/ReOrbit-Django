@@ -94,7 +94,8 @@ export default function DonationActionModal({
   const reasonMissing = action.fields === "reason" && reason.trim().length < 5;
   const dateMissing = action.fields === "schedule" && !date;
   const teamMissing = action.fields === "schedule" && !chosen;
-  const codeMissing = action.fields === "code" && code.trim().length !== 4;
+  const wantsCode = action.fields === "code" || action.needsCode;
+  const codeMissing = wantsCode && code.trim().length !== 4;
   /* Partial acceptance only makes sense for one donation with more than one item. */
   const showPartialAccept =
     action.key === "accept" && !many && donation && donation.quantity > 1;
@@ -383,10 +384,10 @@ export default function DonationActionModal({
           </>
         )}
 
-        {action.fields === "code" && (
+        {wantsCode && (
           <div className="ad-modal-field">
             <span>
-              Donor's handover code <em>(ask the donor to read it out)</em>
+              {action.codeWho || "Donor's"} handover code <em>(ask them to read it out)</em>
             </span>
             <input
               type="text"

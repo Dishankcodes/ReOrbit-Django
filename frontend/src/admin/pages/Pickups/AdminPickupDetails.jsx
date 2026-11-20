@@ -258,9 +258,16 @@ export default function AdminPickupDetails() {
                 </p>
                 <p>
                   {p.type === "Order"
-                    ? `Managed by ReOrbit: collect from the seller and deliver to the buyer. Delivery fee ₹${Number(p.order?.delivery_fee || 0).toLocaleString("en-IN")} goes to ReOrbit.`
+                    ? `The seller chose ReOrbit delivery (Managed by ReOrbit): collect from the seller and deliver to the buyer. This page is the only place its status changes: picked up = order shipped, completed = order delivered. Delivery fee ₹${Number(p.order?.delivery_fee || 0).toLocaleString("en-IN")} goes to ReOrbit.`
                     : "Free pickup, handled by the ReOrbit platform."}
                 </p>
+                {p.code?.needed && p.status === "Scheduled" && (
+                  <p className={p.code.tries_left <= 2 ? "apd-warn" : "aup-muted"}>
+                    {p.code.tries_left > 0
+                      ? `Handover code needed to mark it picked up (ask the ${p.type === "Order" ? "seller" : "customer"}). ${p.code.tries_left} of 5 tries left.`
+                      : "Locked after 5 wrong codes. Reschedule the pickup to make a new code."}
+                  </p>
+                )}
               </div>
             </div>
           </section>

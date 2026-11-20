@@ -434,3 +434,26 @@
     display: block;
   }
 }
+
+/* "Got the parcel? … I received it" inside the shipped banner */
+.ob-received-auto {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.ob-received-auto a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.ob-received {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+  font-size: 13px;
+}

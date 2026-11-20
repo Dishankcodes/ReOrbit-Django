@@ -6,10 +6,11 @@ Buyer (user account)
   POST checkout/                 {items, address_id, method: RAZORPAY|COD, note}  (header Idempotency-Key)
   GET  me/                       my orders      GET me/<id>/      POST me/<id>/cancel/
   POST me/<id>/return/           (multipart) reason, details, photos     POST me/<id>/return/<escalate|withdraw>/
+  POST me/<id>/received/         the parcel arrived (courier orders; sellers can't mark their own delivered)
   GET  options/                  courier list, return and failed-delivery reasons
 Seller (user or ReMaker account)
   GET  sales/                    orders to fulfil   GET sales/<id>/
-  POST sales/<id>/<pack|ship|deliver|cancel|update|fail|retry|returned>/
+  POST sales/<id>/<pack|ship|cancel|update|fail|retry|returned>/   (not deliver: see me/<id>/received/)
   POST sales/<id>/<return-approve|return-reject|return-received>/
 Admin (module "orders")
   GET  admin/        GET admin/<id>/        POST admin/<id>/<any seller action>/
@@ -280,6 +281,20 @@ class MyOrderReturnAction(APIView):
         return ok({"order": order_data(o, request, events=True)}, message="Return updated.")
 
 
+class MyOrderReceived(APIView):
+    """POST me/<id>/received/: the buyer confirms the parcel arrived (courier orders)."""
+    permission_classes = [IsReOrbitAuthenticated]
+
+    def post(self, request, public_id):
+        o = get_object_or_404(Order, public_id=public_id, buyer_key=buyers.key_of(request.user.account))
+        try:
+            services.confirm_received(o.pk, request.user.account)
+        except services.CheckoutError as e:
+            return _checkout_fail(e)
+        o = _order_qs().prefetch_related("events").get(pk=o.pk)
+        return ok({"order": order_data(o, request, events=True)}, message="Thanks! The order is marked delivered.")
+
+
 class OptionsView(APIView):
     """Lists the screens need: couriers, why a return or a failed delivery happens."""
     permission_classes = [IsReOrbitAuthenticated]
@@ -473,6 +488,18 @@ def _act(request, order, action, actor_kind):
             if action in ("cod-received", "return-received", "return-decide") and not me.has_module("finance", "edit"):
                 raise services.CheckoutError("This needs the Payout details (finance) permission.", code="FORBIDDEN", status=403)
         rr = getattr(order, "return_request", None)
+        if who == "seller" and action == "deliver":
+            # proof of delivery: the buyer confirms it, or ReOrbit marks it after checking the courier's tracking
+            raise services.CheckoutError(
+                "You can't mark your own order delivered. The buyer confirms it, or ReOrbit marks it after checking "
+                "the courier's tracking.", code="SELLER_CANT_DELIVER", status=409)
+        if order.managed_delivery and who == "admin" and action in ("ship", "deliver"):
+            # ReOrbit's own delivery is moved along from its pickup (Admin › Pickups), never from the order page
+            pid = getattr(getattr(order, "delivery_pickup", None), "public_id", "")
+            raise services.CheckoutError(
+                "The seller chose ReOrbit delivery. Change this order's status from Admin › Pickups"
+                + (f" ({pid})" if pid else "") + ".", code="USE_PICKUPS", status=409,
+                errors={"pickup_id": pid} if pid else None)
         if order.managed_delivery and who == "seller" and action in services.MANAGED_SELLER_BLOCKED:
             raise services.CheckoutError("ReOrbit picks up and delivers this order. Pack it, then ask ReOrbit to pick it up.",
                                          code="MANAGED_DELIVERY", status=409)

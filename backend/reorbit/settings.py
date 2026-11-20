@@ -38,6 +38,7 @@ def env_list(name, default=""):
 
 
 DEBUG = env_bool("DEBUG", False)
+DJANGO_ADMIN = env_bool("DJANGO_ADMIN", False)  # Django's own /admin/ site (see urls.py); off by default
 
 SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
 
@@ -124,6 +125,7 @@ MIDDLEWARE = [
     "apps.core.timing.RequestTimingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "apps.core.security_headers.ApiSecurityHeaders",
 
     "corsheaders.middleware.CorsMiddleware",
 
@@ -517,13 +519,16 @@ if not DEBUG:
         "https"
     )
 
+    # browsers only talk to the API over HTTPS for a year (set SECURE_HSTS_SECONDS=0 to turn it off)
     SECURE_HSTS_SECONDS = int(
-        os.getenv("SECURE_HSTS_SECONDS", "0")
+        os.getenv("SECURE_HSTS_SECONDS", "31536000")
     )
 
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
     X_FRAME_OPTIONS = "DENY"
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
     if SECURE_HSTS_SECONDS > 0:
         SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(

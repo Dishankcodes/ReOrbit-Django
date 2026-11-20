@@ -21,7 +21,72 @@ MODELS = {"user": Users, "remaker": ReMakers, "admin": Admins}
 PAGE_SIZE = 50
 MESSAGE_PAGE_SIZE = 50
 MAX_MESSAGE_SIZE = 5000
-MAX_ATTACHMENT_SIZE = 2_000_000  # Base64 image storage is intentionally unchanged in this pass.
+MAX_ATTACHMENT_SIZE = 7_000_000  # the base64 text sent by the app (about a 5 MB photo); saved much smaller
+MAX_PHOTO_BYTES = 5_000_000
+CHAT_PHOTO_SIDE = 1280
+
+
+def clean_photo(raw):
+    """(data_url, error). A chat photo must be a photo sent from the device (data:image/...;base64),
+    never a link to another site. It is opened as a real JPEG, PNG or WebP and saved again: at most
+    1280px, without location or camera data, so a phone photo of several MB is stored at a fraction."""
+    import base64
+    import binascii
+    import io
+
+    from apps.core.images import process_image
+
+    raw = (raw or "").strip()
+    if not raw:
+        return "", ""
+    if not raw.startswith("data:image/") or ";base64," not in raw[:64]:
+        return None, "Send photos from your device. Links to images on other sites aren't accepted."
+    try:
+        data = base64.b64decode(raw.split(",", 1)[1], validate=True)
+    except (binascii.Error, ValueError):
+        return None, "That photo couldn't be read. Try another one."
+    if len(data) > MAX_PHOTO_BYTES:
+        return None, "Photos can be up to 5 MB."
+    try:
+        clean = process_image(io.BytesIO(data), max_side=CHAT_PHOTO_SIDE)
+    except Exception:  # noqa: BLE001  not a JPEG / PNG / WebP, or a broken file
+        return None, "Only JPEG, PNG or WebP photos can be sent."
+    ext = clean.name.rsplit(".", 1)[-1]
+    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "webp": "webp"}.get(ext, "jpeg")
+    return f"data:image/{mime};base64,{base64.b64encode(clean.read()).decode()}", ""
+
+
+def _safe_url(value, request, *, image=False):
+    """A link the chat's "about this item" card may show: a ReOrbit page ("/...") or, for its picture,
+    an image on ReOrbit's own server or its photo storage (Cloudinary). Anything else is dropped."""
+    from urllib.parse import urlparse
+
+    value = str(value or "").strip()[:500]
+    if value.startswith("/") and not value.startswith("//"):
+        return value
+    if not image:
+        return ""
+    from django.conf import settings
+
+    u = urlparse(value)
+    host = (u.hostname or "").lower()
+    own = {h.lstrip(".").lower() for h in settings.ALLOWED_HOSTS if h and h != "*"}
+    if request is not None:
+        own.add(request.get_host().split(":")[0].lower())
+    ok_scheme = u.scheme == "https" or (settings.DEBUG and u.scheme == "http")
+    if ok_scheme and host and (host in own or host == "res.cloudinary.com" or host.endswith(".cloudinary.com")):
+        return value
+    return ""
+
+
+def clean_context(ctx, request):
+    """Only a label, an internal link and a ReOrbit-hosted picture survive."""
+    if not isinstance(ctx, dict):
+        return {}
+    label = " ".join(str(ctx.get("label") or "").split())[:120]
+    if not label:
+        return {}
+    return {"label": label, "to": _safe_url(ctx.get("to"), request), "image": _safe_url(ctx.get("image"), request, image=True)}
 
 
 class HasAdminMessagesOrSupport(BasePermission):
@@ -376,8 +441,8 @@ def _public_context(conv, participant):
     owner = f"{participant.account_type}:{getattr(participant, participant.account_type + '_id')}"
     return {
         "label": label,
-        "to": str(ctx.get("to") or ""),
-        "image": str(ctx.get("image") or ""),
+        "to": _safe_url(ctx.get("to"), None),
+        "image": _safe_url(ctx.get("image"), None, image=True),
         "mine": ctx.get("by") == owner,
     }
 
@@ -654,7 +719,8 @@ class ConversationList(APIView):
         if kind == "admin" and public_id != "support":
             return fail("Use ReOrbit Support to contact the team.", status=403)
         with transaction.atomic():
-            conv = _conversation_for_pair(actor_type, account, kind, target, data)
+            conv = _conversation_for_pair(actor_type, account, kind, target,
+                                          {**data, "context": clean_context(data.get("context"), request)})
             participant = ConversationParticipant.objects.get(
                 conversation=conv, **{actor_type: account}
             )
@@ -720,9 +786,10 @@ class ConversationDetail(APIView):
         text = str(request.data.get("text") or "").strip()
         attachment = str(request.data.get("image") or request.data.get("attachment_url") or "").strip()
         if len(text) > MAX_MESSAGE_SIZE or len(attachment) > MAX_ATTACHMENT_SIZE or (not text and not attachment):
-            return fail("Enter a message (up to 5,000 characters) or provide an attachment.")
-        if attachment and not (attachment.startswith("https://") or attachment.startswith("data:image/")):
-            return fail("Attachments must be secure image URLs or uploaded image data.")
+            return fail("Enter a message (up to 5,000 characters) or add a photo (up to 5 MB).")
+        attachment, photo_error = clean_photo(attachment)
+        if photo_error:
+            return fail(photo_error, errors={"image": [photo_error]})
 
         kind = request.user.account_type
         sender = {f"sender_{kind}": request.user.account}
@@ -817,7 +884,8 @@ class AdminInbox(ConversationList):
             return fail("That account is unavailable.", status=404)
         account = request.user.account
         with transaction.atomic():
-            conversation = _conversation_for_pair("admin", account, kind, target, data)
+            conversation = _conversation_for_pair("admin", account, kind, target,
+                                                  {**data, "context": clean_context(data.get("context"), request)})
             participant = ConversationParticipant.objects.get(
                 conversation=conversation, admin=account
             )

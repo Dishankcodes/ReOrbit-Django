@@ -47,7 +47,7 @@ class WalletBase(APIBase):
         WalletBase._n += 1
         r = self.post(S + "ship/", {"courier_name": "DTDC", "tracking_no": f"D{WalletBase._n:08d}"}, as_=self.maker)
         self.assertEqual(r.status_code, 200, r.data)
-        self.assertEqual(self.post(S + "deliver/", {}, as_=self.maker).status_code, 200)
+        self.assertEqual(self.post(f"/api/orders/me/{oid}/received/", {}, as_=self.buyer).status_code, 200)
         if confirm:  # the courier handed the cash to ReOrbit and an admin confirmed it
             self.assertEqual(self.post(f"/api/orders/admin/{oid}/cod-received/", {"reference": "REM1"}, as_=self.boss).status_code, 200)
         return oid

@@ -12,6 +12,7 @@ urlpatterns = [
     path("me/<str:public_id>/", v.MyOrderDetail.as_view()),
     path("me/<str:public_id>/cancel/", v.MyOrderCancel.as_view()),
     path("me/<str:public_id>/return/", v.MyOrderReturn.as_view()),
+    path("me/<str:public_id>/received/", v.MyOrderReceived.as_view()),
     path("me/<str:public_id>/return/<str:action>/", v.MyOrderReturnAction.as_view()),
     path("options/", v.OptionsView.as_view()),
     path("sales/", v.SalesList.as_view()),

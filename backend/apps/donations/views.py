@@ -36,6 +36,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import HasAdminModule, IsReOrbitAdmin, IsReOrbitUser
 from apps.rewards import services as rewards
 from apps.core.responses import created, fail, ok
+from apps.core.services import audit
 
 from . import services
 from .models import Donation, PickupPartner
@@ -173,13 +174,18 @@ class AdminRewardOptions(APIView):
         return ok({"voucher_tiers": rewards.donation_voucher_tiers(), "voucher_min": rewards.VOUCHER_MIN})
 
 
+def _token_info(p):
+    return {"token_hint": p.token_hint, "token_expires_at": p.token_expires_at}
+
+
 class AdminPickupPartners(APIView):
-    """Pickup partners have no ReOrbit login: admin hands their token to the driver directly."""
+    """Pickup partners have no ReOrbit login: admin hands their token to the driver directly.
+    The token is shown once (when the partner is added or the token is reset), never in the list."""
     permission_classes = [IsReOrbitAdmin, HasAdminModule("donations")]
 
     def get(self, request):
         rows = PickupPartner.objects.all()
-        return ok([{**pickup_partner_data(p), "token": p.token} for p in rows])
+        return ok([{**pickup_partner_data(p), **_token_info(p)} for p in rows])
 
     def post(self, request):
         name = " ".join(str(request.data.get("name") or "").split())[:60]
@@ -190,7 +196,22 @@ class AdminPickupPartners(APIView):
         phone = " ".join(str(request.data.get("phone") or "").split())[:20]
         lead_name = " ".join(str(request.data.get("lead_name") or "").split())[:120]
         p = PickupPartner.objects.create(name=name, phone=phone, lead_name=lead_name)
-        return created({**pickup_partner_data(p), "token": p.token}, message="Pickup partner added.")
+        audit(request.user.account, "pickup_partner.token", "pickup_partner", p.public_id, reason="Token issued")
+        return created({**pickup_partner_data(p), **_token_info(p), "token": p.raw_token},
+                       message="Pickup partner added. Copy the token now: it won't be shown again.")
+
+
+class AdminPickupPartnerToken(APIView):
+    """POST admin/partners/<PTR-id>/token/: a new driver token (the old one stops working at once)."""
+    permission_classes = [IsReOrbitAdmin, HasAdminModule("donations", "edit")]
+
+    def post(self, request, public_id):
+        p = get_object_or_404(PickupPartner, public_id=public_id)
+        raw = p.new_token()
+        p.save(update_fields=["token", "token_hint", "token_expires_at", "updated_at"])
+        audit(request.user.account, "pickup_partner.token", "pickup_partner", p.public_id, reason="Token reset")
+        return ok({**pickup_partner_data(p), **_token_info(p), "token": raw},
+                  message="New token made. Copy it now: it won't be shown again.")
 
 
 # ------------------------------------------------------------------ pickup partner

@@ -27,6 +27,7 @@ import OrderRelated from "../../../shared/components/OrderRelated";
 import {
   PAYMENT_LABEL,
   cancelOrder,
+  confirmReceived,
   canCancel,
   useOrder,
   useOrdersStatus,
@@ -55,6 +56,7 @@ export default function UserOrderDetails() {
   const { orderId } = useParams();
   const order = useOrder(orderId);
   const { toast, show } = useToast();
+  const [confirming, setConfirming] = useState(false);
 
   const [cancelling, setCancelling] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -204,6 +206,47 @@ export default function UserOrderDetails() {
             <Link to={`/user-orders/${order.id}/track`} className="dn-link">
               See live tracking →
             </Link>
+            {order.courier?.url && (
+              <>
+                {" · "}
+                <a href={order.courier.url} target="_blank" rel="noopener noreferrer" className="dn-link">
+                  Track on {order.courier.name} ↗
+                </a>
+              </>
+            )}
+            {!order.managedDelivery && (
+              <div className="ob-received">
+                <span>
+                  Got the parcel? Tell us, so the seller gets paid.
+                  {order.autoConfirmOn && (
+                    <small className="ob-received-auto">
+                      Not arrived?{" "}
+                      <Link to={`/user-help/contact?order=${encodeURIComponent(order.id)}`}>Raise a ticket</Link> before{" "}
+                      {new Date(order.autoConfirmOn).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}, or
+                      we'll mark it delivered that day.
+                    </small>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="dn-btn dn-btn--sm"
+                  disabled={confirming}
+                  onClick={async () => {
+                    setConfirming(true);
+                    try {
+                      await confirmReceived(order.id);
+                      show("Thanks! The order is marked delivered.");
+                    } catch (e) {
+                      show(e.message || "Couldn't update the order. Try again.");
+                    } finally {
+                      setConfirming(false);
+                    }
+                  }}
+                >
+                  {confirming ? "Saving…" : "I received it"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -390,6 +433,11 @@ export default function UserOrderDetails() {
               <div className="ob-addr">
                 <strong>{order.courier.name}</strong>
                 <p className="dn-muted">AWB {order.courier.awb}</p>
+                {order.courier.url && (
+                  <a href={order.courier.url} target="_blank" rel="noopener noreferrer" className="dn-link">
+                    Track on {order.courier.name} ↗
+                  </a>
+                )}
               </div>
             </section>
           )}

@@ -76,6 +76,9 @@ class PickupRequest(PublicIdModel, TimeStampedModel):
     address_snapshot = models.JSONField(default=dict)
     cancel_reason = models.CharField(max_length=255, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    # 4 digits the seller shows the pickup team (apps.core.handover); made when the pickup is scheduled
+    handover_code = models.CharField(max_length=4, blank=True)
+    handover_tries = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         db_table = "pickup_requests"

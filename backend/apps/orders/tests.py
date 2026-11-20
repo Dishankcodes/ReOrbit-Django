@@ -377,11 +377,17 @@ class FulfilmentTests(OrderBase):
         self.assertEqual(r.status_code, 400)
         self.assertIn("tracking_no", r.data["errors"])
         r = self.post(S + "ship/", {"courier_name": "Delhivery", "tracking_no": "12345678901"}, as_=self.maker)
-        self.assertEqual(r.data["data"]["order"]["courier"], {"name": "Delhivery", "tracking_no": "12345678901"})
-        r = self.post(S + "deliver/", {}, as_=self.maker)
+        self.assertEqual(r.data["data"]["order"]["courier"],
+                         {"name": "Delhivery", "tracking_no": "12345678901",
+                          "tracking_url": "https://www.delhivery.com/track-v2/package/12345678901"})
+        # the seller can't mark their own order delivered (proof of delivery)
+        bad = self.post(S + "deliver/", {}, as_=self.maker)
+        self.assertEqual((bad.status_code, bad.data["code"]), (409, "SELLER_CANT_DELIVER"))
+        r = self.post(f"/api/orders/me/{oid}/received/", {}, as_=self.buyer)  # the buyer confirms it arrived
         o = r.data["data"]["order"]
         self.assertEqual((o["status"], o["payment"]["status"]), ("Delivered", "COD_Collected"))  # courier has the cash
         self.assertEqual([e["label"] for e in o["events"]][-3:], ["Packed", "Shipped", "Delivered"])
+        self.assertIn("Confirmed by the buyer", o["events"][-1]["detail"])
         self.assertEqual(self.get(f"/api/orders/me/{oid}/", as_=self.buyer).data["data"]["order"]["status"], "Delivered")
 
     def test_only_the_seller_can_act(self):

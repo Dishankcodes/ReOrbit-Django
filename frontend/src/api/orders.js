@@ -41,6 +41,8 @@ export const buyerOrdersApi = {
   get: (id) => apiRequest(`/orders/me/${id}/`).then((r) => r.data.order),
   cancel: (id, reason) =>
     post(`/orders/me/${id}/cancel/`, { reason }).then((r) => r.data.order),
+  /* the parcel arrived (courier orders): this, not the seller, marks it delivered */
+  received: (id) => post(`/orders/me/${id}/received/`, {}).then((r) => r.data.order),
   /* returns: `form` is a FormData with reason, details and photos */
   requestReturn: (id, form) =>
     apiRequest(`/orders/me/${id}/return/`, { method: "POST", body: form }).then(

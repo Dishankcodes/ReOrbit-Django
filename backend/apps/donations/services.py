@@ -16,7 +16,7 @@ the warehouse actually counted and the condition it actually found, not what the
 
 import logging
 import re
-import secrets
+from contextlib import contextmanager
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
@@ -28,6 +28,7 @@ from django.utils import timezone
 from apps.admins.models import Admins
 from apps.core import buyers as buyer_kit
 from apps.core.images import process_image
+from apps.core import handover
 from apps.core.models import Category, SavedAddress
 from apps.core.pricing import maintenance_block_reason
 from apps.core.services import audit, notify
@@ -393,9 +394,9 @@ def _accept(d, admin, p):
     d.accepted_quantity = accepted if partial else None
     d.partial_reject_reason = partial_reason
     d.admin_points, d.admin_voucher_amount = points, voucher_amount
-    d.handover_code = f"{secrets.randbelow(9000) + 1000}"  # 4 digits: shown to the donor, entered by the partner
+    d.handover_code, d.handover_tries = handover.new_code(), 0  # 4 digits: shown to the donor, entered by the partner
     _save(d, "status", "pickup_date", "pickup_slot", "assigned_partner", "accepted_quantity",
-          "partial_reject_reason", "admin_points", "admin_voucher_amount", "handover_code")
+          "partial_reject_reason", "admin_points", "admin_voucher_amount", "handover_code", "handover_tries")
     reward_note = ""
     if points is not None or voucher_amount is not None:
         bits = [f"{points} points" if points is not None else "", f"\u20b9{voucher_amount} voucher" if voucher_amount is not None else ""]
@@ -433,6 +434,9 @@ def _reschedule(d, admin, p):
     was_failed = d.status == S.FAILED_PICKUP
     d.status, d.pickup_date, d.pickup_slot, d.assigned_partner = S.SCHEDULED, day, slot, partner
     fields = ["status", "pickup_date", "pickup_slot", "assigned_partner"]
+    if d.handover_tries >= handover.MAX_TRIES or not d.handover_code:  # locked by wrong codes: a fresh code
+        d.handover_code, d.handover_tries = handover.new_code(), 0
+        fields += ["handover_code", "handover_tries"]
     _save(d, *fields)
     event(d, "Pickup rescheduled", f"{when(day, slot)} \u00b7 {partner.name}", "info", "admin")
     _notify_donor(d, "Pickup rescheduled", f"{d.public_id}: your pickup is now {when(day, slot)}.")
@@ -455,10 +459,7 @@ def _confirm_pickup(d, code, actor_label):
     """Shared by the admin 'pickedUp' action and the partner 'collect' endpoint.
     Requires the donor's own handover code: this is the collection check, not a rubber stamp."""
     _need(d, S.SCHEDULED)
-    entered = _text(code, 4)
-    if not entered or entered != d.handover_code:
-        raise DonationError("That handover code doesn't match. Ask the donor to confirm it.",
-                            code="CODE_MISMATCH", status=400)
+    handover.check(d, code)  # WrongCode / CodeLocked: counted by the caller once this transaction is undone
     d.status = S.PICKED_UP
     _save(d, "status")
     who = d.assigned_partner.name if d.assigned_partner else "our pickup team"
@@ -638,23 +639,41 @@ def run_action(pk, key, admin, payload=None, ip=None):
     if handler is None:
         raise DonationError("Unknown action.", code="UNKNOWN_ACTION", status=404)
     payload = payload if hasattr(payload, "get") else {}
-    with transaction.atomic():
-        d = _lock(pk)
-        before = d.status
-        reason = handler(d, admin, payload)
-        audit(admin, f"donation.{key}", "donation", d.public_id, before={"status": before},
-              after={"status": d.status}, reason=reason or "", ip=ip)
+    with _code_errors(pk):
+        with transaction.atomic():
+            d = _lock(pk)
+            before = d.status
+            reason = handler(d, admin, payload)
+            audit(admin, f"donation.{key}", "donation", d.public_id, before={"status": before},
+                  after={"status": d.status}, reason=reason or "", ip=ip)
     return d
+
+
+@contextmanager
+def _code_errors(pk):
+    """A wrong handover code: undo the action, count the miss, say how many tries are left."""
+    try:
+        yield
+    except handover.CodeLocked:
+        raise DonationError(handover.LOCKED_MESSAGE, code="CODE_LOCKED", status=423)
+    except handover.WrongCode:
+        left = handover.record_miss(Donation, pk)
+        raise DonationError(handover.miss_message(left, "the donor"),
+                            code="CODE_LOCKED" if left <= 0 else "CODE_MISMATCH", status=423 if left <= 0 else 400)
 
 
 # --------------------------------------------------------------------------- #
 # pickup partner (token-authenticated, no ReOrbit account)
 # --------------------------------------------------------------------------- #
 def partner_for_token(raw_token):
-    token = _text(raw_token, 40)
-    partner = PickupPartner.objects.filter(token=token, status=PickupPartner.Status.ACTIVE).first() if token else None
+    """The pickup team for a driver token (compared by its hash; expired tokens don't work)."""
+    token = _text(raw_token, 64)
+    partner = (PickupPartner.objects.filter(token=PickupPartner.hash_token(token),
+                                            status=PickupPartner.Status.ACTIVE).first() if token else None)
     if partner is None:
         raise DonationError("Invalid or missing partner token.", code="PARTNER_AUTH", status=401)
+    if partner.token_expires_at and partner.token_expires_at <= timezone.now():
+        raise DonationError("This token has ended. Ask ReOrbit for a new one.", code="PARTNER_TOKEN_EXPIRED", status=401)
     return partner
 
 
@@ -665,12 +684,13 @@ def partner_pickups(partner):
 
 
 def partner_collect(pk, partner, code):
-    with transaction.atomic():
-        d = _lock(pk)
-        if d.assigned_partner_id != partner.pk:
-            raise DonationError("This pickup isn't assigned to you.", code="NOT_YOURS", status=403)
-        _confirm_pickup(d, code, "partner")
-        audit(None, "donation.partner_collect", "donation", d.public_id, after={"status": d.status})
+    with _code_errors(pk):
+        with transaction.atomic():
+            d = _lock(pk)
+            if d.assigned_partner_id != partner.pk:
+                raise DonationError("This pickup isn't assigned to you.", code="NOT_YOURS", status=403)
+            _confirm_pickup(d, code, "partner")
+            audit(None, "donation.partner_collect", "donation", d.public_id, after={"status": d.status})
     return d
 
 

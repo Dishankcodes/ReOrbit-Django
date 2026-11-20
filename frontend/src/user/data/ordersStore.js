@@ -146,10 +146,11 @@ function adapt(o) {
     awaitingPayment: o.status === "Pending_Payment",
     canCancel: !!o.can_cancel,
     courier: o.courier
-      ? { name: o.courier.name, awb: o.courier.tracking_no, phone: "" }
+      ? { name: o.courier.name, awb: o.courier.tracking_no, phone: "", url: o.courier.tracking_url || "" }
       : null,
     eta: null,
     deliveredAt: o.delivered_at || null,
+    autoConfirmOn: o.auto_confirm_on || null,
     canReview: o.can_review !== false,
     review: o.review ? { rating: o.review.rating, at: o.review.at } : null,
     reference: o.payment.id,
@@ -255,6 +256,10 @@ export async function refreshOrder(id) {
 
 export async function cancelOrder(id, reason) {
   replaceOrder(await buyerOrdersApi.cancel(id, reason));
+}
+
+export async function confirmReceived(id) {
+  replaceOrder(await buyerOrdersApi.received(id));
 }
 
 export async function requestReturn(id, form) {

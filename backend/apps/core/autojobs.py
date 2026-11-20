@@ -6,6 +6,7 @@ so nobody waits for it:
 
   - scheduled announcements   every 2 minutes   (apps.notifications.announcements.deliver_due)
   - finish 30-day deletions   every 6 hours     (apps.core.account_deletion.purge_due)
+  - auto-confirm deliveries   every hour        (apps.orders.services.auto_confirm_due)
 
 Both jobs are safe to run twice or from several server processes at once: an announcement is
 locked and marked sent when it goes out, and an account that was already cleaned up is skipped.
@@ -38,10 +39,17 @@ def _purge():
     return purge_due()
 
 
+def _auto_confirm():
+    from apps.orders.services import auto_confirm_due
+
+    return auto_confirm_due()
+
+
 # name -> (seconds between runs, job)
 JOBS = {
     "announcements": (120, _announcements),
     "purge_deleted_accounts": (6 * 3600, _purge),
+    "auto_confirm_deliveries": (3600, _auto_confirm),
 }
 
 _last = {}  # name -> monotonic time of the last start (per server process)

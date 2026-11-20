@@ -15,6 +15,18 @@ from .services import FAIL_REASONS
 from apps.core import buyers
 
 
+
+def _auto_confirm_on(o):
+    from .services import auto_confirm_on  # local import: services imports this module
+
+    return auto_confirm_on(o)
+
+
+def _tracking_url(courier, number):
+    from .services import tracking_url  # local import: services imports this module
+
+    return tracking_url(courier, number)
+
 def media_url(request, name):
     if not name:
         return None
@@ -141,17 +153,29 @@ def related_data(o, request, data):
     return rows
 
 
-def pickup_of(o):
-    """The ReOrbit pickup of a "Managed by ReOrbit" order, once the seller asked for it."""
+def pickup_of(o, seller_view=False):
+    """The ReOrbit pickup of a "Managed by ReOrbit" order, once the seller asked for it. The seller
+    (only) also gets the 4-digit handover code to show the pickup team."""
     if not o.managed_delivery:
         return None
     r = getattr(o, "delivery_pickup", None)
     if r is None:
         return {"requested": bool(o.pickup_requested_at), "status": None}
     # after ReOrbit cancels a pickup the seller can ask again (requested goes back to False)
-    return {"requested": bool(o.pickup_requested_at), "id": r.public_id, "status": r.status, "date": r.pickup_date,
+    data = {"requested": bool(o.pickup_requested_at), "id": r.public_id, "status": r.status, "date": r.pickup_date,
             "slot": r.pickup_slot, "team": r.assigned_partner.name if r.assigned_partner_id else None,
             "cancel_reason": r.cancel_reason, "requested_at": o.pickup_requested_at}
+    if seller_view and r.status == "Scheduled" and r.handover_code:
+        data["handover_code"] = r.handover_code
+    return data
+
+
+def _is_seller(o, request):
+    a = getattr(getattr(request, "user", None), "account", None)
+    if a is None:
+        return False
+    kind = getattr(request.user, "account_type", "")
+    return (kind == "user" and o.seller_user_id == a.pk) or (kind == "remaker" and o.seller_remaker_id == a.pk)
 
 
 def _reorbit_address():
@@ -181,16 +205,19 @@ def order_data(o, request, *, events=False, buyer=False):
         ],
         "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee, "discount": o.discount, "total": o.total,
         "address": o.address, "note": o.note,
-        "courier": {"name": o.courier_name, "tracking_no": o.tracking_no} if o.tracking_no else None,
+        "courier": {"name": o.courier_name, "tracking_no": o.tracking_no,
+                    "tracking_url": _tracking_url(o.courier_name, o.tracking_no)} if o.tracking_no else None,
         "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,
         "delivered_at": o.delivered_at, "cancelled_at": o.cancelled_at,
+        # a shipped courier order becomes Delivered by itself on this date (unless a ticket is open)
+        "auto_confirm_on": _auto_confirm_on(o),
         "cancel_reason": o.cancel_reason, "cancelled_by": o.cancelled_by,
         "can_cancel": o.status in (Order.Status.CONFIRMED, Order.Status.PACKED),
         "seller_earning": 0 if o.seller_type == "platform" else o.subtotal + (0 if o.managed_delivery else o.delivery_fee),
         "managed_delivery": o.managed_delivery,
         # ReOrbit's own address (Admin > Addresses): where its store orders ship from and returns go back to
         "reorbit_address": _reorbit_address() if o.seller_type == "platform" or o.managed_delivery else None,
-        "pickup": pickup_of(o),
+        "pickup": pickup_of(o, seller_view=_is_seller(o, request)),
         "cod_received_at": o.cod_received_at,
         "failed": {"reason": o.fail_reason, "label": FAIL_REASONS.get(o.fail_reason, (o.fail_reason, ""))[0],
                    "note": o.fail_note, "fault": o.fail_fault, "at": o.failed_at} if o.fail_reason else None,

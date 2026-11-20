@@ -14,6 +14,7 @@ Rules this file keeps:
 """
 
 import logging
+import os
 import re
 from collections import OrderedDict
 from datetime import timedelta
@@ -646,6 +647,29 @@ COURIERS = {
 }
 _GENERIC_TRACKING = re.compile(r"^[A-Za-z0-9\-/]{5,30}$")
 
+# Where to check a parcel on the courier's own website ({n} = tracking number). ReOrbit has no courier
+# partner yet, so an admin opens this page, checks the parcel and marks the order delivered on the
+# order page. Couriers without a deep link open their tracking page (paste the number shown).
+COURIER_TRACK_URLS = {
+    "Delhivery": "https://www.delhivery.com/track-v2/package/{n}",
+    "India Post": "https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx",
+    "Blue Dart": "https://www.bluedart.com/web/guest/trackdartresultthirdparty?trackFor=0&trackNo={n}",
+    "DTDC": "https://www.dtdc.in/tracking.asp",
+    "Ecom Express": "https://ecomexpress.in/tracking/?awb_field={n}",
+    "Xpressbees": "https://www.xpressbees.com/shipment/tracking?awbNo={n}",
+    "Shadowfax": "https://tracker.shadowfax.in/",
+}
+
+
+def tracking_url(courier, number):
+    """The courier's tracking page for this parcel, or "" (ReOrbit's own delivery, unknown couriers)."""
+    url = COURIER_TRACK_URLS.get(courier or "")
+    if not url or not number:
+        return ""
+    from urllib.parse import quote
+
+    return url.replace("{n}", quote(str(number), safe=""))
+
 
 def check_tracking(courier_name, tracking_no, exclude_pk=None):
     """Returns (courier, tracking) cleaned, or raises CheckoutError with field messages."""
@@ -705,11 +729,16 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
         if to == "Delivered":
             o.delivered_at = timezone.now()
             fields.append("delivered_at")
+            # who vouched for the delivery (sellers can't): shown on the order's timeline
+            detail = {"buyer": "Confirmed by the buyer",
+                      "admin": "Checked by ReOrbit" + (" on the courier's tracking" if not o.managed_delivery else ""),
+                      "system": f"Marked delivered automatically, {AUTO_CONFIRM_DAYS} days after shipping",
+                      }.get(actor_kind, "")
             if o.payment_status == Order.PayStatus.COD_DUE:
                 # the courier has the cash; ReOrbit counts it as paid once an admin confirms it arrived
                 o.payment_status = Order.PayStatus.COD_COLLECTED
                 fields.append("payment_status")
-                detail = "Cash collected by the courier"
+                detail = (detail + " · " if detail else "") + "Cash collected by the courier"
         o.save(update_fields=fields)
         event(o, LABEL[to], detail, actor_kind)
         if to == "Delivered":
@@ -729,6 +758,107 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             audit(actor, f"order.{action}", "order", o.public_id, before={"status": before}, after={"status": to}, ip=ip)
         _notify_buyer(o, f"Order {to.lower()}", f"{o.public_id} is {to.lower()}." + (f" {detail}" if to == "Shipped" else ""))
     return o
+
+
+def confirm_received(order_pk, buyer):
+    """The buyer says the parcel arrived (a courier order the seller shipped). This, ReOrbit checking
+    the courier's tracking, or ReOrbit's own pickup team are the only ways an order becomes Delivered:
+    a seller can't mark their own order delivered, so nobody is paid for a parcel that never arrived."""
+    with transaction.atomic():
+        o = Order.objects.select_for_update().get(pk=order_pk)
+        if o.buyer_key != buyer_kit.key_of(buyer):
+            raise CheckoutError("This isn't your order.", code="FORBIDDEN", status=403)
+        if o.managed_delivery:
+            raise CheckoutError("ReOrbit is delivering this order and will mark it delivered.",
+                                code="MANAGED_DELIVERY", status=409)
+        if o.status != Order.Status.SHIPPED:
+            raise CheckoutError("You can confirm an order once it has been shipped.", code="BAD_STATE", status=409)
+    return advance_order(order_pk, "deliver", actor_kind="buyer", actor=buyer)
+
+
+# --------------------------------------------------------------------------- #
+# Auto-confirm: a courier order the buyer never confirmed
+# --------------------------------------------------------------------------- #
+AUTO_CONFIRM_DAYS = max(int(os.getenv("AUTO_CONFIRM_DAYS", "7") or 7), 3)
+REMIND_BEFORE_DAYS = 2
+REMINDER_LABEL = "Delivery reminder"
+OPEN_TICKET = ("Open", "In progress", "Waiting for you")
+
+
+def auto_confirm_on(order):
+    """When a shipped courier order becomes Delivered by itself (None if it never will)."""
+    if order.managed_delivery or order.status != Order.Status.SHIPPED or not order.shipped_at:
+        return None
+    return order.shipped_at + timedelta(days=AUTO_CONFIRM_DAYS)
+
+
+def _disputed(public_ids):
+    """Orders with an open support ticket (e.g. "it never arrived"): never confirmed automatically."""
+    from apps.support.models import SupportTicket  # local import: support reads orders too
+
+    return set(SupportTicket.objects.filter(order_id__in=list(public_ids), status__in=OPEN_TICKET)
+               .values_list("order_id", flat=True))
+
+
+def _remind_buyer(o, on):
+    from apps.core import mailer
+
+    when = f"{timezone.localtime(on):%d %b}"
+    body = (f"{o.public_id} was shipped {AUTO_CONFIRM_DAYS - REMIND_BEFORE_DAYS} days ago. Got it? Tap \"I received it\". "
+            f"If it hasn't arrived, tell us before {when}; otherwise we'll mark it delivered then.")
+    _notify_buyer(o, "Did your order arrive?", body)
+    try:
+        buyer = o.buyer
+        mailer.send(
+            buyer.email, f"Did your order arrive? ({o.public_id})",
+            heading="Did your parcel arrive?",
+            intro=body,
+            facts=[("Order", o.public_id), ("Courier", f"{o.courier_name} · {o.tracking_no}"),
+                   ("Marked delivered on", when)],
+            footer="Not arrived yet? Open the order and choose Get help, so we can look into it first.",
+        )
+    except Exception:  # noqa: BLE001 - a reminder must never stop the job
+        log.exception("delivery reminder email failed for %s", o.public_id)
+
+
+def auto_confirm_due(now=None):
+    """Runs by itself every hour (apps.core.autojobs). For courier orders the seller shipped:
+    - REMIND_BEFORE_DAYS before the date, the buyer is reminded once (in the app and by email);
+    - after AUTO_CONFIRM_DAYS it becomes Delivered, as if the buyer had confirmed it.
+    "Managed by ReOrbit" orders are skipped (the pickup team delivers them), and so is any order with
+    an open support ticket. Cash on delivery still waits for ReOrbit to get the cash before the
+    seller's earning starts clearing or points are given. Returns how many were confirmed."""
+    now = now or timezone.now()
+    base = Order.objects.filter(status=Order.Status.SHIPPED, managed_delivery=False, shipped_at__isnull=False)
+    due_at = now - timedelta(days=AUTO_CONFIRM_DAYS)
+
+    remind = list(base.filter(shipped_at__lte=due_at + timedelta(days=REMIND_BEFORE_DAYS), shipped_at__gt=due_at)
+                  .exclude(events__label=REMINDER_LABEL)[:200])
+    skip = _disputed(o.public_id for o in remind)
+    for o in remind:
+        if o.public_id in skip:
+            continue
+        with transaction.atomic():  # once per order, even with two server processes running the job
+            locked = Order.objects.select_for_update(skip_locked=True).filter(pk=o.pk, status=Order.Status.SHIPPED).first()
+            if not locked or OrderEvent.objects.filter(order=locked, label=REMINDER_LABEL).exists():
+                continue
+            event(locked, REMINDER_LABEL, "The buyer was asked to confirm it arrived", "system")
+        _remind_buyer(o, auto_confirm_on(o))
+
+    due = list(base.filter(shipped_at__lte=due_at).values_list("pk", "public_id")[:200])
+    skip = _disputed(pid for _, pid in due)
+    done = 0
+    for pk, pid in due:
+        if pid in skip:
+            continue
+        try:
+            advance_order(pk, "deliver", actor_kind="system", actor=None)
+            done += 1
+        except CheckoutError:
+            pass  # it moved on meanwhile (confirmed, failed or cancelled)
+        except Exception:  # noqa: BLE001 - one bad order must not stop the rest
+            log.exception("auto-confirm failed for %s", pid)
+    return done
 
 
 def request_pickup(order_pk, *, actor, ip=None):

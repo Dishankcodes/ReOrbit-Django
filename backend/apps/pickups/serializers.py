@@ -18,7 +18,7 @@ def team_data(t, token=False):
         "members": [member_data(m) for m in t.members.all()],
     }
     if token:
-        row["token"] = t.token
+        row["token"] = getattr(t, "raw_token", None)  # only right after it is made (stored hashed)
     return row
 
 
@@ -69,6 +69,8 @@ def request_data(r, request):
         "partner": r.assigned_partner.name if r.assigned_partner else None,
         "requested_at": r.created_at,
         "cancel_reason": r.cancel_reason,
+        # the team asks the seller / customer for the code; admins never see it
+        "code": {"needed": bool(r.handover_code), "tries_left": max(0, 5 - (r.handover_tries or 0))},
         "customer": {
             "id": seller.public_id, "name": seller.full_name, "email": seller.email, "type": kind,
             "phone": snap.get("phone") or (profile.phone if profile else "") or "",

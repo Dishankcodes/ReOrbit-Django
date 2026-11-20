@@ -79,6 +79,7 @@ function fromRequest(r) {
     agent: r.partner,
     requested_at: r.requested_at,
     cancel_reason: r.cancel_reason,
+    code: r.code || null, // { needed, tries_left }: the code itself is never sent to admins
     events: r.events.map((e) => ({ ...e })),
   };
 }

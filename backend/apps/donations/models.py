@@ -30,7 +30,11 @@ class PickupPartner(PublicIdModel, TimeStampedModel):
     name = models.CharField(max_length=60, unique=True, help_text="Team label, e.g. 'Pickup team A'")
     lead_name = models.CharField(max_length=120, blank=True, help_text="The lead's own name, shown to the donor")
     phone = models.CharField(max_length=20, blank=True)
-    token = models.CharField(max_length=40, unique=True, editable=False)
+    # The driver's access token is stored only as a SHA-256 hash: admins see it once, when it is made
+    # (or reset), never again. It ends after TOKEN_DAYS; resetting it gives a new one.
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    token_hint = models.CharField(max_length=4, blank=True)  # last 4 characters, to tell tokens apart
+    token_expires_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     area = models.CharField(max_length=120, blank=True)
     vehicle = models.CharField(max_length=60, blank=True)
@@ -42,10 +46,30 @@ class PickupPartner(PublicIdModel, TimeStampedModel):
         db_table = "pickup_partners"
         ordering = ["name"]
 
+    TOKEN_DAYS = 180
+
+    @staticmethod
+    def hash_token(raw):
+        import hashlib
+
+        return hashlib.sha256(str(raw or "").encode()).hexdigest()
+
+    def new_token(self):
+        """Make a new token: stores its hash and returns the token itself (show it once)."""
+        import secrets
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        raw = secrets.token_urlsafe(24)
+        self.token, self.token_hint = self.hash_token(raw), raw[-4:]
+        self.token_expires_at = timezone.now() + timedelta(days=self.TOKEN_DAYS)
+        self.raw_token = raw  # only on this instance, for the response that creates or resets it
+        return raw
+
     def save(self, *args, **kwargs):
         if not self.token:
-            import secrets
-            self.token = secrets.token_urlsafe(24)
+            self.new_token()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -89,6 +113,7 @@ class Donation(PublicIdModel, TimeStampedModel):
     assigned_partner = models.ForeignKey(
         PickupPartner, null=True, blank=True, on_delete=models.SET_NULL, related_name="pickups")
     handover_code = models.CharField(max_length=4, blank=True)
+    handover_tries = models.PositiveSmallIntegerField(default=0)  # wrong codes entered (locks at 5)
     reschedule_count = models.PositiveSmallIntegerField(default=0)
     failed_pickup_count = models.PositiveSmallIntegerField(default=0)
 

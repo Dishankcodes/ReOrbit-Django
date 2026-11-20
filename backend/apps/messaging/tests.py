@@ -286,9 +286,11 @@ class AdminLabelsAndPhotosTests(APIBase):
     def test_photos_are_not_sent_with_the_thread_but_can_be_fetched(self):
         chat = self.post("/api/messaging/me/", {"target_type": "user", "target_id": self.friend.public_id},
                          as_=self.user).data["data"]["conversation"]["id"]
-        photo = "data:image/png;base64,AAAA"
+        photo = _real_photo()
         sent = self.post(f"/api/messaging/me/{chat}/", {"image": photo}, as_=self.user)
         self.assertEqual(sent.status_code, 201, sent.data)  # sending a message creates it (same as text messages)
+        photo = Message.objects.latest("pk").attachment_url  # saved again (smaller, no camera data)
+        self.assertTrue(photo.startswith("data:image/png;base64,"))
 
         thread = self.get(f"/api/messaging/me/{chat}/", as_=self.friend).data["data"]["conversation"]
         message = thread["messages"][-1]
@@ -305,3 +307,51 @@ class AdminLabelsAndPhotosTests(APIBase):
         listed = next(row for row in self.get("/api/messaging/me/", as_=self.friend).data["data"]["conversations"]
                       if row["id"] == chat)
         self.assertEqual((listed["last_message"]["image"], listed["last_message"]["has_image"]), ("", True))
+
+
+def _real_photo(size=(64, 48), fmt="PNG", exif=None):
+    import base64
+    import io
+
+    from PIL import Image
+
+    buf = io.BytesIO()
+    kw = {"exif": exif} if exif is not None else {}
+    Image.new("RGB", size, "teal").save(buf, format=fmt, **kw)
+    return f"data:image/{fmt.lower()};base64,{base64.b64encode(buf.getvalue()).decode()}"
+
+
+class ChatPhotoAndCardSafetyTests(AdminLabelsAndPhotosTests):
+    """Chat photos are uploads only, cleaned and shrunk; the "about" card can't point elsewhere."""
+
+    def chat(self):
+        return self.post("/api/messaging/me/", {"target_type": "user", "target_id": self.friend.public_id},
+                         as_=self.user).data["data"]["conversation"]["id"]
+
+    def test_links_and_fake_photos_are_refused(self):
+        chat = self.chat()
+        for bad in ("https://evil.example/x.png", "data:image/png;base64,AAAA", "data:image/png;base64,@@@"):
+            r = self.post(f"/api/messaging/me/{chat}/", {"image": bad}, as_=self.user)
+            self.assertEqual(r.status_code, 400, bad)
+
+    def test_a_big_photo_is_saved_small_and_without_camera_data(self):
+        from PIL import Image
+        exif = Image.Exif()
+        exif[0x010F] = "PhoneMaker"
+        big = _real_photo(size=(3000, 2000), fmt="JPEG", exif=exif)
+        r = self.post(f"/api/messaging/me/{self.chat()}/", {"image": big}, as_=self.user)
+        self.assertEqual(r.status_code, 201, r.data)
+        import base64
+        import io
+        stored = Message.objects.latest("pk").attachment_url
+        img = Image.open(io.BytesIO(base64.b64decode(stored.split(",", 1)[1])))
+        self.assertLessEqual(max(img.size), 1280)
+        self.assertNotIn(b"PhoneMaker", base64.b64decode(stored.split(",", 1)[1]))
+
+    def test_about_card_keeps_only_reorbit_links(self):
+        r = self.post("/api/messaging/me/", {
+            "target_type": "user", "target_id": self.friend.public_id,
+            "context": {"label": "Order ORD-1", "to": "https://evil.example/login", "image": "https://evil.example/a.png"},
+        }, as_=self.user)
+        ctx = r.data["data"]["conversation"]["context"]
+        self.assertEqual((ctx["label"], ctx["to"], ctx["image"]), ("Order ORD-1", "", ""))
