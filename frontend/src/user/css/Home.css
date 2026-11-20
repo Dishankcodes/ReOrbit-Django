@@ -1048,6 +1048,16 @@
     right: 0;
   }
 
+  /* the cards overlap on a phone: the next card covers the bottom of the one behind it, so its
+     "Buy now" moves up under the category chip, where it stays in view */
+  .hero-card-one .hero-buy,
+  .hero-card-two .hero-buy {
+    top: 50px;
+    bottom: auto;
+    left: 14px;
+    transform: none;
+  }
+
   .trust-grid {
     grid-template-columns: 1fr;
   }

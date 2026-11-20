@@ -70,7 +70,11 @@ const LINK_LABEL = {
 
 function fromServer(n, unreadIds) {
   const category = categoryOf(n);
-  const to = n.target_url && n.target_url.startsWith("/") && !n.target_url.startsWith("/admin") ? n.target_url : "";
+  const to = n.target_url && n.target_url.startsWith("/") && !n.target_url.startsWith("/admin")
+    ? n.target_url
+    : n.ref_type === "complaint" && n.ref_id
+      ? `/remaker-help?tab=reports&report=${n.ref_id}` // older report notifications had no link
+      : "";
   return {
     id: n.id,
     category,
@@ -78,7 +82,7 @@ function fromServer(n, unreadIds) {
     text: n.body,
     createdAt: n.created_at,
     read: n.is_read && !unreadIds.includes(n.id),
-    link: to ? { to, label: LINK_LABEL[category] } : null,
+    link: to ? { to, label: n.module === "complaints" ? "View report" : LINK_LABEL[category] } : null,
     image: "",
     severity: n.severity,
   };

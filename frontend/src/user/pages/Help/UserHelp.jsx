@@ -19,7 +19,6 @@ import { HELP_CATEGORIES, useHelpFaqs } from "../../data/supportStore";
 import EmptyState from "../../components/ui/EmptyState";
 import HelpNav from "./components/HelpNav";
 import RateReOrbit from "../../../shared/components/RateReOrbit";
-import MyReports from "../../../shared/components/MyReports";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
@@ -160,8 +159,6 @@ export default function UserHelp() {
           })}
         </section>
       )}
-
-      <MyReports side="user" hideWhenEmpty />
 
       <RateReOrbit side="user" />
 

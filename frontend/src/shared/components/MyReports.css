@@ -163,3 +163,7 @@
     display: none;
   }
 }
+.mrp li.is-focus {
+  border-color: #2f6a4f;
+  box-shadow: 0 0 0 3px rgba(47, 106, 79, 0.14);
+}

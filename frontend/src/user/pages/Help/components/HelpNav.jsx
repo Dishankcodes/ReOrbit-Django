@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { CircleHelp, LifeBuoy, MessageSquarePlus } from "lucide-react";
+import { CircleHelp, Flag, LifeBuoy, MessageSquarePlus } from "lucide-react";
 import { useTickets } from "../../../data/supportStore";
 
 export default function HelpNav() {
@@ -17,6 +17,9 @@ export default function HelpNav() {
       <NavLink to="/user-help/tickets" className={cls}>
         <LifeBuoy size={15} /> My tickets{" "}
         {open > 0 && <span className="uhp-pill">{open}</span>}
+      </NavLink>
+      <NavLink to="/user-help/reports" className={cls}>
+        <Flag size={15} /> My reports
       </NavLink>
     </nav>
   );

@@ -176,6 +176,7 @@ const UserContactSupport = page(
   () => import("./user/pages/Help/UserContactSupport"),
 );
 const UserTickets = page("user", () => import("./user/pages/Help/UserTickets"));
+const UserReports = page("user", () => import("./user/pages/Help/UserReports"));
 const UserTicketDetails = page(
   "user",
   () => import("./user/pages/Help/UserTicketDetails"),
@@ -725,6 +726,7 @@ export default function App() {
               <Route path="/user-help" element={<UserHelp />} />
               <Route path="/user-help/contact" element={<UserContactSupport />} />
               <Route path="/user-help/tickets" element={<UserTickets />} />
+              <Route path="/user-help/reports" element={<UserReports />} />
               <Route
                 path="/user-help/tickets/:ticketId"
                 element={<UserTicketDetails />}

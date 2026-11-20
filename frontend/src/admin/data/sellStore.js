@@ -198,6 +198,7 @@ function withStats(l, s = {}, sales = []) {
     orderCount: s.orders || 0,
     toHandle: s.to_handle || 0,
     wishlisted: s.wishlisted || 0,
+    savedBy: { user: 0, remaker: 0, admin: 0, ...(s.saved_by || {}) },
     sales,
   };
 }

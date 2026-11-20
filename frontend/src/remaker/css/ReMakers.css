@@ -1643,6 +1643,11 @@
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
+/* the raised middle photo covers the left edge of the third one: keep its button on the right */
+.rm-page .rm-photo:nth-child(3) .rm-photo-buy {
+  right: 14px;
+  left: auto;
+}
 .rm-page .rm-photo-buy:hover {
   background: #400808;
   color: #fff;

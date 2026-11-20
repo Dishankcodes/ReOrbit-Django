@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, ChevronDown, Clock, Flag, MessageSquareText } from "lucide-react";
 import { apiRequest } from "../../api/api";
 import "./MyReports.css";
@@ -12,7 +13,17 @@ const when = (d) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric
    `hideWhenEmpty` leaves the whole block out when there is nothing to show. */
 export default function MyReports({ side = "user", hideWhenEmpty = false, title = "My reports", onLoaded }) {
   const [rows, setRows] = useState(null);
-  const [open, setOpen] = useState("");
+  /* ?report=CP-1001 (from a notification) opens that report and scrolls to it */
+  const [params] = useSearchParams();
+  const focus = params.get("report") || "";
+  const [open, setOpen] = useState(focus);
+  useEffect(() => {
+    if (!focus || !rows) return;
+    setOpen(focus);
+    requestAnimationFrame(() =>
+      document.getElementById(`mrp-${focus}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+  }, [focus, rows]);
   useEffect(() => {
     let alive = true;
     apiRequest("/complaints/me/")
@@ -52,7 +63,8 @@ export default function MyReports({ side = "user", hideWhenEmpty = false, title 
           {rows.map((r) => {
             const isOpen = open === r.id;
             return (
-              <li key={r.id} className={r.answer ? "has-answer" : ""}>
+              <li key={r.id} id={`mrp-${r.id}`}
+                className={`${r.answer ? "has-answer" : ""} ${r.id === focus ? "is-focus" : ""}`}>
                 <button type="button" className="mrp-row" onClick={() => setOpen(isOpen ? "" : r.id)} aria-expanded={isOpen}>
                   <span className="mrp-main">
                     <small>

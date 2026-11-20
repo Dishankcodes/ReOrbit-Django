@@ -32,6 +32,14 @@
   gap: 14px;
   margin-bottom: 20px;
 }
+.ao-money--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1280px) {
+  .ao-money--five {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 .ao-money-card {
   display: flex;
   align-items: flex-start;
@@ -83,6 +91,10 @@ button.ao-money-card:focus-visible {
 .ao-money-icon.bad {
   background: #fbe9e9;
   color: #a24545;
+}
+.ao-money-icon.warn {
+  background: #fdecef;
+  color: #c2185b;
 }
 .ao-money-icon.info {
   background: #e8f1f1;

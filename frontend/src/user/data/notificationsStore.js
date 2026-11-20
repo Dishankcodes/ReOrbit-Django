@@ -234,7 +234,8 @@ const fromServer = (n) => {
     title: n.title,
     message: n.body,
     at: n.created_at,
-    to: n.target_url || NOTIFICATION_TYPES[type].to,
+    to: n.target_url ||
+      (n.ref_type === "complaint" && n.ref_id ? `/user-help/reports?report=${n.ref_id}` : NOTIFICATION_TYPES[type].to),
     severity: n.severity,
     read: n.is_read,
   };

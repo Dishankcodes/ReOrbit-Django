@@ -220,6 +220,8 @@ function getMorePages(pathname) {
         title: "My Tickets",
         subtitle: "Follow every request you've sent.",
       };
+    if (pathname === "/user-help/reports")
+      return { title: "My Reports", subtitle: "What you reported and what we did." };
     return { title: "Ticket Details", subtitle: "Conversation and status." };
   }
   return null;

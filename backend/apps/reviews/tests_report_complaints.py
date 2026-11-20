@@ -35,6 +35,9 @@ class ReviewReportComplaintTests(ReviewBase):
         self.assertTrue(Notification.objects.filter(admin=self.mod, module="complaints").exists())
         mine = self.get("/api/complaints/me/", as_=self.maker).data["data"]
         self.assertEqual(mine["results"][0]["id"] if "results" in mine else mine[0]["id"], c.public_id)
+        # the reporter is told it arrived, and the notification opens it in Help › My reports
+        n = Notification.objects.get(remaker=self.maker, module="complaints")
+        self.assertEqual((n.title, n.target_url), ("Report received", f"/remaker-help?tab=reports&report={c.public_id}"))
         adm = self.get("/api/complaints/admin/", as_=self.viewer)
         self.assertEqual(adm.status_code, 200)
         self.assertIn(c.public_id, str(adm.data))
@@ -64,3 +67,16 @@ class ReviewReportComplaintTests(ReviewBase):
         r = self.post(f"/api/reviews/admin/reports/{rep}/resolve/", {"action": "dismiss", "note": "Fine."}, as_=self.mod)
         self.assertEqual(r.status_code, 200, r.data)
         self.assertEqual(Complaint.objects.get().status, "Dismissed")
+
+
+    def test_member_report_tells_the_reporter_with_a_link(self):
+        r = self.post("/api/complaints/me/", {"type": "ReMaker", "target_id": self.maker.public_id, "category": "Other",
+                                              "description": "Other. Something looked wrong here."}, as_=self.buyer)
+        self.assertEqual(r.status_code, 201, r.data)
+        cid = r.data["data"]["id"]
+        n = Notification.objects.get(user=self.buyer, module="complaints")
+        self.assertEqual(n.target_url, f"/user-help/reports?report={cid}")
+        r = self.post(f"/api/complaints/admin/{cid}/dismiss/", {"reason": "Nothing against the rules."}, as_=self.mod)
+        self.assertEqual(r.status_code, 200, r.data)
+        last = Notification.objects.filter(user=self.buyer, module="complaints").order_by("-pk").first()
+        self.assertEqual((last.title, last.target_url), ("Your report was reviewed", f"/user-help/reports?report={cid}"))

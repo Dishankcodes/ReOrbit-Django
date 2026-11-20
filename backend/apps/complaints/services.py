@@ -201,6 +201,8 @@ def file_member(account, data):
     event(c, "Complaint filed", f"Reported by {account.full_name}", "wait")
     audit(account, "complaint.file", "complaint", c.public_id, after={"type": ttype, "category": c.category})
     _tell_admins(c)
+    _tell_reporter(c, "Report received", f"{c.public_id}: thanks, our team will look into it. "
+                                         "You can follow it in Help › My reports.")
     return c
 
 
@@ -238,6 +240,8 @@ def mirror_review_report(account, review, reason, note=""):
         reporter_role="ReMaker" if kind == "remaker" else "User", **mine)
     event(c, "Complaint filed", f"Review reported by {account.full_name}", "wait")
     _tell_admins(c)
+    _tell_reporter(c, "Report received", f"{c.public_id}: thanks, our team will look into it. "
+                                         "You can follow it in Help › My reports.")
     return c
 
 
@@ -341,13 +345,21 @@ def _finish(c, admin, p, status, action, note, label, tone):
             _tell_reporter(x, "Your report was handled", f"{x.public_id}: our team took action on what you reported.")
 
 
+def reports_url(c):
+    """Where the reporter reads this report and the team's answer (Help › My reports, opened on it)."""
+    if c.reporter_remaker_id:
+        return f"/remaker-help?tab=reports&report={c.public_id}"
+    return f"/user-help/reports?report={c.public_id}"
+
+
 def _tell_reporter(c, title, body):
     who = c.reporter_user or c.reporter_remaker
     if who is None:
         return
     try:
         with transaction.atomic():
-            notify(who, title, body, module="complaints", ref_type="complaint", ref_id=c.public_id)
+            notify(who, title, body, module="complaints", target_url=reports_url(c), severity="info",
+                   ref_type="complaint", ref_id=c.public_id)
     except Exception:  # noqa: BLE001
         log.exception("could not notify the reporter of %s", c.public_id)
 

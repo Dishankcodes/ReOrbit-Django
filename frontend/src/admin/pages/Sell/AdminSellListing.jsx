@@ -317,7 +317,7 @@ export default function AdminSellListing() {
         </div>
       </div>
 
-      <section className="ao-money" aria-label="Listing performance">
+      <section className="ao-money ao-money--five" aria-label="Listing performance">
         <div className="ao-money-card">
           <span className="ao-money-icon info">
             <Eye size={18} />
@@ -325,7 +325,27 @@ export default function AdminSellListing() {
           <div>
             <small>Views</small>
             <strong>{l.views.toLocaleString("en-IN")}</strong>
-            <em>{l.wishlisted} saved by buyers</em>
+            <em>Product page visits</em>
+          </div>
+        </div>
+        <div className="ao-money-card">
+          <span className="ao-money-icon warn">
+            <Heart size={18} />
+          </span>
+          <div>
+            <small>Saves</small>
+            <strong>{l.wishlisted.toLocaleString("en-IN")}</strong>
+            <em>
+              {l.wishlisted === 0
+                ? "No one has saved it yet"
+                : [
+                    `${l.savedBy.user} member${l.savedBy.user === 1 ? "" : "s"}`,
+                    `${l.savedBy.remaker} ReMaker${l.savedBy.remaker === 1 ? "" : "s"}`,
+                    l.savedBy.admin ? `${l.savedBy.admin} team` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+            </em>
           </div>
         </div>
         <div className="ao-money-card">

@@ -150,7 +150,7 @@ class DetailView(Mine, sb.Detail):
 class StatsView(APIView):
     """What each store product has sold, for the Sell products screens.
 
-    {"stats": {"ADI-1": {"sold", "revenue", "orders", "to_handle", "wishlisted"}}}
+    {"stats": {"ADI-1": {"sold", "revenue", "orders", "to_handle", "wishlisted", "saved_by": {"user", "remaker", "admin"}}}}
     sold counts units in orders that are still going ahead; revenue is delivered orders only;
     to_handle is orders waiting for the admin to pack or ship.
     """
@@ -162,7 +162,8 @@ class StatsView(APIView):
         stats = {}
 
         def row(ref):
-            return stats.setdefault(ref, {"sold": 0, "revenue": 0, "orders": 0, "to_handle": 0, "wishlisted": 0})
+            return stats.setdefault(ref, {"sold": 0, "revenue": 0, "orders": 0, "to_handle": 0, "wishlisted": 0,
+                                          "saved_by": {"user": 0, "remaker": 0, "admin": 0}})
 
         seen = set()
         lines = OrderItem.objects.filter(kind="admin_item", order__confirmed_at__isnull=False).values_list(
@@ -178,9 +179,12 @@ class StatsView(APIView):
                 r["sold"] += qty
             if status == "Delivered":
                 r["revenue"] += total
-        saved = WishlistEntry.objects.filter(item_kind="admin").values("item_ref").annotate(n=Count("id"))
+        # who saved it: members, ReMakers (and team members shopping the store)
+        saved = WishlistEntry.objects.filter(item_kind="admin").values("item_ref", "actor_type").annotate(n=Count("id"))
         for s in saved:
-            row(s["item_ref"])["wishlisted"] = s["n"]
+            r = row(s["item_ref"])
+            r["wishlisted"] += s["n"]
+            r["saved_by"][s["actor_type"]] = s["n"]
         return ok({"stats": stats})
 
 
