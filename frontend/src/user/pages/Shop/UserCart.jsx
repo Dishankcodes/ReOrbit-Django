@@ -25,6 +25,7 @@ import {
   useCartCount,
 } from "../../data/shopStore";
 import { isLiveId, useServerQuote } from "../../data/checkoutStore";
+import CartNudges from "./components/CartNudges";
 import { useLiveMarketplace } from "../../data/liveMarketplace";
 import Spinner, { PageLoader } from "../../../shared/components/Spinner";
 import "../../../shared/components/Spinner.css";
@@ -145,6 +146,10 @@ export default function UserCart() {
                       <b>
                         <Sparkles size={11} /> ReMaker
                       </b>
+                    ) : ["platform", "admin"].includes(item.sellerType) ? (
+                      <b>
+                        <BadgeCheck size={11} /> ReOrbit store
+                      </b>
                     ) : (
                       <b>
                         <BadgeCheck size={11} /> Community
@@ -216,7 +221,14 @@ export default function UserCart() {
                 {!off && (
                   <div className="ushp-line-price">
                     <strong>{formatPrice(item.price * l.qty)}</strong>
-                    <span>{formatPrice(item.price)} each</span>
+                    {item.mrp > item.price ? (
+                      <span>
+                        <del>{formatPrice(item.mrp)}</del> {formatPrice(item.price)} each
+                        <em className="ushp-sale-chip">{item.off}% off · no coupons</em>
+                      </span>
+                    ) : (
+                      <span>{formatPrice(item.price)} each</span>
+                    )}
                   </div>
                 )}
                 {off && (
@@ -274,6 +286,7 @@ export default function UserCart() {
               <dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd>
             </div>
           </dl>
+          <CartNudges quote={quote} />
           {quote && quote.groups.length > 1 && (
             <p className="ushp-note">
               Pieces from {quote.groups.length} sellers ship as{" "}

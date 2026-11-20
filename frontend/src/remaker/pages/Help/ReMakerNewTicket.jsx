@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import AboutCard from "../../../shared/components/AboutCard";
+import { useOrders as usePurchases } from "../../../user/data/ordersStore";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { FAQS, TICKET_CATEGORIES, createTicket } from "../../data/helpStore";
@@ -40,6 +42,9 @@ export default function ReMakerNewTicket() {
   const [subject, setSubject] = useState((params.get("subject") || "").slice(0, 120));
   /* the product it came from is linked too, so the team sees it on the ticket */
   const [related, setRelated] = useState(fromOrder || fromProduct);
+  /* an order they bought, shown as an "About" card with an X (like a chat's context) */
+  const myPurchases = usePurchases();
+  const aboutOrder = fromOrder && related ? myPurchases.find((o) => o.id === related) : null;
   const [priority, setPriority] = useState("Normal");
   const [description, setDescription] = useState((params.get("message") || "").slice(0, 4000));
   const [photos, setPhotos] = useState([]);
@@ -158,6 +163,14 @@ export default function ReMakerNewTicket() {
 
       <div className="hlp-layout">
         <form className="rk-card hlp-form" onSubmit={submit} noValidate>
+          {(fromOrder || fromProduct) && (
+            <AboutCard
+              id={related}
+              title={aboutOrder?.item?.title || ""}
+              image={aboutOrder?.item?.image || ""}
+              onClear={() => setRelated("")}
+            />
+          )}
           <div className="rk-field">
             <label htmlFor="tk-category">What is this about?</label>
             <div className="rk-select">

@@ -625,3 +625,31 @@ a.pd-seller--link:hover .pd-seller-go {
   height: 100%;
   object-fit: cover;
 }
+
+/* sale price (ReOrbit store items below their MRP) */
+.pd-mrp {
+  color: #8a948d;
+  font-size: 17px;
+}
+.pd-off {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #e3f3e8;
+  color: #1f7a4a;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+}
+.pd-sale-note {
+  margin: -4px 0 0;
+  padding: 9px 12px;
+  border: 1px dashed #bcdcc8;
+  border-radius: 10px;
+  background: #f3faf5;
+  color: #2f5a43;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pd-description {
+  white-space: pre-line;
+}

@@ -38,6 +38,9 @@ export const cardToItem = (c) => ({
   title: c.title,
   category: c.category.name,
   price: Number(c.price) || 0,
+  /* ReOrbit store items below their original price: struck-through MRP, "20% off", no coupons */
+  mrp: c.mrp ? Number(c.mrp) : null,
+  off: c.off || 0,
   image: c.cover || "",
   summary: c.summary || "",
   description: c.summary || "",

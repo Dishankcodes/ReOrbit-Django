@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { productPath } from "../../../shared/slug";
 import MessageButton from "../../components/ui/MessageButton";
-import { sellerChat } from "../../data/messageTargets";
-import { Link, useParams } from "../../../shared/portalRouter";
+import ShareTracking from "../../../shared/components/ShareTracking";
+import { Link, portalPath, useParams } from "../../../shared/portalRouter";
 import {
   Ban,
   CalendarDays,
@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Info,
   Leaf,
+  MessageCircle,
 } from "lucide-react";
 
 import ReturnPanel from "../../../shared/components/ReturnPanel";
@@ -124,6 +125,9 @@ export default function UserOrderDetails() {
               <MapPinned size={16} /> Track order
             </Link>
           )}
+          {!order.cancelled && !delivered && !order.awaitingPayment && (
+            <ShareTracking side="me" orderId={order.id} itemTitle={order.item.title} />
+          )}
           {delivered && !order.review && order.canReview && (
             <Link
               to={`/user-reviews?q=${encodeURIComponent(order.id)}`}
@@ -140,21 +144,35 @@ export default function UserOrderDetails() {
               <RotateCcw size={16} /> Buy again
             </Link>
           )}
-          <MessageButton
-            target={{
-              ...sellerChat(order.item),
-              context: {
-                label: `Order ${order.id} · ${order.item.title}`,
-                to: `/user-orders/${order.id}`,
-                image: order.item.image,
-              },
-            }}
-            label={
-              order.sellerIsRemaker
-                ? "Message the ReMaker"
-                : "Message the seller"
-            }
-          />
+          {order.seller?.type === "platform" || !order.seller?.id ? (
+            /* ReOrbit's own store: there is no seller inbox, the support team answers instead */
+            <Link
+              to={`/user-help/contact?order=${encodeURIComponent(order.id)}`}
+              className="dn-btn dn-btn--ghost"
+            >
+              <MessageCircle size={15} /> Message ReOrbit support
+            </Link>
+          ) : (
+            <MessageButton
+              target={{
+                key: `${order.sellerIsRemaker ? "remaker" : "seller"}:${order.seller.id}`,
+                kind: order.sellerIsRemaker ? "remaker" : "seller",
+                name: order.seller.name,
+                subtitle: `${order.sellerIsRemaker ? "ReMaker" : "Seller"}${order.seller.city ? ` · ${order.seller.city}` : ""}`,
+                image: order.seller.image || "",
+                context: {
+                  label: `Order ${order.id} · ${order.item.title}`,
+                  to: portalPath(`/user-orders/${order.id}`),
+                  image: order.item.image,
+                },
+              }}
+              label={
+                order.sellerIsRemaker
+                  ? "Message the ReMaker"
+                  : "Message the seller"
+              }
+            />
+          )}
           <button
             type="button"
             className="dn-btn dn-btn--ghost"

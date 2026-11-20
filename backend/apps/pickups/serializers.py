@@ -41,19 +41,22 @@ def request_data(r, request):
                 "category": "Order delivery", "image": media_url(request, first.cover) if first and first.cover else None,
                 "quantity": sum(ln.qty for ln in lines)}
         buyer = o.buyer_user or o.buyer_remaker or o.buyer_admin
-        addr = o.address or {}
+        addr = dict(o.address or {})  # SavedAddress.snapshot() keys
+        addr.setdefault("line1", addr.get("address_line1", ""))
+        addr.setdefault("name", addr.get("recipient_name", ""))
         order = {"id": o.public_id, "status": o.status, "total": o.total, "delivery_fee": o.delivery_fee,
                  "payment": o.payment_status, "path": f"/admin-orders/{o.public_id}",
                  "courier": {"name": o.courier_name, "tracking_no": o.tracking_no} if o.tracking_no else None,
                  "buyer": {"name": buyer.full_name if buyer else addr.get("name", ""), "phone": addr.get("phone", ""),
-                           "address": addr.get("line1") or addr.get("address") or addr.get("line", ""),
+                           "address": ", ".join(x for x in (addr.get("line1") or addr.get("address") or addr.get("line", ""),
+                                                            addr.get("address_line2", "")) if x),
                            "city": addr.get("city", ""), "pincode": addr.get("pincode", "")}}
     else:
         it = r.item
         item = {"id": it.public_id, "title": it.title, "category": it.category.name,
                 "image": _cover(request, it), "quantity": it.quantity}
         order = None
-    kind = "remaker" if r.remaker_id else "user"
+    kind = "remaker" if r.remaker_id else "user" if r.user_id else "platform"
     from apps.core.buyers import reorbit_address_data
 
     return {
@@ -78,6 +81,10 @@ def request_data(r, request):
             "address": snap.get("line", ""), "city": snap.get("city", ""), "state": snap.get("state", ""),
             "pincode": snap.get("pincode", ""),
             "path": f"/admin-remakers/{seller.public_id}" if kind == "remaker" else f"/admin-users/{seller.public_id}",
+        } if seller else {  # a ReOrbit store order: collected from ReOrbit's own address
+            "id": "", "name": "ReOrbit store", "email": "", "type": "platform", "phone": snap.get("phone", ""),
+            "image": None, "status": "Active", "address": snap.get("line", ""), "city": snap.get("city", ""),
+            "state": snap.get("state", ""), "pincode": snap.get("pincode", ""), "path": "/admin-sell",
         },
         "events": [{"id": e.pk, "label": e.label, "detail": e.detail, "tone": e.tone, "at": e.created_at,
                     "actor": e.actor} for e in r.events.all()],

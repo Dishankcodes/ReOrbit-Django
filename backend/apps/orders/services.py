@@ -26,7 +26,8 @@ from django.utils import timezone
 from apps.admins.models import Admins, AdminItem
 from apps.core import buyers as buyer_kit
 from apps.core.models import Notification, PlatformSettings, SavedAddress
-from apps.core.pricing import cod_block_reason, delivery_charge, maintenance_block_reason, platform_fee
+from apps.core.pricing import (cod_block_reason, delivery_charge, free_delivery_from, maintenance_block_reason,
+                                platform_fee, sale_of)
 from apps.core.services import audit, notify
 from apps.listings.models import Item, MediaImage
 from apps.listings.sellables import settle_status
@@ -247,9 +248,28 @@ def split_discount(discount, totals):
 
 
 def _seller_types(plan):
-    """Who sells what is in the cart (user / remaker / platform): a coupon for ReMaker creations or for
-    ReOrbit's own products needs one of those in the cart."""
-    return {g["seller"]["type"] for g in plan["groups"]}
+    """Who sells the full-price items in the cart (user / remaker / platform): a coupon for ReMaker
+    creations or for ReOrbit's own products needs one of those in the cart (sale items don't count)."""
+    return {g["seller"]["type"] for g in plan["groups"] if g["eligible"]}
+
+
+SALE_ONLY = "Coupons don't apply to items already on sale. Add a full-price item to use this code."
+
+
+def _voucher(buyer, code, plan, lock=False):
+    """Check a voucher against the full-price part of the cart only. Items already on sale (a ReOrbit
+    product below its MRP) never get a second discount, and don't count towards a minimum order.
+    Returns (voucher, discount) or raises VoucherError."""
+    goods = sum(g["subtotal"] for g in plan["groups"])
+    eligible = sum(g["eligible"] for g in plan["groups"])
+    if eligible <= 0 and goods > 0:
+        raise VoucherError(SALE_ONLY, "VOUCHER_SALE_ONLY")
+    try:
+        return vouchers.check(buyer, code, eligible, lock=lock, seller_types=_seller_types(plan))
+    except VoucherError as e:
+        if e.code == "VOUCHER_MIN_ORDER" and eligible < goods:
+            e.message = e.message.replace("more to use", "more of full-price items to use") + " Sale items don't count."
+        raise
 
 
 def quote(buyer, raw_lines, method=None, voucher_code=None):
@@ -263,7 +283,7 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
     discount, applied, voucher_error = 0, None, ""
     if str(voucher_code or "").strip():
         try:
-            v, discount = vouchers.check(buyer, voucher_code, goods, seller_types=_seller_types(plan))
+            v, discount = _voucher(buyer, voucher_code, plan)
             discount, applied = min(discount, max(0, grand - 1)), vouchers.brief(v)
         except VoucherError as e:
             voucher_error = e.message
@@ -275,6 +295,11 @@ def quote(buyer, raw_lines, method=None, voucher_code=None):
         "platform_fee": sum(g["platform_fee"] for g in plan["groups"]),
         "delivery_fee": sum(g["delivery_fee"] for g in plan["groups"]),
         "discount": discount, "voucher": applied, "voucher_error": voucher_error,
+        # coupons only work on full-price items; sale items already have their own discount
+        "coupon_eligible": sum(g["eligible"] for g in plan["groups"]),
+        "sale_items": sum(ln["qty"] for g in plan["groups"] for ln in g["lines"] if ln["sale"]),
+        "sale_savings": sum((ln["sale"]["mrp"] - ln["unit_price"]) * ln["qty"]
+                            for g in plan["groups"] for ln in g["lines"] if ln["sale"]),
         "total": payable,
         "cod_allowed": not cod,
         "cod_reason": cod,
@@ -287,8 +312,11 @@ def _public_group(g):
         "seller": g["seller"],
         "subtotal": g["subtotal"], "platform_fee": g["platform_fee"],
         "delivery_fee": g["delivery_fee"], "total": g["total"],
+        "free_delivery": g["free_delivery"],
         "lines": [{"id": ln["public_id"], "title": ln["title"], "qty": ln["qty"], "unit_price": ln["unit_price"],
-                   "line_total": ln["line_total"]} for ln in g["lines"]],
+                   "line_total": ln["line_total"], "on_sale": bool(ln["sale"]),
+                   "mrp": ln["sale"]["mrp"] if ln["sale"] else None,
+                   "off": ln["sale"]["off"] if ln["sale"] else None} for ln in g["lines"]],
     }
 
 
@@ -335,6 +363,7 @@ def _plan(buyer, merged, s, lock):
         g["lines"].append({
             "public_id": pid, "kind": kind, "obj": obj, "qty": qty, "title": obj.title, "unit_price": unit,
             "line_total": unit * qty, "cover": covers[kind].get(obj.pk, ""),
+            "sale": sale_of(obj) if kind == "admin_item" else None,
         })
         if kind in ("item", "remaker_product") and obj.pickup_preference == Item.Pickup.PLATFORM_PICKUP:
             g["platform_pickup"] = True
@@ -342,11 +371,16 @@ def _plan(buyer, merged, s, lock):
     out = list(groups.values())
     for g in out:
         g["subtotal"] = sum(ln["line_total"] for ln in g["lines"])
+        # what a coupon can take off: items already on sale are left out (like Zomato's "not on offer items")
+        g["eligible"] = sum(ln["line_total"] for ln in g["lines"] if not ln["sale"])
         g["platform_fee"] = platform_fee(g["subtotal"], g["seller"]["type"], s)
         # ReOrbit delivers "Managed by ReOrbit" orders and keeps the fee, so it is always the platform rate
         # (Admin > Settings); a seller who ships it themselves adds no delivery charge.
         g["delivery_fee"] = delivery_charge(g["seller"]["type"], g["subtotal"], g["platform_pickup"], s)
         g["total"] = g["subtotal"] + g["platform_fee"] + g["delivery_fee"]
+        free_from = free_delivery_from(g["seller"]["type"], g["platform_pickup"], s)
+        g["free_delivery"] = ({"from": free_from, "gap": max(0, free_from - g["subtotal"])}
+                              if free_from and g["delivery_fee"] else None)
     return {"groups": out, "problems": problems}
 
 
@@ -415,8 +449,7 @@ def create_checkout(buyer, data, key=None):
             voucher, discount = None, 0
             if voucher_code:
                 try:  # locked: two checkouts can never both spend it
-                    voucher, discount = vouchers.check(buyer, voucher_code, sum(g["subtotal"] for g in plan["groups"]),
-                                                       lock=True, seller_types=_seller_types(plan))
+                    voucher, discount = _voucher(buyer, voucher_code, plan, lock=True)
                 except VoucherError as e:
                     raise CheckoutError(e.message, code=e.code)
                 discount = min(discount, max(0, grand - 1))  # an order always keeps at least ₹1 to pay
@@ -425,7 +458,8 @@ def create_checkout(buyer, data, key=None):
                 reason = cod_block_reason(payable, s) or cod_open_reason(buyer)
                 if reason:
                     raise CheckoutError(reason, {"method": [reason]}, code="COD_BLOCKED")
-            shares = split_discount(discount, [g["total"] for g in plan["groups"]])
+            # the discount only lands on orders that have full-price items
+            shares = split_discount(discount, [g["eligible"] for g in plan["groups"]])
             payment = Payment.objects.create(
                 **buyer_kit.fields(buyer), method=method, amount=payable, idempotency_key=key or None,
                 status=Payment.Status.COD if cod else Payment.Status.CREATED,
@@ -859,6 +893,44 @@ def auto_confirm_due(now=None):
         except Exception:  # noqa: BLE001 - one bad order must not stop the rest
             log.exception("auto-confirm failed for %s", pid)
     return done
+
+
+REORBIT_COURIER = "ReOrbit Delivery"  # the courier choice that hands the parcel to ReOrbit's own pickup team
+
+
+def is_reorbit_courier(name):
+    return " ".join(str(name or "").lower().split()) in ("reorbit delivery", "reorbit", "reorbit pickup")
+
+
+def hand_to_reorbit(order_pk, *, actor_kind, actor, ip=None):
+    """"Mark as shipped" with ReOrbit Delivery as the courier, by the seller or an admin: ReOrbit's
+    pickup team takes over. The order becomes a ReOrbit-delivered one and gets a pickup in
+    Admin > Pickups; from then on only that pickup moves it along (picked up = shipped,
+    completed = delivered). The buyer's total does not change. Safe to press twice."""
+    from apps.pickups import services as pickups  # local import: pickups reads orders too
+
+    with transaction.atomic():
+        o = Order.objects.select_for_update(of=("self",)).select_related(
+            "seller_user", "seller_remaker").get(pk=order_pk)
+        if o.status == Order.Status.CONFIRMED:
+            raise CheckoutError("Pack the order first, then hand it to ReOrbit Delivery.", code="BAD_STATE", status=409)
+        if o.status != Order.Status.PACKED:
+            raise CheckoutError("This order has already left, so it can't be handed to ReOrbit Delivery.",
+                                code="BAD_STATE", status=409)
+        first = not o.managed_delivery or not o.pickup_requested_at
+        o.managed_delivery = True
+        o.pickup_requested_at = o.pickup_requested_at or timezone.now()
+        o.save(update_fields=["managed_delivery", "pickup_requested_at", "updated_at"])
+        r = pickups.request_for_order(o)
+        if first:
+            who = "ReOrbit" if actor_kind == "admin" else "The seller"
+            event(o, "Handed to ReOrbit Delivery", f"{who} chose ReOrbit Delivery. ReOrbit's team collects it ({r.public_id}).",
+                  actor_kind)
+            if actor_kind == "admin":
+                audit(actor, "order.reorbit_delivery", "order", o.public_id, after={"pickup": r.public_id}, ip=ip)
+            _notify_buyer(o, "ReOrbit is delivering your order",
+                          f"{o.public_id} will be collected and delivered by ReOrbit's own team.")
+    return r
 
 
 def request_pickup(order_pk, *, actor, ip=None):

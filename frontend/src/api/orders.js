@@ -52,6 +52,18 @@ export const buyerOrdersApi = {
     post(`/orders/me/${id}/return/${action}/`).then((r) => r.data.order),
 };
 
+/* Share tracking with someone who has no account: a signed link to the public /track page.
+   `side` is "me" (the buyer) or "sales" (the seller). */
+export const shareTrackingApi = {
+  link: (side, id) =>
+    post(`/orders/${side}/${encodeURIComponent(id)}/share/`, {}).then((r) => ({
+      url: `${window.location.origin}/track/${r.data.token}`,
+      days: r.data.expires_in_days,
+    })),
+  publicView: (token) =>
+    apiRequest(`/orders/track/${encodeURIComponent(token)}/`, { auth: false }).then((r) => r.data.order),
+};
+
 /* Couriers and the reasons used by returns and failed deliveries. Rarely changes: fetched once. */
 let optionsPromise;
 export const orderOptionsApi = {
@@ -143,6 +155,19 @@ export async function payOnline(payment, { name, email, phone } = {}) {
       description: "Order payment",
       prefill: { name, email, contact: phone },
       theme: { color: "#2a4d3a" },
+      /* UPI first, as its own block (QR on a computer, UPI apps on a phone). Razorpay only lists UPI
+         when it is switched on for the account (Dashboard > Payment methods). Typing a UPI ID ("UPI
+         collect") was retired by NPCI on 28 Feb 2026, so this is QR / app based. The other methods
+         stay underneath (show_default_blocks). */
+      config: {
+        display: {
+          blocks: {
+            upi: { name: "Pay with UPI", instruments: [{ method: "upi" }] },
+          },
+          sequence: ["block.upi"],
+          preferences: { show_default_blocks: true },
+        },
+      },
       handler: (resp) => {
         checkoutApi
           .verify({

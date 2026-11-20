@@ -1,5 +1,6 @@
 from django.urls import path
 
+from . import share
 from . import views as v
 
 urlpatterns = [
@@ -13,12 +14,15 @@ urlpatterns = [
     path("me/<str:public_id>/cancel/", v.MyOrderCancel.as_view()),
     path("me/<str:public_id>/return/", v.MyOrderReturn.as_view()),
     path("me/<str:public_id>/received/", v.MyOrderReceived.as_view()),
+    path("me/<str:public_id>/share/", share.MyOrderShare.as_view()),
+    path("track/<str:token>/", share.PublicTrack.as_view()),
     path("me/<str:public_id>/return/<str:action>/", v.MyOrderReturnAction.as_view()),
     path("options/", v.OptionsView.as_view()),
     path("sales/", v.SalesList.as_view()),
     path("sales/customers/", v.SalesCustomers.as_view()),
     path("sales/customers/<str:key>/", v.SalesCustomerDetail.as_view()),
     path("sales/<str:public_id>/", v.SalesDetail.as_view()),
+    path("sales/<str:public_id>/share/", share.SalesShare.as_view()),
     path("sales/<str:public_id>/<str:action>/", v.SalesAction.as_view()),
     path("admin/", v.AdminList.as_view()),
     path("admin/report/", v.AdminReport.as_view()),

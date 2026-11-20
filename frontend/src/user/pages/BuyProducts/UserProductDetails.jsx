@@ -92,11 +92,14 @@ export default function UserProductDetails() {
   const [photos, setPhotos] = useState([]);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [sellerPhoto, setSellerPhoto] = useState("");
+  /* the marketplace card only carries a 140-character summary; the full text comes with the detail */
+  const [fullDescription, setFullDescription] = useState("");
   useEffect(() => {
     let active = true;
     setPhotos([]);
     setPhotoIndex(0);
     setSellerPhoto("");
+    setFullDescription("");
     apiRequest(`/marketplace/${encodeURIComponent(productId)}/`, {
       auth: false,
     })
@@ -107,6 +110,7 @@ export default function UserProductDetails() {
         if (active) {
           setPhotos(list);
           setSellerPhoto(r.data?.product?.seller?.photo || "");
+          setFullDescription(r.data?.product?.description || "");
         }
       })
       .catch(() => {});
@@ -299,8 +303,21 @@ export default function UserProductDetails() {
           <h1>{item.title}</h1>
           <div className="pd-price">
             <strong>{formatPrice(item.price)}</strong>
-            <span>Listed price</span>
+            {item.mrp > item.price ? (
+              <>
+                <del className="pd-mrp">{formatPrice(item.mrp)}</del>
+                <em className="pd-off">{item.off}% off</em>
+              </>
+            ) : (
+              <span>Listed price</span>
+            )}
           </div>
+          {item.mrp > item.price && (
+            <p className="pd-sale-note">
+              Already on sale: you save {formatPrice(item.mrp - item.price)}. Coupons and vouchers don't apply to sale
+              items.
+            </p>
+          )}
           <p className="pd-summary">{item.summary}</p>
 
           <ul className="pd-facts">
@@ -484,7 +501,7 @@ export default function UserProductDetails() {
         <section className="pd-details">
           <div>
             <h2>About this piece</h2>
-            <p>{item.description}</p>
+            <p className="pd-description">{fullDescription || item.description}</p>
             <div className="pd-stats">
               <div>
                 <Boxes size={16} />

@@ -2082,10 +2082,17 @@
 }
 
 /* Content › Discover (featured ReMakers) */
-.cm-dc-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 22px; margin-top: 14px; }
-.cm-dc-col h4 { margin: 0 0 8px; color: #0e3a2d; font-size: 14px; }
+.cm-dc { padding: 24px 26px 0; }
+.cm-dc .cm-sp-head a { color: #1f6b52; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.cm-dc-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 18px; }
+.cm-dc-col { min-width: 0; padding: 18px; border: 1px solid #e3ece7; border-radius: 16px; background: #fbfdfc; }
+.cm-dc-col h4 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; color: #0e3a2d; font-size: 14px; }
+.cm-dc-auto { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 12px 14px; border: 1px dashed #cfe0d7; border-radius: 12px; background: #f4f9f6; color: #5b6b63; font-size: 13px; line-height: 1.5; }
+.cm-dc-auto strong { padding: 2px 8px; border-radius: 999px; background: #e1efe7; color: #1f6b52; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+.cm-dc-auto svg { vertical-align: -2px; }
+.cm-dc .au-search { width: 100%; }
 .cm-dc-col h5 { margin: 14px 0 6px; color: #4a5a52; font-size: 12.5px; }
-.cm-dc-h { margin-top: 22px !important; }
+.cm-dc-h { margin-top: 20px !important; }
 .cm-dc-maker { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e0e8e3; border-radius: 12px; background: #fff; }
 .cm-dc-av { display: grid; place-items: center; width: 36px; height: 36px; flex: none; overflow: hidden; border-radius: 50%; background: #e8f0ea; color: #0e3a2d; font-weight: 800; }
 .cm-dc-av img { width: 100%; height: 100%; object-fit: cover; }
@@ -2104,8 +2111,11 @@
 .cm-dc-imgs button:disabled:not(.on) { opacity: 0.4; }
 .cm-dc-imgs img { width: 100%; height: 100%; object-fit: cover; }
 .cm-dc-imgs em { position: absolute; top: 3px; right: 3px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #2a7a52; color: #fff; font-size: 11px; font-style: normal; font-weight: 800; }
-.cm-dc-foot { display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 14px; border-top: 1px solid #eef2ef; }
+.cm-dc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 20px -26px 0; padding: 14px 26px; border-top: 1px solid #eef2ef; background: #f8fbf9; }
+.cm-dc-state { color: #6b756d; font-size: 13px; }
+.cm-dc-state.dirty { color: #a1660b; font-weight: 700; }
 @media (max-width: 900px) { .cm-dc-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .cm-dc { padding: 18px 16px 0; } .cm-dc-foot { margin: 18px -16px 0; padding: 12px 16px; } .cm-dc-foot .ad-btn { width: 100%; } }
 
 /* New banner, step 1: which side shows it */
 .cm-side-pick {

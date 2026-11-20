@@ -32,6 +32,7 @@ const HowItWorks = page(
 );
 const Privacy = page("user", () => import("./user/pages/HomePages/Privacy"));
 const Terms = page("user", () => import("./user/pages/HomePages/Terms"));
+const PublicTrack = page("user", () => import("./user/pages/HomePages/PublicTrack"));
 const PolicyRoute = page("user", () => import("./user/pages/HomePages/PolicyRoute"));
 const ReMakerDiscover = page(
   "user",
@@ -587,6 +588,8 @@ export default function App() {
           <Route path="/account-blocked" element={<AccountBlocked />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          {/* a delivery someone shared: no login */}
+          <Route path="/track/:token" element={<PublicTrack />} />
           <Route path="/policies/:policyKey" element={<PolicyRoute />} />
           {/* Compatibility aliases used by older links */}
           <Route path="/UserPrivacy" element={<Privacy />} />

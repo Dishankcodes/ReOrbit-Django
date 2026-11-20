@@ -9,6 +9,7 @@ import { useListings, useSales } from "../../data/listingsStore";
 import TextSuggestions from "../../../shared/components/TextSuggestions";
 import { LISTING_TOPIC, TOPIC_IDEAS, TOPIC_REFS } from "../../../shared/supportTopics";
 import HelpNav from "./components/HelpNav";
+import AboutCard from "../../../shared/components/AboutCard";
 
 import "../../css/shared/ui-base.css";
 import "../../css/help/UserHelp.css";
@@ -95,6 +96,9 @@ export default function UserContactSupport() {
     message: f.message.trim().length < 20,
   };
   const refKinds = TOPIC_REFS[f.category] || null;
+  /* the order it was opened from, shown as an "About" card with an X (like a chat's context) */
+  const myOrders = useOrders();
+  const aboutOrder = f.orderId ? myOrders.find((o) => o.id === f.orderId) : null;
   const ideas = TOPIC_IDEAS[f.category] || [];
   const pickRef = (id, row) => {
     setF((x) => ({
@@ -170,6 +174,14 @@ export default function UserContactSupport() {
 
       <div className="uhp-contact">
         <form className="dn-card uhp-form" onSubmit={submit} noValidate>
+          {(fromOrder || fromListing) && (
+            <AboutCard
+              id={f.orderId}
+              title={aboutOrder?.item?.title || ""}
+              image={aboutOrder?.item?.image || ""}
+              onClear={() => pickRef("", null)}
+            />
+          )}
           <label className="dn-field">
             <span className="dn-label">
               What is this about? <em>*</em>

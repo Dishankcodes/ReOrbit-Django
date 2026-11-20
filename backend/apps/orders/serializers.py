@@ -2,14 +2,14 @@
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Sum
 
 from datetime import timedelta
 
 from django.utils import timezone
 
 from . import returns
-from .models import Order
+from .models import Order, OrderItem
 from .services import FAIL_REASONS
 
 from apps.core import buyers
@@ -66,6 +66,12 @@ def _image(request, profile):
     return media_url(request, f.name) if f else None
 
 
+def _items_sold(**seller):
+    """Pieces this seller has delivered (the profile's total_sales counter is never kept up to date)."""
+    return OrderItem.objects.filter(order__status=Order.Status.DELIVERED, **{f"order__{k}": v for k, v in seller.items()}
+                                    ).aggregate(n=Sum("qty"))["n"] or 0
+
+
 def seller_card(o, request):
     """The "Sold by" card on one order: who the seller really is. Used on the order detail only,
     because it counts reviews. Fields the seller has not filled in come back empty, never made up."""
@@ -83,7 +89,7 @@ def seller_card(o, request):
             "craft": (getattr(p, "speciality", "") or getattr(p, "studio_name", "") or ""),
             "rating": float(getattr(p, "rating_average", 0) or 0), "totalReviews": getattr(p, "rating_count", 0) or 0,
             "experience": getattr(p, "experience", "") or "",
-            "productsSold": getattr(p, "total_sales", 0) or 0,
+            "productsSold": _items_sold(seller_remaker=r),
             "verified": r.email_verified_at is not None,
         }
     u = o.seller_user
@@ -95,7 +101,7 @@ def seller_card(o, request):
     return {
         **base, "image": _image(request, p), "city": getattr(p, "city", "") or "",
         "rating": round(total / n, 1) if n else 0, "totalReviews": n,
-        "productsSold": getattr(p, "total_sales", 0) or 0,
+        "productsSold": _items_sold(seller_user=u),
     }
 
 
@@ -204,7 +210,7 @@ def order_data(o, request, *, events=False, buyer=False):
             for ln in o.lines.all()
         ],
         "subtotal": o.subtotal, "platform_fee": o.platform_fee, "delivery_fee": o.delivery_fee, "discount": o.discount, "total": o.total,
-        "address": o.address, "note": o.note,
+        "address": address_view(o.address), "note": o.note,
         "courier": {"name": o.courier_name, "tracking_no": o.tracking_no,
                     "tracking_url": _tracking_url(o.courier_name, o.tracking_no)} if o.tracking_no else None,
         "created_at": o.created_at, "confirmed_at": o.confirmed_at, "shipped_at": o.shipped_at,
@@ -268,6 +274,16 @@ def report_row(o):
         "cancel_reason": o.cancel_reason, "cod_received_at": o.cod_received_at,
         "refund_due": o.payment_status in ("Refund_Pending", "Refund_Failed"),
     }
+
+
+def address_view(snap):
+    """An order keeps a copy of the address as it was (SavedAddress.snapshot(): address_line1,
+    recipient_name, ...). Screens read the same shape as saved addresses (line1, name), so give both."""
+    snap = dict(snap or {})
+    snap.setdefault("name", snap.get("recipient_name", ""))
+    snap.setdefault("line1", snap.get("address_line1", ""))
+    snap.setdefault("line2", snap.get("address_line2", ""))
+    return snap
 
 
 def address_data(a):

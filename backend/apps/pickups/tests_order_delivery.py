@@ -37,8 +37,10 @@ class ManagedDeliveryTests(PostDeliveryBase):
         # the seller can't ship it themselves, and must pack before asking
         self.assertEqual(self.act(oid, self.table, "pickup").status_code, 409)
         self.assertEqual(self.act(oid, self.table, "pack").status_code, 200)
+        # "Mark as shipped" on a ReOrbit-delivered order hands it to the pickup team instead of shipping it
         r = self.act(oid, self.table, "ship", {"courier_name": "Delhivery", "tracking_no": "98765000001"}, who=self.maker)
-        self.assertEqual((r.status_code, r.data["code"]), (409, "MANAGED_DELIVERY"))
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual((r.data["data"]["order"]["status"], r.data["data"]["pickup_id"]), ("Packed", self.pickup(oid).public_id))
         r = self.act(oid, self.table, "pickup")
         self.assertEqual(r.status_code, 200, r.data)
         self.assertEqual(r.data["data"]["order"]["pickup"]["status"], "Requested")

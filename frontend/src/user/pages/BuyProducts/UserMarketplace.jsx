@@ -141,7 +141,16 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
 
         <div className="mk-foot">
           <div>
-            <strong>{formatPrice(item.price)}</strong>
+            <strong>
+              {formatPrice(item.price)}
+              {item.mrp > item.price && (
+                <>
+                  {" "}
+                  <del className="mk-mrp">{formatPrice(item.mrp)}</del>{" "}
+                  <em className="mk-off">{item.off}% off</em>
+                </>
+              )}
+            </strong>
             <small>
               <MapPin size={11} /> {item.city}
             </small>

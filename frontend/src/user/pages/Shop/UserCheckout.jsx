@@ -42,6 +42,7 @@ import {
 import { checkoutApi, payOnline } from "../../../api/orders";
 import { getAccount, getAccountType } from "../../../api/session";
 import VoucherBox from "./components/VoucherBox";
+import CartNudges from "./components/CartNudges";
 import { loadVouchers } from "../../data/donationsStore";
 import { feeLabel } from "../../../shared/commerce";
 import { formatPrice } from "../../../data/marketplaceData";
@@ -781,6 +782,7 @@ export default function UserCheckout() {
                     <strong title={l.item.title}>{l.item.title}</strong>
                     <span>
                       {formatPrice(l.item.price)} · {l.item.seller}
+                      {l.item.mrp > l.item.price && <em className="ushp-sale-chip">{l.item.off}% off · no coupons</em>}
                     </span>
                     <div className="ushp-sum-ctrl">
                       <div className="ckp-step sm" aria-label={`Quantity of ${l.item.title}`}>
@@ -885,6 +887,7 @@ export default function UserCheckout() {
               <dd>{quote ? formatPrice(quote.total) : <Spinner />}</dd>
             </div>
           </dl>
+          <CartNudges quote={quote} showCoupon={canVoucher} />
           {quote && quote.groups.length > 1 && (
             <p className="ushp-note">
               {quote.groups.length} sellers, so {quote.groups.length} separate

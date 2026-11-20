@@ -375,6 +375,16 @@ def request_for_order(order):
     """A "Managed by ReOrbit" order the seller packed: ReOrbit collects it from them and delivers it.
     One pickup per order (called inside the order's transaction)."""
     seller = order.seller_user or order.seller_remaker
+    if seller is None:  # a ReOrbit store order: collected from ReOrbit's own address (Admin > Addresses)
+        from apps.core.buyers import reorbit_address_data
+
+        a = reorbit_address_data() or {}
+        r, created = PickupRequest.objects.get_or_create(order=order, defaults={"address_snapshot": {
+            "line": ", ".join(x for x in (a.get("line1"), a.get("line2")) if x), "city": a.get("city", ""),
+            "state": a.get("state", ""), "pincode": a.get("pincode", ""), "phone": a.get("phone", "")}})
+        if created:
+            _event(r, "Pickup requested", f"ReOrbit store order {order.public_id}", "neutral", "admin")
+        return r
     kind = "user" if order.seller_user_id else "remaker"
     r, created = PickupRequest.objects.get_or_create(
         order=order, defaults={kind: seller, "address_snapshot": _snapshot(seller)})
@@ -416,6 +426,8 @@ def _need(r, *statuses):
 
 
 def _notify_seller(r, title, body):
+    if r.seller is None:  # a ReOrbit store order: no outside seller to tell
+        return
     if r.order_id:
         to = (f"/user-sell/sales/{r.order.public_id}" if r.user_id else f"/remaker-sales/{r.order.public_id}")
     else:
@@ -439,7 +451,9 @@ def _schedule(r, admin, p, *, again=False):
         raise _fix({"partner": ["This team has no active lead yet."]})
     r.pickup_date, r.pickup_slot, r.assigned_partner, r.status = day, slot, partner, R.SCHEDULED
     fields = ["pickup_date", "pickup_slot", "assigned_partner", "status", "updated_at"]
-    if not again or not r.handover_code or r.handover_tries >= handover.MAX_TRIES:
+    if r.seller is None:
+        pass  # a ReOrbit store order leaves ReOrbit's own address: no outside seller to hold a code
+    elif not again or not r.handover_code or r.handover_tries >= handover.MAX_TRIES:
         # a fresh code for a new booking, or after too many wrong codes locked the old one
         r.handover_code, r.handover_tries = handover.new_code(), 0
         fields += ["handover_code", "handover_tries"]
@@ -464,8 +478,10 @@ def _order_step(r, admin, action, courier="", tracking=""):
 
 def _picked_up(r, admin, p):
     _need(r, R.SCHEDULED)
-    # the seller's 4-digit code proves the team really collected it (a wrong one is counted by the caller)
-    handover.check(r, p.get("code"))
+    # the seller's 4-digit code proves the team really collected it (a wrong one is counted by the caller).
+    # A ReOrbit store order leaves ReOrbit's own address, so there is no outside seller holding a code.
+    if r.seller is not None:
+        handover.check(r, p.get("code"))
     if r.order_id:
         # ReOrbit is the courier now. The admin can enter a partner courier's number; else the pickup id tracks it.
         courier = _text(p.get("courier_name"), 40) or "ReOrbit Delivery"

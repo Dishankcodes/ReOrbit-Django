@@ -51,8 +51,10 @@ SLA_DAYS = 3  # a pending donation should be reviewed within this many days
 
 # same slots as the app (frontend/src/user/data/donationsStore.js SLOTS)
 SLOTS = ("9:00 AM \u2013 12:00 PM", "12:00 PM \u2013 3:00 PM", "3:00 PM \u2013 6:00 PM")
-# the pincodes we collect from (frontend checkPincode RANGES)
-SERVICE_RANGES = ((380001, 380063), (382005, 382030), (382345, 382481))
+# We collect anywhere in Gujarat: pincodes 360001-396999 (frontend checkPincode GUJARAT), except the
+# union territories that share the range: Daman, Dadra and Nagar Haveli (396210-396240) and Diu (362520).
+SERVICE_RANGES = ((360001, 396999),)
+NOT_GUJARAT = ((396210, 396240), (362520, 362520))
 
 
 class DonationError(Exception):
@@ -76,7 +78,8 @@ def serviceable(pincode):
     p = str(pincode or "").strip()
     if not (p.isascii() and p.isdigit() and len(p) == 6):
         return False
-    return any(lo <= int(p) <= hi for lo, hi in SERVICE_RANGES)
+    n = int(p)
+    return any(lo <= n <= hi for lo, hi in SERVICE_RANGES) and not any(lo <= n <= hi for lo, hi in NOT_GUJARAT)
 
 
 def event(d, label, detail="", tone="neutral", actor="system"):

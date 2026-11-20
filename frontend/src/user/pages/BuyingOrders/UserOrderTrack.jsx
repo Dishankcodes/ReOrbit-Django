@@ -22,6 +22,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import SafeImage from "../../components/ui/SafeImage";
 import useToast from "../../components/ui/useToast";
 import OrderStepper from "./components/OrderStepper";
+import ShareTracking from "../../../shared/components/ShareTracking";
 import SellerCard from "./components/SellerCard";
 import OrderHelp from "./components/OrderHelp";
 import TrackTimeline from "./components/TrackTimeline";
@@ -138,6 +139,12 @@ export default function UserOrderTrack() {
           </div>
           <h1>{title}</h1>
           <p>{sub}</p>
+          {!cancelled && !delivered && !order.awaitingPayment && (
+            <div className="ob-hero-share">
+              <ShareTracking side="me" orderId={order.id} itemTitle={order.item.title} className="dn-btn dn-btn--soft" />
+              <small>Not at home? Send the delivery to family so they can receive it.</small>
+            </div>
+          )}
 
           <Link to={`/user-orders/${order.id}`} className="ob-hero-item">
             <SafeImage src={order.item.image} alt="" />

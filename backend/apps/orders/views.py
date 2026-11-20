@@ -302,6 +302,8 @@ class OptionsView(APIView):
     def get(self, request):
         return ok({
             "couriers": list(services.COURIERS),
+            # first in the courier list: hands the parcel to ReOrbit's own pickup team (Admin › Pickups)
+            "reorbit_courier": services.REORBIT_COURIER,
             "return_days": returns.RETURN_DAYS, "escalate_days": returns.ESCALATE_DAYS, "max_photos": returns.MAX_PHOTOS,
             "return_reasons": [
                 {"code": k, "label": v[0], "fault": v[1], "needs_photo": returns.needs_photo(k),
@@ -493,6 +495,14 @@ def _act(request, order, action, actor_kind):
             raise services.CheckoutError(
                 "You can't mark your own order delivered. The buyer confirms it, or ReOrbit marks it after checking "
                 "the courier's tracking.", code="SELLER_CANT_DELIVER", status=409)
+        if action == "ship" and (services.is_reorbit_courier(d.get("courier_name"))
+                                 or (order.managed_delivery and who == "seller")):
+            # ReOrbit Delivery chosen as the courier (or a ReOrbit-delivered order "shipped" by its seller):
+            # it goes to Admin > Pickups, and only the pickup changes the order's status from here on
+            r = services.hand_to_reorbit(order.pk, actor_kind="admin" if who == "admin" else "seller", actor=me, ip=ip)
+            o = _order_qs().prefetch_related("events").get(pk=order.pk)
+            return ok({"order": order_data(o, request, events=True, buyer=True), "pickup_id": r.public_id},
+                      message=f"Handed to ReOrbit Delivery. The pickup is {r.public_id} in Admin › Pickups.")
         if order.managed_delivery and who == "admin" and action in ("ship", "deliver"):
             # ReOrbit's own delivery is moved along from its pickup (Admin › Pickups), never from the order page
             pid = getattr(getattr(order, "delivery_pickup", None), "public_id", "")

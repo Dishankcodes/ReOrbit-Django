@@ -281,3 +281,17 @@
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+
+/* share the delivery with family (public /track link) */
+.ob-hero-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.ob-hero-share small {
+  max-width: 260px;
+  opacity: 0.85;
+  font-size: 12.5px;
+}

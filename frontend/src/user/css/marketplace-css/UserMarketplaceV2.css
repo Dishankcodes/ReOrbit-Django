@@ -570,3 +570,16 @@
   justify-content: center;
   margin: 22px 0 6px;
 }
+
+/* sale price on a card */
+.mk-mrp {
+  color: #8a948d;
+  font-size: 13px;
+  font-weight: 500;
+}
+.mk-off {
+  color: #1f7a4a;
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 800;
+}

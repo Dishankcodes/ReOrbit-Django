@@ -417,9 +417,17 @@ class DonationTests(OrderBase):
         self.assertFalse(Donation.objects.exists())
 
     def test_only_serviceable_own_addresses(self):
-        r = self.donate(address_id=self.addr)  # Surat, outside the pickup area
+        from apps.core.models import SavedAddress
+        from apps.donations.services import serviceable
+
+        self.assertEqual(self.donate(address_id=self.addr).status_code, 201)  # Surat: all of Gujarat is covered
+        daman = SavedAddress.objects.create(user=self.buyer, label="Daman", recipient_name="Asha", phone="9876543210",
+                                            address_line1="Beach Road", city="Daman", state="Daman", pincode="396220")
+        r = self.donate(address_id=daman.public_id)
         self.assertEqual(r.status_code, 400, r.data)
         self.assertIn("address_id", r.data["errors"])
+        self.assertTrue(serviceable("360001") and serviceable("396001") and serviceable("370001"))
+        self.assertFalse(serviceable("400050") or serviceable("362520") or serviceable("396230"))
         other = self.make_user("other@example.com")
         self.assertIn("address_id", self.donate(who=other).data["errors"])
 

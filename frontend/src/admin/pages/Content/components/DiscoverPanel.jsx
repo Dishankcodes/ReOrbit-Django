@@ -108,7 +108,9 @@ export default function DiscoverPanel({ canEdit, toast }) {
 
       <div className="cm-dc-grid">
         <div className="cm-dc-col">
-          <h4>Spotlight</h4>
+          <h4>
+            Spotlight <span className="cm-count">1 ReMaker</span>
+          </h4>
           {spot ? (
             <Maker r={spot}>
               {canEdit && (
@@ -118,7 +120,9 @@ export default function DiscoverPanel({ canEdit, toast }) {
               )}
             </Maker>
           ) : (
-            <p className="cm-sp-note">Automatic: {state.showing.spotlight || "no ReMakers yet"}.</p>
+            <p className="cm-dc-auto">
+              <strong>Automatic</strong> {state.showing.spotlight_name || state.showing.spotlight || "No ReMakers yet"}. Pick one on the right to choose yourself.
+            </p>
           )}
           {spot && (
             <>
@@ -156,9 +160,13 @@ export default function DiscoverPanel({ canEdit, toast }) {
           )}
 
           <h4 className="cm-dc-h">
-            Featured cards ({cards.length}/{max})
+            Featured cards <span className="cm-count">{cards.length} of {max}</span>
           </h4>
-          {cards.length === 0 && <p className="cm-sp-note">Automatic: the {max} highest-rated ReMakers.</p>}
+          {cards.length === 0 && (
+            <p className="cm-dc-auto">
+              <strong>Automatic</strong> The {max} highest-rated ReMakers. Use <Plus size={12} /> on the right to choose.
+            </p>
+          )}
           <ol className="cm-dc-list">
             {cards.map((c, i) => (
               <li key={c.id}>
@@ -228,6 +236,9 @@ export default function DiscoverPanel({ canEdit, toast }) {
 
       {canEdit && (
         <footer className="cm-dc-foot">
+          <span className={`cm-dc-state${dirty ? " dirty" : ""}`}>
+            {dirty ? "You have unsaved changes." : "Everything is saved. Changes show on the page right away."}
+          </span>
           <button type="button" className="ad-btn ad-btn-primary" disabled={!dirty || busy} onClick={save}>
             {busy ? "Saving…" : "Save Discover page"}
           </button>

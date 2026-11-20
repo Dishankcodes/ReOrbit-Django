@@ -172,6 +172,7 @@ def admin_state(request):
         "cards": [row(found[x]) for x in card_ids if x in found],
         "max_cards": MAX_CARDS, "max_images": MAX_IMGS,
         "showing": {"spotlight": live["spotlight"]["id"] if live["spotlight"] else None,
+                    "spotlight_name": (live["spotlight"].get("name") or live["spotlight"].get("studio")) if live["spotlight"] else None,
                     "cards": [c["id"] for c in live["cards"]]},
     }
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Banknote,
@@ -17,8 +17,11 @@ import {
 } from "lucide-react";
 
 import { orderOptionsApi } from "../../api/orders";
+
+const REORBIT_COURIER = "ReOrbit Delivery"; /* same as the server's services.REORBIT_COURIER */
 import Spinner, { PageLoader } from "./Spinner";
 import OrderRelated from "./OrderRelated";
+import ShareTracking from "./ShareTracking";
 import "./Spinner.css";
 import "./SellerOrderDetails.css";
 
@@ -160,6 +163,7 @@ export default function SellerOrderDetails({
 }) {
   const { orderId } = useParams();
   const isAdmin = role === "admin";
+  const navigate = useNavigate();
   const [o, setO] = useState(null);
   const [error, setError] = useState("");
   const [form, setForm] =
@@ -232,9 +236,11 @@ export default function SellerOrderDetails({
     setErrs({});
     setMsg("");
     try {
-      setO(await api.act(orderId, action, body));
+      const next = await api.act(orderId, action, body);
+      setO(next);
       setForm(null);
       say(done || "Order updated.");
+      return next;
     } catch (e) {
       setErrs(e.errors || {});
       setMsg(
@@ -319,6 +325,8 @@ export default function SellerOrderDetails({
       }[o.status];
   const courierValue =
     vals.courier_name === "Other" ? vals.other : vals.courier_name;
+  /* "ReOrbit Delivery" as the courier: the parcel goes to Admin › Pickups instead of being marked shipped */
+  const byReOrbit = vals.courier_name === REORBIT_COURIER;
   const failFault = opts?.fail_reasons?.find(
     (r) => r.code === vals.reason,
   )?.fault;
@@ -414,6 +422,11 @@ export default function SellerOrderDetails({
           >
             {isAdmin ? "Support tickets for this order" : "Get help with this order"}
           </Link>
+          {!isAdmin && ["Confirmed", "Packed", "Shipped"].includes(o.status) && (
+            <span style={{ marginLeft: 8, marginTop: 8, display: "inline-flex" }}>
+              <ShareTracking side="sales" orderId={o.id} itemTitle={o.items?.[0]?.title || ""} className="sod-btn ghost" />
+            </span>
+          )}
         </div>
         <div className="sod-badges">
           <span className={`sod-badge s-${o.status}`}>
@@ -524,6 +537,7 @@ export default function SellerOrderDetails({
                     onChange={set("courier_name")}
                   >
                     <option value="">Choose a courier</option>
+                    <option value={REORBIT_COURIER}>ReOrbit Delivery (our own pickup team)</option>
                     {(opts?.couriers || []).map((c) => (
                       <option key={c} value={c}>
                         {c}
@@ -544,16 +558,23 @@ export default function SellerOrderDetails({
                     />
                   </label>
                 )}
-                <label>
-                  Tracking number
-                  <input
-                    value={vals.tracking_no}
-                    onChange={set("tracking_no")}
-                    maxLength={40}
-                    placeholder="Exactly as the courier gave it"
-                  />
-                  {fieldErr(errs, "tracking_no")}
-                </label>
+                {byReOrbit ? (
+                  <p className="sod-pickup st-reorbit">
+                    <Truck size={15} /> ReOrbit's team collects the parcel and delivers it. The order then moves only
+                    from Admin › Pickups: picked up = shipped, completed = delivered.
+                  </p>
+                ) : (
+                  <label>
+                    Tracking number
+                    <input
+                      value={vals.tracking_no}
+                      onChange={set("tracking_no")}
+                      maxLength={40}
+                      placeholder="Exactly as the courier gave it"
+                    />
+                    {fieldErr(errs, "tracking_no")}
+                  </label>
+                )}
                 <div className="sod-actions">
                   <button
                     type="button"
@@ -566,7 +587,17 @@ export default function SellerOrderDetails({
                   <button
                     type="button"
                     className="sod-btn"
-                    onClick={() =>
+                    onClick={async () => {
+                      if (byReOrbit) {
+                        const next = await act(
+                          "ship",
+                          { courier_name: REORBIT_COURIER, tracking_no: "" },
+                          "Handed to ReOrbit Delivery. It is now in Admin › Pickups.",
+                        );
+                        /* admins go straight to the pickup, where its status changes from now on */
+                        if (next && isAdmin && next.pickup?.id) navigate(`/admin-pickups/${next.pickup.id}`);
+                        return;
+                      }
                       act(
                         "ship",
                         {
@@ -574,12 +605,14 @@ export default function SellerOrderDetails({
                           tracking_no: vals.tracking_no,
                         },
                         "Marked as shipped. The buyer was told.",
-                      )
-                    }
+                      );
+                    }}
                     disabled={!!busy}
                   >
                     {busy === "ship" ? (
                       <Spinner label="Saving…" />
+                    ) : byReOrbit ? (
+                      "Hand to ReOrbit Delivery"
                     ) : (
                       "Confirm shipped"
                     )}
@@ -1122,7 +1155,9 @@ export default function SellerOrderDetails({
                   <p className="sod-muted">
                     {["Shipped", "Delivered"].includes(o.status)
                       ? "No courier details were added."
-                      : "Added when you mark it as shipped. The seller arranges and pays for shipping."}
+                      : o.managed_delivery
+                        ? "ReOrbit's pickup team collects it and handles the delivery."
+                        : "Added when you mark it as shipped. The seller arranges and pays for shipping."}
                   </p>
                 )}
               </div>

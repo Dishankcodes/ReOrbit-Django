@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 
 from apps.admins.models import AdminItem
 from apps.core.models import Category, SellableBase
+from apps.core.pricing import sale_of
 from apps.core.pagination import StandardPagination
 from apps.core.responses import ok
 from apps.remakers.models import RemakerProduct
@@ -104,8 +105,10 @@ def card(kind, o, request):
                 "customization_available": o.customization_available,
                 "seller": {"type": "remaker", "id": o.remaker.public_id,
                            "name": o.remaker.full_name, "username": o.remaker.username}}
+    sale = sale_of(o)  # below its original price: shown struck through, and coupons skip it
     return {**base, "price": o.price, "stock": o.stock, "sold_out": sold_out,
             "condition": getattr(o, "condition", "") or "Good",
+            "mrp": sale["mrp"] if sale else None, "off": sale["off"] if sale else None,
             "seller": {"type": "admin", "id": o.admin.public_id, "name": "ReOrbit"}}
 
 

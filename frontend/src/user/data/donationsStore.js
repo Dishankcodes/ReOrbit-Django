@@ -253,10 +253,20 @@ export const stepIndex = (status) =>
    Pincode serviceability (Serviceable_Pincodes table)
    --------------------------------------------------------- */
 
-const RANGES = [
-  [380001, 380063, "Ahmedabad"],
-  [382005, 382030, "Gandhinagar"],
-  [382345, 382481, "Ahmedabad"],
+/* We pick up anywhere in Gujarat (pincodes 360001-396999), except Daman, Dadra and Nagar Haveli
+   (396210-396240) and Diu (362520), which share the range. Same rule as the backend
+   (apps/donations/services.py serviceable). The area name is only a friendly hint. */
+const GUJARAT = [360001, 396999];
+const NOT_GUJARAT = [
+  [396210, 396240],
+  [362520, 362520],
+];
+const AREAS = [
+  [360, "Rajkot"], [361, "Jamnagar"], [362, "Junagadh"], [363, "Surendranagar"], [364, "Bhavnagar"],
+  [365, "Amreli"], [370, "Kutch"], [380, "Ahmedabad"], [382, "Ahmedabad / Gandhinagar"], [383, "Sabarkantha"],
+  [384, "Mehsana"], [385, "Banaskantha"], [387, "Kheda"], [388, "Anand"], [389, "Panchmahal"],
+  [390, "Vadodara"], [391, "Vadodara"], [392, "Bharuch"], [393, "Narmada"], [394, "Surat"], [395, "Surat"],
+  [396, "Valsad / Navsari"],
 ];
 
 export function checkPincode(value) {
@@ -264,12 +274,13 @@ export function checkPincode(value) {
   if (!/^\d{6}$/.test(text))
     return { valid: false, serviceable: false, city: "" };
   const num = Number(text);
-  const range = RANGES.find(([from, to]) => num >= from && num <= to);
-  return {
-    valid: true,
-    serviceable: Boolean(range),
-    city: range ? range[2] : "",
-  };
+  const ok =
+    num >= GUJARAT[0] &&
+    num <= GUJARAT[1] &&
+    !NOT_GUJARAT.some(([from, to]) => num >= from && num <= to);
+  const prefix = Math.floor(num / 1000);
+  const area = ok ? [...AREAS].reverse().find(([p]) => prefix >= p) : null;
+  return { valid: true, serviceable: ok, city: area ? area[1] : "" };
 }
 
 /* ---------------------------------------------------------

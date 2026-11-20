@@ -379,3 +379,64 @@
     width: 100%;
   }
 }
+
+/* cart and checkout helpers: free delivery progress and sale items */
+.ushp-nudges {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+.ushp-nudge {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d7e9de;
+  border-radius: 12px;
+  background: #f4faf6;
+  color: #2f4a3c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ushp-nudge p {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+}
+.ushp-nudge svg {
+  flex: none;
+  margin-top: 2px;
+  color: #2a7a52;
+}
+.ushp-nudge--sale {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  border-color: #f0dfb8;
+  background: #fdf8ec;
+  color: #5a4615;
+}
+.ushp-nudge--sale svg {
+  color: #b07a12;
+}
+.ushp-nudge-bar {
+  display: block;
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dfece4;
+}
+.ushp-nudge-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f9b72, #2a7a52);
+}
+.ushp-sale-chip {
+  display: block;
+  margin-top: 3px;
+  color: #1f7a4a;
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 800;
+}
