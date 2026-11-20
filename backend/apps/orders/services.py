@@ -724,8 +724,9 @@ def tracking_url(courier, number):
     return url.replace("{n}", quote(str(number), safe=""))
 
 
-def check_tracking(courier_name, tracking_no, exclude_pk=None):
-    """Returns (courier, tracking) cleaned, or raises CheckoutError with field messages."""
+def check_tracking(courier_name, tracking_no, exclude_pk=None, unique=True):
+    """Returns (courier, tracking) cleaned, or raises CheckoutError with field messages.
+    unique=False skips the "already used" check (ReOrbit's own pickup number, which ReOrbit made)."""
     courier = " ".join(str(courier_name or "").split())[:40]
     tracking = re.sub(r"\s+", "", str(tracking_no or "")).upper()
     errs = {}
@@ -740,7 +741,7 @@ def check_tracking(courier_name, tracking_no, exclude_pk=None):
         errs["tracking_no"] = [f"This does not look like a {known} tracking number."]
     elif not _GENERIC_TRACKING.match(tracking) or len(set(tracking)) < 3:
         errs["tracking_no"] = ["Enter the tracking number exactly as the courier gave it."]
-    elif Order.objects.filter(courier_name__iexact=courier, tracking_no=tracking).exclude(pk=exclude_pk).exists():
+    elif unique and Order.objects.filter(courier_name__iexact=courier, tracking_no=tracking).exclude(pk=exclude_pk).exists():
         errs["tracking_no"] = ["This tracking number is already used on another order."]
     if errs:
         raise CheckoutError("Check the courier details.", errs)
@@ -758,7 +759,8 @@ FAIL_REASONS = {
 }
 
 
-def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", tracking_no="", ip=None):
+def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", tracking_no="", ip=None,
+                  unique_tracking=True):
     """Seller/admin moves an order forward one step."""
     if action not in FLOW:
         raise CheckoutError("Unknown action.")
@@ -770,7 +772,8 @@ def advance_order(order_pk, action, *, actor_kind, actor, courier_name="", track
             raise CheckoutError(f"This order is {o.get_status_display().lower()}, so it can't be marked {to.lower()}.",
                                 code="BAD_STATE", status=409)
         if action == "ship":
-            courier_name, tracking_no = check_tracking(courier_name, tracking_no, exclude_pk=o.pk)
+            courier_name, tracking_no = check_tracking(courier_name, tracking_no, exclude_pk=o.pk,
+                                                       unique=unique_tracking)
         before = o.status
         o.status = to
         fields = ["status", "updated_at"]

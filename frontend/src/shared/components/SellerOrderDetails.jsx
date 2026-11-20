@@ -31,6 +31,12 @@ import "./SellerOrderDetails.css";
    action endpoint the list used to, so the server decides what is allowed. */
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+/* a pickup date is a plain day ("2026-11-21"): read it as a local day, with no time */
+const pickupDay = (v) => {
+  const [y, m, d] = String(v).slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+};
+
 const when = (v) =>
   v
     ? new Date(v).toLocaleString("en-IN", {
@@ -392,7 +398,7 @@ export default function SellerOrderDetails({
     : null;
   const PICKUP_TEXT = {
     Requested: "Waiting for ReOrbit to schedule the pickup",
-    Scheduled: `Pickup ${pickup?.date ? `on ${when(pickup.date)}` : "scheduled"}${pickup?.slot ? `, ${pickup.slot}` : ""}${pickup?.team ? ` · ${pickup.team}` : ""}`,
+    Scheduled: `Pickup ${pickup?.date ? `on ${pickupDay(pickup.date)}` : "scheduled"}${pickup?.slot ? `, ${pickup.slot}` : ""}${pickup?.team ? ` · ${pickup.team}` : ""}`,
     Picked_Up: "Picked up by ReOrbit, on its way to the buyer",
     Completed: "Delivered by ReOrbit",
     Cancelled: `ReOrbit cancelled the pickup${pickup?.cancel_reason ? `: ${pickup.cancel_reason}` : ""}. Ask again when it's ready.`,

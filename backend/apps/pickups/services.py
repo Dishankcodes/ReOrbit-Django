@@ -470,8 +470,12 @@ def _order_step(r, admin, action, courier="", tracking=""):
     """Move the pickup's order along with it (shipped when picked up, delivered when completed)."""
     from apps.orders import services as orders  # local import: orders imports this app too
 
+    # the pickup's own number is ReOrbit's tracking for its own team: never refuse it as "already used"
+    # (an old test order can hold the same number after a database reset)
+    own = tracking.upper() == r.public_id.upper()
     try:
-        orders.advance_order(r.order_id, action, actor_kind="admin", actor=admin, courier_name=courier, tracking_no=tracking)
+        orders.advance_order(r.order_id, action, actor_kind="admin", actor=admin, courier_name=courier, tracking_no=tracking,
+                             unique_tracking=not own)
     except orders.CheckoutError as e:
         raise PickupError(e.message, e.errors, e.code, e.status)
 

@@ -98,3 +98,18 @@ class ManagedDeliveryTests(PostDeliveryBase):
         self.assertFalse(Order.objects.get(public_id=oid).managed_delivery)
         self.assertEqual(self.act(oid, self.lamp, "pack").status_code, 200)
         self.assertEqual(self.act(oid, self.lamp, "pickup").status_code, 409)
+
+    def test_old_order_with_the_same_pickup_number_does_not_block(self):
+        """After a database reset an old order can already carry this pickup's number as its tracking.
+        Marking the pickup collected must still work."""
+        oid = self.place(self.table)
+        self.assertEqual(self.act(oid, self.table, "pack").status_code, 200)
+        self.assertEqual(self.act(oid, self.table, "pickup").status_code, 200)
+        p = self.pickup(oid)
+        old = self.place(self.table)
+        Order.objects.filter(public_id=old).update(courier_name="ReOrbit Delivery", tracking_no=p.public_id)
+        self.assertEqual(self.admin(p, "schedule", date=day(), slot=SLOT, partner="Pickup team A").status_code, 200)
+        p.refresh_from_db()
+        r = self.admin(p, "pickedUp", code=p.handover_code)
+        self.assertEqual(r.status_code, 200, r.data)
+        self.assertEqual(Order.objects.get(public_id=oid).tracking_no, p.public_id)
