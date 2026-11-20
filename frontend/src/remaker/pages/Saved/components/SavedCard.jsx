@@ -1,3 +1,4 @@
+import SoldOutTag, { soldOutClass } from "../../../../shared/components/SoldOutTag";
 import React, { useState } from "react";
 import { withSlug } from "../../../../shared/slug";
 import { Link } from "react-router-dom";
@@ -16,7 +17,7 @@ export default function SavedCard({ listing, onRemove }) {
 
   return (
     <article className="sav-card">
-      <div className="sav-media">
+      <div className={`sav-media ${soldOutClass(soldOut)}`}>
         {failed || !listing.gallery[0] ? (
           <span className="sav-noimg" />
         ) : (
@@ -32,7 +33,7 @@ export default function SavedCard({ listing, onRemove }) {
           {SOURCE_LABEL[listing.source]}
         </span>
         <span className="sav-condition">{listing.condition}</span>
-        {soldOut && <span className="sav-sold">Sold out</span>}
+        <SoldOutTag show={soldOut} />
       </div>
 
       <div className="sav-body">
@@ -52,9 +53,11 @@ export default function SavedCard({ listing, onRemove }) {
         <div className="sav-foot">
           <strong>{formatPrice(listing.price)}</strong>
           <small>
-            {listing.quantity > 1
-              ? `${listing.quantity} available`
-              : "1 available"}
+            {soldOut
+              ? "Sold out"
+              : listing.quantity > 1
+                ? `${listing.quantity} available`
+                : "1 available"}
           </small>
         </div>
       </div>

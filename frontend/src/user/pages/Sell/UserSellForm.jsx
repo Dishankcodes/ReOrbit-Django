@@ -111,6 +111,8 @@ export default function UserSellForm() {
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  /* every hook stays above the early returns below (the listing may still be loading) */
+  const [limitMsg, setLimitMsg] = useState("");
 
   /* if the listing arrives after the first render, fill the form once */
   const filled = useRef(Boolean(existing));
@@ -211,8 +213,6 @@ export default function UserSellForm() {
   };
 
   const payload = () => ({ ...form, price });
-
-  const [limitMsg, setLimitMsg] = useState("");
 
   const submit = (asDraft = false) => {
     if (!asDraft && !validate(2)) return;

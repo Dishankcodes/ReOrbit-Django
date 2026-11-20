@@ -576,3 +576,41 @@
     grid-template-columns: 1fr;
   }
 }
+.sod-pickup--admin {
+  justify-content: space-between;
+}
+.sod-pickup--admin > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sod-pickup--admin small {
+  font-weight: 500;
+  opacity: 0.8;
+}
+.sod-pickup .sod-pickup-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #1f4f86;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.sod-pickup .sod-pickup-go:hover {
+  background: #173d69;
+}
+.sod-pickup.st-reorbit > span b {
+  font-weight: 800;
+}
+.sod-pickup.st-reorbit {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.sod-pickup.st-reorbit svg {
+  flex: none;
+  margin-top: 2px;
+}

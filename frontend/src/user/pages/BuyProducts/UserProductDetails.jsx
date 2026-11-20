@@ -47,6 +47,7 @@ import {
   useSellerReviews,
 } from "../../../shared/hooks/usePublicReviews";
 import { useUserComplaintFiler } from "../../../shared/complaints";
+import SoldOutTag, { soldOutClass } from "../../../shared/components/SoldOutTag";
 import SafeImage from "../../components/ui/SafeImage";
 import { apiRequest } from "../../../api/api";
 import MessageButton from "../../components/ui/MessageButton";
@@ -247,12 +248,13 @@ export default function UserProductDetails() {
 
       <section className="pd-hero">
         <div className="pd-media" data-gallery>
-          <div className="pd-gallery">
+          <div className={`pd-gallery ${soldOutClass(stock?.available <= 0)}`}>
             <SafeImage
               src={photos[photoIndex] || item.image}
               alt={item.title}
               title="Click to see it full size"
             />
+            <SoldOutTag show={stock?.available <= 0} size="lg" />
             <span className={`pd-type ${isMaker ? "maker" : ""}`}>
               {isMaker ? (
                 <>

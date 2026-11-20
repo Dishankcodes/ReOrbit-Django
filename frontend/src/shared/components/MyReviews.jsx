@@ -678,6 +678,12 @@ function SuggestChips({ kind, rating, value, onChange }) {
   );
 }
 
+/* one delivered line matches the search by order number, product or seller */
+const matches = (r, q) =>
+  r.order_id.toLowerCase().includes(q) ||
+  r.item.title.toLowerCase().includes(q) ||
+  r.seller.name.toLowerCase().includes(q);
+
 export default function MyReviews({
   accent = "#2a4d3a",
   orderPath = (id) => `/user-orders/${id}`,
@@ -693,7 +699,7 @@ export default function MyReviews({
   const startText = useRef(
     new URLSearchParams(window.location.search).get("q") || "",
   ).current;
-  const [filter, setFilter] = useState(startText ? "all" : "waiting");
+  const [filter, setFilter] = useState("waiting");
   const [kind, setKind] = useState(
     new URLSearchParams(window.location.search).get("kind") === "seller" ? "seller" : "product",
   );
@@ -718,7 +724,17 @@ export default function MyReviews({
       });
       if (first.current) {
         first.current = false;
-        if (!d.results.some((r) => !r.product_review) && d.results.length) setFilter("done");
+        /* Opened for one order (?q=ORD-…, from "Rate order"): go straight to what is still waiting for
+           it: its product reviews first, then the seller review; if all done, show them as reviewed. */
+        const q = startText.trim().toLowerCase();
+        const mine = q ? d.results.filter((r) => matches(r, q)) : d.results;
+        const productWaiting = mine.some((r) => !r.product_review);
+        const sellerWaiting = mine.some((r) => r.can_review_seller && !r.seller_review);
+        if (q && !productWaiting && sellerWaiting) {
+          setKind("seller");
+          setFilter("waiting");
+        } else if (productWaiting) setFilter("waiting");
+        else if (mine.length) setFilter("done");
       }
     } catch (e) {
       setState((s) => ({
@@ -748,48 +764,43 @@ export default function MyReviews({
     return [...by.values()];
   }, [state.rows]);
 
+  /* the search narrows everything first; the pills and their counts then split what is left, so
+     "Waiting for review 1" always means one card is waiting in what you see */
+  const found = useMemo(() => {
+    const q = text.trim().toLowerCase();
+    return {
+      product: q ? state.rows.filter((r) => matches(r, q)) : state.rows,
+      seller: q ? sellerGroups.filter((g) => g.entries.some((e) => matches(e, q))) : sellerGroups,
+    };
+  }, [state.rows, sellerGroups, text]);
+
   const counts = useMemo(
     () => ({
       product: {
-        waiting: state.rows.filter((r) => !r.product_review).length,
-        done: state.rows.filter((r) => r.product_review).length,
-        all: state.rows.length,
+        waiting: found.product.filter((r) => !r.product_review).length,
+        done: found.product.filter((r) => r.product_review).length,
+        all: found.product.length,
       },
       seller: {
-        waiting: sellerGroups.filter((g) => !g.entries[0].seller_review).length,
-        done: sellerGroups.filter((g) => g.entries[0].seller_review).length,
-        all: sellerGroups.length,
+        waiting: found.seller.filter((g) => !g.entries[0].seller_review).length,
+        done: found.seller.filter((g) => g.entries[0].seller_review).length,
+        all: found.seller.length,
       },
     }),
-    [state.rows, sellerGroups],
+    [found],
   );
 
   const rows = useMemo(() => {
-    const q = text.trim().toLowerCase();
     if (kind === "seller") {
-      return sellerGroups.filter((g) => {
+      return found.seller.filter((g) => {
         const done = !!g.entries[0].seller_review;
-        if (filter === "waiting" && done) return false;
-        if (filter === "done" && !done) return false;
-        return (
-          !q ||
-          g.order_id.toLowerCase().includes(q) ||
-          g.entries[0].seller.name.toLowerCase().includes(q) ||
-          g.entries.some((e) => e.item.title.toLowerCase().includes(q))
-        );
+        return filter === "all" || (filter === "done" ? done : !done);
       });
     }
-    return state.rows.filter((r) => {
-      if (filter === "waiting" && r.product_review) return false;
-      if (filter === "done" && !r.product_review) return false;
-      return (
-        !q ||
-        r.item.title.toLowerCase().includes(q) ||
-        r.order_id.toLowerCase().includes(q) ||
-        r.seller.name.toLowerCase().includes(q)
-      );
-    });
-  }, [state.rows, sellerGroups, kind, filter, text]);
+    return found.product.filter(
+      (r) => filter === "all" || (filter === "done" ? !!r.product_review : !r.product_review),
+    );
+  }, [found, kind, filter]);
 
   const rated = state.rows
     .filter((r) => r.product_review)
@@ -900,7 +911,9 @@ export default function MyReviews({
           <strong>
             {state.rows.length === 0
               ? "Nothing to review yet"
-              : filter === "waiting"
+              : text.trim() && found[kind].length === 0
+                ? "No reviews match"
+                : filter === "waiting"
                 ? "You're all caught up"
                 : kind === "seller" && sellerGroups.length === 0
                   ? "No sellers to rate"

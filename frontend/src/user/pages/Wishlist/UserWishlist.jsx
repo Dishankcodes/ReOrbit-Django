@@ -49,14 +49,14 @@ function WishCard({ item, stock, onRemove, onAdded }) {
   return (
     <article className={`wl-card ${stock.purchasable ? "" : "is-off"}`}>
       <div
-        className={`wl-media ${soldOutClass(!stock.purchasable && !stock.own)}`}
+        className={`wl-media ${soldOutClass(stock.available <= 0)}`}
         onClick={open}
         role="link"
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && open()}
       >
         <SafeImage src={item.image} alt={item.title} />
-        <SoldOutTag show={!stock.purchasable && !stock.own} />
+        <SoldOutTag show={stock.available <= 0} />
         {!stock.purchasable && stock.own && (
           <span className="wl-off">Your listing</span>
         )}

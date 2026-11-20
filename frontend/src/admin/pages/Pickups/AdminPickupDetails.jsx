@@ -73,7 +73,7 @@ function Stepper({ status }) {
 export default function AdminPickupDetails() {
   const { pickupId } = useParams();
   const navigate = useNavigate();
-  const p = usePickup(pickupId);
+  const { pickup: p, loading } = usePickup(pickupId);
   const { toast, toastNode } = useToast();
   const [pending, setPending] = useState(null);
   const teamLabel = useTeamLabel();
@@ -82,6 +82,16 @@ export default function AdminPickupDetails() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [pickupId]);
+
+  if (!p && loading) {
+    return (
+      <div className="aup-page">
+        <section className="aup-card" aria-busy="true">
+          <p className="ad-muted" style={{ padding: 24 }}>Loading the pickup…</p>
+        </section>
+      </div>
+    );
+  }
 
   if (!p) {
     return (

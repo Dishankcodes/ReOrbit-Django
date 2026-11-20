@@ -176,8 +176,21 @@ export function usePickups() {
     return all.map((p) => ({ ...p, due: dueInfo(p) }));
   }, [donations, items]);
 }
+/* { pickup, loading }. A pickup made a moment ago (e.g. "Hand to ReOrbit Delivery" on an order page)
+   isn't in the list loaded earlier: fetch the list again once before saying it doesn't exist. */
+const refetched = new Set();
 export function usePickup(id) {
-  return usePickups().find((p) => p.id === id) || null;
+  const pickup = usePickups().find((p) => p.id === id) || null;
+  const s = useItemPickups();
+  const missing = !pickup && /^PKR-/.test(id || "");
+  const refetch = missing && s.loaded && !s.loading && !refetched.has(id);
+  useEffect(() => {
+    if (refetch) {
+      refetched.add(id);
+      loadItemPickups(true);
+    }
+  }, [refetch, id]);
+  return { pickup, loading: !pickup && (s.loading || !s.loaded || refetch) };
 }
 
 /* { loading, error, reload } for the list pages */

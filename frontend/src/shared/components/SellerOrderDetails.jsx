@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  ChevronRight,
   ArrowLeft,
   Banknote,
   Check,
@@ -395,7 +396,22 @@ export default function SellerOrderDetails({
         Shipped: "ReOrbit is delivering it. You'll be told when it arrives.",
         Delivery_Failed: "ReOrbit couldn't deliver it and is sorting it out. You'll be told what happens next.",
       }[o.status]
-    : null;
+    : managed && isAdmin
+      ? {
+          Confirmed: platform
+            ? "Pack it, then mark it as packed. ReOrbit Delivery collects it from the store address."
+            : "The seller packs it, then asks ReOrbit for a pickup.",
+          Packed: !pickup?.id
+            ? platform
+              ? "Hand it to ReOrbit Delivery: a pickup is made in Admin › Pickups."
+              : "Waiting for the seller to ask for the pickup."
+            : platform
+              ? "Next, in the pickup: schedule it, then mark it picked up. It's ReOrbit's own product, so no handover code is needed."
+              : "Next, in the pickup: schedule it, then mark it picked up with the seller's handover code.",
+          Shipped: "ReOrbit Delivery has it. Complete the pickup once the buyer has it: the order becomes delivered.",
+          Delivery_Failed: "ReOrbit Delivery couldn't deliver it. Sort it out from the pickup.",
+        }[o.status]
+      : null;
   const PICKUP_TEXT = {
     Requested: "Waiting for ReOrbit to schedule the pickup",
     Scheduled: `Pickup ${pickup?.date ? `on ${pickupDay(pickup.date)}` : "scheduled"}${pickup?.slot ? `, ${pickup.slot}` : ""}${pickup?.team ? ` · ${pickup.team}` : ""}`,
@@ -490,12 +506,17 @@ export default function SellerOrderDetails({
             )}
             {(managedHint || hint) && <p className="sod-hint">{managedHint || hint}</p>}
             {managed && pickup?.status && (
-              <p className={`sod-pickup st-${pickup.status}`}>
-                <Truck size={15} /> {PICKUP_TEXT[pickup.status] || pickup.status}
+              <div className={`sod-pickup st-${pickup.status} ${isAdmin ? "sod-pickup--admin" : ""}`}>
+                <span>
+                  <Truck size={15} /> {PICKUP_TEXT[pickup.status] || pickup.status}
+                  {isAdmin && pickup.id && <small> · {pickup.id}</small>}
+                </span>
                 {isAdmin && pickup.id && (
-                  <Link to={`/admin-pickups/${pickup.id}`}> · Open pickup {pickup.id}</Link>
+                  <Link to={`/admin-pickups/${pickup.id}`} className="sod-pickup-go">
+                    Open pickup <ChevronRight size={14} />
+                  </Link>
                 )}
-              </p>
+              </div>
             )}
             {!isAdmin && pickup?.handover_code && (
               <div className="sod-handover" role="note">
@@ -511,9 +532,12 @@ export default function SellerOrderDetails({
             )}
             {managed && isAdmin && (
               <p className="sod-pickup st-reorbit">
-                <Truck size={15} /> The seller chose <b>&nbsp;ReOrbit delivery</b>. After packing, its status moves only
-                from {pickup?.id ? <Link to={`/admin-pickups/${pickup.id}`}>&nbsp;Admin › Pickups ({pickup.id})</Link> : " Admin › Pickups"}
-                : picked up = shipped, completed = delivered.
+                <Truck size={15} />
+                <span>
+                  {platform ? "Delivered by " : "The seller chose "}
+                  <b>ReOrbit Delivery</b>. After packing, the order moves with its pickup: picked up = shipped,
+                  completed = delivered.
+                </span>
               </p>
             )}
             {managed && isAdmin && !pickup?.status && ["Confirmed", "Packed"].includes(o.status) && (

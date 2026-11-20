@@ -127,11 +127,27 @@ const ORDER = {
   },
 };
 
+/* A ReOrbit store order leaves ReOrbit's own address: no outside seller, so no handover code */
+const STORE_ORDER = {
+  pickedUp: {
+    ...ORDER.pickedUp,
+    label: "Mark picked up from the store",
+    needsCode: false,
+    title: "Picked up from the ReOrbit store?",
+    body: "It's ReOrbit's own product, so no handover code is needed. The order is then marked as shipped and the buyer is told. Add a partner courier's tracking number if you handed it on.",
+  },
+  complete: {
+    ...ORDER.complete,
+    body: "The order is marked as delivered. It's a ReOrbit store sale, so the money stays with ReOrbit.",
+  },
+};
+
 export const PICKUP_ACTION_LIST = A;
 
 export function getPickupActions(p) {
   const donation = p.type === "Donation";
   const order = p.type === "Order";
+  const O = order && p.customer?.type === "platform" ? STORE_ORDER : ORDER;
   switch (p.status) {
     case "Requested":
       return [A.schedule, A.cancel];
@@ -139,9 +155,9 @@ export function getPickupActions(p) {
       /* a missed donation pickup can only be re-booked or called off */
       if (donation && p.donationStatus === "Failed_Pickup")
         return [A.reschedule, A.cancel];
-      return [donation ? DONATION.pickedUp : order ? ORDER.pickedUp : A.pickedUp, A.reschedule, A.cancel];
+      return [donation ? DONATION.pickedUp : order ? O.pickedUp : A.pickedUp, A.reschedule, A.cancel];
     case "Picked_Up":
-      return [donation ? DONATION.complete : order ? ORDER.complete : A.complete];
+      return [donation ? DONATION.complete : order ? O.complete : A.complete];
     case "Cancelled":
       /* only a donation the admin rejected can be brought back; the donor's own cancel is final */
       if (donation) return p.donationStatus === "Rejected" ? [DONATION.reopen] : [];

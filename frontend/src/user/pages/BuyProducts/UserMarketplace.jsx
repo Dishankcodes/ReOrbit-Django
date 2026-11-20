@@ -70,7 +70,7 @@ function ProductCard({ item, wished, onWishlist, onAdded }) {
 
   const openProduct = () => navigate(productPath(item.id, item.title));
   const isStore = item.sellerType === "admin";
-  const soldOut = !stock.purchasable && !stock.own;
+  const soldOut = stock.available <= 0; /* the stamp shows on your own sold-out listing too */
   const openSeller = (e) => {
     e.stopPropagation();
     navigate(
