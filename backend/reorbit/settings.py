@@ -128,6 +128,8 @@ MIDDLEWARE = [
     "apps.core.security_headers.ApiSecurityHeaders",
 
     "corsheaders.middleware.CorsMiddleware",
+    # Super Admin pause switches: a paused side gets 503 here, before any database work
+    "apps.core.pause.PauseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

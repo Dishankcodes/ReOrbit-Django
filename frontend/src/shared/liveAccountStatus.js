@@ -7,6 +7,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { ACCOUNT_STATUS_EVENT, apiRequest } from "../api/api";
+import { isActive, onActive } from "./activity";
 
 const PATH = { user: "/users/me/", remaker: "/remakers/me/" };
 const EVERY_MS = 60 * 1000;
@@ -51,13 +52,16 @@ export function useLiveAccountStatus(kind) {
   const snap = useSyncExternalStore(subscribe, () => state[kind], () => state[kind]);
   useEffect(() => {
     loadAccountStatus(kind);
-    const tick = setInterval(() => loadAccountStatus(kind), EVERY_MS);
+    /* hidden or untouched tab: no checks (the server and database can sleep); one check on return */
+    const tick = setInterval(() => isActive() && loadAccountStatus(kind), EVERY_MS);
+    const offActive = onActive(() => loadAccountStatus(kind));
     const onVisible = () => document.visibilityState === "visible" && loadAccountStatus(kind);
     const onRefused = () => loadAccountStatus(kind);
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener(ACCOUNT_STATUS_EVENT, onRefused);
     return () => {
       clearInterval(tick);
+      offActive();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener(ACCOUNT_STATUS_EVENT, onRefused);
     };

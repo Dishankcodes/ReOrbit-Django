@@ -394,6 +394,7 @@ export function refreshMyAccess() {
 /* ---------- permission helpers ---------- */
 export function moduleForPath(pathname) {
   if (pathname.startsWith("/admin-team")) return "team";
+  if (pathname.startsWith("/admin-system")) return "system";
   if (pathname.startsWith("/admin-reviews")) return "complaints";
   if (
     pathname.startsWith("/admin-settings") ||
@@ -423,7 +424,7 @@ export function useAccess() {
       real || { name: "Admin", role: "custom", roleLabel: "", permissions: {} };
     const isSuper = me.role === "super";
     const level = (key) =>
-      key === "team"
+      key === "team" || key === "system"
         ? isSuper
           ? "edit"
           : "none"

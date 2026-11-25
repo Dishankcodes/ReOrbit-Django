@@ -7,6 +7,7 @@ import {
 } from "./session";
 
 import { readyFormData } from "../shared/compressPhoto";
+import { applyPaused, blocksRequest } from "../shared/pause";
 
 export const ACCOUNT_STATUS_EVENT = "reorbit:account-status";
 
@@ -139,6 +140,14 @@ export async function apiRequest(endpoint, options = {}) {
   let token = options.token || (auth ? getAccessToken() : null);
   const isUpload = body instanceof FormData;
 
+  /* this side is paused by a Super Admin: don't call the server at all (the PauseGate screen shows) */
+  if (blocksRequest(endpoint)) {
+    const error = new Error("ReOrbit is paused for a short while. Please come back a little later.");
+    error.status = 503;
+    error.code = "PAUSED";
+    throw error;
+  }
+
   try {
     /* photos are read into memory first: a file the phone can no longer read gives a clear
        "choose it again" message instead of a silent failed request */
@@ -167,6 +176,7 @@ export async function apiRequest(endpoint, options = {}) {
       error.data = data;
       error.errors = data?.errors;
       error.code = data?.code;
+      if (response.status === 503 && data?.code === "PAUSED") applyPaused(data.paused);
       /* an admin still on a temporary password left the "choose your own" step: sign in again */
       if (response.status === 403 && data?.code === "PASSWORD_CHANGE_REQUIRED" && typeof window !== "undefined") {
         clearSession();

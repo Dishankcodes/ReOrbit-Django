@@ -156,6 +156,7 @@ const PAGES = [
   [/^\/admin-testimonials$/, "Testimonials", D.admin],
   [/^\/admin-reports$/, "Reports & analytics", D.admin],
   [/^\/admin-team$/, "Team & roles", D.admin],
+  [/^\/admin-system$/, "System", D.admin],
   [/^\/admin-addresses$/, "ReOrbit addresses", D.admin],
   [/^\/admin-states$/, "System status", D.admin],
   [/^\/admin-settings$/, "Settings", D.admin],

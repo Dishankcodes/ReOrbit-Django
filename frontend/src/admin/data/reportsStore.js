@@ -4,6 +4,7 @@
    from the same rows the Orders, Donations and Warehouse pages show. */
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { analyticsApi } from "../../api/analytics";
+import { isActive, onActive } from "../../shared/activity";
 
 export const RANGES = [
   { key: "30d", label: "Last 30 days", days: 30 },
@@ -159,10 +160,11 @@ if (typeof window !== "undefined") {
     cache.clear();
     emit();
   });
+  const again = () => cache.forEach((v, k) => v.loadedAt && load(k, true));
   window.setInterval(() => {
-    if (document.visibilityState !== "visible") return;
-    cache.forEach((v, k) => v.loadedAt && load(k, true));
+    if (isActive()) again();
   }, 60000);
+  onActive(again);
 }
 
 export function refreshReport(rangeKey) {

@@ -157,6 +157,10 @@ const pageInformation = {
     title: "Team & Roles",
     subtitle: "Add sub-admins and choose what each person can see and change.",
   },
+  "/admin-system": {
+    title: "System",
+    subtitle: "Pause or start ReOrbit, and see what keeps the server and database busy.",
+  },
 };
 
 function getStoredAdmin() {

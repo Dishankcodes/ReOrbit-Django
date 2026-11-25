@@ -136,7 +136,7 @@ export const STATUS_TONE = {
   Closed: "closed",
 };
 
-export const useTickets = () => useSupportTickets("remaker");
+export const useTickets = () => useSupportTickets("remaker", {}, true, true);
 export const useTicket = (id) => useSupportTicket("remaker", id);
 
 export async function createTicket({

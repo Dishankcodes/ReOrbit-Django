@@ -50,7 +50,7 @@ export default function AdminTicketDetails() {
   const { toast, toastNode } = useToast();
 
   // The inbox list also carries the team members who can take a ticket.
-  useSupportTickets("admin", {});
+  useSupportTickets("admin", {}, true, true);
   const { supportAgents } = useSupportStatus("admin", null, {});
   const ticket = useSupportTicketDetail("admin", ticketId);
   const { loading, error: loadError } = useSupportStatus("admin", ticketId);

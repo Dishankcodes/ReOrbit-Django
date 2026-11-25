@@ -2,11 +2,13 @@
    ReMakers and admins. They are written with the member paths; this makes every link and
    navigate() land on the visitor's own portal instead:
      ReMaker: /user-marketplace -> /remaker-marketplace, /user-orders -> /remaker-orders, ...
-     Admin:   /user-marketplace -> /admin-shop,          /user-orders -> /admin-shop/orders, ... */
+     Admin:   /user-marketplace -> /admin-shop,          /user-orders -> /admin-shop/orders, ...
+              a seller / ReMaker profile -> /admin-users/USR-… or /admin-remakers/RMK-… (manage page) */
 import * as RR from "react-router-dom";
 import React from "react";
 
 import { portalOf } from "../api/session";
+import { idFrom } from "./slug";
 
 const MAPS = {
   remaker: [
@@ -41,6 +43,12 @@ export function portalPath(path) {
   const portal = portalOf(window.location.pathname);
   const map = MAPS[portal];
   if (!map) return path;
+  /* admins manage people: a seller or ReMaker name in the shop opens their admin profile
+     (Admin › Users / ReMakers), not the public shop profile members see */
+  if (portal === "admin") {
+    const m = path.match(/^\/user-(?:marketplace|remakers)\/(seller|remaker)\/([^/?#]+)/);
+    if (m) return `${m[1] === "seller" ? "/admin-users" : "/admin-remakers"}/${idFrom(m[2])}`;
+  }
   /* the ticket list is a tab of the ReMaker help page, not a page of its own */
   if (portal === "remaker" && /^\/user-help\/tickets\/?(\?|#|$)/.test(path))
     return "/remaker-help?tab=tickets";

@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { adminOrdersApi } from "../../api/orders";
+import { isActive, onActive } from "../../shared/activity";
 
 const PARTY = { platform: "Admin", remaker: "ReMaker", user: "User", admin: "Admin" };
 
@@ -128,8 +129,9 @@ function startRefreshing() {
   if (started) return;
   started = true;
   window.setInterval(() => {
-    if (document.visibilityState === "visible" && state.loaded) loadOrders({ force: true });
+    if (isActive() && state.loaded) loadOrders({ force: true });
   }, 60000);
+  onActive(() => state.loaded && loadOrders({ force: true }));
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && state.loaded) loadOrders({ force: true });
   });

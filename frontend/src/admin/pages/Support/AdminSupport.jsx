@@ -118,7 +118,7 @@ function TicketsView() {
   const [pageSize, setPageSize] = useState(10);
   const [assigned, setAssigned] = useState("all");
   const filters = { query, status, priority, source, assigned };
-  const tickets = useSupportTickets("admin", filters);
+  const tickets = useSupportTickets("admin", filters, true, true);
   const ticketState = useSupportStatus("admin", null, filters);
 
   /* One server-backed inbox shape for User and ReMaker tickets. */

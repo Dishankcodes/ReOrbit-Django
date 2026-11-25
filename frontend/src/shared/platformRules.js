@@ -12,6 +12,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 import { fetchRules } from "../api/platform";
+import { isActive, onActive } from "./activity";
 
 /* Used until the first answer arrives, or if the server can't be reached. */
 export const DEFAULT_RULES = {
@@ -89,7 +90,9 @@ function start() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") refreshRules();
   });
-  window.setInterval(() => refreshRules({ force: true }), REFRESH_MS);
+  /* only while someone is using the tab: an open but forgotten tab must not keep the server awake */
+  window.setInterval(() => isActive() && refreshRules({ force: true }), REFRESH_MS);
+  onActive(() => refreshRules());
 }
 
 /* Non-React callers (price helpers): the current values. */

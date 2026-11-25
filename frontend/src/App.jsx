@@ -2,7 +2,8 @@ import React, { Suspense } from "react";
 import ScrollToTop from "./shared/components/ScrollToTop";
 import ImageViewer from "./shared/components/ImageViewer";
 import PageMeta from "./shared/pageMeta";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
+import { idFrom } from "./shared/slug";
 import { useNavTracker } from "./shared/backNav";
 import "./styles/theme.css";
 import { DelayedLoader } from "./shared/components/Spinner";
@@ -10,6 +11,7 @@ import RouteEffects from "./shared/components/RouteEffects";
 import { page } from "./shared/lazyPage";
 import { isSignedIn, loginUrl } from "./api/session";
 import OfflineBanner from "./shared/status/OfflineBanner";
+import PauseGate from "./shared/components/PauseGate";
 import RouteErrorBoundary from "./shared/status/RouteErrorBoundary";
 
 /* Shared layouts */
@@ -483,6 +485,7 @@ const AdminProfile = page(
   () => import("./admin/pages/Profile/AdminProfile"),
 );
 const AdminTeam = page("admin", () => import("./admin/pages/Team/AdminTeam"));
+const AdminSystem = page("admin", () => import("./admin/pages/System/AdminSystem"));
 const AdminEarnings = page(
   "admin",
   () => import("./admin/pages/Earnings/AdminEarnings"),
@@ -566,6 +569,13 @@ function RouteFallback() {
   return <PublicNotFound />;
 }
 
+/* /admin-shop/seller/asha-shah-USR-1004 -> /admin-users/USR-1004 (and RMK-… -> /admin-remakers/…) */
+function AdminManageRedirect({ kind }) {
+  const params = useParams();
+  const id = idFrom(params.sellerId || params.artistId || "");
+  return <Navigate replace to={`${kind === "remaker" ? "/admin-remakers" : "/admin-users"}/${id}`} />;
+}
+
 export default function App() {
   useNavTracker();
   const { pathname } = useLocation();
@@ -579,6 +589,7 @@ export default function App() {
       <Suspense fallback={<DelayedLoader minHeight={360} />}>
         <RouteEffects />
         <OfflineBanner />
+        <PauseGate>
         <Routes>
           {/* Public website */}
           <Route path="/" element={<Home />} />
@@ -918,6 +929,7 @@ export default function App() {
               <Route path="/admin-settings" element={<AdminSettings />} />
               <Route path="/admin-addresses" element={<UserAddresses />} />
               <Route path="/admin-team" element={<AdminTeam />} />
+              <Route path="/admin-system" element={<AdminSystem />} />
               <Route path="/admin-earnings" element={<AdminEarnings />} />
               <Route
                 path="/admin-notifications"
@@ -936,14 +948,9 @@ export default function App() {
                 element={<UserProductDetails />}
               />
               <Route path="/admin-shop/reorbit-platform-profile" element={<ReOrbitStoreProfile />} />
-              <Route
-                path="/admin-shop/seller/:sellerId"
-                element={<UserSellerProfile />}
-              />
-              <Route
-                path="/admin-shop/remaker/:artistId"
-                element={<UserArtistProfile />}
-              />
+              {/* old shop profile links: admins manage people from Users / ReMakers */}
+              <Route path="/admin-shop/seller/:sellerId" element={<AdminManageRedirect kind="user" />} />
+              <Route path="/admin-shop/remaker/:artistId" element={<AdminManageRedirect kind="remaker" />} />
               <Route path="/admin-shop/wishlist" element={<UserWishlist />} />
               <Route path="/admin-shop/cart" element={<UserCart />} />
               <Route path="/admin-shop/checkout" element={<UserShopCheckout />} />
@@ -984,6 +991,7 @@ export default function App() {
           {/* Admin unknown routes stay inside the admin shell; other unknown routes go home. */}
           <Route path="*" element={<RouteFallback />} />
         </Routes>
+        </PauseGate>
       </Suspense>
     </RouteErrorBoundary>
   );

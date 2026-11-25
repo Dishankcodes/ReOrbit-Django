@@ -17,6 +17,7 @@ import {
   markConversationUnread,
   useUnreadConversations,
 } from "../../shared/messagingStore";
+import { isActive, onActive } from "../../shared/activity";
 
 const PAGE = 50;
 const POLL_MS = 60000;
@@ -129,8 +130,9 @@ function start() {
   started = true;
   loadNotifications();
   window.setInterval(() => {
-    if (document.visibilityState === "visible") loadNotifications({ force: true });
+    if (isActive()) loadNotifications({ force: true });
   }, POLL_MS);
+  onActive(() => loadNotifications({ force: true }));
   window.addEventListener("reorbit:session-ended", () => set({ server: [], loaded: false }));
 }
 

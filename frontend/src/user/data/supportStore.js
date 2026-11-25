@@ -207,5 +207,5 @@ export const replyToTicket = (id, text) =>
   replyToSupportTicket("user", id, text);
 export const closeTicket = (id) =>
   setSupportTicketStatus("user", id, "Resolved");
-export const useTickets = () => useSupportTickets("user");
+export const useTickets = () => useSupportTickets("user", {}, true, true);
 export const useTicket = (id) => useSupportTicket("user", id);

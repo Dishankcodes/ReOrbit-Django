@@ -296,7 +296,9 @@ def apply(s: PlatformSettings, values: dict, admin):
         s.min_donation_items = p["minDonationItems"]
         s.donation_co2_per_kg = p["donationCo2PerKg"]
         s.donation_voucher_tiers = p["donationVoucherTiers"]
-        s.platform_settings = {"maintenance": p["maintenance"], "sessionMinutes": p["sessionMinutes"]}
+        # keep keys this screen doesn't own (the Super Admin pause switches)
+        s.platform_settings = {**(s.platform_settings or {}), "maintenance": p["maintenance"],
+                               "sessionMinutes": p["sessionMinutes"]}
     s.updated_by = admin
     s.save()
 

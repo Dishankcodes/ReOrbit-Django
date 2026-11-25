@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { supportApi } from "../api/social";
 import { getAccountType, isSignedIn, SESSION_ENDED_EVENT } from "../api/session";
+import { isActive, onActive } from "./activity";
 
 const PAGE_SIZE = 50;
 const POLL_MS = 15000;
@@ -255,7 +256,11 @@ async function loadTicket(scope, id, { force = false } = {}) {
   }
 }
 
-function usePolling(scope, filters, enabled = true) {
+/* Sidebar badge: every minute. The Help/Support screens themselves: every 15 seconds.
+   Hidden or untouched tab: no checks at all (see shared/activity.js); one check on return. */
+const BADGE_MS = 60000;
+
+function useSupportPolling(scope, filters, enabled = true, fast = false) {
   const filterKey = JSON.stringify(filters || {});
   useEffect(() => {
     if (!enabled) return undefined;
@@ -264,40 +269,46 @@ function usePolling(scope, filters, enabled = true) {
     const key = `${scope}:${filterKey}`;
     let entry = pollers.get(key);
     if (!entry) {
-      entry = { refs: 0, timer: null, filters };
+      entry = { refs: 0, fast: 0, timer: null, filters };
       pollers.set(key, entry);
     }
     entry.refs += 1;
+    if (fast) entry.fast += 1;
     entry.filters = filters;
-    if (!entry.timer) {
-      entry.timer = window.setInterval(() => {
-        if (document.visibilityState === "visible") {
-          loadTickets(scope, entry.filters, { silent: true }).catch(() => {});
-        }
-      }, POLL_MS);
-    }
-    const visible = () => document.visibilityState === "visible" &&
+    const tick = () => {
+      entry.timer = window.setTimeout(() => {
+        if (isActive()) loadTickets(scope, entry.filters, { silent: true }).catch(() => {});
+        if (entry.refs > 0) tick();
+      }, entry.fast > 0 ? POLL_MS : BADGE_MS);
+    };
+    if (entry.timer) window.clearTimeout(entry.timer);
+    tick();
+    const back = () => isActive() &&
       loadTickets(scope, entry.filters, { silent: true }).catch(() => {});
-    document.addEventListener("visibilitychange", visible);
+    document.addEventListener("visibilitychange", back);
+    const offActive = onActive(back);
     return () => {
       entry.refs -= 1;
-      if (entry.refs <= 0 && entry.timer) {
-        window.clearInterval(entry.timer);
+      if (fast) entry.fast = Math.max(0, entry.fast - 1);
+      if (entry.refs <= 0) {
+        if (entry.timer) window.clearTimeout(entry.timer);
         entry.timer = null;
         pollers.delete(key);
       }
-      document.removeEventListener("visibilitychange", visible);
+      document.removeEventListener("visibilitychange", back);
+      offActive();
     };
-  }, [scope, filterKey, enabled]);
+  }, [scope, filterKey, enabled, fast]);
 }
 
-export function useSupportTickets(scope = "user", filters = {}, enabled = true) {
+/* fast = the support screen itself is open (every 15 s); otherwise only the sidebar badge (every minute) */
+export function useSupportTickets(scope = "user", filters = {}, enabled = true, fast = false) {
   const state = useSyncExternalStore(
     (listener) => subscribe(scope, listener, filters),
     () => snapshot(scope, filters),
     () => snapshot(scope, filters),
   );
-  usePolling(scope, filters, enabled);
+  useSupportPolling(scope, filters, enabled, fast);
   const filterKey = JSON.stringify(filters || {});
   useEffect(() => {
     if (!enabled) return undefined;
@@ -319,7 +330,7 @@ export function useSupportTicketDetail(scope, id) {
     if (id && !state.details.has(id)) loadTicket(scope, id).catch(() => {});
     if (!id) return undefined;
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") loadTicket(scope, id, { force: true }).catch(() => {});
+      if (isActive()) loadTicket(scope, id, { force: true }).catch(() => {});
     }, POLL_MS);
     return () => window.clearInterval(timer);
   }, [scope, id]);

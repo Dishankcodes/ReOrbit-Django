@@ -33,6 +33,7 @@ import RowActionMenu from "../../../components/ui/RowActionMenu";
 import { BannerModal, BannerSideModal, ConfirmModal } from "./ContentModals";
 import SpotlightPanel from "./SpotlightPanel";
 import { formatDate } from "../../../utils/format";
+import { isActive } from "../../../../shared/activity";
 
 const FILTERS = ["All", "Live", "Scheduled", "Draft", "Ended"];
 const num = (n) => Number(n).toLocaleString("en-IN");
@@ -63,7 +64,7 @@ export default function BannersTab({ canEdit, by, toast }) {
   /* Views and clicks update on their own, no refresh needed. Paused while the tab is hidden. */
   useEffect(() => {
     const tick = () => {
-      if (document.visibilityState === "visible") refreshBannerStats();
+      if (isActive()) refreshBannerStats();
     };
     const t = setInterval(tick, 10000);
     document.addEventListener("visibilitychange", tick);

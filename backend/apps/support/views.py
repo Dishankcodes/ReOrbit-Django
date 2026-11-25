@@ -582,22 +582,23 @@ class AdminTickets(APIView):
                 | Q(remaker__email__icontains=search)
                 | Q(messages__text__icontains=search)
             ).distinct()
-        counts = {
-            "All": queryset.count(),
-            "Open": queryset.filter(status=SupportTicket.Status.OPEN).count(),
-            "In progress": queryset.filter(status=SupportTicket.Status.IN_PROGRESS).count(),
-            "Waiting": queryset.filter(status=SupportTicket.Status.WAITING).count(),
-            "Resolved": queryset.filter(
-                status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
-            ).count(),
-        }
+        # all the tab counts and the sidebar badge in ONE query (this list is polled by the sidebar)
+        done = [SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
+        unread_q = (~Q(status__in=done) & Q(_last_member_at__isnull=False)
+                    & (Q(_viewer_read_at__isnull=True) | Q(_last_member_at__gt=F("_viewer_read_at"))))
+        agg = queryset.aggregate(
+            all=Count("pk", distinct=True),
+            open=Count("pk", distinct=True, filter=Q(status=SupportTicket.Status.OPEN)),
+            progress=Count("pk", distinct=True, filter=Q(status=SupportTicket.Status.IN_PROGRESS)),
+            waiting=Count("pk", distinct=True, filter=Q(status=SupportTicket.Status.WAITING)),
+            resolved=Count("pk", distinct=True, filter=Q(status__in=done)),
+            unread=Count("pk", distinct=True, filter=unread_q),
+        )
+        counts = {"All": agg["all"], "Open": agg["open"], "In progress": agg["progress"],
+                  "Waiting": agg["waiting"], "Resolved": agg["resolved"]}
         # the sidebar badge: tickets still open with a member message the admin hasn't read.
         # Resolved / closed tickets never count, even if the last message was unread.
-        unread_count = queryset.exclude(
-            status__in=[SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED]
-        ).filter(_last_member_at__isnull=False).filter(
-            Q(_viewer_read_at__isnull=True) | Q(_last_member_at__gt=F("_viewer_read_at"))
-        ).count()
+        unread_count = agg["unread"]
         if status:
             if status == "Waiting":
                 queryset = queryset.filter(status=SupportTicket.Status.WAITING)
@@ -614,7 +615,9 @@ class AdminTickets(APIView):
             limit = min(max(1, int(request.query_params.get("limit", ADMIN_PAGE_SIZE))), 100)
         except (TypeError, ValueError):
             raise ValidationError("Ticket page parameters must be integers.")
-        total = queryset.count()
+        tab = {"": "All", "Open": "Open", "In progress": "In progress", "Waiting": "Waiting",
+               "Waiting for you": "Waiting", "Resolved": "Resolved"}.get(status or "")
+        total = counts[tab] if tab else queryset.count()
         tickets = list(
             _with_message_summary(
                 _ticket_queryset(include_message_senders=False), request.user.account

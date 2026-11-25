@@ -85,6 +85,7 @@ const NAMES = {
   "admin-testimonials": ["Testimonials"],
   "admin-reviews": ["Reviews"],
   "admin-team": ["Team"],
+  "admin-system": ["System"],
   "admin-settings": ["Settings"],
   "admin-addresses": ["Addresses"],
   "remaker-addresses": ["Addresses"],

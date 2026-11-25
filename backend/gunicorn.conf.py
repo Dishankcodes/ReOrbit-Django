@@ -13,3 +13,14 @@ graceful_timeout = 30
 keepalive = 5
 # Free instances have 512 MB: two workers fit comfortably alongside Pillow.
 workers = int(os.getenv("WEB_CONCURRENCY", "2"))
+
+
+def worker_exit(server, worker):
+    """Render stops the server on deploys and when the free instance goes to sleep: save the API usage
+    counts still in memory first (apps/core/usage.py)."""
+    try:
+        from apps.core import usage
+
+        usage.flush()
+    except Exception:  # noqa: BLE001
+        pass

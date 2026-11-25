@@ -1,0 +1,102 @@
+.pgate {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: radial-gradient(1200px 600px at 50% -10%, #e5efe7 0%, #f6f8f5 55%, #f6f8f5 100%);
+  font-family: inherit;
+}
+.pgate--admin {
+  background: radial-gradient(1200px 600px at 50% -10%, #e6ecf6 0%, #f5f7fb 55%, #f5f7fb 100%);
+}
+.pgate-card {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 28px 30px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #dfe7e1;
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(30, 61, 47, 0.1);
+}
+.pgate-icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: #e8f0ea;
+  color: #1e3d2f;
+}
+.pgate--admin .pgate-icon {
+  background: #e7edf7;
+  color: #23406b;
+}
+.pgate-brand {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6b7b71;
+}
+.pgate h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+  color: #1e3d2f;
+}
+.pgate--admin h1 {
+  color: #1d2f4d;
+}
+.pgate-text {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4f5f55;
+}
+.pgate-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #7a887f;
+}
+.pgate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #1e3d2f;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pgate--admin .pgate-btn {
+  background: #23406b;
+}
+.pgate-btn:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+.pgate-spin {
+  animation: pgate-spin 0.9s linear infinite;
+}
+@keyframes pgate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pgate-spin {
+    animation: none;
+  }
+}

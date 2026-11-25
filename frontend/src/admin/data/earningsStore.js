@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { analyticsApi } from "../../api/analytics";
 import { RANGES, DAY } from "./reportsStore";
+import { isActive, onActive } from "../../shared/activity";
 
 export { RANGES };
 
@@ -95,10 +96,11 @@ if (typeof window !== "undefined") {
     cache.clear();
     emit();
   });
+  const again = () => cache.forEach((v, k) => v.loadedAt && load(k, true));
   window.setInterval(() => {
-    if (document.visibilityState !== "visible") return;
-    cache.forEach((v, k) => v.loadedAt && load(k, true));
+    if (isActive()) again();
   }, 60000);
+  onActive(again);
 }
 
 export function refreshEarnings(rangeKey) {

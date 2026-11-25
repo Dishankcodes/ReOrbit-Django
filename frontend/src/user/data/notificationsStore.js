@@ -15,6 +15,7 @@ import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { notificationsApi } from "../../api/notifications";
 import { getAccount } from "../../api/session";
 import { lastMessage, useUnreadConversations } from "./messagesStore";
+import { isActive, onActive } from "../../shared/activity";
 
 const KEY = "reorbit_user_notif_read";
 const GONE = "reorbit_user_notif_gone";
@@ -192,8 +193,9 @@ function start() {
   started = true;
   loadNotifications();
   window.setInterval(() => {
-    if (document.visibilityState === "visible") loadNotifications({ force: true });
+    if (isActive()) loadNotifications({ force: true });
   }, POLL_MS);
+  onActive(() => loadNotifications({ force: true }));
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") loadNotifications({ force: true });
   });

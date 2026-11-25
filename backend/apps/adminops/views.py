@@ -7,7 +7,7 @@ Admin
 Each block is only filled in when the admin's role can open that area; the rest stay at zero.
 """
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from rest_framework.views import APIView
 
@@ -54,27 +54,36 @@ def operations_data(admin):
             "cod_cash_pending": (Order.objects.filter(payment__method="COD", status="Delivered", cod_received_at__isnull=True)
                                  .exclude(payment_status="Paid").count()),
         }
-    if can("donations"):
-        out["donations"] = {"to_review": Donation.objects.filter(status="Pending").count(),
-                            "in_progress": Donation.objects.filter(status__in=("Scheduled", "Failed_Pickup", "Picked_Up", "Received")).count()}
-    if can("pickups"):
+    # each block is ONE query with filtered counts (this endpoint refreshes every minute on the dashboard)
+    if can("donations") or can("pickups"):
         today = timezone.localdate()
-        donation_open = Donation.objects.filter(status__in=("Pending", "Scheduled", "Failed_Pickup"))
-        item_open = PickupRequest.objects.filter(status__in=("Requested", "Scheduled"))
-        overdue = (Donation.objects.filter(status__in=("Scheduled", "Failed_Pickup"), pickup_date__lt=today).count()
-                   + PickupRequest.objects.filter(status="Scheduled", pickup_date__lt=today).count())
-        out["pickups"] = {"open": donation_open.count() + item_open.count(), "overdue": overdue}
+        d = Donation.objects.aggregate(
+            to_review=Count("pk", filter=Q(status="Pending")),
+            in_progress=Count("pk", filter=Q(status__in=("Scheduled", "Failed_Pickup", "Picked_Up", "Received"))),
+            open=Count("pk", filter=Q(status__in=("Pending", "Scheduled", "Failed_Pickup"))),
+            overdue=Count("pk", filter=Q(status__in=("Scheduled", "Failed_Pickup"), pickup_date__lt=today)),
+        )
+    if can("donations"):
+        out["donations"] = {"to_review": d["to_review"], "in_progress": d["in_progress"]}
+    if can("pickups"):
+        p = PickupRequest.objects.aggregate(
+            open=Count("pk", filter=Q(status__in=("Requested", "Scheduled"))),
+            overdue=Count("pk", filter=Q(status="Scheduled", pickup_date__lt=today)),
+        )
+        out["pickups"] = {"open": d["open"] + p["open"], "overdue": d["overdue"] + p["overdue"]}
     if can("earnings") or can("finance"):
-        p = Payout.objects.filter(status="Pending")
-        out["payouts"] = {"pending": p.count(), "pending_amount": p.aggregate(n=Sum("amount"))["n"] or 0}
+        p = Payout.objects.filter(status="Pending").aggregate(n=Count("pk"), amount=Sum("amount"))
+        out["payouts"] = {"pending": p["n"], "pending_amount": p["amount"] or 0}
     if can("warehouse"):
-        items = WarehouseItem.objects.all()
-        out["warehouse"] = {"alerts": aggregate.warehouse_section()["kpi"]["alerts"],
-                            "at_dock": items.filter(warehouse_status="Received").count(),
-                            "items": items.exclude(warehouse_status="Released").count()}
+        w = WarehouseItem.objects.aggregate(
+            at_dock=Count("pk", filter=Q(warehouse_status="Received")),
+            items=Count("pk", filter=~Q(warehouse_status="Released")),
+        )
+        out["warehouse"] = {"alerts": aggregate.warehouse_section()["kpi"]["alerts"], **w}
     if can("complaints"):
-        c = Complaint.objects.filter(status__in=OPEN_COMPLAINT)
-        out["complaints"] = {"open": c.count(), "reported_listings": c.filter(target_type="Product").count()}
+        c = Complaint.objects.filter(status__in=OPEN_COMPLAINT).aggregate(
+            open=Count("pk"), reported_listings=Count("pk", filter=Q(target_type="Product")))
+        out["complaints"] = c
     if can("support"):
         out["support"] = {"open": SupportTicket.objects.filter(status__in=OPEN_SUPPORT).count()}
     return out
@@ -89,11 +98,11 @@ class AdminOperations(APIView):
 
 # ------------------------------------------------------------------ dashboard
 def _people():
-    alive = lambda m: m.objects.exclude(status="Deleted")  # noqa: E731
-    return {
-        "users": {"total": alive(Users).count(), "active": Users.objects.filter(status="Active").count()},
-        "remakers": {"total": alive(ReMakers).count(), "active": ReMakers.objects.filter(status="Active").count()},
-    }
+    def two(model):  # one query per table
+        return model.objects.aggregate(total=Count("pk", filter=~Q(status="Deleted")),
+                                       active=Count("pk", filter=Q(status="Active")))
+
+    return {"users": two(Users), "remakers": two(ReMakers)}
 
 
 def _products():
@@ -104,8 +113,12 @@ def _products():
         return {status_field[model]: value}
 
     models = (Item, RemakerProduct, AdminItem)
-    live = sum(m.objects.filter(**where(m, "Listed")).count() for m in models)
-    not_draft = sum(m.objects.exclude(**where(m, "Draft")).count() for m in models)
+    live = not_draft = 0
+    for m in models:  # one query per table
+        a = m.objects.aggregate(live=Count("pk", filter=Q(**where(m, "Listed"))),
+                                not_draft=Count("pk", filter=~Q(**where(m, "Draft"))))
+        live += a["live"]
+        not_draft += a["not_draft"]
     by_category = {}
     for model in models:
         for r in model.objects.filter(**where(model, "Listed")).values("category__name").annotate(n=Count("pk")):
@@ -115,8 +128,8 @@ def _products():
 
 def _impact():
     """Kilos donated and items reused, the way the old Dashboard counted them."""
-    kg = Donation.objects.filter(status__in=IN_HAND).aggregate(n=Sum("weight_kg"))["n"] or 0
-    donated = Donation.objects.filter(status__in=IN_HAND).aggregate(n=Sum("quantity"))["n"] or 0
+    d = Donation.objects.filter(status__in=IN_HAND).aggregate(kg=Sum("weight_kg"), n=Sum("quantity"))
+    kg, donated = d["kg"] or 0, d["n"] or 0
     sold = (OrderItem.objects.filter(order__status="Delivered").exclude(order__payment_status="Refunded")
             .aggregate(n=Sum("qty"))["n"] or 0)
     kg, reused = round(float(kg)), int(donated) + int(sold)
@@ -139,7 +152,8 @@ def _feed(admin, limit=6):
                 f"{d.donor.full_name} · {d.title} × {d.quantity}", d.created_at if waiting else d.updated_at,
                 f"/admin-donations/{d.public_id}", "Review" if waiting else "Open", waiting)
     if can("orders"):
-        for o in (Order.objects.filter(confirmed_at__isnull=False).select_related("seller_user", "seller_remaker")
+        for o in (Order.objects.filter(confirmed_at__isnull=False)
+                  .select_related("seller_user", "seller_remaker", "return_request")
                   .prefetch_related("lines").order_by("-created_at")[:limit]):
             ret = getattr(o, "return_request", None)
             waiting = bool(ret and ret.status in aggregate.OPEN_ORDER_RETURNS) or o.payment_status in ("Refund_Pending", "Refund_Failed")
@@ -150,7 +164,8 @@ def _feed(admin, limit=6):
                 f"{o.public_id} · {first} · ₹{o.total:,}", o.updated_at if waiting else o.created_at,
                 f"/admin-orders/{o.public_id}", "Open", waiting)
     if can("earnings") or can("finance"):
-        for p in Payout.objects.filter(status="Pending").order_by("-created_at")[:limit]:
+        for p in (Payout.objects.filter(status="Pending").select_related("seller_remaker", "seller_user")
+                  .order_by("-created_at")[:limit]):
             who = p.seller_remaker or p.seller_user
             add(f"pyo-{p.public_id}", "Sales", "Payout to pay", f"{who.full_name} asked for ₹{p.amount:,}",
                 p.created_at, "/admin-earnings", "Pay", True)

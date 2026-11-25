@@ -17,6 +17,7 @@ import {
   markConversationUnread,
   useUnreadConversations,
 } from "./messagesStore";
+import { isActive, onActive } from "../../shared/activity";
 
 export const CATEGORIES = [
   { key: "messages", label: "Messages", note: "Unread conversations" },
@@ -165,8 +166,9 @@ function start() {
   started = true;
   loadNotifications();
   window.setInterval(() => {
-    if (document.visibilityState === "visible") loadNotifications({ force: true });
+    if (isActive()) loadNotifications({ force: true });
   }, POLL_MS);
+  onActive(() => loadNotifications({ force: true }));
   window.addEventListener("reorbit:session-ended", () => {
     set({ server: [], loaded: false, page: 0, pages: 1 });
   });

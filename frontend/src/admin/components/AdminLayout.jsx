@@ -30,7 +30,9 @@ function NoAccess({ moduleKey, onHome, isSuper }) {
   const label =
     moduleKey === "team"
       ? "Team & Roles"
-      : MODULES.find((m) => m.key === moduleKey)?.label || "this page";
+      : moduleKey === "system"
+        ? "System"
+        : MODULES.find((m) => m.key === moduleKey)?.label || "this page";
 
   return (
     <div className="admin-noaccess">
@@ -41,6 +43,8 @@ function NoAccess({ moduleKey, onHome, isSuper }) {
       <p>
         {moduleKey === "team" && !isSuper
           ? "Only the super admin can add team members and change permissions."
+          : moduleKey === "system" && !isSuper
+          ? "Only a super admin can pause ReOrbit and see server usage."
           : "Your role doesn’t include this part of the admin. Ask the super admin if you need it."}
       </p>
       <button type="button" className="ad-btn ad-btn-primary" onClick={onHome}>

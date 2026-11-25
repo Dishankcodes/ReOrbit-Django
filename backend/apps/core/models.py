@@ -138,6 +138,9 @@ class PlatformSettings(TimeStampedModel):
             if existing:
                 self.created_at = existing
         super().save(*args, **kwargs)
+        from .pause import forget
+
+        forget()  # this server process sees new pause switches straight away
 
     def delete(self, *args, **kwargs):
         raise models.ProtectedError("Platform settings cannot be deleted.", set())
@@ -146,6 +149,12 @@ class PlatformSettings(TimeStampedModel):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+    @property
+    def paused(self):
+        """Super Admin pause switches: {"user": bool, "remaker": bool, "admin": bool} (apps/core/pause.py)."""
+        stored = (self.platform_settings or {}).get("paused") or {}
+        return {k: bool(stored.get(k)) for k in ("user", "remaker", "admin")}
 
     @property
     def maintenance(self):
@@ -382,3 +391,27 @@ class SellableBase(PublicIdModel, TimeStampedModel):
 
     class Meta:
         abstract = True
+
+
+# --------------------------------------------------------------------------- #
+# API usage per hour (apps/core/usage.py): what keeps the server and the database busy.
+# --------------------------------------------------------------------------- #
+class UsageHour(models.Model):
+    hour = models.DateTimeField()
+    route = models.CharField(max_length=200)
+    method = models.CharField(max_length=8)
+    side = models.CharField(max_length=10)  # user, remaker, admin, guest, bot
+    agent = models.CharField(max_length=60, blank=True, default="")  # bots only: who is calling
+    requests = models.PositiveIntegerField(default=0)
+    queries = models.PositiveBigIntegerField(default=0)
+    db_ms = models.PositiveBigIntegerField(default=0)
+    app_ms = models.PositiveBigIntegerField(default=0)
+    errors = models.PositiveIntegerField(default=0)
+    slow = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "usage_hours"
+        constraints = [
+            models.UniqueConstraint(fields=["hour", "route", "method", "side", "agent"], name="usage_hours_one_row"),
+        ]
+        indexes = [models.Index(fields=["hour"], name="usage_hours_hour")]

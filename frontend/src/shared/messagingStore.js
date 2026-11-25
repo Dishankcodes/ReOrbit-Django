@@ -5,6 +5,7 @@ import {
   isSignedIn,
   SESSION_ENDED_EVENT,
 } from "../api/session";
+import { isActive, onActive } from "./activity";
 
 /* The chips filter by who is on the other end of the chat, from the viewer's side.
    The keys match the backend's `kind` filter and the counts it returns. */
@@ -377,7 +378,7 @@ export function prefetchConversation(id, scope = currentScope()) {
 
 async function refresh(scope) {
   const state = stateFor(scope);
-  if (!isVisible() || !isSignedIn(scope)) return;
+  if (!isActive() || !isSignedIn(scope)) return; // hidden or untouched tab: no calls
   if (!state.loaded) {
     await loadList(scope, state.view).catch(() => {});
     return;
@@ -761,6 +762,7 @@ if (typeof window !== "undefined") {
   };
   document.addEventListener("visibilitychange", catchUp);
   window.addEventListener("online", catchUp);
+  onActive(catchUp);
 }
 
 export function clockLabel(iso) {

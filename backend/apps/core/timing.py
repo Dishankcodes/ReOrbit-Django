@@ -7,6 +7,7 @@
       SLOW 3.42s POST /api/orders/checkout/ -> 201 | db 2.91s in 34 queries
   On Render this shows up under Logs, so a slow action can be traced to the database
   (far-away region, cold start) or to the app itself.
+- Counts every API request for Super Admin › System › Usage (apps/core/usage.py).
 """
 
 import logging
@@ -15,6 +16,8 @@ import time
 
 from django.conf import settings
 from django.db import connection
+
+from . import usage
 
 log = logging.getLogger("reorbit.timing")
 SLOW = float(os.getenv("SLOW_REQUEST_SECONDS", "1.5"))
@@ -48,6 +51,7 @@ class RequestTimingMiddleware:
             response["Server-Timing"] = (
                 f'db;dur={clock.seconds * 1000:.0f};desc="{clock.count} queries", app;dur={total * 1000:.0f}'
             )
+        usage.record(request, response, clock.count, clock.seconds, total, total >= SLOW)
         if total >= SLOW:
             log.warning("SLOW %.2fs %s %s -> %s | db %.2fs in %d queries", total, request.method,
                         request.path, response.status_code, clock.seconds, clock.count)

@@ -29,6 +29,7 @@ import { useAccess } from "../../data/teamStore";
 import EmptyState from "../../components/ui/EmptyState";
 import "../../css/AdminUI.css";
 import "../../css/help/AdminHelp.css";
+import { isActive, onActive } from "../../../shared/activity";
 
 /* Each guide points at the page where the job is done. `key` is the
    permission module, so people only see guides for what they can open. */
@@ -203,8 +204,12 @@ function useSystemStatus() {
   }, []);
   useEffect(() => {
     load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
+    const t = setInterval(() => isActive() && load(), 60000);
+    const off = onActive(load);
+    return () => {
+      clearInterval(t);
+      off();
+    };
   }, [load]);
   return { data, error, busy, reload: load };
 }

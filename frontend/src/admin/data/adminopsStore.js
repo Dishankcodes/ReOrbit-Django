@@ -7,6 +7,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { adminOpsApi } from "../../api/adminops";
+import { isActive, onActive } from "../../shared/activity";
 
 const EMPTY = {
   users: { total: 0, active: 0 },
@@ -54,10 +55,11 @@ function startRefreshing() {
   if (started) return;
   started = true;
   const again = () => {
-    if (document.visibilityState === "visible" && state.loaded)
+    if (isActive() && state.loaded)
       loadDashboard({ force: true });
   };
   window.setInterval(again, 60000);
+  onActive(again);
   document.addEventListener("visibilitychange", again);
   /* another account signing in on this tab must not see the previous numbers */
   window.addEventListener("reorbit:session-ended", () => {

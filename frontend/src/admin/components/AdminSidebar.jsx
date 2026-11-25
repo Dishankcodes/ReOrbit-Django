@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CircleHelp,
   UserCog,
+  Power,
   Wallet,
   ShieldAlert,
   LifeBuoy,
@@ -175,6 +176,7 @@ const managementMenu = [
   { key: "earnings", label: "Earnings", path: "/admin-earnings", icon: Wallet },
   { key: "reports", label: "Reports", path: "/admin-reports", icon: BarChart3 },
   { key: "team", label: "Team & Roles", path: "/admin-team", icon: UserCog },
+  { key: "system", label: "System", path: "/admin-system", icon: Power },
 ];
 
 const supportMenu = [
